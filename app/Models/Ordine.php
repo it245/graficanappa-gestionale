@@ -1,0 +1,39 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Ordine extends Model
+{
+    use HasFactory;
+    protected $table = 'ordini';
+
+    protected $fillable = [
+        'commessa', 'cliente_nome', 'cod_art', 'descrizione',
+        'qta_richiesta', 'qta_prodotta', 'um', 'stato', 'priorita',
+        'data_registrazione', 'data_prevista_consegna', 'pronto_consegna', 'note',
+        'ore_lavorate', 'timeout_macchina'
+    ];
+
+    public function articoli()
+    {
+        return $this->hasMany(Articolo::class);
+    }
+
+    public function fasi()
+    {
+        return $this->hasMany(OrdineFase::class);
+    }
+
+    public function assegnazioni()
+    {
+        return $this->hasMany(Assegnazione::class);
+    }
+
+    public function pause()
+    {
+        return $this->hasMany(PausaOperatore::class);
+    }
+}
