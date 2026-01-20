@@ -1,5 +1,5 @@
 <?php
-namespace App\Services;
+namespace App\Http\Services;
 
 /**
  * Gestisce la creazione e lo stato degli ordini

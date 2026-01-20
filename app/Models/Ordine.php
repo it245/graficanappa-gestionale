@@ -26,6 +26,13 @@ class Ordine extends Model
     {
         return $this->hasMany(OrdineFase::class);
     }
+    
+  
+    public function operatori()
+{
+    return $this->hasManyThrough(Operatore::class, OrdineFase::class, 'ordine_id', 'id', 'id', 'operatore_id');
+}
+
 
     public function assegnazioni()
     {

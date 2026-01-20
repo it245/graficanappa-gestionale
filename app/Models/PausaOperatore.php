@@ -11,7 +11,7 @@ class PausaOperatore extends Model
     protected $table = 'pausa_operatores';
 
 
-    protected $fillable = ['operatore_id','ordine_id','fase','motivo','data_ora'];
+    protected $fillable = ['operatore_id','ordine_id','fase','motivo','data_ora','fine'];
 
     public function operatore()
     {
@@ -22,4 +22,5 @@ class PausaOperatore extends Model
     {
         return $this->belongsTo(Ordine::class);
     }
+    
 }

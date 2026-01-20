@@ -11,7 +11,15 @@ class Operatore extends Model
      
     protected $table = 'operatori'; 
 
-    protected $fillable = ['nome','cognome','codice_operatore','ruolo','attivo'];
+    protected $fillable = ['nome','cognome','codice_operatore','ruolo','attivo','reparto'];
+     public function ordini()
+{
+    return $this->belongsToMany(
+        Ordine::class,
+        'assegnazioni'
+    );
+}
+
 
     public function assegnazioni()
     {
@@ -27,4 +35,8 @@ class Operatore extends Model
     {
         return $this->hasMany(PausaOperatore::class);
     }
+    public function reparto()
+{
+    return $this->belongsTo(Reparto::class);
+}
 }

@@ -11,12 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-       Schema::create('fasi', function (Blueprint $table) {
-    $table->id();
-    $table->string('nome');
-    $table->foreignId('reparto_id')->constrained('reparti');
-    $table->timestamps();
-    });
+       Schema::table('ordine_fasi', function (Blueprint $table) {
+    $table->foreignId('fase_catalogo_id')
+          ->nullable()
+          ->constrained('fasi_catalogo');
+});
 
     }
 
@@ -25,6 +24,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('fasi');
+        Schema::table('ordine_fasi', function (Blueprint $table) {
+            //
+        });
     }
 };

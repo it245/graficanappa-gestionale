@@ -10,21 +10,20 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-    {
-       Schema::create('fasi', function (Blueprint $table) {
-    $table->id();
-    $table->string('nome');
-    $table->foreignId('reparto_id')->constrained('reparti');
-    $table->timestamps();
+{
+    Schema::table('operatori', function (Blueprint $table) {
+        $table->foreignId('reparto_id')->nullable()->after('id')->constrained('reparti');
     });
+}
 
-    }
 
     /**
      * Reverse the migrations.
      */
     public function down(): void
     {
-        Schema::dropIfExists('fasi');
+         Schema::table('operatori', function (Blueprint $table) {
+            $table->dropColumn('reparto_id');
+        });
     }
 };
