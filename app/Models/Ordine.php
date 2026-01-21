@@ -22,6 +22,11 @@ class Ordine extends Model
         return $this->hasMany(Articolo::class);
     }
 
+   /* public function cliente()
+    {
+        return $this->belongsTo(Cliente::class);
+    }
+*/
     public function fasi()
     {
         return $this->hasMany(OrdineFase::class);

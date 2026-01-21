@@ -13,12 +13,16 @@ class DashboardOperatoreController extends Controller
         $reparto = session('operatore_reparto');
 
         // Prendi tutte le fasi degli ordini relative al reparto
-        $fasiVisibili = OrdineFase::whereHas('faseCatalogo', function($q) use ($reparto) {
-            $q->whereHas('reparto', function($r) use ($reparto) {
-                $r->where('nome', $reparto);
-            });
-        })->with('ordine')->get();
-
+        $fasiVisibili = OrdineFase::whereHas('faseCatalogo.reparto', function ($query) use ($reparto) {
+            $query->where('nome', $reparto);
+        })
+        ->where('stato', '!=', '2') // Solo fasi non completate
+        ->with(['ordine'=> function($query){
+            $query->select('id', 'commessa', 'cliente_nome','priorita','cod_art','descrizione','qta_richiesta','um','data_registrazione','data_prevista_consegna');
+        }, 'faseCatalogo'])
+        ->get()
+        ->sortbydesc(fn($f) => $f->ordine->priorita);
         return view('operatore.dashboard', compact('fasiVisibili'));
     }
+
 }

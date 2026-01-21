@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\FasiCatalogo;
 
 class OrdineFase extends Model
 {
@@ -16,11 +17,12 @@ class OrdineFase extends Model
         'fase',
         'operatore_id',
         'stato',
-        'qta_prod',
         'data_inizio',
         'data_fine',
         'reparto',
-        'fase_catalogo_id'
+        'fase_catalogo_id',
+        'qta_prod',
+        'note',
     ];
 
     /* ===================== RELAZIONI ===================== */
@@ -41,7 +43,7 @@ class OrdineFase extends Model
 
     public function faseCatalogo()
 {
-    return $this->belongsTo(\App\Models\FasiCatalogo::class, 'fase_catalogo_id');
+    return $this->belongsTo(FasiCatalogo::class, 'fase_catalogo_id');
 }
 
 
@@ -94,3 +96,4 @@ public function termina()
     ]);
 }
 }
+

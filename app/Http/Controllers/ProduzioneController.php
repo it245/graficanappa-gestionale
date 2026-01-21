@@ -3,67 +3,110 @@
 namespace App\Http\Controllers;
 
 use App\Models\OrdineFase;
-use App\Models\Operatore;
 use Illuminate\Http\Request;
 
 class ProduzioneController extends Controller
 {
-
-public function index()
+    public function index()
     {
-        // Prendi tutti gli ordini e relative fasi
-        $ordini = Ordine::with('fasi')->get();
-
-        return view('produzione.index', compact('ordini'));
+        // Non necessario se usi solo AJAX per aggiornare le fasi
+        $fasi = OrdineFase::with('ordine', 'faseCatalogo')->get();
+        return view('produzione.index', compact('fasi'));
     }
-    // ▶️ Avvia una fase
-    public function avvia(Request $request)
+
+    public function avviaFase(Request $request)
     {
-        $request->validate([
-            'fase_id' => 'required|exists:ordine_fasi,id',
-            'operatore_id' => 'required|exists:operatori,id',
-        ]);
+        $fase = OrdineFase::find($request->fase_id);
+        if (!$fase) {
+            return response()->json(['success' => false, 'messaggio' => 'Fase non trovata']);
+        }
 
-        $fase = OrdineFase::findOrFail($request->fase_id);
-        $operatore = Operatore::findOrFail($request->operatore_id);
-
-        $fase->avvia($operatore);
+        $fase->stato = 1; // 1 = avviata
+        $fase->operatore_id = session('operatore_id'); // Assumi che l'ID operatore sia in sessione
+        $fase->save();
 
         return response()->json([
-            'success' => 'Fase avviata correttamente'
+            'success' => true,
+            'nuovo_stato' => $this->statoLabel($fase->stato),
+            'operatore' => session('operatore_nome')
         ]);
     }
 
-    // ▶️ Aggiungi produzione
-    public function produzione(Request $request)
+   public function pausaFase(Request $request)
+{
+    $fase = OrdineFase::find($request->fase_id);
+    if (!$fase) {
+        return response()->json(['success' => false, 'messaggio' => 'Fase non trovata']);
+    }
+
+    // Richiedi motivo all'operatore
+    $motivo = $request->input('motivo'); 
+    if (!$motivo) {
+        return response()->json(['success' => false, 'messaggio' => 'Motivo della pausa mancante']);
+    }
+    
+    date_default_timezone_set('Europe/Rome'); // Imposta il fuso orario a Roma
+
+    // Aggiorna stato e timeout
+    $fase->stato = $motivo;          // testo della pausa
+    $fase->timeout = date('Y-m-d H:i:s');           // data e ora corrente
+    $fase->save();
+    $timeout_italiano = date('d/m/Y H:i:s', strtotime($fase->timeout));
+   
+    return response()->json([
+        'success' => true,
+        'nuovo_stato' => $fase->stato,
+        'timeout' => $timeout_italiano // formato leggibile
+    ]);
+}
+
+    public function terminaFase(Request $request)
     {
-        $request->validate([
-            'fase_id' => 'required|exists:ordine_fasi,id',
-            'quantita' => 'required|numeric|min:1',
-        ]);
+        $fase = OrdineFase::find($request->fase_id);
+        if (!$fase) {
+            return response()->json(['success' => false, 'messaggio' => 'Fase non trovata']);
+        }
 
-        $fase = OrdineFase::findOrFail($request->fase_id);
-
-        $fase->aggiungiProduzione((int) $request->quantita);
+        $fase->stato = 2; // 2 = terminata
+        $fase->save();
 
         return response()->json([
-            'success' => 'Produzione aggiornata'
+            'success' => true,
+            'nuovo_stato' => $this->statoLabel($fase->stato)
         ]);
     }
 
-    // ▶️ Termina fase
-    public function termina(Request $request)
+    // Helper per visualizzare label leggibile
+    private function statoLabel($stato)
     {
-        $request->validate([
-            'fase_id' => 'required|exists:ordine_fasi,id',
-        ]);
-
-        $fase = OrdineFase::findOrFail($request->fase_id);
-
-        $fase->termina();
-
-        return response()->json([
-            'success' => 'Fase terminata'
-        ]);
+        switch ($stato) {
+            case 0: return '0';
+            case 1: return '1';
+            case 2: return '2';
+            default: return $stato; // se è un testo (pausa), lo ritorna così com’è
+        }
     }
+
+ public function aggiornaCampo(Request $request)
+{
+    $request->validate([
+        'fase_id' => 'required|exists:ordine_fasi,id',
+        'campo' => 'required|string|in:qta_prod,note', // solo campi spostati in ordine_fasi
+        'valore' => 'nullable'
+    ]);
+
+    // Recupera la fase
+    $fase = OrdineFase::find($request->fase_id);
+    if (!$fase) {
+        return response()->json(['success' => false, 'messaggio' => 'Fase non trovata']);
+    }
+
+    // Aggiorna direttamente la fase
+    $campo = $request->campo;
+    $valore = $request->valore;
+    $fase->{$campo} = $valore;
+    $fase->save();
+
+    return response()->json(['success' => true]);
+}
 }

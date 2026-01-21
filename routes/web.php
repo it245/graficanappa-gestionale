@@ -41,3 +41,6 @@ Route::get('/produzione', [ProduzioneController::class, 'index']);
 Route::post('/produzione/avvia', [ProduzioneController::class, 'avviaFase'])->name('produzione.avvia');
 Route::post('/produzione/aggiungi', [ProduzioneController::class, 'aggiungiProduzione'])->name('produzione.aggiungi');
 Route::post('/produzione/termina', [ProduzioneController::class, 'terminaFase'])->name('produzione.termina');
+Route::post('/produzione/pausa', [ProduzioneController::class, 'pausaFase'])->name('produzione.pausa');
+Route::post('/produzione/aggiorna-campo',[ProduzioneController::class,'aggiornaCampo'])->name('produzione.aggiornaCampo');
+Route::post('/produzione/aggiorna-ordine-campo',[ProduzioneController::class,'aggiornaOrdineCampo'])->name('produzione.aggiornaOrdineCampo');
