@@ -5,42 +5,39 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DashboardOperatoreController;
 use App\Http\Controllers\OperatoreLoginController;
 use App\Http\Controllers\ProduzioneController;
+use App\Http\Controllers\DashboardOwnerController;
+// Operatori
+Route::prefix('operatore')->group(function() {
+     Route::get('/login', [OperatoreLoginController::class, 'form'])->name('operatore.login');
+    Route::post('/login', [OperatoreLoginController::class, 'login'])->name('operatore.login.post');
 
-// Rotta di test rapido /health
-Route::get('/health', function () {
-    return 'MES OK';
+    Route::middleware(['operatore.auth'])->group(function() {
+        Route::get('dashboard', [DashboardOperatoreController::class, 'index'])->name('operatore.dashboard');
+        Route::post('/logout', [OperatoreLoginController::class, 'logout'])->name('operatore.logout');
+    });
 });
 
-// Rotta principale welcome
-Route::get('/', function () {
-    return view('welcome');
+// Owner
+Route::middleware(['web', 'owner'])->group(function() {
+    Route::get('/owner/dashboard', [DashboardOwnerController::class, 'index'])->name('owner.dashboard');
+Route::post('/owner/aggiungi-operatore', [DashboardOwnerController::class, 'aggiungiOperatore'])->name('owner.aggiungiOperatore');
+Route::post('/owner/aggiorna-campo', [DashboardOwnerController::class, 'aggiornaCampo'])->name('owner.aggiornaCampo');
+Route::post('/owner/import', [DashboardOwnerController::class, 'importOrdini'])->name('owner.importOrdini');
+
+});
+// Produzione
+Route::prefix('produzione')->group(function() {
+    Route::get('/', [ProduzioneController::class, 'index']);
+    Route::post('/avvia', [ProduzioneController::class, 'avviaFase'])->name('produzione.avvia');
+    Route::post('/aggiungi', [ProduzioneController::class, 'aggiungiProduzione'])->name('produzione.aggiungi');
+    Route::post('/termina', [ProduzioneController::class, 'terminaFase'])->name('produzione.termina');
+    Route::post('/pausa', [ProduzioneController::class, 'pausaFase'])->name('produzione.pausa');
+    Route::post('/aggiorna-campo', [ProduzioneController::class, 'aggiornaCampo'])->name('produzione.aggiornaCampo');
+    Route::post('/aggiorna-ordine-campo', [ProduzioneController::class, 'aggiornaOrdineCampo'])->name('produzione.aggiornaOrdineCampo');
 });
 
-// Rotte operatori (protette dal middleware)
-Route::middleware(['web', 'operatore.auth'])->group(function () {
-    Route::get('/operatore/dashboard', [DashboardOperatoreController::class, 'index'])
-        ->name('operatore.dashboard');
+// Health check
+Route::get('/health', fn() => 'MES OK');
 
-    Route::post('/operatore/logout', [OperatoreLoginController::class, 'logout'])
-        ->name('operatore.logout');
-});
-
-// Login operatori
-Route::get('/operatore/login', [OperatoreLoginController::class, 'form'])
-    ->name('operatore.login');
-
-Route::post('/operatore/login', [OperatoreLoginController::class, 'login'])
-    ->name('operatore.login.post');
-
-// Dashboard superadmin
-Route::get('/dashboard/admin', [DashboardController::class, 'superadmin'])
-    ->name('dashboard.superadmin');
-
-// Rotte produzione
-Route::get('/produzione', [ProduzioneController::class, 'index']);
-Route::post('/produzione/avvia', [ProduzioneController::class, 'avviaFase'])->name('produzione.avvia');
-Route::post('/produzione/aggiungi', [ProduzioneController::class, 'aggiungiProduzione'])->name('produzione.aggiungi');
-Route::post('/produzione/termina', [ProduzioneController::class, 'terminaFase'])->name('produzione.termina');
-Route::post('/produzione/pausa', [ProduzioneController::class, 'pausaFase'])->name('produzione.pausa');
-Route::post('/produzione/aggiorna-campo',[ProduzioneController::class,'aggiornaCampo'])->name('produzione.aggiornaCampo');
-Route::post('/produzione/aggiorna-ordine-campo',[ProduzioneController::class,'aggiornaOrdineCampo'])->name('produzione.aggiornaOrdineCampo');
+// Homepage
+Route::get('/', fn() => view('welcome'));

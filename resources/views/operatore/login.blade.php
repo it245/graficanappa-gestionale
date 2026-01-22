@@ -17,7 +17,7 @@
         <input type="text" name="codice_operatore" required autofocus>
         <br><br>
 
-        <button type="submit">Entra</button>
+        <button type="submit">Login</button>
     </form>
 </body>
 </html>

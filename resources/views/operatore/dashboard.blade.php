@@ -77,7 +77,7 @@
 
                 <!-- Note modificabili -->
                 <td>
-                    <textarea style="width:100%; height:60px;"
+                    <textarea style="width: 300px;; height:60px;"
                               onblur="aggiornaCampo({{ $fase->id }}, 'note', this.value)">{{ $fase->note ?? '' }}</textarea>
                 </td>
 

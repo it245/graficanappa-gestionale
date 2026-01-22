@@ -2,12 +2,12 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 
-class Operatore extends Model
+class Operatore extends Authenticatable
 {
-    use HasFactory;
+    use Notifiable;
      
     protected $table = 'operatori'; 
 
@@ -39,4 +39,13 @@ class Operatore extends Model
 {
     return $this->belongsTo(Reparto::class);
 }
+
+public function getRepartiArrayAttribute()
+{
+    if (!$this->reparto) {
+        return [];
+    }
+    return array_filter(explode(',', $this->reparto));
+}
+
 }
