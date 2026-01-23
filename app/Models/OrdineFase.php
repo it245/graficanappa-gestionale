@@ -46,6 +46,12 @@ class OrdineFase extends Model
     return $this->belongsTo(FasiCatalogo::class, 'fase_catalogo_id');
 }
 
+    public function operatori()
+    {
+        return $this->belongsToMany(Operatore::class, 'fase_operatore', 'fase_id', 'operatore_id')
+            ->withPivot('data_inizio')
+            ->withTimestamps();
+    }
 
     /* ===================== LOGICA ===================== */
 

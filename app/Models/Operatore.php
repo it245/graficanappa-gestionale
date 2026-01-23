@@ -28,7 +28,9 @@ class Operatore extends Authenticatable
 
     public function fasi()
     {
-        return $this->hasMany(OrdineFase::class);
+        return $this->belongsToMany(OrdineFase::class, 'fase_operatore', 'operatore_id', 'fase_id')
+                    ->withPivot('data_inizio')
+                    ->withTimestamps();
     }
 
     public function pause()

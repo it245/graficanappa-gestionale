@@ -1,3 +1,4 @@
+
 @extends('layouts.app')
 
 @section('content')
@@ -36,8 +37,11 @@
             @foreach($fasiVisibili as $fase)
             <tr id="fase-{{ $fase->id }}">
                 <td>{{ $fase->ordine->priorita ?? '-' }}</td>
-                <td id="operatore-{{ $fase->id }}">{{ $fase->operatore->nome ?? '-' }}</td>
-                <td>{{ $fase->fase_catalogo->nome ?? '-' }}</td>
+<td id="operatore-{{ $fase->id }}">
+    @foreach($fase->operatori as $op)
+        {{ $op->nome }} ({{ $op->pivot->data_inizio ? \Carbon\Carbon::parse($op->pivot->data_inizio)->format('d/m/Y H:i:s') : '-' }})<br>
+    @endforeach
+</td>                <td>{{ $fase->fase_catalogo->nome ?? '-' }}</td>
                 <td>
                     <div class="form-check form-check-inline">
                         <input class="form-check-input" type="checkbox" id="avvia-{{ $fase->id }}" 
@@ -119,9 +123,16 @@ function aggiornaStato(faseId, azione, checked){
     .then(data=>{
         if(data.success){
             document.getElementById('stato-'+faseId).innerText = data.nuovo_stato;
-            document.getElementById('operatore-'+faseId).innerText = data.operatore;
 
-            ['avvia','pausa','termina'].forEach(a=>{if(a!==azione) document.getElementById(a+'-'+faseId).checked=false;});
+            let opCell = document.getElementById('operatore-'+faseId);
+            opCell.innerHTML = '';
+            data.operatori.forEach(op=>{
+                opCell.innerHTML += `${op.nome} (${op.data_inizio})<br>`;
+            });
+
+            ['avvia','pausa','termina'].forEach(a=>{
+                if(a!==azione) document.getElementById(a+'-'+faseId).checked=false;
+            });
 
             if(azione==='termina'){
                 document.getElementById('fase-'+faseId).style.display='none';

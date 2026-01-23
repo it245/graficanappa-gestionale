@@ -56,6 +56,7 @@ class OrdiniImport implements ToModel, WithHeadingRow
     'Allest.Manuale' => 'esterno',
     'ALLEST.SHOPPER' => 'esterno',
     'ALLEST.SHOPPER030' => 'esterno',
+    'ALLESTIMENTO.ESPOSITORI' => 'esterno',
     'APPL.BIADESIVO30' => 'esterno',
     'appl.laccetto' => 'esterno',
     'ARROT2ANGOLI' => 'esterno',
@@ -90,6 +91,9 @@ class OrdiniImport implements ToModel, WithHeadingRow
     'FUSTBOBSTRILIEVI' => 'fustella',
     'FUSTSTELG33.44' => 'fustella',
     'FUSTSTELP25.35' => 'fustella',
+    'FUSTIML75X106' => 'fustella',
+    'FUSTELLATURA72X51' => 'fustella',
+    'FINESTRATURA.INT'=>'finestre',
 
     'INCOLLAGGIO.PATTINA' => 'legatoria',
     'INCOLLAGGIOBLOCCHI' => 'legatoria',
@@ -182,7 +186,7 @@ class OrdiniImport implements ToModel, WithHeadingRow
                 'reparto' => $reparto,
                 'qta_prod' =>0,
                 'note' => null,
-                'stato' => $row['stato'] ?? 0,
+                'stato' =>  0,
             ]);
         }
 
