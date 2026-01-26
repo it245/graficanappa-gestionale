@@ -49,3 +49,5 @@ class Ordine extends Model
         return $this->hasMany(PausaOperatore::class);
     }
 }
+
+

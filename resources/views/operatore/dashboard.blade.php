@@ -26,6 +26,7 @@
                 <th>UM</th>
                 <th>Data Prevista Consegna</th>
                 <th>Qta Prodotta</th>
+                 <th>Codice Carta</th>
                 <th>Carta</th>
                 <th>Quantità Carta</th>
                 <th>Note</th>
@@ -36,12 +37,13 @@
         <tbody>
             @foreach($fasiVisibili as $fase)
             <tr id="fase-{{ $fase->id }}">
-                <td>{{ $fase->ordine->priorita ?? '-' }}</td>
+                <td>{{ $fase->priorita ?? '-' }}</td>
 <td id="operatore-{{ $fase->id }}">
     @foreach($fase->operatori as $op)
         {{ $op->nome }} ({{ $op->pivot->data_inizio ? \Carbon\Carbon::parse($op->pivot->data_inizio)->format('d/m/Y H:i:s') : '-' }})<br>
     @endforeach
-</td>                <td>{{ $fase->fase_catalogo->nome ?? '-' }}</td>
+</td>               <td>{{ $fase->faseCatalogo->nome ?? '-' }}</td>
+                
                 <td>
                     <div class="form-check form-check-inline">
                         <input class="form-check-input" type="checkbox" id="avvia-{{ $fase->id }}" 
@@ -75,7 +77,7 @@
                            value="{{ $fase->qta_prod ?? '' }}"
                            onblur="aggiornaCampo({{ $fase->id }}, 'qta_prod', this.value)">
                 </td>
-
+         <td>{{ $fase->ordine->cod_carta ?? '-' }}</td>
                 <td>{{ $fase->ordine->carta ?? '-' }}</td>
                 <td>{{ $fase->ordine->qta_carta ?? '-' }}</td>
 
