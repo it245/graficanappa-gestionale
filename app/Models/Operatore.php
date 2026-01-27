@@ -12,6 +12,16 @@ class Operatore extends Authenticatable
     protected $table = 'operatori'; 
 
     protected $fillable = ['nome','cognome','codice_operatore','ruolo','attivo','reparto'];
+    public static function tokenAttivi(){
+        return \App\Models\OperatoreToken::with('operatore')
+        ->get()
+        ->map(fn($t)=>[
+            'operatore_id' => $t->operatore_id,
+            'token'=> $t->token
+        ]);
+            
+    }
+
      public function ordini()
 {
     return $this->belongsToMany(
@@ -19,7 +29,6 @@ class Operatore extends Authenticatable
         'assegnazioni'
     );
 }
-
 
     public function assegnazioni()
     {
@@ -48,6 +57,9 @@ public function getRepartiArrayAttribute()
         return [];
     }
     return array_filter(explode(',', $this->reparto));
+}
+public function tokens(){
+    return $this->hasMany(OperatoreToken::class);
 }
 
 }

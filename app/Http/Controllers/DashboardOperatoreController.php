@@ -11,10 +11,10 @@ class DashboardOperatoreController extends Controller
     public function index(Request $request)
     {
         // Operatore loggato
-        $operatore = auth()->guard('operatore')->user();
+        $operatore = $request->attributes->get('operatore');
         if (!$operatore) abort(403, 'Accesso negato');
 
-        $reparti = array_map('trim', explode(',', $operatore->reparto));
+        $reparti = array_map('trim',explode(',' , $operatore->reparto));
 
         // Mappa fasi → avviamento e copieh
        $fasiInfo = [

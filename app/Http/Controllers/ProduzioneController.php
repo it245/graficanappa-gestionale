@@ -14,6 +14,34 @@ class ProduzioneController extends Controller
         return view('produzione.index', compact('fasiVisibili'));
     }
 
+public function datiDashboardOperatore(Request $request)
+{
+    $operatore = $request->attributes->get('operatore');
+
+    $fasi = $operatore->fasi()
+        ->with(['ordine', 'faseCatalogo', 'operatori'])
+        ->get()
+        ->map(function ($fase) {
+            return [
+                'id' => $fase->id,
+                'stato' => $fase->stato,
+                'qta_prod' => $fase->qta_prod,
+                'note' => $fase->note,
+                'timeout' => $fase->timeout,
+                'operatori' => $fase->operatori->map(fn($op) => [
+                    'nome' => $op->nome,
+                    'data_inizio' => $op->pivot->data_inizio,
+                    'data_fine' => $op->pivot->data_fine
+                ])
+            ];
+        });
+
+    return response()->json([
+        'success' => true,
+        'fasi' => $fasi
+    ]);
+}
+
     public function avviaFase(Request $request)
     {
         $fase = OrdineFase::with('operatori')->find($request->fase_id);
@@ -21,7 +49,8 @@ class ProduzioneController extends Controller
             return response()->json(['success' => false, 'messaggio' => 'Fase non trovata']);
         }
 
-        $operatoreId = session('operatore_id');
+        $operatore=$request->attributes->get('operatore');
+        $operatoreId = $operatore->id;
 
         // Aggiunge l'operatore se non presente
         if (!$fase->operatori->contains($operatoreId)) {
@@ -30,7 +59,7 @@ class ProduzioneController extends Controller
 
         $fase->stato = 1; // fase avviata
         $fase->save();
-
+        $fase->load('operatori'); // ricarica gli operatori dopo l'eventuale attach
         $operatori = $fase->operatori->map(function($op){
             return [
                 'nome' => $op->nome,
@@ -45,25 +74,49 @@ class ProduzioneController extends Controller
         ]);
     }
 
+
+
     public function terminaFase(Request $request)
-    {
-        $fase = OrdineFase::with('operatori')->find($request->fase_id);
-        if (!$fase) {
-            return response()->json(['success' => false, 'messaggio' => 'Fase non trovata']);
-        }
-
-        $fase->stato = 2; // fase terminata
-        $fase->save();
-
-        // Rimuove tutti gli operatori dalla fase
-        $fase->operatori()->detach();
-
-        return response()->json([
-            'success' => true,
-            'nuovo_stato' => $this->statoLabel($fase->stato),
-            'operatori' => [] // nessuno rimane
-        ]);
+{
+    $fase = OrdineFase::with('operatori')->find($request->fase_id);
+    if (!$fase) {
+        return response()->json(['success' => false, 'messaggio' => 'Fase non trovata']);
     }
+
+    $operatore = $request->attributes->get('operatore');
+    $operatoreId = $operatore->id;
+
+    // Aggiorna la pivot con la data di fine dell'operatore
+    $fase->operatori()->updateExistingPivot($operatoreId, ['data_fine' => now()]);
+
+    // Imposta data_fine nella tabella principale solo se non già valorizzata
+    if (!$fase->data_fine) {
+        $fase->data_fine = now();
+    }
+
+    $fase->stato = 2; // fase terminata
+    $fase->save();
+
+    // Ricarica gli operatori con pivot aggiornata
+    $fase->load('operatori');
+
+    $operatori = $fase->operatori->map(function($op){
+        return [
+            'nome' => $op->nome,
+            'data_inizio' => $op->pivot->data_inizio ? Carbon::parse($op->pivot->data_inizio)->format('d/m/Y H:i:s') : '-',
+            'data_fine' => $op->pivot->data_fine ? Carbon::parse($op->pivot->data_fine)->format('d/m/Y H:i:s') : '-'
+        ];
+    });
+
+    return response()->json([
+        'success' => true,
+        'nuovo_stato' => $this->statoLabel($fase->stato),
+        'operatori' => $operatori,
+        'data_fine' => $fase->data_fine->format('d/m/Y H:i:s')
+    ]);
+}
+
+
 
     public function pausaFase(Request $request)
     {

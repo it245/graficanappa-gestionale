@@ -4,20 +4,26 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use App\Models\Operatore;
 use Symfony\Component\HttpFoundation\Response;
 
 class OwnerMiddleware
 {
-    /**
-     * Handle an incoming request.
-     */
     public function handle(Request $request, Closure $next): Response
     {
-        // Controlla se esiste la sessione e se il ruolo è owner
-        if (session('operatore_ruolo') === 'owner') {
-            return $next($request);
+        $operatoreId = $request->session()->get('operatore_id');
+        $sessionToken = $request->session()->get('session_token');
+
+        if (!$operatoreId || !$sessionToken) {
+            return redirect()->route('operatore.login');
         }
 
-        abort(403, 'Accesso negato.'); 
+        $operatore = Operatore::find($operatoreId);
+
+        if (!$operatore || $operatore->ruolo !== 'owner' || $operatore->session_token !== $sessionToken) {
+            $request->session()->flush();
+            abort(403, 'Accesso negato.');
+        }
+        return $next($request);
     }
 }

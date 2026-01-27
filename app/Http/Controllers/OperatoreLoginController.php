@@ -4,54 +4,64 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Operatore;
-use Illuminate\Support\Facades\Auth;
+use App\Models\OperatoreToken;
 
 class OperatoreLoginController extends Controller
 {
-    // Mostra form login
+    // Solo per login via browser
     public function form()
     {
         return view('operatore.login');
     }
 
-    // Login operatore
+    // Login API e web
     public function login(Request $request)
     {
-        $request->validate([
-            'codice_operatore' => 'required|string'
-        ]);
+        $codice = $request->input('codice_operatore');
 
-        $operatore = Operatore::where('codice_operatore', $request->codice_operatore)
-                                ->where('attivo', 1)
-                
-                                ->first();
+        $operatore = Operatore::where('codice_operatore', $codice)->first();
 
         if (!$operatore) {
-            return back()->withErrors(['codice_operatore' => 'Operatore non trovato o inattivo']);
+            return response()->json([
+                'success' => false,
+                'messaggio' => 'Operatore non trovato'
+            ]);
         }
 
-        // Login con guard operatore
-        Auth::guard('operatore')->login($operatore);
+        // Genera token random
+        $token = bin2hex(random_bytes(16));
 
-        // Set sessione
-        $request->session()->put([
+        // Salva token nella tabella operatore_tokens
+        OperatoreToken::create([
             'operatore_id' => $operatore->id,
-            'operatore_nome' => $operatore->nome,
-            'operatore_reparto' => $operatore->reparto,
-            'operatore_ruolo' => $operatore->ruolo
+            'token' => $token
         ]);
-if ($operatore->ruolo === 'owner') {
-            return redirect()->route('owner.dashboard');
-        } else {
-            return redirect()->route('operatore.dashboard');
-        }
+
+        return response()->json([
+            'success' => true,
+            'token' => $token,
+            'operatore' => [
+                'id' => $operatore->id,
+                'nome' => $operatore->nome,
+                'ruolo' => $operatore->ruolo,
+                'reparto' => $operatore->reparto
+            ],
+            'redirect' => route('operatore.dashboard')
+        ]);
     }
 
     // Logout
     public function logout(Request $request)
     {
-        Auth::guard('operatore')->logout();
-        $request->session()->flush();
-        return redirect()->route('operatore.login');
+        $operatore = $request->attributes->get('operatore');
+
+        if($operatore){
+            $operatore->tokens()->delete();
+        }
+
+        return response()->json([
+            'success' => true,
+            'redirect' => route('operatore.login')
+        ]);
     }
 }

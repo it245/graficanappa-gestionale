@@ -1,11 +1,11 @@
-
 @extends('layouts.app')
 
 @section('content')
 <div class="container">
     <h2>Dashboard Operatore</h2>
-    <p>Operatore: {{ session('operatore_nome') }}</p>
-    <p>Reparto: {{ session('operatore_reparto') }}</p>
+
+    <p>Operatore: {{ $operatore->nome }}</p>
+    <p>Reparto: {{ $operatore->reparto }}</p>
 
     <h4>Fasi visibili</h4>
 
@@ -26,7 +26,7 @@
                 <th>UM</th>
                 <th>Data Prevista Consegna</th>
                 <th>Qta Prodotta</th>
-                 <th>Codice Carta</th>
+                <th>Codice Carta</th>
                 <th>Carta</th>
                 <th>Quantità Carta</th>
                 <th>Note</th>
@@ -34,158 +34,145 @@
                 <th>Timeout</th>
             </tr>
         </thead>
-        <tbody>
-            @foreach($fasiVisibili as $fase)
-            <tr id="fase-{{ $fase->id }}">
-                <td>{{ $fase->priorita ?? '-' }}</td>
-<td id="operatore-{{ $fase->id }}">
-    @foreach($fase->operatori as $op)
-        {{ $op->nome }} ({{ $op->pivot->data_inizio ? \Carbon\Carbon::parse($op->pivot->data_inizio)->format('d/m/Y H:i:s') : '-' }})<br>
-    @endforeach
-</td>               <td>{{ $fase->faseCatalogo->nome ?? '-' }}</td>
-                
-                <td>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="checkbox" id="avvia-{{ $fase->id }}" 
-                               onchange="aggiornaStato({{ $fase->id }}, 'avvia', this.checked)">
-                        <label class="form-check-label" for="avvia-{{ $fase->id }}">Avvia</label>
-                    </div>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="checkbox" id="pausa-{{ $fase->id }}" 
-                               onchange="gestisciPausa({{ $fase->id }}, this.checked)">
-                        <label class="form-check-label" for="pausa-{{ $fase->id }}">Pausa</label>
-                    </div>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="checkbox" id="termina-{{ $fase->id }}" 
-                               onchange="aggiornaStato({{ $fase->id }}, 'termina', this.checked)">
-                        <label class="form-check-label" for="termina-{{ $fase->id }}">Termina</label>
-                    </div>
-                </td>
-                <td id="stato-{{ $fase->id }}">{{ $fase->stato ?? '-' }}</td>
-                <td>{{ $fase->ordine->commessa ?? '-' }}</td>
-                <td>{{ $fase->ordine->data_registrazione ?? '-' }}</td>
-                <td>{{ $fase->ordine->cliente_nome ?? '-' }}</td>
-                <td>{{ $fase->ordine->cod_art ?? '-' }}</td>
-                <td>{{ $fase->ordine->descrizione ?? '-' }}</td>
-                <td>{{ $fase->ordine->qta_richiesta ?? '-' }}</td>
-                <td>{{ $fase->ordine->um ?? '-' }}</td>
-                <td>{{ $fase->ordine->data_prevista_consegna ?? '-' }}</td>
-
-                <!-- Qta Prodotta modificabile -->
-                <td>
-                    <input type="text" class="form-control form-control-sm"
-                           value="{{ $fase->qta_prod ?? '' }}"
-                           onblur="aggiornaCampo({{ $fase->id }}, 'qta_prod', this.value)">
-                </td>
-         <td>{{ $fase->ordine->cod_carta ?? '-' }}</td>
-                <td>{{ $fase->ordine->carta ?? '-' }}</td>
-                <td>{{ $fase->ordine->qta_carta ?? '-' }}</td>
-
-                <!-- Note modificabili -->
-                <td>
-                    <textarea style="width: 300px;; height:60px;"
-                              onblur="aggiornaCampo({{ $fase->id }}, 'note', this.value)">{{ $fase->note ?? '' }}</textarea>
-                </td>
-
-                <td>{{ $fase->ore ?? '-' }}</td>
-                <td id="timeout-{{ $fase->id }}">{{ $fase->timeout ?? '-' }}</td>
-            </tr>
-            @endforeach
+        <tbody id="fasi-body">
+            <!-- Le righe saranno generate via JS -->
         </tbody>
     </table>
 
-    <form action="{{ route('operatore.logout') }}" method="POST">
-        @csrf
-        <button type="submit" class="btn btn-secondary">Logout</button>
-    </form>
+    <button class="btn btn-secondary" onclick="logout()">Logout</button>
 </div>
 
 <script>
 const motiviPausa = ["Attesa materiale", "Problema macchina", "Pranzo", "Altro"];
 
-// Aggiorna stato fase (avvia/termina)
-function aggiornaStato(faseId, azione, checked){
-    if(!checked) return;
-
-    if(azione === 'termina'){
-        if(!confirm("Sei sicuro di voler terminare questa fase?")){
-            document.getElementById('termina-'+faseId).checked = false;
-            return;
-        }
+// Funzione fetch generale con token
+async function fetchWithToken(url, options = {}) {
+    options.headers = options.headers || {};
+    options.headers['X-Operatore-Token'] = sessionStorage.getItem('operatore_token');
+    options.headers['Content-Type'] = 'application/json';
+    
+    if (options.body && typeof options.body !== 'string') {
+        options.body = JSON.stringify(options.body);
     }
 
-    let route = azione==='avvia' ? '{{ route("produzione.avvia") }}' : '{{ route("produzione.termina") }}';
+    const res = await fetch(url, options);
 
-    fetch(route, {
-        method:'POST',
-        headers:{'X-CSRF-TOKEN':'{{ csrf_token() }}','Content-Type':'application/json'},
-        body:JSON.stringify({fase_id:faseId})
-    })
-    .then(res=>res.json())
-    .then(data=>{
-        if(data.success){
-            document.getElementById('stato-'+faseId).innerText = data.nuovo_stato;
-
-            let opCell = document.getElementById('operatore-'+faseId);
-            opCell.innerHTML = '';
-            data.operatori.forEach(op=>{
-                opCell.innerHTML += `${op.nome} (${op.data_inizio})<br>`;
-            });
-
-            ['avvia','pausa','termina'].forEach(a=>{
-                if(a!==azione) document.getElementById(a+'-'+faseId).checked=false;
-            });
-
-            if(azione==='termina'){
-                document.getElementById('fase-'+faseId).style.display='none';
-            }
+    if (!res.ok) {
+        if (res.status === 401) {
+            alert('Sessione scaduta, rifai login.');
+            window.location.href = '{{ route("operatore.login") }}';
         }
-    })
-    .catch(err=>console.error('Errore:', err));
+        return null;
+    }
+
+    return await res.json();
 }
 
-// Gestione pausa con prompt standard
-function gestisciPausa(faseId, checked){
-    if(!checked) return;
+// Carica tutte le fasi
+async function caricaFasi() {
+    const data = await fetchWithToken('{{ route("produzione.datiDashboardOperatore") }}');
+    if(data && data.success){
+        const tbody = document.getElementById('fasi-body');
+        tbody.innerHTML = '';
+        data.fasi.forEach(fase => {
+            const tr = document.createElement('tr');
+            tr.id = 'fase-'+fase.id;
+            tr.innerHTML = `
+                <td>${fase.priorita ?? '-'}</td>
+                <td id="operatore-${fase.id}">
+                    ${fase.operatori.map(op => `${op.nome} (${op.data_inizio}${op.data_fine ? ' - ' + op.data_fine : ''})`).join('<br>')}
+                </td>
+                <td>${fase.faseCatalogo?.nome ?? '-'}</td>
+                <td>
+                    <input type="checkbox" id="avvia-${fase.id}" onchange="aggiornaStato(${fase.id}, 'avvia', this.checked)"> Avvia
+                    <input type="checkbox" id="pausa-${fase.id}" onchange="gestisciPausa(${fase.id}, this.checked)"> Pausa
+                    <input type="checkbox" id="termina-${fase.id}" onchange="aggiornaStato(${fase.id}, 'termina', this.checked)"> Termina
+                </td>
+                <td id="stato-${fase.id}">${fase.stato ?? '-'}</td>
+                <td>${fase.ordine?.commessa ?? '-'}</td>
+                <td>${fase.ordine?.data_registrazione ?? '-'}</td>
+                <td>${fase.ordine?.cliente_nome ?? '-'}</td>
+                <td>${fase.ordine?.cod_art ?? '-'}</td>
+                <td>${fase.ordine?.descrizione ?? '-'}</td>
+                <td>${fase.ordine?.qta_richiesta ?? '-'}</td>
+                <td>${fase.ordine?.um ?? '-'}</td>
+                <td>${fase.ordine?.data_prevista_consegna ?? '-'}</td>
+                <td><input type="text" value="${fase.qta_prod ?? ''}" onblur="aggiornaCampo(${fase.id}, 'qta_prod', this.value)"></td>
+                <td>${fase.ordine?.cod_carta ?? '-'}</td>
+                <td>${fase.ordine?.carta ?? '-'}</td>
+                <td>${fase.ordine?.qta_carta ?? '-'}</td>
+                <td><textarea onblur="aggiornaCampo(${fase.id}, 'note', this.value)">${fase.note ?? ''}</textarea></td>
+                <td>${fase.ore ?? '-'}</td>
+                <td id="timeout-${fase.id}">${fase.timeout ?? '-'}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+}
 
-    let scelta = prompt(
-        "Seleziona motivo pausa:\n1) Attesa materiale\n2) Problema macchina\n3) Pranzo\n4) Altro"
-    );
-    if(!scelta || !["1","2","3","4"].includes(scelta)){
+// Avvia/Termina fase
+async function aggiornaStato(faseId, azione, checked){
+    if(!checked) return;
+    if(azione==='termina' && !confirm('Sei sicuro di voler terminare questa fase?')){
+        document.getElementById('termina-'+faseId).checked=false;
+        return;
+    }
+    const route = azione==='avvia' ? '{{ route("produzione.avvia") }}' : '{{ route("produzione.termina") }}';
+    const data = await fetchWithToken(route, {method:'POST', body:{fase_id:faseId}});
+    if(data.success) await caricaFasi();
+    else alert('Errore: ' + (data.messaggio||''));
+}
+
+// Gestione pausa
+async function gestisciPausa(faseId, checked){
+    if(!checked) return;
+    const scelta = prompt("Seleziona motivo pausa:\n1) Attesa materiale\n2) Problema macchina\n3) Pranzo\n4) Altro");
+    if(!["1","2","3","4"].includes(scelta)){
         document.getElementById('pausa-'+faseId).checked=false;
         return alert('Selezione non valida!');
     }
-
-    let motivo = motiviPausa[parseInt(scelta)-1];
-
-    fetch('{{ route("produzione.pausa") }}',{
-        method:'POST',
-        headers:{'X-CSRF-TOKEN':'{{ csrf_token() }}','Content-Type':'application/json'},
-        body:JSON.stringify({fase_id:faseId, motivo:motivo})
-    })
-    .then(res=>res.json())
-    .then(data=>{
-        if(data.success){
-            document.getElementById('stato-'+faseId).innerText = motivo;
-            document.getElementById('timeout-'+faseId).innerText = data.timeout;
-            ['avvia','termina'].forEach(a=>document.getElementById(a+'-'+faseId).checked=false);
-        }
-    })
-    .catch(err=>console.error('Errore:', err));
+    const motivo = motiviPausa[parseInt(scelta)-1];
+    const data = await fetchWithToken('{{ route("produzione.pausa") }}',{method:'POST', body:{fase_id:faseId, motivo}});
+    if(data.success){
+        document.getElementById('stato-'+faseId).innerText=motivo;
+        document.getElementById('timeout-'+faseId).innerText=data.timeout;
+        ['avvia','termina'].forEach(a=>document.getElementById(a+'-'+faseId).checked=false);
+    }
 }
 
-// Aggiorna i campi qta_prodotta e note sull'ordine
-function aggiornaCampo(faseId, campo, valore){
-    fetch('{{ route("produzione.aggiornaCampo") }}',{
-        method:'POST',
-        headers:{'X-CSRF-TOKEN':'{{ csrf_token() }}','Content-Type':'application/json'},
-        body:JSON.stringify({fase_id:faseId, campo:campo, valore:valore})
-    })
-    .then(res=>res.json())
-    .then(data=>{
-        if(!data.success) alert('Errore durante il salvataggio: '+data.messaggio);
-    })
-    .catch(err=>console.error('Errore:', err));
+// Aggiorna campo
+async function aggiornaCampo(faseId, campo, valore){
+    const data = await fetchWithToken('{{ route("produzione.aggiornaCampo") }}',{method:'POST', body:{fase_id:faseId, campo, valore}});
+    if(!data.success) alert('Errore: '+(data.messaggio||''));
 }
+
+// Aggiorna singola riga tabella
+function aggiornaTabellaSingola(faseId, data){
+    document.getElementById('stato-'+faseId).innerText = data.nuovo_stato ?? data.stato;
+    const opCell = document.getElementById('operatore-'+faseId);
+    opCell.innerHTML = (data.operatori||[]).map(op => `${op.nome} (${op.data_inizio}${op.data_fine ? ' - ' + op.data_fine : ''})`).join('<br>');
+    const row = document.getElementById('fase-'+faseId);
+    const qtaInput = row.querySelector('input[type="text"]');
+    if(qtaInput && data.qta_prod!==undefined) qtaInput.value = data.qta_prod;
+    const noteTextarea = row.querySelector('textarea');
+    if(noteTextarea && data.note!==undefined) noteTextarea.value = data.note;
+    document.getElementById('timeout-'+faseId).innerText = data.timeout ?? '-';
+    if(data.nuovo_stato==='2' || data.stato==='2') row.style.display='none';
+}
+
+// Logout
+async function logout(){
+    const data = await fetchWithToken('{{ route("operatore.logout") }}', {method:'POST'});
+    if(data.success){
+        sessionStorage.clear();
+        window.location.href = '{{route("operatore.login")}}';
+    }
+}
+
+// Aggiornamento automatico ogni 10s
+setInterval(caricaFasi, 10000);
+
+// Carica inizialmente
+caricaFasi();
 </script>
 @endsection
