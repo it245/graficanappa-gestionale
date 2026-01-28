@@ -6,8 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class OperatoreToken extends Model
 {
-    protected $table = 'operatore_tokens';
-
     protected $fillable = [
         'operatore_id',
         'token',

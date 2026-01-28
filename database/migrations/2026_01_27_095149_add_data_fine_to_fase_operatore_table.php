@@ -22,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('fase_operatore', function (Blueprint $table) {
-            $table->timestamp('data_fine');
+            $table->dropColumn('data_fine');
         });
     }
 };

@@ -5,63 +5,57 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Operatore;
 use App\Models\OperatoreToken;
+use Illuminate\Support\Facades\Hash;
 
 class OperatoreLoginController extends Controller
 {
-    // Solo per login via browser
-    public function form()
+     public function form()
     {
         return view('operatore.login');
     }
+   public function login(Request $request)
+{
+    $request->validate([
+        'codice_operatore' => 'required|string'
+    ]);
 
-    // Login API e web
-    public function login(Request $request)
-    {
-        $codice = $request->input('codice_operatore');
+    $codice = strtolower($request->input('codice_operatore'));
+    $operatore = Operatore::where('codice_operatore', $codice)->first();
 
-        $operatore = Operatore::where('codice_operatore', $codice)->first();
-
-        if (!$operatore) {
-            return response()->json([
-                'success' => false,
-                'messaggio' => 'Operatore non trovato'
-            ]);
-        }
-
-        // Genera token random
-        $token = bin2hex(random_bytes(16));
-
-        // Salva token nella tabella operatore_tokens
-        OperatoreToken::create([
-            'operatore_id' => $operatore->id,
-            'token' => $token
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'token' => $token,
-            'operatore' => [
-                'id' => $operatore->id,
-                'nome' => $operatore->nome,
-                'ruolo' => $operatore->ruolo,
-                'reparto' => $operatore->reparto
-            ],
-            'redirect' => route('operatore.dashboard')
-        ]);
+    if (!$operatore) {
+        return response()->json(['success' => false, 'messaggio' => 'Operatore non trovato']);
     }
 
-    // Logout
-    public function logout(Request $request)
-    {
-        $operatore = $request->attributes->get('operatore');
+    // Cancella token precedente per questo operatore (optional)
+    $operatore->tokens()->delete();
 
-        if($operatore){
-            $operatore->tokens()->delete();
-        }
+    // Genera token nuovo
+    $token = bin2hex(random_bytes(16));
+    OperatoreToken::create([
+        'operatore_id' => $operatore->id,
+        'token' => $token
+    ]);
 
-        return response()->json([
-            'success' => true,
-            'redirect' => route('operatore.login')
-        ]);
+    return response()->json([
+        'success' => true,
+        'token' => $token,
+        'operatore' => [
+            'id' => $operatore->id,
+            'nome' => $operatore->nome,
+            'ruolo' => $operatore->ruolo,
+            'reparto' => $operatore->reparto,
+        ]
+    ]);
+}
+
+public function logout(Request $request)
+{
+    $token = $request->header('X-Operatore-Token') ?? $request->bearerToken();
+
+    if ($token) {
+        OperatoreToken::where('token', $token)->delete();
     }
+
+    return response()->json(['success' => true]);
+}
 }

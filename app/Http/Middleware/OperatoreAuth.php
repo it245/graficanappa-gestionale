@@ -4,23 +4,33 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use App\Models\Operatore;
+use App\Models\OperatoreToken;
+
 class OperatoreAuth
 {
     public function handle(Request $request, Closure $next)
     {
-         $operatoreId = $request->session()->get('operatore_id');
-        $sessionToken = $request->session()->get('session_token');
-       
-        // Controlla se l'operatore è loggato in sessione
-       if(!$operatoreId || !$sessionToken) {
-           return redirect()->route('operatore.login');
-    }
-    $operatore = Operatore::find($operatoreId);
-    if (!$operatore || $operatore->session_token !== $sessionToken) {
-        $request->session()->flush();
-        return redirect()->route('operatore.login')->withErrors(['sessione' => 'Sessione scaduta, effettua nuovamente il login.']);
-}
+        // Prende il token dall'header personalizzato o da Authorization Bearer
+        $token = $request->header('X-Operatore-Token') ?? $request->bearerToken();
+
+        if (!$token) {
+            // Se non c'è token, reindirizza al login
+            return redirect()->route('operatore.login');
+        }
+
+        // Recupera il token e l'operatore associato
+        $record = OperatoreToken::with('operatore')->where('token', $token)->first();
+
+        if (!$record || !$record->operatore) {
+            // Token non valido: cancelliamo eventuali residui e reindirizziamo
+            return redirect()->route('operatore.login')->withErrors([
+                'sessione' => 'Token non valido o scaduto, effettua nuovamente il login.'
+            ]);
+        }
+
+        // Imposta l'operatore nella request
+        $request->attributes->set('operatore', $record->operatore);
+
         return $next($request);
     }
 }

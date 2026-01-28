@@ -4,11 +4,10 @@
 <div class="container">
     <h2>Dashboard Operatore</h2>
 
-    <p>Operatore: {{ $operatore->nome }}</p>
-    <p>Reparto: {{ $operatore->reparto }}</p>
+    <p>Operatore:{{$operatore->nome}}</p>
+    <p>Reparto: {{$operatore->reparto}}</p>
 
-    <h4>Fasi visibili</h4>
-
+    <h4>Fasi Visibili</h4>
     <table class="table table-bordered table-sm">
         <thead>
             <tr>
@@ -26,67 +25,74 @@
                 <th>UM</th>
                 <th>Data Prevista Consegna</th>
                 <th>Qta Prodotta</th>
-                <th>Codice Carta</th>
-                <th>Carta</th>
-                <th>Quantità Carta</th>
                 <th>Note</th>
                 <th>Ore</th>
                 <th>Timeout</th>
             </tr>
         </thead>
         <tbody id="fasi-body">
-            <!-- Le righe saranno generate via JS -->
+            <!-- Righe caricate via JS -->
         </tbody>
     </table>
 
     <button class="btn btn-secondary" onclick="logout()">Logout</button>
 </div>
 
+@push('scripts')
 <script>
-const motiviPausa = ["Attesa materiale", "Problema macchina", "Pranzo", "Altro"];
+console.log('JS Dashboard caricato');
 
-// Funzione fetch generale con token
+// Recupera token
+const token = sessionStorage.getItem('operatore_token');
+if(!token){
+    alert('Devi effettuare il login.');
+    window.location.href = '/operatore/login';
+}
+
+// Mostra info operatore
+document.getElementById('operatore-nome').innerText = sessionStorage.getItem('operatore_nome') || '-';
+document.getElementById('operatore-reparto').innerText = sessionStorage.getItem('operatore_reparto') || '-';
+
+// Funzione fetch con token
 async function fetchWithToken(url, options = {}) {
     options.headers = options.headers || {};
-    options.headers['X-Operatore-Token'] = sessionStorage.getItem('operatore_token');
     options.headers['Content-Type'] = 'application/json';
-    
-    if (options.body && typeof options.body !== 'string') {
+    options.headers['X-Operatore-Token'] = token;
+
+    if(options.body && typeof options.body !== 'string'){
         options.body = JSON.stringify(options.body);
     }
 
     const res = await fetch(url, options);
 
-    if (!res.ok) {
-        if (res.status === 401) {
-            alert('Sessione scaduta, rifai login.');
-            window.location.href = '{{ route("operatore.login") }}';
-        }
+    if(res.status === 403){
+        alert('Token scaduto o non valido. Effettua nuovamente il login.');
+        sessionStorage.clear();
+        window.location.href = '/operatore/login';
         return null;
     }
 
     return await res.json();
 }
 
-// Carica tutte le fasi
+// Carica fasi
 async function caricaFasi() {
     const data = await fetchWithToken('{{ route("produzione.datiDashboardOperatore") }}');
     if(data && data.success){
         const tbody = document.getElementById('fasi-body');
         tbody.innerHTML = '';
+
         data.fasi.forEach(fase => {
             const tr = document.createElement('tr');
             tr.id = 'fase-'+fase.id;
             tr.innerHTML = `
                 <td>${fase.priorita ?? '-'}</td>
-                <td id="operatore-${fase.id}">
-                    ${fase.operatori.map(op => `${op.nome} (${op.data_inizio}${op.data_fine ? ' - ' + op.data_fine : ''})`).join('<br>')}
-                </td>
+                <td>${fase.operatori.map(op => `${op.nome} (${op.data_inizio ?? '-'}` + (op.data_fine ? ' - ' + op.data_fine : '') + `)`).join('<br>')}</td>
                 <td>${fase.faseCatalogo?.nome ?? '-'}</td>
                 <td>
-                    <input type="checkbox" id="avvia-${fase.id}" onchange="aggiornaStato(${fase.id}, 'avvia', this.checked)"> Avvia
-                    <input type="checkbox" id="pausa-${fase.id}" onchange="gestisciPausa(${fase.id}, this.checked)"> Pausa
-                    <input type="checkbox" id="termina-${fase.id}" onchange="aggiornaStato(${fase.id}, 'termina', this.checked)"> Termina
+                    <input type="checkbox" id="avvia-${fase.id}" onchange="aggiornaStato(${fase.id}, 'avvia', this)"> Avvia
+                    <input type="checkbox" id="pausa-${fase.id}" onchange="gestisciPausa(${fase.id}, this)"> Pausa
+                    <input type="checkbox" id="termina-${fase.id}" onchange="aggiornaStato(${fase.id}, 'termina', this)"> Termina
                 </td>
                 <td id="stato-${fase.id}">${fase.stato ?? '-'}</td>
                 <td>${fase.ordine?.commessa ?? '-'}</td>
@@ -98,9 +104,6 @@ async function caricaFasi() {
                 <td>${fase.ordine?.um ?? '-'}</td>
                 <td>${fase.ordine?.data_prevista_consegna ?? '-'}</td>
                 <td><input type="text" value="${fase.qta_prod ?? ''}" onblur="aggiornaCampo(${fase.id}, 'qta_prod', this.value)"></td>
-                <td>${fase.ordine?.cod_carta ?? '-'}</td>
-                <td>${fase.ordine?.carta ?? '-'}</td>
-                <td>${fase.ordine?.qta_carta ?? '-'}</td>
                 <td><textarea onblur="aggiornaCampo(${fase.id}, 'note', this.value)">${fase.note ?? ''}</textarea></td>
                 <td>${fase.ore ?? '-'}</td>
                 <td id="timeout-${fase.id}">${fase.timeout ?? '-'}</td>
@@ -110,69 +113,80 @@ async function caricaFasi() {
     }
 }
 
-// Avvia/Termina fase
-async function aggiornaStato(faseId, azione, checked){
-    if(!checked) return;
-    if(azione==='termina' && !confirm('Sei sicuro di voler terminare questa fase?')){
-        document.getElementById('termina-'+faseId).checked=false;
+// Aggiorna stato Avvia/Termina
+async function aggiornaStato(faseId, azione, checkbox){
+    if(!checkbox.checked) return;
+    checkbox.disabled = true;
+
+    if(azione === 'termina' && !confirm('Sei sicuro di terminare questa fase?')){
+        checkbox.checked = false;
+        checkbox.disabled = false;
         return;
     }
-    const route = azione==='avvia' ? '{{ route("produzione.avvia") }}' : '{{ route("produzione.termina") }}';
-    const data = await fetchWithToken(route, {method:'POST', body:{fase_id:faseId}});
-    if(data.success) await caricaFasi();
-    else alert('Errore: ' + (data.messaggio||''));
+
+    const route = azione === 'avvia' ? '{{ route("produzione.avvia") }}' : '{{ route("produzione.termina") }}';
+    const data = await fetchWithToken(route, { method: 'POST', body: { fase_id: faseId } });
+
+    if(data && data.success){
+        await caricaFasi();
+    } else {
+        alert('Errore: '+(data?.messaggio || ''));
+        checkbox.checked = false;
+    }
+    checkbox.disabled = false;
 }
 
 // Gestione pausa
-async function gestisciPausa(faseId, checked){
-    if(!checked) return;
-    const scelta = prompt("Seleziona motivo pausa:\n1) Attesa materiale\n2) Problema macchina\n3) Pranzo\n4) Altro");
+async function gestisciPausa(faseId, checkbox){
+    if(!checkbox.checked) return;
+    checkbox.disabled = true;
+
+    const motivi = ["Attesa materiale","Problema macchina","Pranzo","Altro"];
+    let scelta = prompt("Seleziona motivo pausa:\n1) Attesa materiale\n2) Problema macchina\n3) Pranzo\n4) Altro");
     if(!["1","2","3","4"].includes(scelta)){
-        document.getElementById('pausa-'+faseId).checked=false;
-        return alert('Selezione non valida!');
+        alert('Selezione non valida');
+        checkbox.checked = false;
+        checkbox.disabled = false;
+        return;
     }
-    const motivo = motiviPausa[parseInt(scelta)-1];
-    const data = await fetchWithToken('{{ route("produzione.pausa") }}',{method:'POST', body:{fase_id:faseId, motivo}});
-    if(data.success){
-        document.getElementById('stato-'+faseId).innerText=motivo;
-        document.getElementById('timeout-'+faseId).innerText=data.timeout;
-        ['avvia','termina'].forEach(a=>document.getElementById(a+'-'+faseId).checked=false);
+
+    const motivo = motivi[parseInt(scelta)-1];
+    const data = await fetchWithToken('{{ route("produzione.pausa") }}', { method: 'POST', body: { fase_id: faseId, motivo } });
+
+    if(data && data.success){
+        document.getElementById('stato-'+faseId).innerText = motivo;
+        ['avvia','termina'].forEach(a => {
+            const el = document.getElementById(a+'-'+faseId);
+            if(el) el.checked = false;
+        });
+    } else {
+        alert('Errore pausa: '+(data?.messaggio || ''));
+        checkbox.checked = false;
     }
+    checkbox.disabled = false;
 }
 
 // Aggiorna campo
 async function aggiornaCampo(faseId, campo, valore){
-    const data = await fetchWithToken('{{ route("produzione.aggiornaCampo") }}',{method:'POST', body:{fase_id:faseId, campo, valore}});
-    if(!data.success) alert('Errore: '+(data.messaggio||''));
-}
-
-// Aggiorna singola riga tabella
-function aggiornaTabellaSingola(faseId, data){
-    document.getElementById('stato-'+faseId).innerText = data.nuovo_stato ?? data.stato;
-    const opCell = document.getElementById('operatore-'+faseId);
-    opCell.innerHTML = (data.operatori||[]).map(op => `${op.nome} (${op.data_inizio}${op.data_fine ? ' - ' + op.data_fine : ''})`).join('<br>');
-    const row = document.getElementById('fase-'+faseId);
-    const qtaInput = row.querySelector('input[type="text"]');
-    if(qtaInput && data.qta_prod!==undefined) qtaInput.value = data.qta_prod;
-    const noteTextarea = row.querySelector('textarea');
-    if(noteTextarea && data.note!==undefined) noteTextarea.value = data.note;
-    document.getElementById('timeout-'+faseId).innerText = data.timeout ?? '-';
-    if(data.nuovo_stato==='2' || data.stato==='2') row.style.display='none';
+    const data = await fetchWithToken('{{ route("produzione.aggiornaCampo") }}', { method: 'POST', body: { fase_id: faseId, campo, valore } });
+    if(!data || !data.success) alert('Errore: '+(data?.messaggio || ''));
 }
 
 // Logout
 async function logout(){
-    const data = await fetchWithToken('{{ route("operatore.logout") }}', {method:'POST'});
-    if(data.success){
+    const data = await fetchWithToken('{{ route("operatore.logout") }}', { method: 'POST' });
+    if(data && data.success){
         sessionStorage.clear();
-        window.location.href = '{{route("operatore.login")}}';
+        window.location.href = '/operatore/login';
     }
 }
 
-// Aggiornamento automatico ogni 10s
-setInterval(caricaFasi, 10000);
-
 // Carica inizialmente
 caricaFasi();
+
+// Aggiornamento automatico ogni 100 secondi
+setInterval(caricaFasi, 100000);
+
 </script>
+@endpush
 @endsection

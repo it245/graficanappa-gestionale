@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Test Login Operatore</title>
+</head>
+<body>
+<h2>Login Operatore</h2>
+
+<label>Codice Operatore:</label>
+<input id="codice" placeholder="Inserisci codice">
+<button id="loginBtn">Login</button>
+<button id="logoutBtn">Logout</button>
+
+<pre id="log" style="background:#eee;padding:10px;"></pre>
+
+<script>
+let token = '';
+
+function log(msg, obj=null){
+    const pre = document.getElementById('log');
+    pre.innerText += msg + (obj ? ' ' + JSON.stringify(obj,null,2) : '') + '\n';
+}
+
+// LOGIN
+document.getElementById('loginBtn').onclick = async () => {
+    const codice = document.getElementById('codice').value.trim();
+    if(!codice){ log("Inserisci un codice"); return; }
+
+    try {
+        const res = await fetch('/api/operatore/login', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({codice_operatore: codice})
+        });
+
+        const data = await res.json();
+        log("Login:", data);
+
+        if(data.success){
+            token = data.token;
+            log("Token salvato:", {token});
+        }
+    } catch(e) {
+        log("Errore fetch login:", e);
+    }
+};
+
+// LOGOUT
+document.getElementById('logoutBtn').onclick = async () => {
+    if(!token){ log("Non sei loggato"); return; }
+
+    try {
+        const res = await fetch('/operatore/logout', {
+            method: 'POST',
+            headers: {'X-Operatore-Token': token}
+        });
+        const data = await res.json();
+        log("Logout:", data);
+        token = '';
+    } catch(e) {
+        log("Errore logout:", e);
+    }
+};
+</script>
+</body>
+</html>

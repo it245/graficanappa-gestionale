@@ -18,6 +18,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('fasi_catalogo');
+        Schema::dropIfExists('fasi_catalogos');
     }
 };

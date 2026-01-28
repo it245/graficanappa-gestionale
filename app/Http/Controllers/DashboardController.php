@@ -8,20 +8,27 @@ use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
-    public function operator()
+    // Mostra la dashboard dell'operatore
+    public function operator(Request $request)
     {
-        // Per ora simuliamo l'operatore (senza Auth)
-        $operatore = Operatore::first();
+        // Prendi l'operatore loggato tramite middleware
+        $operatore = $request->attributes->get('operatore'); // se usi il token middleware
+        if (!$operatore) {
+            abort(403, 'Accesso negato');
+        }
 
-        // Prendiamo solo gli ordini che hanno fasi del reparto dell'operatore
-        $ordini = Ordine::whereHas('fasi', function ($query) use ($operatore) {
-            $query->where('reparto', $operatore->reparto);
-        })
-        ->with(['fasi' => function ($query) use ($operatore) {
-            $query->where('reparto', $operatore->reparto);
-        }])
-        ->get();
+        // Gestione più reparti separati da virgola
+        $reparti = array_map('trim', explode(',', $operatore->reparto));
 
-        return view('dashboard.operator', compact('ordini'));
+        // Prendi solo gli ordini che hanno fasi nel reparto dell'operatore
+        $ordini = Ordine::whereHas('fasi', function ($query) use ($reparti) {
+                $query->whereIn('reparto', $reparti);
+            })
+            ->with(['fasi' => function ($query) use ($reparti) {
+                $query->whereIn('reparto', $reparti);
+            }])
+            ->get();
+
+        return view('dashboard.operator', compact('ordini', 'operatore'));
     }
 }

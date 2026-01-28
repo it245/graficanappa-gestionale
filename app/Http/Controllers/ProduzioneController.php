@@ -10,8 +10,9 @@ class ProduzioneController extends Controller
 {
     public function index()
     {
+        $operatore= $request->attributes->get('operatore');
         $fasiVisibili = OrdineFase::with(['ordine', 'faseCatalogo', 'operatori'])->get();
-        return view('produzione.index', compact('fasiVisibili'));
+        return view('produzione.index', compact('fasiVisibili', 'operatore'));
     }
 
 public function datiDashboardOperatore(Request $request)
