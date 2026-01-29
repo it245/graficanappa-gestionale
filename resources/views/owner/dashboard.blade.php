@@ -18,6 +18,9 @@
         <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#aggiungiOperatoreModal">
             Aggiungi Operatore
         </button>
+
+        <a href="{{ route('owner.fasiTerminate')}}" class="btn btn-primary mb-3">
+            Visualizza fasi terminate </a>
     </div>
 
     <table class="table table-bordered table-sm table-striped">
@@ -113,7 +116,7 @@
                 </div>
                 <div class="mb-2">
                     <label>Codice Operatore</label>
-                    <input type="text" name="codice_operatore" class="form-control" required>
+                    <input type="text"class="form-control" value="{{ $prossimoCodice }}" readonly>
                 </div>
                 <div class="mb-2">
                     <label>Ruolo</label>
@@ -124,7 +127,20 @@
                 </div>
                 <div class="mb-2">
                     <label>Reparto</label>
-                    <input type="text" name="reparto" class="form-control" required>
+                    <select name="reparto" class="form-control" required>
+                        @foreach($reparti as $reparto)
+                            <option value="{{ $reparto }}">{{ $reparto}}</option>
+                        @endforeach
+                    </select>
+                </div>
+                  <div class="mb-2">
+                    <label>Reparto secondario (opzionale)</label>
+                    <select name="reparto" class="form-control">
+                          <option value="">-- Nessuno --</option>
+                        @foreach($reparti as $reparto)
+                            <option value="{{ $reparto }}">{{ $reparto}}</option>
+                        @endforeach
+                    </select>
                 </div>
             </div>
             <div class="modal-footer">

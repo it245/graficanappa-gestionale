@@ -8,6 +8,8 @@ use App\Models\Operatore;
 use Illuminate\Support\Facades\Hash;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\OrdiniImport;
+use Illuminate\Support\Facades\DB;
+use App\Models\Reparto;
 
 class DashboardOwnerController extends Controller
 {
@@ -114,6 +116,7 @@ class DashboardOwnerController extends Controller
         $fasi = OrdineFase::with(['ordine', 'faseCatalogo', 'operatori' => function($q){
     $q->select('operatori.id','nome');
 }])
+->where('stato','!=',2)
 ->get()
 ->map(function ($fase) use ($fasiInfo) {
     // Quantità carta
@@ -146,7 +149,18 @@ class DashboardOwnerController extends Controller
 })
 ->sortBy('priorita');
 
-        return view('owner.dashboard', compact('fasi'));
+$ultimoCodice = Operatore::where('codice_operatore','LIKE','OP%')
+->orderBy('codice_operatore','desc')
+->value('codice_operatore');
+
+    $numero=$ultimoCodice
+    ? (int) substr($ultimoCodice, 2) + 1
+    : 1;
+    $prossimoCodice='OP'.str_pad($numero,3,'0',STR_PAD_LEFT);
+
+$reparti=Reparto::orderBy('nome')
+->pluck('nome');
+        return view('owner.dashboard', compact('fasi','prossimoCodice','reparti'));
     }
 
     // Aggiorna campi qta_prod e note
@@ -170,28 +184,37 @@ class DashboardOwnerController extends Controller
     }
 
     // Aggiunge nuovo operatore
-    public function aggiungiOperatore(Request $request)
-    {
-        $request->validate([
-            'nome' => 'required|string',
-            'cognome' => 'nullable|string',
-            'codice_operatore' => 'required|string|unique:operatori,codice_operatore',
-            'ruolo' => 'required|in:operatore,owner',
-            'reparto' => 'required|string',
-        ]);
+  public function aggiungiOperatore(Request $request)
+{
+    $request->validate([
+        'nome' => 'required|string',
+        'cognome' => 'nullable|string',
+        'ruolo' => 'required|in:operatore,owner',
+        'reparto' => 'required|string',
+    ]);
 
-        Operatore::create([
-            'nome' => $request->nome,
-            'cognome' => $request->cognome,
-            'codice_operatore' => $request->codice_operatore,
-            'ruolo' => $request->ruolo,
-            'reparto' => $request->reparto,
-            'attivo' => 1,
-            'password' => Hash::make('password123'),
-        ]);
+   $ultimoCodice = Operatore::where('codice_operatore','LIKE','OP%')
+->orderBy('codice_operatore','desc')->value('codice_operatore');;
 
-        return redirect()->back()->with('success', 'Operatore aggiunto correttamente.');
-    }
+    $numero=$ultimoCodice
+    ? (int) substr($ultimoCodice, 2) + 1
+    : 1;
+    $codice='OP'.str_pad($numero,3,'0',STR_PAD_LEFT);
+    $reparti = array_filter($request->reparto);
+    $repartoString = implode(',',$reparti);
+
+    Operatore::create([
+        'nome' => $request->nome,
+        'cognome' => $request->cognome,
+        'codice_operatore' => $codice,
+        'ruolo' => $request->ruolo,
+        'reparto' => $request->reparto,
+        'attivo' => 1,
+        'password' => Hash::make('password123'),
+    ]);
+
+    return redirect()->back()->with('success','Operatore aggiunto correttamente');
+}
 
     // Import ordini da file Excel
     public function importOrdini(Request $request)
@@ -206,5 +229,13 @@ class DashboardOwnerController extends Controller
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Errore importazione: '.$e->getMessage());
         }
+    }
+
+    public function fasiTerminate()
+    {
+        $fasiTerminate = OrdineFase::with(['ordine','faseCatalogo','operatori'])
+        ->where('stato',2)
+        ->get();
+    return view('owner.fasi_terminate', compact('fasiTerminate'));
     }
 }
