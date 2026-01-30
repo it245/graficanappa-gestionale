@@ -1,4 +1,3 @@
-
 @extends('layouts.app')
 
 @section('content')
@@ -26,9 +25,10 @@
                 <th>UM</th>
                 <th>Data Prevista Consegna</th>
                 <th>Qta Prodotta</th>
-                 <th>Codice Carta</th>
+                <th>Codice Carta</th>
                 <th>Carta</th>
                 <th>Quantità Carta</th>
+                <th>UM Carta</th>
                 <th>Note</th>
                 <th>Ore</th>
                 <th>Timeout</th>
@@ -42,55 +42,55 @@
     @foreach($fase->operatori as $op)
         {{ $op->nome }} ({{ $op->pivot->data_inizio ? \Carbon\Carbon::parse($op->pivot->data_inizio)->format('d/m/Y H:i:s') : '-' }})<br>
     @endforeach
-</td>               <td>{{ $fase->faseCatalogo->nome ?? '-' }}</td>
+</td>               
+<td>{{ $fase->faseCatalogo->nome ?? '-' }}</td>
                 
-                <td>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="checkbox" id="avvia-{{ $fase->id }}" 
-                               onchange="aggiornaStato({{ $fase->id }}, 'avvia', this.checked)">
-                        <label class="form-check-label" for="avvia-{{ $fase->id }}">Avvia</label>
-                    </div>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="checkbox" id="pausa-{{ $fase->id }}" 
-                               onchange="gestisciPausa({{ $fase->id }}, this.checked)">
-                        <label class="form-check-label" for="pausa-{{ $fase->id }}">Pausa</label>
-                    </div>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="checkbox" id="termina-{{ $fase->id }}" 
-                               onchange="aggiornaStato({{ $fase->id }}, 'termina', this.checked)">
-                        <label class="form-check-label" for="termina-{{ $fase->id }}">Termina</label>
-                    </div>
-                </td>
-                <td id="stato-{{ $fase->id }}">{{ $fase->stato ?? '-' }}</td>
-                <td>{{ $fase->ordine->commessa ?? '-' }}</td>
-                <td>{{ $fase->ordine->data_registrazione ?? '-' }}</td>
-                <td>{{ $fase->ordine->cliente_nome ?? '-' }}</td>
-                <td>{{ $fase->ordine->cod_art ?? '-' }}</td>
-                <td>{{ $fase->ordine->descrizione ?? '-' }}</td>
-                <td>{{ $fase->ordine->qta_richiesta ?? '-' }}</td>
-                <td>{{ $fase->ordine->um ?? '-' }}</td>
-                <td>{{ $fase->ordine->data_prevista_consegna ?? '-' }}</td>
+<td>
+    <div class="form-check form-check-inline">
+        <input class="form-check-input" type="checkbox" id="avvia-{{ $fase->id }}" 
+               onchange="aggiornaStato({{ $fase->id }}, 'avvia', this.checked)">
+        <label class="form-check-label" for="avvia-{{ $fase->id }}">Avvia</label>
+    </div>
+    <div class="form-check form-check-inline">
+        <input class="form-check-input" type="checkbox" id="pausa-{{ $fase->id }}" 
+               onchange="gestisciPausa({{ $fase->id }}, this.checked)">
+        <label class="form-check-label" for="pausa-{{ $fase->id }}">Pausa</label>
+    </div>
+    <div class="form-check form-check-inline">
+        <input class="form-check-input" type="checkbox" id="termina-{{ $fase->id }}" 
+               onchange="aggiornaStato({{ $fase->id }}, 'termina', this.checked)">
+        <label class="form-check-label" for="termina-{{ $fase->id }}">Termina</label>
+    </div>
+</td>
+<td id="stato-{{ $fase->id }}">{{ $fase->stato ?? '-' }}</td>
+<td>{{ $fase->ordine->commessa ?? '-' }}</td>
+<td>{{ $fase->ordine->data_registrazione ? \Carbon\Carbon::parse($fase->ordine->data_registrazione)->format('d/m/Y') : '-' }}</td>
+<td>{{ $fase->ordine->cliente_nome ?? '-' }}</td>
+<td>{{ $fase->ordine->cod_art ?? '-' }}</td>
+<td>{{ $fase->ordine->descrizione ?? '-' }}</td>
+<td>{{ $fase->ordine->qta_richiesta ?? '-' }}</td>
+<td>{{ $fase->ordine->um ?? '-' }}</td>
+<td>{{ $fase->ordine->data_prevista_consegna ? \Carbon\Carbon::parse($fase->ordine->data_prevista_consegna)->format('d/m/Y') : '-' }}</td>
 
-                <!-- Qta Prodotta modificabile -->
-                <td>
-                    <input type="text" class="form-control form-control-sm"
-                           value="{{ $fase->qta_prod ?? '' }}"
-                           onblur="aggiornaCampo({{ $fase->id }}, 'qta_prod', this.value)">
-                </td>
-         <td>{{ $fase->ordine->cod_carta ?? '-' }}</td>
-                <td>{{ $fase->ordine->carta ?? '-' }}</td>
-                <td>{{ $fase->ordine->qta_carta ?? '-' }}</td>
+<td>
+    <input type="text" class="form-control form-control-sm"
+           value="{{ $fase->qta_prod ?? '' }}"
+           onblur="aggiornaCampo({{ $fase->id }}, 'qta_prod', this.value)">
+</td>
+<td>{{ $fase->ordine->cod_carta ?? '-' }}</td>
+<td>{{ $fase->ordine->carta ?? '-' }}</td>
+<td>{{ $fase->ordine->qta_carta ?? '-' }}</td>
+<td>{{ $fase->ordine->UM_carta ?? '-' }}</td>
 
-                <!-- Note modificabili -->
-                <td>
-                    <textarea style="width: 300px;; height:60px;"
-                              onblur="aggiornaCampo({{ $fase->id }}, 'note', this.value)">{{ $fase->note ?? '' }}</textarea>
-                </td>
+<td>
+    <textarea style="width: 300px; height:60px;"
+              onblur="aggiornaCampo({{ $fase->id }}, 'note', this.value)">{{ $fase->note ?? '' }}</textarea>
+</td>
 
-                <td>{{ $fase->ore ?? '-' }}</td>
-                <td id="timeout-{{ $fase->id }}">{{ $fase->timeout ?? '-' }}</td>
-            </tr>
-            @endforeach
+<td>{{ $fase->ore ?? '-' }}</td>
+<td id="timeout-{{ $fase->id }}">{{ $fase->timeout ?? '-' }}</td>
+</tr>
+@endforeach
         </tbody>
     </table>
 

@@ -149,18 +149,16 @@ class DashboardOwnerController extends Controller
 })
 ->sortBy('priorita');
 
-$ultimoCodice = Operatore::where('codice_operatore','LIKE','OP%')
-->orderBy('codice_operatore','desc')
+$ultimoCodice = Operatore::orderBy('codice_operatore','desc')
 ->value('codice_operatore');
 
-    $numero=$ultimoCodice
-    ? (int) substr($ultimoCodice, 2) + 1
+    $prossimoNumero=$ultimoCodice
+    ? (int) substr($ultimoCodice, -3) + 1
     : 1;
-    $prossimoCodice='OP'.str_pad($numero,3,'0',STR_PAD_LEFT);
-
+$prossimoCodice='__'.str_pad($prossimoNumero,3,'0',STR_PAD_LEFT);
 $reparti=Reparto::orderBy('nome')
 ->pluck('nome');
-        return view('owner.dashboard', compact('fasi','prossimoCodice','reparti'));
+        return view('owner.dashboard', compact('fasi','prossimoNumero','prossimoCodice','reparti'));
     }
 
     // Aggiorna campi qta_prod e note
@@ -183,39 +181,50 @@ $reparti=Reparto::orderBy('nome')
         return response()->json(['success' => true]);
     }
 
-    // Aggiunge nuovo operatore
-  public function aggiungiOperatore(Request $request)
+public function aggiungiOperatore(Request $request)
 {
     $request->validate([
         'nome' => 'required|string',
-        'cognome' => 'nullable|string',
+        'cognome' => 'required|string',
         'ruolo' => 'required|in:operatore,owner',
-        'reparto' => 'required|string',
+        'reparto' => 'required|array',
     ]);
 
-   $ultimoCodice = Operatore::where('codice_operatore','LIKE','OP%')
-->orderBy('codice_operatore','desc')->value('codice_operatore');;
+    // 🔢 ultimo numero progressivo globale (ultime 3 cifre)
+    $ultimoCodice = Operatore::orderBy('codice_operatore', 'desc')
+        ->value('codice_operatore');
 
-    $numero=$ultimoCodice
-    ? (int) substr($ultimoCodice, 2) + 1
-    : 1;
-    $codice='OP'.str_pad($numero,3,'0',STR_PAD_LEFT);
-    $reparti = array_filter($request->reparto);
-    $repartoString = implode(',',$reparti);
+    $numero = $ultimoCodice
+        ? (int) substr($ultimoCodice, -3)
+        : 0;
+
+    $numero++;
+
+    // ✏️ normalizzazione nome
+    $nome = ucfirst(strtolower($request->nome));
+    $cognome = ucfirst(strtolower($request->cognome));
+
+    // 🔠 iniziali
+    $iniziali = strtoupper($nome[0] . $cognome[0]);
+
+    // 🆔 codice finale
+    $codice = $iniziali . str_pad($numero, 3, '0', STR_PAD_LEFT);
+
+    // 🏭 reparti multipli
+    $repartiPuliti= array_filter(array_unique($request->reparto));
+    $repartoString = implode(',', $request->reparto);
 
     Operatore::create([
-        'nome' => $request->nome,
-        'cognome' => $request->cognome,
+        'nome' => $nome,
+        'cognome' => $cognome,
         'codice_operatore' => $codice,
         'ruolo' => $request->ruolo,
-        'reparto' => $request->reparto,
+        'reparto' => $repartoString,
         'attivo' => 1,
-        'password' => Hash::make('password123'),
     ]);
 
-    return redirect()->back()->with('success','Operatore aggiunto correttamente');
+    return redirect()->back()->with('success', "Operatore $codice aggiunto correttamente");
 }
-
     // Import ordini da file Excel
     public function importOrdini(Request $request)
     {

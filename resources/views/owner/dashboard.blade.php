@@ -3,26 +3,45 @@
 @section('content')
 <div class="container">
     <h2>Dashboard Owner</h2>
-    <p>Benvenuto: {{ auth()->user()->nome ?? session('operatore_nome') }} | Ruolo: {{ auth()->user()->ruolo ?? session('operatore_ruolo') }}</p>
 
-    <!-- Pulsanti azione -->
+    <p>
+        Benvenuto: {{ auth()->user()->nome ?? session('operatore_nome') }}
+        | Ruolo: {{ auth()->user()->ruolo ?? session('operatore_ruolo') }}
+    </p>
+
+    {{-- PULSANTI --}}
     <div class="mb-3 d-flex gap-2 align-items-center">
-        <!-- Import Excel -->
         <form action="{{ route('owner.importOrdini') }}" method="POST" enctype="multipart/form-data">
             @csrf
             <input type="file" name="file" accept=".xlsx,.xls" required>
             <button class="btn btn-primary">Importa Ordini</button>
         </form>
 
-        <!-- Aggiungi Operatore -->
         <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#aggiungiOperatoreModal">
             Aggiungi Operatore
         </button>
 
-        <a href="{{ route('owner.fasiTerminate')}}" class="btn btn-primary mb-3">
-            Visualizza fasi terminate </a>
+        <a href="{{ route('owner.fasiTerminate') }}"
+           class="btn btn-primary"
+           style="min-width:180px;">
+            Visualizza fasi terminate
+        </a>
     </div>
 
+@php
+    /* Helper date italiane */
+    function formatItalianDate($date, $withTime = false) {
+        if (!$date) return '-';
+        try {
+            return \Carbon\Carbon::parse($date)
+                ->format($withTime ? 'd/m/Y H:i' : 'd/m/Y');
+        } catch (\Exception $e) {
+            return $date;
+        }
+    }
+@endphp
+
+    {{-- TABELLA --}}
     <table class="table table-bordered table-sm table-striped">
         <thead class="table-dark">
             <tr>
@@ -30,143 +49,144 @@
                 <th>Cliente</th>
                 <th>Codice Articolo</th>
                 <th>Descrizione</th>
-                <th>Qta Richiesta</th>
+                <th>Qta</th>
                 <th>UM</th>
                 <th>Priorità</th>
                 <th>Data Registrazione</th>
                 <th>Data Prevista Consegna</th>
-                <th>Codice Carta</th>
+                <th>Cod Carta</th>
                 <th>Carta</th>
                 <th>Qta Carta</th>
                 <th>UM Carta</th>
                 <th>Fase</th>
                 <th>Reparto</th>
                 <th>Operatori</th>
-                <th>Qta Prodotta</th>
+                <th>Qta Prod.</th>
                 <th>Note</th>
                 <th>Data Inizio</th>
                 <th>Data Fine</th>
-                <th>Stato Fase</th>
+                <th>Stato</th>
             </tr>
         </thead>
-        <tbody>
-            @foreach($fasi as $fase)
-            <tr>
-                <!-- Ordine -->
-                <td>{{ $fase->ordine->commessa ?? '-' }}</td>
-                <td>{{ $fase->ordine->cliente_nome ?? '-' }}</td>
-                <td>{{ $fase->ordine->cod_art ?? '-' }}</td>
-                <td>{{ $fase->ordine->descrizione ?? '-' }}</td>
-                <td>{{ $fase->ordine->qta_richiesta ?? '-' }}</td>
-                <td>{{ $fase->ordine->um ?? '-' }}</td>
-                <td>{{ $fase->priorita ?? '-' }}</td>
-                <td>{{ $fase->ordine->data_registrazione ?? '-' }}</td>
-                <td>{{ $fase->ordine->data_prevista_consegna ?? '-' }}</td>
-                <td>{{ $fase->ordine->cod_carta ?? '-' }}</td>
-                <td>{{ $fase->ordine->carta ?? '-' }}</td>
-                <td>{{ $fase->ordine->qta_carta ?? '-' }}</td>
-                <td>{{ $fase->ordine->UM_carta ?? '-' }}</td>
 
-                <!-- Fase -->
+        <tbody>
+        @foreach($fasi as $fase)
+
+            @php
+                $rowClass = '';
+
+                if ($fase->ordine->data_prevista_consegna) {
+                    $dataPrevista = \Carbon\Carbon::parse(
+                        $fase->ordine->data_prevista_consegna
+                    )->startOfDay();
+
+                    $oggi = \Carbon\Carbon::today();
+                    $diffGiorni = $oggi->diffInDays($dataPrevista, false);
+
+                    if ($diffGiorni <= -5) {
+                        $rowClass = 'scaduta';           // 🔴 passati 5 giorni
+                    } elseif ($diffGiorni <= 3) {
+                        $rowClass = 'warning-strong';   // 🟠 mancano 3 giorni
+                    } elseif ($diffGiorni <= 5) {
+                        $rowClass = 'warning-light';    // 🟡 mancano 5 giorni
+                    }
+                }
+            @endphp
+
+            <tr class="{{ $rowClass }}" data-id="{{ $fase->id }}">
+                <td>{{ $fase->ordine->commessa ?? '-' }}</td>
+
+                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'cliente_nome', this.innerText)">
+                    {{ $fase->ordine->cliente_nome ?? '-' }}
+                </td>
+
+                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'cod_art', this.innerText)">
+                    {{ $fase->ordine->cod_art ?? '-' }}
+                </td>
+
+                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'descrizione', this.innerText)">
+                    {{ $fase->ordine->descrizione ?? '-' }}
+                </td>
+
+                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'qta_richiesta', this.innerText)">
+                    {{ $fase->ordine->qta_richiesta ?? '-' }}
+                </td>
+
+                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'um', this.innerText)">
+                    {{ $fase->ordine->um ?? '-' }}
+                </td>
+
+                <td>{{ $fase->priorita ?? '-' }}</td>
+
+                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_registrazione', this.innerText)">
+                    {{ formatItalianDate($fase->ordine->data_registrazione) }}
+                </td>
+
+                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_prevista_consegna', this.innerText)">
+                    {{ formatItalianDate($fase->ordine->data_prevista_consegna) }}
+                </td>
+
+                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'cod_carta', this.innerText)">
+                    {{ $fase->ordine->cod_carta ?? '-' }}
+                </td>
+
+                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'carta', this.innerText)">
+                    {{ $fase->ordine->carta ?? '-' }}
+                </td>
+
+                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'qta_carta', this.innerText)">
+                    {{ $fase->ordine->qta_carta ?? '-' }}
+                </td>
+
+                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'UM_carta', this.innerText)">
+                    {{ $fase->ordine->UM_carta ?? '-' }}
+                </td>
+
                 <td>{{ $fase->faseCatalogo->nome ?? '-' }}</td>
                 <td>{{ $fase->reparto ?? '-' }}</td>
 
-                <!-- Operatori multipli -->
                 <td>
-                    @if($fase->operatori->isNotEmpty())
-                        @foreach($fase->operatori as $op)
-                            {{ $op->nome }} ({{ \Carbon\Carbon::parse($op->pivot->data_inizio)->format('d/m/Y H:i:s') }})<br>
-                        @endforeach
-                    @else
+                    @forelse($fase->operatori as $op)
+                        {{ $op->nome }}
+                        ({{ formatItalianDate($op->pivot->data_inizio, true) }})<br>
+                    @empty
                         -
-                    @endif
+                    @endforelse
                 </td>
 
-                <td>{{ $fase->qta_prod ?? '-' }}</td>
-                <td>{{ $fase->note ?? '-' }}</td>
+                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'qta_prod', this.innerText)">
+                    {{ $fase->qta_prod ?? '-' }}
+                </td>
 
-                <!-- Data Inizio = primo operatore -->
-                <td>{{ $fase->data_inizio ?? '-' }}</td>
-                <td>{{ $fase->data_fine ?? '-' }}</td>
+                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'note', this.innerText)">
+                    {{ $fase->note ?? '-' }}
+                </td>
+
+                <td>{{ formatItalianDate($fase->data_inizio, true) }}</td>
+                <td>{{ formatItalianDate($fase->data_fine, true) }}</td>
                 <td>{{ $fase->stato ?? '-' }}</td>
             </tr>
-            @endforeach
+
+        @endforeach
         </tbody>
     </table>
 </div>
 
-<!-- Modale Aggiungi Operatore -->
-<div class="modal fade" id="aggiungiOperatoreModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
-    <form method="POST" action="{{ route('owner.aggiungiOperatore') }}">
-        @csrf
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Nuovo Operatore</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-2">
-                    <label>Nome</label>
-                    <input type="text" name="nome" class="form-control" required>
-                </div>
-                <div class="mb-2">
-                    <label>Cognome</label>
-                    <input type="text" name="cognome" class="form-control">
-                </div>
-                <div class="mb-2">
-                    <label>Codice Operatore</label>
-                    <input type="text"class="form-control" value="{{ $prossimoCodice }}" readonly>
-                </div>
-                <div class="mb-2">
-                    <label>Ruolo</label>
-                    <select name="ruolo" class="form-control" required>
-                        <option value="operatore">Operatore</option>
-                        <option value="owner">Owner</option>
-                    </select>
-                </div>
-                <div class="mb-2">
-                    <label>Reparto</label>
-                    <select name="reparto" class="form-control" required>
-                        @foreach($reparti as $reparto)
-                            <option value="{{ $reparto }}">{{ $reparto}}</option>
-                        @endforeach
-                    </select>
-                </div>
-                  <div class="mb-2">
-                    <label>Reparto secondario (opzionale)</label>
-                    <select name="reparto" class="form-control">
-                          <option value="">-- Nessuno --</option>
-                        @foreach($reparti as $reparto)
-                            <option value="{{ $reparto }}">{{ $reparto}}</option>
-                        @endforeach
-                    </select>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Chiudi</button>
-                <button class="btn btn-primary" type="submit">Salva</button>
-            </div>
-        </div>
-    </form>
-  </div>
-</div>
-
+{{-- JS --}}
 <script>
 function aggiornaCampo(faseId, campo, valore){
-    fetch('{{ route("produzione.aggiornaCampo") }}',{
-        method:'POST',
-        headers:{
-            'X-CSRF-TOKEN':'{{ csrf_token() }}',
-            'Content-Type':'application/json'
+    fetch('{{ route("produzione.aggiornaCampo") }}', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Content-Type': 'application/json'
         },
-        body:JSON.stringify({fase_id:faseId, campo:campo, valore:valore})
+        body: JSON.stringify({ fase_id: faseId, campo: campo, valore: valore })
     })
-    .then(res=>res.json())
-    .then(data=>{
-        if(!data.success) alert('Errore durante il salvataggio: '+(data.messaggio||''));
-    })
-    .catch(err=>console.error('Errore:', err));
+    .then(r => r.json())
+    .then(d => {
+        if (!d.success) alert('Errore salvataggio');
+    });
 }
 </script>
 @endsection

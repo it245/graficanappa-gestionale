@@ -40,14 +40,20 @@ class OperatoreSeeder extends Seeder
         ];
 
         $ultimoCodice = Operatore::orderBy('codice_operatore','desc')->value('codice_operatore');
-        $numero = $ultimoCodice ? (int) substr($ultimoCodice, 2) : 0;
+        $numero = $ultimoCodice ? (int) substr($ultimoCodice, -3) : 0;
 
         foreach ($operatori as $op) {
             $numero++;
+            $nome = ucfirst(strtolower($op['nome']));
+             $cognome = ucfirst(strtolower($op['cognome']));
+         $iniziali=strtoupper($nome[0].$cognome[0]);
+         $codice= $iniziali.str_pad($numero,3,'0',STR_PAD_LEFT);
+        
+
             Operatore::create([
-                'nome' => ucfirst(strtolower($op['nome'])),
-                'cognome' => ucfirst(strtolower($op['cognome'])),
-                'codice_operatore' => 'OP' . str_pad($numero, 3, '0', STR_PAD_LEFT),
+                'nome' =>$nome,
+                'cognome' =>$cognome,
+                'codice_operatore' =>$codice,
                 'ruolo' => 'operatore',
                 'reparto' => $op['reparto'],
                 'attivo' => 1,
@@ -55,11 +61,14 @@ class OperatoreSeeder extends Seeder
             ]);
         }
 
+        
+        $numero++;
+
         // Owner globale con tutti i reparti
         Operatore::create([
             'nome' => 'Antonio',
             'cognome' => 'Nappa',
-            'codice_operatore' => 'OWN001',
+            'codice_operatore' => 'OWN'.str_pad($numero,3,'0',STR_PAD_LEFT),
             'ruolo' => 'owner',
             'reparto' => 'spedizione,digitale,fustella,legatoria,piegaincolla,plastificazione,prestampa,stampa a caldo,stampa offset,generico,finestre,esterno',
             'attivo' => 1,

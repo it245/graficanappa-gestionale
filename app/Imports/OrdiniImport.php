@@ -14,31 +14,31 @@ class OrdiniImport implements ToModel, WithHeadingRow
 {
     public function headingRow(): int { return 2; }
 
-    public function model(array $row)
+   public function model(array $row)
 {
-    $commessa = isset($row['codcommessa']) ? trim($row['codcommessa']) : null;
-    $codArt   = isset($row['codart']) ? trim($row['codart']) : null;
-    $faseNome = isset($row['fase']) ? trim($row['fase']) : null;
-    $descrizione = $row['descrizione'] ?? null;
+    $commessa     = isset($row['codcommessa']) ? trim($row['codcommessa']) : null;
+    $codArt       = isset($row['codart']) ? trim($row['codart']) : null;
+    $faseNome     = isset($row['fase']) ? trim($row['fase']) : null;
+    $descrizione  = $row['descrizione'] ?? null;
 
     if (!$commessa || !$faseNome) return null;
 
     // --- 1. GESTIONE ORDINE ---
     $ordine = Ordine::updateOrCreate(
         [
-            'commessa' => $commessa,
-            'cod_art'  => $codArt,
-            'descrizione' => $descrizione, // consideriamo descrizione
+            'commessa'    => $commessa,
+            'cod_art'     => $codArt,
+            'descrizione' => $descrizione,
         ],
         [
             'cliente_nome'           => $row['cliente'] ?? null,
-            'data_registrazione'     => !empty($row['dataregistrazione']) ? \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($row['dataregistrazione']) : null,
-            'data_prevista_consegna' => !empty($row['datapresconsegna']) ? \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($row['datapresconsegna']) : null,
+            'data_registrazione'     => !empty($row['dataregistrazione']) ? $this->convertiData($row['dataregistrazione']) : null,
+            'data_prevista_consegna' => !empty($row['datapresconsegna']) ? $this->convertiData($row['datapresconsegna']) : null,
             'qta_richiesta'          => $row['qta'] ?? 0,
             'cod_carta'              => $row['codcarta'] ?? null,
             'carta'                  => $row['carta'] ?? null,
             'qta_carta'              => $row['qtacarta'] ?? 0,
-            'UM_carta'               => $row['UMcarta'] ?? null,
+            'UM_carta'               => $row['umcarta'] ?? null, // ora importato correttamente
         ]
     );
 
@@ -58,12 +58,14 @@ class OrdiniImport implements ToModel, WithHeadingRow
         'um'          => $row['umfase'] ?? ($row['um'] ?? 'FG'),
         'fase_catalogo_id' => FasiCatalogo::firstOrCreate(
             ['nome' => $faseNome],
-            ['reparto_id' => Reparto::firstOrCreate(['nome' => $repartoNome], ['codice' => strtoupper(substr($repartoNome,0,3)).rand(10,99)])->id]
+            ['reparto_id' => Reparto::firstOrCreate(
+                ['nome' => $repartoNome], 
+                ['codice' => strtoupper(substr($repartoNome,0,3)).rand(10,99)]
+            )->id]
         )->id,
     ];
 
     if ($tipo === 'monofase') {
-        // solo una fase per ordine+descrizione
         $faseEsistente = OrdineFase::where('ordine_id', $ordine->id)
             ->where('fase', $faseNome)
             ->whereHas('ordine', fn($q) => $q->where('descrizione', $descrizione))
@@ -93,6 +95,27 @@ class OrdiniImport implements ToModel, WithHeadingRow
     return $ordine;
 }
 
+// -----------------
+// Funzione helper per le date
+private function convertiData($valore) {
+    if (is_numeric($valore)) {
+        // Excel serial number
+        return \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($valore);
+    } elseif (is_string($valore)) {
+        // stringa in formato italiano
+        try {
+            return Carbon::createFromFormat('d/m/Y H:i:s', $valore);
+        } catch (\Exception $e) {
+            // prova senza secondi
+            try {
+                return Carbon::createFromFormat('d/m/Y H:i', $valore);
+            } catch (\Exception $e2) {
+                return null; // fallback se formato non valido
+            }
+        }
+    }
+    return null;
+}
     private function getMappaReparti(): array {
         return [
             // mappa completa come già definita nel tuo codice
