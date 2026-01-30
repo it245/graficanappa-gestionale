@@ -6,6 +6,7 @@ use App\Http\Controllers\DashboardOperatoreController;
 use App\Http\Controllers\OperatoreLoginController;
 use App\Http\Controllers\ProduzioneController;
 use App\Http\Controllers\DashboardOwnerController;
+use App\Http\Controllers\PrinectController;
 // Operatori
 Route::prefix('operatore')->group(function() {
      Route::get('/login', [OperatoreLoginController::class, 'form'])->name('operatore.login');
@@ -37,8 +38,12 @@ Route::prefix('produzione')->group(function() {
     Route::post('/aggiorna-ordine-campo', [ProduzioneController::class, 'aggiornaOrdineCampo'])->name('produzione.aggiornaOrdineCampo');
 });
 
+
+Route::get('/mes/prinect',[PrinectController::class, 'index'])->name('mes.prinect');
 // Health check
 Route::get('/health', fn() => 'MES OK');
+
+
 
 // Homepage
 Route::get('/', fn() => view('welcome'));
