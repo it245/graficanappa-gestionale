@@ -31,6 +31,8 @@ class ProduzioneController extends Controller
         $fase->stato = 1; // fase avviata
         $fase->save();
 
+        $fase->load('operatori');
+
         $operatori = $fase->operatori->map(function($op){
             return [
                 'nome' => $op->nome,

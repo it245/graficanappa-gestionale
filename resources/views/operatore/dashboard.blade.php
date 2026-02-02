@@ -5,7 +5,10 @@
     <h2>Dashboard Operatore</h2>
     <p>Operatore: {{ session('operatore_nome') }}</p>
     <p>Reparto: {{ session('operatore_reparto') }}</p>
-
+<form action="{{ route('operatore.logout') }}" method="POST">
+        @csrf
+        <button type="submit" class="btn btn-secondary">Logout</button>
+    </form>
     <h4>Fasi visibili</h4>
 
     <table class="table table-bordered table-sm">
@@ -35,8 +38,29 @@
             </tr>
         </thead>
         <tbody>
-            @foreach($fasiVisibili as $fase)
-            <tr id="fase-{{ $fase->id }}">
+           @foreach($fasiVisibili as $fase)
+@php
+    $rowClass = '';
+
+    if ($fase->ordine && $fase->ordine->data_prevista_consegna) {
+
+        $oggi = \Carbon\Carbon::today();
+        $dataPrevista = \Carbon\Carbon::parse($fase->ordine->data_prevista_consegna);
+
+        // diff negativo = già scaduta
+        $diff = $oggi->diffInDays($dataPrevista, false);
+
+        if ($diff < -5) {
+            $rowClass = 'scaduta';
+        } elseif ($diff <= 3) {
+            $rowClass = 'warning-strong';
+        } elseif ($diff <= 5) {
+            $rowClass = 'warning-light';
+        }
+    }
+@endphp
+
+<tr id="fase-{{ $fase->id }}" class="{{ $rowClass }}">
                 <td>{{ $fase->priorita ?? '-' }}</td>
 <td id="operatore-{{ $fase->id }}">
     @foreach($fase->operatori as $op)
@@ -94,10 +118,6 @@
         </tbody>
     </table>
 
-    <form action="{{ route('operatore.logout') }}" method="POST">
-        @csrf
-        <button type="submit" class="btn btn-secondary">Logout</button>
-    </form>
 </div>
 
 <script>
