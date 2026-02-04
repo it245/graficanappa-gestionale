@@ -9,18 +9,16 @@ class DatabaseSeeder extends Seeder
     /**
      * Run the database seeds.
      */
-    public function run(): void
-    {
-        // Popola la tabella operatori
-        $this->call(OperatoreSeeder::class);
-
-        // Popola la tabella ordini e ordini_operatori
-        $this->call(OrdineSeeder::class);
-
-        // Popola le fasi per ogni ordine
-        $this->call(OrdineFaseSeeder::class);
-
-        // Popola eventuali pause degli operatori
-        $this->call(PausaOperatoreSeeder::class);
-    }
+public function run(): void
+{
+    $this->call([
+        RepartiSeeder::class,
+    ]);
+     $this->call([
+        FasiCatalogoSeeder::class,
+    ]);
+      $this->call([
+        OperatoreSeeder::class,
+    ]);
+}
 }

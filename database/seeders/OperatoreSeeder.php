@@ -1,8 +1,9 @@
 <?php
 namespace Database\Seeders;
+
 use Illuminate\Database\Seeder;
 use App\Models\Operatore;
-use Illuminate\Support\DB;
+use App\Models\Reparto;
 use Illuminate\Support\Facades\Hash;
 
 class OperatoreSeeder extends Seeder
@@ -39,38 +40,43 @@ class OperatoreSeeder extends Seeder
             ['reparto' => 'spedizione', 'nome' => 'FRANCESCO', 'cognome' => 'IULIANO'],
         ];
 
+        // Recupera l'ultimo codice operatore
         $ultimoCodice = Operatore::orderBy('codice_operatore','desc')->value('codice_operatore');
         $numero = $ultimoCodice ? (int) substr($ultimoCodice, -3) : 0;
 
         foreach ($operatori as $op) {
             $numero++;
             $nome = ucfirst(strtolower($op['nome']));
-             $cognome = ucfirst(strtolower($op['cognome']));
-         $iniziali=strtoupper($nome[0].$cognome[0]);
-         $codice= $iniziali.str_pad($numero,3,'0',STR_PAD_LEFT);
-        
+            $cognome = ucfirst(strtolower($op['cognome']));
+            $iniziali = strtoupper($nome[0].$cognome[0]);
+            $codice = $iniziali.str_pad($numero,3,'0',STR_PAD_LEFT);
+
+            // Trova l'ID del reparto
+            $reparto = Reparto::where('nome', $op['reparto'])->first();
+            if (!$reparto) {
+                $this->command->warn("Reparto non trovato: {$op['reparto']} - operatore {$nome} {$cognome} saltato");
+                continue;
+            }
 
             Operatore::create([
-                'nome' =>$nome,
-                'cognome' =>$cognome,
-                'codice_operatore' =>$codice,
+                'nome' => $nome,
+                'cognome' => $cognome,
+                'codice_operatore' => $codice,
                 'ruolo' => 'operatore',
-                'reparto' => $op['reparto'],
+                'reparto_id' => $reparto->id,
                 'attivo' => 1,
                 'password' => Hash::make('password123'),
             ]);
         }
 
-        
+        // Owner globale
         $numero++;
-
-        // Owner globale con tutti i reparti
         Operatore::create([
             'nome' => 'Antonio',
             'cognome' => 'Nappa',
             'codice_operatore' => 'OWN'.str_pad($numero,3,'0',STR_PAD_LEFT),
             'ruolo' => 'owner',
-            'reparto' => 'spedizione,digitale,fustella,legatoria,piegaincolla,plastificazione,prestampa,stampa a caldo,stampa offset,generico,finestre,esterno',
+            'reparto_id' => null, // Owner globale, senza reparto specifico
             'attivo' => 1,
             'password' => Hash::make('password123'),
         ]);

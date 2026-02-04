@@ -4,7 +4,7 @@
 <div class="container">
     <h2>Dashboard Operatore</h2>
     <p>Operatore: {{ session('operatore_nome') }}</p>
-    <p>Reparto: {{ session('operatore_reparto') }}</p>
+    <p>Reparto: {{ $operatore->reparto->nome}}</p>
 <form action="{{ route('operatore.logout') }}" method="POST">
         @csrf
         <button type="submit" class="btn btn-secondary">Logout</button>

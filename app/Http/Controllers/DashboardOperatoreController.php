@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\OrdineFase;
 use Illuminate\Support\Facades\DB;
-
+use App\Models\Reparto;
 class DashboardOperatoreController extends Controller
 {
     public function index(Request $request)
@@ -113,7 +113,7 @@ class DashboardOperatoreController extends Controller
             ];
 
 
-       $fasiVisibili = OrdineFase::whereIn('ordine_fasi.reparto', $reparti)
+       $fasiVisibili = OrdineFase::whereIn('ordine_fasi.reparto_id', $reparti)
     ->where('ordine_fasi.stato', '!=', 2)
     ->join('ordini', 'ordini.id', '=', 'ordine_fasi.ordine_id')
     ->select('ordine_fasi.*', 
