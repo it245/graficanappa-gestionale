@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\OrdineFase;
 use Illuminate\Support\Facades\DB;
-use App\Models\Reparto;
+
 class DashboardOperatoreController extends Controller
 {
     public function index(Request $request)
@@ -14,10 +14,14 @@ class DashboardOperatoreController extends Controller
         $operatore = auth()->guard('operatore')->user();
         if (!$operatore) abort(403, 'Accesso negato');
 
-        $reparti = array_map('trim', explode(',', $operatore->reparto));
+        // Recupera gli ID dei reparti dell'operatore
+        $reparti = $operatore->reparti->pluck('id')->toArray();
+        if (empty($reparti)) {
+            $reparti = []; // sicurezza
+        }
 
         // Mappa fasi → avviamento e copieh
-       $fasiInfo = [
+         $fasiInfo = [
   'accopp+fust' => ['avviamento' => 72, 'copieh' => 100],
             'ACCOPPIATURA.FOG.33.48INT' => ['avviamento' => 1, 'copieh' => 100],
             'ACCOPPIATURA.FOGLI' => ['avviamento' => 72, 'copieh' => 100],
@@ -112,30 +116,32 @@ class DashboardOperatoreController extends Controller
             'APPL.CORDONCINO0,035' => ['avviamento' => 0.02, 'copieh' => 50],
             ];
 
+        // Recupera le fasi visibili per i reparti dell'operatore
+        $fasiVisibili = OrdineFase::where('stato', '!=', 2)
+            ->whereHas('faseCatalogo', function ($q) use ($reparti) {
+                $q->whereIn('reparto_id', $reparti);
+            })
+            ->with(['ordine', 'faseCatalogo', 'operatori'])
+            ->get()
+            ->map(function ($fase) use ($fasiInfo) {
+                $qta_carta = $fase->ordine->qta_carta ?? 1;
+                $infoFase = $fasiInfo[$fase->fase] ?? ['avviamento' => 0, 'copieh' => 0];
 
-       $fasiVisibili = OrdineFase::whereIn('ordine_fasi.reparto_id', $reparti)
-    ->where('ordine_fasi.stato', '!=', 2)
-    ->join('ordini', 'ordini.id', '=', 'ordine_fasi.ordine_id')
-    ->select('ordine_fasi.*', 
-             DB::raw('DATEDIFF(ordini.data_prevista_consegna, ordini.data_registrazione) AS giorni_disponibili'))
-    ->with('ordine', 'faseCatalogo')
-    ->get()
-    ->map(function ($fase) use ($fasiInfo) {
-        $qta_carta = $fase->ordine->qta_carta ?: 1;
-        $infoFase = $fasiInfo[$fase->fase] ?? ['avviamento' => 0, 'copieh' => 0];
+                // Ore necessarie
+                $fase->ore = round($infoFase['avviamento'] + ($infoFase['copieh'] / $qta_carta), 2);
 
-        // Ore necessarie
-        $fase->ore = round($infoFase['avviamento'] + ($infoFase['copieh'] / $qta_carta), 2);
+                // Giorni disponibili dal DB
+                $giorni_disponibili = $fase->ordine ? 
+                    ($fase->ordine->data_prevista_consegna && $fase->ordine->data_registrazione ? 
+                        round((strtotime($fase->ordine->data_prevista_consegna) - strtotime($fase->ordine->data_registrazione)) / 86400) : 0) 
+                    : 0;
 
-        // Giorni disponibili dal DB
-        $giorni_disponibili = $fase->getAttribute('giorni_disponibili') ?: 0;
+                // Priorità combinata
+                $fase->priorita = round($giorni_disponibili + ($fase->ore / 24), 2);
 
-        // Priorità combinata
-        $fase->priorita = round($giorni_disponibili + ($fase->ore / 24), 2);
-
-        return $fase;
-    })
-    ->sortBy('priorita');
+                return $fase;
+            })
+            ->sortBy('priorita');
 
         return view('operatore.dashboard', compact('fasiVisibili', 'operatore'));
     }

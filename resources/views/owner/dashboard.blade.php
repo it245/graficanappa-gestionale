@@ -13,13 +13,69 @@
     <div class="mb-3 d-flex gap-2 align-items-center">
         <form action="{{ route('owner.importOrdini') }}" method="POST" enctype="multipart/form-data">
             @csrf
-            <input type="file" name="file" accept=".xlsx,.xls" required>
+            <input type="file" name="file" required>
             <button class="btn btn-primary">Importa Ordini</button>
         </form>
 
         <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#aggiungiOperatoreModal">
             Aggiungi Operatore
         </button>
+        <div class="modal fade" id="aggiungiOperatoreModal" tabindex="-1" aria-labelledby="aggiungiOperatoreModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="POST" action="{{ route('owner.aggiungiOperatore') }}">
+      @csrf
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="aggiungiOperatoreModalLabel">Aggiungi Operatore</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+            <div class="mb-3">
+                <label class="form-label">Nome</label>
+                <input type="text" name="nome" id="nome" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Cognome</label>
+                <input type="text" name="cognome" id="cognome" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Ruolo</label>
+                <select name="ruolo" class="form-select" required>
+                    <option value="operatore">Operatore</option>
+                    <option value="owner">Owner</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Codice operatore</label>
+                <input type="text" id="codice_operatore" class="form-control" value="{{ $prossimoCodice }}" data-numero="{{ $prossimoNumero}}" disabled>
+                <small class="text-muted">Il codice sarà confermato alla creazione</small>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Reparto Principale</label>
+                <select name="reparto_principale" class="form-select" required>
+                    @foreach($reparti as $id => $rep)
+                        <option value="{{ $id }}">{{ $rep }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Reparto Secondario (facoltativo)</label>
+                <select name="reparto_secondario" class="form-select">
+                    <option value="">-- Nessuno --</option>
+                    @foreach($reparti as $id => $rep)
+                        <option value="{{ $id }}">{{ $rep }}</option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">Aggiungi</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
 
         <a href="{{ route('owner.fasiTerminate') }}"
            class="btn btn-primary"
@@ -143,7 +199,7 @@
                 </td>
 
                 <td>{{ $fase->faseCatalogo->nome ?? '-' }}</td>
-                <td>{{ $fase->reparto ?? '-' }}</td>
+                <td>{{ $fase->faseCatalogo->reparto->nome ?? '-' }}</td>
 
                 <td>
                     @forelse($fase->operatori as $op)
@@ -188,5 +244,36 @@ function aggiornaCampo(faseId, campo, valore){
         if (!d.success) alert('Errore salvataggio');
     });
 }
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const nomeInput = document.querySelector('input[name="nome"]');
+    const cognomeInput = document.querySelector('input[name="cognome"]');
+    const codiceInput = document.getElementById('codice_operatore');
+
+    if (!nomeInput || !cognomeInput || !codiceInput) return;
+
+    const numero = codiceInput.dataset.numero;
+
+    function aggiornaCodice() {
+        const nome = nomeInput.value.trim();
+        const cognome = cognomeInput.value.trim();
+
+        if (nome && cognome) {
+            const iniziali =
+                nome.charAt(0).toUpperCase() +
+                cognome.charAt(0).toUpperCase();
+
+            codiceInput.value =
+                iniziali + numero.toString().padStart(3, '0');
+        } else {
+            codiceInput.value =
+                '__' + numero.toString().padStart(3, '0');
+        }
+    }
+
+    nomeInput.addEventListener('input', aggiornaCodice);
+    cognomeInput.addEventListener('input', aggiornaCodice);
+});
 </script>
 @endsection

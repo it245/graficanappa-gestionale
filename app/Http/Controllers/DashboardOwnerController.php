@@ -149,15 +149,17 @@ class DashboardOwnerController extends Controller
 })
 ->sortBy('priorita');
 
-$ultimoCodice = Operatore::orderBy('codice_operatore','desc')
-->value('codice_operatore');
+// Trova l'ultimo numero progressivo già usato
+$ultimoNumero = Operatore::selectRaw('CAST(RIGHT(codice_operatore, 3) AS UNSIGNED) as numero')
+    ->orderByDesc('numero')
+    ->value('numero');
 
-    $prossimoNumero=$ultimoCodice
-    ? (int) substr($ultimoCodice, -3) + 1
-    : 1;
-$prossimoCodice='__'.str_pad($prossimoNumero,3,'0',STR_PAD_LEFT);
+$prossimoNumero = $ultimoNumero ? $ultimoNumero + 1 : 1;
+
+// Codice temporaneo con iniziali placeholder "__"
+$prossimoCodice = '__' . str_pad($prossimoNumero, 3, '0', STR_PAD_LEFT);
 $reparti=Reparto::orderBy('nome')
-->pluck('nome');
+->pluck('nome','id');
         return view('owner.dashboard', compact('fasi','prossimoNumero','prossimoCodice','reparti'));
     }
 
@@ -187,58 +189,87 @@ public function aggiungiOperatore(Request $request)
         'nome' => 'required|string',
         'cognome' => 'required|string',
         'ruolo' => 'required|in:operatore,owner',
-        'reparto' => 'required|array',
+        'reparto_principale' => 'required|exists:reparti,id',
+        'reparto_secondario' => 'nullable|exists:reparti,id',
     ]);
 
-    // 🔢 ultimo numero progressivo globale (ultime 3 cifre)
-    $ultimoCodice = Operatore::orderBy('codice_operatore', 'desc')
-        ->value('codice_operatore');
+    // 🔢 Numero progressivo GLOBALE
+    $ultimoNumero = Operatore::selectRaw(
+            'CAST(RIGHT(codice_operatore, 3) AS UNSIGNED) as numero'
+        )
+        ->orderByDesc('numero')
+        ->value('numero');
 
-    $numero = $ultimoCodice
-        ? (int) substr($ultimoCodice, -3)
-        : 0;
+    $numero = $ultimoNumero ? $ultimoNumero + 1 : 1;
 
-    $numero++;
-
-    // ✏️ normalizzazione nome
+    // 🔠 Nome + Cognome
     $nome = ucfirst(strtolower($request->nome));
     $cognome = ucfirst(strtolower($request->cognome));
-
-    // 🔠 iniziali
     $iniziali = strtoupper($nome[0] . $cognome[0]);
 
-    // 🆔 codice finale
     $codice = $iniziali . str_pad($numero, 3, '0', STR_PAD_LEFT);
 
-    // 🏭 reparti multipli
-    $repartiPuliti= array_filter(array_unique($request->reparto));
-    $repartoString = implode(',', $request->reparto);
-
-    Operatore::create([
+    // ✅ Creazione operatore
+    $operatore = Operatore::create([
         'nome' => $nome,
         'cognome' => $cognome,
         'codice_operatore' => $codice,
         'ruolo' => $request->ruolo,
-        'reparto' => $repartoString,
         'attivo' => 1,
     ]);
 
-    return redirect()->back()->with('success', "Operatore $codice aggiunto correttamente");
+    // 🔗 Associazione reparti (pivot)
+    $reparti = array_filter([
+        $request->reparto_principale,
+        $request->reparto_secondario
+    ]);
+
+    $operatore->reparti()->sync($reparti);
+
+    return redirect()->back()
+        ->with('success', "Operatore $codice aggiunto correttamente");
 }
     // Import ordini da file Excel
-    public function importOrdini(Request $request)
-    {
-        $request->validate([
-            'file' => 'required|file|mimes:xlsx,xls'
-        ]);
+   public function importOrdini(Request $request)
+{
+    // Controllo ruolo (puoi togliere il dd in produzione)
+    \Log::info('Utente import ordini ruolo: ' . session('operatore_ruolo'));
 
-        try {
-            Excel::import(new OrdiniImport, $request->file('file'));
-            return redirect()->back()->with('success', 'Ordini importati correttamente.');
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Errore importazione: '.$e->getMessage());
-        }
+    // Validazione file
+    $request->validate([
+        'file' => 'required|file|mimes:xlsx,xls'
+    ]);
+
+    $file = $request->file('file');
+
+    if (!$file->isValid()) {
+        \Log::error('File upload non valido.');
+        return redirect()->back()->with('error', 'File non valido.');
     }
+
+    try {
+        // Log prima dell'import
+        \Log::info('Inizio import ordini da file: ' . $file->getClientOriginalName());
+
+        // Import Excel
+        Excel::import(new \App\Imports\OrdiniImport, $file);
+
+        \Log::info('Import completato correttamente');
+
+        return redirect()->back()->with('success', 'Ordini importati correttamente.');
+
+    } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
+        // Errori di validazione Excel
+        $failures = $e->failures();
+        foreach ($failures as $failure) {
+            \Log::error("Riga {$failure->row()}: " . implode(', ', $failure->errors()));
+        }
+        return redirect()->back()->with('error', 'Errore di validazione Excel. Controlla il log.');
+    } catch (\Exception $e) {
+        \Log::error('Errore generico import Excel: ' . $e->getMessage());
+        return redirect()->back()->with('error', 'Errore importazione: ' . $e->getMessage());
+    }
+}
 
    public function fasiTerminate()
 {

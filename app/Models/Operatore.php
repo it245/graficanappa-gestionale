@@ -50,4 +50,8 @@ public function getRepartiArrayAttribute()
     return array_filter(explode(',', $this->reparto));
 }
 
+public function reparti(){
+    return $this->belongsToMany(Reparto::class,'operatore_reparto','operatore_id','reparto_id')->withTimeStamps();
+}
+
 }

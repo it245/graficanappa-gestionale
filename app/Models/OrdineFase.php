@@ -53,6 +53,17 @@ class OrdineFase extends Model
             ->withTimestamps();
     }
 
+    public function reparto()
+{
+    return $this->hasOneThrough(
+        Reparto::class,         // modello finale
+        FasiCatalogo::class,    // modello intermediario
+        'id',                   // chiave primaria di fasi_catalogo
+        'id',                   // chiave primaria di reparto
+        'fase_catalogo_id',     // chiave locale in ordine_fasi
+        'reparto_id'            // chiave esterna in fasi_catalogo
+    );
+}
     /* ===================== LOGICA ===================== */
 
     

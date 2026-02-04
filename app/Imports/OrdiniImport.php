@@ -51,19 +51,21 @@ class OrdiniImport implements ToModel, WithHeadingRow
 
     // --- 3. LOGICA FASI CON DEDUPLICAZIONE ---
     $dataFase = [
-        'ordine_id'   => $ordine->id,
-        'fase'        => $faseNome,
-        'reparto'     => $repartoNome,
-        'qta_fase'    => $row['qtafase'] ?? 0,
-        'um'          => $row['umfase'] ?? ($row['um'] ?? 'FG'),
-        'fase_catalogo_id' => FasiCatalogo::firstOrCreate(
-            ['nome' => $faseNome],
-            ['reparto_id' => Reparto::firstOrCreate(
-                ['nome' => $repartoNome], 
-                ['codice' => strtoupper(substr($repartoNome,0,3)).rand(10,99)]
-            )->id]
-        )->id,
-    ];
+    'ordine_id'   => $ordine->id,
+    'fase'        => $faseNome,
+    //'reparto'     => $repartoNome, // <- rimuovi questa riga
+    'reparto_id'  => Reparto::firstOrCreate(
+        ['nome' => $repartoNome]
+    )->id,
+    'qta_fase'    => $row['qtafase'] ?? 0,
+    'um'          => $row['umfase'] ?? ($row['um'] ?? 'FG'),
+    'fase_catalogo_id' => FasiCatalogo::firstOrCreate(
+        ['nome' => $faseNome],
+        ['reparto_id' => Reparto::firstOrCreate(
+            ['nome' => $repartoNome]
+        )->id]
+    )->id,
+];
 
     if ($tipo === 'monofase') {
         $faseEsistente = OrdineFase::where('ordine_id', $ordine->id)
