@@ -185,6 +185,7 @@ $reparti=Reparto::orderBy('nome')
 
 public function aggiungiOperatore(Request $request)
 {
+    // ✅ Validazione input
     $request->validate([
         'nome' => 'required|string',
         'cognome' => 'required|string',
@@ -193,7 +194,7 @@ public function aggiungiOperatore(Request $request)
         'reparto_secondario' => 'nullable|exists:reparti,id',
     ]);
 
-    // 🔢 Numero progressivo GLOBALE
+    // 🔢 Numero progressivo globale per il codice operatore
     $ultimoNumero = Operatore::selectRaw(
             'CAST(RIGHT(codice_operatore, 3) AS UNSIGNED) as numero'
         )
@@ -202,11 +203,10 @@ public function aggiungiOperatore(Request $request)
 
     $numero = $ultimoNumero ? $ultimoNumero + 1 : 1;
 
-    // 🔠 Nome + Cognome
+    // 🔠 Formattazione nome e cognome
     $nome = ucfirst(strtolower($request->nome));
     $cognome = ucfirst(strtolower($request->cognome));
     $iniziali = strtoupper($nome[0] . $cognome[0]);
-
     $codice = $iniziali . str_pad($numero, 3, '0', STR_PAD_LEFT);
 
     // ✅ Creazione operatore
@@ -223,8 +223,11 @@ public function aggiungiOperatore(Request $request)
         $request->reparto_principale,
         $request->reparto_secondario
     ]);
-
     $operatore->reparti()->sync($reparti);
+
+    // 🟢 Aggiorna il reparto principale nella tabella operatori
+    $operatore->reparto_id = $request->reparto_principale;
+    $operatore->save();
 
     return redirect()->back()
         ->with('success', "Operatore $codice aggiunto correttamente");

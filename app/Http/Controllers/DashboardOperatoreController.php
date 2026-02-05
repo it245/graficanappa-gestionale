@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\OrdineFase;
-use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class DashboardOperatoreController extends Controller
 {
@@ -14,14 +14,16 @@ class DashboardOperatoreController extends Controller
         $operatore = auth()->guard('operatore')->user();
         if (!$operatore) abort(403, 'Accesso negato');
 
-        // Recupera gli ID dei reparti dell'operatore
+        // Recupera gli ID dei reparti dell'operatore (molti-a-molti)
         $reparti = $operatore->reparti->pluck('id')->toArray();
+
+        // Sicurezza: se nessun reparto
         if (empty($reparti)) {
-            $reparti = []; // sicurezza
+            $reparti = [];
         }
 
-        // Mappa fasi → avviamento e copieh
-         $fasiInfo = [
+        // Mappa fasi → ore avviamento e copieh
+        $fasiInfo = [
   'accopp+fust' => ['avviamento' => 72, 'copieh' => 100],
             'ACCOPPIATURA.FOG.33.48INT' => ['avviamento' => 1, 'copieh' => 100],
             'ACCOPPIATURA.FOGLI' => ['avviamento' => 72, 'copieh' => 100],
@@ -127,13 +129,12 @@ class DashboardOperatoreController extends Controller
                 $qta_carta = $fase->ordine->qta_carta ?? 1;
                 $infoFase = $fasiInfo[$fase->fase] ?? ['avviamento' => 0, 'copieh' => 0];
 
-                // Ore necessarie
-                $fase->ore = round($infoFase['avviamento'] + ($infoFase['copieh'] / $qta_carta), 2);
+                // Calcola ore necessarie
+                $fase->ore = round($infoFase['avviamento'] + ($infoFase['copieh'] / max($qta_carta, 1)), 2);
 
                 // Giorni disponibili dal DB
-                $giorni_disponibili = $fase->ordine ? 
-                    ($fase->ordine->data_prevista_consegna && $fase->ordine->data_registrazione ? 
-                        round((strtotime($fase->ordine->data_prevista_consegna) - strtotime($fase->ordine->data_registrazione)) / 86400) : 0) 
+                $giorni_disponibili = $fase->ordine && $fase->ordine->data_prevista_consegna && $fase->ordine->data_registrazione
+                    ? round((strtotime($fase->ordine->data_prevista_consegna) - strtotime($fase->ordine->data_registrazione)) / 86400)
                     : 0;
 
                 // Priorità combinata

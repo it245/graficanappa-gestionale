@@ -3,19 +3,26 @@
 @section('content')
 <div class="container">
     <h2>Dashboard Operatore</h2>
-    <p>Operatore: {{ session('operatore_nome') }}</p>
-    <p>Reparto: {{ $operatore->reparto->nome}}</p>
-<form action="{{ route('operatore.logout') }}" method="POST">
+    <p>Operatore: {{ $operatore->nome }}</p>
+    <p>Reparti: 
+        @if($operatore->reparti->isEmpty())
+            Nessun reparto assegnato
+        @else
+            {{ $operatore->reparti->pluck('nome')->join(', ') }}
+        @endif
+    </p>
+
+    <form action="{{ route('operatore.logout') }}" method="POST" class="mb-3">
         @csrf
         <button type="submit" class="btn btn-secondary">Logout</button>
     </form>
-    <h4>Fasi visibili</h4>
 
+    <h4>Fasi visibili</h4>
     <table class="table table-bordered table-sm">
         <thead>
             <tr>
                 <th>Priorità</th>
-                <th>Operatore</th>
+                <th>Operatori</th>
                 <th>Fase</th>
                 <th>Azioni</th>
                 <th>Stato</th>
@@ -38,86 +45,85 @@
             </tr>
         </thead>
         <tbody>
-           @foreach($fasiVisibili as $fase)
-@php
-    $rowClass = '';
+            @foreach($fasiVisibili as $fase)
+                @php
+                    $rowClass = '';
+                    if ($fase->ordine && $fase->ordine->data_prevista_consegna) {
+                        $oggi = \Carbon\Carbon::today();
+                        $dataPrevista = \Carbon\Carbon::parse($fase->ordine->data_prevista_consegna);
+                        $diff = $oggi->diffInDays($dataPrevista, false);
 
-    if ($fase->ordine && $fase->ordine->data_prevista_consegna) {
+                        if ($diff < -5) $rowClass = 'scaduta';
+                        elseif ($diff <= 3) $rowClass = 'warning-strong';
+                        elseif ($diff <= 5) $rowClass = 'warning-light';
+                    }
+                @endphp
 
-        $oggi = \Carbon\Carbon::today();
-        $dataPrevista = \Carbon\Carbon::parse($fase->ordine->data_prevista_consegna);
+                <tr id="fase-{{ $fase->id }}" class="{{ $rowClass }}">
+                    <td>{{ $fase->priorita }}</td>
 
-        // diff negativo = già scaduta
-        $diff = $oggi->diffInDays($dataPrevista, false);
+                    <!-- Lista operatori -->
+                    <td id="operatore-{{ $fase->id }}">
+                        @foreach($fase->operatori as $op)
+                            {{ $op->nome }} ({{ $op->pivot->data_inizio ? \Carbon\Carbon::parse($op->pivot->data_inizio)->format('d/m/Y H:i:s') : '-' }})<br>
+                        @endforeach
+                    </td>
 
-        if ($diff < -5) {
-            $rowClass = 'scaduta';
-        } elseif ($diff <= 3) {
-            $rowClass = 'warning-strong';
-        } elseif ($diff <= 5) {
-            $rowClass = 'warning-light';
-        }
-    }
-@endphp
+                    <td>{{ $fase->faseCatalogo->nome ?? '-' }}</td>
 
-<tr id="fase-{{ $fase->id }}" class="{{ $rowClass }}">
-                <td>{{ $fase->priorita ?? '-' }}</td>
-<td id="operatore-{{ $fase->id }}">
-    @foreach($fase->operatori as $op)
-        {{ $op->nome }} ({{ $op->pivot->data_inizio ? \Carbon\Carbon::parse($op->pivot->data_inizio)->format('d/m/Y H:i:s') : '-' }})<br>
-    @endforeach
-</td>               
-<td>{{ $fase->faseCatalogo->nome ?? '-' }}</td>
-                
-<td>
-    <div class="form-check form-check-inline">
-        <input class="form-check-input" type="checkbox" id="avvia-{{ $fase->id }}" 
-               onchange="aggiornaStato({{ $fase->id }}, 'avvia', this.checked)">
-        <label class="form-check-label" for="avvia-{{ $fase->id }}">Avvia</label>
-    </div>
-    <div class="form-check form-check-inline">
-        <input class="form-check-input" type="checkbox" id="pausa-{{ $fase->id }}" 
-               onchange="gestisciPausa({{ $fase->id }}, this.checked)">
-        <label class="form-check-label" for="pausa-{{ $fase->id }}">Pausa</label>
-    </div>
-    <div class="form-check form-check-inline">
-        <input class="form-check-input" type="checkbox" id="termina-{{ $fase->id }}" 
-               onchange="aggiornaStato({{ $fase->id }}, 'termina', this.checked)">
-        <label class="form-check-label" for="termina-{{ $fase->id }}">Termina</label>
-    </div>
-</td>
-<td id="stato-{{ $fase->id }}">{{ $fase->stato ?? '-' }}</td>
-<td>{{ $fase->ordine->commessa ?? '-' }}</td>
-<td>{{ $fase->ordine->data_registrazione ? \Carbon\Carbon::parse($fase->ordine->data_registrazione)->format('d/m/Y') : '-' }}</td>
-<td>{{ $fase->ordine->cliente_nome ?? '-' }}</td>
-<td>{{ $fase->ordine->cod_art ?? '-' }}</td>
-<td>{{ $fase->ordine->descrizione ?? '-' }}</td>
-<td>{{ $fase->ordine->qta_richiesta ?? '-' }}</td>
-<td>{{ $fase->ordine->um ?? '-' }}</td>
-<td>{{ $fase->ordine->data_prevista_consegna ? \Carbon\Carbon::parse($fase->ordine->data_prevista_consegna)->format('d/m/Y') : '-' }}</td>
+                    <!-- Checkbox azioni -->
+                    <td>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="avvia-{{ $fase->id }}" 
+                                   onchange="aggiornaStato({{ $fase->id }}, 'avvia', this.checked)">
+                            <label class="form-check-label" for="avvia-{{ $fase->id }}">Avvia</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="pausa-{{ $fase->id }}" 
+                                   onchange="gestisciPausa({{ $fase->id }}, this.checked)">
+                            <label class="form-check-label" for="pausa-{{ $fase->id }}">Pausa</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="termina-{{ $fase->id }}" 
+                                   onchange="aggiornaStato({{ $fase->id }}, 'termina', this.checked)">
+                            <label class="form-check-label" for="termina-{{ $fase->id }}">Termina</label>
+                        </div>
+                    </td>
 
-<td>
-    <input type="text" class="form-control form-control-sm"
-           value="{{ $fase->qta_prod ?? '' }}"
-           onblur="aggiornaCampo({{ $fase->id }}, 'qta_prod', this.value)">
-</td>
-<td>{{ $fase->ordine->cod_carta ?? '-' }}</td>
-<td>{{ $fase->ordine->carta ?? '-' }}</td>
-<td>{{ $fase->ordine->qta_carta ?? '-' }}</td>
-<td>{{ $fase->ordine->UM_carta ?? '-' }}</td>
+                    <td id="stato-{{ $fase->id }}">{{ $fase->stato ?? '-' }}</td>
+                    <td>{{ $fase->ordine->commessa ?? '-' }}</td>
+                    <td>{{ $fase->ordine->data_registrazione ? \Carbon\Carbon::parse($fase->ordine->data_registrazione)->format('d/m/Y') : '-' }}</td>
+                    <td>{{ $fase->ordine->cliente_nome ?? '-' }}</td>
+                    <td>{{ $fase->ordine->cod_art ?? '-' }}</td>
+                    <td>{{ $fase->ordine->descrizione ?? '-' }}</td>
+                    <td>{{ $fase->ordine->qta_richiesta ?? '-' }}</td>
+                    <td>{{ $fase->ordine->um ?? '-' }}</td>
+                    <td>{{ $fase->ordine->data_prevista_consegna ? \Carbon\Carbon::parse($fase->ordine->data_prevista_consegna)->format('d/m/Y') : '-' }}</td>
 
-<td>
-    <textarea style="width: 300px; height:60px;"
-              onblur="aggiornaCampo({{ $fase->id }}, 'note', this.value)">{{ $fase->note ?? '' }}</textarea>
-</td>
+                    <!-- Qta Prodotta -->
+                    <td>
+                        <input type="text" class="form-control form-control-sm"
+                               value="{{ $fase->qta_prod ?? '' }}"
+                               onblur="aggiornaCampo({{ $fase->id }}, 'qta_prod', this.value)">
+                    </td>
 
-<td>{{ $fase->ore ?? '-' }}</td>
-<td id="timeout-{{ $fase->id }}">{{ $fase->timeout ?? '-' }}</td>
-</tr>
-@endforeach
+                    <td>{{ $fase->ordine->cod_carta ?? '-' }}</td>
+                    <td>{{ $fase->ordine->carta ?? '-' }}</td>
+                    <td>{{ $fase->ordine->qta_carta ?? '-' }}</td>
+                    <td>{{ $fase->ordine->UM_carta ?? '-' }}</td>
+
+                    <!-- Note -->
+                    <td>
+                        <textarea style="width: 300px; height:60px;"
+                                  onblur="aggiornaCampo({{ $fase->id }}, 'note', this.value)">{{ $fase->note ?? '' }}</textarea>
+                    </td>
+
+                    <td>{{ $fase->ore ?? '-' }}</td>
+                    <td id="timeout-{{ $fase->id }}">{{ $fase->timeout ?? '-' }}</td>
+                </tr>
+            @endforeach
         </tbody>
     </table>
-
 </div>
 
 <script>
@@ -146,6 +152,7 @@ function aggiornaStato(faseId, azione, checked){
         if(data.success){
             document.getElementById('stato-'+faseId).innerText = data.nuovo_stato;
 
+            // Aggiorna operatori
             let opCell = document.getElementById('operatore-'+faseId);
             opCell.innerHTML = '';
             data.operatori.forEach(op=>{

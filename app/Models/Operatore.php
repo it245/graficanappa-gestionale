@@ -39,7 +39,7 @@ class Operatore extends Authenticatable
     }
     public function reparto()
 {
-    return $this->belongsTo(Reparto::class);
+    return $this->belongsTo(Reparto::class,'reparto_id');
 }
 
 public function getRepartiArrayAttribute()
