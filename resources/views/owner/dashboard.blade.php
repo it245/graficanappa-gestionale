@@ -21,7 +21,7 @@
             margin-right:4px
         }
         tr.selected, th.selected{
-            outline: 1px solid #3399ff,
+            outline: 1px solid #3399ff;
         }
         .selection-box{
             position:absolute;
@@ -51,6 +51,81 @@
         .action-icons img:hover{
             transform: scale(1.2);
         }
+     /* Contenitore filtri */
+/* FILTRI */
+#filterBox {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: flex-start;
+    margin-left: 10px;
+}
+
+/* input normali */
+#filterBox input {
+    min-height: 38px;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+/* Choices.js container */
+#filterBox .choices {
+    display: inline-flex;
+    align-items: center;
+}
+
+/* riquadro interno Choices */
+#filterBox .choices__inner {
+    min-height: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    box-sizing: border-box;
+}
+
+/* larghezze */
+#filterStato + .choices { width: 120px; }
+#filterFase + .choices { width: 250px; }
+#filterReparto + .choices { width: 200px; }
+
+/* dropdown */
+.choices__list--dropdown {
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+/* larghezza fissa dei filtri */
+#filterStato + .choices,
+#filterFase + .choices,
+#filterReparto + .choices {
+    flex-direction: column;
+    align-items: stretch;
+}
+
+/* contenitore interno */
+#filterBox .choices__inner {
+    height: auto !important;
+    min-height: 38px;
+    align-items: flex-start;
+}
+
+/* lista selezioni → VERTICALE */
+#filterBox .choices__list--multiple {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+/* ogni selezione a tutta larghezza */
+#filterBox .choices__item--selectable {
+    width: 100%;
+    box-sizing: border-box;
+}
+/* massimo 3 selezioni visibili */
+#filterBox .choices__list--multiple .choices__item:nth-child(n+10) {
+    display: none;
+}
     </style>
 
     <h2>Dashboard Owner</h2>
@@ -70,6 +145,13 @@
             </label>
             <input id="file-upload" type="file" name="file" style="display:none" onchange="this.form.submit()">
         </form>
+        {{-- ICONA FILTRO --}}
+        <img
+            src="{{ asset('images/icons8-filtro-50.png') }}"
+            id="toggleFilter"
+            title="Mostra / Nascondi filtri"
+            alt="Filtri"
+        >
 
         {{-- Aggiungi Operatore --}}
         <a href="#" data-bs-toggle="modal" data-bs-target="#aggiungiOperatoreModal" title="Aggiungi Operatore">
@@ -87,6 +169,32 @@
         </button>
 
     </div>
+    
+        {{-- FILTRI --}}
+<div class="mb-3" id="filterBox" style="display:none;">
+    <!-- Filtri multi-valore (virgola) -->
+    <input type="text" id="filterCommessa" class="form-control form-control-sm" placeholder="Filtra Commessa (più valori ,)" style="max-width:200px;">
+    <input type="text" id="filterCliente" class="form-control form-control-sm" placeholder="Filtra Cliente (più valori ,)" style="max-width:200px;">
+    <input type="text" id="filterDescrizione" class="form-control form-control-sm" placeholder="Filtra Descrizione (più valori ,)" style="max-width:300px;">
+
+    <!-- Filtri multi-selezione -->
+   <select id="filterStato" multiple>
+    <option value="0">0</option>
+    <option value="1">1</option>
+</select>
+
+<select id="filterFase" multiple>
+    @foreach($fasiCatalogo as $faseCat)
+        <option value="{{ $faseCat->nome }}">{{ $faseCat->nome }}</option>
+    @endforeach
+</select>
+
+<select id="filterReparto" multiple>
+    @foreach($reparti as $id => $rep)
+        <option value="{{ $rep }}">{{ $rep }}</option>
+    @endforeach
+</select>
+</div>
 
     {{-- MODALE AGGIUNGI OPERATORE --}}
     <div class="modal fade" id="aggiungiOperatoreModal" tabindex="-1" aria-labelledby="aggiungiOperatoreModalLabel" aria-hidden="true">
@@ -234,7 +342,8 @@
         </table>
     </div>
 </div>
-
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
 {{-- JS --}}
 <script>
 function aggiornaCampo(faseId, campo, valore){
@@ -328,6 +437,116 @@ document.addEventListener('DOMContentLoaded', () => {
         printWindow.document.write('</table></body></html>');
         printWindow.document.close(); printWindow.print();
     });
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Inizializza Choices.js
+    const choicesOptions = {
+        removeItemButton: true,
+        searchEnabled: true,
+        itemSelectText: '',
+        placeholder:true,
+    };
+    const choiceStato = new Choices('#filterStato',{...choicesOptions,placeholderValue:'Seleziona Stato'});
+    const choiceFase = new Choices('#filterFase',{...choicesOptions,placeholderValue:'Seleziona Fase'})
+    const choiceReparto = new Choices('#filterReparto',{...choicesOptions,placeholderValue:'Seleziona Reparto'})
+
+    const toggleFilter = document.getElementById('toggleFilter');
+    const filterBox = document.getElementById('filterBox');
+
+    const fCommessa = document.getElementById('filterCommessa');
+    const fCliente = document.getElementById('filterCliente');
+    const fDescrizione = document.getElementById('filterDescrizione');
+    const fStato = document.getElementById('filterStato');
+    const fFase = document.getElementById('filterFase');
+    const fReparto = document.getElementById('filterReparto');
+
+    const rows = Array.from(document.querySelectorAll('table tbody tr'));
+
+    const rowData = rows.map(row => ({
+        row,
+        commessa: row.cells[0].innerText.toLowerCase(),
+        cliente: row.cells[1].innerText.toLowerCase(),
+        descrizione: row.cells[3].innerText.toLowerCase(),
+        stato: row.cells[20].innerText.toLowerCase(), // ora contiene "1" o "2"
+        fase: row.cells[13].innerText.toLowerCase(),
+        reparto: row.cells[14].innerText.toLowerCase()
+    }));
+
+    function parseValues(input) {
+        return input.split(',').map(v => v.trim().toLowerCase()).filter(v => v);
+    }
+
+    function getSelectedOptions(select) {
+        return Array.from(select.selectedOptions).map(opt => opt.value.toLowerCase());
+    }
+
+    function filtra() {
+        const commesse = parseValues(fCommessa.value);
+        const clienti = parseValues(fCliente.value);
+        const descrizioni = parseValues(fDescrizione.value);
+        const stati = getSelectedOptions(fStato);
+        const fasi = getSelectedOptions(fFase);
+        const reparti = getSelectedOptions(fReparto);
+
+        requestAnimationFrame(() => {
+            rowData.forEach(data => {
+                let match = true;
+                if(commesse.length) match = match && commesse.some(v => data.commessa.includes(v));
+                if(clienti.length) match = match && clienti.some(v => data.cliente.includes(v));
+                if(descrizioni.length) match = match && descrizioni.some(v => data.descrizione.includes(v));
+                if(stati.length) match = match && stati.includes(data.stato);
+                if(fasi.length) match = match && fasi.includes(data.fase);
+                if(reparti.length) match = match && reparti.includes(data.reparto);
+                data.row.style.display = match ? '' : 'none';
+            });
+        });
+    }
+
+    function debounce(func, delay) {
+        let timeout;
+        return function() {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, arguments), delay);
+        }
+    }
+
+    const filtraDebounced = debounce(filtra, 100);
+
+    fCommessa.addEventListener('input', filtraDebounced);
+    fCliente.addEventListener('input', filtraDebounced);
+    fDescrizione.addEventListener('input', filtraDebounced);
+    fStato.addEventListener('change', filtraDebounced);
+    fFase.addEventListener('change', filtraDebounced);
+    fReparto.addEventListener('change', filtraDebounced);
+
+    if (toggleFilter) {
+        toggleFilter.addEventListener('click', () => {
+            if (filterBox.style.display === 'none') {
+                filterBox.style.display = 'flex';
+                filterBox.style.opacity = 0;
+                filterBox.style.transform = 'translateY(-10px)';
+                setTimeout(() => {
+                    filterBox.style.opacity = 1;
+                    filterBox.style.transform = 'translateY(0)';
+                }, 10);
+            } else {
+                filterBox.style.opacity = 0;
+                filterBox.style.transform = 'translateY(-10px)';
+                setTimeout(() => {
+                    filterBox.style.display = 'none';
+                    fCommessa.value = '';
+                    fCliente.value = '';
+                    fDescrizione.value = '';
+                    choiceStato.removeActiveItems();
+                    choiceFase.removeActiveItems();
+                    choiceReparto.removeActiveItems();
+                    rowData.forEach(data => data.row.style.display = '');
+                }, 300);
+            }
+        });
+    }
 });
 </script>
 @endsection

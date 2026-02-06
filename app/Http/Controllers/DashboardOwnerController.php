@@ -10,7 +10,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\OrdiniImport;
 use Illuminate\Support\Facades\DB;
 use App\Models\Reparto;
-
+use App\Models\FasiCatalogo;
 class DashboardOwnerController extends Controller
 {
     // Mostra tutte le fasi e ordini con calcolo ore e priorità
@@ -160,28 +160,52 @@ $prossimoNumero = $ultimoNumero ? $ultimoNumero + 1 : 1;
 $prossimoCodice = '__' . str_pad($prossimoNumero, 3, '0', STR_PAD_LEFT);
 $reparti=Reparto::orderBy('nome')
 ->pluck('nome','id');
-        return view('owner.dashboard', compact('fasi','prossimoNumero','prossimoCodice','reparti'));
+$fasiCatalogo = fasiCatalogo::all();
+        return view('owner.dashboard', compact('fasi','prossimoNumero','prossimoCodice','reparti','fasiCatalogo'));
     }
 
-    // Aggiorna campi qta_prod e note
-    public function aggiornaCampo(Request $request)
-    {
-        $request->validate([
-            'fase_id' => 'required|exists:ordine_fasi,id',
-            'campo' => 'required|string|in:qta_prod,note',
-            'valore' => 'nullable'
-        ]);
 
-        $fase = OrdineFase::find($request->fase_id);
-        if (!$fase) {
-            return response()->json(['success' => false, 'messaggio' => 'Fase non trovata']);
+public function aggiornaCampo(Request $request)
+{
+    $request->validate([
+        'fase_id' => 'required|exists:ordine_fasi,id',
+        'campo' => 'required|string',
+        'valore' => 'nullable'
+    ]);
+
+    $fase = OrdineFase::find($request->fase_id);
+    if (!$fase) {
+        return response()->json(['success' => false, 'messaggio' => 'Fase non trovata']);
+    }
+
+    $campo = $request->campo;
+    $valore = $request->valore;
+
+    $campiPermessi = [
+        'cliente_nome', 'cod_art', 'descrizione', 'qta_richiesta', 'um', 'priorita',
+        'data_registrazione', 'data_prevista_consegna', 'cod_carta', 'carta', 'qta_carta', 'UM_carta',
+        'qta_prod', 'note', 'data_inizio', 'data_fine', 'stato'
+    ];
+
+    if (!in_array($campo, $campiPermessi)) {
+        return response()->json(['success' => false, 'messaggio' => 'Campo non modificabile']);
+    }
+
+    // Se è una data, converti in formato MySQL
+    if (in_array($campo, ['data_registrazione', 'data_prevista_consegna', 'data_inizio', 'data_fine'])) {
+        try {
+            $valore = $valore ? \Carbon\Carbon::createFromFormat('d/m/Y', $valore)->format('Y-m-d') : null;
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'messaggio' => 'Formato data non valido']);
         }
-
-        $fase->{$request->campo} = $request->valore;
-        $fase->save();
-
-        return response()->json(['success' => true]);
     }
+
+    // Aggiorna il campo
+    $fase->{$campo} = $valore;
+    $fase->save();
+
+    return response()->json(['success' => true]);
+}
 
 public function aggiungiOperatore(Request $request)
 {
