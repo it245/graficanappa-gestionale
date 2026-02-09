@@ -347,12 +347,32 @@
 {{-- JS --}}
 <script>
 function aggiornaCampo(faseId, campo, valore){
-    fetch('{{ route("produzione.aggiornaCampo") }}', {
+    valore = valore.trim();
+
+    // Se il campo è numerico o priorità, sostituisci la virgola con punto
+    const campiNumerici = ['qta_richiesta','qta_prod','priorita','qta_carta','ore'];
+    if(campiNumerici.includes(campo)){
+        valore = valore.replace(',', '.');
+        if(isNaN(parseFloat(valore))){
+            alert('Valore numerico non valido');
+            return;
+        }
+    }
+
+    fetch('{{ route("owner.aggiornaCampo") }}', {
         method: 'POST',
         headers: {'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Content-Type': 'application/json'},
         body: JSON.stringify({ fase_id: faseId, campo: campo, valore: valore })
-    }).then(r => r.json()).then(d => {
-        if (!d.success) alert('Errore salvataggio');
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (!d.success) {
+            alert('Errore salvataggio: ' + (d.messaggio || ''));
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert('Errore di connessione');
     });
 }
 </script>

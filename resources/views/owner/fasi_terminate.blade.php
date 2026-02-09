@@ -67,7 +67,7 @@
                 <td>{{ $fase->ordine->UM_carta ?? '-' }}</td>
 
                 <td>{{ $fase->faseCatalogo->nome ?? '-' }}</td>
-                <td>{{ $fase->reparto ?? '-' }}</td>
+                <td>{{ $fase->reparto_nome ?? '-' }}</td>
 
                 <td>
                     @forelse($fase->operatori as $op)

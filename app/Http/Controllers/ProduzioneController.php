@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\OrdineFase;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Validator;
 
 class ProduzioneController extends Controller
 {
@@ -25,7 +26,7 @@ class ProduzioneController extends Controller
 
         // Aggiunge l'operatore se non presente
         if (!$fase->operatori->contains($operatoreId)) {
-            $fase->operatori()->attach($operatoreId, ['data_inizio' => now()]);
+            $fase->operatori()->attach($operatoreId, ['data_inizio' => now(),'data_fine'=>null]);
         }
 
         $fase->stato = 1; // fase avviata
@@ -47,25 +48,31 @@ class ProduzioneController extends Controller
         ]);
     }
 
-    public function terminaFase(Request $request)
-    {
-        $fase = OrdineFase::with('operatori')->find($request->fase_id);
-        if (!$fase) {
-            return response()->json(['success' => false, 'messaggio' => 'Fase non trovata']);
-        }
+   public function terminaFase(Request $request)
+{
+    $fase = OrdineFase::with('operatori')->find($request->fase_id);
+    if (!$fase) {
+        return response()->json(['success' => false, 'messaggio' => 'Fase non trovata']);
+    }
 
-        $fase->stato = 2; // fase terminata
-        $fase->save();
+    $fase->stato = 2; // fase terminata
+    $fase->save();
 
-        // Rimuove tutti gli operatori dalla fase
-        $fase->operatori()->detach();
+    $operatoreId = session('operatore_id');
 
-        return response()->json([
-            'success' => true,
-            'nuovo_stato' => $this->statoLabel($fase->stato),
-            'operatori' => [] // nessuno rimane
+    // Aggiorna la data_fine nella pivot per l'operatore corrente
+    if ($fase->operatori->contains($operatoreId)) {
+        $fase->operatori()->updateExistingPivot($operatoreId, [
+            'data_fine' => now()
         ]);
     }
+
+    return response()->json([
+        'success' => true,
+        'nuovo_stato' => $this->statoLabel($fase->stato),
+        'operatori' => [] // nessuno rimane
+    ]);
+}
 
     public function pausaFase(Request $request)
     {
@@ -90,24 +97,28 @@ class ProduzioneController extends Controller
         ]);
     }
 
-    public function aggiornaCampo(Request $request)
-    {
-        $request->validate([
-            'fase_id' => 'required|exists:ordine_fasi,id',
-            'campo' => 'required|string|in:qta_prod,note',
-            'valore' => 'nullable'
-        ]);
+public function aggiornaCampo(Request $request)
+{
+    $validator = Validator::make($request->all(), [
+        'fase_id' => 'required|exists:ordine_fasi,id',
+        'campo'   => 'required|string|in:qta_prod,note',
+        'valore'  => 'nullable'
+    ]);
 
-        $fase = OrdineFase::find($request->fase_id);
-        if (!$fase) {
-            return response()->json(['success' => false, 'messaggio' => 'Fase non trovata']);
-        }
-
-        $fase->{$request->campo} = $request->valore;
-        $fase->save();
-
-        return response()->json(['success' => true]);
+    if ($validator->fails()) {
+        return response()->json([
+            'success' => false,
+            'errors'  => $validator->errors()
+        ], 422);
     }
+
+    $fase = OrdineFase::find($request->fase_id);
+
+    $fase->{$request->campo} = $request->valore;
+    $fase->save();
+
+    return response()->json(['success' => true]);
+}
 
     private function statoLabel($stato)
     {

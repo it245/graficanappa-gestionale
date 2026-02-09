@@ -48,6 +48,9 @@ class Ordine extends Model
     {
         return $this->hasMany(PausaOperatore::class);
     }
+    public function reparto(){
+        return $this->belongsTo(\App\Models\Reparto::class);
+    }
 }
 
 
