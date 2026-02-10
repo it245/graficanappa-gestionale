@@ -30,7 +30,7 @@ class Operatore extends Authenticatable
     {
         return $this->belongsToMany(OrdineFase::class, 'fase_operatore', 'operatore_id', 'fase_id')
                     ->withPivot('data_inizio')
-                    ->withTimestamps();
+                    ->withTimeStamps();
     }
 
     public function pause()

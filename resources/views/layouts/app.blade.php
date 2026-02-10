@@ -3,7 +3,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>MES Simulazione</title>
+    <title>MES GRAFICA NAPPA</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         tr.scaduta td{

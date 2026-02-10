@@ -42,7 +42,9 @@ Route::prefix('produzione')->group(function() {
 Route::get('/mes/prinect',[PrinectController::class, 'index'])->name('mes.prinect');
 // Health check
 Route::get('/health', fn() => 'MES OK');
-
+Route::get('/commesse/{commessa}', [App\Http\Controllers\CommessaController::class, 'show'])
+->middleware('operatore.auth')
+    ->name('commesse.show');
 
 
 // Homepage

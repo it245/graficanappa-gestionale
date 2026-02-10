@@ -1,30 +1,109 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container">
-    <h2>Dashboard Operatore</h2>
-    <p>Operatore: {{ $operatore->nome }}</p>
-    <p>Reparti: 
-        @if($operatore->reparti->isEmpty())
-            Nessun reparto assegnato
-        @else
-            {{ $operatore->reparti->pluck('nome')->join(', ') }}
-        @endif
-    </p>
+<div class="container-fluid px-0">
+   <style>
+    html, body {
+        margin:0; padding:0; overflow-x:hidden; width:100%;
+    }
+    h2, p { margin-left:8px; margin-right:8px; }
+    .top-bar {
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        margin-bottom:10px;
+    }
+    .operatore-info {
+        position:relative;
+        display:flex;
+        align-items:center;
+        gap:10px;
+        cursor:pointer;
+    }
+    .operatore-info img {
+        width:50px; height:50px; border-radius:50%;
+    }
+    .operatore-popup {
+        position:absolute;
+        top:60px;
+        left:0;
+        background:#fff;
+        border:1px solid #ccc;
+        padding:10px;
+        border-radius:5px;
+        box-shadow:0 2px 10px rgba(0,0,0,0.2);
+        display:none;
+        z-index:1000;
+        min-width:200px;
+    }
+    .operatore-popup button {
+        width:100%;
+        margin-top:8px;
+    }
+    .action-icons img {
+        height:35px;
+        cursor:pointer;
+        margin-right:15px;
+        transition: transform 0.2s;
+    }
+    .action-icons img:hover { transform: scale(1.2); }
+    .table-wrapper { 
+        width:100%;
+        max-width:100%;
+        overflow-x:auto;
+        overflow-y:visible;
+        margin: 0 4px; 
+    }
+    table th, table td { white-space:nowrap; }
 
-    <form action="{{ route('operatore.logout') }}" method="POST" class="mb-3">
-        @csrf
-        <button type="submit" class="btn btn-secondary">Logout</button>
-    </form>
+    /* CAMPO DESCRIZIONE */
+    th:nth-child(9),
+    table td:nth-child(9){
+        min-width: 500px;
+    }
+    th, td { white-space:nowrap; }
+    td:nth-child(9){ white-space:normal; }
 
-    <h4>Fasi visibili</h4>
-    <table class="table table-bordered table-sm">
-        <thead>
+    a.commessa-link{
+        color:#000;
+        text-decoration: underline;
+    }
+</style>
+
+<div class="top-bar">
+    <div class="operatore-info" id="operatoreInfo">
+        <img src="{{ asset('images/icons8-utente-uomo-cerchiato-50.png') }}" alt="Operatore">
+        <div class="operatore-popup" id="operatorePopup">
+            <div><strong>{{ $operatore->nome }} {{ $operatore->cognome }}</strong></div>
+            <div>
+                @if($operatore->reparti->isEmpty())
+                    Nessun reparto assegnato
+                @else
+                    <p>Reparto: <strong>{{ $operatore->reparti->pluck('nome')->join(', ') }} </strong></p>
+                @endif
+            </div>
+            <form action="{{ route('operatore.logout') }}" method="POST">
+                @csrf
+                <button type="submit" class="btn btn-secondary btn-sm mt-2">Logout</button>
+            </form>
+        </div>
+    </div>
+    <div class="action-icons">
+        <img src="{{ asset('images/icons8-ricerca-50.png') }}"
+             title="Cerca commessa"
+             onclick="cercaCommessa()">
+    </div>
+</div>
+
+<h2>Dashboard Operatore</h2>
+
+<div class="table-wrapper">
+    <table class="table table-bordered table-sm table-striped">
+        <thead class="table-dark">
             <tr>
                 <th>Priorità</th>
                 <th>Operatori</th>
                 <th>Fase</th>
-                <th>Azioni</th>
                 <th>Stato</th>
                 <th>Commessa</th>
                 <th>Data Registrazione</th>
@@ -52,7 +131,6 @@
                         $oggi = \Carbon\Carbon::today();
                         $dataPrevista = \Carbon\Carbon::parse($fase->ordine->data_prevista_consegna);
                         $diff = $oggi->diffInDays($dataPrevista, false);
-
                         if ($diff < -5) $rowClass = 'scaduta';
                         elseif ($diff <= 3) $rowClass = 'warning-strong';
                         elseif ($diff <= 5) $rowClass = 'warning-light';
@@ -61,63 +139,35 @@
 
                 <tr id="fase-{{ $fase->id }}" class="{{ $rowClass }}">
                     <td>{{ $fase->priorita }}</td>
-
-                    <!-- Lista operatori -->
                     <td id="operatore-{{ $fase->id }}">
                         @foreach($fase->operatori as $op)
                             {{ $op->nome }} ({{ $op->pivot->data_inizio ? \Carbon\Carbon::parse($op->pivot->data_inizio)->format('d/m/Y H:i:s') : '-' }})<br>
                         @endforeach
                     </td>
-
                     <td>{{ $fase->faseCatalogo->nome ?? '-' }}</td>
+                    <td id="stato-{{ $fase->id }}">{{ $fase->stato ?? '-' }}</td>
 
-                    <!-- Checkbox azioni -->
+                    {{-- COMMESSA CLICCABILE --}}
                     <td>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="checkbox" id="avvia-{{ $fase->id }}" 
-                                   onchange="aggiornaStato({{ $fase->id }}, 'avvia', this.checked)">
-                            <label class="form-check-label" for="avvia-{{ $fase->id }}">Avvia</label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="checkbox" id="pausa-{{ $fase->id }}" 
-                                   onchange="gestisciPausa({{ $fase->id }}, this.checked)">
-                            <label class="form-check-label" for="pausa-{{ $fase->id }}">Pausa</label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="checkbox" id="termina-{{ $fase->id }}" 
-                                   onchange="aggiornaStato({{ $fase->id }}, 'termina', this.checked)">
-                            <label class="form-check-label" for="termina-{{ $fase->id }}">Termina</label>
-                        </div>
+                        <a href="{{ route('commesse.show', $fase->ordine->commessa) }}" class="commessa-link"
+                           style="font-weight:bold">
+                           {{ $fase->ordine->commessa }}
+                        </a>
                     </td>
 
-                    <td id="stato-{{ $fase->id }}">{{ $fase->stato ?? '-' }}</td>
-                    <td>{{ $fase->ordine->commessa ?? '-' }}</td>
                     <td>{{ $fase->ordine->data_registrazione ? \Carbon\Carbon::parse($fase->ordine->data_registrazione)->format('d/m/Y') : '-' }}</td>
                     <td>{{ $fase->ordine->cliente_nome ?? '-' }}</td>
                     <td>{{ $fase->ordine->cod_art ?? '-' }}</td>
-                    <td>{{ $fase->ordine->descrizione ?? '-' }}</td>
+                    <td class="descrizione">{{ $fase->ordine->descrizione ?? '-' }}</td>
                     <td>{{ $fase->ordine->qta_richiesta ?? '-' }}</td>
                     <td>{{ $fase->ordine->um ?? '-' }}</td>
                     <td>{{ $fase->ordine->data_prevista_consegna ? \Carbon\Carbon::parse($fase->ordine->data_prevista_consegna)->format('d/m/Y') : '-' }}</td>
-
-                    <!-- Qta Prodotta -->
-                    <td>
-                        <input type="text" class="form-control form-control-sm"
-                               value="{{ $fase->qta_prod ?? '' }}"
-                               onblur="aggiornaCampo({{ $fase->id }}, 'qta_prod', this.value)">
-                    </td>
-
+                    <td>{{ $fase->qta_prod ?? '-' }}</td>
                     <td>{{ $fase->ordine->cod_carta ?? '-' }}</td>
                     <td>{{ $fase->ordine->carta ?? '-' }}</td>
                     <td>{{ $fase->ordine->qta_carta ?? '-' }}</td>
                     <td>{{ $fase->ordine->UM_carta ?? '-' }}</td>
-
-                    <!-- Note -->
-                    <td>
-                        <textarea style="width: 300px; height:60px;"
-                                  onblur="aggiornaCampo({{ $fase->id }}, 'note', this.value)">{{ $fase->note ?? '' }}</textarea>
-                    </td>
-
+                    <td>{{ $fase->note ?? '-' }}</td>
                     <td>{{ $fase->ore ?? '-' }}</td>
                     <td id="timeout-{{ $fase->id }}">{{ $fase->timeout ?? '-' }}</td>
                 </tr>
@@ -125,94 +175,36 @@
         </tbody>
     </table>
 </div>
+</div>
 
 <script>
-const motiviPausa = ["Attesa materiale", "Problema macchina", "Pranzo", "Altro"];
+document.getElementById('operatoreInfo').addEventListener('click', function(){
+    const popup = document.getElementById('operatorePopup');
+    popup.style.display = popup.style.display === 'block' ? 'none' : 'block';
+});
 
-// Aggiorna stato fase (avvia/termina)
-function aggiornaStato(faseId, azione, checked){
-    if(!checked) return;
-
-    if(azione === 'termina'){
-        if(!confirm("Sei sicuro di voler terminare questa fase?")){
-            document.getElementById('termina-'+faseId).checked = false;
-            return;
-        }
+document.addEventListener('click', function(e){
+    if(!document.getElementById('operatoreInfo').contains(e.target)){
+        document.getElementById('operatorePopup').style.display='none';
     }
+});
+</script>
 
-    let route = azione==='avvia' ? '{{ route("produzione.avvia") }}' : '{{ route("produzione.termina") }}';
+<script>
+function cercaCommessa(){
+    const box = document.getElementById('searchBox');
+    const input = document.getElementById('searchInput');
 
-    fetch(route, {
-        method:'POST',
-        headers:{'X-CSRF-TOKEN':'{{ csrf_token() }}','Content-Type':'application/json'},
-        body:JSON.stringify({fase_id:faseId})
-    })
-    .then(res=>res.json())
-    .then(data=>{
-        if(data.success){
-            document.getElementById('stato-'+faseId).innerText = data.nuovo_stato;
+    box.style.display = box.style.display === 'none' ? 'block' : 'none';
+    input.focus();
 
-            // Aggiorna operatori
-            let opCell = document.getElementById('operatore-'+faseId);
-            opCell.innerHTML = '';
-            data.operatori.forEach(op=>{
-                opCell.innerHTML += `${op.nome} (${op.data_inizio})<br>`;
-            });
-
-            ['avvia','pausa','termina'].forEach(a=>{
-                if(a!==azione) document.getElementById(a+'-'+faseId).checked=false;
-            });
-
-            if(azione==='termina'){
-                document.getElementById('fase-'+faseId).style.display='none';
-            }
-        }
-    })
-    .catch(err=>console.error('Errore:', err));
-}
-
-// Gestione pausa con prompt standard
-function gestisciPausa(faseId, checked){
-    if(!checked) return;
-
-    let scelta = prompt(
-        "Seleziona motivo pausa:\n1) Attesa materiale\n2) Problema macchina\n3) Pranzo\n4) Altro"
-    );
-    if(!scelta || !["1","2","3","4"].includes(scelta)){
-        document.getElementById('pausa-'+faseId).checked=false;
-        return alert('Selezione non valida!');
-    }
-
-    let motivo = motiviPausa[parseInt(scelta)-1];
-
-    fetch('{{ route("produzione.pausa") }}',{
-        method:'POST',
-        headers:{'X-CSRF-TOKEN':'{{ csrf_token() }}','Content-Type':'application/json'},
-        body:JSON.stringify({fase_id:faseId, motivo:motivo})
-    })
-    .then(res=>res.json())
-    .then(data=>{
-        if(data.success){
-            document.getElementById('stato-'+faseId).innerText = motivo;
-            document.getElementById('timeout-'+faseId).innerText = data.timeout;
-            ['avvia','termina'].forEach(a=>document.getElementById(a+'-'+faseId).checked=false);
-        }
-    })
-    .catch(err=>console.error('Errore:', err));
-}
-
-// Aggiorna i campi qta_prodotta e note sull'ordine
-function aggiornaCampo(faseId, campo, valore){
-    fetch('{{ route("produzione.aggiornaCampo") }}',{
-        method:'POST',
-        headers:{'X-CSRF-TOKEN':'{{ csrf_token() }}','Content-Type':'application/json'},
-        body:JSON.stringify({fase_id:faseId, campo:campo, valore:valore})
-    })
-    .then(res=>res.json())
-    .then(data=>{
-        if(!data.success) alert('Errore durante il salvataggio: '+data.messaggio);
-    })
-    .catch(err=>console.error('Errore:', err));
+    input.onkeyup = function(){
+        const filtro = input.value.toLowerCase();
+        document.querySelectorAll("tbody tr").forEach(riga=>{
+            const commessa = riga.cells[4]?.innerText.toLowerCase() || '';
+            riga.style.display = commessa.includes(filtro) ? '' : 'none';
+        });
+    };
 }
 </script>
 @endsection
