@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         tr.scaduta td{
-               background-color: #ff0015 !important;
+               background-color: #ff0015d5 !important;
             color: #000000 !important;
             font-weight: 700;
         }
@@ -27,9 +27,9 @@
           </style>
 </head>
 <body>
-    <div class="container mt-4">
-        @yield('content')
-    </div>
+  <div class="container-fluid px-0 mt-1">
+    @yield('content')
+</div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js">
         
     </script>

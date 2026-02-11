@@ -1,9 +1,45 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container mt-3">
+<style>
+/* Cerchi azioni verticali accanto alla card */
+.azioni-cerchi {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-left: 20px;
+}
 
-    <!-- Header con pulsante dashboard -->
+/* Cerchi */
+.azioni-cerchi label {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    width: 75px;
+    height: 75px;
+    border-radius: 50%;
+    color: #fff;
+    font-weight: bold;
+    font-size: 12px;
+    cursor: pointer;
+    user-select: none;
+}
+
+/* Colori */
+.badge-avvia { background-color: #28a745; }  
+.badge-pausa { background-color: #ffc107; }  
+.badge-termina { background-color: #dc3545; }
+
+/* Nasconde checkbox reale */
+.azioni-cerchi input[type="checkbox"] { display: none; }
+
+/* Quando selezionata */
+.azioni-cerchi input[type="checkbox"]:checked + label {
+    opacity: 0.7;
+    box-shadow: inset 0 0 2px rgba(0,0,0,0.5);
+}
+</style>
+<!-- Header con pulsante dashboard -->
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2>Commessa {{ $ordine->commessa }}</h2>
         <a href="{{ route('operatore.dashboard') }}" class="btn btn-primary d-flex align-items-center">
@@ -12,85 +48,85 @@
         </a>
     </div>
 
-    <!-- Info ordine -->
-    <div class="card mb-3">
+<div class="container mt-3 d-flex align-items-start">
+    <!-- Card info ordine ridotta -->
+    <div class="card mb-3 flex-grow-1">
         <div class="card-body">
             <p><strong>Cliente:</strong> {{ $ordine->cliente_nome }}</p>
             <p><strong>Descrizione:</strong> {{ $ordine->descrizione }}</p>
-            <p><strong>Quantità:</strong> {{ $ordine->qta_richiesta }} {{ $ordine->um }}</p>
-            <p><strong>Note:</strong> 
-                <textarea class="form-control" 
-                    onblur="aggiornaOrdineCampo('{{ $ordine->id }}', 'note', this.value)">{{ $ordine->note ?? '' }}</textarea>
-            </p>
+            <p><strong>Quantità totale:</strong> {{ $ordine->qta_richiesta }} {{ $ordine->um }}</p>
+
+            <!-- NOTE FASI SOTTO QUANTITÀ TOTALE -->
+            @php
+                $operatore = auth('operatore')->user();
+                $repartiOperatore = $operatore?->reparti?->pluck('id')->toArray() ?? [];
+                $fasiGestibili = $ordine->fasi->filter(function($f) use ($repartiOperatore) {
+                    return in_array($f->faseCatalogo->reparto_id ?? null, $repartiOperatore);
+                });
+            @endphp
+
+            @foreach($fasiGestibili as $fase)
+            <div class="mb-2">
+                <label for="note-fase-{{ $fase->id }}"><strong>Note:</strong></label>
+                <textarea id="note-fase-{{ $fase->id }}" class="form-control" rows="2"
+                          onblur="aggiornaCampo({{ $fase->id }}, 'note', this.value)">{{ $fase->note ?? '' }}</textarea>
+            </div>
+            @endforeach
         </div>
     </div>
 
-   @php
-$repartiOperatore = optional(auth('operatore')->user())->reparti->pluck('id')->toArray() ?? [];
-@endphp
+    <!-- Cerchi azioni verticali accanto alla card -->
+    <div class="azioni-cerchi">
+        @foreach($fasiGestibili as $fase)
+            <input type="checkbox" id="avvia-{{ $fase->id }}" onchange="aggiornaStato({{ $fase->id }}, 'avvia', this.checked)">
+            <label for="avvia-{{ $fase->id }}" class="badge-avvia" title="Avvia">Avvia</label>
 
-    <!-- Fasi gestibili dall'operatore -->
-    <h4>Le tue fasi</h4>
-    <table class="table table-sm table-bordered">
-        <thead class="table-dark">
-            <tr>
-                <th>Fase</th>
-                <th>Stato</th>
-                <th>Operatori</th>
-                <th>Azioni</th>
-                <th>Quantità prodotta</th>
-                <th>Timeout</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($ordine->fasi as $fase)
-                @php
-                    $repartoFase = $fase->faseCatalogo->reparto_id ?? null;
-                    $puoGestire = in_array($repartoFase, $repartiOperatore);
-                @endphp
+            <input type="checkbox" id="pausa-{{ $fase->id }}" onchange="gestisciPausa({{ $fase->id }}, this.checked)">
+            <label for="pausa-{{ $fase->id }}" class="badge-pausa" title="Pausa">Pausa</label>
 
-                @if($puoGestire)
-                <tr id="fase-{{ $fase->id }}">
-                    <td>{{ $fase->faseCatalogo->nome ?? '-' }}</td>
-                    <td id="stato-{{ $fase->id }}">{{ $fase->stato ?? '-' }}</td>
-                    <td id="operatore-{{ $fase->id }}">
-                        @foreach($fase->operatori as $op)
-                            {{ $op->nome }} ({{ $op->pivot->data_inizio ? \Carbon\Carbon::parse($op->pivot->data_inizio)->format('d/m/Y H:i:s') : '-' }})<br>
-                        @endforeach
-                    </td>
-                    <td class="actions">
-                        <input type="checkbox" id="avvia-{{ $fase->id }}" 
-                               onchange="aggiornaStato({{ $fase->id }}, 'avvia', this.checked)"
-                               {{ $fase->stato == 0 ? '' : 'disabled' }}>
-                        <label for="avvia-{{ $fase->id }}" style="cursor:pointer;">Avvia</label>
+            <input type="checkbox" id="termina-{{ $fase->id }}" onchange="aggiornaStato({{ $fase->id }}, 'termina', this.checked)">
+            <label for="termina-{{ $fase->id }}" class="badge-termina" title="Termina">Termina</label>
+        @endforeach
+    </div>
+</div>
 
-                        <input type="checkbox" id="pausa-{{ $fase->id }}" 
-                               onchange="gestisciPausa({{ $fase->id }}, this.checked)"
-                               {{ $fase->stato == 1 ? '' : 'disabled' }}>
-                        <label for="pausa-{{ $fase->id }}" style="cursor:pointer;">Pausa</label>
+<!-- Tabella "Le tue fasi" senza colonne azioni -->
+<h4>Le tue fasi</h4>
+<table class="table table-sm table-bordered">
+    <thead class="table-dark">
+        <tr>
+            <th>Fase</th>
+            <th>Stato</th>
+            <th>Operatori</th>
+            <th>Quantità prodotta</th>
+            <th>Timeout</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach($fasiGestibili as $fase)
+        <tr id="fase-{{ $fase->id }}">
+            <td>{{ $fase->faseCatalogo->nome ?? '-' }}</td>
+            <td id="stato-{{ $fase->id }}">{{ $fase->stato ?? '-' }}</td>
+            <td id="operatore-{{ $fase->id }}">
+                @foreach($fase->operatori as $op)
+                    {{ $op->nome }} ({{ $op->pivot->data_inizio ? \Carbon\Carbon::parse($op->pivot->data_inizio)->format('d/m/Y H:i:s') : '-' }})<br>
+                @endforeach
+            </td>
+            <td>
+                <input type="text" class="form-control form-control-sm"
+                       value="{{ $fase->qta_prod ?? '' }}"
+                       onblur="aggiornaCampo({{ $fase->id }}, 'qta_prod', this.value)">
+            </td>
+            <td id="timeout-{{ $fase->id }}">{{ $fase->timeout ?? '-' }}</td>
+        </tr>
+        @endforeach
+    </tbody>
+</table>
 
-                        <input type="checkbox" id="termina-{{ $fase->id }}" 
-                               onchange="aggiornaStato({{ $fase->id }}, 'termina', this.checked)"
-                               {{ $fase->stato == 1 ? '' : 'disabled' }}>
-                        <label for="termina-{{ $fase->id }}" style="cursor:pointer;">Termina</label>
-                    </td>
-                    <td>
-                        <input type="text" class="form-control form-control-sm"
-                               value="{{ $fase->qta_prod ?? '' }}"
-                               onblur="aggiornaCampo({{ $fase->id }}, 'qta_prod', this.value)">
-                    </td>
-                    <td id="timeout-{{ $fase->id }}">{{ $fase->timeout ?? '-' }}</td>
-                </tr>
-                @endif
-            @endforeach
-        </tbody>
-    </table>
-
-    <!-- Fasi non gestibili -->
+<!-- Fasi non gestibili -->
     @php
-        $altreFasi = $ordine->fasi->filter(function($f){ 
-            $repartoFase = $f->faseCatalogo->reparto_id ?? null;
-            return !in_array($repartoFase, auth()->user()->reparti->pluck('id')->toArray());
+        $altreFasi = $ordine->fasi->filter(function($f) use ($repartiOperatore) {
+            return !in_array($f->faseCatalogo->reparto_id ?? null, $repartiOperatore);
         });
     @endphp
 
@@ -210,19 +246,6 @@ function aggiornaCampo(faseId, campo, valore){
         method:'POST',
         headers:{'X-CSRF-TOKEN':'{{ csrf_token() }}','Content-Type':'application/json'},
         body:JSON.stringify({fase_id:faseId, campo:campo, valore:valore})
-    })
-    .then(res=>res.json())
-    .then(data=>{
-        if(!data.success) alert('Errore durante il salvataggio: '+data.messaggio);
-    })
-    .catch(err=>console.error('Errore:', err));
-}
-
-function aggiornaOrdineCampo(ordineId, campo, valore){
-    fetch('{{ route("produzione.aggiornaOrdineCampo") }}',{
-        method:'POST',
-        headers:{'X-CSRF-TOKEN':'{{ csrf_token() }}','Content-Type':'application/json'},
-        body:JSON.stringify({ordine_id:ordineId, campo:campo, valore:valore})
     })
     .then(res=>res.json())
     .then(data=>{

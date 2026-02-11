@@ -6,24 +6,19 @@ use App\Models\Ordine;
 
 class CommessaController extends Controller
 {
-    public function show($commessa)
-    {
-        $ordine = Ordine::with(['fasi.faseCatalogo', 'fasi.operatori'])
-            ->where('commessa', $commessa)
-            ->firstOrFail();
+  public function show($commessa)
+{
+    $ordine = Ordine::where('commessa', $commessa)
+                     ->with(['fasi.faseCatalogo', 'fasi.operatori'])
+                     ->firstOrFail();
 
-        // Prossime 5 commesse con priorità minore
-        $prossime = Ordine::where('priorita', '>', $ordine->priorita)
-            ->orderBy('priorita')
-            ->limit(5)
-            ->get();
+    $prossime = Ordine::where('priorita', '>', $ordine->priorita)
+                      ->orderBy('priorita', 'asc')
+                      ->limit(5)
+                      ->get();
 
-        // Operatore loggato
-        $operatore = auth()->guard('operatore')->user();
+    $operatore = auth('operatore')->user()->load('reparti'); // 🔹 importante
 
-        // ID dei reparti dell'operatore
-        $repartiOperatore = $operatore ? $operatore->reparti->pluck('id')->toArray() : [];
-
-        return view('commesse.show', compact('ordine', 'prossime', 'operatore', 'repartiOperatore'));
-    }
+    return view('commesse.show', compact('ordine', 'prossime', 'operatore'));
+}
 }

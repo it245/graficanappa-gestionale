@@ -95,6 +95,11 @@
     </div>
 </div>
 
+<!-- BOX RICERCA COMMESSA -->
+<div id="searchBox" style="display:none; margin:10px 8px;">
+    <input type="text" id="searchInput" class="form-control" placeholder="Digita commessa da cercare...">
+</div>
+
 <h2>Dashboard Operatore</h2>
 
 <div class="table-wrapper">
@@ -188,9 +193,7 @@ document.addEventListener('click', function(e){
         document.getElementById('operatorePopup').style.display='none';
     }
 });
-</script>
 
-<script>
 function cercaCommessa(){
     const box = document.getElementById('searchBox');
     const input = document.getElementById('searchInput');
@@ -204,6 +207,15 @@ function cercaCommessa(){
             const commessa = riga.cells[4]?.innerText.toLowerCase() || '';
             riga.style.display = commessa.includes(filtro) ? '' : 'none';
         });
+    };
+
+    // chiudi con ESC
+    input.onkeydown = function(e){
+        if(e.key === "Escape"){
+            box.style.display = 'none';
+            input.value = '';
+            document.querySelectorAll("tbody tr").forEach(riga=>riga.style.display='');
+        }
     };
 }
 </script>

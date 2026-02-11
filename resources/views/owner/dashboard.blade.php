@@ -2,79 +2,208 @@
 
 @section('content')
 <div class="container-fluid px-0">
-    <style>
-        html,body{
-            margin:0;
-            padding:0;
-            overflow-x:hidden;
-            width:100%;
-        }
-        .table-wrapper{
-            width:100%;
-            max-width:100%;
-            overflow-x:auto;
-            overflow-y:visible;
-            margin: 0 4px;
-        }
-        h2,p{
-            margin-left:4px;
-            margin-right:4px
-        }
-        tr.selected, th.selected{
-            outline: 1px solid #3399ff;
-        }
-        .selection-box{
-            position:absolute;
-            border: 2px dashed #3399ff;
-            background-color: rgba(51,153,255,0.2);
-            pointer-events: none;
-            z-index:1000;
-        }
-        table th:nth-child(4),
-        table td:nth-child(4){
-            min-width: 380px;
-        }
-        th,td{
-            white-space:nowrap;
-        }
-        td:nth-child(4){
-            white-space:normal;
-        }
+<style>
+html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100%;
+    height: 100%;
+    overflow-x: hidden;
+}
 
-        /* Stile icone PNG */
-        .action-icons img{
-            height: 35px;
-            cursor: pointer;
-            margin-right: 25px;
-            transition: transform 0.2s;
-        }
-        .action-icons img:hover{
-            transform: scale(1.2);
-        }
-     /* Contenitore filtri */
-/* FILTRI */
+/* Rimuovi padding del container Bootstrap */
+.container-fluid {
+    padding-left: 1px !important;
+    padding-right: 1px !important;
+    margin-left: 0 !important;
+}
+
+/* Titoli */
+h2, p {
+    margin: 4px 1px !important;
+
+}
+
+/* Icone */
+.action-icons {
+    margin-left: 1px !important;
+    padding-left: 0 !important;
+}
+
+.action-icons img {
+    height: 35px;
+    cursor: pointer;
+    margin-right: 14px;
+    transition: transform 0.15s ease;
+}
+.action-icons img:hover {
+    transform: scale(1.15);
+}
+
+/* =========================
+   TABELLA (EXCEL STYLE)
+   ========================= */
+
+table {
+    width: 2000px;              /* LIMITE ASSOLUTO */
+    max-width: 2000px;
+    border-collapse: collapse;
+    table-layout: fixed;        /* FONDAMENTALE */
+    font-size: 12px;
+}
+
+thead, tbody, tr {
+    width: 100%;
+}
+
+th, td {
+    border: 1px solid #dee2e6;
+    padding: 2px 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+}
+
+/* Header sticky */
+thead th {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: #000000;
+    color: #ffffff; 
+    font-size: 11.5px;
+    
+}
+
+/* =========================
+   LARGHEZZA COLONNE (≈ 1980px)
+   ========================= */
+
+/* Commessa */
+th:nth-child(1), td:nth-child(1) { width: 90px; }
+
+/* Cliente */
+th:nth-child(2), td:nth-child(2) {
+    width: 180px;
+    white-space: normal;
+}
+
+/* Codice articolo */
+th:nth-child(3), td:nth-child(3) { width: 110px; }
+
+/* DESCRIZIONE (MAX 280px) */
+th:nth-child(4), td:nth-child(4) {
+    width: 280px;
+    max-width: 280px;
+    white-space: normal;
+}
+
+/* Qta / UM / Priorità */
+th:nth-child(5), td:nth-child(5),
+th:nth-child(6), td:nth-child(6),
+th:nth-child(7), td:nth-child(7) {
+    width: 70px;
+    text-align: center;
+}
+
+/* Date */
+th:nth-child(8), td:nth-child(8),
+th:nth-child(9), td:nth-child(9),
+th:nth-child(19), td:nth-child(19),
+th:nth-child(20), td:nth-child(20) {
+    width: 115px;
+}
+
+/* Carta */
+th:nth-child(10), td:nth-child(10),
+th:nth-child(11), td:nth-child(11) {
+    width: 200px;
+     white-space: normal;
+}
+
+th:nth-child(12), td:nth-child(12),
+th:nth-child(13), td:nth-child(13) {
+    width: 80px;
+    text-align: center;
+}
+
+/* Fase + Reparto */
+th:nth-child(14), td:nth-child(14),
+th:nth-child(15), td:nth-child(15) {
+    width: 110px;
+}
+
+/* Operatori */
+th:nth-child(16), td:nth-child(16) {
+    width: 100px;
+    white-space: normal;
+}
+
+/* Qta prodotta */
+th:nth-child(17), td:nth-child(17) {
+    width: 80px;
+    text-align: center;
+}
+
+/* Note */
+th:nth-child(18), td:nth-child(18) {
+    width: 160px;
+    white-space: normal;
+}
+
+/* Stato */
+th:nth-child(21), td:nth-child(21) {
+    width: 60px;
+    text-align: center;
+}
+
+/* =========================
+   SELEZIONE EXCEL
+   ========================= */
+
+td.selected, th.selected {
+    outline: 1px solid #000000;
+    background: rgb(0, 0, 0);
+}
+
+/* Box selezione */
+.selection-box {
+    position: absolute;
+    border: 2px dashed #000000;
+    background-color: rgba(0, 0, 0, 0.18);
+    pointer-events: none;
+    z-index: 9999;
+}
+
+/* =========================
+   FILTRI
+   ========================= */
+/* Filtri */
 #filterBox {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
     align-items: flex-start;
-    margin-left: 10px;
+    margin: 5px 1px !important;
+    padding-left: 0 !important;
+    margin-left:1px !important;
 }
 
-/* input normali */
 #filterBox input {
     min-height: 38px;
     padding: 0.25rem 0.5rem;
     font-size: 0.875rem;
+    flex: 1 1 250px;      /* input flessibili, più larghi */
+    max-width: 100%;
 }
 
-/* Choices.js container */
 #filterBox .choices {
     display: inline-flex;
     align-items: center;
+    flex: 1 1 200px;
 }
 
-/* riquadro interno Choices */
 #filterBox .choices__inner {
     min-height: 38px;
     height: 38px;
@@ -84,50 +213,44 @@
     box-sizing: border-box;
 }
 
-/* larghezze */
-#filterStato + .choices { width: 120px; }
-#filterFase + .choices { width: 250px; }
-#filterReparto + .choices { width: 200px; }
+/* Larghezze filtri */
+#filterStato + .choices { width: 180px; }
+#filterFase + .choices { width: 350px; }
+#filterReparto + .choices { width: 300px; }
 
-/* dropdown */
 .choices__list--dropdown {
     max-height: 250px;
     overflow-y: auto;
 }
 
-/* larghezza fissa dei filtri */
-#filterStato + .choices,
-#filterFase + .choices,
-#filterReparto + .choices {
-    flex-direction: column;
-    align-items: stretch;
-}
-
-/* contenitore interno */
-#filterBox .choices__inner {
-    height: auto !important;
-    min-height: 38px;
-    align-items: flex-start;
-}
-
-/* lista selezioni → VERTICALE */
 #filterBox .choices__list--multiple {
     display: flex;
     flex-direction: column;
     gap: 4px;
 }
 
-/* ogni selezione a tutta larghezza */
 #filterBox .choices__item--selectable {
     width: 100%;
     box-sizing: border-box;
 }
-/* massimo 3 selezioni visibili */
+
 #filterBox .choices__list--multiple .choices__item:nth-child(n+10) {
     display: none;
 }
-    </style>
 
+/* =========================
+   PERFORMANCE
+   ========================= */
+
+table * {
+    user-select: none;
+}
+
+td[contenteditable] {
+    user-select: text;
+}
+
+</style>
     <h2>Dashboard Owner</h2>
     <p>
         Benvenuto: {{ auth()->user()->nome ?? session('operatore_nome') }}
@@ -268,7 +391,7 @@
 @endphp
 
     {{-- TABELLA --}}
-    <div class="table-wrapper">
+    <div>
         <table class="table table-bordered table-sm table-striped">
             <thead class="table-dark">
                 <tr>
@@ -326,7 +449,7 @@
                     <td>{{ $fase->faseCatalogo->reparto->nome ?? '-' }}</td>
                     <td>
                         @forelse($fase->operatori as $op)
-                            {{ $op->nome }} ({{ formatItalianDate($op->pivot->data_inizio, true) }})<br>
+                            {{ $op->nome }}<br>
                         @empty
                             -
                         @endforelse
@@ -376,86 +499,151 @@ function aggiornaCampo(faseId, campo, valore){
     });
 }
 </script>
-
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    const nomeInput = document.querySelector('input[name="nome"]');
-    const cognomeInput = document.querySelector('input[name="cognome"]');
-    const codiceInput = document.getElementById('codice_operatore');
-    if (!nomeInput || !cognomeInput || !codiceInput) return;
-    const numero = codiceInput.dataset.numero;
-    function aggiornaCodice() {
-        const nome = nomeInput.value.trim();
-        const cognome = cognomeInput.value.trim();
-        codiceInput.value = nome && cognome ? nome.charAt(0).toUpperCase() + cognome.charAt(0).toUpperCase() + numero.toString().padStart(3,'0') : '__' + numero.toString().padStart(3,'0');
-    }
-    nomeInput.addEventListener('input', aggiornaCodice);
-    cognomeInput.addEventListener('input', aggiornaCodice);
-});
-</script>
-
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const table = document.querySelector('table');
-    const cells = table.querySelectorAll('td, th');
-    let isSelecting = false, startX, startY, selectionBox;
-    const selectedCellsSet = new Set();
+    const allCells = Array.from(table.querySelectorAll('td, th'));
+    const selectedCells = new Set();
+
+    let isSelecting = false;
+    let startX = 0, startY = 0;
+    let currentX = 0, currentY = 0;
+    let selectionBox = null;
+    let rafPending = false;
+
+    function boxesIntersect(a, b) {
+        return !(
+            a.right < b.left ||
+            a.left > b.right ||
+            a.bottom < b.top ||
+            a.top > b.bottom
+        );
+    }
+
+    function updateSelection() {
+        rafPending = false;
+
+        const x = Math.min(startX, currentX);
+        const y = Math.min(startY, currentY);
+        const w = Math.abs(currentX - startX);
+        const h = Math.abs(currentY - startY);
+
+        selectionBox.style.left = x + 'px';
+        selectionBox.style.top = y + 'px';
+        selectionBox.style.width = w + 'px';
+        selectionBox.style.height = h + 'px';
+
+        const boxRect = {
+            left: x,
+            top: y,
+            right: x + w,
+            bottom: y + h
+        };
+
+        selectedCells.forEach(c => c.classList.remove('selected'));
+        selectedCells.clear();
+
+        for (const cell of allCells) {
+            const r = cell.getBoundingClientRect();
+            const cellRect = {
+                left: r.left + window.scrollX,
+                top: r.top + window.scrollY,
+                right: r.right + window.scrollX,
+                bottom: r.bottom + window.scrollY
+            };
+
+            if (boxesIntersect(boxRect, cellRect)) {
+                cell.classList.add('selected');
+                selectedCells.add(cell);
+            }
+        }
+    }
 
     table.addEventListener('mousedown', e => {
-        if(e.button!==0) return;
+        if (e.button !== 0 || !e.target.matches('td, th')) return;
+
         isSelecting = true;
-        startX = e.pageX; startY = e.pageY;
+        startX = currentX = e.pageX;
+        startY = currentY = e.pageY;
+
+        selectedCells.forEach(c => c.classList.remove('selected'));
+        selectedCells.clear();
+
         selectionBox = document.createElement('div');
-        selectionBox.classList.add('selection-box');
-        selectionBox.style.left = `${startX}px`; selectionBox.style.top = `${startY}px`;
+        selectionBox.className = 'selection-box';
         document.body.appendChild(selectionBox);
+
+        e.preventDefault();
     });
 
     document.addEventListener('mousemove', e => {
-        if(!isSelecting) return;
-        const x = Math.min(e.pageX,startX), y = Math.min(e.pageY,startY);
-        const w = Math.abs(e.pageX-startX), h = Math.abs(e.pageY-startY);
-        selectionBox.style.left = `${x}px`; selectionBox.style.top = `${y}px`;
-        selectionBox.style.width = `${w}px`; selectionBox.style.height = `${h}px`;
+        if (!isSelecting) return;
 
-        const rect = selectionBox.getBoundingClientRect();
-        cells.forEach(cell => {
-            const r = cell.getBoundingClientRect();
-            if(rect.bottom<r.top||rect.top>r.bottom||rect.right<r.left||rect.left>r.right){
-                cell.classList.remove('selected');
-            } else {
-                cell.classList.add('selected');
-                selectedCellsSet.add(cell);
-            }
-        });
+        currentX = e.pageX;
+        currentY = e.pageY;
+
+        if (!rafPending) {
+            rafPending = true;
+            requestAnimationFrame(updateSelection);
+        }
     });
 
-    document.addEventListener('mouseup', () => { isSelecting=false; if(selectionBox) selectionBox.remove(); });
+    document.addEventListener('mouseup', () => {
+        isSelecting = false;
+        rafPending = false;
+        if (selectionBox) {
+            selectionBox.remove();
+            selectionBox = null;
+        }
+    });
 
-    const printButton = document.getElementById('printButton');
-    printButton.addEventListener('click', () => {
-        if(selectedCellsSet.size===0){ alert('Seleziona almeno una cella!'); return; }
-        const rowsMap = new Map();
-        selectedCellsSet.forEach(cell=>{
-            const row=cell.parentElement;
-            if(!rowsMap.has(row)) rowsMap.set(row,[]);
-            const style=window.getComputedStyle(cell);
-            rowsMap.get(row).push({content:cell.innerHTML, tag:cell.tagName, background:style.backgroundColor, color:style.color});
-        });
-        const printWindow = window.open('','width=1200,height=800');
-        printWindow.document.write('<html><head><title>Stampa</title>');
-        printWindow.document.write('<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">');
-        printWindow.document.write('<style>table{border-collapse: collapse;} td, th{border:1px solid #dee2e6; padding:0.25rem;}</style>');
-        printWindow.document.write('</head><body><table class="table table-bordered table-sm">');
-        rowsMap.forEach(cellsArr=>{
-            printWindow.document.write('<tr>');
-            cellsArr.forEach(c=>{
-                printWindow.document.write(`<${c.tag} style="background:${c.background}; color:${c.color}">${c.content}</${c.tag}>`);
+    // STAMPA SOLO LE CELLE NEL BOX
+    document.getElementById('printButton').addEventListener('click', () => {
+        if (selectedCells.size === 0) {
+            alert('Seleziona un\'area!');
+            return;
+        }
+
+        const rows = new Map();
+
+        selectedCells.forEach(cell => {
+            const row = cell.parentElement;
+            if (!rows.has(row)) rows.set(row, []);
+            const style = getComputedStyle(cell);
+            rows.get(row).push({
+                tag: cell.tagName,
+                html: cell.innerHTML,
+                bg: style.backgroundColor,
+                color: style.color
             });
-            printWindow.document.write('</tr>');
         });
-        printWindow.document.write('</table></body></html>');
-        printWindow.document.close(); printWindow.print();
+
+        const win = window.open('', '', 'width=1200,height=800');
+        win.document.write(`
+            <html>
+            <head>
+                <title>Stampa</title>
+                <style>
+                    table { border-collapse: collapse; }
+                    td, th { border:1px solid #ccc; padding:4px; }
+                </style>
+            </head>
+            <body><table>
+        `);
+
+        rows.forEach(cells => {
+            win.document.write('<tr>');
+            cells.forEach(c => {
+                win.document.write(
+                    `<${c.tag} style="background:${c.bg};color:${c.color}">${c.html}</${c.tag}>`
+                );
+            });
+            win.document.write('</tr>');
+        });
+
+        win.document.write('</table></body></html>');
+        win.document.close();
+        win.print();
     });
 });
 </script>
