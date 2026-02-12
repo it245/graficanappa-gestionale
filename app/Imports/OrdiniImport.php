@@ -5,57 +5,129 @@ namespace App\Imports;
 use App\Models\Ordine;
 use App\Models\OrdineFase;
 use App\Models\FasiCatalogo;
+use App\Models\Reparto;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 
 class OrdiniImport implements ToModel, WithHeadingRow
 {
-    /**
-     * Specifica la riga delle intestazioni nel file Excel
-     */
-    public function headingRow(): int
-    {
-        return 2; // le intestazioni sono alla riga 2
+    public function headingRow(): int { return 2; }
+
+   public function model(array $row)
+{
+    $commessa     = isset($row['codcommessa']) ? trim($row['codcommessa']) : null;
+    $codArt       = isset($row['codart']) ? trim($row['codart']) : null;
+    $faseNome     = isset($row['fase']) ? trim($row['fase']) : null;
+    $descrizione  = $row['descrizione'] ?? null;
+
+    if (!$commessa || !$faseNome) return null;
+
+    // --- 1. GESTIONE ORDINE ---
+    $ordine = Ordine::updateOrCreate(
+        [
+            'commessa'    => $commessa,
+            'cod_art'     => $codArt,
+            'descrizione' => $descrizione,
+        ],
+        [
+            'cliente_nome'           => $row['cliente'] ?? null,
+            'data_registrazione'     => !empty($row['dataregistrazione']) ? $this->convertiData($row['dataregistrazione']) : null,
+            'data_prevista_consegna' => !empty($row['datapresconsegna']) ? $this->convertiData($row['datapresconsegna']) : null,
+            'qta_richiesta'          => $row['qta'] ?? 0,
+            'cod_carta'              => $row['codcarta'] ?? null,
+            'carta'                  => $row['carta'] ?? null,
+            'qta_carta'              => $row['qtacarta'] ?? 0,
+            'UM_carta'               => $row['umcarta'] ?? null, // ora importato correttamente
+        ]
+    );
+
+    // --- 2. REPARTO E TIPO ---
+    $mappaReparti = $this->getMappaReparti();
+    $tipiFase     = $this->getTipoReparto();
+    
+    $repartoNome = $mappaReparti[$faseNome] ?? 'generico';
+    $tipo        = $tipiFase[$faseNome] ?? 'monofase';
+
+    // --- 3. LOGICA FASI CON DEDUPLICAZIONE ---
+    $dataFase = [
+    'ordine_id'   => $ordine->id,
+    'fase'        => $faseNome,
+    //'reparto'     => $repartoNome, // <- rimuovi questa riga
+    'reparto_id'  => Reparto::firstOrCreate(
+        ['nome' => $repartoNome]
+    )->id,
+    'qta_fase'    => $row['qtafase'] ?? 0,
+    'um'          => $row['umfase'] ?? ($row['um'] ?? 'FG'),
+    'fase_catalogo_id' => FasiCatalogo::firstOrCreate(
+        ['nome' => $faseNome],
+        ['reparto_id' => Reparto::firstOrCreate(
+            ['nome' => $repartoNome]
+        )->id]
+    )->id,
+];
+
+    if ($tipo === 'monofase') {
+        $faseEsistente = OrdineFase::where('ordine_id', $ordine->id)
+            ->where('fase', $faseNome)
+            ->whereHas('ordine', fn($q) => $q->where('descrizione', $descrizione))
+            ->first();
+
+        if ($faseEsistente) {
+            $faseEsistente->update($dataFase);
+        } else {
+            OrdineFase::create($dataFase);
+        }
+
+    } elseif ($tipo === 'max 2 fasi') {
+        $count = OrdineFase::where('ordine_id', $ordine->id)
+            ->where('fase', $faseNome)
+            ->whereHas('ordine', fn($q) => $q->where('descrizione', $descrizione))
+            ->count();
+
+        if ($count < 2) {
+            OrdineFase::create($dataFase);
+        }
+
+    } else {
+        // multifase: crea sempre
+        OrdineFase::create($dataFase);
     }
 
-    public function model(array $row)
-    {
+    return $ordine;
+}
 
-
-        // Conversione date Excel in oggetti DateTime
-        $dataRegistrazione = isset($row['dataregistrazione']) ? Date::excelToDateTimeObject($row['dataregistrazione']) : null;
-        $dataPrevista = isset($row['datapresconsegna']) ? Date::excelToDateTimeObject($row['datapresconsegna']) : null;
-
-        // Creo un nuovo ordine (anche duplicati)
-        $ordine = Ordine::create([
-            'commessa' => $row['codcommessa'] ?? null,
-            'cliente_nome' => $row['cliente'] ?? null,
-            'cod_art' => $row['codart'] ?? null,
-            'descrizione' => $row['descrizione'] ?? null,
-            'qta_richiesta' => $row['qta'] ?? 0,
-            'um' => $row['um'] ?? 'FG',
-            'data_registrazione' => $dataRegistrazione,
-            'data_prevista_consegna' => $dataPrevista,
-            'priorita' => $row['priorita'] ?? 0,
-            'quantita' => $row['qta'] ?? 0,
-            'cod_carta' => $row['codcarta'] ?? null,
-            'qta_fase' => $row['qtafase'] ?? 0,
-            'carta' => $row['carta'] ?? null,
-            'qta_carta' => $row['qtacarta'] ?? 0,
-            'UM_carta' => $row['umcarta'] ?? null,
-        ]);
-
-      
-
-        // Mappa fasi → reparti
-       $mappaReparti = [
-    'accopp+fust' => 'esterno',
+// -----------------
+// Funzione helper per le date
+private function convertiData($valore) {
+    if (is_numeric($valore)) {
+        // Excel serial number
+        return \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($valore);
+    } elseif (is_string($valore)) {
+        // stringa in formato italiano
+        try {
+            return Carbon::createFromFormat('d/m/Y H:i:s', $valore);
+        } catch (\Exception $e) {
+            // prova senza secondi
+            try {
+                return Carbon::createFromFormat('d/m/Y H:i', $valore);
+            } catch (\Exception $e2) {
+                return null; // fallback se formato non valido
+            }
+        }
+    }
+    return null;
+}
+    private function getMappaReparti(): array {
+        return [
+            // mappa completa come già definita nel tuo codice
+              'accopp+fust' => 'esterno',
     'ACCOPPIATURA.FOG.33.48INT' => 'esterno',
     'ACCOPPIATURA.FOGLI' => 'esterno',
     'Allest.Manuale' => 'esterno',
     'ALLEST.SHOPPER' => 'esterno',
     'ALLEST.SHOPPER030' => 'esterno',
+    'ALLESTIMENTO.ESPOSITORI' => 'esterno',
     'APPL.BIADESIVO30' => 'esterno',
     'appl.laccetto' => 'esterno',
     'ARROT2ANGOLI' => 'esterno',
@@ -90,6 +162,9 @@ class OrdiniImport implements ToModel, WithHeadingRow
     'FUSTBOBSTRILIEVI' => 'fustella',
     'FUSTSTELG33.44' => 'fustella',
     'FUSTSTELP25.35' => 'fustella',
+    'FUSTIML75X106' => 'fustella',
+    'FUSTELLATURA72X51' => 'fustella',
+    'FINESTRATURA.INT'=>'finestre',
 
     'INCOLLAGGIO.PATTINA' => 'legatoria',
     'INCOLLAGGIOBLOCCHI' => 'legatoria',
@@ -164,28 +239,109 @@ class OrdiniImport implements ToModel, WithHeadingRow
 
     'ZUND' => 'digitale',
     'APPL.CORDONCINO0,035' => 'legatoria',
-];
+            // ... aggiungi tutte le altre voci ...
+        ];
+    }
 
-        // Creo una nuova fase collegata (anche duplicati)
-        if (!empty($row['fase'])) {
-            $faseCatalogo = FasiCatalogo::firstOrCreate(
-                ['nome' => $row['fase']],
-                ['reparto_id' => 1]
-            );
+    private function getTipoReparto(): array {
+        return [
+               // multifase
+    'accopp+fust' => 'multifase',
+    'FIN01' => 'multifase',
+    'FIN03' => 'multifase',
+    'FIN04' => 'multifase',
+    'PI01' => 'multifase',
+    'PI02' => 'multifase',
+    'PI03' => 'multifase',
+    'TAGLIACARTE' => 'multifase',
+    'TAGLIACARTE.IML' => 'multifase',
+    'TAGLIOINDIGO' => 'multifase',
+    'SFUST' => 'multifase',
+    'SFUST.IML.FUSTELLATO' => 'multifase',
 
-            $reparto = $mappaReparti[$row['fase']] ?? 'generico';
+    // monofase
+    'ACCOPPIATURA.FOG.33.48INT' => 'monofase',
+    'ACCOPPIATURA.FOGLI' => 'monofase',
+    'Allest.Manuale' => 'monofase',
+    'ALLEST.SHOPPER' => 'monofase',
+    'ALLEST.SHOPPER030' => 'monofase',
+    'APPL.BIADESIVO30' => 'monofase',
+    'appl.laccetto' => 'monofase',
+    'ARROT2ANGOLI' => 'monofase',
+    'ARROT4ANGOLI' => 'monofase',
+    'AVVIAMENTISTAMPA.EST1.1' => 'monofase',
+    'blocchi.manuale' => 'monofase',
+    'BROSSCOPBANDELLAEST' => 'monofase',
+    'BROSSCOPEST' => 'monofase',
+    'BROSSFILOREFE/A4EST' => 'monofase',
+    'BROSSFILOREFE/A5EST' => 'monofase',
+    'BRT1' => 'monofase',
+    'brt1' => 'monofase',
+    'CARTONATO.GEN' => 'monofase',
+    'CORDONATURAPETRATTO' => 'monofase',
+    'DEKIA-Difficile' => 'monofase',
+    'FOIL.MGI.30M' => 'monofase',
+    'FOILMGI' => 'monofase',
+    'FUST.STARPACK.74X104' => 'monofase',
+    'FUSTBIML75X106' => 'monofase',
+    'FUSTbIML75X106' => 'monofase',
+    'FUSTBOBST75X106' => 'monofase',
+    'FUSTBOBSTRILIEVI' => 'monofase',
+    'FUSTSTELG33.44' => 'monofase',
+    'FUSTSTELP25.35' => 'monofase',
+    'INCOLLAGGIO.PATTINA' => 'monofase',
+    'INCOLLAGGIOBLOCCHI' => 'monofase',
+    'LAVGEN' => 'monofase',
+    'NUM.PROGR.' => 'monofase',
+    'NUM33.44' => 'monofase',
+    'PERF.BUC' => 'monofase',
+    'PIEGA2ANTECORDONE' => 'monofase',
+    'PIEGA2ANTESINGOLO' => 'monofase',
+     'PIEGA3ANTESINGOLO' => 'monofase',
+     'PIEGA8ANTESINGOLO' => 'monofase',
+     'PIEGAMANUALE' => 'monofase',
+    'PLALUX1LATO' => 'monofase',
+    'PLALUXBV' => 'monofase',
+    'PLAOPA1LATO' => 'monofase',
+    'PLAOPABV' => 'monofase',
+    'PLAPOLIESARG1LATO' => 'monofase',
+    'PLASAB1LATO' => 'monofase',
+    'PLASABBIA1LATO' => 'monofase',
+    'PLASOFTBV' => 'monofase',
+    'PLASOFTBVEST' => 'monofase',
+    'PLASOFTTOUCH1' => 'monofase',
+    'PUNTOMETALLICO' => 'monofase',
+    'PUNTOMETALLICOEST' => 'monofase',
+    'PUNTOMETALLICOESTCOPERT.' => 'monofase',
+    'PUNTOMETAMANUALE' => 'monofase',
+    'RILIEVOASECCOJOH' => 'monofase',
+    'SPIRBLOCCOLIBROA3' => 'monofase',
+    'SPIRBLOCCOLIBROA4' => 'monofase',
+    'SPIRBLOCCOLIBROA5' => 'monofase',
+    'STAMPA' => 'monofase',
+    'STAMPA.OFFSET11.EST' => 'monofase',
+    'STAMPABUSTE.EST' => 'monofase',
+    'STAMPACALDOJOH' => 'monofase',
+    'STAMPACALDOJOH0,1' => 'monofase',
+    'UVSERIGRAFICOEST' => 'monofase',
+    'UVSPOT.MGI.30M' => 'monofase',
+    'UVSPOT.MGI.9M' => 'monofase',
+    'UVSPOTEST' => 'monofase',
+    'UVSPOTSPESSEST' => 'monofase',
+    'ZUND' => 'monofase',
+    'APPL.CORDONCINO0,035' => 'monofase',
 
-            OrdineFase::create([
-                'ordine_id' => $ordine->id,
-                'fase_catalogo_id' => $faseCatalogo->id,
-                'fase' => $row['fase'],
-                'reparto' => $reparto,
-                'qta_prod' =>0,
-                'note' => null,
-                'stato' => $row['stato'] ?? 0,
-            ]);
-        }
-
-        return $ordine;
+    // max 2 fasi
+    'STAMPAINDIGO' => 'max 2 fasi',
+    'STAMPAINDIGOBN' => 'max 2 fasi',
+    'STAMPAXL106' => 'max 2 fasi',
+    'STAMPAXL106.1' => 'max 2 fasi',
+    'STAMPAXL106.2' => 'max 2 fasi',
+    'STAMPAXL106.3' => 'max 2 fasi',
+    'STAMPAXL106.4' => 'max 2 fasi',
+    'STAMPAXL106.5' => 'max 2 fasi',
+    'STAMPAXL106.6' => 'max 2 fasi',
+    'STAMPAXL106.7' => 'max 2 fasi',
+        ];
     }
 }

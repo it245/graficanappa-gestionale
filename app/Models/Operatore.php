@@ -28,7 +28,9 @@ class Operatore extends Authenticatable
 
     public function fasi()
     {
-        return $this->hasMany(OrdineFase::class);
+        return $this->belongsToMany(OrdineFase::class, 'fase_operatore', 'operatore_id', 'fase_id')
+                    ->withPivot('data_inizio')
+                    ->withTimeStamps();
     }
 
     public function pause()
@@ -37,7 +39,7 @@ class Operatore extends Authenticatable
     }
     public function reparto()
 {
-    return $this->belongsTo(Reparto::class);
+    return $this->belongsTo(Reparto::class,'reparto_id');
 }
 
 public function getRepartiArrayAttribute()
@@ -46,6 +48,10 @@ public function getRepartiArrayAttribute()
         return [];
     }
     return array_filter(explode(',', $this->reparto));
+}
+
+public function reparti(){
+    return $this->belongsToMany(Reparto::class,'operatore_reparto','operatore_id','reparto_id')->withTimeStamps();
 }
 
 }

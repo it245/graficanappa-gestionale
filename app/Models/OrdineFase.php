@@ -46,7 +46,24 @@ class OrdineFase extends Model
     return $this->belongsTo(FasiCatalogo::class, 'fase_catalogo_id');
 }
 
+    public function operatori()
+    {
+        return $this->belongsToMany(Operatore::class, 'fase_operatore', 'fase_id', 'operatore_id')
+            ->withPivot('data_inizio','data_fine')
+            ->withTimestamps();
+    }
 
+    public function reparto()
+{
+    return $this->hasOneThrough(
+        Reparto::class,         // modello finale
+        FasiCatalogo::class,    // modello intermediario
+        'id',                   // chiave primaria di fasi_catalogo
+        'id',                   // chiave primaria di reparto
+        'fase_catalogo_id',     // chiave locale in ordine_fasi
+        'reparto_id'            // chiave esterna in fasi_catalogo
+    );
+}
     /* ===================== LOGICA ===================== */
 
     

@@ -21,5 +21,9 @@ class Fase extends Model
     {
         return $this->hasMany(OrdineFase::class);
     }
+    public function FasiCatalogo()
+    {
+        return $this->belongsTo(FasiCatalogo::class, 'fase_catalogo_id');
+    }
 }
 

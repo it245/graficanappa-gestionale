@@ -14,7 +14,7 @@ class Ordine extends Model
         'commessa', 'cliente_nome', 'cod_art', 'descrizione',
         'qta_richiesta', 'qta_prodotta', 'um', 'stato', 'priorita',
         'data_registrazione', 'data_prevista_consegna', 'pronto_consegna', 'note',
-        'ore_lavorate', 'timeout_macchina'
+        'ore_lavorate', 'timeout_macchina','cod_carta','carta','qta_carta','UM_carta'
     ];
 
     public function articoli()
@@ -48,4 +48,9 @@ class Ordine extends Model
     {
         return $this->hasMany(PausaOperatore::class);
     }
+    public function reparto(){
+        return $this->belongsTo(\App\Models\Reparto::class);
+    }
 }
+
+

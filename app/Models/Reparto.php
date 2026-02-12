@@ -14,7 +14,7 @@ class Reparto extends Model
 
     public function operatori()
     {
-        return $this->hasMany(Operatore::class);
+        return $this->hasMany(Operatore::class,'operatore_reparto','reparto_id','operatore_id')->withTimeStamps();
     }
 
     public function fasi()

@@ -6,6 +6,7 @@ use App\Http\Controllers\DashboardOperatoreController;
 use App\Http\Controllers\OperatoreLoginController;
 use App\Http\Controllers\ProduzioneController;
 use App\Http\Controllers\DashboardOwnerController;
+use App\Http\Controllers\PrinectController;
 // Operatori
 Route::prefix('operatore')->group(function() {
      Route::get('/login', [OperatoreLoginController::class, 'form'])->name('operatore.login');
@@ -23,6 +24,7 @@ Route::middleware(['web', 'owner'])->group(function() {
 Route::post('/owner/aggiungi-operatore', [DashboardOwnerController::class, 'aggiungiOperatore'])->name('owner.aggiungiOperatore');
 Route::post('/owner/aggiorna-campo', [DashboardOwnerController::class, 'aggiornaCampo'])->name('owner.aggiornaCampo');
 Route::post('/owner/import', [DashboardOwnerController::class, 'importOrdini'])->name('owner.importOrdini');
+Route::get('owner/fasi-terminate',[DashboardOwnerController::class, 'fasiTerminate'])->name('owner.fasiTerminate');
 
 });
 // Produzione
@@ -36,8 +38,14 @@ Route::prefix('produzione')->group(function() {
     Route::post('/aggiorna-ordine-campo', [ProduzioneController::class, 'aggiornaOrdineCampo'])->name('produzione.aggiornaOrdineCampo');
 });
 
+
+Route::get('/mes/prinect',[PrinectController::class, 'index'])->name('mes.prinect');
 // Health check
 Route::get('/health', fn() => 'MES OK');
+Route::get('/commesse/{commessa}', [App\Http\Controllers\CommessaController::class, 'show'])
+->middleware('operatore.auth')
+    ->name('commesse.show');
+
 
 // Homepage
 Route::get('/', fn() => view('welcome'));
