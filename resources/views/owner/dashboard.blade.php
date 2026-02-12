@@ -67,9 +67,6 @@ th, td {
 
 /* Header sticky */
 thead th {
-    position: sticky;
-    top: 0;
-    z-index: 20;
     background: #000000;
     color: #ffffff; 
     font-size: 11.5px;
@@ -319,64 +316,100 @@ td[contenteditable] {
 </select>
 </div>
 
-    {{-- MODALE AGGIUNGI OPERATORE --}}
-    <div class="modal fade" id="aggiungiOperatoreModal" tabindex="-1" aria-labelledby="aggiungiOperatoreModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <form method="POST" action="{{ route('owner.aggiungiOperatore') }}">
-                @csrf
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="aggiungiOperatoreModalLabel">Aggiungi Operatore</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    <!-- MODALE AGGIUNGI OPERATORE -->
+<div class="modal fade" id="aggiungiOperatoreModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="POST" action="{{ route('owner.aggiungiOperatore') }}">
+            @csrf
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Aggiungi Operatore</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label>Nome</label>
+                        <input type="text" name="nome" id="nome" class="form-control" required>
                     </div>
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label class="form-label">Nome</label>
-                            <input type="text" name="nome" id="nome" class="form-control" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Cognome</label>
-                            <input type="text" name="cognome" id="cognome" class="form-control" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Ruolo</label>
-                            <select name="ruolo" class="form-select" required>
-                                <option value="operatore">Operatore</option>
-                                <option value="owner">Owner</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Codice operatore</label>
-                            <input type="text" id="codice_operatore" class="form-control" value="{{ $prossimoCodice }}" data-numero="{{ $prossimoNumero}}" disabled>
-                            <small class="text-muted">Il codice sarà confermato alla creazione</small>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Reparto Principale</label>
-                            <select name="reparto_principale" class="form-select" required>
-                                @foreach($reparti as $id => $rep)
-                                    <option value="{{ $id }}">{{ $rep }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Reparto Secondario (facoltativo)</label>
-                            <select name="reparto_secondario" class="form-select">
-                                <option value="">-- Nessuno --</option>
-                                @foreach($reparti as $id => $rep)
-                                    <option value="{{ $id }}">{{ $rep }}</option>
-                                @endforeach
-                            </select>
-                        </div>
+                    <div class="mb-3">
+                        <label>Cognome</label>
+                        <input type="text" name="cognome" id="cognome" class="form-control" required>
                     </div>
-                    <div class="modal-footer">
-                        <button type="submit" class="btn btn-success">Aggiungi</button>
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+                    <div class="mb-3">
+                        <label>Ruolo</label>
+                        <select name="ruolo" class="form-select" required>
+                            <option value="operatore">Operatore</option>
+                            <option value="owner">Owner</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label>Codice operatore</label>
+                        <input type="text" id="codice_operatore" class="form-control" 
+                               value="{{ $prossimoCodice }}" 
+                               data-numero="{{ $prossimoNumero }}" readonly>
+                        <small class="text-muted">Il codice sarà confermato alla creazione</small>
+                    </div>
+                    <div class="mb-3">
+                        <label>Reparto Principale</label>
+                        <select name="reparto_principale" class="form-select" required>
+                            @foreach($reparti as $id => $rep)
+                                <option value="{{ $id }}">{{ $rep }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label>Reparto Secondario (facoltativo)</label>
+                        <select name="reparto_secondario" class="form-select">
+                            <option value="">-- Nessuno --</option>
+                            @foreach($reparti as $id => $rep)
+                                <option value="{{ $id }}">{{ $rep }}</option>
+                            @endforeach
+                        </select>
                     </div>
                 </div>
-            </form>
-        </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success">Aggiungi</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+                </div>
+            </div>
+        </form>
     </div>
+</div>
 
+<!-- JS LIVE CODICE -->
+<!-- JS LIVE CODICE OPERATORE -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('aggiungiOperatoreModal');
+
+    modal.addEventListener('shown.bs.modal', () => {
+        const nomeInput = modal.querySelector('#nome');
+        const cognomeInput = modal.querySelector('#cognome');
+        const codiceInput = modal.querySelector('#codice_operatore');
+        const numero = codiceInput.dataset.numero || 1;
+
+        function aggiornaCodice() {
+            const nome = nomeInput.value.trim();
+            const cognome = cognomeInput.value.trim();
+
+            const inizialeNome = nome ? nome[0].toUpperCase() : '_';
+            const inizialeCognome = cognome ? cognome[0].toUpperCase() : '_';
+
+            codiceInput.value = inizialeNome + inizialeCognome + String(numero).padStart(3, '0');
+
+            // DEBUG: puoi rimuovere
+            console.log("Codice aggiornato:", codiceInput.value);
+        }
+
+        // Aggiornamento live
+        nomeInput.addEventListener('input', aggiornaCodice);
+        cognomeInput.addEventListener('input', aggiornaCodice);
+
+        // Inizializza subito quando si apre il modal
+        aggiornaCodice();
+    });
+});
+</script>
 @php
     /* Helper date italiane */
     function formatItalianDate($date, $withTime = false) {

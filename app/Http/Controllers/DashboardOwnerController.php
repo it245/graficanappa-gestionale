@@ -226,10 +226,10 @@ public function calcolaOreEPriorita($fase)
             ->orderByDesc('numero')->value('numero');
         $numero = $ultimoNumero ? $ultimoNumero + 1 : 1;
 
-        $nome = ucfirst(strtolower($request->nome));
-        $cognome = ucfirst(strtolower($request->cognome));
-        $iniziali = strtoupper($nome[0] . $cognome[0]);
-        $codice = $iniziali . str_pad($numero, 3, '0', STR_PAD_LEFT);
+       $nome = ucfirst(strtolower($request->nome));
+    $cognome = ucfirst(strtolower($request->cognome));
+    $iniziali = strtoupper(($nome[0] ?? '') . ($cognome[0] ?? ''));
+    $codice = $iniziali . str_pad($numero, 3, '0', STR_PAD_LEFT);
 
         $operatore = Operatore::create([
             'nome' => $nome,
@@ -241,8 +241,10 @@ public function calcolaOreEPriorita($fase)
         ]);
 
         $reparti = array_filter([$request->reparto_principale, $request->reparto_secondario]);
-        $operatore->reparti()->sync($reparti);
-
+        if(!empty($reparti)){
+            $operatore->reparti()->sync($reparti);
+        }
+        
         return redirect()->back()->with('success', "Operatore $codice aggiunto correttamente");
     }
 
