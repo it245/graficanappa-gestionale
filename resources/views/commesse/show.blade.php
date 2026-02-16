@@ -67,6 +67,9 @@
                 <strong>{{ $fase->faseCatalogo->nome ?? '-' }}</strong>
                 <span class="badge bg-light text-dark ms-2">Stato: {{ $fase->stato }}</span>
             </div>
+            <div class="card-body border-bottom py-2">
+                <small class="text-muted">{{ $fase->ordine_descrizione ?? $fase->ordine->descrizione ?? '-' }}</small>
+            </div>
             <div class="card-body d-flex align-items-start gap-3">
                 <div class="flex-grow-1">
                     <label for="note-fase-{{ $fase->id }}"><strong>Note:</strong></label>
@@ -104,6 +107,7 @@
         <thead class="table-dark">
             <tr>
                 <th>Fase</th>
+                <th>Descrizione</th>
                 <th>Stato</th>
                 <th>Operatori</th>
                 <th>Qta Prodotta</th>
@@ -114,6 +118,7 @@
             @foreach($altreFasiMieNonSelezionate as $fase)
             <tr style="cursor:pointer" onclick="window.location='{{ route('commesse.show', $ordine->commessa) }}?fase={{ $fase->id }}'">
                 <td><a href="{{ route('commesse.show', $ordine->commessa) }}?fase={{ $fase->id }}" style="color:#000; text-decoration:underline; font-weight:bold">{{ $fase->faseCatalogo->nome ?? '-' }}</a></td>
+                <td><small>{{ Str::limit($fase->ordine_descrizione ?? $fase->ordine->descrizione ?? '-', 60) }}</small></td>
                 <td id="stato-{{ $fase->id }}">{{ $fase->stato ?? '-' }}</td>
                 <td>
                     @foreach($fase->operatori as $op)

@@ -3,22 +3,42 @@
 namespace App\Http\Controllers;
 
 use App\Models\Ordine;
+use App\Models\OrdineFase;
 
 class CommessaController extends Controller
 {
-  public function show($commessa)
-{
-    $ordine = Ordine::where('commessa', $commessa)
-                     ->with(['fasi.faseCatalogo', 'fasi.operatori'])
-                     ->firstOrFail();
+    public function show($commessa)
+    {
+        // Carica TUTTI gli ordini con questa commessa (fondente, latte, ecc.)
+        $ordini = Ordine::where('commessa', $commessa)
+                        ->with(['fasi.faseCatalogo.reparto', 'fasi.operatori'])
+                        ->get();
 
-    $prossime = Ordine::where('priorita', '>', $ordine->priorita)
-                      ->orderBy('priorita', 'asc')
-                      ->limit(5)
-                      ->get();
+        if ($ordini->isEmpty()) {
+            abort(404);
+        }
 
-    $operatore = auth('operatore')->user()->load('reparti'); // 🔹 importante
+        // Primo ordine per info generali (cliente, commessa)
+        $ordine = $ordini->first();
 
-    return view('commesse.show', compact('ordine', 'prossime', 'operatore'));
-}
+        // Raccoglie TUTTE le fasi da tutti gli ordini
+        $tutteLeFasi = $ordini->flatMap(function ($o) {
+            return $o->fasi->map(function ($fase) use ($o) {
+                $fase->ordine_descrizione = $o->descrizione;
+                return $fase;
+            });
+        });
+
+        // Sostituisci la relazione fasi con tutte le fasi combinate
+        $ordine->setRelation('fasi', $tutteLeFasi);
+
+        $prossime = Ordine::where('priorita', '>', $ordine->priorita)
+                          ->orderBy('priorita', 'asc')
+                          ->limit(5)
+                          ->get();
+
+        $operatore = auth('operatore')->user()->load('reparti');
+
+        return view('commesse.show', compact('ordine', 'prossime', 'operatore'));
+    }
 }
