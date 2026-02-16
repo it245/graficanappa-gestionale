@@ -42,9 +42,15 @@ class OperatoreLoginController extends Controller
         ]);
 if ($operatore->ruolo === 'owner') {
             return redirect()->route('owner.dashboard');
-        } else {
-            return redirect()->route('operatore.dashboard');
         }
+
+        // Redirect spedizione
+        $repartiNomi = $operatore->reparti->pluck('nome')->map(fn($n) => strtolower($n))->toArray();
+        if (in_array('spedizione', $repartiNomi)) {
+            return redirect()->route('spedizione.dashboard');
+        }
+
+        return redirect()->route('operatore.dashboard');
     }
 
     // Logout

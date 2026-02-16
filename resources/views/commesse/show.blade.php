@@ -65,7 +65,15 @@
         <div class="card mb-3 border-primary">
             <div class="card-header bg-primary text-white">
                 <strong>{{ $fase->faseCatalogo->nome ?? '-' }}</strong>
-                <span class="badge bg-light text-dark ms-2">Stato: {{ $fase->stato }}</span>
+                @if($fase->stato == 0)
+                    <span class="badge bg-secondary ms-2 fs-5">Da avviare</span>
+                @elseif($fase->stato == 1)
+                    <span class="badge bg-success ms-2 fs-5">In corso</span>
+                @elseif($fase->stato == 2)
+                    <span class="badge bg-danger ms-2 fs-5">Completata</span>
+                @else
+                    <span class="badge bg-warning text-dark ms-2 fs-5">{{ $fase->stato }}</span>
+                @endif
             </div>
             <div class="card-body border-bottom py-2">
                 <small class="text-muted">{{ $fase->ordine_descrizione ?? $fase->ordine->descrizione ?? '-' }}</small>
@@ -200,25 +208,9 @@ function aggiornaStato(faseId, azione, checked){
     .then(res=>res.json())
     .then(data=>{
         if(data.success){
-            document.getElementById('stato-'+faseId).innerText = data.nuovo_stato;
-
-            let opCell = document.getElementById('operatore-'+faseId);
-            if(opCell){
-                opCell.innerHTML = '';
-                data.operatori.forEach(op=>{
-                    opCell.innerHTML += `${op.nome} (${op.data_inizio})<br>`;
-                });
-            }
-
-            ['avvia','pausa','termina'].forEach(a=>{
-                let el = document.getElementById(a+'-'+faseId);
-                if(el && a!==azione) el.checked=false;
-            });
-
-            if(azione==='termina'){
-                let row = document.getElementById('fase-'+faseId);
-                if(row) row.style.display='none';
-            }
+            window.location.reload();
+        } else {
+            alert('Errore: ' + (data.messaggio || 'operazione fallita'));
         }
     })
     .catch(err=>console.error('Errore:', err));
@@ -245,13 +237,9 @@ function gestisciPausa(faseId, checked){
     .then(res=>res.json())
     .then(data=>{
         if(data.success){
-            document.getElementById('stato-'+faseId).innerText = motivo;
-            let timeoutEl = document.getElementById('timeout-'+faseId);
-            if(timeoutEl) timeoutEl.innerText = data.timeout;
-            ['avvia','termina'].forEach(a=>{
-                let el = document.getElementById(a+'-'+faseId);
-                if(el) el.checked=false;
-            });
+            window.location.reload();
+        } else {
+            alert('Errore: ' + (data.messaggio || 'operazione fallita'));
         }
     })
     .catch(err=>console.error('Errore:', err));

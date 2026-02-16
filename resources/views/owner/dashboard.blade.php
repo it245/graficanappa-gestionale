@@ -3,6 +3,11 @@
 @section('content')
 <div class="container-fluid px-0">
 <style>
+* {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
 html, body {
     margin: 0 !important;
     padding: 0 !important;
@@ -58,22 +63,18 @@ thead, tbody, tr {
 
 th, td {
     border: 1px solid #dee2e6;
-    padding: 2px 6px;
+    padding: 3px 6px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    line-height: 1.2;
+    line-height: 1.3;
+    transition: background 0.1s ease;
 }
 
-/* Header sticky */
 thead th {
-    position: sticky;
-    top: 0;
-    z-index: 20;
     background: #000000;
-    color: #ffffff; 
+    color: #ffffff;
     font-size: 11.5px;
-    
 }
 
 /* =========================
@@ -162,18 +163,22 @@ th:nth-child(21), td:nth-child(21) {
    SELEZIONE EXCEL
    ========================= */
 
-td.selected, th.selected {
+td.selected {
     outline: 1px solid #000000;
-    background: rgb(0, 0, 0);
+    background: rgba(0, 0, 0, 0.12) !important;
+}
+th.selected {
+    outline: 1px solid #ffffff;
 }
 
 /* Box selezione */
 .selection-box {
     position: absolute;
     border: 2px dashed #000000;
-    background-color: rgba(0, 0, 0, 0.18);
+    background-color: rgba(0, 0, 0, 0.08);
     pointer-events: none;
     z-index: 9999;
+    will-change: left, top, width, height;
 }
 
 /* =========================
@@ -190,33 +195,34 @@ td.selected, th.selected {
     margin-left:1px !important;
 }
 
+#filterBox input,
+#filterBox .choices {
+    flex: 1 1 200px;
+    max-width: 250px;
+}
+
 #filterBox input {
-    min-height: 38px;
+    height: 38px;
     padding: 0.25rem 0.5rem;
     font-size: 0.875rem;
-    flex: 1 1 250px;      /* input flessibili, più larghi */
-    max-width: 100%;
 }
 
 #filterBox .choices {
     display: inline-flex;
     align-items: center;
-    flex: 1 1 200px;
 }
 
 #filterBox .choices__inner {
-    min-height: 38px;
     height: 38px;
+    max-height: 38px;
+    overflow: hidden;
     display: flex;
+    flex-wrap: nowrap;
     align-items: center;
     padding: 0 8px;
     box-sizing: border-box;
+    width: 100%;
 }
-
-/* Larghezze filtri */
-#filterStato + .choices { width: 180px; }
-#filterFase + .choices { width: 350px; }
-#filterReparto + .choices { width: 300px; }
 
 .choices__list--dropdown {
     max-height: 250px;
@@ -225,17 +231,20 @@ td.selected, th.selected {
 
 #filterBox .choices__list--multiple {
     display: flex;
-    flex-direction: column;
+    flex-wrap: wrap;
     gap: 4px;
 }
 
-#filterBox .choices__item--selectable {
-    width: 100%;
-    box-sizing: border-box;
+#filterBox .choices__list--multiple .choices__item {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    font-size: 12px;
 }
 
-#filterBox .choices__list--multiple .choices__item:nth-child(n+10) {
-    display: none;
+#filterBox .choices__list--multiple .choices__button {
+    padding-left: 8px;
+    cursor: pointer;
 }
 
 /* =========================
@@ -248,6 +257,27 @@ table * {
 
 td[contenteditable] {
     user-select: text;
+    cursor: text;
+}
+
+td[contenteditable]:focus {
+    outline: 2px solid #0d6efd;
+    outline-offset: -2px;
+    background: #f0f7ff !important;
+}
+
+tr:hover td {
+    background: rgba(0, 0, 0, 0.03);
+}
+
+/* Animazione filtri */
+#filterBox {
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+/* Modal fluido */
+.modal.fade .modal-dialog {
+    transition: transform 0.2s ease;
 }
 
 </style>
@@ -290,6 +320,21 @@ td[contenteditable] {
         <button id="printButton" class="btn p-0" style="background:none; border:none;" title="Stampa celle selezionate">
             <img src="{{ asset('images/printer.png') }}" alt="Stampa">
         </button>
+
+        {{-- Aggiungi riga manuale --}}
+        <a href="#" data-bs-toggle="modal" data-bs-target="#aggiungiRigaModal" title="Aggiungi riga">
+            <img src="{{ asset('images/icons8-ddt-64 (1).png') }}" alt="Aggiungi riga" style="height:35px">
+        </a>
+
+        {{-- Report consegnati oggi --}}
+        <a href="#" data-bs-toggle="modal" data-bs-target="#modalSpedizioniOggi" title="Consegnati oggi" class="position-relative" id="btnConsegnati">
+            <img src="{{ asset('images/icons8-consegnato-50.png') }}" alt="Consegnati oggi" style="height:35px">
+            @if($spedizioniOggi->count() > 0)
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:10px;" id="badgeConsegnati">
+                    {{ $spedizioniOggi->count() }}
+                </span>
+            @endif
+        </a>
 
     </div>
     
@@ -377,6 +422,70 @@ td[contenteditable] {
         </div>
     </div>
 
+    {{-- MODALE AGGIUNGI RIGA --}}
+    <div class="modal fade" id="aggiungiRigaModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <form method="POST" action="{{ route('owner.aggiungiRiga') }}">
+                @csrf
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Aggiungi Riga</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <label class="form-label">Commessa *</label>
+                                <input type="text" name="commessa" class="form-control">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">Cliente</label>
+                                <input type="text" name="cliente_nome" class="form-control">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">Codice Articolo</label>
+                                <input type="text" name="cod_art" class="form-control">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Descrizione</label>
+                                <input type="text" name="descrizione" class="form-control">
+                            </div>
+                            <div class="col-4">
+                                <label class="form-label">Quantita</label>
+                                <input type="number" name="qta_richiesta" class="form-control" value="0">
+                            </div>
+                            <div class="col-4">
+                                <label class="form-label">UM</label>
+                                <input type="text" name="um" class="form-control" value="FG">
+                            </div>
+                            <div class="col-4">
+                                <label class="form-label">Data Consegna</label>
+                                <input type="date" name="data_prevista_consegna" class="form-control">
+                            </div>
+                            <div class="col-4">
+                                <label class="form-label">Priorità</label>
+                                <input type="number" name="priorita" class="form-control" step="0.01" value="0">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Fase *</label>
+                                <select name="fase_catalogo_id" class="form-select">
+                                    <option value="">-- Seleziona fase --</option>
+                                    @foreach(\App\Models\FasiCatalogo::with('reparto')->orderBy('nome')->get() as $fc)
+                                        <option value="{{ $fc->id }}">{{ $fc->nome }} ({{ $fc->reparto->nome ?? '-' }})</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-success">Aggiungi</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
 @php
     /* Helper date italiane */
     function formatItalianDate($date, $withTime = false) {
@@ -392,7 +501,7 @@ td[contenteditable] {
 
     {{-- TABELLA --}}
     <div>
-        <table class="table table-bordered table-sm table-striped">
+        <table id="tabellaOrdini" class="table table-bordered table-sm table-striped">
             <thead class="table-dark">
                 <tr>
                     <th>Commessa</th>
@@ -465,6 +574,83 @@ td[contenteditable] {
         </table>
     </div>
 </div>
+{{-- MODALE SPEDIZIONI OGGI --}}
+<div class="modal fade" id="modalSpedizioniOggi" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">Consegnati oggi ({{ $spedizioniOggi->count() }})</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="overflow-x:auto;">
+                @if($spedizioniOggi->count() > 0)
+                <table class="table table-bordered table-sm" style="white-space:nowrap; font-size:13px;">
+                    <thead class="table-success">
+                        <tr>
+                            <th>Commessa</th>
+                            <th>Cliente</th>
+                            <th>Descrizione</th>
+                            <th>Fase</th>
+                            <th>Operatore</th>
+                            <th>Data Consegna</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($spedizioniOggi as $sp)
+                        <tr>
+                            <td><strong>{{ $sp->ordine->commessa ?? '-' }}</strong></td>
+                            <td>{{ $sp->ordine->cliente_nome ?? '-' }}</td>
+                            <td style="white-space:normal; max-width:350px;">{{ $sp->ordine->descrizione ?? '-' }}</td>
+                            <td>{{ $sp->faseCatalogo->nome ?? $sp->fase ?? '-' }}</td>
+                            <td>
+                                @foreach($sp->operatori as $op)
+                                    {{ $op->nome }} {{ $op->cognome }}@if(!$loop->last), @endif
+                                @endforeach
+                            </td>
+                            <td>{{ $sp->data_fine ? \Carbon\Carbon::parse($sp->data_fine)->format('d/m/Y H:i:s') : '-' }}</td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+                @else
+                <p class="text-muted text-center py-3">Nessuna consegna effettuata oggi</p>
+                @endif
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+    // Badge consegnati
+    var modal = document.getElementById('modalSpedizioniOggi');
+    if(modal){
+        modal.addEventListener('show.bs.modal', function(){
+            var badge = document.getElementById('badgeConsegnati');
+            if(badge) badge.style.display = 'none';
+        });
+    }
+
+    // Codice operatore live
+    var nomeInput = document.getElementById('nome');
+    var cognomeInput = document.getElementById('cognome');
+    var codiceInput = document.getElementById('codice_operatore');
+    var numero = codiceInput ? codiceInput.getAttribute('data-numero') : '001';
+    numero = String(numero).padStart(3, '0');
+
+    function aggiornaCodice(){
+        var n = (nomeInput.value || '').trim().toUpperCase();
+        var c = (cognomeInput.value || '').trim().toUpperCase();
+        var iniziali = (n.charAt(0) || '_') + (c.charAt(0) || '_');
+        codiceInput.value = iniziali + numero;
+    }
+
+    if(nomeInput && cognomeInput && codiceInput){
+        nomeInput.addEventListener('input', aggiornaCodice);
+        cognomeInput.addEventListener('input', aggiornaCodice);
+    }
+});
+</script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
 <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
 {{-- JS --}}
@@ -501,7 +687,7 @@ function aggiornaCampo(faseId, campo, valore){
 </script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    const table = document.querySelector('table');
+    const table = document.getElementById('tabellaOrdini');
     const allCells = Array.from(table.querySelectorAll('td, th'));
     const selectedCells = new Set();
 
@@ -510,92 +696,119 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentX = 0, currentY = 0;
     let selectionBox = null;
     let rafPending = false;
+    let cachedRects = [];
 
-    function boxesIntersect(a, b) {
-        return !(
-            a.right < b.left ||
-            a.left > b.right ||
-            a.bottom < b.top ||
-            a.top > b.bottom
-        );
+    function cacheRects() {
+        const sx = window.scrollX, sy = window.scrollY;
+        cachedRects = allCells.map(cell => {
+            const r = cell.getBoundingClientRect();
+            return {
+                cell,
+                left: r.left + sx,
+                top: r.top + sy,
+                right: r.right + sx,
+                bottom: r.bottom + sy
+            };
+        });
     }
 
     function updateSelection() {
         rafPending = false;
+        if (!selectionBox) return;
 
         const x = Math.min(startX, currentX);
         const y = Math.min(startY, currentY);
         const w = Math.abs(currentX - startX);
         const h = Math.abs(currentY - startY);
 
-        selectionBox.style.left = x + 'px';
-        selectionBox.style.top = y + 'px';
+        selectionBox.style.transform = 'translate(' + x + 'px,' + y + 'px)';
         selectionBox.style.width = w + 'px';
         selectionBox.style.height = h + 'px';
 
-        const boxRect = {
-            left: x,
-            top: y,
-            right: x + w,
-            bottom: y + h
-        };
+        const bRight = x + w, bBottom = y + h;
 
         selectedCells.forEach(c => c.classList.remove('selected'));
         selectedCells.clear();
 
-        for (const cell of allCells) {
-            const r = cell.getBoundingClientRect();
-            const cellRect = {
-                left: r.left + window.scrollX,
-                top: r.top + window.scrollY,
-                right: r.right + window.scrollX,
-                bottom: r.bottom + window.scrollY
-            };
-
-            if (boxesIntersect(boxRect, cellRect)) {
-                cell.classList.add('selected');
-                selectedCells.add(cell);
+        for (let i = 0; i < cachedRects.length; i++) {
+            const r = cachedRects[i];
+            if (!(r.right < x || r.left > bRight || r.bottom < y || r.top > bBottom)) {
+                r.cell.classList.add('selected');
+                selectedCells.add(r.cell);
             }
         }
     }
 
-    table.addEventListener('mousedown', e => {
-        if (e.button !== 0 || !e.target.matches('td, th')) return;
-
+    // Doppio click/tap = avvia selezione per stampa
+    function startSelection(x, y) {
         isSelecting = true;
-        startX = currentX = e.pageX;
-        startY = currentY = e.pageY;
+        startX = currentX = x;
+        startY = currentY = y;
 
         selectedCells.forEach(c => c.classList.remove('selected'));
         selectedCells.clear();
 
+        cacheRects();
+
         selectionBox = document.createElement('div');
         selectionBox.className = 'selection-box';
+        selectionBox.style.left = '0';
+        selectionBox.style.top = '0';
         document.body.appendChild(selectionBox);
+    }
 
-        e.preventDefault();
-    });
-
-    document.addEventListener('mousemove', e => {
+    function moveSelection(x, y) {
         if (!isSelecting) return;
-
-        currentX = e.pageX;
-        currentY = e.pageY;
-
+        currentX = x;
+        currentY = y;
         if (!rafPending) {
             rafPending = true;
             requestAnimationFrame(updateSelection);
         }
-    });
+    }
 
-    document.addEventListener('mouseup', () => {
+    function endSelection() {
         isSelecting = false;
         rafPending = false;
         if (selectionBox) {
             selectionBox.remove();
             selectionBox = null;
         }
+    }
+
+    // Mouse: doppio click avvia, drag seleziona
+    table.addEventListener('dblclick', e => {
+        if (!e.target.matches('td, th')) return;
+        startSelection(e.pageX, e.pageY);
+        e.preventDefault();
     });
+
+    document.addEventListener('mousemove', e => moveSelection(e.pageX, e.pageY));
+    document.addEventListener('mouseup', endSelection);
+
+    // Touch: doppio tap avvia, drag seleziona
+    let lastTap = 0;
+    table.addEventListener('touchstart', e => {
+        const now = Date.now();
+        const touch = e.touches[0];
+        const target = document.elementFromPoint(touch.clientX, touch.clientY);
+
+        if (now - lastTap < 350 && target && target.matches('td, th')) {
+            // Doppio tap
+            startSelection(touch.pageX, touch.pageY);
+            e.preventDefault();
+        }
+        lastTap = now;
+    }, { passive: false });
+
+    document.addEventListener('touchmove', e => {
+        if (!isSelecting) return;
+        const touch = e.touches[0];
+        moveSelection(touch.pageX, touch.pageY);
+        e.preventDefault();
+    }, { passive: false });
+
+    document.addEventListener('touchend', endSelection);
 
     // STAMPA SOLO LE CELLE NEL BOX
     document.getElementById('printButton').addEventListener('click', () => {
@@ -644,6 +857,21 @@ document.addEventListener('DOMContentLoaded', () => {
         win.document.write('</table></body></html>');
         win.document.close();
         win.print();
+
+        // Deseleziona dopo che la finestra di stampa viene chiusa
+        win.onafterprint = function() {
+            selectedCells.forEach(c => c.classList.remove('selected'));
+            selectedCells.clear();
+            win.close();
+        };
+        // Fallback: deseleziona quando la finestra viene chiusa
+        var checkClosed = setInterval(function() {
+            if (win.closed) {
+                clearInterval(checkClosed);
+                selectedCells.forEach(c => c.classList.remove('selected'));
+                selectedCells.clear();
+            }
+        }, 300);
     });
 });
 </script>
@@ -670,7 +898,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const fFase = document.getElementById('filterFase');
     const fReparto = document.getElementById('filterReparto');
 
-    const rows = Array.from(document.querySelectorAll('table tbody tr'));
+    const rows = Array.from(document.querySelectorAll('#tabellaOrdini tbody tr'));
 
     const rowData = rows.map(row => ({
         row,

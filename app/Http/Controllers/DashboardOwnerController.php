@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Ordine;
 use App\Models\OrdineFase;
 use App\Models\Operatore;
 use App\Models\Reparto;
@@ -158,7 +159,21 @@ public function calcolaOreEPriorita($fase)
         $reparti = Reparto::orderBy('nome')->pluck('nome', 'id');
         $fasiCatalogo = FasiCatalogo::all();
 
-        return view('owner.dashboard', compact('fasi', 'prossimoNumero', 'prossimoCodice', 'reparti', 'fasiCatalogo'));
+        // Report spedizioni di oggi
+        $repartoSpedizione = Reparto::where('nome', 'spedizione')->first();
+        $spedizioniOggi = collect();
+        if ($repartoSpedizione) {
+            $spedizioniOggi = OrdineFase::where('stato', 2)
+                ->whereDate('data_fine', Carbon::today())
+                ->whereHas('faseCatalogo', function ($q) use ($repartoSpedizione) {
+                    $q->where('reparto_id', $repartoSpedizione->id);
+                })
+                ->with(['ordine', 'faseCatalogo', 'operatori'])
+                ->get()
+                ->sortByDesc('data_fine');
+        }
+
+        return view('owner.dashboard', compact('fasi', 'prossimoNumero', 'prossimoCodice', 'reparti', 'fasiCatalogo', 'spedizioniOggi'));
     }
 
     public function aggiornaCampo(Request $request)
@@ -244,6 +259,35 @@ public function calcolaOreEPriorita($fase)
         $operatore->reparti()->sync($reparti);
 
         return redirect()->back()->with('success', "Operatore $codice aggiunto correttamente");
+    }
+
+    public function aggiungiRiga(Request $request)
+    {
+        $faseCatalogo = $request->fase_catalogo_id
+            ? FasiCatalogo::with('reparto')->find($request->fase_catalogo_id)
+            : null;
+
+        $ordine = Ordine::create([
+            'commessa' => trim($request->commessa),
+            'cliente_nome' => trim($request->cliente_nome ?? ''),
+            'cod_art' => trim($request->cod_art ?? ''),
+            'descrizione' => trim($request->descrizione ?? ''),
+            'qta_richiesta' => $request->qta_richiesta ?? 0,
+            'um' => $request->um ?? 'FG',
+            'stato' => 0,
+            'data_registrazione' => now()->toDateString(),
+            'data_prevista_consegna' => $request->data_prevista_consegna ?? null,
+            'priorita' => $request->priorita ?? 0,
+        ]);
+
+        OrdineFase::create([
+            'ordine_id' => $ordine->id,
+            'fase' => $faseCatalogo ? $faseCatalogo->nome : '-',
+            'fase_catalogo_id' => $faseCatalogo?->id,
+            'stato' => 0,
+        ]);
+
+        return redirect()->back()->with('success', 'Riga aggiunta correttamente.');
     }
 
     public function importOrdini(Request $request)
