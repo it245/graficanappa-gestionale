@@ -154,7 +154,7 @@
 
                     {{-- COMMESSA CLICCABILE --}}
                     <td>
-                        <a href="{{ route('commesse.show', $fase->ordine->commessa) }}" class="commessa-link"
+                        <a href="{{ route('commesse.show', $fase->ordine->commessa) }}?fase={{ $fase->id }}" class="commessa-link"
                            style="font-weight:bold">
                            {{ $fase->ordine->commessa }}
                         </a>
