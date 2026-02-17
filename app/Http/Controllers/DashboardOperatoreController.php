@@ -119,6 +119,7 @@ class DashboardOperatoreController extends Controller
             // Nuove fasi (valori da fasi simili)
             '4graph' => ['avviamento' => 0.5, 'copieh' => 100],
             'stampalaminaoro' => ['avviamento' => 1, 'copieh' => 2200],
+            'STAMPALAMINAORO' => ['avviamento' => 1, 'copieh' => 2200],
             'ALL.COFANETTO.ISMAsrl' => ['avviamento' => 0.5, 'copieh' => 100],
             'PMDUPLO36COP' => ['avviamento' => 0.5, 'copieh' => 100],
             'FINESTRATURA.MANUALE' => ['avviamento' => 0.5, 'copieh' => 100],

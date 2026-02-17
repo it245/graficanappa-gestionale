@@ -344,6 +344,11 @@ tr:hover td {
             <img src="{{ asset('images/out-of-the-box.png') }}" alt="Fasi terminate">
         </a>
 
+        {{-- Scheduling Produzione --}}
+        <a href="{{ route('owner.scheduling') }}" title="Scheduling Produzione (Gantt)">
+            <img src="{{ asset('images/icons8-report-grafico-a-torta-50.png') }}" alt="Scheduling">
+        </a>
+
         {{-- Stampa celle selezionate --}}
         <button id="printButton" class="btn p-0" style="background:none; border:none;" title="Stampa celle selezionate">
             <img src="{{ asset('images/printer.png') }}" alt="Stampa">

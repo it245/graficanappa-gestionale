@@ -111,6 +111,7 @@ class DashboardOwnerController extends Controller
         // Nuove fasi (valori da fasi simili)
         '4graph' => ['avviamento' => 0.5, 'copieh' => 100],           // come Allest.Manuale (esterno)
         'stampalaminaoro' => ['avviamento' => 1, 'copieh' => 2200],   // come STAMPACALDOJOH
+        'STAMPALAMINAORO' => ['avviamento' => 1, 'copieh' => 2200],
         'ALL.COFANETTO.ISMAsrl' => ['avviamento' => 0.5, 'copieh' => 100], // come Allest.Manuale (esterno)
         'PMDUPLO36COP' => ['avviamento' => 0.5, 'copieh' => 100],    // esterno generico
         'FINESTRATURA.MANUALE' => ['avviamento' => 0.5, 'copieh' => 100], // come FINESTRATURA.INT
@@ -446,5 +447,52 @@ public function calcolaOreEPriorita($fase)
     {
         FaseStatoService::ricalcolaTutti();
         return response()->json(['success' => true, 'messaggio' => 'Stati ricalcolati']);
+    }
+
+    public function scheduling()
+    {
+        $fasi = OrdineFase::with(['ordine', 'faseCatalogo.reparto', 'operatori'])
+            ->where('stato', '!=', 3)
+            ->get()
+            ->map(function ($fase) {
+                return $this->calcolaOreEPriorita($fase);
+            })
+            ->sortBy('priorita');
+
+        $dataScheduling = $fasi->map(function ($fase) {
+            $dataInizio = null;
+            if ($fase->operatori->isNotEmpty()) {
+                $primo = $fase->operatori->sortBy('pivot.data_inizio')->first();
+                $dataInizio = $primo?->pivot->data_inizio;
+            }
+
+            $consegna = $fase->ordine->data_prevista_consegna;
+            $giorniAllaConsegna = null;
+            if ($consegna) {
+                $giorniAllaConsegna = round((Carbon::parse($consegna)->startOfDay()->timestamp - Carbon::today()->timestamp) / 86400);
+            }
+
+            return [
+                'id' => $fase->id,
+                'commessa' => $fase->ordine->commessa ?? '-',
+                'cliente' => $fase->ordine->cliente_nome ?? '-',
+                'descrizione' => $fase->ordine->descrizione ?? '-',
+                'cod_art' => $fase->ordine->cod_art ?? '-',
+                'fase' => $fase->fase,
+                'stato' => $fase->stato,
+                'ore' => round($fase->ore, 2),
+                'priorita' => $fase->priorita,
+                'consegna' => $consegna,
+                'giorni_consegna' => $giorniAllaConsegna,
+                'qta_carta' => $fase->ordine->qta_carta ?? 0,
+                'reparto_id' => $fase->faseCatalogo?->reparto_id ?? 0,
+                'reparto' => ucfirst($fase->faseCatalogo?->reparto?->nome ?? 'generico'),
+                'data_inizio_reale' => $dataInizio,
+            ];
+        })->values();
+
+        return view('owner.scheduling', [
+            'dataJson' => $dataScheduling->toJson(),
+        ]);
     }
 }

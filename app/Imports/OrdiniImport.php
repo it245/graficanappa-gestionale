@@ -249,6 +249,7 @@ private function convertiData($valore) {
     // Nuove fasi
     '4graph' => 'esterno',
     'stampalaminaoro' => 'stampa a caldo',
+    'STAMPALAMINAORO' => 'stampa a caldo',
     'ALL.COFANETTO.ISMAsrl' => 'esterno',
     'PMDUPLO36COP' => 'esterno',
     'FINESTRATURA.MANUALE' => 'finestre',
@@ -349,6 +350,7 @@ private function convertiData($valore) {
     // nuove fasi
     '4graph' => 'monofase',
     'stampalaminaoro' => 'monofase',
+    'STAMPALAMINAORO' => 'monofase',
     'ALL.COFANETTO.ISMAsrl' => 'monofase',
     'PMDUPLO36COP' => 'monofase',
     'FINESTRATURA.MANUALE' => 'monofase',
