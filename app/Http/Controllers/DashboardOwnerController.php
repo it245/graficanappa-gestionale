@@ -11,6 +11,7 @@ use App\Models\FasiCatalogo;
 use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;
 use Carbon\Carbon;
+use App\Services\FaseStatoService;
 
 class DashboardOwnerController extends Controller
 {
@@ -107,35 +108,52 @@ class DashboardOwnerController extends Controller
         'UVSPOTSPESSEST' => ['avviamento' => 72, 'copieh' => 1000],
         'ZUND' => ['avviamento' => 0.5, 'copieh' => 50],
         'APPL.CORDONCINO0,035' => ['avviamento' => 0.02, 'copieh' => 50],
+        // Nuove fasi (valori da fasi simili)
+        '4graph' => ['avviamento' => 0.5, 'copieh' => 100],           // come Allest.Manuale (esterno)
+        'stampalaminaoro' => ['avviamento' => 1, 'copieh' => 2200],   // come STAMPACALDOJOH
+        'ALL.COFANETTO.ISMAsrl' => ['avviamento' => 0.5, 'copieh' => 100], // come Allest.Manuale (esterno)
+        'PMDUPLO36COP' => ['avviamento' => 0.5, 'copieh' => 100],    // esterno generico
+        'FINESTRATURA.MANUALE' => ['avviamento' => 0.5, 'copieh' => 100], // come FINESTRATURA.INT
+        'FINESTRATURA.INT' => ['avviamento' => 0.5, 'copieh' => 100],
+        'STAMPACALDOJOHEST' => ['avviamento' => 72, 'copieh' => 2200], // come STAMPACALDOJOH ma est (avv.72)
+        'BROSSFRESATA/A5EST' => ['avviamento' => 72, 'copieh' => 1000], // come BROSSFILOREFE/A5EST
+        'PIEGA6ANTESINGOLO' => ['avviamento' => 0.5, 'copieh' => 500], // come PIEGA3ANTESINGOLO
+        'ALLESTIMENTO.ESPOSITORI' => ['avviamento' => 0.5, 'copieh' => 100], // come Allest.Manuale
+        'FUSTIML75X106' => ['avviamento' => 0.5, 'copieh' => 3000],   // come FUSTBOBST75X106
+        'FUSTELLATURA72X51' => ['avviamento' => 0.5, 'copieh' => 1500], // come FUSTSTELG33.44
     ];
 
 public function calcolaOreEPriorita($fase)
     {
-        $qta_carta = $fase->ordine->qta_carta ?: 1;
+        $qta_carta = $fase->ordine->qta_carta ?: 0;
         $infoFase = $this->fasiInfo[$fase->fase] ?? ['avviamento' => 0, 'copieh' => 0];
+        $copieh = $infoFase['copieh'] ?: 1;
 
-        $fase->ore = $infoFase['avviamento'] + ($infoFase['copieh'] / $qta_carta);
+        // ore = avviamento + qtaCarta / copieh (pezzi da fare / pezzi all'ora)
+        $fase->ore = $infoFase['avviamento'] + ($qta_carta / $copieh);
 
-        $giorni_disponibili = 0;
-        if ($fase->ordine->data_prevista_consegna && $fase->ordine->data_registrazione) {
-            $start = Carbon::parse($fase->ordine->data_registrazione);
-            $end = Carbon::parse($fase->ordine->data_prevista_consegna);
-            $giorni_disponibili = ($end->timestamp - $start->timestamp) / 86400;
+        // giorni rimasti = dataPrevConsegna - OGGI (negativo se scaduta)
+        $giorni_rimasti = 0;
+        if ($fase->ordine->data_prevista_consegna) {
+            $oggi = Carbon::today();
+            $consegna = Carbon::parse($fase->ordine->data_prevista_consegna)->startOfDay();
+            $giorni_rimasti = ($consegna->timestamp - $oggi->timestamp) / 86400;
         }
 
-        if (!$fase->ordine->priorita || $fase->ordine->priorita == 0) {
-            $fase->ordine->priorita = round($giorni_disponibili + ($fase->ore / 24), 2);
-            $fase->ordine->save();
-        }
+        // Ordine fase dalla config (es. STAMPA=10, PLASTIFICA=20, BRT=999)
+        $fasePriorita = config('fasi_priorita')[$fase->fase] ?? 500;
 
-        $fase->priorita = $fase->ordine->priorita;
+        // Priorità = giorni rimasti - ore/24 + ordineFase/10000
+        $prioritaCalcolata = round($giorni_rimasti - ($fase->ore / 24) + ($fasePriorita / 10000), 2);
+
+        $fase->priorita = $prioritaCalcolata;
         return $fase;
     }
 
     public function index()
     {
         $fasi = OrdineFase::with(['ordine', 'faseCatalogo', 'operatori' => fn($q) => $q->select('operatori.id', 'nome')])
-            ->where('stato', '!=', 2)
+            ->where('stato', '!=', 3)
             ->get()
             ->map(function ($fase) {
                 $fase = $this->calcolaOreEPriorita($fase);
@@ -163,7 +181,7 @@ public function calcolaOreEPriorita($fase)
         $repartoSpedizione = Reparto::where('nome', 'spedizione')->first();
         $spedizioniOggi = collect();
         if ($repartoSpedizione) {
-            $spedizioniOggi = OrdineFase::where('stato', 2)
+            $spedizioniOggi = OrdineFase::where('stato', 3)
                 ->whereDate('data_fine', Carbon::today())
                 ->whereHas('faseCatalogo', function ($q) use ($repartoSpedizione) {
                     $q->where('reparto_id', $repartoSpedizione->id);
@@ -178,9 +196,9 @@ public function calcolaOreEPriorita($fase)
 
     public function aggiornaCampo(Request $request)
     {
-        $campiFase = ['qta_prod', 'note', 'stato', 'data_inizio', 'data_fine', 'ore'];
-        $campiOrdine = ['cliente_nome', 'cod_art', 'descrizione', 'qta_richiesta', 'um', 
-                        'priorita', 'data_registrazione', 'data_prevista_consegna',
+        $campiFase = ['qta_prod', 'note', 'stato', 'data_inizio', 'data_fine', 'ore', 'priorita', 'fase'];
+        $campiOrdine = ['cliente_nome', 'cod_art', 'descrizione', 'qta_richiesta', 'um',
+                        'data_registrazione', 'data_prevista_consegna',
                         'cod_carta', 'carta', 'qta_carta', 'UM_carta'];
 
         $validator = Validator::make($request->all(), [
@@ -217,9 +235,25 @@ public function calcolaOreEPriorita($fase)
         if (in_array($campo, $campiFase)) {
             $fase->{$campo} = $valore;
             $fase->save();
+
+            // Se aggiornata qta_prod, controlla completamento automatico
+            if ($campo === 'qta_prod') {
+                FaseStatoService::controllaCompletamento($fase->id);
+            }
         } elseif (in_array($campo, $campiOrdine)) {
             $fase->ordine->{$campo} = $valore;
             $fase->ordine->save();
+
+            // Se cambiata data consegna, aggiorna TUTTI gli ordini della stessa commessa
+            if ($campo === 'data_prevista_consegna') {
+                Ordine::where('commessa', $fase->ordine->commessa)
+                    ->where('id', '!=', $fase->ordine->id)
+                    ->update(['data_prevista_consegna' => $valore]);
+
+                FaseStatoService::ricalcolaStati($fase->ordine_id);
+
+                return response()->json(['success' => true, 'reload' => true]);
+            }
         } else {
             return response()->json(['success' => false, 'messaggio' => 'Campo non aggiornabile'], 422);
         }
@@ -300,6 +334,7 @@ public function calcolaOreEPriorita($fase)
             $path = $file->store('imports');
             Excel::import(new \App\Imports\OrdiniImport, storage_path('app/' . $path));
             @unlink(storage_path('app/' . $path));
+            FaseStatoService::ricalcolaTutti();
             return redirect()->route('owner.dashboard')->with('success', 'Ordini importati correttamente.');
         } catch (\Exception $e) {
             return redirect()->route('owner.dashboard')->with('error', 'Errore importazione: ' . $e->getMessage());
@@ -313,7 +348,7 @@ public function calcolaOreEPriorita($fase)
             'faseCatalogo',
             'operatori'
         ])
-        ->where('stato', 2)
+        ->where('stato', 3)
         ->get()
         ->map(function ($fase) {
 
@@ -358,4 +393,58 @@ public function calcolaOreEPriorita($fase)
 
     return view('owner.fasi_terminate', compact('fasiTerminate'));
 }
+
+    public function dettaglioCommessa($commessa)
+    {
+        $ordini = Ordine::where('commessa', $commessa)->with('fasi.faseCatalogo.reparto', 'fasi.operatori')->get();
+        if ($ordini->isEmpty()) abort(404, 'Commessa non trovata');
+
+        $fasi = $ordini->flatMap(function ($ordine) {
+            return $ordine->fasi->map(function ($fase) use ($ordine) {
+                $fase->ordine = $ordine;
+                $fase->reparto_nome = $fase->faseCatalogo->reparto->nome ?? '-';
+                $fase = $this->calcolaOreEPriorita($fase);
+                return $fase;
+            });
+        })->sortBy('priorita');
+
+        return view('owner.dettaglio_commessa', compact('commessa', 'fasi'));
+    }
+
+    public function eliminaFase(Request $request)
+    {
+        $fase = OrdineFase::find($request->fase_id);
+        if (!$fase) return response()->json(['success' => false, 'messaggio' => 'Fase non trovata']);
+
+        $fase->operatori()->detach();
+        $fase->delete();
+
+        return response()->json(['success' => true]);
+    }
+
+    public function aggiornaStato(Request $request)
+    {
+        $fase = OrdineFase::find($request->fase_id);
+        if (!$fase) return response()->json(['success' => false, 'messaggio' => 'Fase non trovata']);
+
+        $nuovoStato = (int) $request->stato;
+        $fase->stato = $nuovoStato;
+
+        if ($nuovoStato == 3 && !$fase->data_fine) {
+            $fase->data_fine = now()->format('d/m/Y H:i:s');
+        }
+
+        $fase->save();
+
+        // Ricalcola stati delle fasi successive
+        FaseStatoService::ricalcolaStati($fase->ordine_id);
+
+        return response()->json(['success' => true, 'messaggio' => 'Stato aggiornato']);
+    }
+
+    public function ricalcolaStati()
+    {
+        FaseStatoService::ricalcolaTutti();
+        return response()->json(['success' => true, 'messaggio' => 'Stati ricalcolati']);
+    }
 }

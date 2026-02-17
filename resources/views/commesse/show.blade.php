@@ -31,18 +31,22 @@
 }
 </style>
 
+@php
+    $operatore = auth('operatore')->user();
+    $repartiOperatore = $operatore?->reparti?->pluck('id')->toArray() ?? [];
+    $isSpedizione = $operatore?->reparti?->pluck('nome')->map(fn($n) => strtolower($n))->contains('spedizione');
+@endphp
+
 <!-- Header -->
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h2>Commessa {{ $ordine->commessa }}</h2>
-    <a href="{{ route('operatore.dashboard') }}" class="btn btn-primary d-flex align-items-center">
+    <a href="{{ $isSpedizione ? route('spedizione.dashboard') : route('operatore.dashboard') }}" class="btn btn-primary d-flex align-items-center">
         <img src="{{ asset('images/turn-left_15441589.png') }}" alt="Dashboard" style="width:20px; height:20px; margin-right:5px;">
         Dashboard
     </a>
 </div>
 
 @php
-    $operatore = auth('operatore')->user();
-    $repartiOperatore = $operatore?->reparti?->pluck('id')->toArray() ?? [];
     $fasiGestibili = $ordine->fasi->filter(function($f) use ($repartiOperatore) {
         return in_array($f->faseCatalogo->reparto_id ?? null, $repartiOperatore);
     });
@@ -65,15 +69,8 @@
         <div class="card mb-3 border-primary">
             <div class="card-header bg-primary text-white">
                 <strong>{{ $fase->faseCatalogo->nome ?? '-' }}</strong>
-                @if($fase->stato == 0)
-                    <span class="badge bg-secondary ms-2 fs-5">Da avviare</span>
-                @elseif($fase->stato == 1)
-                    <span class="badge bg-success ms-2 fs-5">In corso</span>
-                @elseif($fase->stato == 2)
-                    <span class="badge bg-danger ms-2 fs-5">Completata</span>
-                @else
-                    <span class="badge bg-warning text-dark ms-2 fs-5">{{ $fase->stato }}</span>
-                @endif
+                @php $badgeBg = [0=>'bg-secondary',1=>'bg-info',2=>'bg-warning text-dark',3=>'bg-success']; @endphp
+                <span class="badge {{ $badgeBg[$fase->stato] ?? 'bg-dark' }} ms-2 fs-5">{{ $fase->stato }}</span>
             </div>
             <div class="card-body border-bottom py-2">
                 <small class="text-muted">{{ $fase->ordine_descrizione ?? $fase->ordine->descrizione ?? '-' }}</small>
@@ -127,7 +124,8 @@
             <tr style="cursor:pointer" onclick="window.location='{{ route('commesse.show', $ordine->commessa) }}?fase={{ $fase->id }}'">
                 <td><a href="{{ route('commesse.show', $ordine->commessa) }}?fase={{ $fase->id }}" style="color:#000; text-decoration:underline; font-weight:bold">{{ $fase->faseCatalogo->nome ?? '-' }}</a></td>
                 <td><small>{{ Str::limit($fase->ordine_descrizione ?? $fase->ordine->descrizione ?? '-', 60) }}</small></td>
-                <td id="stato-{{ $fase->id }}">{{ $fase->stato ?? '-' }}</td>
+                @php $sb = [0=>'#e9ecef',1=>'#cfe2ff',2=>'#fff3cd',3=>'#d1e7dd']; @endphp
+                <td id="stato-{{ $fase->id }}" style="background:{{ $sb[$fase->stato] ?? '#e9ecef' }};font-weight:bold;text-align:center;">{{ $fase->stato }}</td>
                 <td>
                     @foreach($fase->operatori as $op)
                         {{ $op->nome }} ({{ $op->pivot->data_inizio ? \Carbon\Carbon::parse($op->pivot->data_inizio)->format('d/m/Y H:i:s') : '-' }})<br>
@@ -161,7 +159,8 @@
             @foreach($altreFasi as $fase)
             <tr>
                 <td>{{ $fase->faseCatalogo->nome ?? '-' }}</td>
-                <td>{{ $fase->stato ?? '-' }}</td>
+                @php $sb2 = [0=>'#e9ecef',1=>'#cfe2ff',2=>'#fff3cd',3=>'#d1e7dd']; @endphp
+                <td style="background:{{ $sb2[$fase->stato] ?? '#e9ecef' }};font-weight:bold;text-align:center;">{{ $fase->stato }}</td>
                 <td>
                     @foreach($fase->operatori as $op)
                         {{ $op->nome }} ({{ $op->pivot->data_inizio ? \Carbon\Carbon::parse($op->pivot->data_inizio)->format('d/m/Y H:i:s') : '-' }})<br>

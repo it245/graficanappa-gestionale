@@ -116,29 +116,49 @@ class DashboardOperatoreController extends Controller
             'UVSPOTSPESSEST' => ['avviamento' => 72, 'copieh' => 1000],
             'ZUND' => ['avviamento' => 0.5, 'copieh' => 50],
             'APPL.CORDONCINO0,035' => ['avviamento' => 0.02, 'copieh' => 50],
+            // Nuove fasi (valori da fasi simili)
+            '4graph' => ['avviamento' => 0.5, 'copieh' => 100],
+            'stampalaminaoro' => ['avviamento' => 1, 'copieh' => 2200],
+            'ALL.COFANETTO.ISMAsrl' => ['avviamento' => 0.5, 'copieh' => 100],
+            'PMDUPLO36COP' => ['avviamento' => 0.5, 'copieh' => 100],
+            'FINESTRATURA.MANUALE' => ['avviamento' => 0.5, 'copieh' => 100],
+            'FINESTRATURA.INT' => ['avviamento' => 0.5, 'copieh' => 100],
+            'STAMPACALDOJOHEST' => ['avviamento' => 72, 'copieh' => 2200],
+            'BROSSFRESATA/A5EST' => ['avviamento' => 72, 'copieh' => 1000],
+            'PIEGA6ANTESINGOLO' => ['avviamento' => 0.5, 'copieh' => 500],
+            'ALLESTIMENTO.ESPOSITORI' => ['avviamento' => 0.5, 'copieh' => 100],
+            'FUSTIML75X106' => ['avviamento' => 0.5, 'copieh' => 3000],
+            'FUSTELLATURA72X51' => ['avviamento' => 0.5, 'copieh' => 1500],
             ];
 
         // Recupera le fasi visibili per i reparti dell'operatore
-        $fasiVisibili = OrdineFase::where('stato', '!=', 2)
+        $fasiVisibili = OrdineFase::where('stato', '!=', 3)
             ->whereHas('faseCatalogo', function ($q) use ($reparti) {
                 $q->whereIn('reparto_id', $reparti);
             })
             ->with(['ordine', 'faseCatalogo', 'operatori'])
             ->get()
             ->map(function ($fase) use ($fasiInfo) {
-                $qta_carta = $fase->ordine->qta_carta ?? 1;
+                $qta_carta = $fase->ordine->qta_carta ?? 0;
                 $infoFase = $fasiInfo[$fase->fase] ?? ['avviamento' => 0, 'copieh' => 0];
+                $copieh = $infoFase['copieh'] ?: 1;
 
-                // Calcola ore necessarie
-                $fase->ore = round($infoFase['avviamento'] + ($infoFase['copieh'] / max($qta_carta, 1)), 2);
+                // ore = avviamento + qtaCarta / copieh (pezzi da fare / pezzi all'ora)
+                $fase->ore = round($infoFase['avviamento'] + ($qta_carta / $copieh), 2);
 
-                // Giorni disponibili dal DB
-                $giorni_disponibili = $fase->ordine && $fase->ordine->data_prevista_consegna && $fase->ordine->data_registrazione
-                    ? round((strtotime($fase->ordine->data_prevista_consegna) - strtotime($fase->ordine->data_registrazione)) / 86400)
-                    : 0;
+                // giorni rimasti = dataPrevConsegna - OGGI (negativo se scaduta)
+                $giorni_rimasti = 0;
+                if ($fase->ordine && $fase->ordine->data_prevista_consegna) {
+                    $oggi = \Carbon\Carbon::today();
+                    $consegna = \Carbon\Carbon::parse($fase->ordine->data_prevista_consegna)->startOfDay();
+                    $giorni_rimasti = ($consegna->timestamp - $oggi->timestamp) / 86400;
+                }
 
-                // Priorità combinata
-                $fase->priorita = round($giorni_disponibili + ($fase->ore / 24), 2);
+                // Ordine fase dalla config
+                $fasePriorita = config('fasi_priorita')[$fase->fase] ?? 500;
+
+                // Priorità = giorni rimasti - ore/24 + ordineFase/10000
+                $fase->priorita = round($giorni_rimasti - ($fase->ore / 24) + ($fasePriorita / 10000), 2);
 
                 return $fase;
             })

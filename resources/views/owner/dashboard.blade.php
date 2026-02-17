@@ -50,8 +50,8 @@ h2, p {
    ========================= */
 
 table {
-    width: 2000px;              /* LIMITE ASSOLUTO */
-    max-width: 2000px;
+    width: 2555px;              /* OTTIMIZZATO PER 2560x1440 */
+    max-width: 2555px;
     border-collapse: collapse;
     table-layout: fixed;        /* FONDAMENTALE */
     font-size: 12px;
@@ -64,11 +64,12 @@ thead, tbody, tr {
 th, td {
     border: 1px solid #dee2e6;
     padding: 3px 6px;
-    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     line-height: 1.3;
     transition: background 0.1s ease;
+    white-space: normal;
+    max-height: 3.9em;
 }
 
 thead th {
@@ -78,85 +79,84 @@ thead th {
 }
 
 /* =========================
-   LARGHEZZA COLONNE (≈ 1980px)
+   LARGHEZZA COLONNE (21 colonne ≈ 2555px per monitor 2560x1440)
+   1=Commessa 2=Stato 3=Cliente 4=CodArt
+   5=Descrizione 6=Qta 7=UM 8=Priorità
+   9=DataReg 10=DataConsegna 11=CodCarta 12=Carta
+   13=QtaCarta 14=UMCarta 15=Fase 16=Reparto
+   17=Operatori 18=QtaProd 19=Note 20=DataInizio 21=DataFine
    ========================= */
 
-/* Commessa */
-th:nth-child(1), td:nth-child(1) { width: 90px; }
+/* 1. Commessa */
+th:nth-child(1), td:nth-child(1) { width: 105px; }
 
-/* Cliente */
-th:nth-child(2), td:nth-child(2) {
-    width: 180px;
+/* 2. Stato */
+th:nth-child(2), td:nth-child(2) { width: 60px; text-align: center; }
+
+/* 3. Cliente */
+th:nth-child(3), td:nth-child(3) { width: 190px; white-space: normal; }
+
+/* 4. Codice Articolo */
+th:nth-child(4), td:nth-child(4) { width: 105px; }
+
+/* 5. Descrizione */
+th:nth-child(5), td:nth-child(5) { width: 360px; max-width: 360px; white-space: normal; }
+
+/* 6. Qta */
+th:nth-child(6), td:nth-child(6) { width: 60px; text-align: center; }
+
+/* 7. UM */
+th:nth-child(7), td:nth-child(7) { width: 55px; text-align: center; }
+
+/* 8. Priorità */
+th:nth-child(8), td:nth-child(8) { width: 70px; text-align: center; }
+
+/* 9. Data Registrazione / 10. Data Prevista Consegna */
+th:nth-child(9), td:nth-child(9),
+th:nth-child(10), td:nth-child(10) {
+    width: 115px;
+}
+
+/* 11. Cod Carta */
+th:nth-child(11), td:nth-child(11) { width: 145px; white-space: normal; }
+
+/* 12. Carta */
+th:nth-child(12), td:nth-child(12) { width: 165px; white-space: normal; }
+
+/* 13. Qta Carta */
+th:nth-child(13), td:nth-child(13) { width: 65px; text-align: center; }
+
+/* 14. UM Carta */
+th:nth-child(14), td:nth-child(14) { width: 60px; text-align: center; }
+
+/* 15. Fase */
+th:nth-child(15), td:nth-child(15) { width: 135px; }
+
+/* 16. Reparto */
+th:nth-child(16), td:nth-child(16) { width: 125px; }
+
+/* 17. Operatori */
+th:nth-child(17), td:nth-child(17) {
+    width: 125px;
     white-space: normal;
 }
 
-/* Codice articolo */
-th:nth-child(3), td:nth-child(3) { width: 110px; }
-
-/* DESCRIZIONE (MAX 280px) */
-th:nth-child(4), td:nth-child(4) {
-    width: 280px;
-    max-width: 280px;
-    white-space: normal;
-}
-
-/* Qta / UM / Priorità */
-th:nth-child(5), td:nth-child(5),
-th:nth-child(6), td:nth-child(6),
-th:nth-child(7), td:nth-child(7) {
+/* 18. Qta Prod. */
+th:nth-child(18), td:nth-child(18) {
     width: 70px;
     text-align: center;
 }
 
-/* Date */
-th:nth-child(8), td:nth-child(8),
-th:nth-child(9), td:nth-child(9),
-th:nth-child(19), td:nth-child(19),
-th:nth-child(20), td:nth-child(20) {
-    width: 115px;
-}
-
-/* Carta */
-th:nth-child(10), td:nth-child(10),
-th:nth-child(11), td:nth-child(11) {
-    width: 200px;
-     white-space: normal;
-}
-
-th:nth-child(12), td:nth-child(12),
-th:nth-child(13), td:nth-child(13) {
-    width: 80px;
-    text-align: center;
-}
-
-/* Fase + Reparto */
-th:nth-child(14), td:nth-child(14),
-th:nth-child(15), td:nth-child(15) {
-    width: 110px;
-}
-
-/* Operatori */
-th:nth-child(16), td:nth-child(16) {
-    width: 100px;
+/* 19. Note */
+th:nth-child(19), td:nth-child(19) {
+    width: 190px;
     white-space: normal;
 }
 
-/* Qta prodotta */
-th:nth-child(17), td:nth-child(17) {
-    width: 80px;
-    text-align: center;
-}
-
-/* Note */
-th:nth-child(18), td:nth-child(18) {
-    width: 160px;
-    white-space: normal;
-}
-
-/* Stato */
+/* 20. Data Inizio / 21. Data Fine */
+th:nth-child(20), td:nth-child(20),
 th:nth-child(21), td:nth-child(21) {
-    width: 60px;
-    text-align: center;
+    width: 120px;
 }
 
 /* =========================
@@ -213,15 +213,17 @@ th.selected {
 }
 
 #filterBox .choices__inner {
-    height: 38px;
-    max-height: 38px;
-    overflow: hidden;
+    min-height: 38px;
+    height: auto;
+    max-height: 120px;
+    overflow-y: auto;
     display: flex;
-    flex-wrap: nowrap;
-    align-items: center;
-    padding: 0 8px;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    padding: 4px 8px;
     box-sizing: border-box;
     width: 100%;
+    gap: 3px;
 }
 
 .choices__list--dropdown {
@@ -238,13 +240,39 @@ th.selected {
 #filterBox .choices__list--multiple .choices__item {
     display: inline-flex;
     align-items: center;
-    padding: 2px 8px;
+    padding: 3px 10px;
     font-size: 12px;
+    background: #333;
+    color: #fff;
+    border-radius: 12px;
+    margin: 1px 0;
 }
 
 #filterBox .choices__list--multiple .choices__button {
-    padding-left: 8px;
+    padding-left: 10px;
+    font-size: 14px;
+    font-weight: bold;
     cursor: pointer;
+    border-left: 1px solid rgba(255,255,255,0.3);
+    margin-left: 6px;
+    min-width: 16px;
+    min-height: 16px;
+}
+
+.btn-reset-filters {
+    background: #dc3545;
+    color: #fff;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    height: 38px;
+    white-space: nowrap;
+}
+.btn-reset-filters:hover {
+    background: #c82333;
 }
 
 /* =========================
@@ -349,6 +377,8 @@ tr:hover td {
    <select id="filterStato" multiple>
     <option value="0">0</option>
     <option value="1">1</option>
+    <option value="2">2</option>
+    <option value="3">3</option>
 </select>
 
 <select id="filterFase" multiple>
@@ -362,6 +392,7 @@ tr:hover td {
         <option value="{{ $rep }}">{{ $rep }}</option>
     @endforeach
 </select>
+<button type="button" class="btn-reset-filters" id="btnResetFilters">Rimuovi filtri</button>
 </div>
 
     {{-- MODALE AGGIUNGI OPERATORE --}}
@@ -505,6 +536,7 @@ tr:hover td {
             <thead class="table-dark">
                 <tr>
                     <th>Commessa</th>
+                    <th>Stato</th>
                     <th>Cliente</th>
                     <th>Codice Articolo</th>
                     <th>Descrizione</th>
@@ -524,7 +556,6 @@ tr:hover td {
                     <th>Note</th>
                     <th>Data Inizio</th>
                     <th>Data Fine</th>
-                    <th>Stato</th>
                 </tr>
             </thead>
             <tbody>
@@ -540,21 +571,26 @@ tr:hover td {
                         elseif ($diffGiorni <= 5) $rowClass = 'warning-light';
                     }
                 @endphp
+                @php
+                    $statiLabel = [0 => 'Caricato', 1 => 'Pronto', 2 => 'Avviato', 3 => 'Terminato'];
+                    $statoBg = [0 => '#e9ecef', 1 => '#cfe2ff', 2 => '#fff3cd', 3 => '#d1e7dd'];
+                @endphp
                 <tr class="{{ $rowClass }}" data-id="{{ $fase->id }}">
-                    <td>{{ $fase->ordine->commessa ?? '-' }}</td>
+                    <td><a href="{{ route('owner.dettaglioCommessa', $fase->ordine->commessa ?? '-') }}" style="color:#000;font-weight:bold;text-decoration:underline;">{{ $fase->ordine->commessa ?? '-' }}</a></td>
+                    <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)" style="background:{{ $statoBg[$fase->stato] ?? '#e9ecef' }} !important;font-weight:bold;text-align:center;">{{ $fase->stato }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'cliente_nome', this.innerText)">{{ $fase->ordine->cliente_nome ?? '-' }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'cod_art', this.innerText)">{{ $fase->ordine->cod_art ?? '-' }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'descrizione', this.innerText)">{{ $fase->ordine->descrizione ?? '-' }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'qta_richiesta', this.innerText)">{{ $fase->ordine->qta_richiesta ?? '-' }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'um', this.innerText)">{{ $fase->ordine->um ?? '-' }}</td>
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'priorita', this.innerText)">{{ $fase->priorita ?? '-' }}</td>
+                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'priorita', this.innerText)">{{ $fase->priorita !== null ? number_format($fase->priorita, 2) : '-' }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_registrazione', this.innerText)">{{ formatItalianDate($fase->ordine->data_registrazione) }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_prevista_consegna', this.innerText)">{{ formatItalianDate($fase->ordine->data_prevista_consegna) }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'cod_carta', this.innerText)">{{ $fase->ordine->cod_carta ?? '-' }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'carta', this.innerText)">{{ $fase->ordine->carta ?? '-' }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'qta_carta', this.innerText)">{{ $fase->ordine->qta_carta ?? '-' }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'UM_carta', this.innerText)">{{ $fase->ordine->UM_carta ?? '-' }}</td>
-                    <td>{{ $fase->faseCatalogo->nome ?? '-' }}</td>
+                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'fase', this.innerText)">{{ $fase->faseCatalogo->nome ?? '-' }}</td>
                     <td>{{ $fase->faseCatalogo->reparto->nome ?? '-' }}</td>
                     <td>
                         @forelse($fase->operatori as $op)
@@ -565,9 +601,8 @@ tr:hover td {
                     </td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'qta_prod', this.innerText)">{{ $fase->qta_prod ?? '-' }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'note', this.innerText)">{{ $fase->note ?? '-' }}</td>
-                    <td>{{ formatItalianDate($fase->data_inizio, true) }}</td>
-                    <td>{{ formatItalianDate($fase->data_fine, true) }}</td>
-                    <td>{{ $fase->stato ?? '-' }}</td>
+                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_inizio', this.innerText)">{{ formatItalianDate($fase->data_inizio, true) }}</td>
+                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_fine', this.innerText)">{{ formatItalianDate($fase->data_fine, true) }}</td>
                 </tr>
             @endforeach
             </tbody>
@@ -677,12 +712,42 @@ function aggiornaCampo(faseId, campo, valore){
     .then(d => {
         if (!d.success) {
             alert('Errore salvataggio: ' + (d.messaggio || ''));
+        } else if (d.reload) {
+            window.location.reload();
         }
     })
     .catch(err => {
         console.error(err);
         alert('Errore di connessione');
     });
+}
+
+function aggiornaStato(faseId, testo) {
+    const nuovoStato = parseInt(testo.trim());
+    if (isNaN(nuovoStato) || nuovoStato < 0 || nuovoStato > 3) {
+        alert('Stato non valido. Usa: 0, 1, 2, 3');
+        return;
+    }
+    fetch('{{ route("owner.aggiornaStato") }}', {
+        method: 'POST',
+        headers: {'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Content-Type': 'application/json'},
+        body: JSON.stringify({ fase_id: faseId, stato: nuovoStato })
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (!d.success) {
+            alert('Errore: ' + (d.messaggio || ''));
+        } else {
+            const bgMap = {0: '#e9ecef', 1: '#cfe2ff', 2: '#fff3cd', 3: '#d1e7dd'};
+            const row = document.querySelector('tr[data-id="' + faseId + '"]');
+            if (row) {
+                const statoCell = row.cells[1];
+                statoCell.style.setProperty('background', bgMap[nuovoStato], 'important');
+                statoCell.innerText = nuovoStato;
+            }
+        }
+    })
+    .catch(err => { console.error(err); alert('Errore di connessione'); });
 }
 </script>
 <script>
@@ -903,11 +968,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const rowData = rows.map(row => ({
         row,
         commessa: row.cells[0].innerText.toLowerCase(),
-        cliente: row.cells[1].innerText.toLowerCase(),
-        descrizione: row.cells[3].innerText.toLowerCase(),
-        stato: row.cells[20].innerText.toLowerCase(), // ora contiene "1" o "2"
-        fase: row.cells[13].innerText.toLowerCase(),
-        reparto: row.cells[14].innerText.toLowerCase()
+        stato: row.cells[1].innerText.toLowerCase(),
+        cliente: row.cells[2].innerText.toLowerCase(),
+        descrizione: row.cells[4].innerText.toLowerCase(),
+        fase: row.cells[14].innerText.toLowerCase(),
+        reparto: row.cells[15].innerText.toLowerCase()
     }));
 
     function parseValues(input) {
@@ -956,6 +1021,16 @@ document.addEventListener('DOMContentLoaded', () => {
     fStato.addEventListener('change', filtraDebounced);
     fFase.addEventListener('change', filtraDebounced);
     fReparto.addEventListener('change', filtraDebounced);
+
+    document.getElementById('btnResetFilters').addEventListener('click', function() {
+        fCommessa.value = '';
+        fCliente.value = '';
+        fDescrizione.value = '';
+        choiceStato.removeActiveItems();
+        choiceFase.removeActiveItems();
+        choiceReparto.removeActiveItems();
+        rowData.forEach(data => { data.row.style.display = ''; });
+    });
 
     if (toggleFilter) {
         toggleFilter.addEventListener('click', () => {

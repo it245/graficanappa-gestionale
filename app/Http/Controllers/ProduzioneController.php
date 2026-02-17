@@ -6,6 +6,7 @@ use App\Models\OrdineFase;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Validator;
+use App\Services\FaseStatoService;
 
 class ProduzioneController extends Controller
 {
@@ -29,7 +30,7 @@ class ProduzioneController extends Controller
             $fase->operatori()->attach($operatoreId, ['data_inizio' => now(),'data_fine'=>null]);
         }
 
-        $fase->stato = 1; // fase avviata
+        $fase->stato = 2; // fase avviata
         $fase->save();
 
         $fase->load('operatori');
@@ -55,7 +56,8 @@ class ProduzioneController extends Controller
         return response()->json(['success' => false, 'messaggio' => 'Fase non trovata']);
     }
 
-    $fase->stato = 2; // fase terminata
+    $fase->stato = 3; // fase terminata
+    $fase->data_fine = now()->format('d/m/Y H:i:s');
     $fase->save();
 
     $operatoreId = session('operatore_id');
@@ -66,6 +68,9 @@ class ProduzioneController extends Controller
             'data_fine' => now()
         ]);
     }
+
+    // Ricalcola stati fasi successive della stessa commessa
+    FaseStatoService::ricalcolaStati($fase->ordine_id);
 
     return response()->json([
         'success' => true,
@@ -123,9 +128,10 @@ public function aggiornaCampo(Request $request)
     private function statoLabel($stato)
     {
         switch ($stato) {
-            case 0: return '0';
-            case 1: return '1';
-            case 2: return '2';
+            case 0: return 'Caricato';
+            case 1: return 'Pronto';
+            case 2: return 'Avviato';
+            case 3: return 'Terminato';
             default: return $stato;
         }
     }

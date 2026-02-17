@@ -6,7 +6,7 @@
     html, body {
         margin:0; padding:0; overflow-x:hidden; width:100%;
     }
-    h2, p { margin-left:8px; margin-right:8px; }
+    h2, h4, p { margin-left:8px; margin-right:8px; }
     .top-bar {
         display:flex;
         align-items:center;
@@ -48,12 +48,7 @@
         margin: 0 4px;
     }
     table th, table td { white-space:nowrap; }
-
-    th:nth-child(5),
-    table td:nth-child(5){
-        min-width: 400px;
-    }
-    td:nth-child(5){ white-space:normal; }
+    td:nth-child(6){ white-space:normal; min-width:300px; }
 
     .btn-invia {
         background-color: #28a745;
@@ -66,21 +61,8 @@
         cursor: pointer;
         transition: background-color 0.2s;
     }
-    .btn-invia:hover {
-        background-color: #218838;
-    }
-    .btn-invia:disabled {
-        background-color: #6c757d;
-        cursor: not-allowed;
-    }
-
-    .badge-spedito {
-        background-color: #28a745;
-        color: #fff;
-        padding: 4px 12px;
-        border-radius: 10px;
-        font-size: 13px;
-    }
+    .btn-invia:hover { background-color: #218838; }
+    .btn-invia:disabled { background-color: #6c757d; cursor: not-allowed; }
 
     .kpi-box {
         background: #fff;
@@ -95,9 +77,40 @@
         font-size: 28px;
         font-weight: bold;
     }
-    .kpi-box small {
-        color: #6c757d;
+    .kpi-box small { color: #6c757d; }
+
+    .progress-bar-custom {
+        height: 18px;
+        border-radius: 10px;
+        background: #e9ecef;
+        overflow: hidden;
+        min-width: 80px;
     }
+    .progress-bar-custom .fill {
+        height: 100%;
+        border-radius: 10px;
+        transition: width 0.3s ease;
+        text-align: center;
+        font-size: 10px;
+        line-height: 18px;
+        color: #fff;
+        font-weight: bold;
+    }
+
+    .search-box {
+        max-width: 300px;
+        margin: 8px;
+    }
+
+    .row-scaduta { background: #f8d7da !important; }
+    .row-warning { background: #fff3cd !important; }
+
+    a.commessa-link {
+        color: #000;
+        font-weight: bold;
+        text-decoration: underline;
+    }
+    a.commessa-link:hover { color: #0d6efd; }
 </style>
 
 <div class="top-bar">
@@ -118,34 +131,43 @@
 
 <!-- KPI -->
 <div class="row mx-2 mb-3">
-    <div class="col-md-6">
-        <div class="kpi-box">
+    <div class="col-md-4">
+        <div class="kpi-box" style="border-left: 4px solid #28a745;">
             <h3>{{ $fasiDaSpedire->count() }}</h3>
             <small>Da consegnare</small>
         </div>
     </div>
-    <div class="col-md-6">
-        <div class="kpi-box" style="cursor:pointer" data-bs-toggle="modal" data-bs-target="#modalSpediteOggi">
+    <div class="col-md-4">
+        <div class="kpi-box" style="border-left: 4px solid #ffc107;">
+            <h3>{{ $fasiInAttesa->count() }}</h3>
+            <small>In attesa (lavorazione)</small>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="kpi-box" style="cursor:pointer; border-left: 4px solid #0d6efd;" data-bs-toggle="modal" data-bs-target="#modalSpediteOggi">
             <h3>{{ $fasiSpediteOggi->count() }}</h3>
-            <small>Consegnate oggi <span style="font-size:11px">(clicca per vedere)</span></small>
+            <small>Consegnate oggi <span style="font-size:11px">(clicca)</span></small>
         </div>
     </div>
 </div>
 
+<!-- Ricerca -->
+<input type="text" id="searchBox" class="form-control form-control-sm search-box" placeholder="Cerca commessa, cliente, descrizione...">
+
 <!-- Tabella fasi da spedire -->
-<h4 class="mx-2">Da consegnare</h4>
+<h4 class="mx-2 mt-2" style="color:#28a745;">Da consegnare</h4>
 <div class="table-wrapper">
-    <table class="table table-bordered table-sm table-striped">
+    <table class="table table-bordered table-sm table-striped" id="tabDaSpedire">
         <thead class="table-dark">
             <tr>
                 <th>Azione</th>
                 <th>Commessa</th>
                 <th>Cliente</th>
                 <th>Cod. Articolo</th>
+                <th>Qta</th>
                 <th>Descrizione</th>
-                <th>Quantita</th>
-                <th>UM</th>
                 <th>Data Consegna</th>
+                <th>Progresso</th>
                 <th>Note</th>
             </tr>
         </thead>
@@ -157,24 +179,29 @@
                         $oggi = \Carbon\Carbon::today();
                         $dataPrevista = \Carbon\Carbon::parse($fase->ordine->data_prevista_consegna);
                         $diff = $oggi->diffInDays($dataPrevista, false);
-                        if ($diff < -5) $rowClass = 'scaduta';
-                        elseif ($diff <= 3) $rowClass = 'warning-strong';
-                        elseif ($diff <= 5) $rowClass = 'warning-light';
+                        if ($diff < -5) $rowClass = 'row-scaduta';
+                        elseif ($diff <= 3) $rowClass = 'row-warning';
                     }
+                    $pct = $fase->percentuale ?? 0;
+                    $pctColor = $pct == 100 ? '#28a745' : ($pct >= 75 ? '#17a2b8' : ($pct >= 50 ? '#ffc107' : '#dc3545'));
                 @endphp
-                <tr id="fase-{{ $fase->id }}" class="{{ $rowClass }}">
+                <tr class="{{ $rowClass }} searchable">
                     <td>
                         <button class="btn-invia" onclick="inviaAutomatico({{ $fase->id }}, this)">
                             Consegnato
                         </button>
                     </td>
-                    <td><strong>{{ $fase->ordine->commessa ?? '-' }}</strong></td>
+                    <td><a href="{{ route('commesse.show', $fase->ordine->commessa ?? '-') }}" class="commessa-link">{{ $fase->ordine->commessa ?? '-' }}</a></td>
                     <td>{{ $fase->ordine->cliente_nome ?? '-' }}</td>
                     <td>{{ $fase->ordine->cod_art ?? '-' }}</td>
-                    <td>{{ $fase->ordine->descrizione ?? '-' }}</td>
                     <td>{{ $fase->ordine->qta_richiesta ?? '-' }}</td>
-                    <td>{{ $fase->ordine->um ?? '-' }}</td>
+                    <td>{{ $fase->ordine->descrizione ?? '-' }}</td>
                     <td>{{ $fase->ordine->data_prevista_consegna ? \Carbon\Carbon::parse($fase->ordine->data_prevista_consegna)->format('d/m/Y') : '-' }}</td>
+                    <td>
+                        <div class="progress-bar-custom">
+                            <div class="fill" style="width:{{ $pct }}%;background:{{ $pctColor }};">{{ $pct }}%</div>
+                        </div>
+                    </td>
                     <td>
                         <input type="text" class="form-control form-control-sm" style="min-width:150px"
                                value="{{ $fase->note ?? '' }}"
@@ -183,12 +210,53 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="10" class="text-center text-muted py-3">Nessuna consegna in coda</td>
+                    <td colspan="9" class="text-center text-muted py-3">Nessuna consegna in coda</td>
                 </tr>
             @endforelse
         </tbody>
     </table>
 </div>
+
+<!-- Tabella fasi in attesa -->
+@if($fasiInAttesa->count() > 0)
+<h4 class="mx-2 mt-4" style="color:#ffc107;">In attesa (lavorazione in corso)</h4>
+<div class="table-wrapper">
+    <table class="table table-bordered table-sm" id="tabInAttesa">
+        <thead style="background:#ffc107; color:#000;">
+            <tr>
+                <th>Commessa</th>
+                <th>Cliente</th>
+                <th>Cod. Articolo</th>
+                <th>Qta</th>
+                <th>Descrizione</th>
+                <th>Data Consegna</th>
+                <th>Progresso fasi</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($fasiInAttesa as $fase)
+                @php
+                    $pct = $fase->percentuale ?? 0;
+                    $pctColor = $pct >= 75 ? '#17a2b8' : ($pct >= 50 ? '#ffc107' : '#dc3545');
+                @endphp
+                <tr class="searchable">
+                    <td><a href="{{ route('commesse.show', $fase->ordine->commessa ?? '-') }}" class="commessa-link">{{ $fase->ordine->commessa ?? '-' }}</a></td>
+                    <td>{{ $fase->ordine->cliente_nome ?? '-' }}</td>
+                    <td>{{ $fase->ordine->cod_art ?? '-' }}</td>
+                    <td>{{ $fase->ordine->qta_richiesta ?? '-' }}</td>
+                    <td>{{ $fase->ordine->descrizione ?? '-' }}</td>
+                    <td>{{ $fase->ordine->data_prevista_consegna ? \Carbon\Carbon::parse($fase->ordine->data_prevista_consegna)->format('d/m/Y') : '-' }}</td>
+                    <td>
+                        <div class="progress-bar-custom">
+                            <div class="fill" style="width:{{ $pct }}%;background:{{ $pctColor }};">{{ $pct }}%</div>
+                        </div>
+                    </td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
+</div>
+@endif
 
 <!-- Modal Spedite Oggi -->
 <div class="modal fade" id="modalSpediteOggi" tabindex="-1">
@@ -244,8 +312,6 @@
 
 <script>
 function inviaAutomatico(faseId, btn) {
-    if (!confirm('Confermi la consegna?')) return;
-
     btn.disabled = true;
     btn.textContent = 'Consegna...';
 
@@ -270,7 +336,7 @@ function inviaAutomatico(faseId, btn) {
     .catch(err => {
         console.error('Errore:', err);
         btn.disabled = false;
-        btn.textContent = 'Invia';
+        btn.textContent = 'Consegnato';
     });
 }
 
@@ -289,6 +355,15 @@ function aggiornaNota(faseId, valore) {
     })
     .catch(err => console.error('Errore:', err));
 }
+
+// Ricerca
+document.getElementById('searchBox').addEventListener('input', function() {
+    const query = this.value.toLowerCase().trim();
+    document.querySelectorAll('tr.searchable').forEach(function(row) {
+        const text = row.innerText.toLowerCase();
+        row.style.display = (!query || text.includes(query)) ? '' : 'none';
+    });
+});
 
 // Popup operatore
 document.getElementById('operatoreInfo').addEventListener('click', function(){

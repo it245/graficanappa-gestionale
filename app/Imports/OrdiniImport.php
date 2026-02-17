@@ -51,16 +51,20 @@ class OrdiniImport implements ToModel, WithHeadingRow, WithChunkReading
     $repartoNome = $mappaReparti[$faseNome] ?? 'generico';
     $tipo        = $tipiFase[$faseNome] ?? 'monofase';
 
-    // --- 3. LOGICA FASI CON DEDUPLICAZIONE ---
+    // --- 3. PRIORITÀ FASE (da config) ---
+    $mappaPriorita = config('fasi_priorita');
+    $prioritaFase = $mappaPriorita[$faseNome] ?? 500;
+
+    // --- 4. LOGICA FASI CON DEDUPLICAZIONE ---
     $dataFase = [
     'ordine_id'   => $ordine->id,
     'fase'        => $faseNome,
-    //'reparto'     => $repartoNome, // <- rimuovi questa riga
     'reparto_id'  => Reparto::firstOrCreate(
         ['nome' => $repartoNome]
     )->id,
     'qta_fase'    => $row['qtafase'] ?? 0,
     'um'          => $row['umfase'] ?? ($row['um'] ?? 'FG'),
+    'priorita'    => $prioritaFase,
     'fase_catalogo_id' => FasiCatalogo::firstOrCreate(
         ['nome' => $faseNome],
         ['reparto_id' => Reparto::firstOrCreate(
@@ -241,7 +245,16 @@ private function convertiData($valore) {
 
     'ZUND' => 'digitale',
     'APPL.CORDONCINO0,035' => 'legatoria',
-            // ... aggiungi tutte le altre voci ...
+
+    // Nuove fasi
+    '4graph' => 'esterno',
+    'stampalaminaoro' => 'stampa a caldo',
+    'ALL.COFANETTO.ISMAsrl' => 'esterno',
+    'PMDUPLO36COP' => 'esterno',
+    'FINESTRATURA.MANUALE' => 'finestre',
+    'STAMPACALDOJOHEST' => 'esterno',
+    'BROSSFRESATA/A5EST' => 'esterno',
+    'PIEGA6ANTESINGOLO' => 'legatoria',
         ];
     }
 
@@ -332,6 +345,16 @@ private function convertiData($valore) {
     'UVSPOTSPESSEST' => 'monofase',
     'ZUND' => 'monofase',
     'APPL.CORDONCINO0,035' => 'monofase',
+
+    // nuove fasi
+    '4graph' => 'monofase',
+    'stampalaminaoro' => 'monofase',
+    'ALL.COFANETTO.ISMAsrl' => 'monofase',
+    'PMDUPLO36COP' => 'monofase',
+    'FINESTRATURA.MANUALE' => 'monofase',
+    'STAMPACALDOJOHEST' => 'monofase',
+    'BROSSFRESATA/A5EST' => 'monofase',
+    'PIEGA6ANTESINGOLO' => 'monofase',
 
     // max 2 fasi
     'STAMPAINDIGO' => 'max 2 fasi',
