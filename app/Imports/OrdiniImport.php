@@ -8,10 +8,12 @@ use App\Models\FasiCatalogo;
 use App\Models\Reparto;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Maatwebsite\Excel\Concerns\WithChunkReading;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 
-class OrdiniImport implements ToModel, WithHeadingRow
+class OrdiniImport implements ToModel, WithHeadingRow, WithChunkReading
 {
+    public function chunkSize(): int { return 200; }
     public function headingRow(): int { return 2; }
 
    public function model(array $row)

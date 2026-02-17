@@ -297,10 +297,12 @@ public function calcolaOreEPriorita($fase)
         if (!$file->isValid()) return redirect()->back()->with('error', 'File non valido.');
 
         try {
-            Excel::import(new \App\Imports\OrdiniImport, $file);
-            return redirect()->back()->with('success', 'Ordini importati correttamente.');
+            $path = $file->store('imports');
+            Excel::import(new \App\Imports\OrdiniImport, storage_path('app/' . $path));
+            @unlink(storage_path('app/' . $path));
+            return redirect()->route('owner.dashboard')->with('success', 'Ordini importati correttamente.');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Errore importazione: ' . $e->getMessage());
+            return redirect()->route('owner.dashboard')->with('error', 'Errore importazione: ' . $e->getMessage());
         }
     }
 
