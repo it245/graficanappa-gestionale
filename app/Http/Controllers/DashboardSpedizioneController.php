@@ -75,6 +75,16 @@ class DashboardSpedizioneController extends Controller
                 ->where('stato', 3)
                 ->count();
             $fase->percentuale = $totaleFasi > 0 ? round(($fasiTerminate / $totaleFasi) * 100) : 0;
+
+            // Fasi non terminate (per il bottone Forza Consegna)
+            $fase->fasiNonTerminate = OrdineFase::where('ordine_id', $fase->ordine_id)
+                ->where('id', '!=', $fase->id)
+                ->whereHas('faseCatalogo', function ($q) use ($repartoSpedizione) {
+                    $q->where('reparto_id', '!=', $repartoSpedizione->id);
+                })
+                ->where('stato', '!=', 3)
+                ->with('faseCatalogo')
+                ->get();
         }
 
         $fasiInAttesa = $fasiInAttesa->sortByDesc('percentuale');

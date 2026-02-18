@@ -98,8 +98,17 @@
     }
 
     .search-box {
-        max-width: 300px;
-        margin: 8px;
+        max-width: 600px;
+        margin: 12px 8px;
+        font-size: 18px;
+        padding: 12px 20px;
+        border-radius: 10px;
+        border: 2px solid #dee2e6;
+        transition: border-color 0.2s;
+    }
+    .search-box:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 3px rgba(13,110,253,0.15);
     }
 
     .row-scaduta { background: #f8d7da !important; }
@@ -111,6 +120,35 @@
         text-decoration: underline;
     }
     a.commessa-link:hover { color: #0d6efd; }
+
+    .btn-forza {
+        background: linear-gradient(135deg, #dc3545, #c82333);
+        color: #fff;
+        border: none;
+        padding: 8px 18px;
+        border-radius: 8px;
+        font-weight: bold;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.2s;
+        white-space: nowrap;
+    }
+    .btn-forza:hover {
+        background: linear-gradient(135deg, #c82333, #a71d2a);
+        transform: translateY(-1px);
+        box-shadow: 0 3px 8px rgba(220,53,69,0.35);
+    }
+    .btn-forza:disabled {
+        background: #6c757d;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+    .fasi-mancanti {
+        font-size: 11px;
+        color: #dc3545;
+        margin-top: 4px;
+    }
 </style>
 
 <div class="top-bar">
@@ -152,7 +190,7 @@
 </div>
 
 <!-- Ricerca -->
-<input type="text" id="searchBox" class="form-control form-control-sm search-box" placeholder="Cerca commessa, cliente, descrizione...">
+<input type="text" id="searchBox" class="form-control search-box" placeholder="Cerca commessa, cliente, descrizione...">
 
 <!-- Tabella fasi da spedire -->
 <h4 class="mx-2 mt-2" style="color:#28a745;">Da consegnare</h4>
@@ -224,6 +262,7 @@
     <table class="table table-bordered table-sm" id="tabInAttesa">
         <thead style="background:#ffc107; color:#000;">
             <tr>
+                <th>Forza Consegna</th>
                 <th>Commessa</th>
                 <th>Cliente</th>
                 <th>Cod. Articolo</th>
@@ -238,8 +277,15 @@
                 @php
                     $pct = $fase->percentuale ?? 0;
                     $pctColor = $pct >= 75 ? '#17a2b8' : ($pct >= 50 ? '#ffc107' : '#dc3545');
+                    $nomiMancanti = $fase->fasiNonTerminate->map(fn($f) => $f->faseCatalogo->nome ?? '-')->implode(', ');
                 @endphp
                 <tr class="searchable">
+                    <td style="text-align:center; vertical-align:middle;">
+                        <button class="btn-forza" onclick="forzaConsegna({{ $fase->id }}, this)">
+                            Forza
+                        </button>
+                        <div class="fasi-mancanti">{{ $fase->fasiNonTerminate->count() }} fase/i aperte</div>
+                    </td>
                     <td><a href="{{ route('commesse.show', $fase->ordine->commessa ?? '-') }}" class="commessa-link">{{ $fase->ordine->commessa ?? '-' }}</a></td>
                     <td>{{ $fase->ordine->cliente_nome ?? '-' }}</td>
                     <td>{{ $fase->ordine->cod_art ?? '-' }}</td>
@@ -354,6 +400,35 @@ function aggiornaNota(faseId, valore) {
         if (!data.success) alert('Errore salvataggio nota');
     })
     .catch(err => console.error('Errore:', err));
+}
+
+function forzaConsegna(faseId, btn) {
+    btn.disabled = true;
+    btn.textContent = 'Consegna...';
+
+    fetch('{{ route("spedizione.invio") }}', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ fase_id: faseId, forza: true })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert('Errore: ' + (data.messaggio || 'operazione fallita'));
+            btn.disabled = false;
+            btn.textContent = 'Forza';
+        }
+    })
+    .catch(err => {
+        console.error('Errore:', err);
+        btn.disabled = false;
+        btn.textContent = 'Forza';
+    });
 }
 
 // Ricerca
