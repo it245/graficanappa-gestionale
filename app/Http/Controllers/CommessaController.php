@@ -36,6 +36,7 @@ class CommessaController extends Controller
             ? Ordine::where('priorita', '>', $ordine->priorita)->orderBy('priorita', 'asc')->limit(5)->get()
             : Ordine::where('commessa', '!=', $commessa)->orderBy('data_prevista_consegna', 'asc')->limit(5)->get();
 
+
         $operatore = \App\Models\Operatore::with('reparti')->find(session('operatore_id'));
 
         return view('commesse.show', compact('ordine', 'prossime', 'operatore'));

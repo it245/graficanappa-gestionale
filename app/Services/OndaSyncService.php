@@ -8,6 +8,7 @@ use App\Models\FasiCatalogo;
 use App\Models\Reparto;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Services\FaseStatoService;
 
 class OndaSyncService
 {
@@ -164,6 +165,17 @@ class OndaSyncService
                 }
             }
         }
+
+        // Ricalcola priorità per tutte le fasi
+        $controller = app(\App\Http\Controllers\DashboardOwnerController::class);
+        $tutteLeFasi = OrdineFase::with('ordine')->get();
+        foreach ($tutteLeFasi as $fase) {
+            $controller->calcolaOreEPriorita($fase);
+            $fase->save();
+        }
+
+        // Ricalcola stati
+        FaseStatoService::ricalcolaStati();
 
         Log::info("Sync Onda completato: $ordiniCreati creati, $ordiniAggiornati aggiornati, $fasiCreate fasi");
 
