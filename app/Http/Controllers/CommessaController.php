@@ -32,10 +32,9 @@ class CommessaController extends Controller
         // Sostituisci la relazione fasi con tutte le fasi combinate
         $ordine->setRelation('fasi', $tutteLeFasi);
 
-        $prossime = Ordine::where('priorita', '>', $ordine->priorita)
-                          ->orderBy('priorita', 'asc')
-                          ->limit(5)
-                          ->get();
+        $prossime = $ordine->priorita !== null
+            ? Ordine::where('priorita', '>', $ordine->priorita)->orderBy('priorita', 'asc')->limit(5)->get()
+            : collect();
 
         $operatore = \App\Models\Operatore::with('reparti')->find(session('operatore_id'));
 
