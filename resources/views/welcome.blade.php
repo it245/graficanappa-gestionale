@@ -4,72 +4,88 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>MES - Grafica Nappa</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+
         body {
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(to top, #d11317, #000);
         }
+
         .welcome-card {
-            background: white;
-            border-radius: 16px;
-            padding: 3rem 2.5rem;
+            background: #fff;
+            border-radius: 15px;
+            padding: 40px 50px;
             text-align: center;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            max-width: 420px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+            max-width: 400px;
             width: 100%;
         }
+
+        .welcome-card img {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            margin-bottom: 20px;
+            object-fit: cover;
+            border: 3px solid #d11317;
+        }
+
         .logo-text {
             font-size: 2rem;
             font-weight: 700;
-            color: #1a1a2e;
-            margin-bottom: 0.25rem;
+            color: #d11317;
+            margin-bottom: 4px;
         }
+
         .subtitle {
-            color: #6c757d;
+            color: #555;
             font-size: 0.95rem;
             margin-bottom: 2rem;
         }
+
         .btn-enter {
             display: block;
             width: 100%;
-            padding: 0.85rem;
-            font-size: 1.1rem;
-            font-weight: 600;
-            border-radius: 10px;
-            margin-bottom: 0.75rem;
-            transition: transform 0.15s ease, box-shadow 0.15s ease;
-        }
-        .btn-enter:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
-        }
-        .btn-operatore {
-            background: #0f3460;
-            color: white;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
             border: none;
+            background-color: #d11317;
+            color: #fff;
+            cursor: pointer;
+            transition: 0.3s;
+            text-decoration: none;
+            text-align: center;
         }
-        .btn-operatore:hover {
-            background: #1a1a2e;
-            color: white;
+
+        .btn-enter:hover {
+            background-color: #a00f12;
+            color: #fff;
         }
+
         .footer-text {
             margin-top: 1.5rem;
             font-size: 0.8rem;
-            color: #adb5bd;
+            color: #999;
+        }
+
+        @media (max-width: 400px) {
+            .welcome-card { width: 90%; padding: 30px 20px; }
         }
     </style>
 </head>
 <body>
     <div class="welcome-card">
+        <img src="{{ asset('images/logo_gn.png') }}" alt="Logo Grafica Nappa">
         <div class="logo-text">Grafica Nappa</div>
         <div class="subtitle">Sistema Gestionale di Produzione</div>
 
-        <a href="{{ route('operatore.login') }}" class="btn btn-enter btn-operatore">
+        <a href="{{ route('operatore.login') }}" class="btn-enter">
             Accedi
         </a>
 

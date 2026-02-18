@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;
 use Carbon\Carbon;
 use App\Services\FaseStatoService;
+use App\Services\OndaSyncService;
 
 class DashboardOwnerController extends Controller
 {
@@ -122,13 +123,48 @@ class DashboardOwnerController extends Controller
         'ALLESTIMENTO.ESPOSITORI' => ['avviamento' => 0.5, 'copieh' => 100], // come Allest.Manuale
         'FUSTIML75X106' => ['avviamento' => 0.5, 'copieh' => 3000],   // come FUSTBOBST75X106
         'FUSTELLATURA72X51' => ['avviamento' => 0.5, 'copieh' => 1500], // come FUSTSTELG33.44
+
+        // Fasi "est" (esterno) — avviamento 72, copieh come fase interna corrispondente
+        'est STAMPACALDOJOH' => ['avviamento' => 72, 'copieh' => 2200],
+        'est FUSTSTELG33.44' => ['avviamento' => 72, 'copieh' => 1500],
+        'est FUSTBOBST75X106' => ['avviamento' => 72, 'copieh' => 3000],
+        'STAMPA.ESTERNA' => ['avviamento' => 72, 'copieh' => 1000],
+
+        // Fasi EXT* (esterno) — avviamento 72, copieh come fase interna corrispondente
+        'EXTALL.COFANETTO.LEGOKART' => ['avviamento' => 72, 'copieh' => 100],
+        'EXTAllest.Manuale' => ['avviamento' => 72, 'copieh' => 100],
+        'EXTALLEST.SHOPPER' => ['avviamento' => 72, 'copieh' => 500],
+        'EXTALLESTIMENTO.ESPOSITOR' => ['avviamento' => 72, 'copieh' => 100],
+        'EXTAPPL.CORDONCINO0,035' => ['avviamento' => 72, 'copieh' => 50],
+        'EXTAVVIAMENTISTAMPA.EST1.' => ['avviamento' => 72, 'copieh' => 100],
+        'EXTBROSSCOPEST' => ['avviamento' => 72, 'copieh' => 1000],
+        'EXTBROSSFILOREFE/A4EST' => ['avviamento' => 72, 'copieh' => 1000],
+        'EXTBROSSFILOREFE/A5EST' => ['avviamento' => 72, 'copieh' => 1000],
+        'EXTBROSSFRESATA/A4EST' => ['avviamento' => 72, 'copieh' => 1000],
+        'EXTBROSSFRESATA/A5EST' => ['avviamento' => 72, 'copieh' => 1000],
+        'EXTCARTONATO' => ['avviamento' => 72, 'copieh' => 1000],
+        'EXTCARTONATO.GEN' => ['avviamento' => 72, 'copieh' => 1000],
+        'EXTFUSTELLATURA72X51' => ['avviamento' => 72, 'copieh' => 1500],
+        'EXTPUNTOMETALLICOEST' => ['avviamento' => 72, 'copieh' => 1500],
+        'EXTSTAMPA.OFFSET11.EST' => ['avviamento' => 72, 'copieh' => 1000],
+        'EXTSTAMPABUSTE.EST' => ['avviamento' => 72, 'copieh' => 1000],
+        'EXTSTAMPASECCO' => ['avviamento' => 72, 'copieh' => 2000],
+        'EXTUVSPOTEST' => ['avviamento' => 72, 'copieh' => 1000],
+        'EXTUVSPOTSPESSEST' => ['avviamento' => 72, 'copieh' => 1000],
+
+        // Altre fasi nuove
+        'DEKIA-semplice' => ['avviamento' => 0.5, 'copieh' => 200],    // come DEKIA-Difficile
+        'STAMPASECCO' => ['avviamento' => 0.5, 'copieh' => 2000],      // come RILIEVOASECCOJOH
+        'STAMPACALDO04' => ['avviamento' => 1, 'copieh' => 2200],      // come STAMPACALDOJOH
+        'STAMPACALDOBR' => ['avviamento' => 1, 'copieh' => 2200],      // come STAMPACALDOJOH
+        'STAMPAINDIGOBIANCO' => ['avviamento' => 0.5, 'copieh' => 1000], // come STAMPAINDIGO
     ];
 
 public function calcolaOreEPriorita($fase)
     {
         $qta_carta = $fase->ordine->qta_carta ?: 0;
-        $infoFase = $this->fasiInfo[$fase->fase] ?? ['avviamento' => 0, 'copieh' => 0];
-        $copieh = $infoFase['copieh'] ?: 1;
+        $infoFase = $this->fasiInfo[$fase->fase] ?? ['avviamento' => 0.5, 'copieh' => 1000];
+        $copieh = $infoFase['copieh'] ?: 1000;
 
         // ore = avviamento + qtaCarta / copieh (pezzi da fare / pezzi all'ora)
         $fase->ore = $infoFase['avviamento'] + ($qta_carta / $copieh);
@@ -447,6 +483,18 @@ public function calcolaOreEPriorita($fase)
     {
         FaseStatoService::ricalcolaTutti();
         return response()->json(['success' => true, 'messaggio' => 'Stati ricalcolati']);
+    }
+
+    public function syncOnda()
+    {
+        try {
+            $risultato = OndaSyncService::sincronizza();
+            $msg = "Sync Onda completato: {$risultato['ordini_creati']} ordini creati, "
+                 . "{$risultato['ordini_aggiornati']} aggiornati, {$risultato['fasi_create']} fasi create.";
+            return redirect()->route('owner.dashboard')->with('success', $msg);
+        } catch (\Exception $e) {
+            return redirect()->route('owner.dashboard')->with('error', 'Errore sync Onda: ' . $e->getMessage());
+        }
     }
 
     public function scheduling()

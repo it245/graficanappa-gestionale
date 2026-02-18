@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schedule;
 use App\Models\OrdineFase;
 use App\Http\Controllers\DashboardOwnerController;
 
@@ -17,3 +18,6 @@ Artisan::command('priorita:ricalcola', function () {
 
     $this->info('Ricalcolo completato.');
 })->describe('Ricalcola tutte le priorità degli ordini');
+
+// Sync automatico Onda ogni ora (lun-sab, 6:00-22:00)
+Schedule::command('onda:sync')->hourly()->between('6:00', '22:00')->days([1, 2, 3, 4, 5, 6]);

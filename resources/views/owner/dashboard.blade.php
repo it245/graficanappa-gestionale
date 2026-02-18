@@ -318,14 +318,6 @@ tr:hover td {
     {{-- ICONE AZIONI --}}
     <div class="mb-3 d-flex align-items-center action-icons">
 
-        {{-- Importa Ordini --}}
-        <form action="{{ route('owner.importOrdini') }}" method="POST" enctype="multipart/form-data">
-            @csrf
-            <label for="file-upload" title="Importa Ordini">
-                <img src="{{ asset('images/import.png') }}" alt="Importa">
-            </label>
-            <input id="file-upload" type="file" name="file" style="display:none" onchange="this.form.submit()">
-        </form>
         {{-- ICONA FILTRO --}}
         <img
             src="{{ asset('images/icons8-filtro-50.png') }}"

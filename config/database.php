@@ -113,6 +113,15 @@ return [
             // 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
         ],
 
+        'onda' => [
+            'driver' => 'sqlsrv',
+            'host' => env('ONDA_DB_HOST'),
+            'database' => env('ONDA_DB_DATABASE'),
+            'username' => env('ONDA_DB_USERNAME'),
+            'password' => env('ONDA_DB_PASSWORD'),
+            'trust_server_certificate' => true,
+        ],
+
     ],
 
     /*

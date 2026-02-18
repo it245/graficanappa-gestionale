@@ -10,7 +10,6 @@ use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
-
 class OrdiniImport implements ToModel, WithHeadingRow, WithChunkReading
 {
     public function chunkSize(): int { return 200; }
@@ -256,6 +255,39 @@ private function convertiData($valore) {
     'STAMPACALDOJOHEST' => 'esterno',
     'BROSSFRESATA/A5EST' => 'esterno',
     'PIEGA6ANTESINGOLO' => 'legatoria',
+
+    // Fasi con "est"/EXT → esterno
+    'est STAMPACALDOJOH' => 'esterno',
+    'est FUSTSTELG33.44' => 'esterno',
+    'est FUSTBOBST75X106' => 'esterno',
+    'STAMPA.ESTERNA' => 'esterno',
+    'EXTALL.COFANETTO.LEGOKART' => 'esterno',
+    'EXTAllest.Manuale' => 'esterno',
+    'EXTALLEST.SHOPPER' => 'esterno',
+    'EXTALLESTIMENTO.ESPOSITOR' => 'esterno',
+    'EXTAPPL.CORDONCINO0,035' => 'esterno',
+    'EXTAVVIAMENTISTAMPA.EST1.' => 'esterno',
+    'EXTBROSSCOPEST' => 'esterno',
+    'EXTBROSSFILOREFE/A4EST' => 'esterno',
+    'EXTBROSSFILOREFE/A5EST' => 'esterno',
+    'EXTBROSSFRESATA/A4EST' => 'esterno',
+    'EXTBROSSFRESATA/A5EST' => 'esterno',
+    'EXTCARTONATO' => 'esterno',
+    'EXTCARTONATO.GEN' => 'esterno',
+    'EXTFUSTELLATURA72X51' => 'esterno',
+    'EXTPUNTOMETALLICOEST' => 'esterno',
+    'EXTSTAMPA.OFFSET11.EST' => 'esterno',
+    'EXTSTAMPABUSTE.EST' => 'esterno',
+    'EXTSTAMPASECCO' => 'esterno',
+    'EXTUVSPOTEST' => 'esterno',
+    'EXTUVSPOTSPESSEST' => 'esterno',
+
+    // Altre fasi nuove
+    'DEKIA-semplice' => 'legatoria',
+    'STAMPASECCO' => 'fustella',
+    'STAMPACALDO04' => 'stampa a caldo',
+    'STAMPACALDOBR' => 'stampa a caldo',
+    'STAMPAINDIGOBIANCO' => 'digitale',
         ];
     }
 
@@ -369,6 +401,37 @@ private function convertiData($valore) {
     'STAMPAXL106.5' => 'max 2 fasi',
     'STAMPAXL106.6' => 'max 2 fasi',
     'STAMPAXL106.7' => 'max 2 fasi',
+    'STAMPAINDIGOBIANCO' => 'max 2 fasi',
+
+    // Nuove fasi EXT e altre → monofase
+    'est STAMPACALDOJOH' => 'monofase',
+    'est FUSTSTELG33.44' => 'monofase',
+    'est FUSTBOBST75X106' => 'monofase',
+    'STAMPA.ESTERNA' => 'monofase',
+    'EXTALL.COFANETTO.LEGOKART' => 'monofase',
+    'EXTAllest.Manuale' => 'monofase',
+    'EXTALLEST.SHOPPER' => 'monofase',
+    'EXTALLESTIMENTO.ESPOSITOR' => 'monofase',
+    'EXTAPPL.CORDONCINO0,035' => 'monofase',
+    'EXTAVVIAMENTISTAMPA.EST1.' => 'monofase',
+    'EXTBROSSCOPEST' => 'monofase',
+    'EXTBROSSFILOREFE/A4EST' => 'monofase',
+    'EXTBROSSFILOREFE/A5EST' => 'monofase',
+    'EXTBROSSFRESATA/A4EST' => 'monofase',
+    'EXTBROSSFRESATA/A5EST' => 'monofase',
+    'EXTCARTONATO' => 'monofase',
+    'EXTCARTONATO.GEN' => 'monofase',
+    'EXTFUSTELLATURA72X51' => 'monofase',
+    'EXTPUNTOMETALLICOEST' => 'monofase',
+    'EXTSTAMPA.OFFSET11.EST' => 'monofase',
+    'EXTSTAMPABUSTE.EST' => 'monofase',
+    'EXTSTAMPASECCO' => 'monofase',
+    'EXTUVSPOTEST' => 'monofase',
+    'EXTUVSPOTSPESSEST' => 'monofase',
+    'DEKIA-semplice' => 'monofase',
+    'STAMPASECCO' => 'monofase',
+    'STAMPACALDO04' => 'monofase',
+    'STAMPACALDOBR' => 'monofase',
         ];
     }
 }
