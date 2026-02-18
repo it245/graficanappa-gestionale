@@ -171,7 +171,8 @@ class OndaSyncService
         $tutteLeFasi = OrdineFase::with('ordine')->get();
         foreach ($tutteLeFasi as $fase) {
             $controller->calcolaOreEPriorita($fase);
-            $fase->save();
+            // Salva solo priorita (ore è calcolato al volo, non è colonna DB)
+            DB::table('ordine_fasi')->where('id', $fase->id)->update(['priorita' => $fase->priorita]);
         }
 
         // Ricalcola stati
