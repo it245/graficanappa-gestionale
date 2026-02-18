@@ -37,7 +37,7 @@ class CommessaController extends Controller
                           ->limit(5)
                           ->get();
 
-        $operatore = auth('operatore')->user()->load('reparti');
+        $operatore = \App\Models\Operatore::with('reparti')->find(session('operatore_id'));
 
         return view('commesse.show', compact('ordine', 'prossime', 'operatore'));
     }
