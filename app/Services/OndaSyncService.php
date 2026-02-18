@@ -23,7 +23,7 @@ class OndaSyncService
         $mappaPriorita = config('fasi_priorita');
         $oggi = now()->format('Y-m-d');
 
-        // 1. Query ordini registrati da oggi, aperti, non chiusi
+        // 1. Query tutti gli ordini aperti (TipoDocumento=2, non chiusi)
         $righeOnda = DB::connection('onda')->select("
             SELECT
                 t.CodCommessa,
@@ -51,8 +51,7 @@ class OndaSyncService
             WHERE t.TipoDocumento = '2'
               AND t.StatoChiusura <> '2'
               AND p.ForzaChiusura = 0
-              AND CAST(t.DataRegistrazione AS DATE) >= ?
-        ", [$oggi]);
+        ");
 
         if (empty($righeOnda)) {
             return ['ordini_creati' => 0, 'ordini_aggiornati' => 0, 'fasi_create' => 0];
@@ -125,6 +124,9 @@ class OndaSyncService
                     'ordine_id'        => $ordine->id,
                     'fase'             => $faseNome,
                     'fase_catalogo_id' => $faseCatalogo->id,
+                    'qta_fase'         => $riga->QtaDaLavorare ?? 0,
+                    'um'               => trim($riga->UMFase ?? 'FG'),
+                    'priorita'         => $prioritaFase,
                     'stato'            => 0,
                 ];
 

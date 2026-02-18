@@ -54,6 +54,11 @@ Route::prefix('spedizione')->middleware(['operatore.auth'])->group(function() {
 });
 
 Route::get('/mes/prinect',[PrinectController::class, 'index'])->name('mes.prinect');
+Route::get('/mes/prinect/api/status',[PrinectController::class, 'apiStatus'])->name('mes.prinect.apiStatus');
+Route::get('/mes/prinect/attivita',[PrinectController::class, 'attivita'])->name('mes.prinect.attivita');
+Route::get('/mes/prinect/report/{commessa}',[PrinectController::class, 'reportCommessa'])->name('mes.prinect.report');
+Route::get('/mes/prinect/jobs',[PrinectController::class, 'jobs'])->name('mes.prinect.jobs');
+Route::get('/mes/prinect/job/{jobId}',[PrinectController::class, 'jobDetail'])->name('mes.prinect.jobDetail');
 // Health check
 Route::get('/health', fn() => 'MES OK');
 Route::get('/commesse/{commessa}', [App\Http\Controllers\CommessaController::class, 'show'])

@@ -361,6 +361,16 @@ tr:hover td {
             @endif
         </a>
 
+        {{-- Sync Onda --}}
+        <form method="POST" action="{{ route('owner.syncOnda') }}" style="display:inline;" onsubmit="this.querySelector('button').disabled=true;">
+            @csrf
+            <button type="submit" class="btn p-0" style="background:none; border:none;" title="Sincronizza ordini da Onda">
+                <svg xmlns="http://www.w3.org/2000/svg" width="35" height="35" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="cursor:pointer; transition:transform 0.15s ease;" onmouseover="this.style.transform='scale(1.15)'" onmouseout="this.style.transform='scale(1)'">
+                    <path d="M21.5 2v6h-6"/><path d="M2.5 22v-6h6"/><path d="M2.5 11.5a10 10 0 0 1 18.8-4.3"/><path d="M21.5 12.5a10 10 0 0 1-18.8 4.2"/>
+                </svg>
+            </button>
+        </form>
+
     </div>
     
         {{-- FILTRI --}}
