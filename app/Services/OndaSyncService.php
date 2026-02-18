@@ -166,8 +166,19 @@ class OndaSyncService
             }
         }
 
-        // Ricalcola stati (cascata fasi)
-        FaseStatoService::ricalcolaStati();
+        // Ricalcola priorità e ore per tutte le fasi
+        $controller = app(\App\Http\Controllers\DashboardOwnerController::class);
+        $tutteLeFasi = OrdineFase::with('ordine')->get();
+        foreach ($tutteLeFasi as $fase) {
+            $controller->calcolaOreEPriorita($fase);
+            $fase->save();
+        }
+
+        // Ricalcola stati per ogni ordine
+        $ordineIds = OrdineFase::distinct()->pluck('ordine_id');
+        foreach ($ordineIds as $ordineId) {
+            FaseStatoService::ricalcolaStati($ordineId);
+        }
 
         Log::info("Sync Onda completato: $ordiniCreati creati, $ordiniAggiornati aggiornati, $fasiCreate fasi");
 
