@@ -98,9 +98,88 @@
                     <label for="termina-{{ $fase->id }}" class="badge-termina">Termina</label>
                 </div>
             </div>
+            @if($isSpedizione && $fase->stato != 3)
+                @php
+                    $repartoSpedizione = $operatore->reparti->first(fn($r) => strtolower($r->nome) === 'spedizione');
+                    $altreFasiNonTerminate = $ordine->fasi->filter(function($f) use ($fase, $repartoSpedizione) {
+                        return $f->id !== $fase->id
+                            && ($f->faseCatalogo->reparto_id ?? null) !== ($repartoSpedizione->id ?? null)
+                            && $f->stato != 3;
+                    });
+                @endphp
+                @if($altreFasiNonTerminate->isNotEmpty())
+                <div class="card-footer bg-warning bg-opacity-25">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <strong style="color:#dc3545;">{{ $altreFasiNonTerminate->count() }} fase/i non ancora terminate</strong>
+                            <br><small class="text-muted">Forzando la consegna, tutte le fasi precedenti verranno chiuse automaticamente.</small>
+                        </div>
+                        <button class="btn btn-danger btn-lg" id="btnForzaConsegna" onclick="forzaConsegna({{ $fase->id }})">
+                            Forza Consegna
+                        </button>
+                    </div>
+                </div>
+                @else
+                <div class="card-footer bg-success bg-opacity-10">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <strong style="color:#28a745;">Tutte le fasi sono terminate - pronto per la consegna</strong>
+                        </div>
+                        <button class="btn btn-success btn-lg" id="btnConsegna" onclick="forzaConsegna({{ $fase->id }})">
+                            Consegnato
+                        </button>
+                    </div>
+                </div>
+                @endif
+            @endif
         </div>
         @endif
     @endforeach
+
+    {{-- Bottone forza consegna per spedizione quando nessuna fase è selezionata --}}
+    @if($isSpedizione && !$faseSelezionataId)
+        @php
+            $faseSpedizione = $fasiGestibili->first(fn($f) => $f->stato != 3);
+        @endphp
+        @if($faseSpedizione)
+        <div class="card mb-3 border-danger">
+            <div class="card-header bg-danger text-white">
+                <strong>Consegna rapida - {{ $faseSpedizione->faseCatalogo->nome ?? 'Spedizione' }}</strong>
+            </div>
+            <div class="card-body">
+                @php
+                    $repartoSpedizione = $operatore->reparti->first(fn($r) => strtolower($r->nome) === 'spedizione');
+                    $altreFasiNonTerminate = $ordine->fasi->filter(function($f) use ($faseSpedizione, $repartoSpedizione) {
+                        return $f->id !== $faseSpedizione->id
+                            && ($f->faseCatalogo->reparto_id ?? null) !== ($repartoSpedizione->id ?? null)
+                            && $f->stato != 3;
+                    });
+                @endphp
+                @if($altreFasiNonTerminate->isNotEmpty())
+                    <p><strong style="color:#dc3545;">{{ $altreFasiNonTerminate->count() }} fase/i non ancora terminate:</strong></p>
+                    <ul class="mb-2">
+                        @foreach($altreFasiNonTerminate as $fNt)
+                            <li>{{ $fNt->faseCatalogo->nome ?? '-' }} (stato: {{ $fNt->stato }})</li>
+                        @endforeach
+                    </ul>
+                    <small class="text-muted">Forzando la consegna, tutte le fasi sopra verranno chiuse automaticamente.</small>
+                    <div class="mt-3">
+                        <button class="btn btn-danger btn-lg w-100" id="btnForzaConsegna" onclick="forzaConsegna({{ $faseSpedizione->id }})">
+                            Forza Consegna
+                        </button>
+                    </div>
+                @else
+                    <p style="color:#28a745;"><strong>Tutte le fasi sono terminate - pronto per la consegna</strong></p>
+                    <div class="mt-2">
+                        <button class="btn btn-success btn-lg w-100" id="btnConsegna" onclick="forzaConsegna({{ $faseSpedizione->id }})">
+                            Consegnato
+                        </button>
+                    </div>
+                @endif
+            </div>
+        </div>
+        @endif
+    @endif
 
     <!-- Tabella altre fasi del tuo reparto (sola lettura) -->
     @php
@@ -255,6 +334,30 @@ function aggiornaCampo(faseId, campo, valore){
         if(!data.success) alert('Errore durante il salvataggio: '+data.messaggio);
     })
     .catch(err=>console.error('Errore:', err));
+}
+
+function forzaConsegna(faseId){
+    const btn = document.getElementById('btnForzaConsegna') || document.getElementById('btnConsegna');
+    if(btn){ btn.disabled = true; btn.textContent = 'Consegna in corso...'; }
+
+    fetch('{{ route("spedizione.invio") }}',{
+        method:'POST',
+        headers:{'X-CSRF-TOKEN':'{{ csrf_token() }}','Content-Type':'application/json'},
+        body:JSON.stringify({fase_id:faseId, forza:true})
+    })
+    .then(res=>res.json())
+    .then(data=>{
+        if(data.success){
+            window.location.href = '{{ route("spedizione.dashboard") }}';
+        } else {
+            alert('Errore: ' + (data.messaggio || 'operazione fallita'));
+            if(btn){ btn.disabled = false; btn.textContent = 'Forza Consegna'; }
+        }
+    })
+    .catch(err=>{
+        console.error('Errore:', err);
+        if(btn){ btn.disabled = false; btn.textContent = 'Forza Consegna'; }
+    });
 }
 </script>
 @endsection

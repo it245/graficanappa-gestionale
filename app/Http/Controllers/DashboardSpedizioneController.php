@@ -93,6 +93,8 @@ class DashboardSpedizioneController extends Controller
             return response()->json(['success' => false, 'messaggio' => 'Già consegnato']);
         }
 
+        $forza = $request->boolean('forza', false);
+
         // Verifica che tutte le altre fasi della commessa siano terminate
         $repartoSpedizione = Reparto::where('nome', 'spedizione')->first();
         $altreFasiNonTerminate = OrdineFase::where('ordine_id', $fase->ordine_id)
@@ -101,10 +103,24 @@ class DashboardSpedizioneController extends Controller
                 $q->where('reparto_id', '!=', $repartoSpedizione->id);
             })
             ->where('stato', '!=', 3)
-            ->count();
+            ->get();
 
-        if ($altreFasiNonTerminate > 0) {
+        if ($altreFasiNonTerminate->count() > 0 && !$forza) {
             return response()->json(['success' => false, 'messaggio' => 'Non tutte le fasi sono terminate']);
+        }
+
+        // Se forza: termina automaticamente tutte le fasi precedenti
+        if ($forza && $altreFasiNonTerminate->count() > 0) {
+            foreach ($altreFasiNonTerminate as $faseAperta) {
+                $faseAperta->stato = 3;
+                if (!$faseAperta->data_fine) {
+                    $faseAperta->data_fine = now()->format('d/m/Y H:i:s');
+                }
+                if (!$faseAperta->data_inizio) {
+                    $faseAperta->data_inizio = now()->format('d/m/Y H:i:s');
+                }
+                $faseAperta->save();
+            }
         }
 
         $operatoreId = session('operatore_id');
