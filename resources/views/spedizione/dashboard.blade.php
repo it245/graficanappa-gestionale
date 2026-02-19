@@ -419,15 +419,12 @@ function forzaConsegna(faseId, btn) {
         },
         body: JSON.stringify({ fase_id: faseId, forza: true })
     })
-    .then(res => {
-        if (!res.ok) throw new Error('Errore server: ' + res.status);
-        return res.json();
-    })
-    .then(data => {
-        if (data.success) {
+    .then(res => res.json().then(data => ({ ok: res.ok, data })))
+    .then(({ ok, data }) => {
+        if (ok && data.success) {
             window.location.reload();
         } else {
-            alert('Errore: ' + (data.messaggio || 'operazione fallita'));
+            alert('Errore: ' + (data.messaggio || data.message || 'operazione fallita'));
             btn.disabled = false;
             btn.textContent = 'Forza';
         }
