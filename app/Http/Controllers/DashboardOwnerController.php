@@ -191,7 +191,7 @@ public function calcolaOreEPriorita($fase)
     public function index()
     {
         $fasi = OrdineFase::with(['ordine', 'faseCatalogo', 'operatori' => fn($q) => $q->select('operatori.id', 'nome')])
-            ->where('stato', '!=', 3)
+            ->where('stato', '<', 3)
             ->get()
             ->map(function ($fase) {
                 $fase = $this->calcolaOreEPriorita($fase);
@@ -210,11 +210,11 @@ public function calcolaOreEPriorita($fase)
         $reparti = Reparto::orderBy('nome')->pluck('nome', 'id');
         $fasiCatalogo = FasiCatalogo::all();
 
-        // Report spedizioni di oggi
+        // Report spedizioni di oggi (stato 4 = consegnato)
         $repartoSpedizione = Reparto::where('nome', 'spedizione')->first();
         $spedizioniOggi = collect();
         if ($repartoSpedizione) {
-            $spedizioniOggi = OrdineFase::where('stato', 3)
+            $spedizioniOggi = OrdineFase::where('stato', 4)
                 ->whereDate('data_fine', Carbon::today())
                 ->whereHas('faseCatalogo', function ($q) use ($repartoSpedizione) {
                     $q->where('reparto_id', $repartoSpedizione->id);
@@ -347,7 +347,7 @@ public function calcolaOreEPriorita($fase)
             'faseCatalogo',
             'operatori'
         ])
-        ->where('stato', 3)
+        ->whereIn('stato', [3, 4])
         ->get()
         ->map(function ($fase) {
 
@@ -462,7 +462,7 @@ public function calcolaOreEPriorita($fase)
     public function scheduling()
     {
         $fasi = OrdineFase::with(['ordine', 'faseCatalogo.reparto', 'operatori'])
-            ->where('stato', '!=', 3)
+            ->where('stato', '<', 3)
             ->get()
             ->map(function ($fase) {
                 return $this->calcolaOreEPriorita($fase);

@@ -73,8 +73,8 @@
 <h2>Commessa: <strong>{{ $commessa }}</strong></h2>
 
 @php
-    $statoBg = [0 => '#e9ecef', 1 => '#cfe2ff', 2 => '#fff3cd', 3 => '#d1e7dd'];
-    $statoColor = [0 => '#333', 1 => '#084298', 2 => '#664d03', 3 => '#0f5132'];
+    $statoBg = [0 => '#e9ecef', 1 => '#cfe2ff', 2 => '#fff3cd', 3 => '#d1e7dd', 4 => '#c3c3c3'];
+    $statoColor = [0 => '#333', 1 => '#084298', 2 => '#664d03', 3 => '#0f5132', 4 => '#1a1a1a'];
 @endphp
 
 <div style="overflow-x:auto; margin-top:10px;">

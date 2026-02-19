@@ -68,14 +68,16 @@
                         <tr>
                             <td>
                                 <strong>{{ $f->fase }}</strong>
-                                @if($f->stato == 3)
-                                    <span class="badge bg-success ms-1" style="font-size:9px">OK</span>
+                                @if($f->stato == 4)
+                                    <span class="badge bg-dark ms-1" style="font-size:9px">Consegnato</span>
+                                @elseif($f->stato == 3)
+                                    <span class="badge bg-success ms-1" style="font-size:9px">Terminato</span>
                                 @elseif($f->stato == 2)
-                                    <span class="badge bg-info ms-1" style="font-size:9px">Pausa</span>
+                                    <span class="badge bg-info ms-1" style="font-size:9px">Avviato</span>
                                 @elseif($f->stato == 1)
-                                    <span class="badge bg-warning text-dark ms-1" style="font-size:9px">In corso</span>
+                                    <span class="badge bg-warning text-dark ms-1" style="font-size:9px">Pronto</span>
                                 @else
-                                    <span class="badge bg-secondary ms-1" style="font-size:9px">Attesa</span>
+                                    <span class="badge bg-secondary ms-1" style="font-size:9px">Caricato</span>
                                 @endif
                             </td>
                             <td>{{ ucfirst($f->reparto) }}</td>

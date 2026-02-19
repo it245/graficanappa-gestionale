@@ -134,7 +134,7 @@ class DashboardOperatoreController extends Controller
             ];
 
         // Recupera le fasi visibili per i reparti dell'operatore
-        $fasiVisibili = OrdineFase::where('stato', '!=', 3)
+        $fasiVisibili = OrdineFase::where('stato', '<', 3)
             ->whereHas('faseCatalogo', function ($q) use ($reparti) {
                 $q->whereIn('reparto_id', $reparti);
             })

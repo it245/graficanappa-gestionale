@@ -9,7 +9,7 @@ class FaseStatoService
 {
     /**
      * Ricalcola gli stati delle fasi di una commessa.
-     * 0 = caricato, 1 = pronto, 2 = avviato, 3 = terminato
+     * 0 = caricato, 1 = pronto, 2 = avviato, 3 = terminato, 4 = consegnato
      * Una fase passa a 1 (pronto) solo se tutte le fasi con priorità inferiore sono a 3 (terminato).
      */
     public static function ricalcolaStati($ordineId)
@@ -33,7 +33,7 @@ class FaseStatoService
                 }
             } else {
                 // Tutte le precedenti devono essere terminate (3)
-                $tuttTerminate = $fasiPrecedenti->every(fn($f) => $f->stato == 3);
+                $tuttTerminate = $fasiPrecedenti->every(fn($f) => $f->stato >= 3);
                 if ($tuttTerminate && $fase->stato == 0) {
                     $fase->stato = 1;
                     $fase->save();

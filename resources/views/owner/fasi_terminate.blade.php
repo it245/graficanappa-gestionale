@@ -340,7 +340,7 @@ th:nth-child(21), td:nth-child(21) {
                     <td>{{ $fase->note ?? '-' }}</td>
                     <td>{{ $fase->data_inizio ?? '-' }}</td>
                     <td>{{ $fase->data_fine ?? '-' }}</td>
-                    <td><span class="badge-stato">Terminata</span></td>
+                    <td><span class="badge-stato">{{ $fase->stato == 4 ? 'Consegnata' : 'Terminata' }}</span></td>
                 </tr>
             @empty
                 <tr>

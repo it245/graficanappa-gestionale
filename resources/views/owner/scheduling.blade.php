@@ -730,7 +730,7 @@ function oreToDateStr(calH) {
 }
 
 function statoLabel(stato) {
-    const map = { 0:['Caricato','#6c757d'], 1:['Pronto','#0dcaf0'], 2:['Avviato','#198754'], 3:['Terminato','#1a1a2e'] };
+    const map = { 0:['Caricato','#6c757d'], 1:['Pronto','#0dcaf0'], 2:['Avviato','#198754'], 3:['Terminato','#1a1a2e'], 4:['Consegnato','#333'] };
     const [label, color] = map[stato] || ['?','#999'];
     return `<span class="badge-stato" style="background:${color}">${label}</span>`;
 }
@@ -923,7 +923,7 @@ function renderKPI() {
 
 function showTooltip(e, fase) {
     const tt = document.getElementById('tooltip');
-    const statoNomi = ['Caricato','Pronto','Avviato','Terminato'];
+    const statoNomi = ['Caricato','Pronto','Avviato','Terminato','Consegnato'];
     const turno = getTurnoLabel(fase.reparto);
     tt.innerHTML = `
         <div class="tt-title">${fase.commessa}</div>
@@ -1357,7 +1357,7 @@ function openSidePanel(commessaId) {
     `;
 
     // Fasi
-    const statoNomi = ['Caricato', 'Pronto', 'Avviato', 'Terminato'];
+    const statoNomi = ['Caricato', 'Pronto', 'Avviato', 'Terminato', 'Consegnato'];
     allFasi.sort((a, b) => a.start_h - b.start_h);
 
     document.getElementById('spFasiList').innerHTML = allFasi.map(f => `

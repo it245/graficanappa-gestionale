@@ -132,6 +132,7 @@ public function aggiornaCampo(Request $request)
             case 1: return 'Pronto';
             case 2: return 'Avviato';
             case 3: return 'Terminato';
+            case 4: return 'Consegnato';
             default: return $stato;
         }
     }

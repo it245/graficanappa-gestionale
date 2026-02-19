@@ -27,7 +27,7 @@ class DashboardSpedizioneController extends Controller
             ->with(['ordine', 'faseCatalogo', 'operatori'])
             ->get();
 
-        // Filtra: mostra solo se tutte le altre fasi (non spedizione) della stessa commessa sono terminate (3)
+        // Filtra: mostra solo se tutte le altre fasi (non spedizione) della stessa commessa sono terminate (>=3)
         $fasiDaSpedire = $fasiSpedizione->filter(function ($fase) use ($repartoSpedizione) {
             $altreFasi = OrdineFase::where('ordine_id', $fase->ordine_id)
                 ->where('id', '!=', $fase->id)
@@ -36,7 +36,7 @@ class DashboardSpedizioneController extends Controller
                 })
                 ->get();
 
-            return $altreFasi->every(fn($f) => $f->stato == 3);
+            return $altreFasi->every(fn($f) => $f->stato >= 3);
         })->sortBy(function ($fase) {
             return $fase->ordine->data_prevista_consegna ?? '9999-12-31';
         });
@@ -44,12 +44,12 @@ class DashboardSpedizioneController extends Controller
         // Calcola percentuale completamento per ogni fase da spedire
         foreach ($fasiDaSpedire as $fase) {
             $totaleFasi = OrdineFase::where('ordine_id', $fase->ordine_id)->count();
-            $fasiTerminate = OrdineFase::where('ordine_id', $fase->ordine_id)->where('stato', 3)->count();
+            $fasiTerminate = OrdineFase::where('ordine_id', $fase->ordine_id)->where('stato', '>=', 3)->count();
             $fase->percentuale = $totaleFasi > 0 ? round(($fasiTerminate / $totaleFasi) * 100) : 0;
         }
 
-        // Fasi spedite oggi (stato 3)
-        $fasiSpediteOggi = OrdineFase::where('stato', 3)
+        // Fasi spedite oggi (stato 4 = consegnato)
+        $fasiSpediteOggi = OrdineFase::where('stato', 4)
             ->whereDate('data_fine', Carbon::today())
             ->whereHas('faseCatalogo', function ($q) use ($repartoSpedizione) {
                 $q->where('reparto_id', $repartoSpedizione->id);
@@ -72,7 +72,7 @@ class DashboardSpedizioneController extends Controller
                 ->count();
             $fasiTerminate = OrdineFase::where('ordine_id', $fase->ordine_id)
                 ->where('id', '!=', $fase->id)
-                ->where('stato', 3)
+                ->where('stato', '>=', 3)
                 ->count();
             $fase->percentuale = $totaleFasi > 0 ? round(($fasiTerminate / $totaleFasi) * 100) : 0;
 
@@ -82,7 +82,7 @@ class DashboardSpedizioneController extends Controller
                 ->whereHas('faseCatalogo', function ($q) use ($repartoSpedizione) {
                     $q->where('reparto_id', '!=', $repartoSpedizione->id);
                 })
-                ->where('stato', '!=', 3)
+                ->where('stato', '<', 3)
                 ->with('faseCatalogo')
                 ->get();
         }
@@ -100,7 +100,7 @@ class DashboardSpedizioneController extends Controller
                 return response()->json(['success' => false, 'messaggio' => 'Fase non trovata']);
             }
 
-            if ($fase->stato == 3) {
+            if ($fase->stato >= 3) {
                 return response()->json(['success' => false, 'messaggio' => 'Già consegnato']);
             }
 
@@ -119,7 +119,7 @@ class DashboardSpedizioneController extends Controller
                         });
                     }
                 })
-                ->where('stato', '!=', 3)
+                ->where('stato', '<', 3)
                 ->get();
 
             if ($altreFasiNonTerminate->count() > 0 && !$forza) {
@@ -129,38 +129,37 @@ class DashboardSpedizioneController extends Controller
             $adesso = now()->format('Y-m-d H:i:s');
             $operatoreId = session('operatore_id');
 
-            // Se forza: termina tutte le fasi non-spedizione aperte
-            if ($forza && $altreFasiNonTerminate->count() > 0) {
-                foreach ($altreFasiNonTerminate as $faseAperta) {
-                    $faseAperta->stato = 3;
-                    if (!$faseAperta->data_fine) {
-                        $faseAperta->data_fine = $adesso;
-                    }
-                    if (!$faseAperta->data_inizio) {
-                        $faseAperta->data_inizio = $adesso;
-                    }
-                    $faseAperta->save();
+            // Tutte le fasi della commessa vanno a stato=4 (consegnato)
+            $tutteLeFasiCommessa = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
+                ->where('stato', '<', 4)
+                ->get();
+
+            foreach ($tutteLeFasiCommessa as $f) {
+                $f->stato = 4;
+                if (!$f->data_fine) {
+                    $f->data_fine = $adesso;
                 }
+                if (!$f->data_inizio) {
+                    $f->data_inizio = $adesso;
+                }
+                $f->save();
             }
 
-            // Chiudi TUTTE le fasi spedizione della stessa commessa (non solo quella cliccata)
+            // Attach operatore spedizione alle fasi BRT
             $fasiSpedizioneCommessa = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
-                ->where('stato', '!=', 3)
+                ->where('stato', 4)
                 ->where(function ($q) use ($repartoSpedizione) {
                     if ($repartoSpedizione) {
                         $q->whereHas('faseCatalogo', fn($q2) => $q2->where('reparto_id', $repartoSpedizione->id));
                     }
                 })
+                ->with('operatori')
                 ->get();
 
             foreach ($fasiSpedizioneCommessa as $faseSped) {
                 if ($operatoreId && !$faseSped->operatori->contains($operatoreId)) {
                     $faseSped->operatori()->attach($operatoreId, ['data_inizio' => now(), 'data_fine' => now()]);
                 }
-                $faseSped->stato = 3;
-                $faseSped->data_inizio = $adesso;
-                $faseSped->data_fine = $adesso;
-                $faseSped->save();
             }
 
             return response()->json([
