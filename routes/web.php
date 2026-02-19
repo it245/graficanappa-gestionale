@@ -52,6 +52,9 @@ Route::middleware(['admin'])->prefix('admin')->group(function() {
     Route::post('/operatore/{id}', [DashboardAdminController::class, 'aggiorna'])->name('admin.operatore.aggiorna');
     Route::post('/operatore/{id}/toggle', [DashboardAdminController::class, 'toggleAttivo'])->name('admin.operatore.toggleAttivo');
     Route::get('/statistiche-operatori', [DashboardAdminController::class, 'statistiche'])->name('admin.statistiche');
+    Route::get('/commesse', [DashboardAdminController::class, 'listaCommesse'])->name('admin.commesse');
+    Route::get('/commessa/{commessa}/report', [DashboardAdminController::class, 'reportCommessa'])->name('admin.reportCommessa');
+    Route::get('/report-produzione', [DashboardAdminController::class, 'reportProduzione'])->name('admin.reportProduzione');
 
     // Prinect (nascosto fino a v2.0, protetto dietro admin)
     Route::get('/mes/prinect', [PrinectController::class, 'index'])->name('mes.prinect');
