@@ -7,6 +7,7 @@ use App\Http\Middleware\OwnerMiddleware;
 
 use App\Http\Middleware\OperatoreAuth;
 use App\Http\Middleware\AdminAuth;
+use App\Http\Middleware\OwnerOrAdmin;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -19,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'operatore.auth' => OperatoreAuth::class,
             'owner' => \App\Http\Middleware\OwnerMiddleware::class,
             'admin' => AdminAuth::class,
+            'owner.or.admin' => OwnerOrAdmin::class,
         ]);
     })
     ->withExceptions(function ($exceptions) {

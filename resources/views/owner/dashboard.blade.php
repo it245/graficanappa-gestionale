@@ -364,6 +364,13 @@ tr:hover td {
             <img src="{{ asset('images/icons8-report-grafico-a-torta-50.png') }}" alt="Scheduling">
         </a>
 
+        {{-- Prinect Live (Stampa Offset) --}}
+        <a href="{{ route('mes.prinect') }}" title="Prinect Live - Stampa Offset">
+            <svg xmlns="http://www.w3.org/2000/svg" width="35" height="35" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="cursor:pointer; transition:transform 0.15s ease;" onmouseover="this.style.transform='scale(1.15)'" onmouseout="this.style.transform='scale(1)'">
+                <rect x="6" y="2" width="12" height="6" rx="1"/><rect x="2" y="8" width="20" height="8" rx="1"/><rect x="6" y="16" width="12" height="6" rx="1"/><line x1="6" y1="12" x2="2" y2="12"/><line x1="22" y1="12" x2="18" y2="12"/>
+            </svg>
+        </a>
+
         {{-- Stampa celle selezionate --}}
         <button id="printButton" class="btn p-0" style="background:none; border:none;" title="Stampa celle selezionate">
             <img src="{{ asset('images/printer.png') }}" alt="Stampa">

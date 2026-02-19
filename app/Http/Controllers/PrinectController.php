@@ -105,6 +105,50 @@ class PrinectController extends Controller
         $consumption = $service->getDeviceConsumption($deviceId, $start7gg, $endNow);
         $cambiLastra = $consumption['plateChanges'] ?? 0;
 
+        // OEE (Overall Equipment Effectiveness) - ultimi 7 giorni
+        // Turno stampa offset: 23h/giorno (0-23), velocita nominale XL106: 18000 fogli/h
+        $velocitaNominale = 18000;
+        $oreTurnoPianificate7gg = 23 * 7; // ore pianificate 7 giorni
+        $secTotali7gg = $attivita7gg->sum(function ($a) {
+            return ($a->start_time && $a->end_time) ? $a->start_time->diffInSeconds($a->end_time) : 0;
+        });
+        $secProd7gg = $attivita7gg->where('activity_name', '!=', 'Avviamento')
+            ->sum(function ($a) {
+                return ($a->start_time && $a->end_time) ? $a->start_time->diffInSeconds($a->end_time) : 0;
+            });
+
+        $disponibilita = $oreTurnoPianificate7gg > 0 ? min($secTotali7gg / ($oreTurnoPianificate7gg * 3600), 1) : 0;
+        $performance = ($secProd7gg > 0 && $velocitaNominale > 0) ? min(($totBuoni7gg + $totScarto7gg) / (($secProd7gg / 3600) * $velocitaNominale), 1) : 0;
+        $qualita = $totFogli7gg > 0 ? $totBuoni7gg / $totFogli7gg : 0;
+        $oee = round($disponibilita * $performance * $qualita * 100, 1);
+        $oeeDisp = round($disponibilita * 100, 1);
+        $oeePerf = round($performance * 100, 1);
+        $oeeQual = round($qualita * 100, 1);
+
+        // Alert automatici
+        $alerts = [];
+
+        // 1. Macchina ferma
+        $statoMacchina = $device['deviceStatus']['status'] ?? 'Idle';
+        if (in_array($statoMacchina, ['Stopped', 'Error'])) {
+            $alerts[] = ['tipo' => 'danger', 'msg' => 'Macchina FERMA — stato: ' . $statoMacchina];
+        }
+
+        // 2. Scarti sopra soglia (>5% oggi)
+        if ($percScartoOggi > 5 && $totFogliOggi > 100) {
+            $alerts[] = ['tipo' => 'warning', 'msg' => 'Scarto oggi al ' . $percScartoOggi . '% — sopra soglia 5%'];
+        }
+
+        // 3. Cambi lastra eccessivi (>50 in 7gg)
+        if ($cambiLastra > 50) {
+            $alerts[] = ['tipo' => 'warning', 'msg' => $cambiLastra . ' cambi lastra in 7 giorni — verificare setup'];
+        }
+
+        // 4. OEE basso (<40%)
+        if ($oee > 0 && $oee < 40) {
+            $alerts[] = ['tipo' => 'danger', 'msg' => 'OEE critico: ' . $oee . '% — sotto soglia 40%'];
+        }
+
         // Timeline attivita oggi per grafico
         $timelineOggi = $attivitaOggi->filter(fn($a) => $a->start_time && $a->end_time)
             ->map(function ($att) {
@@ -126,7 +170,9 @@ class PrinectController extends Controller
             'totBuoni7gg', 'totScarto7gg', 'totFogli7gg', 'percScarto7gg',
             'secAvvOggi', 'secProdOggi',
             'prodPerGiorno', 'perOperatore', 'topCommesse',
-            'cambiLastra', 'timelineOggi'
+            'cambiLastra', 'timelineOggi',
+            'oee', 'oeeDisp', 'oeePerf', 'oeeQual',
+            'alerts'
         ));
     }
 

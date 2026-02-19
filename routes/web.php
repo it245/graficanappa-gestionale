@@ -56,14 +56,16 @@ Route::middleware(['admin'])->prefix('admin')->group(function() {
     Route::get('/commesse', [DashboardAdminController::class, 'listaCommesse'])->name('admin.commesse');
     Route::get('/commessa/{commessa}/report', [DashboardAdminController::class, 'reportCommessa'])->name('admin.reportCommessa');
     Route::get('/report-produzione', [DashboardAdminController::class, 'reportProduzione'])->name('admin.reportProduzione');
+});
 
-    // Prinect (nascosto fino a v2.0, protetto dietro admin)
-    Route::get('/mes/prinect', [PrinectController::class, 'index'])->name('mes.prinect');
-    Route::get('/mes/prinect/api/status', [PrinectController::class, 'apiStatus'])->name('mes.prinect.apiStatus');
-    Route::get('/mes/prinect/attivita', [PrinectController::class, 'attivita'])->name('mes.prinect.attivita');
-    Route::get('/mes/prinect/report/{commessa}', [PrinectController::class, 'reportCommessa'])->name('mes.prinect.report');
-    Route::get('/mes/prinect/jobs', [PrinectController::class, 'jobs'])->name('mes.prinect.jobs');
-    Route::get('/mes/prinect/job/{jobId}', [PrinectController::class, 'jobDetail'])->name('mes.prinect.jobDetail');
+// Prinect — accessibile a owner e admin
+Route::middleware(['owner.or.admin'])->prefix('mes/prinect')->group(function() {
+    Route::get('/', [PrinectController::class, 'index'])->name('mes.prinect');
+    Route::get('/api/status', [PrinectController::class, 'apiStatus'])->name('mes.prinect.apiStatus');
+    Route::get('/attivita', [PrinectController::class, 'attivita'])->name('mes.prinect.attivita');
+    Route::get('/report/{commessa}', [PrinectController::class, 'reportCommessa'])->name('mes.prinect.report');
+    Route::get('/jobs', [PrinectController::class, 'jobs'])->name('mes.prinect.jobs');
+    Route::get('/job/{jobId}', [PrinectController::class, 'jobDetail'])->name('mes.prinect.jobDetail');
 });
 
 // Produzione

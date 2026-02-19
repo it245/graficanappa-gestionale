@@ -33,6 +33,17 @@
         </div>
     </div>
 
+    {{-- ALERT --}}
+    @if(!empty($alerts))
+    <div class="mb-3">
+        @foreach($alerts as $alert)
+        <div class="alert alert-{{ $alert['tipo'] }} py-2 mb-2 d-flex align-items-center" style="font-size:14px;">
+            <strong class="me-2">{{ $alert['tipo'] === 'danger' ? 'ALERT' : 'ATTENZIONE' }}</strong> {{ $alert['msg'] }}
+        </div>
+        @endforeach
+    </div>
+    @endif
+
     {{-- STATO MACCHINA LIVE --}}
     <div class="card mb-3 border-0 shadow-sm" style="border-radius:12px;">
         <div class="card-body py-3">
@@ -128,6 +139,46 @@
                 <div class="card-body text-center py-3">
                     <div class="kpi-label">Cambi lastra 7gg</div>
                     <div class="kpi-value">{{ number_format($cambiLastra) }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- OEE --}}
+    <div class="row g-3 mb-3">
+        <div class="col-md-3">
+            <div class="card kpi-card border-0 shadow-sm h-100" style="background: {{ $oee >= 60 ? 'rgba(25,135,84,0.1)' : ($oee >= 40 ? 'rgba(255,193,7,0.1)' : 'rgba(220,53,69,0.1)') }};">
+                <div class="card-body text-center py-3">
+                    <div class="kpi-label">OEE 7 giorni</div>
+                    <div class="kpi-value" style="font-size:2.5rem; color: {{ $oee >= 60 ? '#198754' : ($oee >= 40 ? '#e67e22' : '#dc3545') }};">{{ $oee }}%</div>
+                    <div class="kpi-sub text-muted">Overall Equipment Effectiveness</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card kpi-card border-0 shadow-sm h-100">
+                <div class="card-body text-center py-3">
+                    <div class="kpi-label">Disponibilita</div>
+                    <div class="kpi-value text-info">{{ $oeeDisp }}%</div>
+                    <div class="kpi-sub text-muted">Tempo operativo / pianificato</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card kpi-card border-0 shadow-sm h-100">
+                <div class="card-body text-center py-3">
+                    <div class="kpi-label">Performance</div>
+                    <div class="kpi-value text-primary">{{ $oeePerf }}%</div>
+                    <div class="kpi-sub text-muted">Velocita reale / nominale</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card kpi-card border-0 shadow-sm h-100">
+                <div class="card-body text-center py-3">
+                    <div class="kpi-label">Qualita</div>
+                    <div class="kpi-value text-success">{{ $oeeQual }}%</div>
+                    <div class="kpi-sub text-muted">Fogli buoni / totali</div>
                 </div>
             </div>
         </div>

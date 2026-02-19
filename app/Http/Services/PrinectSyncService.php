@@ -3,6 +3,8 @@
 namespace App\Http\Services;
 
 use App\Models\PrinectAttivita;
+use App\Models\Ordine;
+use App\Models\OrdineFase;
 
 class PrinectSyncService
 {
@@ -23,6 +25,7 @@ class PrinectSyncService
         }
 
         $importate = 0;
+        $commesseAggiornate = [];
 
         foreach ($data['activities'] as $att) {
             $startTime = isset($att['startTime']) ? date('Y-m-d H:i:s', strtotime($att['startTime'])) : null;
@@ -75,8 +78,58 @@ class PrinectSyncService
             ]);
 
             $importate++;
+
+            if ($commessa) {
+                $commesseAggiornate[$commessa] = true;
+            }
+        }
+
+        // Aggiorna fogli_buoni/scarto sulle fasi di stampa offset per ogni commessa toccata
+        foreach (array_keys($commesseAggiornate) as $commessa) {
+            $this->aggiornaFogliCommessa($commessa);
         }
 
         return $importate;
+    }
+
+    /**
+     * Aggiorna fogli_buoni, fogli_scarto, tempo_avviamento_sec, tempo_esecuzione_sec
+     * sulle fasi di stampa offset (STAMPAXL106*) della commessa dal totale Prinect.
+     */
+    protected function aggiornaFogliCommessa(string $commessa): void
+    {
+        // Somma totali da Prinect per questa commessa
+        $totali = PrinectAttivita::where('commessa_gestionale', $commessa)
+            ->selectRaw('
+                SUM(good_cycles) as fogli_buoni,
+                SUM(waste_cycles) as fogli_scarto
+            ')
+            ->first();
+
+        $tempi = PrinectAttivita::where('commessa_gestionale', $commessa)->get();
+        $secAvviamento = 0;
+        $secProduzione = 0;
+        foreach ($tempi as $att) {
+            if (!$att->start_time || !$att->end_time) continue;
+            $diff = $att->start_time->diffInSeconds($att->end_time);
+            if ($att->activity_name === 'Avviamento') {
+                $secAvviamento += $diff;
+            } else {
+                $secProduzione += $diff;
+            }
+        }
+
+        // Trova le fasi di stampa offset (STAMPAXL106*) per questa commessa
+        $fasi = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
+            ->where('fase', 'LIKE', 'STAMPAXL106%')
+            ->get();
+
+        foreach ($fasi as $fase) {
+            $fase->fogli_buoni = $totali->fogli_buoni ?? 0;
+            $fase->fogli_scarto = $totali->fogli_scarto ?? 0;
+            $fase->tempo_avviamento_sec = $secAvviamento;
+            $fase->tempo_esecuzione_sec = $secProduzione;
+            $fase->save();
+        }
     }
 }
