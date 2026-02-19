@@ -12,7 +12,14 @@ class DashboardAdminController extends Controller
     public function index()
     {
         $operatori = Operatore::with('reparti')->orderBy('attivo', 'desc')->orderBy('nome')->get();
-        return view('admin.dashboard', compact('operatori'));
+        $reparti = Reparto::orderBy('nome')->pluck('nome', 'id');
+
+        $ultimoNumero = Operatore::selectRaw('CAST(RIGHT(codice_operatore, 3) AS UNSIGNED) as numero')
+            ->orderByDesc('numero')->value('numero');
+        $prossimoNumero = $ultimoNumero ? $ultimoNumero + 1 : 1;
+        $prossimoCodice = '__' . str_pad($prossimoNumero, 3, '0', STR_PAD_LEFT);
+
+        return view('admin.dashboard', compact('operatori', 'reparti', 'prossimoCodice', 'prossimoNumero'));
     }
 
     public function crea()

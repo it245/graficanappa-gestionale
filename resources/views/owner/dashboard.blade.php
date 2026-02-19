@@ -326,11 +326,6 @@ tr:hover td {
             alt="Filtri"
         >
 
-        {{-- Aggiungi Operatore --}}
-        <a href="#" data-bs-toggle="modal" data-bs-target="#aggiungiOperatoreModal" title="Aggiungi Operatore">
-            <img src="{{ asset('images/add-user.png') }}" alt="Aggiungi Operatore">
-        </a>
-
         {{-- Visualizza fasi terminate --}}
         <a href="{{ route('owner.fasiTerminate') }}" title="Visualizza fasi terminate">
             <img src="{{ asset('images/out-of-the-box.png') }}" alt="Fasi terminate">
@@ -401,64 +396,6 @@ tr:hover td {
 </select>
 <button type="button" class="btn-reset-filters" id="btnResetFilters">Rimuovi filtri</button>
 </div>
-
-    {{-- MODALE AGGIUNGI OPERATORE --}}
-    <div class="modal fade" id="aggiungiOperatoreModal" tabindex="-1" aria-labelledby="aggiungiOperatoreModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <form method="POST" action="{{ route('owner.aggiungiOperatore') }}">
-                @csrf
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="aggiungiOperatoreModalLabel">Aggiungi Operatore</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label class="form-label">Nome</label>
-                            <input type="text" name="nome" id="nome" class="form-control" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Cognome</label>
-                            <input type="text" name="cognome" id="cognome" class="form-control" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Ruolo</label>
-                            <select name="ruolo" class="form-select" required>
-                                <option value="operatore">Operatore</option>
-                                <option value="owner">Owner</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Codice operatore</label>
-                            <input type="text" id="codice_operatore" class="form-control" value="{{ $prossimoCodice }}" data-numero="{{ $prossimoNumero}}" disabled>
-                            <small class="text-muted">Il codice sarà confermato alla creazione</small>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Reparto Principale</label>
-                            <select name="reparto_principale" class="form-select" required>
-                                @foreach($reparti as $id => $rep)
-                                    <option value="{{ $id }}">{{ $rep }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Reparto Secondario (facoltativo)</label>
-                            <select name="reparto_secondario" class="form-select">
-                                <option value="">-- Nessuno --</option>
-                                @foreach($reparti as $id => $rep)
-                                    <option value="{{ $id }}">{{ $rep }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="submit" class="btn btn-success">Aggiungi</button>
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
 
     {{-- MODALE AGGIUNGI RIGA --}}
     <div class="modal fade" id="aggiungiRigaModal" tabindex="-1" aria-hidden="true">
@@ -673,24 +610,6 @@ document.addEventListener('DOMContentLoaded', function(){
         });
     }
 
-    // Codice operatore live
-    var nomeInput = document.getElementById('nome');
-    var cognomeInput = document.getElementById('cognome');
-    var codiceInput = document.getElementById('codice_operatore');
-    var numero = codiceInput ? codiceInput.getAttribute('data-numero') : '001';
-    numero = String(numero).padStart(3, '0');
-
-    function aggiornaCodice(){
-        var n = (nomeInput.value || '').trim().toUpperCase();
-        var c = (cognomeInput.value || '').trim().toUpperCase();
-        var iniziali = (n.charAt(0) || '_') + (c.charAt(0) || '_');
-        codiceInput.value = iniziali + numero;
-    }
-
-    if(nomeInput && cognomeInput && codiceInput){
-        nomeInput.addEventListener('input', aggiornaCodice);
-        cognomeInput.addEventListener('input', aggiornaCodice);
-    }
 });
 </script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />

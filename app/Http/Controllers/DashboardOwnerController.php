@@ -207,11 +207,6 @@ public function calcolaOreEPriorita($fase)
             })
             ->sortBy('priorita');
 
-        $ultimoNumero = Operatore::selectRaw('CAST(RIGHT(codice_operatore, 3) AS UNSIGNED) as numero')
-            ->orderByDesc('numero')->value('numero');
-        $prossimoNumero = $ultimoNumero ? $ultimoNumero + 1 : 1;
-        $prossimoCodice = '__' . str_pad($prossimoNumero, 3, '0', STR_PAD_LEFT);
-
         $reparti = Reparto::orderBy('nome')->pluck('nome', 'id');
         $fasiCatalogo = FasiCatalogo::all();
 
@@ -229,7 +224,7 @@ public function calcolaOreEPriorita($fase)
                 ->sortByDesc('data_fine');
         }
 
-        return view('owner.dashboard', compact('fasi', 'prossimoNumero', 'prossimoCodice', 'reparti', 'fasiCatalogo', 'spedizioniOggi'));
+        return view('owner.dashboard', compact('fasi', 'reparti', 'fasiCatalogo', 'spedizioniOggi'));
     }
 
     public function aggiornaCampo(Request $request)
@@ -297,40 +292,6 @@ public function calcolaOreEPriorita($fase)
         }
 
         return response()->json(['success' => true]);
-    }
-
-    public function aggiungiOperatore(Request $request)
-    {
-        $request->validate([
-            'nome' => 'required|string',
-            'cognome' => 'required|string',
-            'ruolo' => 'required|in:operatore,owner',
-            'reparto_principale' => 'required|exists:reparti,id',
-            'reparto_secondario' => 'nullable|exists:reparti,id',
-        ]);
-
-        $ultimoNumero = Operatore::selectRaw('CAST(RIGHT(codice_operatore, 3) AS UNSIGNED) as numero')
-            ->orderByDesc('numero')->value('numero');
-        $numero = $ultimoNumero ? $ultimoNumero + 1 : 1;
-
-        $nome = ucfirst(strtolower($request->nome));
-        $cognome = ucfirst(strtolower($request->cognome));
-        $iniziali = strtoupper($nome[0] . $cognome[0]);
-        $codice = $iniziali . str_pad($numero, 3, '0', STR_PAD_LEFT);
-
-        $operatore = Operatore::create([
-            'nome' => $nome,
-            'cognome' => $cognome,
-            'codice_operatore' => $codice,
-            'ruolo' => $request->ruolo,
-            'attivo' => 1,
-            'reparto_id' => $request->reparto_principale
-        ]);
-
-        $reparti = array_filter([$request->reparto_principale, $request->reparto_secondario]);
-        $operatore->reparti()->sync($reparti);
-
-        return redirect()->back()->with('success', "Operatore $codice aggiunto correttamente");
     }
 
     public function aggiungiRiga(Request $request)
