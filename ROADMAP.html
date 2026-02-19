@@ -4,15 +4,16 @@
 <meta charset="utf-8">
 <title>Roadmap — MES Grafica Nappa</title>
 <style>
-    @page { margin: 2cm; }
+    @page { margin: 1.5cm; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #222; line-height: 1.7; padding: 40px; max-width: 900px; margin: 0 auto; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #222; line-height: 1.7; padding: 40px; max-width: 960px; margin: 0 auto; }
 
     .header { text-align: center; border-bottom: 3px solid #d11317; padding-bottom: 20px; margin-bottom: 30px; }
     .header h1 { color: #d11317; font-size: 24px; margin-bottom: 4px; }
     .header h2 { color: #333; font-size: 16px; font-weight: 400; }
     .header .date { color: #888; font-size: 13px; margin-top: 8px; }
     .header .author { color: #555; font-size: 13px; margin-top: 4px; font-style: italic; }
+    .header .piano { color: #d11317; font-size: 14px; margin-top: 8px; font-weight: 700; }
 
     h3 { color: #d11317; font-size: 18px; margin-top: 35px; margin-bottom: 12px; border-left: 4px solid #d11317; padding-left: 10px; }
     h4 { color: #333; font-size: 15px; margin-top: 18px; margin-bottom: 8px; }
@@ -27,6 +28,12 @@
     .badge-current { background: #0d6efd; }
     .badge-next { background: #e67e22; }
     .badge-future { background: #6c757d; }
+    .badge-ai { background: linear-gradient(135deg, #667eea, #764ba2); }
+
+    .timeline-badge {
+        display: inline-block; padding: 2px 10px; border-radius: 12px;
+        font-size: 11px; font-weight: 600; color: #fff; background: #555; margin-left: 8px;
+    }
 
     .checklist { list-style: none; margin: 10px 0 10px 5px; font-size: 14px; }
     .checklist li { padding: 5px 0 5px 30px; position: relative; border-bottom: 1px solid #f0f0f0; }
@@ -51,6 +58,12 @@
     }
     .section-box strong { color: #d11317; }
 
+    .ai-box {
+        background: linear-gradient(135deg, #f5f3ff, #ede9fe); border: 2px solid #8b5cf6; border-radius: 10px;
+        padding: 18px 22px; margin: 15px 0;
+    }
+    .ai-box strong { color: #7c3aed; }
+
     table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 13px; }
     th { background: #d11317; color: #fff; padding: 10px 14px; text-align: left; }
     td { padding: 10px 14px; border-bottom: 1px solid #e0e0e0; }
@@ -62,10 +75,26 @@
     .legend-item { display: flex; align-items: center; gap: 6px; }
     .legend-box { width: 20px; height: 20px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #fff; }
 
+    /* Timeline Gantt */
+    .gantt { margin: 20px 0; overflow-x: auto; }
+    .gantt table { font-size: 12px; min-width: 800px; }
+    .gantt td, .gantt th { padding: 6px 4px; text-align: center; }
+    .gantt th.version-col { text-align: left; min-width: 160px; }
+    .gantt td.version-col { text-align: left; font-weight: 700; font-size: 12px; }
+    .gantt .bar { height: 22px; border-radius: 6px; min-width: 100%; }
+    .bar-done { background: #28a745; }
+    .bar-current { background: #0d6efd; }
+    .bar-next { background: #e67e22; }
+    .bar-future { background: #adb5bd; }
+    .bar-ai { background: linear-gradient(135deg, #667eea, #764ba2); }
+    .gantt .q-header { font-size: 11px; background: #f8f9fa; color: #555; font-weight: 600; }
+
     @media print {
-        body { padding: 0; }
+        body { padding: 0; font-size: 11px; }
         h3 { page-break-after: avoid; }
-        .section-box { page-break-inside: avoid; }
+        .section-box, .ai-box { page-break-inside: avoid; }
+        .gantt { page-break-inside: avoid; }
+        .bar-done, .bar-current, .bar-next, .bar-future, .bar-ai { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     }
 </style>
 </head>
@@ -74,6 +103,7 @@
 <div class="header">
     <h1>ROADMAP SVILUPPO</h1>
     <h2>Sistema Gestionale MES &mdash; Grafica Nappa srl</h2>
+    <div class="piano">Piano di lavoro biennale: Febbraio 2026 &mdash; Febbraio 2028</div>
     <div class="date">Aggiornata al 19 Febbraio 2026</div>
     <div class="author">Giovanni Pietropaolo &mdash; Responsabile Sistemi Informativi</div>
 </div>
@@ -84,8 +114,88 @@
     <div class="legend-item"><div class="legend-box" style="background:#e0e0e0;border:2px solid #bbb;color:transparent">.</div> Da fare</div>
 </div>
 
+<!-- ==================== TIMELINE GANTT ==================== -->
+<h3>Piano temporale</h3>
+
+<div class="gantt">
+<table>
+    <thead>
+        <tr>
+            <th class="version-col">Versione</th>
+            <th colspan="3" style="background:#333;">2026</th>
+            <th colspan="4" style="background:#555;">2027</th>
+            <th colspan="1" style="background:#333;">2028</th>
+        </tr>
+        <tr class="q-header">
+            <td class="version-col"></td>
+            <td>Q1<br><small>Gen-Mar</small></td>
+            <td>Q2<br><small>Apr-Giu</small></td>
+            <td>Q3<br><small>Lug-Set</small></td>
+            <td>Q4<br><small>Ott-Dic</small></td>
+            <td>Q1<br><small>Gen-Mar</small></td>
+            <td>Q2<br><small>Apr-Giu</small></td>
+            <td>Q3<br><small>Lug-Set</small></td>
+            <td>Q4<br><small>Ott-Dic</small></td>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td class="version-col">v1.0&ndash;1.2 Fondamenta</td>
+            <td><div class="bar bar-done" title="Completata">&nbsp;</div></td>
+            <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+        </tr>
+        <tr>
+            <td class="version-col">v1.3 Report &amp; Statistiche</td>
+            <td><div class="bar bar-current" title="In corso">&nbsp;</div></td>
+            <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+        </tr>
+        <tr>
+            <td class="version-col">v1.4 Prinect Live</td>
+            <td></td>
+            <td><div class="bar bar-next" title="Q2 2026">&nbsp;</div></td>
+            <td></td><td></td><td></td><td></td><td></td><td></td>
+        </tr>
+        <tr>
+            <td class="version-col">v2.0 Costi &amp; Margini</td>
+            <td></td><td></td>
+            <td><div class="bar bar-future" title="Q3 2026">&nbsp;</div></td>
+            <td></td><td></td><td></td><td></td><td></td>
+        </tr>
+        <tr>
+            <td class="version-col">v2.1 Notifiche &amp; Mobilit&agrave;</td>
+            <td></td><td></td><td></td>
+            <td><div class="bar bar-future" title="Q4 2026">&nbsp;</div></td>
+            <td></td><td></td><td></td><td></td>
+        </tr>
+        <tr>
+            <td class="version-col">v3.0 Claude AI Intelligence</td>
+            <td></td><td></td><td></td><td></td>
+            <td><div class="bar bar-ai" title="Q1 2027">&nbsp;</div></td>
+            <td></td><td></td><td></td>
+        </tr>
+        <tr>
+            <td class="version-col">v3.1 Pianificazione Smart</td>
+            <td></td><td></td><td></td><td></td><td></td>
+            <td><div class="bar bar-ai" title="Q2 2027">&nbsp;</div></td>
+            <td></td><td></td>
+        </tr>
+        <tr>
+            <td class="version-col">v3.2 Qualit&agrave; &amp; Tracciabilit&agrave;</td>
+            <td></td><td></td><td></td><td></td><td></td><td></td>
+            <td><div class="bar bar-future" title="Q3 2027">&nbsp;</div></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td class="version-col">v4.0 IoT &amp; Digital Twin</td>
+            <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+            <td><div class="bar bar-future" title="Q4 2027 - Q1 2028">&nbsp;</div></td>
+        </tr>
+    </tbody>
+</table>
+</div>
+
 <!-- ========== v1.0 ========== -->
-<h3><span class="version-badge badge-done">v1.0</span> Fondamenta MES</h3>
+<h3><span class="version-badge badge-done">v1.0</span> Fondamenta MES <span class="timeline-badge">Gen-Feb 2026</span></h3>
 <p>Struttura base del sistema: modello dati, autenticazione operatori, dashboard produzione, gestione fasi.</p>
 
 <ul class="checklist">
@@ -108,7 +218,7 @@
 </ul>
 
 <!-- ========== v1.1 ========== -->
-<h3><span class="version-badge badge-done">v1.1</span> Automazione &amp; Scheduling</h3>
+<h3><span class="version-badge badge-done">v1.1</span> Automazione &amp; Scheduling <span class="timeline-badge">Feb 2026</span></h3>
 <p>Integrazione con Onda, Gantt scheduling, dashboard spedizioni, integrazione Prinect.</p>
 
 <ul class="checklist">
@@ -142,7 +252,7 @@
 </ul>
 
 <!-- ========== v1.2 ========== -->
-<h3><span class="version-badge badge-done">v1.2</span> Admin &amp; Stabilit&agrave;</h3>
+<h3><span class="version-badge badge-done">v1.2</span> Admin &amp; Stabilit&agrave; <span class="timeline-badge">Feb 2026</span></h3>
 <p>Separazione ruolo admin, gestione operatori centralizzata, fix stabilit&agrave; sync Onda.</p>
 
 <ul class="checklist">
@@ -164,7 +274,7 @@
 </ul>
 
 <!-- ========== v1.3 ========== -->
-<h3><span class="version-badge badge-current">v1.3</span> Statistiche &amp; Report &mdash; IN CORSO</h3>
+<h3><span class="version-badge badge-current">v1.3</span> Statistiche &amp; Report &mdash; IN CORSO <span class="timeline-badge">Feb-Mar 2026</span></h3>
 <p>Analisi dati produzione, confronto operatori, report automatici per il titolare.</p>
 
 <ul class="checklist">
@@ -175,25 +285,12 @@
     <li class="done">Report produzione settimanale stampabile (KPI, top operatori, commesse in ritardo)</li>
     <li class="done">Export report in PDF (window.print con CSS @media print ottimizzato A4)</li>
     <li class="todo">Dashboard KPI giornaliero owner: fasi completate oggi, ore lavorate, spedizioni</li>
-
     <li class="todo">Storico commesse: archivio consultabile con filtri per data, cliente, stato</li>
 </ul>
 
 <!-- ========== v1.4 ========== -->
-<h3><span class="version-badge badge-next">v1.4</span> Costi &amp; Margini</h3>
-<p>Consuntivazione economica delle commesse.</p>
-
-<ul class="checklist">
-    <li class="todo">Costo orario per reparto/macchina (configurabile da admin)</li>
-    <li class="todo">Calcolo costo effettivo commessa: somma (ore_effettive &times; costo_orario) per fase</li>
-    <li class="todo">Confronto costo stimato vs costo effettivo per commessa</li>
-    <li class="todo">Dashboard margini: commesse pi&ugrave; profittevoli / in perdita</li>
-    <li class="todo">Integrazione costo carta da Onda</li>
-</ul>
-
-<!-- ========== v2.0 ========== -->
-<h3><span class="version-badge badge-future">v2.0</span> Prinect Live &amp; Automazione Avanzata</h3>
-<p>Attivazione completa dell'integrazione Prinect per il monitoraggio in tempo reale della stampa offset.</p>
+<h3><span class="version-badge badge-next">v1.4</span> Prinect Live &amp; Automazione Avanzata <span class="timeline-badge">Apr-Giu 2026</span></h3>
+<p>Attivazione completa dell'integrazione Prinect per il monitoraggio in tempo reale della stampa offset. L'infrastruttura &egrave; gi&agrave; pronta (nascosta dietro admin), si tratta di attivare e potenziare.</p>
 
 <ul class="checklist">
     <li class="done">Prinect: dashboard live, storico attivit&agrave;, report commessa, sync automatica (gi&agrave; pronto, nascosto)</li>
@@ -202,32 +299,113 @@
     <li class="todo">Aggiornamento automatico fogli_buoni / fogli_scarto da Prinect</li>
     <li class="todo">Calcolo OEE (Overall Equipment Effectiveness) per macchina stampa</li>
     <li class="todo">Alert automatici: macchina ferma, scarti sopra soglia, cambio lastre eccessivo</li>
-    <li class="todo">Dashboard real-time con auto-refresh (WebSocket o polling)</li>
+    <li class="todo">Dashboard real-time con auto-refresh (WebSocket o polling 30s)</li>
+</ul>
+
+<!-- ========== v2.0 ========== -->
+<h3><span class="version-badge badge-future">v2.0</span> Costi &amp; Margini <span class="timeline-badge">Lug-Set 2026</span></h3>
+<p>Consuntivazione economica delle commesse: quanto costa davvero ogni lavoro?</p>
+
+<ul class="checklist">
+    <li class="todo">Costo orario per reparto/macchina (configurabile da admin)</li>
+    <li class="todo">Calcolo costo effettivo commessa: somma (ore_effettive &times; costo_orario) per fase</li>
+    <li class="todo">Confronto costo stimato vs costo effettivo per commessa</li>
+    <li class="todo">Dashboard margini: commesse pi&ugrave; profittevoli / in perdita</li>
+    <li class="todo">Integrazione costo carta da Onda</li>
+    <li class="todo">Report mensile marginalit&agrave; con trend e grafici</li>
 </ul>
 
 <!-- ========== v2.1 ========== -->
-<h3><span class="version-badge badge-future">v2.1</span> Notifiche &amp; Mobilit&agrave;</h3>
-<p>Sistema di notifiche e accesso mobile per operatori.</p>
+<h3><span class="version-badge badge-future">v2.1</span> Notifiche &amp; Mobilit&agrave; <span class="timeline-badge">Ott-Dic 2026</span></h3>
+<p>Sistema di notifiche e accesso mobile per operatori e titolare.</p>
 
 <ul class="checklist">
-    <li class="todo">Notifiche push/email per commesse in ritardo critico</li>
+    <li class="todo">Progressive Web App (PWA): installabile su tablet e smartphone operatori</li>
+    <li class="todo">Scansione barcode/QR per avvio/termine fase da dispositivo mobile</li>
+    <li class="todo">Notifiche push (browser) per commesse in ritardo critico</li>
     <li class="todo">Notifica automatica al titolare quando una commessa viene spedita</li>
-    <li class="todo">Interfaccia responsive / PWA per operatori su tablet in reparto</li>
-    <li class="todo">Scansione barcode/QR per avvio/termine fase</li>
-    <li class="todo">Dashboard sintetica su TV in reparto (visualizzazione a rotazione)</li>
+    <li class="todo">Dashboard sintetica su TV in reparto (visualizzazione a rotazione, kiosk mode)</li>
+    <li class="todo">Interfaccia responsive completa per tutti i ruoli</li>
+    <li class="todo">Notifica Telegram/WhatsApp al titolare (riepilogo giornaliero serale)</li>
 </ul>
 
 <!-- ========== v3.0 ========== -->
-<h3><span class="version-badge badge-future">v3.0</span> Pianificazione Intelligente</h3>
-<p>Scheduling avanzato con ottimizzazione automatica.</p>
+<h3><span class="version-badge badge-ai">v3.0</span> Claude AI Intelligence <span class="timeline-badge">Gen-Mar 2027</span></h3>
+
+<div class="ai-box">
+    <strong>SUPER INTEGRAZIONE: Intelligenza Artificiale nel MES</strong><br>
+    Integrazione di Claude (Anthropic) come motore di intelligenza artificiale nel sistema gestionale.
+    L'AI analizza i dati di produzione storici e in tempo reale per fornire insight, previsioni e suggerimenti
+    operativi che un sistema tradizionale non pu&ograve; offrire.
+</div>
 
 <ul class="checklist">
-    <li class="todo">Scheduling automatico con ottimizzazione (minimizzazione ritardi)</li>
-    <li class="todo">Drag &amp; drop fasi nel Gantt per riordinamento manuale</li>
-    <li class="todo">Simulazione &ldquo;what-if&rdquo;: impatto di una nuova commessa urgente</li>
-    <li class="todo">Gestione manutenzione macchine (fermi programmati nel Gantt)</li>
-    <li class="todo">Previsione carico lavoro settimanale per reparto</li>
-    <li class="todo">API pubblica per integrazione con sistemi esterni</li>
+    <li class="todo">Integrazione Claude API (Anthropic SDK) nel backend Laravel</li>
+    <li class="todo"><strong>Assistente AI per il titolare:</strong> chat in linguaggio naturale per interrogare i dati di produzione
+        <ul style="margin:5px 0 0 20px;font-size:13px;">
+            <li>&ldquo;Quali commesse sono a rischio questa settimana?&rdquo;</li>
+            <li>&ldquo;Confronta la produttivit&agrave; di febbraio con gennaio&rdquo;</li>
+            <li>&ldquo;Perch&eacute; la commessa 0066550 ha sforato i tempi?&rdquo;</li>
+        </ul>
+    </li>
+    <li class="todo"><strong>Analisi predittiva ritardi:</strong> AI analizza pattern storici per prevedere commesse a rischio prima che diventino critiche</li>
+    <li class="todo"><strong>Ottimizzazione tempi stimati:</strong> AI ricalibra automaticamente avviamento e copie/ora in base ai dati reali accumulati</li>
+    <li class="todo"><strong>Report AI generati:</strong> il report settimanale include un paragrafo scritto dall'AI con osservazioni, anomalie e raccomandazioni</li>
+    <li class="todo"><strong>Anomaly detection:</strong> segnalazione automatica di tempi anomali (fase troppo lunga/corta rispetto allo storico)</li>
+    <li class="todo">Cache intelligente delle risposte AI per contenere i costi API</li>
+</ul>
+
+<!-- ========== v3.1 ========== -->
+<h3><span class="version-badge badge-ai">v3.1</span> Pianificazione Intelligente <span class="timeline-badge">Apr-Giu 2027</span></h3>
+
+<div class="ai-box">
+    <strong>SUPER INTEGRAZIONE: Scheduling AI-Powered</strong><br>
+    L'AI non solo analizza, ma pianifica. Scheduling automatico che considera vincoli reali:
+    disponibilit&agrave; macchine, skill operatori, urgenze, setup time, e storico performance.
+</div>
+
+<ul class="checklist">
+    <li class="todo"><strong>Scheduling automatico AI:</strong> generazione piano di produzione ottimale con minimizzazione ritardi e setup</li>
+    <li class="todo">Drag &amp; drop fasi nel Gantt per riordinamento manuale + ricalcolo AI impatto</li>
+    <li class="todo"><strong>Simulazione &ldquo;what-if&rdquo; AI:</strong> &ldquo;Se arriva una commessa urgente da 5000 fogli, cosa succede al planning?&rdquo;</li>
+    <li class="todo">Gestione manutenzione macchine (fermi programmati integrati nel Gantt)</li>
+    <li class="todo">Previsione carico lavoro settimanale per reparto con suggerimento straordinari/turni</li>
+    <li class="todo"><strong>Assegnazione intelligente operatori:</strong> AI suggerisce chi assegnare a quale fase in base a skill, velocit&agrave; storica e disponibilit&agrave;</li>
+    <li class="todo">API pubblica REST per integrazione con sistemi esterni</li>
+</ul>
+
+<!-- ========== v3.2 ========== -->
+<h3><span class="version-badge badge-future">v3.2</span> Qualit&agrave; &amp; Tracciabilit&agrave; <span class="timeline-badge">Lug-Set 2027</span></h3>
+<p>Sistema di controllo qualit&agrave; integrato nella produzione.</p>
+
+<ul class="checklist">
+    <li class="todo">Checklist qualit&agrave; per fase: verifiche obbligatorie prima del termine (colore, registro, grammatura, piega)</li>
+    <li class="todo">Foto allegata alla fase: operatore scatta foto del prodotto a fine lavorazione</li>
+    <li class="todo">Tracciabilit&agrave; completa: per ogni foglio stampato, sapere chi/quando/quale macchina</li>
+    <li class="todo">Gestione non conformit&agrave;: apertura ticket, assegnazione responsabile, azione correttiva</li>
+    <li class="todo">Dashboard qualit&agrave;: % scarti per macchina, per operatore, per tipologia lavoro</li>
+    <li class="todo">Storico reclami cliente collegato alla commessa</li>
+</ul>
+
+<!-- ========== v4.0 ========== -->
+<h3><span class="version-badge badge-future">v4.0</span> IoT &amp; Digital Twin <span class="timeline-badge">Ott 2027 - Feb 2028</span></h3>
+
+<div class="ai-box">
+    <strong>SUPER INTEGRAZIONE: Fabbrica Connessa</strong><br>
+    Sensori IoT sulle macchine + digital twin dello stabilimento. Il sistema &ldquo;vede&rdquo; la fabbrica
+    in tempo reale e, combinato con l'AI, prevede guasti, ottimizza consumi energetici e
+    fornisce un gemello digitale navigabile della produzione.
+</div>
+
+<ul class="checklist">
+    <li class="todo"><strong>Sensori IoT:</strong> contatori fogli, temperatura, vibrazione su macchine principali (offset, fustella, plastificatrice)</li>
+    <li class="todo"><strong>Digital Twin 2D:</strong> mappa interattiva dello stabilimento con stato macchine in tempo reale</li>
+    <li class="todo"><strong>Manutenzione predittiva AI:</strong> analisi vibrazioni e pattern di utilizzo per prevedere guasti prima che accadano</li>
+    <li class="todo">Monitoraggio consumi energetici per macchina e per commessa</li>
+    <li class="todo"><strong>Conteggio automatico produzione:</strong> sensori contano i fogli &rarr; aggiornano qta_prod in tempo reale senza input manuale</li>
+    <li class="todo">Dashboard direzionale: KPI aggregati, trend 12 mesi, benchmark per reparto</li>
+    <li class="todo">Integrazione con sistema contabile per marginalit&agrave; automatica</li>
+    <li class="todo"><strong>App nativa iOS/Android</strong> per il titolare con notifiche push e dashboard sintetica</li>
 </ul>
 
 <!-- ========== RIEPILOGO ========== -->
@@ -238,6 +416,7 @@
         <tr>
             <th>Versione</th>
             <th>Tema</th>
+            <th>Periodo</th>
             <th>Stato</th>
             <th>Funzionalit&agrave;</th>
         </tr>
@@ -246,61 +425,100 @@
         <tr>
             <td><strong>v1.0</strong></td>
             <td>Fondamenta MES</td>
+            <td>Gen-Feb 2026</td>
             <td><span class="version-badge badge-done">Completata</span></td>
-            <td>15/15</td>
+            <td>16/16</td>
         </tr>
         <tr>
             <td><strong>v1.1</strong></td>
             <td>Automazione &amp; Scheduling</td>
+            <td>Feb 2026</td>
             <td><span class="version-badge badge-done">Completata</span></td>
             <td>14/14</td>
         </tr>
         <tr>
             <td><strong>v1.2</strong></td>
             <td>Admin &amp; Stabilit&agrave;</td>
+            <td>Feb 2026</td>
             <td><span class="version-badge badge-done">Completata</span></td>
             <td>15/15</td>
         </tr>
         <tr>
             <td><strong>v1.3</strong></td>
             <td>Statistiche &amp; Report</td>
+            <td>Feb-Mar 2026</td>
             <td><span class="version-badge badge-current">In corso</span></td>
             <td>6/8</td>
         </tr>
         <tr>
             <td><strong>v1.4</strong></td>
-            <td>Costi &amp; Margini</td>
+            <td>Prinect Live</td>
+            <td>Apr-Giu 2026</td>
             <td><span class="version-badge badge-next">Pianificata</span></td>
-            <td>0/5</td>
+            <td>1/7</td>
         </tr>
         <tr>
             <td><strong>v2.0</strong></td>
-            <td>Prinect Live</td>
+            <td>Costi &amp; Margini</td>
+            <td>Lug-Set 2026</td>
             <td><span class="version-badge badge-future">Futura</span></td>
-            <td>1/7</td>
+            <td>0/6</td>
         </tr>
         <tr>
             <td><strong>v2.1</strong></td>
             <td>Notifiche &amp; Mobilit&agrave;</td>
+            <td>Ott-Dic 2026</td>
             <td><span class="version-badge badge-future">Futura</span></td>
-            <td>0/5</td>
+            <td>0/7</td>
+        </tr>
+        <tr style="background: linear-gradient(135deg, #f5f3ff, #ede9fe);">
+            <td><strong>v3.0</strong></td>
+            <td>Claude AI Intelligence</td>
+            <td>Gen-Mar 2027</td>
+            <td><span class="version-badge badge-ai">AI</span></td>
+            <td>0/7</td>
+        </tr>
+        <tr style="background: linear-gradient(135deg, #f5f3ff, #ede9fe);">
+            <td><strong>v3.1</strong></td>
+            <td>Pianificazione Intelligente</td>
+            <td>Apr-Giu 2027</td>
+            <td><span class="version-badge badge-ai">AI</span></td>
+            <td>0/7</td>
         </tr>
         <tr>
-            <td><strong>v3.0</strong></td>
-            <td>Pianificazione Intelligente</td>
+            <td><strong>v3.2</strong></td>
+            <td>Qualit&agrave; &amp; Tracciabilit&agrave;</td>
+            <td>Lug-Set 2027</td>
             <td><span class="version-badge badge-future">Futura</span></td>
             <td>0/6</td>
+        </tr>
+        <tr>
+            <td><strong>v4.0</strong></td>
+            <td>IoT &amp; Digital Twin</td>
+            <td>Ott 2027 - Feb 2028</td>
+            <td><span class="version-badge badge-future">Futura</span></td>
+            <td>0/8</td>
         </tr>
     </tbody>
 </table>
 
 <div class="section-box">
-    <strong>Stack tecnologico:</strong> Laravel 11 &middot; PHP 8.5 &middot; MySQL &middot; SQL Server (Onda IQ) &middot; Apache &middot; Windows Server 2022 &middot; Prinect REST API &middot; Chart.js &middot; Bootstrap 5
+    <strong>Totale funzionalit&agrave; pianificate:</strong> 101 &mdash; di cui 51 completate, 2 in corso, 48 da sviluppare<br>
+    <strong>Avanzamento complessivo piano biennale:</strong> 50%
+</div>
+
+<div class="section-box">
+    <strong>Stack tecnologico attuale:</strong> Laravel 11 &middot; PHP 8.5 &middot; MySQL &middot; SQL Server (Onda IQ) &middot; Apache &middot; Windows Server 2022 &middot; Prinect REST API &middot; Chart.js &middot; Bootstrap 5
+</div>
+
+<div class="section-box">
+    <strong>Stack tecnologico previsto (2027-2028):</strong> Claude API (Anthropic) &middot; WebSocket (Laravel Reverb) &middot; PWA / Service Workers &middot; Sensori IoT (MQTT) &middot; Redis (cache AI) &middot; REST API pubblica
 </div>
 
 <div class="footer">
     <p>Sistema Gestionale MES &mdash; Grafica Nappa srl &mdash; Aversa (CE)</p>
     <p>Progettazione, sviluppo e amministrazione: Giovanni Pietropaolo</p>
+    <p style="margin-top:8px; font-size:11px; color:#aaa;">Piano di lavoro biennale Feb 2026 &ndash; Feb 2028 &middot; Aggiornamento: 19/02/2026</p>
 </div>
 
 </body>
