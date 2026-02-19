@@ -266,7 +266,7 @@ class OndaSyncService
             'SPIRBLOCCOLIBROA3' => 'legatoria',
             'SPIRBLOCCOLIBROA4' => 'legatoria',
             'SPIRBLOCCOLIBROA5' => 'legatoria',
-            'STAMPA' => 'stampa offset',
+            'STAMPA' => 'digitale',
             'STAMPA.OFFSET11.EST' => 'esterno',
             'STAMPABUSTE.EST' => 'esterno',
             'STAMPACALDOJOH' => 'stampa a caldo',
