@@ -403,6 +403,10 @@ function aggiornaNota(faseId, valore) {
 }
 
 function forzaConsegna(faseId, btn) {
+    if (!confirm('Forzare la consegna? Tutte le fasi aperte verranno chiuse automaticamente.')) {
+        return;
+    }
+
     btn.disabled = true;
     btn.textContent = 'Consegna...';
 
@@ -410,11 +414,15 @@ function forzaConsegna(faseId, btn) {
         method: 'POST',
         headers: {
             'X-CSRF-TOKEN': '{{ csrf_token() }}',
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
         },
         body: JSON.stringify({ fase_id: faseId, forza: true })
     })
-    .then(res => res.json())
+    .then(res => {
+        if (!res.ok) throw new Error('Errore server: ' + res.status);
+        return res.json();
+    })
     .then(data => {
         if (data.success) {
             window.location.reload();
@@ -425,6 +433,7 @@ function forzaConsegna(faseId, btn) {
         }
     })
     .catch(err => {
+        alert('Errore di rete: ' + err.message);
         console.error('Errore:', err);
         btn.disabled = false;
         btn.textContent = 'Forza';

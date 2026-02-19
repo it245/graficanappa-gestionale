@@ -94,59 +94,75 @@ class DashboardSpedizioneController extends Controller
 
     public function invioAutomatico(Request $request)
     {
-        $fase = OrdineFase::with('operatori')->find($request->fase_id);
-        if (!$fase) {
-            return response()->json(['success' => false, 'messaggio' => 'Fase non trovata']);
-        }
-
-        if ($fase->stato == 3) {
-            return response()->json(['success' => false, 'messaggio' => 'Già consegnato']);
-        }
-
-        $forza = $request->boolean('forza', false);
-
-        // Verifica che tutte le altre fasi della commessa siano terminate
-        $repartoSpedizione = Reparto::where('nome', 'spedizione')->first();
-        $altreFasiNonTerminate = OrdineFase::where('ordine_id', $fase->ordine_id)
-            ->where('id', '!=', $fase->id)
-            ->whereHas('faseCatalogo', function ($q) use ($repartoSpedizione) {
-                $q->where('reparto_id', '!=', $repartoSpedizione->id);
-            })
-            ->where('stato', '!=', 3)
-            ->get();
-
-        if ($altreFasiNonTerminate->count() > 0 && !$forza) {
-            return response()->json(['success' => false, 'messaggio' => 'Non tutte le fasi sono terminate']);
-        }
-
-        // Se forza: termina automaticamente tutte le fasi precedenti
-        if ($forza && $altreFasiNonTerminate->count() > 0) {
-            foreach ($altreFasiNonTerminate as $faseAperta) {
-                $faseAperta->stato = 3;
-                if (!$faseAperta->data_fine) {
-                    $faseAperta->data_fine = now()->format('d/m/Y H:i:s');
-                }
-                if (!$faseAperta->data_inizio) {
-                    $faseAperta->data_inizio = now()->format('d/m/Y H:i:s');
-                }
-                $faseAperta->save();
+        try {
+            $fase = OrdineFase::with(['operatori', 'ordine'])->find($request->fase_id);
+            if (!$fase) {
+                return response()->json(['success' => false, 'messaggio' => 'Fase non trovata']);
             }
+
+            if ($fase->stato == 3) {
+                return response()->json(['success' => false, 'messaggio' => 'Già consegnato']);
+            }
+
+            $forza = $request->boolean('forza', false);
+
+            // Verifica che tutte le altre fasi della commessa siano terminate
+            $repartoSpedizione = Reparto::where('nome', 'spedizione')->first();
+
+            // Cerca fasi non terminate in TUTTI gli ordini della stessa commessa
+            $commessa = $fase->ordine->commessa ?? null;
+            $altreFasiNonTerminate = OrdineFase::where('id', '!=', $fase->id)
+                ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
+                ->where(function ($q) use ($repartoSpedizione) {
+                    if ($repartoSpedizione) {
+                        $q->where(function ($q2) use ($repartoSpedizione) {
+                            $q2->whereDoesntHave('faseCatalogo')
+                               ->orWhereHas('faseCatalogo', fn($q3) => $q3->where('reparto_id', '!=', $repartoSpedizione->id));
+                        });
+                    }
+                })
+                ->where('stato', '!=', 3)
+                ->get();
+
+            if ($altreFasiNonTerminate->count() > 0 && !$forza) {
+                return response()->json(['success' => false, 'messaggio' => 'Non tutte le fasi sono terminate']);
+            }
+
+            // Se forza: termina automaticamente tutte le fasi precedenti
+            if ($forza && $altreFasiNonTerminate->count() > 0) {
+                $adesso = now()->format('d/m/Y H:i:s');
+                foreach ($altreFasiNonTerminate as $faseAperta) {
+                    $faseAperta->stato = 3;
+                    if (!$faseAperta->data_fine) {
+                        $faseAperta->data_fine = $adesso;
+                    }
+                    if (!$faseAperta->data_inizio) {
+                        $faseAperta->data_inizio = $adesso;
+                    }
+                    $faseAperta->save();
+                }
+            }
+
+            $operatoreId = session('operatore_id');
+
+            if ($operatoreId && !$fase->operatori->contains($operatoreId)) {
+                $fase->operatori()->attach($operatoreId, ['data_inizio' => now(), 'data_fine' => now()]);
+            }
+
+            $fase->stato = 3;
+            $fase->data_inizio = now()->format('d/m/Y H:i:s');
+            $fase->data_fine = now()->format('d/m/Y H:i:s');
+            $fase->save();
+
+            return response()->json([
+                'success' => true,
+                'messaggio' => 'Consegnato - commessa ' . ($fase->ordine->commessa ?? '-')
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'messaggio' => 'Errore server: ' . $e->getMessage()
+            ], 500);
         }
-
-        $operatoreId = session('operatore_id');
-
-        if (!$fase->operatori->contains($operatoreId)) {
-            $fase->operatori()->attach($operatoreId, ['data_inizio' => now(), 'data_fine' => now()]);
-        }
-
-        $fase->stato = 3;
-        $fase->data_inizio = now()->format('d/m/Y H:i:s');
-        $fase->data_fine = now()->format('d/m/Y H:i:s');
-        $fase->save();
-
-        return response()->json([
-            'success' => true,
-            'messaggio' => 'Consegnato - commessa ' . ($fase->ordine->commessa ?? '-')
-        ]);
     }
 }
