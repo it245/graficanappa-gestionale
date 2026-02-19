@@ -259,7 +259,7 @@ class PrinectController extends Controller
             ->get();
 
         if ($attivita->isEmpty()) {
-            abort(404, 'Nessuna attivita trovata per questa commessa');
+            return back()->with('error', 'Nessuna attivita Prinect trovata per la commessa ' . $commessa . '. Il job potrebbe non essere ancora stato lavorato sulla XL106.');
         }
 
         $jobName = $attivita->first()->prinect_job_name ?? '-';
