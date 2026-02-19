@@ -130,7 +130,7 @@ class DashboardSpedizioneController extends Controller
 
             // Se forza: termina automaticamente tutte le fasi precedenti
             if ($forza && $altreFasiNonTerminate->count() > 0) {
-                $adesso = now()->format('d/m/Y H:i:s');
+                $adesso = now()->format('Y-m-d H:i:s');
                 foreach ($altreFasiNonTerminate as $faseAperta) {
                     $faseAperta->stato = 3;
                     if (!$faseAperta->data_fine) {
@@ -150,8 +150,8 @@ class DashboardSpedizioneController extends Controller
             }
 
             $fase->stato = 3;
-            $fase->data_inizio = now()->format('d/m/Y H:i:s');
-            $fase->data_fine = now()->format('d/m/Y H:i:s');
+            $fase->data_inizio = now()->format('Y-m-d H:i:s');
+            $fase->data_fine = now()->format('Y-m-d H:i:s');
             $fase->save();
 
             return response()->json([
