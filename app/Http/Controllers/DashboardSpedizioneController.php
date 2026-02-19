@@ -106,13 +106,11 @@ class DashboardSpedizioneController extends Controller
 
             $forza = $request->boolean('forza', false);
 
-            // Verifica che tutte le altre fasi della commessa siano terminate
             $repartoSpedizione = Reparto::where('nome', 'spedizione')->first();
-
-            // Cerca fasi non terminate in TUTTI gli ordini della stessa commessa
             $commessa = $fase->ordine->commessa ?? null;
-            $altreFasiNonTerminate = OrdineFase::where('id', '!=', $fase->id)
-                ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
+
+            // Tutte le fasi non-spedizione non terminate della stessa commessa
+            $altreFasiNonTerminate = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
                 ->where(function ($q) use ($repartoSpedizione) {
                     if ($repartoSpedizione) {
                         $q->where(function ($q2) use ($repartoSpedizione) {
@@ -128,9 +126,11 @@ class DashboardSpedizioneController extends Controller
                 return response()->json(['success' => false, 'messaggio' => 'Non tutte le fasi sono terminate']);
             }
 
-            // Se forza: termina automaticamente tutte le fasi precedenti
+            $adesso = now()->format('Y-m-d H:i:s');
+            $operatoreId = session('operatore_id');
+
+            // Se forza: termina tutte le fasi non-spedizione aperte
             if ($forza && $altreFasiNonTerminate->count() > 0) {
-                $adesso = now()->format('Y-m-d H:i:s');
                 foreach ($altreFasiNonTerminate as $faseAperta) {
                     $faseAperta->stato = 3;
                     if (!$faseAperta->data_fine) {
@@ -143,20 +143,29 @@ class DashboardSpedizioneController extends Controller
                 }
             }
 
-            $operatoreId = session('operatore_id');
+            // Chiudi TUTTE le fasi spedizione della stessa commessa (non solo quella cliccata)
+            $fasiSpedizioneCommessa = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
+                ->where('stato', '!=', 3)
+                ->where(function ($q) use ($repartoSpedizione) {
+                    if ($repartoSpedizione) {
+                        $q->whereHas('faseCatalogo', fn($q2) => $q2->where('reparto_id', $repartoSpedizione->id));
+                    }
+                })
+                ->get();
 
-            if ($operatoreId && !$fase->operatori->contains($operatoreId)) {
-                $fase->operatori()->attach($operatoreId, ['data_inizio' => now(), 'data_fine' => now()]);
+            foreach ($fasiSpedizioneCommessa as $faseSped) {
+                if ($operatoreId && !$faseSped->operatori->contains($operatoreId)) {
+                    $faseSped->operatori()->attach($operatoreId, ['data_inizio' => now(), 'data_fine' => now()]);
+                }
+                $faseSped->stato = 3;
+                $faseSped->data_inizio = $adesso;
+                $faseSped->data_fine = $adesso;
+                $faseSped->save();
             }
-
-            $fase->stato = 3;
-            $fase->data_inizio = now()->format('Y-m-d H:i:s');
-            $fase->data_fine = now()->format('Y-m-d H:i:s');
-            $fase->save();
 
             return response()->json([
                 'success' => true,
-                'messaggio' => 'Consegnato - commessa ' . ($fase->ordine->commessa ?? '-')
+                'messaggio' => 'Consegnato - commessa ' . $commessa
             ]);
         } catch (\Exception $e) {
             return response()->json([
