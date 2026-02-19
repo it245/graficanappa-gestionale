@@ -856,15 +856,39 @@ function renderDayLines(timeline, maxCalH, repartoNome) {
 
 function renderKPI() {
     const filtered = filterData(DATA);
-    const commesseMap = {};
-    filtered.forEach(f => { if (!commesseMap[f.commessa]) commesseMap[f.commessa] = f; });
-    const commesse = Object.values(commesseMap);
+    const oreTotali = Math.round(filtered.reduce((s, f) => s + f.ore, 0));
+
+    // Usa lo scheduling reale per calcolare margine (come la tabella)
+    const macchine = schedulaPerMacchina(filtered);
+    const commMap = {};
+    macchine.forEach(m => m.fasi.forEach(f => {
+        if (!commMap[f.commessa]) commMap[f.commessa] = {
+            commessa: f.commessa, consegna: f.consegna,
+            giorni_consegna: f.giorni_consegna, max_end_h: 0
+        };
+        if (f.end_h > commMap[f.commessa].max_end_h) commMap[f.commessa].max_end_h = f.end_h;
+    }));
+
+    const commesse = Object.values(commMap);
     const totale = commesse.length;
 
-    const scadute = commesse.filter(f => f.giorni_consegna !== null && f.giorni_consegna < 0).length;
-    const critiche = commesse.filter(f => f.giorni_consegna !== null && f.giorni_consegna >= 0 && f.giorni_consegna <= 3).length;
-    const inTempo = commesse.filter(f => f.giorni_consegna === null || f.giorni_consegna > 3).length;
-    const oreTotali = Math.round(filtered.reduce((s, f) => s + f.ore, 0));
+    // Calcola stato:
+    // - Critiche: consegna superata di almeno 3 giorni
+    // - In ritardo: fine stimata produzione > data consegna (ma non critica)
+    // - In tempo: tutto il resto
+    let scadute = 0, critiche = 0, inTempo = 0;
+    commesse.forEach(c => {
+        let margineH = null;
+        if (c.consegna) {
+            const consDate = new Date(c.consegna);
+            consDate.setHours(0, 0, 0, 0);
+            const fineStimata = new Date(NOW.getTime() + c.max_end_h * 3600000);
+            margineH = (consDate - fineStimata) / 3600000;
+        }
+        if (c.giorni_consegna !== null && c.giorni_consegna <= -3) critiche++;
+        else if (margineH !== null && margineH < 0) scadute++;
+        else inTempo++;
+    });
 
     const pct = (n) => totale > 0 ? Math.round(n / totale * 100) : 0;
 
@@ -886,7 +910,7 @@ function renderKPI() {
         <div class="kpi-card kpi-orange">
             <div class="kpi-icon">!!</div>
             <h3>${critiche} <span style="font-size:18px;color:#f0a04b;font-weight:700">(${pct(critiche)}%)</span></h3>
-            <small>Critiche (&le;3gg)</small>
+            <small>Critiche (&ge;3gg scadute)</small>
         </div>
         <div class="kpi-card kpi-purple">
             <div class="kpi-icon">H</div>
@@ -1135,8 +1159,8 @@ function renderTabella() {
             c.margine_h = null;
         }
 
-        // Stato: critico (consegna superata da >5gg), ritardo (fine > consegna), in tempo
-        if (c.giorni_consegna !== null && c.giorni_consegna <= -5) c.stato_label = 'critico';
+        // Stato: critico (consegna superata da ≥3gg), ritardo (fine stimata > consegna), in tempo
+        if (c.giorni_consegna !== null && c.giorni_consegna <= -3) c.stato_label = 'critico';
         else if (c.margine_h !== null && c.margine_h < 0) c.stato_label = 'ritardo';
         else c.stato_label = 'ok';
 
