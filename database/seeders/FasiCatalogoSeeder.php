@@ -47,12 +47,12 @@ class FasiCatalogoSeeder extends Seeder
             'ZUND' => 'digitale',
 
             // FUSTELLA
-            'FUSTBIML75X106' => 'fustella',
-            'FUSTbIML75X106' => 'fustella',
-            'FUSTBOBST75X106' => 'fustella',
-            'FUSTBOBSTRILIEVI' => 'fustella',
-            'FUSTSTELG33.44' => 'fustella',
-            'FUSTSTELP25.35' => 'fustella',
+            'FUSTBIML75X106' => 'fustella piana',
+            'FUSTbIML75X106' => 'fustella piana',
+            'FUSTBOBST75X106' => 'fustella piana',
+            'FUSTBOBSTRILIEVI' => 'fustella piana',
+            'FUSTSTELG33.44' => 'fustella cilindrica',
+            'FUSTSTELP25.35' => 'fustella cilindrica',
             'RILIEVOASECCOJOH' => 'fustella',
 
             // LEGATORIA
