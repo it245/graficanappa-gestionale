@@ -315,6 +315,34 @@ tr:hover td {
         | Ruolo: {{ auth()->user()->ruolo ?? session('operatore_ruolo') }}
     </p>
 
+    {{-- KPI GIORNALIERI --}}
+    <div class="d-flex gap-2 mb-2 mx-0" style="max-width:920px;">
+        <div class="d-flex align-items-center p-2 rounded flex-fill" style="background:#d1e7dd; height:56px; min-width:200px;">
+            <div>
+                <div style="font-size:11px; color:#555; line-height:1.2;">Fasi completate oggi</div>
+                <div style="font-size:22px; font-weight:700; color:#198754; line-height:1;">{{ $fasiCompletateOggi }}</div>
+            </div>
+        </div>
+        <div class="d-flex align-items-center p-2 rounded flex-fill" style="background:#cfe2ff; height:56px; min-width:200px;">
+            <div>
+                <div style="font-size:11px; color:#555; line-height:1.2;">Ore lavorate oggi</div>
+                <div style="font-size:22px; font-weight:700; color:#0d6efd; line-height:1;">{{ $oreLavorateOggi }}h</div>
+            </div>
+        </div>
+        <div class="d-flex align-items-center p-2 rounded flex-fill" style="background:#d5d5d5; height:56px; min-width:200px;">
+            <div>
+                <div style="font-size:11px; color:#555; line-height:1.2;">Consegnate oggi</div>
+                <div style="font-size:22px; font-weight:700; color:#333; line-height:1;">{{ $commesseSpediteOggi }}</div>
+            </div>
+        </div>
+        <div class="d-flex align-items-center p-2 rounded flex-fill" style="background:#fff3cd; height:56px; min-width:200px;">
+            <div>
+                <div style="font-size:11px; color:#555; line-height:1.2;">Fasi in lavorazione</div>
+                <div style="font-size:22px; font-weight:700; color:#e67e22; line-height:1;">{{ $fasiAttive }}</div>
+            </div>
+        </div>
+    </div>
+
     {{-- ICONE AZIONI --}}
     <div class="mb-3 d-flex align-items-center action-icons">
 
@@ -329,6 +357,13 @@ tr:hover td {
         {{-- Visualizza fasi terminate --}}
         <a href="{{ route('owner.fasiTerminate') }}" title="Visualizza fasi terminate">
             <img src="{{ asset('images/out-of-the-box.png') }}" alt="Fasi terminate">
+        </a>
+
+        {{-- Storico Commesse --}}
+        <a href="{{ route('owner.storicoCommesse') }}" title="Storico Commesse">
+            <svg xmlns="http://www.w3.org/2000/svg" width="35" height="35" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="cursor:pointer; transition:transform 0.15s ease;" onmouseover="this.style.transform='scale(1.15)'" onmouseout="this.style.transform='scale(1)'">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+            </svg>
         </a>
 
         {{-- Scheduling Produzione --}}

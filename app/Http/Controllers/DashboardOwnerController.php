@@ -11,6 +11,7 @@ use App\Models\FasiCatalogo;
 use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use App\Services\FaseStatoService;
 use App\Services\OndaSyncService;
 
@@ -224,7 +225,35 @@ public function calcolaOreEPriorita($fase)
                 ->sortByDesc('data_fine');
         }
 
-        return view('owner.dashboard', compact('fasi', 'reparti', 'fasiCatalogo', 'spedizioniOggi'));
+        // KPI giornalieri
+        $oggi = Carbon::today();
+
+        $fasiCompletateOggi = OrdineFase::where('stato', '>=', 3)
+            ->whereHas('operatori', fn($q) => $q->whereDate('fase_operatore.data_fine', $oggi))
+            ->count();
+
+        $pivotOggi = DB::table('fase_operatore')
+            ->whereDate('data_fine', $oggi)
+            ->whereNotNull('data_inizio')
+            ->get();
+        $oreLavorateOggi = round($pivotOggi->sum(function ($row) {
+            return Carbon::parse($row->data_fine)->diffInSeconds(Carbon::parse($row->data_inizio)) / 3600;
+        }), 1);
+
+        $commesseSpediteOggi = OrdineFase::where('stato', 4)
+            ->whereHas('operatori', fn($q) => $q->whereDate('fase_operatore.data_fine', $oggi))
+            ->with('ordine')
+            ->get()
+            ->pluck('ordine.commessa')
+            ->unique()
+            ->count();
+
+        $fasiAttive = OrdineFase::where('stato', 2)->count();
+
+        return view('owner.dashboard', compact(
+            'fasi', 'reparti', 'fasiCatalogo', 'spedizioniOggi',
+            'fasiCompletateOggi', 'oreLavorateOggi', 'commesseSpediteOggi', 'fasiAttive'
+        ));
     }
 
     public function aggiornaCampo(Request $request)
@@ -457,6 +486,62 @@ public function calcolaOreEPriorita($fase)
         } catch (\Exception $e) {
             return redirect()->route('owner.dashboard')->with('error', 'Errore sync Onda: ' . $e->getMessage());
         }
+    }
+
+    public function storicoCommesse(Request $request)
+    {
+        $filtro = $request->get('stato', 'tutte');
+        $ricercaCliente = $request->get('cliente', '');
+        $dataDa = $request->get('data_da', '');
+        $dataA = $request->get('data_a', '');
+
+        $commesse = Ordine::select('commessa', 'cliente_nome', 'descrizione', 'data_prevista_consegna')
+            ->groupBy('commessa', 'cliente_nome', 'descrizione', 'data_prevista_consegna')
+            ->get()
+            ->map(function ($row) {
+                $fasi = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $row->commessa))->get();
+                $row->fasi_totali = $fasi->count();
+                $row->fasi_completate = $fasi->filter(fn($f) => $f->stato >= 3)->count();
+                $row->percentuale = $row->fasi_totali > 0 ? round(($row->fasi_completate / $row->fasi_totali) * 100) : 0;
+                $row->completata = $row->fasi_totali > 0 && $row->fasi_completate === $row->fasi_totali;
+                $row->consegnata = $fasi->contains(fn($f) => $f->stato == 4);
+
+                if ($row->consegnata) {
+                    $row->stato_label = 'Consegnata';
+                } elseif ($row->completata) {
+                    $row->stato_label = 'Completata';
+                } else {
+                    $row->stato_label = 'In corso';
+                }
+
+                return $row;
+            });
+
+        if ($filtro === 'completate') {
+            $commesse = $commesse->filter(fn($c) => $c->completata);
+        } elseif ($filtro === 'in_corso') {
+            $commesse = $commesse->filter(fn($c) => !$c->completata && !$c->consegnata);
+        } elseif ($filtro === 'consegnate') {
+            $commesse = $commesse->filter(fn($c) => $c->consegnata);
+        }
+
+        if ($ricercaCliente) {
+            $ricerca = strtolower($ricercaCliente);
+            $commesse = $commesse->filter(fn($c) => str_contains(strtolower($c->cliente_nome ?? ''), $ricerca));
+        }
+
+        if ($dataDa) {
+            $da = Carbon::parse($dataDa)->startOfDay();
+            $commesse = $commesse->filter(fn($c) => $c->data_prevista_consegna && Carbon::parse($c->data_prevista_consegna)->gte($da));
+        }
+        if ($dataA) {
+            $a = Carbon::parse($dataA)->endOfDay();
+            $commesse = $commesse->filter(fn($c) => $c->data_prevista_consegna && Carbon::parse($c->data_prevista_consegna)->lte($a));
+        }
+
+        $commesse = $commesse->sortByDesc('data_prevista_consegna')->values();
+
+        return view('owner.storico_commesse', compact('commesse', 'filtro', 'ricercaCliente', 'dataDa', 'dataA'));
     }
 
     public function scheduling()

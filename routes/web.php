@@ -35,6 +35,7 @@ Route::post('/owner/aggiorna-stato', [DashboardOwnerController::class, 'aggiorna
 Route::post('/owner/ricalcola-stati', [DashboardOwnerController::class, 'ricalcolaStati'])->name('owner.ricalcolaStati');
 Route::post('/owner/elimina-fase', [DashboardOwnerController::class, 'eliminaFase'])->name('owner.eliminaFase');
 Route::get('/owner/scheduling', [DashboardOwnerController::class, 'scheduling'])->name('owner.scheduling');
+Route::get('/owner/storico-commesse', [DashboardOwnerController::class, 'storicoCommesse'])->name('owner.storicoCommesse');
 
 });
 
