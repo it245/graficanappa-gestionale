@@ -70,6 +70,7 @@ class DashboardOperatoreController extends Controller
             'PIEGA2ANTESINGOLO' => ['avviamento' => 0.5, 'copieh' => 500],
             'PIEGA3ANTESINGOLO' => ['avviamento' => 0.5, 'copieh' => 500],
             'PIEGA8ANTESINGOLO' => ['avviamento' => 0.5, 'copieh' => 500],
+            'PIEGA8TTAVO' => ['avviamento' => 0.5, 'copieh' => 500],
             'PIEGAMANUALE' => ['avviamento' => 0.1, 'copieh' => 100],
             'PLALUX1LATO' => ['avviamento' => 0.5, 'copieh' => 1500],
             'PLALUXBV' => ['avviamento' => 0.5, 'copieh' => 1500],

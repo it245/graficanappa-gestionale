@@ -69,6 +69,7 @@ class FasiCatalogoSeeder extends Seeder
             'PIEGA2ANTESINGOLO' => 'legatoria',
             'PIEGA3ANTESINGOLO' => 'legatoria',
             'PIEGA8ANTESINGOLO' => 'legatoria',
+            'PIEGA8TTAVO' => 'legatoria',
             'PIEGAMANUALE' => 'legatoria',
             'PUNTOMETALLICO' => 'legatoria',
             'PUNTOMETAMANUALE' => 'legatoria',

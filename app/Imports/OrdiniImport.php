@@ -187,6 +187,7 @@ private function convertiData($valore) {
     'PIEGA2ANTESINGOLO' => 'legatoria',
     'PIEGA3ANTESINGOLO' => 'legatoria',
     'PIEGA8ANTESINGOLO' => 'legatoria',
+    'PIEGA8TTAVO' => 'legatoria',
     'PIEGAMANUALE' => 'legatoria',
 
     'PLALUX1LATO' => 'plastificazione',
@@ -347,6 +348,7 @@ private function convertiData($valore) {
     'PIEGA2ANTESINGOLO' => 'monofase',
      'PIEGA3ANTESINGOLO' => 'monofase',
      'PIEGA8ANTESINGOLO' => 'monofase',
+     'PIEGA8TTAVO' => 'monofase',
      'PIEGAMANUALE' => 'monofase',
     'PLALUX1LATO' => 'monofase',
     'PLALUXBV' => 'monofase',
