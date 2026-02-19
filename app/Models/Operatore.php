@@ -11,7 +11,9 @@ class Operatore extends Authenticatable
      
     protected $table = 'operatori'; 
 
-    protected $fillable = ['nome','cognome','codice_operatore','ruolo','attivo','reparto'];
+    protected $fillable = ['nome','cognome','codice_operatore','ruolo','attivo','reparto','reparto_id','password'];
+
+    protected $hidden = ['password'];
      public function ordini()
 {
     return $this->belongsToMany(

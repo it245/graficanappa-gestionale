@@ -6,6 +6,7 @@ use Illuminate\Foundation\Configuration\Middleware;
 use App\Http\Middleware\OwnerMiddleware;
 
 use App\Http\Middleware\OperatoreAuth;
+use App\Http\Middleware\AdminAuth;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -17,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'operatore.auth' => OperatoreAuth::class,
             'owner' => \App\Http\Middleware\OwnerMiddleware::class,
+            'admin' => AdminAuth::class,
         ]);
     })
     ->withExceptions(function ($exceptions) {

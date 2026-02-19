@@ -32,6 +32,7 @@ class OndaSyncService
                 COALESCE(NULLIF(p.NCPRagioneSociale, ''), a.RagioneSociale) AS ClienteNome,
                 p.QtaDaProdurre,
                 p.DataPresConsegna,
+                t.DataRegistrazione,
                 carta.CodArt AS CodCarta,
                 carta.Descrizione AS DescrizioneCarta,
                 carta.Qta AS QtaCarta,
@@ -51,6 +52,7 @@ class OndaSyncService
             WHERE t.TipoDocumento = '2'
               AND t.StatoChiusura <> '2'
               AND p.ForzaChiusura = 0
+              AND t.DataRegistrazione >= '2026-02-18'
         ");
 
         if (empty($righeOnda)) {
@@ -78,7 +80,7 @@ class OndaSyncService
 
             $datiOrdine = [
                 'cliente_nome'           => trim($prima->ClienteNome ?? ''),
-                'data_prevista_consegna' => $prima->DataPresConsegna ? date('Y-m-d', strtotime($prima->DataPresConsegna)) : null,
+                'data_prevista_consegna' => $prima->DataPresConsegna && date('Y', strtotime($prima->DataPresConsegna)) >= 2024 ? date('Y-m-d', strtotime($prima->DataPresConsegna)) : null,
                 'qta_richiesta'          => $prima->QtaDaProdurre ?? 0,
                 'cod_carta'              => trim($prima->CodCarta ?? ''),
                 'carta'                  => trim($prima->DescrizioneCarta ?? ''),
@@ -95,7 +97,7 @@ class OndaSyncService
                     'cod_art'     => $codArt,
                     'descrizione' => $descrizione,
                     'stato'       => 0,
-                    'data_registrazione' => $oggi,
+                    'data_registrazione' => $prima->DataRegistrazione ? date('Y-m-d', strtotime($prima->DataRegistrazione)) : $oggi,
                 ], $datiOrdine));
                 $ordiniCreati++;
             }

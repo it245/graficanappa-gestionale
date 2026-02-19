@@ -8,6 +8,9 @@ use App\Http\Controllers\ProduzioneController;
 use App\Http\Controllers\DashboardOwnerController;
 use App\Http\Controllers\PrinectController;
 use App\Http\Controllers\DashboardSpedizioneController;
+use App\Http\Controllers\AdminLoginController;
+use App\Http\Controllers\DashboardAdminController;
+
 // Operatori
 Route::prefix('operatore')->group(function() {
      Route::get('/login', [OperatoreLoginController::class, 'form'])->name('operatore.login');
@@ -35,6 +38,30 @@ Route::post('/owner/elimina-fase', [DashboardOwnerController::class, 'eliminaFas
 Route::get('/owner/scheduling', [DashboardOwnerController::class, 'scheduling'])->name('owner.scheduling');
 
 });
+
+// Admin — login pubblico
+Route::get('/admin/login', [AdminLoginController::class, 'form'])->name('admin.login');
+Route::post('/admin/login', [AdminLoginController::class, 'login'])->name('admin.login.post');
+
+// Admin — area protetta
+Route::middleware(['admin'])->prefix('admin')->group(function() {
+    Route::post('/logout', [AdminLoginController::class, 'logout'])->name('admin.logout');
+    Route::get('/dashboard', [DashboardAdminController::class, 'index'])->name('admin.dashboard');
+    Route::get('/operatore/nuovo', [DashboardAdminController::class, 'crea'])->name('admin.operatore.crea');
+    Route::post('/operatore', [DashboardAdminController::class, 'salva'])->name('admin.operatore.salva');
+    Route::get('/operatore/{id}/modifica', [DashboardAdminController::class, 'modifica'])->name('admin.operatore.modifica');
+    Route::post('/operatore/{id}', [DashboardAdminController::class, 'aggiorna'])->name('admin.operatore.aggiorna');
+    Route::post('/operatore/{id}/toggle', [DashboardAdminController::class, 'toggleAttivo'])->name('admin.operatore.toggleAttivo');
+
+    // Prinect (nascosto fino a v2.0, protetto dietro admin)
+    Route::get('/mes/prinect', [PrinectController::class, 'index'])->name('mes.prinect');
+    Route::get('/mes/prinect/api/status', [PrinectController::class, 'apiStatus'])->name('mes.prinect.apiStatus');
+    Route::get('/mes/prinect/attivita', [PrinectController::class, 'attivita'])->name('mes.prinect.attivita');
+    Route::get('/mes/prinect/report/{commessa}', [PrinectController::class, 'reportCommessa'])->name('mes.prinect.report');
+    Route::get('/mes/prinect/jobs', [PrinectController::class, 'jobs'])->name('mes.prinect.jobs');
+    Route::get('/mes/prinect/job/{jobId}', [PrinectController::class, 'jobDetail'])->name('mes.prinect.jobDetail');
+});
+
 // Produzione
 Route::prefix('produzione')->middleware(['operatore.auth'])->group(function() {
     Route::get('/', [ProduzioneController::class, 'index']);
@@ -53,12 +80,6 @@ Route::prefix('spedizione')->middleware(['operatore.auth'])->group(function() {
     Route::post('/invio', [DashboardSpedizioneController::class, 'invioAutomatico'])->name('spedizione.invio');
 });
 
-Route::get('/mes/prinect',[PrinectController::class, 'index'])->name('mes.prinect');
-Route::get('/mes/prinect/api/status',[PrinectController::class, 'apiStatus'])->name('mes.prinect.apiStatus');
-Route::get('/mes/prinect/attivita',[PrinectController::class, 'attivita'])->name('mes.prinect.attivita');
-Route::get('/mes/prinect/report/{commessa}',[PrinectController::class, 'reportCommessa'])->name('mes.prinect.report');
-Route::get('/mes/prinect/jobs',[PrinectController::class, 'jobs'])->name('mes.prinect.jobs');
-Route::get('/mes/prinect/job/{jobId}',[PrinectController::class, 'jobDetail'])->name('mes.prinect.jobDetail');
 // Health check
 Route::get('/health', fn() => 'MES OK');
 Route::get('/commesse/{commessa}', [App\Http\Controllers\CommessaController::class, 'show'])
