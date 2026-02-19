@@ -52,7 +52,7 @@ class OndaSyncService
             WHERE t.TipoDocumento = '2'
               AND t.StatoChiusura <> '2'
               AND p.ForzaChiusura = 0
-              AND t.DataRegistrazione >= '2026-02-18'
+              AND t.DataRegistrazione >= CAST('20260218' AS datetime)
         ");
 
         if (empty($righeOnda)) {
