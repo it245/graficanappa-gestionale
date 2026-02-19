@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use App\Models\Operatore;
 use App\Models\Reparto;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class DashboardAdminController extends Controller
 {
@@ -102,6 +104,69 @@ class DashboardAdminController extends Controller
         $operatore->reparti()->sync($reparti);
 
         return redirect()->route('admin.dashboard')->with('success', "Operatore {$operatore->codice_operatore} aggiornato.");
+    }
+
+    public function statistiche()
+    {
+        $sogliaRecenti = Carbon::now()->subDays(7);
+
+        $operatori = Operatore::where('attivo', 1)
+            ->where('ruolo', 'operatore')
+            ->with('reparti')
+            ->get()
+            ->map(function ($op) use ($sogliaRecenti) {
+                // Reparti come stringa
+                $op->stat_reparti = $op->reparti->pluck('nome')->join(', ');
+
+                // Fasi completate (stato=3) e in corso (stato=2) dalla pivot fase_operatore
+                $fasi = DB::table('fase_operatore')
+                    ->join('ordine_fasi', 'ordine_fasi.id', '=', 'fase_operatore.fase_id')
+                    ->where('fase_operatore.operatore_id', $op->id)
+                    ->select(
+                        'ordine_fasi.stato',
+                        'ordine_fasi.qta_prod',
+                        'fase_operatore.data_inizio',
+                        'fase_operatore.data_fine'
+                    )
+                    ->get();
+
+                $op->stat_fasi_completate = $fasi->where('stato', 3)->count();
+                $op->stat_fasi_in_corso = $fasi->where('stato', 2)->count();
+
+                // Tempo totale lavorato (somma differenze data_inizio - data_fine dalla pivot)
+                $secTotale = 0;
+                $fasiConTempo = 0;
+                foreach ($fasi as $f) {
+                    if ($f->data_inizio && $f->data_fine) {
+                        $sec = Carbon::parse($f->data_fine)->diffInSeconds(Carbon::parse($f->data_inizio));
+                        $secTotale += $sec;
+                        $fasiConTempo++;
+                    }
+                }
+                $op->stat_sec_totale = $secTotale;
+                $op->stat_sec_medio = $fasiConTempo > 0 ? round($secTotale / $fasiConTempo) : 0;
+
+                // Quantita prodotta totale
+                $op->stat_qta_prod = $fasi->where('stato', 3)->sum('qta_prod');
+
+                // Ultimi 7 giorni
+                $recenti = $fasi->filter(function ($f) use ($sogliaRecenti) {
+                    return $f->stato == 3 && $f->data_fine && Carbon::parse($f->data_fine)->gte($sogliaRecenti);
+                });
+                $op->stat_fasi_recenti = $recenti->count();
+                $secRecenti = 0;
+                foreach ($recenti as $f) {
+                    if ($f->data_inizio && $f->data_fine) {
+                        $secRecenti += Carbon::parse($f->data_fine)->diffInSeconds(Carbon::parse($f->data_inizio));
+                    }
+                }
+                $op->stat_sec_recenti = $secRecenti;
+
+                return $op;
+            })
+            ->sortByDesc('stat_fasi_completate');
+
+        return view('admin.statistiche_operatori', compact('operatori'));
     }
 
     public function toggleAttivo($id)

@@ -9,6 +9,7 @@
         </div>
         <div>
             <a href="#" class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#aggiungiOperatoreModal">+ Nuovo operatore</a>
+            <a href="{{ route('admin.statistiche') }}" class="btn btn-info me-2">Statistiche</a>
             <form method="POST" action="{{ route('admin.logout') }}" style="display:inline;">
                 @csrf
                 <button type="submit" class="btn btn-outline-secondary">Logout</button>

@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Roadmap — MES Grafica Nappa</title>
+<style>
+    @page { margin: 2cm; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #222; line-height: 1.7; padding: 40px; max-width: 900px; margin: 0 auto; }
+
+    .header { text-align: center; border-bottom: 3px solid #d11317; padding-bottom: 20px; margin-bottom: 30px; }
+    .header h1 { color: #d11317; font-size: 24px; margin-bottom: 4px; }
+    .header h2 { color: #333; font-size: 16px; font-weight: 400; }
+    .header .date { color: #888; font-size: 13px; margin-top: 8px; }
+    .header .author { color: #555; font-size: 13px; margin-top: 4px; font-style: italic; }
+
+    h3 { color: #d11317; font-size: 18px; margin-top: 35px; margin-bottom: 12px; border-left: 4px solid #d11317; padding-left: 10px; }
+    h4 { color: #333; font-size: 15px; margin-top: 18px; margin-bottom: 8px; }
+
+    p { margin-bottom: 10px; font-size: 14px; text-align: justify; }
+
+    .version-badge {
+        display: inline-block; padding: 4px 14px; border-radius: 20px;
+        font-size: 12px; font-weight: 700; color: #fff; margin-right: 8px;
+    }
+    .badge-done { background: #28a745; }
+    .badge-current { background: #0d6efd; }
+    .badge-next { background: #e67e22; }
+    .badge-future { background: #6c757d; }
+
+    .checklist { list-style: none; margin: 10px 0 10px 5px; font-size: 14px; }
+    .checklist li { padding: 5px 0 5px 30px; position: relative; border-bottom: 1px solid #f0f0f0; }
+    .checklist li:last-child { border-bottom: none; }
+    .checklist li::before {
+        position: absolute; left: 0; top: 5px;
+        width: 20px; height: 20px; border-radius: 4px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 14px; font-weight: 700;
+    }
+    .checklist li.done::before { content: '\2713'; background: #28a745; color: #fff; }
+    .checklist li.partial::before { content: '~'; background: #e67e22; color: #fff; }
+    .checklist li.todo::before { content: ''; background: #e0e0e0; border: 2px solid #bbb; }
+
+    .checklist li.done { color: #333; }
+    .checklist li.partial { color: #e67e22; font-weight: 500; }
+    .checklist li.todo { color: #888; }
+
+    .section-box {
+        background: #f9f9f9; border: 1px solid #e0e0e0; border-radius: 10px;
+        padding: 18px 22px; margin: 15px 0;
+    }
+    .section-box strong { color: #d11317; }
+
+    table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 13px; }
+    th { background: #d11317; color: #fff; padding: 10px 14px; text-align: left; }
+    td { padding: 10px 14px; border-bottom: 1px solid #e0e0e0; }
+    tr:nth-child(even) { background: #f9f9f9; }
+
+    .footer { margin-top: 40px; padding-top: 15px; border-top: 2px solid #e0e0e0; text-align: center; font-size: 12px; color: #888; }
+
+    .legend { display: flex; gap: 20px; margin: 15px 0; font-size: 13px; flex-wrap: wrap; }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .legend-box { width: 20px; height: 20px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #fff; }
+
+    @media print {
+        body { padding: 0; }
+        h3 { page-break-after: avoid; }
+        .section-box { page-break-inside: avoid; }
+    }
+</style>
+</head>
+<body>
+
+<div class="header">
+    <h1>ROADMAP SVILUPPO</h1>
+    <h2>Sistema Gestionale MES &mdash; Grafica Nappa srl</h2>
+    <div class="date">Aggiornata al 19 Febbraio 2026</div>
+    <div class="author">Giovanni Pietropaolo &mdash; Responsabile Sistemi Informativi</div>
+</div>
+
+<div class="legend">
+    <div class="legend-item"><div class="legend-box" style="background:#28a745">&#10003;</div> Completato</div>
+    <div class="legend-item"><div class="legend-box" style="background:#e67e22">~</div> Parziale</div>
+    <div class="legend-item"><div class="legend-box" style="background:#e0e0e0;border:2px solid #bbb;color:transparent">.</div> Da fare</div>
+</div>
+
+<!-- ========== v1.0 ========== -->
+<h3><span class="version-badge badge-done">v1.0</span> Fondamenta MES</h3>
+<p>Struttura base del sistema: modello dati, autenticazione operatori, dashboard produzione, gestione fasi.</p>
+
+<ul class="checklist">
+    <li class="done">Architettura Laravel 11 con MySQL &mdash; deploy su Windows Server / Apache</li>
+    <li class="done">Modello dati: Ordini, OrdineFasi, Operatori, Reparti, FasiCatalogo, pivot tables</li>
+    <li class="done">Login operatori con codice operatore (senza password)</li>
+    <li class="done">Dashboard Owner &mdash; vista completa di tutte le fasi attive, ordinate per priorit&agrave;</li>
+    <li class="done">Editing inline campi ordine/fase via AJAX (qta, note, stato, date, carta...)</li>
+    <li class="done">Import ordini da Excel (.xlsx) con mapping fasi e deduplicazione</li>
+    <li class="done">Dashboard Operatore &mdash; fasi filtrate per reparto assegnato</li>
+    <li class="done">Produzione: avvio, pausa, termine fase con tracciamento operatore e timestamp</li>
+    <li class="done">Cascata stati fasi automatica (FaseStatoService): quando una fase termina, la successiva diventa &ldquo;pronta&rdquo;</li>
+    <li class="done">Formula priorit&agrave;: giorni_rimasti &minus; (ore/24) + (ordineFase/10000)</li>
+    <li class="done">Catalogo 96+ fasi di produzione con tempi avviamento e copie/ora per ogni fase</li>
+    <li class="done">Mapping fasi &rarr; reparti (stampa offset, digitale, plastificazione, fustella, legatoria, piegaincolla, stampa a caldo, spedizione, esterno...)</li>
+    <li class="done">Dettaglio commessa (owner + operatore) &mdash; tutte le fasi raggruppate</li>
+    <li class="done">Vista fasi terminate con storico</li>
+    <li class="done">Pagina errori personalizzate (403, 404)</li>
+    <li class="done">Health check endpoint (/health)</li>
+</ul>
+
+<!-- ========== v1.1 ========== -->
+<h3><span class="version-badge badge-done">v1.1</span> Automazione &amp; Scheduling</h3>
+<p>Integrazione con Onda, Gantt scheduling, dashboard spedizioni, integrazione Prinect.</p>
+
+<ul class="checklist">
+    <li class="done">Sincronizzazione automatica con Onda IQ (SQL Server) &mdash; import ordini + fasi da ERP</li>
+    <li class="done">Filtro import: solo ordini dal 18/02/2026, indipendentemente dallo stato Onda</li>
+    <li class="done">Sync schedulata ogni ora (lun-sab 06:00&ndash;22:00) + bottone manuale</li>
+    <li class="done">Auto-creazione reparti e fasi catalogo da Onda se mancanti</li>
+    <li class="done">Ricalcolo automatico ore/priorit&agrave; dopo ogni sync</li>
+    <li class="done">Scheduling Produzione &mdash; interfaccia Gantt completa con 3 viste:
+        <ul style="margin:5px 0 0 20px;font-size:13px;">
+            <li>Per Macchina: turni configurati per reparto, swim lanes per esterni</li>
+            <li>Per Commessa: timeline con marker consegna</li>
+            <li>Tabella Priorit&agrave;: ordini raggruppati con margine, fine stimata, stato</li>
+        </ul>
+    </li>
+    <li class="done">Turni specifici per reparto (stampa offset 0-23, piegaincolla/fustella 6-22, stampa a caldo 6-22 + sab 6-13, altri 8-17)</li>
+    <li class="done">Macchina Bobst unificata (fustella + rilievo come unica risorsa)</li>
+    <li class="done">Pannello laterale dettaglio commessa nello scheduling</li>
+    <li class="done">KPI scheduling: commesse attive, in tempo, in ritardo (margine produzione), critiche (&ge;3gg scadute)</li>
+    <li class="done">Dashboard Spedizione dedicata &mdash; sezioni: Da spedire / Spedite oggi / In attesa</li>
+    <li class="done">Forza consegna: chiude forzatamente tutte le fasi aperte e completa la spedizione</li>
+    <li class="done">Integrazione Prinect (stampa offset) &mdash; nascosta dietro admin, pronta per v2.0:
+        <ul style="margin:5px 0 0 20px;font-size:13px;">
+            <li>Dashboard live: stato macchine, cicli buoni/scarti, tempi setup vs produzione</li>
+            <li>Storico attivit&agrave; filtrabile con sync automatica</li>
+            <li>Report per commessa: breakdown per workstep e operatore</li>
+            <li>Lista jobs Prinect con dettaglio workstep e consumo inchiostro</li>
+        </ul>
+    </li>
+    <li class="done">Comando artisan <code>onda:sync</code>, <code>prinect:sync-attivita</code>, <code>priorita:ricalcola</code></li>
+</ul>
+
+<!-- ========== v1.2 ========== -->
+<h3><span class="version-badge badge-current">v1.2</span> Admin &amp; Stabilit&agrave; &mdash; IN CORSO</h3>
+<p>Separazione ruolo admin, gestione operatori centralizzata, fix stabilit&agrave; sync Onda.</p>
+
+<ul class="checklist">
+    <li class="done">Ruolo Admin separato con login protetto da password (codice + password hashata)</li>
+    <li class="done">Middleware AdminAuth &mdash; protezione route /admin/*</li>
+    <li class="done">Dashboard Admin: elenco operatori con codice, ruolo, reparti, stato attivo</li>
+    <li class="done">CRUD operatori da admin: crea (con modale + codice live), modifica, attiva/disattiva</li>
+    <li class="done">Gestione operatori rimossa dall'owner e centralizzata nell'admin</li>
+    <li class="done">Route Prinect protette dietro middleware admin</li>
+    <li class="done">Fix sync Onda: driver sqlsrv su Apache (extension_dir assoluto)</li>
+    <li class="done">Fix sync Onda: colonna carta allargata a VARCHAR(255)</li>
+    <li class="done">Fix sync Onda: data_registrazione da Onda (non hardcoded)</li>
+    <li class="done">Fix sync Onda: formato data SQL Server (CAST datetime)</li>
+    <li class="done">Fix sync Onda: importa tutte le commesse indipendentemente dallo stato Onda</li>
+    <li class="done">Fix KPI scheduling: ritardo basato su margine produzione reale</li>
+    <li class="done">Aggiunta fase PIEGA8TTAVO in tutti i mapping</li>
+    <li class="done">Statistiche operatori &mdash; collegata a route admin con grafici Chart.js</li>
+    <li class="todo">Pulizia file di test sul server (phpinfo_test.php, test_cols.php, test_onda.php)</li>
+</ul>
+
+<!-- ========== v1.3 ========== -->
+<h3><span class="version-badge badge-next">v1.3</span> Statistiche &amp; Report</h3>
+<p>Analisi dati produzione, confronto operatori, report automatici per il titolare.</p>
+
+<ul class="checklist">
+    <li class="todo">Statistiche operatori (admin): fasi completate, ore lavorate, quantit&agrave; prodotte per operatore</li>
+    <li class="todo">Grafici confronto operatori (Chart.js): bar chart produttivit&agrave;, trend settimanale</li>
+    <li class="todo">Report commessa completata: riepilogo tempi effettivi vs stimati per ogni fase</li>
+    <li class="todo">Dashboard KPI giornaliero owner: fasi completate oggi, ore lavorate, spedizioni</li>
+    <li class="todo">Email report settimanale automatico al titolare (KPI, commesse in ritardo, produttivit&agrave;)</li>
+    <li class="todo">Export report in PDF</li>
+    <li class="todo">Storico commesse: archivio consultabile con filtri per data, cliente, stato</li>
+</ul>
+
+<!-- ========== v1.4 ========== -->
+<h3><span class="version-badge badge-next">v1.4</span> Costi &amp; Margini</h3>
+<p>Consuntivazione economica delle commesse.</p>
+
+<ul class="checklist">
+    <li class="todo">Costo orario per reparto/macchina (configurabile da admin)</li>
+    <li class="todo">Calcolo costo effettivo commessa: somma (ore_effettive &times; costo_orario) per fase</li>
+    <li class="todo">Confronto costo stimato vs costo effettivo per commessa</li>
+    <li class="todo">Dashboard margini: commesse pi&ugrave; profittevoli / in perdita</li>
+    <li class="todo">Integrazione costo carta da Onda</li>
+</ul>
+
+<!-- ========== v2.0 ========== -->
+<h3><span class="version-badge badge-future">v2.0</span> Prinect Live &amp; Automazione Avanzata</h3>
+<p>Attivazione completa dell'integrazione Prinect per il monitoraggio in tempo reale della stampa offset.</p>
+
+<ul class="checklist">
+    <li class="done">Prinect: dashboard live, storico attivit&agrave;, report commessa, sync automatica (gi&agrave; pronto, nascosto)</li>
+    <li class="todo">Attivazione Prinect visibile all'owner (rimozione protezione admin-only)</li>
+    <li class="todo">Correlazione automatica job Prinect &harr; commessa MES</li>
+    <li class="todo">Aggiornamento automatico fogli_buoni / fogli_scarto da Prinect</li>
+    <li class="todo">Calcolo OEE (Overall Equipment Effectiveness) per macchina stampa</li>
+    <li class="todo">Alert automatici: macchina ferma, scarti sopra soglia, cambio lastre eccessivo</li>
+    <li class="todo">Dashboard real-time con auto-refresh (WebSocket o polling)</li>
+</ul>
+
+<!-- ========== v2.1 ========== -->
+<h3><span class="version-badge badge-future">v2.1</span> Notifiche &amp; Mobilit&agrave;</h3>
+<p>Sistema di notifiche e accesso mobile per operatori.</p>
+
+<ul class="checklist">
+    <li class="todo">Notifiche push/email per commesse in ritardo critico</li>
+    <li class="todo">Notifica automatica al titolare quando una commessa viene spedita</li>
+    <li class="todo">Interfaccia responsive / PWA per operatori su tablet in reparto</li>
+    <li class="todo">Scansione barcode/QR per avvio/termine fase</li>
+    <li class="todo">Dashboard sintetica su TV in reparto (visualizzazione a rotazione)</li>
+</ul>
+
+<!-- ========== v3.0 ========== -->
+<h3><span class="version-badge badge-future">v3.0</span> Pianificazione Intelligente</h3>
+<p>Scheduling avanzato con ottimizzazione automatica.</p>
+
+<ul class="checklist">
+    <li class="todo">Scheduling automatico con ottimizzazione (minimizzazione ritardi)</li>
+    <li class="todo">Drag &amp; drop fasi nel Gantt per riordinamento manuale</li>
+    <li class="todo">Simulazione &ldquo;what-if&rdquo;: impatto di una nuova commessa urgente</li>
+    <li class="todo">Gestione manutenzione macchine (fermi programmati nel Gantt)</li>
+    <li class="todo">Previsione carico lavoro settimanale per reparto</li>
+    <li class="todo">API pubblica per integrazione con sistemi esterni</li>
+</ul>
+
+<!-- ========== RIEPILOGO ========== -->
+<h3>Riepilogo versioni</h3>
+
+<table>
+    <thead>
+        <tr>
+            <th>Versione</th>
+            <th>Tema</th>
+            <th>Stato</th>
+            <th>Funzionalit&agrave;</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>v1.0</strong></td>
+            <td>Fondamenta MES</td>
+            <td><span class="version-badge badge-done">Completata</span></td>
+            <td>15/15</td>
+        </tr>
+        <tr>
+            <td><strong>v1.1</strong></td>
+            <td>Automazione &amp; Scheduling</td>
+            <td><span class="version-badge badge-done">Completata</span></td>
+            <td>14/14</td>
+        </tr>
+        <tr>
+            <td><strong>v1.2</strong></td>
+            <td>Admin &amp; Stabilit&agrave;</td>
+            <td><span class="version-badge badge-current">In corso</span></td>
+            <td>14/15</td>
+        </tr>
+        <tr>
+            <td><strong>v1.3</strong></td>
+            <td>Statistiche &amp; Report</td>
+            <td><span class="version-badge badge-next">Prossima</span></td>
+            <td>0/7</td>
+        </tr>
+        <tr>
+            <td><strong>v1.4</strong></td>
+            <td>Costi &amp; Margini</td>
+            <td><span class="version-badge badge-next">Pianificata</span></td>
+            <td>0/5</td>
+        </tr>
+        <tr>
+            <td><strong>v2.0</strong></td>
+            <td>Prinect Live</td>
+            <td><span class="version-badge badge-future">Futura</span></td>
+            <td>1/7</td>
+        </tr>
+        <tr>
+            <td><strong>v2.1</strong></td>
+            <td>Notifiche &amp; Mobilit&agrave;</td>
+            <td><span class="version-badge badge-future">Futura</span></td>
+            <td>0/5</td>
+        </tr>
+        <tr>
+            <td><strong>v3.0</strong></td>
+            <td>Pianificazione Intelligente</td>
+            <td><span class="version-badge badge-future">Futura</span></td>
+            <td>0/6</td>
+        </tr>
+    </tbody>
+</table>
+
+<div class="section-box">
+    <strong>Stack tecnologico:</strong> Laravel 11 &middot; PHP 8.5 &middot; MySQL &middot; SQL Server (Onda IQ) &middot; Apache &middot; Windows Server 2022 &middot; Prinect REST API &middot; Chart.js &middot; Bootstrap 5
+</div>
+
+<div class="footer">
+    <p>Sistema Gestionale MES &mdash; Grafica Nappa srl &mdash; Aversa (CE)</p>
+    <p>Progettazione, sviluppo e amministrazione: Giovanni Pietropaolo</p>
+</div>
+
+</body>
+</html>
