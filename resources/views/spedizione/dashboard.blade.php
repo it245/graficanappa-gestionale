@@ -403,10 +403,6 @@ function aggiornaNota(faseId, valore) {
 }
 
 function forzaConsegna(faseId, btn) {
-    if (!confirm('Forzare la consegna? Tutte le fasi aperte verranno chiuse automaticamente.')) {
-        return;
-    }
-
     btn.disabled = true;
     btn.textContent = 'Consegna...';
 
