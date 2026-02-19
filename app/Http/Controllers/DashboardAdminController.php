@@ -330,9 +330,12 @@ class DashboardAdminController extends Controller
     public function listaCommesse(Request $request)
     {
         $filtro = $request->get('filtro', 'tutte');
+        $ricercaCliente = $request->get('cliente', '');
+        $dataDa = $request->get('data_da', '');
+        $dataA = $request->get('data_a', '');
 
-        $commesse = Ordine::select('commessa', 'cliente_nome', 'data_prevista_consegna')
-            ->groupBy('commessa', 'cliente_nome', 'data_prevista_consegna')
+        $commesse = Ordine::select('commessa', 'cliente_nome', 'descrizione', 'data_prevista_consegna')
+            ->groupBy('commessa', 'cliente_nome', 'descrizione', 'data_prevista_consegna')
             ->get()
             ->map(function ($row) {
                 $fasi = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $row->commessa))->get();
@@ -340,18 +343,44 @@ class DashboardAdminController extends Controller
                 $row->fasi_completate = $fasi->filter(fn($f) => $f->stato >= 3)->count();
                 $row->percentuale = $row->fasi_totali > 0 ? round(($row->fasi_completate / $row->fasi_totali) * 100) : 0;
                 $row->completata = $row->fasi_totali > 0 && $row->fasi_completate === $row->fasi_totali;
+                $row->consegnata = $fasi->contains(fn($f) => $f->stato == 4);
+
+                if ($row->consegnata) {
+                    $row->stato_label = 'Consegnata';
+                } elseif ($row->completata) {
+                    $row->stato_label = 'Completata';
+                } else {
+                    $row->stato_label = 'In corso';
+                }
+
                 return $row;
             });
 
         if ($filtro === 'completate') {
             $commesse = $commesse->filter(fn($c) => $c->completata);
         } elseif ($filtro === 'in_corso') {
-            $commesse = $commesse->filter(fn($c) => !$c->completata);
+            $commesse = $commesse->filter(fn($c) => !$c->completata && !$c->consegnata);
+        } elseif ($filtro === 'consegnate') {
+            $commesse = $commesse->filter(fn($c) => $c->consegnata);
+        }
+
+        if ($ricercaCliente) {
+            $ricerca = strtolower($ricercaCliente);
+            $commesse = $commesse->filter(fn($c) => str_contains(strtolower($c->cliente_nome ?? ''), $ricerca));
+        }
+
+        if ($dataDa) {
+            $da = Carbon::parse($dataDa)->startOfDay();
+            $commesse = $commesse->filter(fn($c) => $c->data_prevista_consegna && Carbon::parse($c->data_prevista_consegna)->gte($da));
+        }
+        if ($dataA) {
+            $a = Carbon::parse($dataA)->endOfDay();
+            $commesse = $commesse->filter(fn($c) => $c->data_prevista_consegna && Carbon::parse($c->data_prevista_consegna)->lte($a));
         }
 
         $commesse = $commesse->sortByDesc('data_prevista_consegna')->values();
 
-        return view('admin.lista_commesse', compact('commesse', 'filtro'));
+        return view('admin.lista_commesse', compact('commesse', 'filtro', 'ricercaCliente', 'dataDa', 'dataA'));
     }
 
     public function reportCommessa($commessa)

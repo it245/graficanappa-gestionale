@@ -10,7 +10,7 @@
         <div>
             <a href="#" class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#aggiungiOperatoreModal">+ Nuovo operatore</a>
             <a href="{{ route('admin.statistiche') }}" class="btn btn-info me-2">Statistiche</a>
-            <a href="{{ route('admin.commesse') }}" class="btn btn-primary me-2">Report Commesse</a>
+            <a href="{{ route('admin.commesse') }}" class="btn btn-primary me-2">Storico Commesse</a>
             <a href="{{ route('admin.reportProduzione') }}" class="btn btn-warning me-2">Report Settimanale</a>
             <form method="POST" action="{{ route('admin.logout') }}" style="display:inline;">
                 @csrf
