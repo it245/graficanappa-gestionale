@@ -683,13 +683,4 @@ public function calcolaOreEPriorita($fase)
         return response()->download($filePath, 'dashboard_mes.xlsx');
     }
 
-    public function apriExcel()
-    {
-        // Genera file aggiornato
-        ExcelSyncService::exportToExcel();
-
-        $fileUrl = url('/owner/excel-download');
-
-        return view('owner.apri_excel', compact('fileUrl'));
-    }
 }
