@@ -169,24 +169,26 @@ class PrinectSyncService
             ->first();
         $dataInizio = $primaAttivita?->start_time;
 
-        // Estrai cognomi operatori Prinect unici
-        $cognomi = PrinectAttivita::where('commessa_gestionale', $commessa)
+        // Estrai nome+cognome operatori Prinect unici
+        $operatoriPrinect = PrinectAttivita::where('commessa_gestionale', $commessa)
             ->whereNotNull('operatore_prinect')
             ->where('operatore_prinect', '!=', '')
             ->distinct()
             ->pluck('operatore_prinect')
             ->flatMap(function ($nomiStr) {
                 // Formato: "Raffaele Barbato" o "Raffaele Barbato, Luigi Marino"
-                return collect(explode(',', $nomiStr))->map(function ($nome) {
-                    $parts = explode(' ', trim($nome));
-                    return end($parts); // ultimo = cognome
+                return collect(explode(',', $nomiStr))->map(function ($nomeCompleto) {
+                    $parts = explode(' ', trim($nomeCompleto));
+                    return [
+                        'nome' => count($parts) > 1 ? $parts[0] : null,
+                        'cognome' => end($parts),
+                    ];
                 });
             })
-            ->unique()
-            ->filter()
+            ->filter(fn($p) => !empty($p['cognome']))
             ->values();
 
-        $operatoriMatched = $this->matchOperatoriPerCognome($cognomi->toArray());
+        $operatoriMatched = $this->matchOperatori($operatoriPrinect->toArray());
 
         // Trova fasi di stampa offset (STAMPAXL106* o STAMPA)
         $fasi = $this->troveFasiStampa($commessa);
@@ -298,18 +300,22 @@ class PrinectSyncService
             ? Carbon::parse($sorted->first()['startTime'])
             : null;
 
-        // Estrai cognomi operatori dalle attivita API
-        $cognomi = [];
+        // Estrai nome+cognome operatori dalle attivita API
+        $operatoriPrinect = [];
+        $seen = [];
         foreach ($attivitaApi as $a) {
             foreach ($a['employees'] ?? [] as $e) {
+                $nome = trim($e['firstName'] ?? '');
                 $cognome = trim($e['name'] ?? '');
-                if ($cognome && !in_array(strtolower($cognome), array_map('strtolower', $cognomi))) {
-                    $cognomi[] = $cognome;
+                $key = strtolower($nome . ' ' . $cognome);
+                if ($cognome && !isset($seen[$key])) {
+                    $seen[$key] = true;
+                    $operatoriPrinect[] = ['nome' => $nome ?: null, 'cognome' => $cognome];
                 }
             }
         }
 
-        $operatoriMatched = $this->matchOperatoriPerCognome($cognomi);
+        $operatoriMatched = $this->matchOperatori($operatoriPrinect);
 
         $this->aggiornaFasi($fasi, [
             'fogli_buoni' => $buoni,
@@ -390,32 +396,58 @@ class PrinectSyncService
     }
 
     /**
-     * Cerca operatori gestionale matchando per cognome nel reparto stampa offset.
+     * Cerca operatori gestionale matchando per nome+cognome nel reparto stampa offset.
+     * @param array $operatoriPrinect Array di ['nome' => '...', 'cognome' => '...']
      */
-    protected function matchOperatoriPerCognome(array $cognomi): array
+    protected function matchOperatori(array $operatoriPrinect): array
     {
         $repartoId = Reparto::where('nome', 'stampa offset')->value('id');
         $matched = [];
 
-        foreach ($cognomi as $cognome) {
-            $cognomeLower = strtolower(trim($cognome));
+        foreach ($operatoriPrinect as $op) {
+            $cognomeLower = strtolower(trim($op['cognome'] ?? ''));
+            $nomeLower = strtolower(trim($op['nome'] ?? ''));
             if (!$cognomeLower) continue;
 
-            // Prima cerca nel reparto stampa offset
-            $op = Operatore::whereRaw('LOWER(cognome) = ?', [$cognomeLower])
-                ->where('attivo', 1)
-                ->when($repartoId, fn($q) => $q->where('reparto_id', $repartoId))
-                ->first();
+            // Match nome + cognome nel reparto stampa offset
+            $query = Operatore::whereRaw('LOWER(cognome) = ?', [$cognomeLower])
+                ->where('attivo', 1);
 
-            // Fallback: qualsiasi reparto
-            if (!$op && $repartoId) {
-                $op = Operatore::whereRaw('LOWER(cognome) = ?', [$cognomeLower])
+            if ($nomeLower) {
+                $query->whereRaw('LOWER(nome) = ?', [$nomeLower]);
+            }
+
+            if ($repartoId) {
+                $query->where('reparto_id', $repartoId);
+            }
+
+            $found = $query->first();
+
+            // Fallback 1: solo cognome + reparto (senza nome)
+            if (!$found && $nomeLower && $repartoId) {
+                $found = Operatore::whereRaw('LOWER(cognome) = ?', [$cognomeLower])
+                    ->where('attivo', 1)
+                    ->where('reparto_id', $repartoId)
+                    ->first();
+            }
+
+            // Fallback 2: nome + cognome senza filtro reparto
+            if (!$found && $nomeLower) {
+                $found = Operatore::whereRaw('LOWER(cognome) = ?', [$cognomeLower])
+                    ->whereRaw('LOWER(nome) = ?', [$nomeLower])
                     ->where('attivo', 1)
                     ->first();
             }
 
-            if ($op) {
-                $matched[] = $op;
+            // Fallback 3: solo cognome senza filtro reparto
+            if (!$found) {
+                $found = Operatore::whereRaw('LOWER(cognome) = ?', [$cognomeLower])
+                    ->where('attivo', 1)
+                    ->first();
+            }
+
+            if ($found) {
+                $matched[] = $found;
             }
         }
 
