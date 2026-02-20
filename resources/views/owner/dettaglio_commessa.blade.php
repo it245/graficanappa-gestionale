@@ -118,23 +118,26 @@
 @endif
 
 {{-- Info Onda --}}
-@if($ordine && ($ordine->note_prestampa || $ordine->responsabile || $ordine->commento_produzione))
-<div class="row mb-3" style="font-size:13px;">
-    @if($ordine->responsabile)
-    <div class="col-auto">
-        <strong>Responsabile:</strong> {{ $ordine->responsabile }}
+@if($ordine)
+<div class="row g-2 mb-3" style="font-size:13px;">
+    <div class="col-md-4">
+        <div class="border rounded p-2 h-100" style="background:#f8f9fa">
+            <strong class="d-block mb-1">Responsabile Produzione</strong>
+            <span class="{{ $ordine->responsabile ? '' : 'text-muted' }}">{{ $ordine->responsabile ?: '-' }}</span>
+        </div>
     </div>
-    @endif
-    @if($ordine->note_prestampa)
-    <div class="col-auto">
-        <strong>Note Prestampa:</strong> {{ $ordine->note_prestampa }}
+    <div class="col-md-4">
+        <div class="border rounded p-2 h-100" style="background:#f8f9fa">
+            <strong class="d-block mb-1">Note Prestampa</strong>
+            <span class="{{ $ordine->note_prestampa ? '' : 'text-muted' }}">{{ $ordine->note_prestampa ?: '-' }}</span>
+        </div>
     </div>
-    @endif
-    @if($ordine->commento_produzione)
-    <div class="col">
-        <strong>Commento Produzione:</strong> {{ $ordine->commento_produzione }}
+    <div class="col-md-4">
+        <div class="border rounded p-2 h-100" style="background:#f8f9fa">
+            <strong class="d-block mb-1">Commento Produzione</strong>
+            <span class="{{ $ordine->commento_produzione ? '' : 'text-muted' }}">{{ $ordine->commento_produzione ?: '-' }}</span>
+        </div>
     </div>
-    @endif
 </div>
 @endif
 
