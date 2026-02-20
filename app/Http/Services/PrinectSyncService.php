@@ -324,7 +324,8 @@ class PrinectSyncService
      */
     protected function troveFasiStampa(string $commessa)
     {
-        return OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
+        return OrdineFase::with('ordine')
+            ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
             ->where(function ($q) {
                 $q->where('fase', 'LIKE', 'STAMPAXL106%')
                   ->orWhere('fase', 'STAMPA');
@@ -334,6 +335,8 @@ class PrinectSyncService
 
     /**
      * Aggiorna le fasi con fogli, tempi, stato, data_inizio e operatori.
+     * Stato 2 = Avviato (come da dashboard operatore)
+     * Stato 3 = Terminato (quando fogli_buoni >= qta_carta)
      */
     protected function aggiornaFasi($fasi, array $dati, $dataInizio, array $operatoriMatched): void
     {
@@ -347,9 +350,20 @@ class PrinectSyncService
             $fase->tempo_avviamento_sec = $dati['tempo_avviamento_sec'];
             $fase->tempo_esecuzione_sec = $dati['tempo_esecuzione_sec'];
 
-            // Avvia la fase se non ancora avviata
-            if ($fase->stato == 0 || $fase->stato === '0') {
-                $fase->stato = 1;
+            // Qta carta dall'ordine
+            $qtaCarta = $fase->ordine->qta_carta ?? 0;
+
+            // Se la fase non e ancora avviata (stato 0 o 1), avviala (stato=2)
+            if (in_array($fase->stato, [0, '0', 1, '1'])) {
+                $fase->stato = 2;
+            }
+
+            // Se fogli_buoni >= qta_carta → fase terminata (stato=3) + data_fine
+            if ($qtaCarta > 0 && $dati['fogli_buoni'] >= $qtaCarta && $fase->stato != 3 && $fase->stato !== '3') {
+                $fase->stato = 3;
+                if (!$fase->data_fine) {
+                    $fase->data_fine = now();
+                }
             }
 
             // Imposta data_inizio se mancante
