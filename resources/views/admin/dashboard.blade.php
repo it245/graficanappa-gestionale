@@ -12,6 +12,7 @@
             <a href="{{ route('admin.statistiche') }}" class="btn btn-info me-2">Statistiche</a>
             <a href="{{ route('admin.commesse') }}" class="btn btn-primary me-2">Storico Commesse</a>
             <a href="{{ route('admin.reportProduzione') }}" class="btn btn-warning me-2">Report Settimanale</a>
+            <a href="{{ route('admin.cruscotto') }}" class="btn btn-danger me-2">Cruscotto Direzionale</a>
             <form method="POST" action="{{ route('admin.logout') }}" style="display:inline;">
                 @csrf
                 <button type="submit" class="btn btn-outline-secondary">Logout</button>

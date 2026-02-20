@@ -60,9 +60,34 @@
             <p><strong>Cliente:</strong> {{ $ordine->cliente_nome }}</p>
             <p><strong>Descrizione:</strong> {{ $ordine->descrizione }}</p>
             <p><strong>Quantita totale:</strong> {{ $ordine->qta_richiesta }} {{ $ordine->um }}</p>
-            @if($ordine->responsabile)<p><strong>Responsabile:</strong> {{ $ordine->responsabile }}</p>@endif
-            @if($ordine->note_prestampa)<p><strong>Note Prestampa:</strong> {{ $ordine->note_prestampa }}</p>@endif
-            @if($ordine->commento_produzione)<p><strong>Commento Produzione:</strong> {{ $ordine->commento_produzione }}</p>@endif
+            @if($ordine->note_prestampa || $ordine->responsabile || $ordine->commento_produzione)
+            <div class="row mt-2">
+                @if($ordine->note_prestampa)
+                <div class="col-md-4">
+                    <div class="border rounded p-2 h-100" style="background:#f8f9fa">
+                        <strong class="d-block mb-1">Note Prestampa</strong>
+                        <span>{{ $ordine->note_prestampa }}</span>
+                    </div>
+                </div>
+                @endif
+                @if($ordine->responsabile)
+                <div class="col-md-4">
+                    <div class="border rounded p-2 h-100" style="background:#f8f9fa">
+                        <strong class="d-block mb-1">Responsabile Produzione</strong>
+                        <span>{{ $ordine->responsabile }}</span>
+                    </div>
+                </div>
+                @endif
+                @if($ordine->commento_produzione)
+                <div class="col-md-4">
+                    <div class="border rounded p-2 h-100" style="background:#f8f9fa">
+                        <strong class="d-block mb-1">Commento Produzione</strong>
+                        <span>{{ $ordine->commento_produzione }}</span>
+                    </div>
+                </div>
+                @endif
+            </div>
+            @endif
         </div>
     </div>
 

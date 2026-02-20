@@ -57,6 +57,7 @@ Route::middleware(['admin'])->prefix('admin')->group(function() {
     Route::get('/commesse', [DashboardAdminController::class, 'listaCommesse'])->name('admin.commesse');
     Route::get('/commessa/{commessa}/report', [DashboardAdminController::class, 'reportCommessa'])->name('admin.reportCommessa');
     Route::get('/report-produzione', [DashboardAdminController::class, 'reportProduzione'])->name('admin.reportProduzione');
+    Route::get('/cruscotto', [DashboardAdminController::class, 'cruscotto'])->name('admin.cruscotto');
 });
 
 // Prinect — accessibile a owner e admin

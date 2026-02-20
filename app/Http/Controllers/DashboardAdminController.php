@@ -7,6 +7,8 @@ use App\Models\Operatore;
 use App\Models\Ordine;
 use App\Models\OrdineFase;
 use App\Models\Reparto;
+use App\Models\PausaOperatore;
+use App\Models\PrinectAttivita;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -562,5 +564,219 @@ class DashboardAdminController extends Controller
             'topOperatori' => $topOperatori,
             'commesseCompletate' => $commesseCompletate,
         ]);
+    }
+
+    public function cruscotto()
+    {
+        $oggi = Carbon::today();
+        $da30gg = Carbon::now()->subDays(30);
+        $da7gg = Carbon::now()->subDays(7);
+        $prossimi7gg = Carbon::today()->addDays(7);
+
+        // --- 1. Ordini attivi (commesse con almeno 1 fase non completata) ---
+        $ordiniAttivi = Ordine::select('commessa')
+            ->groupBy('commessa')
+            ->get()
+            ->filter(function ($row) {
+                return OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $row->commessa))
+                    ->where('stato', '<', 3)->exists();
+            })->count();
+
+        // --- 2. Completate ultimi 30gg ---
+        $commesseCompletate30gg = DB::table('fase_operatore')
+            ->join('ordine_fasi', 'ordine_fasi.id', '=', 'fase_operatore.fase_id')
+            ->join('ordini', 'ordini.id', '=', 'ordine_fasi.ordine_id')
+            ->where('ordine_fasi.stato', '>=', 3)
+            ->where('fase_operatore.data_fine', '>=', $da30gg)
+            ->select('ordini.commessa')
+            ->distinct()
+            ->get()
+            ->filter(function ($row) {
+                return OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $row->commessa))
+                    ->where('stato', '<', 3)->count() === 0;
+            })->count();
+
+        // --- 3. Commesse in ritardo ---
+        $commesseInRitardo = Ordine::where('data_prevista_consegna', '<', $oggi->toDateString())
+            ->select('commessa', 'cliente_nome', 'data_prevista_consegna')
+            ->groupBy('commessa', 'cliente_nome', 'data_prevista_consegna')
+            ->get()
+            ->filter(function ($row) {
+                return OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $row->commessa))
+                    ->where('stato', '<', 3)->count() > 0;
+            })
+            ->map(function ($row) use ($oggi) {
+                $row->giorni_ritardo = Carbon::parse($row->data_prevista_consegna)->diffInDays($oggi);
+                $fasiTot = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $row->commessa))->count();
+                $fasiDone = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $row->commessa))->where('stato', '>=', 3)->count();
+                $row->avanzamento = $fasiTot > 0 ? round(($fasiDone / $fasiTot) * 100) : 0;
+                return $row;
+            })
+            ->sortByDesc('giorni_ritardo')
+            ->values();
+
+        // --- 4. Tasso puntualita ---
+        // Commesse completate con data_prevista_consegna: ultima data_fine <= data_prevista_consegna
+        $commesseConConsegna = DB::table('fase_operatore')
+            ->join('ordine_fasi', 'ordine_fasi.id', '=', 'fase_operatore.fase_id')
+            ->join('ordini', 'ordini.id', '=', 'ordine_fasi.ordine_id')
+            ->where('ordine_fasi.stato', '>=', 3)
+            ->where('fase_operatore.data_fine', '>=', $da30gg)
+            ->whereNotNull('ordini.data_prevista_consegna')
+            ->select('ordini.commessa', 'ordini.data_prevista_consegna', DB::raw('MAX(fase_operatore.data_fine) as ultima_fine'))
+            ->groupBy('ordini.commessa', 'ordini.data_prevista_consegna')
+            ->get()
+            ->filter(function ($row) {
+                return OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $row->commessa))
+                    ->where('stato', '<', 3)->count() === 0;
+            });
+
+        $puntuali = $commesseConConsegna->filter(function ($row) {
+            return $row->ultima_fine && Carbon::parse($row->ultima_fine)->lte(Carbon::parse($row->data_prevista_consegna)->endOfDay());
+        })->count();
+
+        $tassoPuntualita = $commesseConConsegna->count() > 0
+            ? round(($puntuali / $commesseConConsegna->count()) * 100)
+            : 0;
+
+        // --- 5. Ore lavorate ultimi 30gg ---
+        $pivotMese = DB::table('fase_operatore')
+            ->where('data_fine', '>=', $da30gg)
+            ->whereNotNull('data_inizio')
+            ->whereNotNull('data_fine')
+            ->get();
+
+        $secLavoratiMese = 0;
+        foreach ($pivotMese as $p) {
+            $secLavoratiMese += Carbon::parse($p->data_fine)->diffInSeconds(Carbon::parse($p->data_inizio));
+        }
+        $oreLavorateMese = round($secLavoratiMese / 3600, 1);
+
+        // --- 5b. Fasi completate ultimi 30gg ---
+        $fasiCompletate30gg = DB::table('fase_operatore')
+            ->join('ordine_fasi', 'ordine_fasi.id', '=', 'fase_operatore.fase_id')
+            ->where('ordine_fasi.stato', '>=', 3)
+            ->where('fase_operatore.data_fine', '>=', $da30gg)
+            ->count();
+
+        // --- 6. Trend giornaliero (30gg) ---
+        $trendRaw = DB::table('fase_operatore')
+            ->join('ordine_fasi', 'ordine_fasi.id', '=', 'fase_operatore.fase_id')
+            ->where('ordine_fasi.stato', '>=', 3)
+            ->where('fase_operatore.data_fine', '>=', $da30gg)
+            ->whereNotNull('fase_operatore.data_inizio')
+            ->whereNotNull('fase_operatore.data_fine')
+            ->select(
+                DB::raw('DATE(fase_operatore.data_fine) as giorno'),
+                DB::raw('COUNT(*) as fasi'),
+                DB::raw('SUM(TIMESTAMPDIFF(SECOND, fase_operatore.data_inizio, fase_operatore.data_fine)) as secondi')
+            )
+            ->groupBy('giorno')
+            ->orderBy('giorno')
+            ->get();
+
+        $trendGiornaliero = $trendRaw->pluck('fasi', 'giorno')->toArray();
+        $oreTrendGiornaliero = $trendRaw->mapWithKeys(function ($r) {
+            return [$r->giorno => round($r->secondi / 3600, 1)];
+        })->toArray();
+
+        // --- 7. Carico reparti ---
+        $reparti = Reparto::orderBy('nome')->get();
+        $caricoReparti = $reparti->map(function ($rep) {
+            $fasi = DB::table('ordine_fasi')
+                ->join('fasi_catalogo', 'fasi_catalogo.id', '=', 'ordine_fasi.fase_catalogo_id')
+                ->where('fasi_catalogo.reparto_id', $rep->id)
+                ->select('ordine_fasi.stato')
+                ->get();
+
+            return (object)[
+                'nome' => $rep->nome,
+                'attesa' => $fasi->whereIn('stato', [0, 1])->count(),
+                'in_corso' => $fasi->where('stato', 2)->count(),
+                'completate' => $fasi->where('stato', '>=', 3)->count(),
+            ];
+        })->filter(fn($r) => ($r->attesa + $r->in_corso + $r->completate) > 0)->values();
+
+        // --- 8. Top clienti attivi ---
+        $topClienti = Ordine::select('cliente_nome', DB::raw('COUNT(DISTINCT commessa) as totale'))
+            ->whereNotNull('cliente_nome')
+            ->where('cliente_nome', '!=', '')
+            ->groupBy('cliente_nome')
+            ->get()
+            ->filter(function ($row) {
+                // Solo clienti con commesse attive (almeno 1 fase incompleta)
+                return Ordine::where('cliente_nome', $row->cliente_nome)
+                    ->get()
+                    ->pluck('commessa')
+                    ->unique()
+                    ->contains(function ($commessa) {
+                        return OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
+                            ->where('stato', '<', 3)->exists();
+                    });
+            })
+            ->sortByDesc('totale')
+            ->take(8)
+            ->values();
+
+        // --- 9. Motivi pausa ultimi 30gg ---
+        $motiviPausa = PausaOperatore::where('data_ora', '>=', $da30gg)
+            ->select('motivo', DB::raw('COUNT(*) as totale'))
+            ->groupBy('motivo')
+            ->orderByDesc('totale')
+            ->get();
+
+        // --- 10. Top 5 operatori ultimi 30gg ---
+        $topOperatoriMese = DB::table('fase_operatore')
+            ->join('ordine_fasi', 'ordine_fasi.id', '=', 'fase_operatore.fase_id')
+            ->join('operatori', 'operatori.id', '=', 'fase_operatore.operatore_id')
+            ->where('ordine_fasi.stato', '>=', 3)
+            ->where('fase_operatore.data_fine', '>=', $da30gg)
+            ->select(
+                'operatori.nome',
+                'operatori.cognome',
+                DB::raw('COUNT(*) as fasi_completate'),
+                DB::raw('SUM(ordine_fasi.qta_prod) as qta_prodotta')
+            )
+            ->groupBy('operatori.id', 'operatori.nome', 'operatori.cognome')
+            ->orderByDesc('fasi_completate')
+            ->limit(5)
+            ->get();
+
+        // --- 11. Scadenze prossimi 7 giorni ---
+        $scadenzeImminenti = Ordine::whereBetween('data_prevista_consegna', [$oggi->toDateString(), $prossimi7gg->toDateString()])
+            ->select('commessa', 'cliente_nome', 'data_prevista_consegna')
+            ->groupBy('commessa', 'cliente_nome', 'data_prevista_consegna')
+            ->get()
+            ->filter(function ($row) {
+                return OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $row->commessa))
+                    ->where('stato', '<', 3)->exists();
+            })
+            ->map(function ($row) use ($oggi) {
+                $fasiTot = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $row->commessa))->count();
+                $fasiDone = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $row->commessa))->where('stato', '>=', 3)->count();
+                $row->avanzamento = $fasiTot > 0 ? round(($fasiDone / $fasiTot) * 100) : 0;
+                $row->giorni_mancanti = $oggi->diffInDays(Carbon::parse($row->data_prevista_consegna));
+                return $row;
+            })
+            ->sortBy('data_prevista_consegna')
+            ->values();
+
+        // --- 12. Prinect stats ultimi 7gg ---
+        $prinectData = PrinectAttivita::where('start_time', '>=', $da7gg)->get();
+        $prinectStats = (object)[
+            'fogli_buoni' => $prinectData->sum('good_cycles'),
+            'scarto' => $prinectData->sum('waste_cycles'),
+            'percentuale_scarto' => ($prinectData->sum('good_cycles') + $prinectData->sum('waste_cycles')) > 0
+                ? round(($prinectData->sum('waste_cycles') / ($prinectData->sum('good_cycles') + $prinectData->sum('waste_cycles'))) * 100, 1)
+                : 0,
+        ];
+
+        return view('admin.cruscotto', compact(
+            'ordiniAttivi', 'commesseCompletate30gg', 'commesseInRitardo',
+            'tassoPuntualita', 'oreLavorateMese', 'fasiCompletate30gg',
+            'caricoReparti', 'trendGiornaliero', 'oreTrendGiornaliero',
+            'topClienti', 'topOperatoriMese', 'motiviPausa',
+            'scadenzeImminenti', 'prinectStats'
+        ));
     }
 }
