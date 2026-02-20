@@ -79,12 +79,13 @@ thead th {
 }
 
 /* =========================
-   LARGHEZZA COLONNE (22 colonne)
+   LARGHEZZA COLONNE (23 colonne)
    1=Commessa 2=Stato 3=Cliente 4=CodArt
    5=Descrizione 6=Qta 7=UM 8=Priorità
    9=DataReg 10=DataConsegna 11=CodCarta 12=Carta
-   13=QtaCarta 14=UMCarta 15=NotePrestampa 16=Fase 17=Reparto
-   18=Operatori 19=QtaProd 20=Note 21=DataInizio 22=DataFine
+   13=QtaCarta 14=UMCarta 15=NotePrestampa 16=Responsabile
+   17=Fase 18=Reparto 19=Operatori 20=QtaProd
+   21=Note 22=DataInizio 23=DataFine
    ========================= */
 
 /* 1. Commessa */
@@ -132,33 +133,36 @@ th:nth-child(14), td:nth-child(14) { width: 60px; text-align: center; }
 /* 15. Note Prestampa */
 th:nth-child(15), td:nth-child(15) { width: 190px; white-space: normal; }
 
-/* 16. Fase */
-th:nth-child(16), td:nth-child(16) { width: 135px; }
+/* 16. Responsabile */
+th:nth-child(16), td:nth-child(16) { width: 140px; white-space: normal; }
 
-/* 17. Reparto */
-th:nth-child(17), td:nth-child(17) { width: 125px; }
+/* 17. Fase */
+th:nth-child(17), td:nth-child(17) { width: 135px; }
 
-/* 18. Operatori */
-th:nth-child(18), td:nth-child(18) {
+/* 18. Reparto */
+th:nth-child(18), td:nth-child(18) { width: 125px; }
+
+/* 19. Operatori */
+th:nth-child(19), td:nth-child(19) {
     width: 125px;
     white-space: normal;
 }
 
-/* 19. Qta Prod. */
-th:nth-child(19), td:nth-child(19) {
+/* 20. Qta Prod. */
+th:nth-child(20), td:nth-child(20) {
     width: 70px;
     text-align: center;
 }
 
-/* 20. Note */
-th:nth-child(20), td:nth-child(20) {
+/* 21. Note */
+th:nth-child(21), td:nth-child(21) {
     width: 190px;
     white-space: normal;
 }
 
-/* 21. Data Inizio / 22. Data Fine */
-th:nth-child(21), td:nth-child(21),
-th:nth-child(22), td:nth-child(22) {
+/* 22. Data Inizio / 23. Data Fine */
+th:nth-child(22), td:nth-child(22),
+th:nth-child(23), td:nth-child(23) {
     width: 120px;
 }
 
@@ -539,6 +543,7 @@ tr:hover td {
                     <th>Qta Carta</th>
                     <th>UM Carta</th>
                     <th>Note Prestampa</th>
+                    <th>Responsabile</th>
                     <th>Fase</th>
                     <th>Reparto</th>
                     <th>Operatori</th>
@@ -581,6 +586,7 @@ tr:hover td {
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'qta_carta', this.innerText)">{{ $fase->ordine->qta_carta ?? '-' }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'UM_carta', this.innerText)">{{ $fase->ordine->UM_carta ?? '-' }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'note_prestampa', this.innerText)">{{ $fase->ordine->note_prestampa ?? '-' }}</td>
+                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'responsabile', this.innerText)">{{ $fase->ordine->responsabile ?? '-' }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'fase', this.innerText)">{{ $fase->faseCatalogo->nome ?? '-' }}</td>
                     <td>{{ $fase->faseCatalogo->reparto->nome ?? '-' }}</td>
                     <td>
