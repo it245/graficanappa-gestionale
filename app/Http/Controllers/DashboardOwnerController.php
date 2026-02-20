@@ -547,7 +547,8 @@ public function calcolaOreEPriorita($fase)
             }
         }
 
-        return view('owner.dettaglio_commessa', compact('commessa', 'fasi', 'preview'));
+        $ordine = $ordini->first();
+        return view('owner.dettaglio_commessa', compact('commessa', 'fasi', 'preview', 'ordine'));
     }
 
     public function eliminaFase(Request $request)

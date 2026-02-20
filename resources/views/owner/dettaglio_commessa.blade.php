@@ -117,6 +117,27 @@
 </div>
 @endif
 
+{{-- Info Onda --}}
+@if($ordine && ($ordine->note_prestampa || $ordine->responsabile || $ordine->commento_produzione))
+<div class="row mb-3" style="font-size:13px;">
+    @if($ordine->responsabile)
+    <div class="col-auto">
+        <strong>Responsabile:</strong> {{ $ordine->responsabile }}
+    </div>
+    @endif
+    @if($ordine->note_prestampa)
+    <div class="col-auto">
+        <strong>Note Prestampa:</strong> {{ $ordine->note_prestampa }}
+    </div>
+    @endif
+    @if($ordine->commento_produzione)
+    <div class="col">
+        <strong>Commento Produzione:</strong> {{ $ordine->commento_produzione }}
+    </div>
+    @endif
+</div>
+@endif
+
 @php
     $statoBg = [0 => '#e9ecef', 1 => '#cfe2ff', 2 => '#fff3cd', 3 => '#d1e7dd', 4 => '#c3c3c3'];
     $statoColor = [0 => '#333', 1 => '#084298', 2 => '#664d03', 3 => '#0f5132', 4 => '#1a1a1a'];

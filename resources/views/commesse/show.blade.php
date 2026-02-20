@@ -60,6 +60,9 @@
             <p><strong>Cliente:</strong> {{ $ordine->cliente_nome }}</p>
             <p><strong>Descrizione:</strong> {{ $ordine->descrizione }}</p>
             <p><strong>Quantita totale:</strong> {{ $ordine->qta_richiesta }} {{ $ordine->um }}</p>
+            @if($ordine->responsabile)<p><strong>Responsabile:</strong> {{ $ordine->responsabile }}</p>@endif
+            @if($ordine->note_prestampa)<p><strong>Note Prestampa:</strong> {{ $ordine->note_prestampa }}</p>@endif
+            @if($ordine->commento_produzione)<p><strong>Commento Produzione:</strong> {{ $ordine->commento_produzione }}</p>@endif
         </div>
     </div>
 
