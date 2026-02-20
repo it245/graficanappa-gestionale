@@ -260,16 +260,42 @@ class PrinectSyncService
             }
         }
 
-        // Aggiorna fasi di stampa per ogni commessa trovata
+        // Ordina le commesse per ultima attivita (chi ha l'attivita piu recente e quella corrente)
+        $ultimaAttivitaPerCommessa = [];
         foreach ($perCommessa as $commessa => $attivitaList) {
-            $this->aggiornaFaseStampaDaApi($commessa, $attivitaList);
+            $maxStart = null;
+            $maxEnd = null;
+            foreach ($attivitaList as $a) {
+                $st = $a['startTime'] ?? null;
+                $en = $a['endTime'] ?? null;
+                if ($st && (!$maxStart || $st > $maxStart)) $maxStart = $st;
+                if ($en && (!$maxEnd || $en > $maxEnd)) $maxEnd = $en;
+            }
+            $ultimaAttivitaPerCommessa[$commessa] = [
+                'lastStart' => $maxStart,
+                'lastEnd' => $maxEnd,
+            ];
+        }
+
+        // La commessa con l'attivita piu recente e quella corrente (ancora in corso)
+        uasort($ultimaAttivitaPerCommessa, fn($a, $b) => ($a['lastStart'] ?? '') <=> ($b['lastStart'] ?? ''));
+        $commesseOrdinate = array_keys($ultimaAttivitaPerCommessa);
+        $commessaCorrente = end($commesseOrdinate);
+
+        // Aggiorna fasi di stampa per ogni commessa
+        foreach ($perCommessa as $commessa => $attivitaList) {
+            $terminata = ($commessa !== $commessaCorrente && count($perCommessa) > 1);
+            $dataFine = $terminata ? ($ultimaAttivitaPerCommessa[$commessa]['lastEnd'] ?? null) : null;
+            $this->aggiornaFaseStampaDaApi($commessa, $attivitaList, $terminata, $dataFine);
         }
     }
 
     /**
      * Aggiorna fasi di stampa offset per una commessa con dati raw dalla API.
+     * $terminata: true se l'operatore ha gia iniziato un'altra commessa dopo questa
+     * $dataFineOverride: data_fine da impostare se terminata
      */
-    protected function aggiornaFaseStampaDaApi(string $commessa, array $attivitaApi): void
+    protected function aggiornaFaseStampaDaApi(string $commessa, array $attivitaApi, bool $terminata = false, ?string $dataFineOverride = null): void
     {
         $fasi = $this->troveFasiStampa($commessa);
         if ($fasi->isEmpty()) return;
@@ -317,12 +343,17 @@ class PrinectSyncService
 
         $operatoriMatched = $this->matchOperatori($operatoriPrinect);
 
+        $dataFine = null;
+        if ($terminata && $dataFineOverride) {
+            $dataFine = Carbon::parse($dataFineOverride);
+        }
+
         $this->aggiornaFasi($fasi, [
             'fogli_buoni' => $buoni,
             'fogli_scarto' => $scarto,
             'tempo_avviamento_sec' => $secAvv,
             'tempo_esecuzione_sec' => $secProd,
-        ], $dataInizio, $operatoriMatched);
+        ], $dataInizio, $operatoriMatched, $terminata, $dataFine);
     }
 
     /**
@@ -342,9 +373,9 @@ class PrinectSyncService
     /**
      * Aggiorna le fasi con fogli, tempi, stato, data_inizio e operatori.
      * Stato 2 = Avviato (come da dashboard operatore)
-     * Stato 3 = Terminato (quando fogli_buoni >= qta_carta)
+     * Stato 3 = Terminato (quando l'operatore avvia un'altra commessa)
      */
-    protected function aggiornaFasi($fasi, array $dati, $dataInizio, array $operatoriMatched): void
+    protected function aggiornaFasi($fasi, array $dati, $dataInizio, array $operatoriMatched, bool $terminata = false, $dataFine = null): void
     {
         if ($fasi->isEmpty()) return;
 
@@ -356,19 +387,16 @@ class PrinectSyncService
             $fase->tempo_avviamento_sec = $dati['tempo_avviamento_sec'];
             $fase->tempo_esecuzione_sec = $dati['tempo_esecuzione_sec'];
 
-            // Qta carta dall'ordine
-            $qtaCarta = $fase->ordine->qta_carta ?? 0;
-
             // Se la fase non e ancora avviata (stato 0 o 1), avviala (stato=2)
             if (in_array($fase->stato, [0, '0', 1, '1'])) {
                 $fase->stato = 2;
             }
 
-            // Se fogli_buoni >= qta_carta → fase terminata (stato=3) + data_fine
-            if ($qtaCarta > 0 && $dati['fogli_buoni'] >= $qtaCarta && $fase->stato != 3 && $fase->stato !== '3') {
+            // Se l'operatore ha avviato un'altra commessa → questa e terminata
+            if ($terminata && !in_array($fase->stato, [3, '3'])) {
                 $fase->stato = 3;
-                if (!$fase->data_fine) {
-                    $fase->data_fine = now();
+                if (!$fase->data_fine && $dataFine) {
+                    $fase->data_fine = $dataFine;
                 }
             }
 
