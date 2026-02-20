@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Exports\ReportDirezioneExport;
+use App\Exports\ReportPrinectExport;
 use Maatwebsite\Excel\Facades\Excel;
 
 class DashboardAdminController extends Controller
@@ -1198,6 +1199,250 @@ class DashboardAdminController extends Controller
         return Excel::download(
             new ReportDirezioneExport($kpi, $kpiPrev, $periodo),
             "ReportDirezione_{$periodo}_{$labelPeriodo}.xlsx"
+        );
+    }
+
+    // =====================================================================
+    // REPORT PRINECT MULTI-PERIODO
+    // =====================================================================
+
+    private function calcolaKpiPrinect($da, $a)
+    {
+        $attivita = PrinectAttivita::whereBetween('start_time', [$da, $a])->get();
+
+        $goodCycles = $attivita->sum('good_cycles');
+        $wasteCycles = $attivita->sum('waste_cycles');
+        $totaleFogli = $goodCycles + $wasteCycles;
+        $scartoPerc = $totaleFogli > 0 ? round(($wasteCycles / $totaleFogli) * 100, 1) : 0;
+        $nAttivita = $attivita->count();
+
+        // Tempo avviamento vs produzione
+        $secAvviamento = 0;
+        $secProduzione = 0;
+        foreach ($attivita as $att) {
+            if (!$att->start_time || !$att->end_time) continue;
+            $diff = $att->start_time->diffInSeconds($att->end_time);
+            if ($att->activity_name === 'Avviamento') {
+                $secAvviamento += $diff;
+            } else {
+                $secProduzione += $diff;
+            }
+        }
+        $secTotali = $secAvviamento + $secProduzione;
+        $oreTotali = round($secTotali / 3600, 1);
+        $oreAvviamento = round($secAvviamento / 3600, 1);
+        $oreProduzione = round($secProduzione / 3600, 1);
+        $rapportoAvvProd = $secTotali > 0 ? round(($secAvviamento / $secTotali) * 100, 1) : 0;
+
+        // Commesse lavorate
+        $nCommesse = $attivita->pluck('commessa_gestionale')->filter()->unique()->count();
+
+        // OEE (con ore turno pianificate proporzionali al periodo)
+        $velocitaNominale = 18000;
+        $giorni = max(Carbon::parse($da)->diffInDays(Carbon::parse($a)), 1);
+        $oreTurnoPianificate = 23 * $giorni;
+        $disponibilita = $oreTurnoPianificate > 0 ? min($secTotali / ($oreTurnoPianificate * 3600), 1) : 0;
+        $performance = ($secProduzione > 0 && $velocitaNominale > 0) ? min($totaleFogli / (($secProduzione / 3600) * $velocitaNominale), 1) : 0;
+        $qualita = $totaleFogli > 0 ? $goodCycles / $totaleFogli : 0;
+        $oee = round($disponibilita * $performance * $qualita * 100, 1);
+        $oeeDisp = round($disponibilita * 100, 1);
+        $oeePerf = round($performance * 100, 1);
+        $oeeQual = round($qualita * 100, 1);
+
+        // Trend giornaliero
+        $trendRaw = DB::table('prinect_attivita')
+            ->whereBetween('start_time', [$da, $a])
+            ->select(
+                DB::raw('DATE(start_time) as giorno'),
+                DB::raw('SUM(good_cycles) as good'),
+                DB::raw('SUM(waste_cycles) as waste'),
+                DB::raw('COUNT(*) as n_attivita')
+            )
+            ->groupBy('giorno')
+            ->orderBy('giorno')
+            ->get();
+
+        $trendGiornaliero = $trendRaw->map(function ($r) {
+            $totale = $r->good + $r->waste;
+            return (object)[
+                'giorno' => $r->giorno,
+                'good' => $r->good,
+                'waste' => $r->waste,
+                'totale' => $totale,
+                'scarto_pct' => $totale > 0 ? round(($r->waste / $totale) * 100, 1) : 0,
+                'n_attivita' => $r->n_attivita,
+            ];
+        });
+
+        // Trend tempo avviamento vs produzione giornaliero
+        $trendTempi = DB::table('prinect_attivita')
+            ->whereBetween('start_time', [$da, $a])
+            ->whereNotNull('end_time')
+            ->select(
+                DB::raw('DATE(start_time) as giorno'),
+                DB::raw("SUM(CASE WHEN activity_name = 'Avviamento' THEN TIMESTAMPDIFF(SECOND, start_time, end_time) ELSE 0 END) as sec_avv"),
+                DB::raw("SUM(CASE WHEN activity_name != 'Avviamento' THEN TIMESTAMPDIFF(SECOND, start_time, end_time) ELSE 0 END) as sec_prod")
+            )
+            ->groupBy('giorno')
+            ->orderBy('giorno')
+            ->get();
+
+        // Per operatore
+        $perOperatore = collect();
+        foreach ($attivita as $att) {
+            $nome = $att->operatore_prinect ?: 'N/D';
+            if (!$perOperatore->has($nome)) {
+                $perOperatore[$nome] = (object)[
+                    'nome' => $nome,
+                    'buoni' => 0, 'scarto' => 0,
+                    'sec_avv' => 0, 'sec_prod' => 0, 'n_attivita' => 0,
+                ];
+            }
+            $perOperatore[$nome]->buoni += $att->good_cycles;
+            $perOperatore[$nome]->scarto += $att->waste_cycles;
+            $diff = ($att->start_time && $att->end_time) ? $att->start_time->diffInSeconds($att->end_time) : 0;
+            if ($att->activity_name === 'Avviamento') {
+                $perOperatore[$nome]->sec_avv += $diff;
+            } else {
+                $perOperatore[$nome]->sec_prod += $diff;
+            }
+            $perOperatore[$nome]->n_attivita++;
+        }
+        $perOperatore = $perOperatore->sortByDesc('buoni')->values();
+
+        // Per commessa (top 15)
+        $perCommessa = $attivita->whereNotNull('commessa_gestionale')
+            ->where('commessa_gestionale', '!=', '')
+            ->groupBy('commessa_gestionale')
+            ->map(function ($gruppo) {
+                $secAvv = 0; $secProd = 0;
+                foreach ($gruppo as $a) {
+                    if (!$a->start_time || !$a->end_time) continue;
+                    $diff = $a->start_time->diffInSeconds($a->end_time);
+                    if ($a->activity_name === 'Avviamento') { $secAvv += $diff; } else { $secProd += $diff; }
+                }
+                $buoni = $gruppo->sum('good_cycles');
+                $scarto = $gruppo->sum('waste_cycles');
+                $totale = $buoni + $scarto;
+                return (object)[
+                    'commessa' => $gruppo->first()->commessa_gestionale,
+                    'job_name' => $gruppo->first()->prinect_job_name ?? '-',
+                    'buoni' => $buoni,
+                    'scarto' => $scarto,
+                    'scarto_pct' => $totale > 0 ? round(($scarto / $totale) * 100, 1) : 0,
+                    'sec_avv' => $secAvv,
+                    'sec_prod' => $secProd,
+                    'n_attivita' => $gruppo->count(),
+                ];
+            })
+            ->sortByDesc('buoni')
+            ->take(15)
+            ->values();
+
+        // Top 5 commesse per scarto %
+        $topScarto = $attivita->whereNotNull('commessa_gestionale')
+            ->where('commessa_gestionale', '!=', '')
+            ->groupBy('commessa_gestionale')
+            ->map(function ($gruppo) {
+                $buoni = $gruppo->sum('good_cycles');
+                $scarto = $gruppo->sum('waste_cycles');
+                $totale = $buoni + $scarto;
+                return (object)[
+                    'commessa' => $gruppo->first()->commessa_gestionale,
+                    'job_name' => $gruppo->first()->prinect_job_name ?? '-',
+                    'buoni' => $buoni,
+                    'scarto' => $scarto,
+                    'scarto_pct' => $totale > 0 ? round(($scarto / $totale) * 100, 1) : 0,
+                ];
+            })
+            ->filter(fn($c) => ($c->buoni + $c->scarto) > 50)
+            ->sortByDesc('scarto_pct')
+            ->take(5)
+            ->values();
+
+        return (object)[
+            'goodCycles' => $goodCycles,
+            'wasteCycles' => $wasteCycles,
+            'totaleFogli' => $totaleFogli,
+            'scartoPerc' => $scartoPerc,
+            'nAttivita' => $nAttivita,
+            'nCommesse' => $nCommesse,
+            'oreAvviamento' => $oreAvviamento,
+            'oreProduzione' => $oreProduzione,
+            'oreTotali' => $oreTotali,
+            'rapportoAvvProd' => $rapportoAvvProd,
+            'oee' => $oee,
+            'oeeDisp' => $oeeDisp,
+            'oeePerf' => $oeePerf,
+            'oeeQual' => $oeeQual,
+            'trendGiornaliero' => $trendGiornaliero,
+            'trendTempi' => $trendTempi,
+            'perOperatore' => $perOperatore,
+            'perCommessa' => $perCommessa,
+            'topScarto' => $topScarto,
+        ];
+    }
+
+    private function parsePeriodoPrinect($periodo)
+    {
+        $oggi = Carbon::today();
+        switch ($periodo) {
+            case 'settimana':
+                return [$oggi->copy()->subWeek(), $oggi->copy()->endOfDay(), $oggi->copy()->subWeeks(2), $oggi->copy()->subWeek()];
+            case 'trimestre':
+                return [$oggi->copy()->subMonths(3), $oggi->copy()->endOfDay(), $oggi->copy()->subMonths(6), $oggi->copy()->subMonths(3)];
+            case 'semestre':
+                return [$oggi->copy()->subMonths(6), $oggi->copy()->endOfDay(), $oggi->copy()->subMonths(12), $oggi->copy()->subMonths(6)];
+            case 'anno':
+                return [$oggi->copy()->subYear(), $oggi->copy()->endOfDay(), $oggi->copy()->subYears(2), $oggi->copy()->subYear()];
+            default: // mese
+                return [$oggi->copy()->subMonth(), $oggi->copy()->endOfDay(), $oggi->copy()->subMonths(2), $oggi->copy()->subMonth()];
+        }
+    }
+
+    public function reportPrinect(Request $request)
+    {
+        $periodo = $request->get('periodo', 'mese');
+        if (!in_array($periodo, ['settimana','mese','trimestre','semestre','anno'])) $periodo = 'mese';
+
+        [$da, $a, $daPrev, $aPrev] = $this->parsePeriodoPrinect($periodo);
+
+        $labelPeriodo = $da->format('d M Y') . ' - ' . $a->format('d M Y');
+        $labelPrecedente = $daPrev->format('d M Y') . ' - ' . $aPrev->format('d M Y');
+
+        $kpi = $this->calcolaKpiPrinect($da, $a);
+        $kpiPrev = $this->calcolaKpiPrinect($daPrev, $aPrev);
+
+        // Delta
+        $delta = (object)[];
+        $delta->goodCycles = $kpiPrev->goodCycles > 0 ? round((($kpi->goodCycles - $kpiPrev->goodCycles) / $kpiPrev->goodCycles) * 100, 1) : null;
+        $delta->wasteCycles = $kpiPrev->wasteCycles > 0 ? round((($kpi->wasteCycles - $kpiPrev->wasteCycles) / $kpiPrev->wasteCycles) * 100, 1) : null;
+        $delta->scartoPerc = round($kpi->scartoPerc - $kpiPrev->scartoPerc, 1);
+        $delta->oreTotali = $kpiPrev->oreTotali > 0 ? round((($kpi->oreTotali - $kpiPrev->oreTotali) / $kpiPrev->oreTotali) * 100, 1) : null;
+        $delta->nCommesse = $kpiPrev->nCommesse > 0 ? round((($kpi->nCommesse - $kpiPrev->nCommesse) / $kpiPrev->nCommesse) * 100, 1) : null;
+        $delta->oee = round($kpi->oee - $kpiPrev->oee, 1);
+
+        return view('admin.report_prinect', compact(
+            'periodo', 'labelPeriodo', 'labelPrecedente',
+            'kpi', 'kpiPrev', 'delta'
+        ));
+    }
+
+    public function reportPrinectExcel(Request $request)
+    {
+        $periodo = $request->get('periodo', 'mese');
+        if (!in_array($periodo, ['settimana','mese','trimestre','semestre','anno'])) $periodo = 'mese';
+
+        [$da, $a, $daPrev, $aPrev] = $this->parsePeriodoPrinect($periodo);
+
+        $kpi = $this->calcolaKpiPrinect($da, $a);
+        $kpiPrev = $this->calcolaKpiPrinect($daPrev, $aPrev);
+
+        $labelPeriodo = $da->format('d-m-Y') . '_' . $a->format('d-m-Y');
+
+        return Excel::download(
+            new ReportPrinectExport($kpi, $kpiPrev, $periodo),
+            "ReportPrinect_{$periodo}_{$labelPeriodo}.xlsx"
         );
     }
 }
