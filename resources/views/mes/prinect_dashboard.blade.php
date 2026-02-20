@@ -309,10 +309,14 @@
             <div class="table-responsive">
                 <table class="table table-sm op-table mb-0">
                     <thead class="table-light">
-                        <tr><th>Ora</th><th>Durata</th><th>Tipo</th><th>Job</th><th>Workstep</th><th class="text-center">Buoni</th><th class="text-center">Scarto</th><th>Operatore</th></tr>
+                        <tr><th>Ora</th><th>Durata</th><th>Tipo</th><th>Commessa</th><th>Job</th><th>Workstep</th><th class="text-center">Buoni</th><th class="text-center">Scarto</th><th>Operatore</th></tr>
                     </thead>
                     <tbody>
                         @foreach($attivitaOggi->take(20) as $att)
+                        @php
+                            $jId = $att->prinect_job_id ?? null;
+                            $comm = ($jId && is_numeric($jId)) ? str_pad($jId, 7, '0', STR_PAD_LEFT) . '-' . date('y') : null;
+                        @endphp
                         <tr class="@if($att->activity_name === 'Avviamento') table-warning @else table-success @endif">
                             <td>{{ $att->start_time ? $att->start_time->format('H:i:s') : '-' }}</td>
                             <td>
@@ -328,6 +332,7 @@
                                     <span class="badge bg-success">Prod</span>
                                 @endif
                             </td>
+                            <td class="fw-bold">@if($comm)<a href="{{ route('mes.prinect.report', $comm) }}">{{ $comm }}</a>@else - @endif</td>
                             <td class="small">{{ $att->prinect_job_name ?? '-' }}</td>
                             <td class="small">{{ $att->workstep_name ?? '-' }}</td>
                             <td class="text-center">@if($att->good_cycles > 0)<span class="text-success fw-bold">{{ number_format($att->good_cycles) }}</span>@else - @endif</td>
