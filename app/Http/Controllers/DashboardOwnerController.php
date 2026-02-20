@@ -191,8 +191,23 @@ public function calcolaOreEPriorita($fase)
         return $fase;
     }
 
-    public function index()
+    public function index(PrinectService $prinect, PrinectSyncService $syncService)
     {
+        // Sync live Prinect: aggiorna fasi stampa da attivita di oggi
+        try {
+            $deviceId = env('PRINECT_DEVICE_XL106_ID', '4001');
+            $oggi = Carbon::today()->format('Y-m-d\TH:i:sP');
+            $ora = Carbon::now()->format('Y-m-d\TH:i:sP');
+            $apiOggi = $prinect->getDeviceActivity($deviceId, $oggi, $ora);
+            $rawOggi = collect($apiOggi['activities'] ?? [])
+                ->filter(fn($a) => !empty($a['id']))
+                ->values()
+                ->toArray();
+            $syncService->sincronizzaDaLive($rawOggi);
+        } catch (\Exception $e) {
+            // Prinect non disponibile, continua senza sync
+        }
+
         $fasi = OrdineFase::with(['ordine', 'faseCatalogo', 'operatori' => fn($q) => $q->select('operatori.id', 'nome')])
             ->where('stato', '<', 3)
             ->get()
@@ -230,20 +245,41 @@ public function calcolaOreEPriorita($fase)
         // KPI giornalieri
         $oggi = Carbon::today();
 
+        // Fasi completate oggi: dalla pivot O dal campo ordine_fasi.data_fine
         $fasiCompletateOggi = OrdineFase::where('stato', '>=', 3)
-            ->whereHas('operatori', fn($q) => $q->whereDate('fase_operatore.data_fine', $oggi))
+            ->where(function ($q) use ($oggi) {
+                $q->whereHas('operatori', fn($q2) => $q2->whereDate('fase_operatore.data_fine', $oggi))
+                  ->orWhereDate('data_fine', $oggi);
+            })
             ->count();
 
+        // Ore lavorate oggi: dalla pivot + dal campo ordine_fasi per fasi Prinect
         $pivotOggi = DB::table('fase_operatore')
             ->whereDate('data_fine', $oggi)
             ->whereNotNull('data_inizio')
             ->get();
-        $oreLavorateOggi = round($pivotOggi->sum(function ($row) {
+        $orePivot = $pivotOggi->sum(function ($row) {
             return Carbon::parse($row->data_fine)->diffInSeconds(Carbon::parse($row->data_inizio)) / 3600;
-        }), 1);
+        });
+
+        // Aggiungi ore da fasi Prinect (ordine_fasi.data_fine oggi, senza pivot data_fine)
+        $fasiPrinectOggi = OrdineFase::where('stato', '>=', 3)
+            ->whereDate('data_fine', $oggi)
+            ->whereNotNull('data_inizio')
+            ->whereDoesntHave('operatori', fn($q) => $q->whereDate('fase_operatore.data_fine', $oggi))
+            ->get();
+        $orePrinect = $fasiPrinectOggi->sum(function ($fase) {
+            $inizio = Carbon::parse($fase->getAttributes()['data_inizio']);
+            $fine = Carbon::parse($fase->getAttributes()['data_fine']);
+            return $fine->diffInSeconds($inizio) / 3600;
+        });
+        $oreLavorateOggi = round($orePivot + $orePrinect, 1);
 
         $commesseSpediteOggi = OrdineFase::where('stato', 4)
-            ->whereHas('operatori', fn($q) => $q->whereDate('fase_operatore.data_fine', $oggi))
+            ->where(function ($q) use ($oggi) {
+                $q->whereHas('operatori', fn($q2) => $q2->whereDate('fase_operatore.data_fine', $oggi))
+                  ->orWhereDate('data_fine', $oggi);
+            })
             ->with('ordine')
             ->get()
             ->pluck('ordine.commessa')
