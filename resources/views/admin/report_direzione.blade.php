@@ -505,6 +505,21 @@
 document.addEventListener('DOMContentLoaded', function() {
     const colori = ['#0d6efd','#198754','#dc3545','#fd7e14','#6f42c1','#20c997','#0dcaf0','#ffc107','#6610f2','#d63384'];
 
+    // Granularita adattiva per etichette
+    const granularita = @json($kpi->granularita);
+    const mesiIt = ['','Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
+    function formatLabel(val) {
+        if (granularita === 'mese') {
+            const p = val.split('-');
+            return mesiIt[parseInt(p[1])] + ' ' + p[0];
+        } else if (granularita === 'settimana') {
+            return 'S' + val.split('-W')[1] + ' ' + val.split('-')[0];
+        } else {
+            const p = val.split('-');
+            return p[2] + '/' + p[1];
+        }
+    }
+
     // --- 1. Trend Produzione (linea + barre) ---
     const trendLabels = @json(array_keys($kpi->trendGiornaliero));
     const trendFasi = @json(array_values($kpi->trendGiornaliero));
@@ -512,10 +527,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     new Chart(document.getElementById('chartTrend'), {
         data: {
-            labels: trendLabels.map(d => {
-                const p = d.split('-');
-                return p[2] + '/' + p[1];
-            }),
+            labels: trendLabels.map(d => formatLabel(d)),
             datasets: [
                 {
                     type: 'bar',
@@ -632,10 +644,7 @@ document.addEventListener('DOMContentLoaded', function() {
         new Chart(document.getElementById('chartScarto'), {
             type: 'line',
             data: {
-                labels: scartoTrend.map(r => {
-                    const p = r.giorno.split('-');
-                    return p[2] + '/' + p[1];
-                }),
+                labels: scartoTrend.map(r => formatLabel(r.periodo)),
                 datasets: [{
                     label: 'Scarto %',
                     data: scartoTrend.map(r => r.scarto_pct),

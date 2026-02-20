@@ -787,7 +787,7 @@ class DashboardAdminController extends Controller
     // REPORT DIREZIONE MULTI-PERIODO
     // =====================================================================
 
-    private function calcolaKpiPeriodo($da, $a)
+    private function calcolaKpiPeriodo($da, $a, $periodo = 'mese')
     {
         $oggi = Carbon::today();
 
@@ -927,7 +927,18 @@ class DashboardAdminController extends Controller
           ->sortByDesc('indice_bottleneck')
           ->values();
 
-        // --- Trend giornaliero ---
+        // --- Trend produzione (granularita adattiva) ---
+        if (in_array($periodo, ['anno'])) {
+            $groupExprFasi = DB::raw("DATE_FORMAT(fase_operatore.data_fine, '%Y-%m') as periodo");
+            $granularita = 'mese';
+        } elseif (in_array($periodo, ['trimestre', 'semestre'])) {
+            $groupExprFasi = DB::raw("CONCAT(YEAR(fase_operatore.data_fine), '-W', LPAD(WEEK(fase_operatore.data_fine, 1), 2, '0')) as periodo");
+            $granularita = 'settimana';
+        } else {
+            $groupExprFasi = DB::raw("DATE(fase_operatore.data_fine) as periodo");
+            $granularita = 'giorno';
+        }
+
         $trendRaw = DB::table('fase_operatore')
             ->join('ordine_fasi', 'ordine_fasi.id', '=', 'fase_operatore.fase_id')
             ->where('ordine_fasi.stato', '>=', 3)
@@ -935,16 +946,16 @@ class DashboardAdminController extends Controller
             ->whereNotNull('fase_operatore.data_inizio')
             ->whereNotNull('fase_operatore.data_fine')
             ->select(
-                DB::raw('DATE(fase_operatore.data_fine) as giorno'),
+                $groupExprFasi,
                 DB::raw('COUNT(*) as fasi'),
                 DB::raw('SUM(TIMESTAMPDIFF(SECOND, fase_operatore.data_inizio, fase_operatore.data_fine)) as secondi')
             )
-            ->groupBy('giorno')
-            ->orderBy('giorno')
+            ->groupBy('periodo')
+            ->orderBy('periodo')
             ->get();
 
-        $trendGiornaliero = $trendRaw->pluck('fasi', 'giorno')->toArray();
-        $oreTrendGiornaliero = $trendRaw->mapWithKeys(fn($r) => [$r->giorno => round($r->secondi / 3600, 1)])->toArray();
+        $trendGiornaliero = $trendRaw->pluck('fasi', 'periodo')->toArray();
+        $oreTrendGiornaliero = $trendRaw->mapWithKeys(fn($r) => [$r->periodo => round($r->secondi / 3600, 1)])->toArray();
 
         // --- Performance operatori ---
         $operatoriPerf = DB::table('fase_operatore')
@@ -991,16 +1002,24 @@ class DashboardAdminController extends Controller
             $m->percentuale = $totalePause > 0 ? round(($m->totale / $totalePause) * 100, 1) : 0;
         });
 
-        // --- Trend scarto Prinect giornaliero ---
+        // --- Trend scarto Prinect (granularita adattiva) ---
+        if (in_array($periodo, ['anno'])) {
+            $groupExprPrinect = DB::raw("DATE_FORMAT(start_time, '%Y-%m') as periodo");
+        } elseif (in_array($periodo, ['trimestre', 'semestre'])) {
+            $groupExprPrinect = DB::raw("CONCAT(YEAR(start_time), '-W', LPAD(WEEK(start_time, 1), 2, '0')) as periodo");
+        } else {
+            $groupExprPrinect = DB::raw("DATE(start_time) as periodo");
+        }
+
         $prinectTrend = DB::table('prinect_attivita')
             ->whereBetween('start_time', [$da, $a])
             ->select(
-                DB::raw('DATE(start_time) as giorno'),
+                $groupExprPrinect,
                 DB::raw('SUM(good_cycles) as good'),
                 DB::raw('SUM(waste_cycles) as waste')
             )
-            ->groupBy('giorno')
-            ->orderBy('giorno')
+            ->groupBy('periodo')
+            ->orderBy('periodo')
             ->get()
             ->map(function ($r) {
                 $totale = $r->good + $r->waste;
@@ -1085,6 +1104,7 @@ class DashboardAdminController extends Controller
             'topScartoCommesse' => $topScartoCommesse,
             'topClienti' => $topClienti,
             'dettaglioCompletate' => $dettaglioCompletate,
+            'granularita' => $granularita,
         ];
     }
 
@@ -1130,8 +1150,8 @@ class DashboardAdminController extends Controller
         $labelPeriodo = $da->format('d M Y') . ' - ' . $a->format('d M Y');
         $labelPrecedente = $daPrev->format('d M Y') . ' - ' . $aPrev->format('d M Y');
 
-        $kpi = $this->calcolaKpiPeriodo($da, $a);
-        $kpiPrev = $this->calcolaKpiPeriodo($daPrev, $aPrev);
+        $kpi = $this->calcolaKpiPeriodo($da, $a, $periodo);
+        $kpiPrev = $this->calcolaKpiPeriodo($daPrev, $aPrev, $periodo);
 
         // Calcolo delta %
         $delta = (object)[];
@@ -1191,8 +1211,8 @@ class DashboardAdminController extends Controller
                 break;
         }
 
-        $kpi = $this->calcolaKpiPeriodo($da, $a);
-        $kpiPrev = $this->calcolaKpiPeriodo($daPrev, $aPrev);
+        $kpi = $this->calcolaKpiPeriodo($da, $a, $periodo);
+        $kpiPrev = $this->calcolaKpiPeriodo($daPrev, $aPrev, $periodo);
 
         $labelPeriodo = $da->format('d-m-Y') . '_' . $a->format('d-m-Y');
 
@@ -1206,7 +1226,7 @@ class DashboardAdminController extends Controller
     // REPORT PRINECT MULTI-PERIODO
     // =====================================================================
 
-    private function calcolaKpiPrinect($da, $a)
+    private function calcolaKpiPrinect($da, $a, $periodo = 'mese')
     {
         $attivita = PrinectAttivita::whereBetween('start_time', [$da, $a])->get();
 
@@ -1237,10 +1257,17 @@ class DashboardAdminController extends Controller
         // Commesse lavorate
         $nCommesse = $attivita->pluck('commessa_gestionale')->filter()->unique()->count();
 
-        // OEE (con ore turno pianificate proporzionali al periodo)
+        // OEE: giorni lavorativi effettivi (lun-sab) nel periodo
         $velocitaNominale = 18000;
-        $giorni = max(Carbon::parse($da)->diffInDays(Carbon::parse($a)), 1);
-        $oreTurnoPianificate = 23 * $giorni;
+        $giorniLav = 0;
+        $cursor = Carbon::parse($da)->copy();
+        $fine = Carbon::parse($a);
+        while ($cursor->lte($fine)) {
+            if ($cursor->dayOfWeek !== Carbon::SUNDAY) $giorniLav++;
+            $cursor->addDay();
+        }
+        $giorniLav = max($giorniLav, 1);
+        $oreTurnoPianificate = 23 * $giorniLav;
         $disponibilita = $oreTurnoPianificate > 0 ? min($secTotali / ($oreTurnoPianificate * 3600), 1) : 0;
         $performance = ($secProduzione > 0 && $velocitaNominale > 0) ? min($totaleFogli / (($secProduzione / 3600) * $velocitaNominale), 1) : 0;
         $qualita = $totaleFogli > 0 ? $goodCycles / $totaleFogli : 0;
@@ -1249,42 +1276,62 @@ class DashboardAdminController extends Controller
         $oeePerf = round($performance * 100, 1);
         $oeeQual = round($qualita * 100, 1);
 
-        // Trend giornaliero
+        // Granularita trend: giorno per sett/mese, settimana per trimestre/semestre, mese per anno
+        if (in_array($periodo, ['anno'])) {
+            $groupExpr = DB::raw("DATE_FORMAT(start_time, '%Y-%m') as periodo");
+            $granularita = 'mese';
+        } elseif (in_array($periodo, ['trimestre', 'semestre'])) {
+            $groupExpr = DB::raw("CONCAT(YEAR(start_time), '-W', LPAD(WEEK(start_time, 1), 2, '0')) as periodo");
+            $granularita = 'settimana';
+        } else {
+            $groupExpr = DB::raw("DATE(start_time) as periodo");
+            $granularita = 'giorno';
+        }
+
+        // Trend produzione
         $trendRaw = DB::table('prinect_attivita')
             ->whereBetween('start_time', [$da, $a])
             ->select(
-                DB::raw('DATE(start_time) as giorno'),
+                $groupExpr,
                 DB::raw('SUM(good_cycles) as good'),
                 DB::raw('SUM(waste_cycles) as waste'),
                 DB::raw('COUNT(*) as n_attivita')
             )
-            ->groupBy('giorno')
-            ->orderBy('giorno')
+            ->groupBy('periodo')
+            ->orderBy('periodo')
             ->get();
 
         $trendGiornaliero = $trendRaw->map(function ($r) {
             $totale = $r->good + $r->waste;
             return (object)[
-                'giorno' => $r->giorno,
-                'good' => $r->good,
-                'waste' => $r->waste,
+                'giorno' => $r->periodo,
+                'good' => (int) $r->good,
+                'waste' => (int) $r->waste,
                 'totale' => $totale,
                 'scarto_pct' => $totale > 0 ? round(($r->waste / $totale) * 100, 1) : 0,
-                'n_attivita' => $r->n_attivita,
+                'n_attivita' => (int) $r->n_attivita,
             ];
         });
 
-        // Trend tempo avviamento vs produzione giornaliero
+        // Trend tempo avviamento vs produzione
+        if (in_array($periodo, ['anno'])) {
+            $groupExpr2 = DB::raw("DATE_FORMAT(start_time, '%Y-%m') as periodo");
+        } elseif (in_array($periodo, ['trimestre', 'semestre'])) {
+            $groupExpr2 = DB::raw("CONCAT(YEAR(start_time), '-W', LPAD(WEEK(start_time, 1), 2, '0')) as periodo");
+        } else {
+            $groupExpr2 = DB::raw("DATE(start_time) as periodo");
+        }
+
         $trendTempi = DB::table('prinect_attivita')
             ->whereBetween('start_time', [$da, $a])
             ->whereNotNull('end_time')
             ->select(
-                DB::raw('DATE(start_time) as giorno'),
+                $groupExpr2,
                 DB::raw("SUM(CASE WHEN activity_name = 'Avviamento' THEN TIMESTAMPDIFF(SECOND, start_time, end_time) ELSE 0 END) as sec_avv"),
                 DB::raw("SUM(CASE WHEN activity_name != 'Avviamento' THEN TIMESTAMPDIFF(SECOND, start_time, end_time) ELSE 0 END) as sec_prod")
             )
-            ->groupBy('giorno')
-            ->orderBy('giorno')
+            ->groupBy('periodo')
+            ->orderBy('periodo')
             ->get();
 
         // Per operatore
@@ -1377,6 +1424,7 @@ class DashboardAdminController extends Controller
             'oeeQual' => $oeeQual,
             'trendGiornaliero' => $trendGiornaliero,
             'trendTempi' => $trendTempi,
+            'granularita' => $granularita,
             'perOperatore' => $perOperatore,
             'perCommessa' => $perCommessa,
             'topScarto' => $topScarto,
@@ -1410,8 +1458,8 @@ class DashboardAdminController extends Controller
         $labelPeriodo = $da->format('d M Y') . ' - ' . $a->format('d M Y');
         $labelPrecedente = $daPrev->format('d M Y') . ' - ' . $aPrev->format('d M Y');
 
-        $kpi = $this->calcolaKpiPrinect($da, $a);
-        $kpiPrev = $this->calcolaKpiPrinect($daPrev, $aPrev);
+        $kpi = $this->calcolaKpiPrinect($da, $a, $periodo);
+        $kpiPrev = $this->calcolaKpiPrinect($daPrev, $aPrev, $periodo);
 
         // Delta
         $delta = (object)[];
@@ -1435,8 +1483,8 @@ class DashboardAdminController extends Controller
 
         [$da, $a, $daPrev, $aPrev] = $this->parsePeriodoPrinect($periodo);
 
-        $kpi = $this->calcolaKpiPrinect($da, $a);
-        $kpiPrev = $this->calcolaKpiPrinect($daPrev, $aPrev);
+        $kpi = $this->calcolaKpiPrinect($da, $a, $periodo);
+        $kpiPrev = $this->calcolaKpiPrinect($daPrev, $aPrev, $periodo);
 
         $labelPeriodo = $da->format('d-m-Y') . '_' . $a->format('d-m-Y');
 

@@ -357,13 +357,30 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const colori = ['#0d6efd','#198754','#dc3545','#fd7e14','#6f42c1','#20c997','#0dcaf0','#ffc107','#6610f2','#d63384'];
+    const granularita = @json($kpi->granularita);
+    const mesiIt = ['','Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
+
+    function formatLabel(val) {
+        if (granularita === 'mese') {
+            // formato: 2026-02
+            const p = val.split('-');
+            return mesiIt[parseInt(p[1])] + ' ' + p[0];
+        } else if (granularita === 'settimana') {
+            // formato: 2026-W07
+            return 'S' + val.split('-W')[1] + ' ' + val.split('-')[0];
+        } else {
+            // formato: 2026-02-18
+            const p = val.split('-');
+            return p[2] + '/' + p[1];
+        }
+    }
 
     // --- 1. Trend Produzione (barre impilate buoni + scarto) ---
     const trend = @json($kpi->trendGiornaliero);
     new Chart(document.getElementById('chartProd'), {
         type: 'bar',
         data: {
-            labels: trend.map(r => { const p = r.giorno.split('-'); return p[2]+'/'+p[1]; }),
+            labels: trend.map(r => formatLabel(r.giorno)),
             datasets: [
                 { label: 'Buoni', data: trend.map(r => r.good), backgroundColor: '#198754', borderRadius: 2 },
                 { label: 'Scarto', data: trend.map(r => r.waste), backgroundColor: '#dc3545', borderRadius: 2 }
@@ -380,7 +397,7 @@ document.addEventListener('DOMContentLoaded', function() {
     new Chart(document.getElementById('chartScarto'), {
         type: 'line',
         data: {
-            labels: trend.map(r => { const p = r.giorno.split('-'); return p[2]+'/'+p[1]; }),
+            labels: trend.map(r => formatLabel(r.giorno)),
             datasets: [{
                 label: 'Scarto %',
                 data: trend.map(r => r.scarto_pct),
@@ -396,12 +413,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // --- 3. Tempo Avviamento vs Produzione giornaliero (barre impilate) ---
+    // --- 3. Tempo Avviamento vs Produzione (barre impilate) ---
     const tempi = @json($kpi->trendTempi);
     new Chart(document.getElementById('chartTempi'), {
         type: 'bar',
         data: {
-            labels: tempi.map(r => { const p = r.giorno.split('-'); return p[2]+'/'+p[1]; }),
+            labels: tempi.map(r => formatLabel(r.periodo)),
             datasets: [
                 { label: 'Avviamento (min)', data: tempi.map(r => Math.round(r.sec_avv / 60)), backgroundColor: '#ffc107', borderRadius: 2 },
                 { label: 'Produzione (min)', data: tempi.map(r => Math.round(r.sec_prod / 60)), backgroundColor: '#0d6efd', borderRadius: 2 }
