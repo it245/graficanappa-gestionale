@@ -21,3 +21,6 @@ Artisan::command('priorita:ricalcola', function () {
 
 // Sync automatico Onda ogni ora (lun-sab, 6:00-22:00)
 Schedule::command('onda:sync')->hourly()->between('6:00', '22:00')->days([1, 2, 3, 4, 5, 6]);
+
+// Sync bidirezionale Excel ↔ DB ogni 2 minuti (lun-sab, 6:00-22:00)
+Schedule::command('excel:sync')->everyTwoMinutes()->between('6:00', '22:00')->days([1, 2, 3, 4, 5, 6])->withoutOverlapping();

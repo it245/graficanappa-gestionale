@@ -16,6 +16,7 @@ use App\Services\FaseStatoService;
 use App\Services\OndaSyncService;
 use App\Http\Services\PrinectService;
 use App\Http\Services\PrinectSyncService;
+use App\Http\Services\ExcelSyncService;
 
 class DashboardOwnerController extends Controller
 {
@@ -193,6 +194,9 @@ public function calcolaOreEPriorita($fase)
 
     public function index(PrinectService $prinect, PrinectSyncService $syncService)
     {
+        // Sync Excel: importa eventuali modifiche dal file
+        ExcelSyncService::syncIfModified();
+
         // Sync live Prinect: aggiorna fasi stampa da attivita di oggi
         try {
             $deviceId = env('PRINECT_DEVICE_XL106_ID', '4001');
@@ -259,7 +263,7 @@ public function calcolaOreEPriorita($fase)
             ->whereNotNull('data_inizio')
             ->get();
         $orePivot = $pivotOggi->sum(function ($row) {
-            return Carbon::parse($row->data_fine)->diffInSeconds(Carbon::parse($row->data_inizio)) / 3600;
+            return abs(Carbon::parse($row->data_fine)->diffInSeconds(Carbon::parse($row->data_inizio))) / 3600;
         });
 
         // Aggiungi ore da fasi Prinect (ordine_fasi.data_fine oggi, senza pivot data_fine)
@@ -271,7 +275,7 @@ public function calcolaOreEPriorita($fase)
         $orePrinect = $fasiPrinectOggi->sum(function ($fase) {
             $inizio = Carbon::parse($fase->getAttributes()['data_inizio']);
             $fine = Carbon::parse($fase->getAttributes()['data_fine']);
-            return $fine->diffInSeconds($inizio) / 3600;
+            return abs($fine->diffInSeconds($inizio)) / 3600;
         });
         $oreLavorateOggi = round($orePivot + $orePrinect, 1);
 
@@ -287,6 +291,9 @@ public function calcolaOreEPriorita($fase)
             ->count();
 
         $fasiAttive = OrdineFase::where('stato', 2)->count();
+
+        // Sync Excel: aggiorna il file con i dati freschi
+        ExcelSyncService::exportToExcel();
 
         return view('owner.dashboard', compact(
             'fasi', 'reparti', 'fasiCatalogo', 'spedizioniOggi',
@@ -352,12 +359,14 @@ public function calcolaOreEPriorita($fase)
 
                 FaseStatoService::ricalcolaStati($fase->ordine_id);
 
+                app()->terminating(fn() => ExcelSyncService::exportToExcel());
                 return response()->json(['success' => true, 'reload' => true]);
             }
         } else {
             return response()->json(['success' => false, 'messaggio' => 'Campo non aggiornabile'], 422);
         }
 
+        app()->terminating(fn() => ExcelSyncService::exportToExcel());
         return response()->json(['success' => true]);
     }
 
@@ -407,15 +416,26 @@ public function calcolaOreEPriorita($fase)
         }
     }
 
-    public function fasiTerminate()
+    public function fasiTerminate(Request $request)
 {
-    $fasiTerminate = OrdineFase::with([
+    $soloOggi = $request->boolean('oggi');
+    $oggi = Carbon::today();
+
+    $query = OrdineFase::with([
             'ordine.reparto',
             'faseCatalogo.reparto',
             'operatori'
         ])
-        ->whereIn('stato', [3, 4])
-        ->get()
+        ->whereIn('stato', [3, 4]);
+
+    if ($soloOggi) {
+        $query->where(function ($q) use ($oggi) {
+            $q->whereHas('operatori', fn($q2) => $q2->whereDate('fase_operatore.data_fine', $oggi))
+              ->orWhereDate('data_fine', $oggi);
+        });
+    }
+
+    $fasiTerminate = $query->get()
         ->map(function ($fase) {
 
             // Calcolo ore e priorità
@@ -474,7 +494,7 @@ public function calcolaOreEPriorita($fase)
         })
         ->sortBy('priorita');
 
-    return view('owner.fasi_terminate', compact('fasiTerminate'));
+    return view('owner.fasi_terminate', compact('fasiTerminate', 'soloOggi'));
 }
 
     public function dettaglioCommessa($commessa, PrinectService $prinect, PrinectSyncService $syncService)
@@ -558,6 +578,7 @@ public function calcolaOreEPriorita($fase)
         // Ricalcola stati delle fasi successive
         FaseStatoService::ricalcolaStati($fase->ordine_id);
 
+        app()->terminating(fn() => ExcelSyncService::exportToExcel());
         return response()->json(['success' => true, 'messaggio' => 'Stato aggiornato']);
     }
 

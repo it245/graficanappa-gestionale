@@ -317,12 +317,12 @@ tr:hover td {
 
     {{-- KPI GIORNALIERI --}}
     <div class="d-flex gap-2 mb-2 mx-0" style="max-width:920px;">
-        <div class="d-flex align-items-center p-2 rounded flex-fill" style="background:#d1e7dd; height:56px; min-width:200px;">
+        <a href="{{ route('owner.fasiTerminate', ['oggi' => 1]) }}" class="d-flex align-items-center p-2 rounded flex-fill text-decoration-none" style="background:#d1e7dd; height:56px; min-width:200px; cursor:pointer;" title="Visualizza fasi completate oggi">
             <div>
                 <div style="font-size:11px; color:#555; line-height:1.2;">Fasi completate oggi</div>
                 <div style="font-size:22px; font-weight:700; color:#198754; line-height:1;">{{ $fasiCompletateOggi }}</div>
             </div>
-        </div>
+        </a>
         <div class="d-flex align-items-center p-2 rounded flex-fill" style="background:#cfe2ff; height:56px; min-width:200px;">
             <div>
                 <div style="font-size:11px; color:#555; line-height:1.2;">Ore lavorate oggi</div>

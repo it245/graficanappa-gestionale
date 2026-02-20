@@ -235,7 +235,10 @@ th:nth-child(21), td:nth-child(21) {
     <a href="{{ route('owner.dashboard') }}" class="btn-back">← Torna alla Dashboard</a>
 </div>
 
-<h2>Fasi Terminate</h2>
+<h2>Fasi Terminate{{ !empty($soloOggi) ? ' - Oggi' : '' }}</h2>
+@if(!empty($soloOggi))
+    <a href="{{ route('owner.fasiTerminate') }}" class="btn btn-sm btn-outline-secondary mb-2 ms-1">Mostra tutte le fasi terminate</a>
+@endif
 
 <!-- KPI -->
 <div class="row mx-1 mb-2">
