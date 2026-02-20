@@ -15,7 +15,7 @@ class Ordine extends Model
         'qta_richiesta', 'qta_prodotta', 'um', 'stato', 'priorita',
         'data_registrazione', 'data_prevista_consegna', 'pronto_consegna', 'note',
         'ore_lavorate', 'timeout_macchina','cod_carta','carta','qta_carta','UM_carta',
-        'note_prestampa', 'responsabile'
+        'note_prestampa', 'responsabile', 'commento_produzione'
     ];
 
     public function articoli()

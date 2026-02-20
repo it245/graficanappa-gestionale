@@ -121,16 +121,17 @@ class ExcelSyncService
                         'UM_carta' => self::normalizeValue($row['O'] ?? null),
                         'note_prestampa' => self::normalizeValue($row['P'] ?? null),
                         'responsabile' => self::normalizeValue($row['Q'] ?? null),
+                        'commento_produzione' => self::normalizeValue($row['R'] ?? null),
                         'stato' => 0,
                     ]);
 
                     $excelStato = self::normalizeValue($row['C'] ?? null);
                     OrdineFase::create([
                         'ordine_id' => $ordine->id,
-                        'fase' => self::normalizeValue($row['R'] ?? null) ?: '-',
+                        'fase' => self::normalizeValue($row['S'] ?? null) ?: '-',
                         'stato' => ($excelStato !== '' && is_numeric($excelStato)) ? (int) $excelStato : 0,
-                        'qta_prod' => self::parseNumeric($row['U'] ?? null),
-                        'note' => self::normalizeValue($row['V'] ?? null),
+                        'qta_prod' => self::parseNumeric($row['V'] ?? null),
+                        'note' => self::normalizeValue($row['W'] ?? null),
                         'priorita' => self::parseNumeric($row['I'] ?? null),
                     ]);
                 }
@@ -257,21 +258,27 @@ class ExcelSyncService
                 $ordineChanged = true;
             }
 
-            // U - Qta Prod
-            $excelQtaProd = self::parseNumeric($row['U'] ?? null);
-            if (self::isNumericChanged($row['U'] ?? null, $fase->qta_prod)) {
+            // R - Commento Produzione
+            if (self::isTextChanged($row['R'] ?? null, $ordine->commento_produzione)) {
+                $ordine->commento_produzione = self::normalizeValue($row['R'] ?? null);
+                $ordineChanged = true;
+            }
+
+            // V - Qta Prod
+            $excelQtaProd = self::parseNumeric($row['V'] ?? null);
+            if (self::isNumericChanged($row['V'] ?? null, $fase->qta_prod)) {
                 $fase->qta_prod = $excelQtaProd;
                 $changed = true;
             }
 
-            // V - Note
-            if (self::isTextChanged($row['V'] ?? null, $fase->note)) {
-                $fase->note = self::normalizeValue($row['V'] ?? null);
+            // W - Note
+            if (self::isTextChanged($row['W'] ?? null, $fase->note)) {
+                $fase->note = self::normalizeValue($row['W'] ?? null);
                 $changed = true;
             }
 
-            // W - Data Inizio
-            $excelDataInizio = self::parseExcelDateTime($row['W'] ?? null);
+            // X - Data Inizio
+            $excelDataInizio = self::parseExcelDateTime($row['X'] ?? null);
             $dbDataInizio = $fase->getAttributes()['data_inizio'] ?? null;
             $dbDataInizio = $dbDataInizio ? Carbon::parse($dbDataInizio)->format('Y-m-d H:i:s') : null;
             if (self::isDateTimeChanged($excelDataInizio, $dbDataInizio)) {
@@ -279,8 +286,8 @@ class ExcelSyncService
                 $changed = true;
             }
 
-            // X - Data Fine
-            $excelDataFine = self::parseExcelDateTime($row['X'] ?? null);
+            // Y - Data Fine
+            $excelDataFine = self::parseExcelDateTime($row['Y'] ?? null);
             $dbDataFine = $fase->getAttributes()['data_fine'] ?? null;
             $dbDataFine = $dbDataFine ? Carbon::parse($dbDataFine)->format('Y-m-d H:i:s') : null;
             if (self::isDateTimeChanged($excelDataFine, $dbDataFine)) {
@@ -292,7 +299,7 @@ class ExcelSyncService
                 $fase->save();
 
                 // Controlla completamento se qta_prod cambiata
-                if (self::isNumericChanged($row['U'] ?? null, $fase->getOriginal('qta_prod'))) {
+                if (self::isNumericChanged($row['V'] ?? null, $fase->getOriginal('qta_prod'))) {
                     FaseStatoService::controllaCompletamento($fase->id);
                 }
 

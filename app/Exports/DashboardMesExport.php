@@ -28,7 +28,7 @@ class DashboardMesExport implements FromCollection, WithHeadings, WithMapping, W
         return [
             'ID', 'Commessa', 'Stato', 'Cliente', 'Cod Articolo', 'Descrizione',
             'Qta', 'UM', 'Priorita', 'Data Registrazione', 'Data Prevista Consegna',
-            'Cod Carta', 'Carta', 'Qta Carta', 'UM Carta', 'Note Prestampa', 'Responsabile',
+            'Cod Carta', 'Carta', 'Qta Carta', 'UM Carta', 'Note Prestampa', 'Responsabile', 'Commento Produzione',
             'Fase', 'Reparto', 'Operatori',
             'Qta Prod', 'Note', 'Data Inizio', 'Data Fine',
         ];
@@ -74,6 +74,7 @@ class DashboardMesExport implements FromCollection, WithHeadings, WithMapping, W
             $ordine->UM_carta ?? '',
             $ordine->note_prestampa ?? '',
             $ordine->responsabile ?? '',
+            $ordine->commento_produzione ?? '',
             $fase->faseCatalogo->nome ?? $fase->fase ?? '',
             $fase->faseCatalogo->reparto->nome ?? '',
             $operatoriNomi,
@@ -104,23 +105,24 @@ class DashboardMesExport implements FromCollection, WithHeadings, WithMapping, W
             'O' => 10,  // UM Carta
             'P' => 30,  // Note Prestampa
             'Q' => 20,  // Responsabile
-            'R' => 22,  // Fase
-            'S' => 14,  // Reparto
-            'T' => 20,  // Operatori
-            'U' => 10,  // Qta Prod
-            'V' => 25,  // Note
-            'W' => 18,  // Data Inizio
-            'X' => 18,  // Data Fine
+            'R' => 30,  // Commento Produzione
+            'S' => 22,  // Fase
+            'T' => 14,  // Reparto
+            'U' => 20,  // Operatori
+            'V' => 10,  // Qta Prod
+            'W' => 25,  // Note
+            'X' => 18,  // Data Inizio
+            'Y' => 18,  // Data Fine
         ];
     }
 
     public function styles(Worksheet $sheet)
     {
         $lastRow = $sheet->getHighestRow();
-        $nonEditabili = ['A', 'B', 'R', 'S', 'T'];
+        $nonEditabili = ['A', 'B', 'S', 'T', 'U'];
 
         // Header: sfondo nero, testo bianco, grassetto
-        $sheet->getStyle('A1:X1')->applyFromArray([
+        $sheet->getStyle('A1:Y1')->applyFromArray([
             'font' => [
                 'bold' => true,
                 'color' => ['rgb' => 'FFFFFF'],
@@ -149,7 +151,7 @@ class DashboardMesExport implements FromCollection, WithHeadings, WithMapping, W
         }
 
         // Auto-filtro sulla riga header
-        $sheet->setAutoFilter('A1:X1');
+        $sheet->setAutoFilter('A1:Y1');
 
         return [];
     }
