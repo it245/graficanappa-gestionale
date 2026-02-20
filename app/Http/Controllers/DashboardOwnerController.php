@@ -306,7 +306,7 @@ public function calcolaOreEPriorita($fase)
         $campiFase = ['qta_prod', 'note', 'stato', 'data_inizio', 'data_fine', 'ore', 'priorita', 'fase'];
         $campiOrdine = ['cliente_nome', 'cod_art', 'descrizione', 'qta_richiesta', 'um',
                         'data_registrazione', 'data_prevista_consegna',
-                        'cod_carta', 'carta', 'qta_carta', 'UM_carta', 'note_prestampa', 'responsabile'];
+                        'cod_carta', 'carta', 'qta_carta', 'UM_carta'];
 
         $validator = Validator::make($request->all(), [
             'fase_id' => 'required|exists:ordine_fasi,id',

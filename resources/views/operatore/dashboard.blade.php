@@ -123,6 +123,8 @@
                 <th>Carta</th>
                 <th>Quantità Carta</th>
                 <th>UM Carta</th>
+                <th>Note Prestampa</th>
+                <th>Responsabile</th>
                 <th>Note</th>
                 <th>Ore</th>
                 <th>Timeout</th>
@@ -173,6 +175,8 @@
                     <td>{{ $fase->ordine->carta ?? '-' }}</td>
                     <td>{{ $fase->ordine->qta_carta ?? '-' }}</td>
                     <td>{{ $fase->ordine->UM_carta ?? '-' }}</td>
+                    <td>{{ $fase->ordine->note_prestampa ?? '-' }}</td>
+                    <td>{{ $fase->ordine->responsabile ?? '-' }}</td>
                     <td>{{ $fase->note ?? '-' }}</td>
                     <td>{{ $fase->ore ?? '-' }}</td>
                     <td id="timeout-{{ $fase->id }}">{{ $fase->timeout ?? '-' }}</td>
