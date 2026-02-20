@@ -1,6 +1,14 @@
 @extends('layouts.app')
 
 @section('content')
+<style>
+.ms-pipeline { display:flex; gap:2px; align-items:center; }
+.ms-step { font-size:9px; padding:1px 4px; border-radius:3px; white-space:nowrap; }
+.ms-done { background:#198754; color:#fff; }
+.ms-partial { background:#ffc107; color:#000; }
+.ms-todo { background:#e9ecef; color:#999; }
+</style>
+
 <div class="container-fluid px-3">
     <div class="d-flex justify-content-between align-items-center mb-3 mt-2">
         <h2>Job Prinect ({{ $jobs->count() }})</h2>
@@ -18,12 +26,9 @@
                         <tr>
                             <th>Job ID</th>
                             <th>Nome</th>
-                            <th>Cliente</th>
                             <th>Commessa</th>
-                            <th>Qta richiesta</th>
-                            <th>Data consegna</th>
                             <th>Stato</th>
-                            <th title="Progresso workflow Prinect (prepress), non stampa effettiva">Progresso</th>
+                            <th>Pipeline Produzione</th>
                             <th></th>
                         </tr>
                     </thead>
@@ -32,16 +37,13 @@
                         @php
                             $status = $job['jobStatus']['globalStatus'] ?? '-';
                             $milestones = $job['jobStatus']['milestones'] ?? [];
-                            $maxProgress = 0;
-                            foreach ($milestones as $m) {
-                                $p = $m['calculatedProgress'] ?? 0;
-                                if ($p > $maxProgress) $maxProgress = $p;
-                            }
                             $badgeClass = match($status) {
                                 'FINISHED' => 'bg-success',
-                                'PROGRESS_FINISHED' => 'bg-success',
-                                'NORMAL' => 'bg-primary',
+                                'ACTIVE' => 'bg-primary',
+                                'RUNNING' => 'bg-info',
+                                'SETUP' => 'bg-warning text-dark',
                                 'ERROR' => 'bg-danger',
+                                'CANCELLED' => 'bg-dark',
                                 default => 'bg-secondary'
                             };
                             $anno = date('y');
@@ -50,28 +52,31 @@
                         <tr>
                             <td class="fw-bold">{{ $job['id'] }}</td>
                             <td>{{ $job['name'] }}</td>
-                            <td>{{ $job['jobCustomer']['name'] ?? '-' }}</td>
                             <td>
                                 @if(isset($commesseConAttivita[$commessa]))
                                     <a href="{{ route('mes.prinect.report', $commessa) }}">{{ $commessa }}</a>
-                                    <span class="badge bg-info" style="font-size:9px;" title="Dati stampa disponibili">STAMPA</span>
+                                    <span class="badge bg-info" style="font-size:9px;">STAMPA</span>
                                 @else
                                     <span class="text-muted">{{ $commessa }}</span>
                                 @endif
                             </td>
-                            <td class="text-center">{{ number_format($job['deliveryAmount'] ?? 0) }}</td>
-                            <td>{{ $job['dueDate'] ? \Carbon\Carbon::parse($job['dueDate'])->format('d/m/Y') : '-' }}</td>
                             <td><span class="badge {{ $badgeClass }}">{{ $status }}</span></td>
                             <td>
-                                <div class="progress" style="height:18px; min-width:100px;">
-                                    <div class="progress-bar {{ $maxProgress >= 100 ? 'bg-success' : 'bg-primary' }}"
-                                         style="width:{{ min($maxProgress, 100) }}%">
-                                        {{ $maxProgress }}%
-                                    </div>
+                                <div class="ms-pipeline">
+                                    @foreach($milestones as $m)
+                                        @php
+                                            $mName = $milestoneMap[$m['milestoneDefId']] ?? '?';
+                                            $mProgress = $m['calculatedProgress'] ?? 0;
+                                            $mStatus = $m['status'] ?? 'NORMAL';
+                                            $mClass = ($mStatus === 'PROGRESS_FINISHED' || $mStatus === 'USER_FINISHED') ? 'ms-done'
+                                                : ($mProgress > 0 ? 'ms-partial' : 'ms-todo');
+                                        @endphp
+                                        <span class="ms-step {{ $mClass }}" title="{{ $mName }}: {{ $mProgress }}%">{{ $mName }}</span>
+                                    @endforeach
                                 </div>
                             </td>
                             <td>
-                                <a href="{{ route('mes.prinect.jobDetail', $job['id']) }}" class="btn btn-outline-secondary btn-sm py-0" title="Dettaglio worksteps">Dettaglio</a>
+                                <a href="{{ route('mes.prinect.jobDetail', $job['id']) }}" class="btn btn-outline-secondary btn-sm py-0">Dettaglio</a>
                             </td>
                         </tr>
                         @endforeach

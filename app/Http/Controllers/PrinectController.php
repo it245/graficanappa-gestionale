@@ -335,16 +335,22 @@ class PrinectController extends Controller
     }
 
     /**
-     * Lista job recenti con progresso
+     * Lista job recenti con progresso e milestones decodificate
      */
     public function jobs(PrinectService $service)
     {
-        $since = Carbon::now()->subDays(30)->format('Y-m-d\TH:i:sP');
-        $data = $service->getJobs($since);
+        $data = $service->getJobs();
         $jobs = $data['jobs'] ?? [];
 
         // Filtra solo job con id numerico e ordina per id desc
         $jobs = collect($jobs)->filter(fn($j) => is_numeric($j['id']))->sortByDesc('id')->values();
+
+        // Milestone definitions per decodifica nomi
+        $milestoneData = $service->getMilestones();
+        $milestoneMap = [];
+        foreach (($milestoneData['milestoneDefs'] ?? []) as $m) {
+            $milestoneMap[$m['id']] = $m['name'];
+        }
 
         // Commesse che hanno attivita di stampa sincronizzate
         $commesseConAttivita = PrinectAttivita::whereNotNull('commessa_gestionale')
@@ -353,26 +359,74 @@ class PrinectController extends Controller
             ->flip()
             ->toArray();
 
-        return view('mes.prinect_jobs', compact('jobs', 'commesseConAttivita'));
+        return view('mes.prinect_jobs', compact('jobs', 'commesseConAttivita', 'milestoneMap'));
     }
 
     /**
-     * Dettaglio job con worksteps e ink consumption
+     * Dettaglio job completo: info live, worksteps, preview, elementi, ink
      */
     public function jobDetail(PrinectService $service, $jobId)
     {
+        // Dettaglio job con creationDate, author, description
+        $jobData = $service->getJob($jobId);
+        $job = $jobData['job'] ?? null;
+
+        // Worksteps
         $wsData = $service->getJobWorksteps($jobId);
         $worksteps = $wsData['worksteps'] ?? [];
 
-        // Per ogni workstep di tipo stampa, prova a caricare ink
+        // Elementi: fogli, pagine, lastre
+        $elemData = $service->getJobElements($jobId);
+        $elements = $elemData['elements'] ?? [];
+
+        // Milestones decodificate
+        $milestoneData = $service->getMilestones();
+        $milestoneMap = [];
+        foreach (($milestoneData['milestoneDefs'] ?? []) as $m) {
+            $milestoneMap[$m['id']] = $m['name'];
+        }
+
+        // Per ogni workstep di tipo stampa: ink + preview + quality
+        $preview = null;
         foreach ($worksteps as &$ws) {
             $ws['ink'] = null;
+            $ws['quality'] = null;
             if (isset($ws['types']) && in_array('ConventionalPrinting', $ws['types'])) {
                 $ink = $service->getWorkstepInkConsumption($jobId, $ws['id']);
                 $ws['ink'] = $ink;
+
+                // Preview solo per il primo workstep di stampa
+                if (!$preview) {
+                    $prevData = $service->getWorkstepPreview($jobId, $ws['id']);
+                    $previews = $prevData['previews'] ?? [];
+                    if (!empty($previews)) {
+                        $preview = $previews[0];
+                    }
+                }
+
+                // Quality measurements
+                $qualData = $service->getWorkstepQuality($jobId, $ws['id']);
+                $measurements = $qualData['quality']['printQuality']['colorMeasurements'] ?? [];
+                if (!empty($measurements)) {
+                    $ws['quality'] = $measurements;
+                }
             }
         }
 
-        return view('mes.prinect_job_detail', compact('jobId', 'worksteps'));
+        // Commessa gestionale
+        $anno = $job && isset($job['creationDate'])
+            ? date('y', strtotime($job['creationDate']))
+            : date('y');
+        $commessa = str_pad($jobId, 7, '0', STR_PAD_LEFT) . '-' . $anno;
+
+        // Attivita da DB locale per questa commessa
+        $attivitaDB = PrinectAttivita::where('commessa_gestionale', $commessa)
+            ->orderByDesc('start_time')
+            ->get();
+
+        return view('mes.prinect_job_detail', compact(
+            'jobId', 'job', 'worksteps', 'elements', 'preview',
+            'milestoneMap', 'commessa', 'attivitaDB'
+        ));
     }
 }
