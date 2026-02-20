@@ -225,7 +225,9 @@
                     </div>
                     @if(!empty($ws['ink']['inkConsumptions']))
                     <h6 class="mb-2" style="font-size:12px;">Consumo inchiostro (kg/1000 fogli)</h6>
-                    <canvas id="inkChart_{{ $loop->index }}" height="120"></canvas>
+                    <div style="position:relative; height:120px;">
+                        <canvas id="inkChart_{{ $loop->index }}"></canvas>
+                    </div>
                     @endif
                 </div>
             </div>
@@ -346,7 +348,8 @@
             }]
         },
         options: {
-            responsive:true, maintainAspectRatio:false,
+            responsive:true, maintainAspectRatio:false, resizeDelay:0,
+            animation:false,
             scales:{ y:{ beginAtZero:true, title:{ display:true, text:'kg/1000 fogli' } } },
             plugins:{ legend:{ display:false } }
         }
