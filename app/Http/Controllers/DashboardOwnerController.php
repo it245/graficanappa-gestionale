@@ -14,6 +14,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use App\Services\FaseStatoService;
 use App\Services\OndaSyncService;
+use App\Http\Services\PrinectService;
 
 class DashboardOwnerController extends Controller
 {
@@ -422,7 +423,7 @@ public function calcolaOreEPriorita($fase)
     return view('owner.fasi_terminate', compact('fasiTerminate'));
 }
 
-    public function dettaglioCommessa($commessa)
+    public function dettaglioCommessa($commessa, PrinectService $prinect)
     {
         $ordini = Ordine::where('commessa', $commessa)->with('fasi.faseCatalogo.reparto', 'fasi.operatori')->get();
         if ($ordini->isEmpty()) abort(404, 'Commessa non trovata');
@@ -436,7 +437,28 @@ public function calcolaOreEPriorita($fase)
             });
         })->sortBy('priorita');
 
-        return view('owner.dettaglio_commessa', compact('commessa', 'fasi'));
+        // Anteprima foglio di stampa da Prinect API
+        $preview = null;
+        $jobId = ltrim(substr($commessa, 0, 7), '0');
+        if ($jobId && is_numeric($jobId)) {
+            try {
+                $wsData = $prinect->getJobWorksteps($jobId);
+                foreach ($wsData['worksteps'] ?? [] as $ws) {
+                    if (isset($ws['types']) && in_array('ConventionalPrinting', $ws['types'])) {
+                        $prevData = $prinect->getWorkstepPreview($jobId, $ws['id']);
+                        $previews = $prevData['previews'] ?? [];
+                        if (!empty($previews)) {
+                            $preview = $previews[0];
+                        }
+                        break;
+                    }
+                }
+            } catch (\Exception $e) {
+                // Prinect non disponibile, nessuna anteprima
+            }
+        }
+
+        return view('owner.dettaglio_commessa', compact('commessa', 'fasi', 'preview'));
     }
 
     public function eliminaFase(Request $request)
