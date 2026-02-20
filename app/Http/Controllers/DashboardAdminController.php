@@ -12,6 +12,8 @@ use App\Models\PrinectAttivita;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use App\Exports\ReportDirezioneExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class DashboardAdminController extends Controller
 {
@@ -778,5 +780,424 @@ class DashboardAdminController extends Controller
             'topClienti', 'topOperatoriMese', 'motiviPausa',
             'scadenzeImminenti', 'prinectStats'
         ));
+    }
+
+    // =====================================================================
+    // REPORT DIREZIONE MULTI-PERIODO
+    // =====================================================================
+
+    private function calcolaKpiPeriodo($da, $a)
+    {
+        $oggi = Carbon::today();
+
+        // --- Fasi completate ---
+        $fasiCompletate = DB::table('fase_operatore')
+            ->join('ordine_fasi', 'ordine_fasi.id', '=', 'fase_operatore.fase_id')
+            ->where('ordine_fasi.stato', '>=', 3)
+            ->whereBetween('fase_operatore.data_fine', [$da, $a])
+            ->count();
+
+        // --- Ore lavorate ---
+        $pivotRange = DB::table('fase_operatore')
+            ->whereBetween('data_fine', [$da, $a])
+            ->whereNotNull('data_inizio')
+            ->whereNotNull('data_fine')
+            ->get();
+
+        $secLavorati = 0;
+        foreach ($pivotRange as $p) {
+            $secLavorati += Carbon::parse($p->data_fine)->diffInSeconds(Carbon::parse($p->data_inizio));
+        }
+        $oreLavorate = round($secLavorati / 3600, 1);
+
+        // --- Commesse completate nel periodo ---
+        $commesseCompletate = DB::table('fase_operatore')
+            ->join('ordine_fasi', 'ordine_fasi.id', '=', 'fase_operatore.fase_id')
+            ->join('ordini', 'ordini.id', '=', 'ordine_fasi.ordine_id')
+            ->where('ordine_fasi.stato', '>=', 3)
+            ->whereBetween('fase_operatore.data_fine', [$da, $a])
+            ->select('ordini.commessa')
+            ->distinct()
+            ->get()
+            ->filter(function ($row) {
+                return OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $row->commessa))
+                    ->where('stato', '<', 3)->count() === 0;
+            });
+
+        $numCommesseCompletate = $commesseCompletate->count();
+
+        // --- Commesse in ritardo (data_prevista_consegna < oggi con fasi incomplete) ---
+        $commesseInRitardo = Ordine::where('data_prevista_consegna', '<', $oggi->toDateString())
+            ->select('commessa', 'cliente_nome', 'data_prevista_consegna')
+            ->groupBy('commessa', 'cliente_nome', 'data_prevista_consegna')
+            ->get()
+            ->filter(function ($row) {
+                return OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $row->commessa))
+                    ->where('stato', '<', 3)->count() > 0;
+            })
+            ->map(function ($row) use ($oggi) {
+                $row->giorni_ritardo = Carbon::parse($row->data_prevista_consegna)->diffInDays($oggi);
+                $fasiTot = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $row->commessa))->count();
+                $fasiDone = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $row->commessa))->where('stato', '>=', 3)->count();
+                $row->avanzamento = $fasiTot > 0 ? round(($fasiDone / $fasiTot) * 100) : 0;
+                $fasi = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $row->commessa))
+                    ->where('stato', '<', 3)
+                    ->with('faseCatalogo')
+                    ->get();
+                $row->fasi_mancanti = $fasi->map(fn($f) => $f->faseCatalogo->nome ?? $f->fase)->implode(', ');
+                return $row;
+            })
+            ->sortByDesc('giorni_ritardo')
+            ->values();
+
+        // --- Tasso puntualita ---
+        $commesseConConsegna = DB::table('fase_operatore')
+            ->join('ordine_fasi', 'ordine_fasi.id', '=', 'fase_operatore.fase_id')
+            ->join('ordini', 'ordini.id', '=', 'ordine_fasi.ordine_id')
+            ->where('ordine_fasi.stato', '>=', 3)
+            ->whereBetween('fase_operatore.data_fine', [$da, $a])
+            ->whereNotNull('ordini.data_prevista_consegna')
+            ->select('ordini.commessa', 'ordini.data_prevista_consegna', DB::raw('MAX(fase_operatore.data_fine) as ultima_fine'))
+            ->groupBy('ordini.commessa', 'ordini.data_prevista_consegna')
+            ->get()
+            ->filter(function ($row) {
+                return OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $row->commessa))
+                    ->where('stato', '<', 3)->count() === 0;
+            });
+
+        $puntuali = $commesseConConsegna->filter(function ($row) {
+            return $row->ultima_fine && Carbon::parse($row->ultima_fine)->lte(Carbon::parse($row->data_prevista_consegna)->endOfDay());
+        })->count();
+
+        $tassoPuntualita = $commesseConConsegna->count() > 0
+            ? round(($puntuali / $commesseConConsegna->count()) * 100, 1)
+            : 0;
+
+        // --- Scarto Prinect ---
+        $prinectData = PrinectAttivita::whereBetween('start_time', [$da, $a])->get();
+        $goodCycles = $prinectData->sum('good_cycles');
+        $wasteCycles = $prinectData->sum('waste_cycles');
+        $scartoPercentuale = ($goodCycles + $wasteCycles) > 0
+            ? round(($wasteCycles / ($goodCycles + $wasteCycles)) * 100, 1)
+            : 0;
+
+        // --- Colli di bottiglia reparti ---
+        $reparti = Reparto::orderBy('nome')->get();
+        $colliBottiglia = $reparti->map(function ($rep) use ($da, $a) {
+            $fasi = DB::table('ordine_fasi')
+                ->join('fasi_catalogo', 'fasi_catalogo.id', '=', 'ordine_fasi.fase_catalogo_id')
+                ->where('fasi_catalogo.reparto_id', $rep->id)
+                ->select('ordine_fasi.stato')
+                ->get();
+
+            $completatePeriodo = DB::table('fase_operatore')
+                ->join('ordine_fasi', 'ordine_fasi.id', '=', 'fase_operatore.fase_id')
+                ->join('fasi_catalogo', 'fasi_catalogo.id', '=', 'ordine_fasi.fase_catalogo_id')
+                ->where('fasi_catalogo.reparto_id', $rep->id)
+                ->where('ordine_fasi.stato', '>=', 3)
+                ->whereBetween('fase_operatore.data_fine', [$da, $a])
+                ->count();
+
+            // Tempo medio fase
+            $tempiRep = DB::table('fase_operatore')
+                ->join('ordine_fasi', 'ordine_fasi.id', '=', 'fase_operatore.fase_id')
+                ->join('fasi_catalogo', 'fasi_catalogo.id', '=', 'ordine_fasi.fase_catalogo_id')
+                ->where('fasi_catalogo.reparto_id', $rep->id)
+                ->where('ordine_fasi.stato', '>=', 3)
+                ->whereBetween('fase_operatore.data_fine', [$da, $a])
+                ->whereNotNull('fase_operatore.data_inizio')
+                ->whereNotNull('fase_operatore.data_fine')
+                ->select(DB::raw('AVG(TIMESTAMPDIFF(SECOND, fase_operatore.data_inizio, fase_operatore.data_fine)) as media_sec'))
+                ->value('media_sec');
+
+            $coda = $fasi->whereIn('stato', [0, 1])->count();
+            $inCorso = $fasi->where('stato', 2)->count();
+            $indiceBottleneck = $completatePeriodo > 0 ? round($coda / $completatePeriodo, 2) : ($coda > 0 ? 999 : 0);
+
+            return (object)[
+                'nome' => $rep->nome,
+                'coda' => $coda,
+                'in_corso' => $inCorso,
+                'completate_periodo' => $completatePeriodo,
+                'tempo_medio_sec' => round($tempiRep ?? 0),
+                'indice_bottleneck' => $indiceBottleneck,
+            ];
+        })->filter(fn($r) => ($r->coda + $r->in_corso + $r->completate_periodo) > 0)
+          ->sortByDesc('indice_bottleneck')
+          ->values();
+
+        // --- Trend giornaliero ---
+        $trendRaw = DB::table('fase_operatore')
+            ->join('ordine_fasi', 'ordine_fasi.id', '=', 'fase_operatore.fase_id')
+            ->where('ordine_fasi.stato', '>=', 3)
+            ->whereBetween('fase_operatore.data_fine', [$da, $a])
+            ->whereNotNull('fase_operatore.data_inizio')
+            ->whereNotNull('fase_operatore.data_fine')
+            ->select(
+                DB::raw('DATE(fase_operatore.data_fine) as giorno'),
+                DB::raw('COUNT(*) as fasi'),
+                DB::raw('SUM(TIMESTAMPDIFF(SECOND, fase_operatore.data_inizio, fase_operatore.data_fine)) as secondi')
+            )
+            ->groupBy('giorno')
+            ->orderBy('giorno')
+            ->get();
+
+        $trendGiornaliero = $trendRaw->pluck('fasi', 'giorno')->toArray();
+        $oreTrendGiornaliero = $trendRaw->mapWithKeys(fn($r) => [$r->giorno => round($r->secondi / 3600, 1)])->toArray();
+
+        // --- Performance operatori ---
+        $operatoriPerf = DB::table('fase_operatore')
+            ->join('ordine_fasi', 'ordine_fasi.id', '=', 'fase_operatore.fase_id')
+            ->join('operatori', 'operatori.id', '=', 'fase_operatore.operatore_id')
+            ->where('ordine_fasi.stato', '>=', 3)
+            ->whereBetween('fase_operatore.data_fine', [$da, $a])
+            ->whereNotNull('fase_operatore.data_inizio')
+            ->whereNotNull('fase_operatore.data_fine')
+            ->select(
+                'operatori.id',
+                'operatori.nome',
+                'operatori.cognome',
+                DB::raw('COUNT(*) as fasi_completate'),
+                DB::raw('SUM(ordine_fasi.qta_prod) as qta_prodotta'),
+                DB::raw('SUM(TIMESTAMPDIFF(SECOND, fase_operatore.data_inizio, fase_operatore.data_fine)) as sec_totali')
+            )
+            ->groupBy('operatori.id', 'operatori.nome', 'operatori.cognome')
+            ->orderByDesc('fasi_completate')
+            ->get()
+            ->map(function ($op) use ($da, $a) {
+                $op->ore_lavorate = round($op->sec_totali / 3600, 1);
+                $op->tempo_medio_sec = $op->fasi_completate > 0 ? round($op->sec_totali / $op->fasi_completate) : 0;
+                $giorni = max(Carbon::parse($da)->diffInDays(Carbon::parse($a)), 1);
+                $op->fasi_giorno = round($op->fasi_completate / $giorni, 1);
+                // Reparti operatore
+                $repOp = DB::table('operatore_reparto')
+                    ->join('reparti', 'reparti.id', '=', 'operatore_reparto.reparto_id')
+                    ->where('operatore_reparto.operatore_id', $op->id)
+                    ->pluck('reparti.nome');
+                $op->reparti = $repOp->implode(', ');
+                return $op;
+            });
+
+        // --- Pause ---
+        $motiviPausa = PausaOperatore::whereBetween('data_ora', [$da, $a])
+            ->select('motivo', DB::raw('COUNT(*) as totale'))
+            ->groupBy('motivo')
+            ->orderByDesc('totale')
+            ->get();
+
+        $totalePause = $motiviPausa->sum('totale');
+        $motiviPausa->each(function ($m) use ($totalePause) {
+            $m->percentuale = $totalePause > 0 ? round(($m->totale / $totalePause) * 100, 1) : 0;
+        });
+
+        // --- Trend scarto Prinect giornaliero ---
+        $prinectTrend = DB::table('prinect_attivita')
+            ->whereBetween('start_time', [$da, $a])
+            ->select(
+                DB::raw('DATE(start_time) as giorno'),
+                DB::raw('SUM(good_cycles) as good'),
+                DB::raw('SUM(waste_cycles) as waste')
+            )
+            ->groupBy('giorno')
+            ->orderBy('giorno')
+            ->get()
+            ->map(function ($r) {
+                $totale = $r->good + $r->waste;
+                $r->scarto_pct = $totale > 0 ? round(($r->waste / $totale) * 100, 1) : 0;
+                return $r;
+            });
+
+        // --- Top 5 commesse per scarto Prinect ---
+        $topScartoCommesse = DB::table('prinect_attivita')
+            ->whereBetween('start_time', [$da, $a])
+            ->whereNotNull('commessa_gestionale')
+            ->where('commessa_gestionale', '!=', '')
+            ->select(
+                'commessa_gestionale',
+                DB::raw('SUM(good_cycles) as good'),
+                DB::raw('SUM(waste_cycles) as waste')
+            )
+            ->groupBy('commessa_gestionale')
+            ->get()
+            ->map(function ($r) {
+                $totale = $r->good + $r->waste;
+                $r->scarto_pct = $totale > 0 ? round(($r->waste / $totale) * 100, 1) : 0;
+                return $r;
+            })
+            ->sortByDesc('scarto_pct')
+            ->take(5)
+            ->values();
+
+        // --- Top clienti ---
+        $topClienti = DB::table('fase_operatore')
+            ->join('ordine_fasi', 'ordine_fasi.id', '=', 'fase_operatore.fase_id')
+            ->join('ordini', 'ordini.id', '=', 'ordine_fasi.ordine_id')
+            ->whereBetween('fase_operatore.data_fine', [$da, $a])
+            ->whereNotNull('ordini.cliente_nome')
+            ->where('ordini.cliente_nome', '!=', '')
+            ->select('ordini.cliente_nome', DB::raw('COUNT(DISTINCT ordini.commessa) as commesse'))
+            ->groupBy('ordini.cliente_nome')
+            ->orderByDesc('commesse')
+            ->limit(10)
+            ->get();
+
+        // --- Dettaglio commesse completate ---
+        $dettaglioCompletate = $commesseCompletate->map(function ($row) use ($da, $a) {
+            $ordine = Ordine::where('commessa', $row->commessa)->first();
+            $fasiTot = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $row->commessa))->count();
+            // Tempo totale
+            $secTotali = DB::table('fase_operatore')
+                ->join('ordine_fasi', 'ordine_fasi.id', '=', 'fase_operatore.fase_id')
+                ->join('ordini', 'ordini.id', '=', 'ordine_fasi.ordine_id')
+                ->where('ordini.commessa', $row->commessa)
+                ->whereNotNull('fase_operatore.data_inizio')
+                ->whereNotNull('fase_operatore.data_fine')
+                ->sum(DB::raw('TIMESTAMPDIFF(SECOND, fase_operatore.data_inizio, fase_operatore.data_fine)'));
+
+            return (object)[
+                'commessa' => $row->commessa,
+                'cliente' => $ordine->cliente_nome ?? '-',
+                'descrizione' => $ordine->descrizione ?? '-',
+                'fasi_totali' => $fasiTot,
+                'ore_totali' => round($secTotali / 3600, 1),
+                'data_consegna' => $ordine->data_prevista_consegna ?? null,
+            ];
+        })->values();
+
+        return (object)[
+            'fasiCompletate' => $fasiCompletate,
+            'oreLavorate' => $oreLavorate,
+            'numCommesseCompletate' => $numCommesseCompletate,
+            'numCommesseInRitardo' => $commesseInRitardo->count(),
+            'commesseInRitardo' => $commesseInRitardo,
+            'tassoPuntualita' => $tassoPuntualita,
+            'scartoPercentuale' => $scartoPercentuale,
+            'goodCycles' => $goodCycles,
+            'wasteCycles' => $wasteCycles,
+            'colliBottiglia' => $colliBottiglia,
+            'trendGiornaliero' => $trendGiornaliero,
+            'oreTrendGiornaliero' => $oreTrendGiornaliero,
+            'operatoriPerf' => $operatoriPerf,
+            'motiviPausa' => $motiviPausa,
+            'totalePause' => $totalePause,
+            'prinectTrend' => $prinectTrend,
+            'topScartoCommesse' => $topScartoCommesse,
+            'topClienti' => $topClienti,
+            'dettaglioCompletate' => $dettaglioCompletate,
+        ];
+    }
+
+    public function reportDirezione(Request $request)
+    {
+        $periodo = $request->get('periodo', 'mese');
+        $oggi = Carbon::today();
+
+        switch ($periodo) {
+            case 'settimana':
+                $da = $oggi->copy()->subWeek();
+                $a = $oggi->copy()->endOfDay();
+                $daPrev = $oggi->copy()->subWeeks(2);
+                $aPrev = $oggi->copy()->subWeek();
+                break;
+            case 'trimestre':
+                $da = $oggi->copy()->subMonths(3);
+                $a = $oggi->copy()->endOfDay();
+                $daPrev = $oggi->copy()->subMonths(6);
+                $aPrev = $oggi->copy()->subMonths(3);
+                break;
+            case 'semestre':
+                $da = $oggi->copy()->subMonths(6);
+                $a = $oggi->copy()->endOfDay();
+                $daPrev = $oggi->copy()->subMonths(12);
+                $aPrev = $oggi->copy()->subMonths(6);
+                break;
+            case 'anno':
+                $da = $oggi->copy()->subYear();
+                $a = $oggi->copy()->endOfDay();
+                $daPrev = $oggi->copy()->subYears(2);
+                $aPrev = $oggi->copy()->subYear();
+                break;
+            default: // mese
+                $periodo = 'mese';
+                $da = $oggi->copy()->subMonth();
+                $a = $oggi->copy()->endOfDay();
+                $daPrev = $oggi->copy()->subMonths(2);
+                $aPrev = $oggi->copy()->subMonth();
+                break;
+        }
+
+        $labelPeriodo = $da->format('d M Y') . ' - ' . $a->format('d M Y');
+        $labelPrecedente = $daPrev->format('d M Y') . ' - ' . $aPrev->format('d M Y');
+
+        $kpi = $this->calcolaKpiPeriodo($da, $a);
+        $kpiPrev = $this->calcolaKpiPeriodo($daPrev, $aPrev);
+
+        // Calcolo delta %
+        $delta = (object)[];
+        $delta->fasiCompletate = $kpiPrev->fasiCompletate > 0
+            ? round((($kpi->fasiCompletate - $kpiPrev->fasiCompletate) / $kpiPrev->fasiCompletate) * 100, 1) : null;
+        $delta->oreLavorate = $kpiPrev->oreLavorate > 0
+            ? round((($kpi->oreLavorate - $kpiPrev->oreLavorate) / $kpiPrev->oreLavorate) * 100, 1) : null;
+        $delta->commesseCompletate = $kpiPrev->numCommesseCompletate > 0
+            ? round((($kpi->numCommesseCompletate - $kpiPrev->numCommesseCompletate) / $kpiPrev->numCommesseCompletate) * 100, 1) : null;
+        $delta->commesseInRitardo = $kpiPrev->numCommesseInRitardo > 0
+            ? round((($kpi->numCommesseInRitardo - $kpiPrev->numCommesseInRitardo) / $kpiPrev->numCommesseInRitardo) * 100, 1) : null;
+        // Per tasso puntualita e scarto: delta in punti percentuali
+        $delta->tassoPuntualita = round($kpi->tassoPuntualita - $kpiPrev->tassoPuntualita, 1);
+        $delta->scartoPercentuale = round($kpi->scartoPercentuale - $kpiPrev->scartoPercentuale, 1);
+
+        return view('admin.report_direzione', compact(
+            'periodo', 'labelPeriodo', 'labelPrecedente',
+            'kpi', 'kpiPrev', 'delta'
+        ));
+    }
+
+    public function reportDirezioneExcel(Request $request)
+    {
+        $periodo = $request->get('periodo', 'mese');
+        $oggi = Carbon::today();
+
+        switch ($periodo) {
+            case 'settimana':
+                $da = $oggi->copy()->subWeek();
+                $a = $oggi->copy()->endOfDay();
+                $daPrev = $oggi->copy()->subWeeks(2);
+                $aPrev = $oggi->copy()->subWeek();
+                break;
+            case 'trimestre':
+                $da = $oggi->copy()->subMonths(3);
+                $a = $oggi->copy()->endOfDay();
+                $daPrev = $oggi->copy()->subMonths(6);
+                $aPrev = $oggi->copy()->subMonths(3);
+                break;
+            case 'semestre':
+                $da = $oggi->copy()->subMonths(6);
+                $a = $oggi->copy()->endOfDay();
+                $daPrev = $oggi->copy()->subMonths(12);
+                $aPrev = $oggi->copy()->subMonths(6);
+                break;
+            case 'anno':
+                $da = $oggi->copy()->subYear();
+                $a = $oggi->copy()->endOfDay();
+                $daPrev = $oggi->copy()->subYears(2);
+                $aPrev = $oggi->copy()->subYear();
+                break;
+            default:
+                $da = $oggi->copy()->subMonth();
+                $a = $oggi->copy()->endOfDay();
+                $daPrev = $oggi->copy()->subMonths(2);
+                $aPrev = $oggi->copy()->subMonth();
+                break;
+        }
+
+        $kpi = $this->calcolaKpiPeriodo($da, $a);
+        $kpiPrev = $this->calcolaKpiPeriodo($daPrev, $aPrev);
+
+        $labelPeriodo = $da->format('d-m-Y') . '_' . $a->format('d-m-Y');
+
+        return Excel::download(
+            new ReportDirezioneExport($kpi, $kpiPrev, $periodo),
+            "ReportDirezione_{$periodo}_{$labelPeriodo}.xlsx"
+        );
     }
 }
