@@ -3,13 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Http\Services\PrinectService;
+use App\Http\Services\PrinectSyncService;
 use App\Models\PrinectAttivita;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
 class PrinectController extends Controller
 {
-    public function index(PrinectService $service)
+    public function index(PrinectService $service, PrinectSyncService $syncService)
     {
         $deviceId = env('PRINECT_DEVICE_XL106_ID', '4001');
 
@@ -21,10 +22,20 @@ class PrinectController extends Controller
         $oggi = Carbon::today()->format('Y-m-d\TH:i:sP');
         $ora = Carbon::now()->format('Y-m-d\TH:i:sP');
         $apiOggi = $service->getDeviceActivity($deviceId, $oggi, $ora);
-        $rawOggi = collect($apiOggi['activities'] ?? [])
-            ->filter(fn($a) => !empty($a['id'])); // Filtra marker con id=null
+        $rawOggiArray = collect($apiOggi['activities'] ?? [])
+            ->filter(fn($a) => !empty($a['id']))
+            ->values()
+            ->toArray();
 
-        $attivitaOggi = $rawOggi->map(function ($a) {
+        // Sync live: salva in DB + aggiorna fasi stampa (operatore, data_inizio, stato)
+        try {
+            $syncService->sincronizzaDaLive($rawOggiArray);
+        } catch (\Exception $e) {
+            // Non bloccare la dashboard se il sync fallisce
+        }
+
+        $attivitaOggi = collect($rawOggiArray)->map(function ($a) {
+            $jobId = $a['workstep']['job']['id'] ?? null;
             return (object) [
                 'activity_name' => $a['name'] ?? null,
                 'good_cycles' => $a['goodCycles'] ?? 0,
@@ -32,7 +43,7 @@ class PrinectController extends Controller
                 'start_time' => isset($a['startTime']) ? Carbon::parse($a['startTime']) : null,
                 'end_time' => isset($a['endTime']) ? Carbon::parse($a['endTime']) : null,
                 'prinect_job_name' => $a['workstep']['job']['name'] ?? null,
-                'prinect_job_id' => $a['workstep']['job']['id'] ?? null,
+                'prinect_job_id' => $jobId,
                 'workstep_name' => $a['workstep']['name'] ?? null,
                 'operatore_prinect' => !empty($a['employees'])
                     ? implode(', ', array_map(fn($e) => trim(($e['firstName'] ?? '').' '.($e['name'] ?? '')), $a['employees']))
