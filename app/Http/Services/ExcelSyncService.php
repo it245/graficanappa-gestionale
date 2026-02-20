@@ -49,11 +49,11 @@ class ExcelSyncService
 
         $path = self::getExcelPath();
 
+        // Sopprime deprecation warnings di PhpSpreadsheet su PHP 8.2+
+        $previousReporting = error_reporting(E_ALL & ~E_DEPRECATED);
+
         try {
-            // Sopprime deprecation warnings di PhpSpreadsheet su PHP 8.2+
-            $previousReporting = error_reporting(error_reporting() & ~E_DEPRECATED);
             Excel::store(new DashboardMesExport, 'excel_sync/dashboard_mes.xlsx', 'local');
-            error_reporting($previousReporting);
 
             // Se il path configurato e diverso da storage, copia il file
             $storagePath = storage_path('app/excel_sync/dashboard_mes.xlsx');
@@ -63,10 +63,11 @@ class ExcelSyncService
 
             // Salva timestamp dell'ultima scrittura
             file_put_contents(self::getTimestampPath(), time());
-        } catch (\Exception $e) {
-            error_reporting($previousReporting ?? E_ALL);
+        } catch (\Throwable $e) {
             // File aperto in Excel da un utente (lock Windows) → skip silenzioso
             Log::debug('ExcelSync export skip: ' . $e->getMessage());
+        } finally {
+            error_reporting($previousReporting);
         }
     }
 
