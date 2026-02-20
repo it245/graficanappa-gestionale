@@ -663,4 +663,25 @@ public function calcolaOreEPriorita($fase)
             'dataJson' => $dataScheduling->toJson(),
         ]);
     }
+
+    public function downloadExcel()
+    {
+        // Genera file aggiornato e scarica
+        ExcelSyncService::exportToExcel();
+
+        $path = env('EXCEL_SYNC_PATH');
+        if ($path && $path !== '') {
+            $filePath = rtrim($path, '/\\') . DIRECTORY_SEPARATOR . 'dashboard_mes.xlsx';
+        } else {
+            $filePath = storage_path('app/excel_sync/dashboard_mes.xlsx');
+        }
+
+        if (!file_exists($filePath)) {
+            return redirect()->back()->with('error', 'File Excel non ancora generato.');
+        }
+
+        return response()->file($filePath, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
+    }
 }
