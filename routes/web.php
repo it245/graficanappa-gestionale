@@ -89,6 +89,7 @@ Route::prefix('produzione')->middleware(['operatore.auth'])->group(function() {
     Route::post('/aggiungi', [ProduzioneController::class, 'aggiungiProduzione'])->name('produzione.aggiungi');
     Route::post('/termina', [ProduzioneController::class, 'terminaFase'])->name('produzione.termina');
     Route::post('/pausa', [ProduzioneController::class, 'pausaFase'])->name('produzione.pausa');
+    Route::post('/riprendi', [ProduzioneController::class, 'riprendiFase'])->name('produzione.riprendi');
     Route::post('/aggiorna-campo', [ProduzioneController::class, 'aggiornaCampo'])->name('produzione.aggiornaCampo');
     Route::post('/aggiorna-ordine-campo', [ProduzioneController::class, 'aggiornaOrdineCampo'])->name('produzione.aggiornaOrdineCampo');
 });

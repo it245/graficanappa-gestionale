@@ -189,7 +189,7 @@ class CostiMarginiController extends Controller
                 ->whereNotNull('fo.data_fine')
                 ->select(
                     'fc.reparto_id',
-                    DB::raw('SUM(TIMESTAMPDIFF(SECOND, fo.data_inizio, fo.data_fine)) as sec_totali'),
+                    DB::raw('SUM(TIMESTAMPDIFF(SECOND, fo.data_inizio, fo.data_fine) - COALESCE(fo.secondi_pausa, 0)) as sec_totali'),
                     DB::raw('MIN(fo.data_inizio) as prima_inizio')
                 )
                 ->groupBy('fc.reparto_id')
@@ -278,7 +278,7 @@ class CostiMarginiController extends Controller
             ->select(
                 'r.id as reparto_id',
                 'r.nome as reparto_nome',
-                DB::raw('SUM(TIMESTAMPDIFF(SECOND, fo.data_inizio, fo.data_fine)) as sec_totali')
+                DB::raw('SUM(TIMESTAMPDIFF(SECOND, fo.data_inizio, fo.data_fine) - COALESCE(fo.secondi_pausa, 0)) as sec_totali')
             )
             ->groupBy('r.id', 'r.nome')
             ->get()
@@ -315,7 +315,7 @@ class CostiMarginiController extends Controller
             ->select(
                 $groupExpr,
                 DB::raw('COUNT(DISTINCT o.commessa) as n_commesse'),
-                DB::raw('SUM(TIMESTAMPDIFF(SECOND, fo.data_inizio, fo.data_fine)) as sec_totali')
+                DB::raw('SUM(TIMESTAMPDIFF(SECOND, fo.data_inizio, fo.data_fine) - COALESCE(fo.secondi_pausa, 0)) as sec_totali')
             )
             ->groupBy('periodo')
             ->orderBy('periodo')

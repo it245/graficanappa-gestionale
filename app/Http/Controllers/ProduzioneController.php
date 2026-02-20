@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\OrdineFase;
+use App\Models\PausaOperatore;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Validator;
@@ -56,11 +57,34 @@ class ProduzioneController extends Controller
         return response()->json(['success' => false, 'messaggio' => 'Fase non trovata']);
     }
 
+    $operatoreId = session('operatore_id');
+
+    // Auto-chiusura pausa aperta (se l'operatore termina senza aver ripreso)
+    $pausaAperta = PausaOperatore::where('operatore_id', $operatoreId)
+        ->where('ordine_id', $fase->ordine_id)
+        ->where('fase', $fase->fase)
+        ->whereNull('fine')
+        ->latest('data_ora')
+        ->first();
+
+    if ($pausaAperta) {
+        $pausaAperta->fine = now();
+        $pausaAperta->save();
+
+        $durataSecondi = Carbon::parse($pausaAperta->data_ora)->diffInSeconds(Carbon::parse($pausaAperta->fine));
+
+        if ($fase->operatori->contains($operatoreId)) {
+            $currentSecondi = $fase->operatori->find($operatoreId)->pivot->secondi_pausa ?? 0;
+            $fase->operatori()->updateExistingPivot($operatoreId, [
+                'secondi_pausa' => $currentSecondi + $durataSecondi
+            ]);
+        }
+    }
+
     $fase->stato = 3; // fase terminata
     $fase->data_fine = now()->format('d/m/Y H:i:s');
+    $fase->timeout = null;
     $fase->save();
-
-    $operatoreId = session('operatore_id');
 
     // Aggiorna la data_fine nella pivot per l'operatore corrente
     if ($fase->operatori->contains($operatoreId)) {
@@ -91,6 +115,17 @@ class ProduzioneController extends Controller
             return response()->json(['success' => false, 'messaggio' => 'Motivo della pausa mancante']);
         }
 
+        $operatoreId = session('operatore_id');
+
+        // Crea record pausa aperta
+        PausaOperatore::create([
+            'operatore_id' => $operatoreId,
+            'ordine_id'    => $fase->ordine_id,
+            'fase'         => $fase->fase,
+            'motivo'       => $motivo,
+            'data_ora'     => now(),
+        ]);
+
         $fase->stato = $motivo;
         $fase->timeout = now();
         $fase->save();
@@ -99,6 +134,48 @@ class ProduzioneController extends Controller
             'success' => true,
             'nuovo_stato' => $fase->stato,
             'timeout' => Carbon::parse($fase->timeout)->format('d/m/Y H:i:s')
+        ]);
+    }
+
+    public function riprendiFase(Request $request)
+    {
+        $fase = OrdineFase::with('operatori')->find($request->fase_id);
+        if (!$fase) {
+            return response()->json(['success' => false, 'messaggio' => 'Fase non trovata']);
+        }
+
+        $operatoreId = session('operatore_id');
+
+        // Trova pausa aperta per questo operatore/ordine/fase
+        $pausa = PausaOperatore::where('operatore_id', $operatoreId)
+            ->where('ordine_id', $fase->ordine_id)
+            ->where('fase', $fase->fase)
+            ->whereNull('fine')
+            ->latest('data_ora')
+            ->first();
+
+        if ($pausa) {
+            $pausa->fine = now();
+            $pausa->save();
+
+            // Calcola durata pausa in secondi e accumula nel pivot
+            $durataSecondi = Carbon::parse($pausa->data_ora)->diffInSeconds(Carbon::parse($pausa->fine));
+
+            if ($fase->operatori->contains($operatoreId)) {
+                $currentSecondi = $fase->operatori->find($operatoreId)->pivot->secondi_pausa ?? 0;
+                $fase->operatori()->updateExistingPivot($operatoreId, [
+                    'secondi_pausa' => $currentSecondi + $durataSecondi
+                ]);
+            }
+        }
+
+        $fase->stato = 2; // Avviato
+        $fase->timeout = null;
+        $fase->save();
+
+        return response()->json([
+            'success' => true,
+            'nuovo_stato' => $this->statoLabel($fase->stato),
         ]);
     }
 

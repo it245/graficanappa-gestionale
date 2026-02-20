@@ -53,7 +53,7 @@ class OrdineFase extends Model
     public function operatori()
     {
         return $this->belongsToMany(Operatore::class, 'fase_operatore', 'fase_id', 'operatore_id')
-            ->withPivot('data_inizio','data_fine')
+            ->withPivot('data_inizio','data_fine','secondi_pausa')
             ->withTimestamps();
     }
 

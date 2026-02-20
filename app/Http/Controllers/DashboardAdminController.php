@@ -133,20 +133,21 @@ class DashboardAdminController extends Controller
                         'ordine_fasi.stato',
                         'ordine_fasi.qta_prod',
                         'fase_operatore.data_inizio',
-                        'fase_operatore.data_fine'
+                        'fase_operatore.data_fine',
+                        'fase_operatore.secondi_pausa'
                     )
                     ->get();
 
                 $op->stat_fasi_completate = $fasi->filter(fn($f) => $f->stato >= 3)->count();
                 $op->stat_fasi_in_corso = $fasi->where('stato', 2)->count();
 
-                // Tempo totale lavorato (somma differenze data_inizio - data_fine dalla pivot)
+                // Tempo totale lavorato (somma differenze data_inizio - data_fine dalla pivot, meno pause)
                 $secTotale = 0;
                 $fasiConTempo = 0;
                 foreach ($fasi as $f) {
                     if ($f->data_inizio && $f->data_fine) {
-                        $sec = Carbon::parse($f->data_fine)->diffInSeconds(Carbon::parse($f->data_inizio));
-                        $secTotale += $sec;
+                        $sec = Carbon::parse($f->data_fine)->diffInSeconds(Carbon::parse($f->data_inizio)) - ($f->secondi_pausa ?? 0);
+                        $secTotale += max($sec, 0);
                         $fasiConTempo++;
                     }
                 }
@@ -164,10 +165,10 @@ class DashboardAdminController extends Controller
                 $secRecenti = 0;
                 foreach ($recenti as $f) {
                     if ($f->data_inizio && $f->data_fine) {
-                        $secRecenti += Carbon::parse($f->data_fine)->diffInSeconds(Carbon::parse($f->data_inizio));
+                        $secRecenti += Carbon::parse($f->data_fine)->diffInSeconds(Carbon::parse($f->data_inizio)) - ($f->secondi_pausa ?? 0);
                     }
                 }
-                $op->stat_sec_recenti = $secRecenti;
+                $op->stat_sec_recenti = max($secRecenti, 0);
 
                 return $op;
             })
@@ -408,7 +409,7 @@ class DashboardAdminController extends Controller
             foreach ($ordine->fasi as $fase) {
                 $oreStimate = $this->calcolaOreStimate($fase->fase, $qtaCarta);
 
-                // Ore effettive dalla pivot fase_operatore
+                // Ore effettive dalla pivot fase_operatore (sottraendo pause)
                 $oreEffettive = 0;
                 if ($fase->operatori->isNotEmpty()) {
                     $dataInizio = $fase->operatori
@@ -421,8 +422,10 @@ class DashboardAdminController extends Controller
                         ->sortByDesc('pivot.data_fine')
                         ->first()?->pivot->data_fine;
 
+                    $totSecondiPausa = $fase->operatori->sum(fn($op) => $op->pivot->secondi_pausa ?? 0);
+
                     if ($dataInizio && $dataFine) {
-                        $oreEffettive = Carbon::parse($dataFine)->diffInSeconds(Carbon::parse($dataInizio)) / 3600;
+                        $oreEffettive = max(Carbon::parse($dataFine)->diffInSeconds(Carbon::parse($dataInizio)) - $totSecondiPausa, 0) / 3600;
                     }
                 }
 
@@ -484,13 +487,14 @@ class DashboardAdminController extends Controller
             ->where('data_fine', '>=', $da)
             ->whereNotNull('data_inizio')
             ->whereNotNull('data_fine')
+            ->select('data_inizio', 'data_fine', 'secondi_pausa')
             ->get();
 
         $secLavorati = 0;
         foreach ($pivotRecenti as $p) {
-            $secLavorati += Carbon::parse($p->data_fine)->diffInSeconds(Carbon::parse($p->data_inizio));
+            $secLavorati += Carbon::parse($p->data_fine)->diffInSeconds(Carbon::parse($p->data_inizio)) - ($p->secondi_pausa ?? 0);
         }
-        $oreLavorate = round($secLavorati / 3600, 1);
+        $oreLavorate = round(max($secLavorati, 0) / 3600, 1);
 
         // Commesse spedite (tutte le fasi stato>=3) negli ultimi 7 giorni
         $commesseSpedite = DB::table('fase_operatore')
@@ -647,13 +651,14 @@ class DashboardAdminController extends Controller
             ->where('data_fine', '>=', $da30gg)
             ->whereNotNull('data_inizio')
             ->whereNotNull('data_fine')
+            ->select('data_inizio', 'data_fine', 'secondi_pausa')
             ->get();
 
         $secLavoratiMese = 0;
         foreach ($pivotMese as $p) {
-            $secLavoratiMese += Carbon::parse($p->data_fine)->diffInSeconds(Carbon::parse($p->data_inizio));
+            $secLavoratiMese += Carbon::parse($p->data_fine)->diffInSeconds(Carbon::parse($p->data_inizio)) - ($p->secondi_pausa ?? 0);
         }
-        $oreLavorateMese = round($secLavoratiMese / 3600, 1);
+        $oreLavorateMese = round(max($secLavoratiMese, 0) / 3600, 1);
 
         // --- 5b. Fasi completate ultimi 30gg ---
         $fasiCompletate30gg = DB::table('fase_operatore')
@@ -672,7 +677,7 @@ class DashboardAdminController extends Controller
             ->select(
                 DB::raw('DATE(fase_operatore.data_fine) as giorno'),
                 DB::raw('COUNT(*) as fasi'),
-                DB::raw('SUM(TIMESTAMPDIFF(SECOND, fase_operatore.data_inizio, fase_operatore.data_fine)) as secondi')
+                DB::raw('SUM(TIMESTAMPDIFF(SECOND, fase_operatore.data_inizio, fase_operatore.data_fine) - COALESCE(fase_operatore.secondi_pausa, 0)) as secondi')
             )
             ->groupBy('giorno')
             ->orderBy('giorno')
@@ -803,13 +808,14 @@ class DashboardAdminController extends Controller
             ->whereBetween('data_fine', [$da, $a])
             ->whereNotNull('data_inizio')
             ->whereNotNull('data_fine')
+            ->select('data_inizio', 'data_fine', 'secondi_pausa')
             ->get();
 
         $secLavorati = 0;
         foreach ($pivotRange as $p) {
-            $secLavorati += Carbon::parse($p->data_fine)->diffInSeconds(Carbon::parse($p->data_inizio));
+            $secLavorati += Carbon::parse($p->data_fine)->diffInSeconds(Carbon::parse($p->data_inizio)) - ($p->secondi_pausa ?? 0);
         }
-        $oreLavorate = round($secLavorati / 3600, 1);
+        $oreLavorate = round(max($secLavorati, 0) / 3600, 1);
 
         // --- Commesse completate nel periodo ---
         $commesseCompletate = DB::table('fase_operatore')
@@ -908,7 +914,7 @@ class DashboardAdminController extends Controller
                 ->whereBetween('fase_operatore.data_fine', [$da, $a])
                 ->whereNotNull('fase_operatore.data_inizio')
                 ->whereNotNull('fase_operatore.data_fine')
-                ->select(DB::raw('AVG(TIMESTAMPDIFF(SECOND, fase_operatore.data_inizio, fase_operatore.data_fine)) as media_sec'))
+                ->select(DB::raw('AVG(TIMESTAMPDIFF(SECOND, fase_operatore.data_inizio, fase_operatore.data_fine) - COALESCE(fase_operatore.secondi_pausa, 0)) as media_sec'))
                 ->value('media_sec');
 
             $coda = $fasi->whereIn('stato', [0, 1])->count();
@@ -948,7 +954,7 @@ class DashboardAdminController extends Controller
             ->select(
                 $groupExprFasi,
                 DB::raw('COUNT(*) as fasi'),
-                DB::raw('SUM(TIMESTAMPDIFF(SECOND, fase_operatore.data_inizio, fase_operatore.data_fine)) as secondi')
+                DB::raw('SUM(TIMESTAMPDIFF(SECOND, fase_operatore.data_inizio, fase_operatore.data_fine) - COALESCE(fase_operatore.secondi_pausa, 0)) as secondi')
             )
             ->groupBy('periodo')
             ->orderBy('periodo')
@@ -971,7 +977,7 @@ class DashboardAdminController extends Controller
                 'operatori.cognome',
                 DB::raw('COUNT(*) as fasi_completate'),
                 DB::raw('SUM(ordine_fasi.qta_prod) as qta_prodotta'),
-                DB::raw('SUM(TIMESTAMPDIFF(SECOND, fase_operatore.data_inizio, fase_operatore.data_fine)) as sec_totali')
+                DB::raw('SUM(TIMESTAMPDIFF(SECOND, fase_operatore.data_inizio, fase_operatore.data_fine) - COALESCE(fase_operatore.secondi_pausa, 0)) as sec_totali')
             )
             ->groupBy('operatori.id', 'operatori.nome', 'operatori.cognome')
             ->orderByDesc('fasi_completate')
@@ -1072,7 +1078,7 @@ class DashboardAdminController extends Controller
                 ->where('ordini.commessa', $row->commessa)
                 ->whereNotNull('fase_operatore.data_inizio')
                 ->whereNotNull('fase_operatore.data_fine')
-                ->sum(DB::raw('TIMESTAMPDIFF(SECOND, fase_operatore.data_inizio, fase_operatore.data_fine)'));
+                ->sum(DB::raw('TIMESTAMPDIFF(SECOND, fase_operatore.data_inizio, fase_operatore.data_fine) - COALESCE(fase_operatore.secondi_pausa, 0)'));
 
             return (object)[
                 'commessa' => $row->commessa,

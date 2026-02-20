@@ -108,14 +108,25 @@
                     </div>
                 </div>
                 <div class="azioni-cerchi">
-                    <input type="checkbox" id="avvia-{{ $fase->id }}" onchange="aggiornaStato({{ $fase->id }}, 'avvia', this.checked)">
-                    <label for="avvia-{{ $fase->id }}" class="badge-avvia">Avvia</label>
+                    @if(is_numeric($fase->stato) && $fase->stato < 2)
+                        {{-- Stato 0/1: mostra Avvia --}}
+                        <input type="checkbox" id="avvia-{{ $fase->id }}" onchange="aggiornaStato({{ $fase->id }}, 'avvia', this.checked)">
+                        <label for="avvia-{{ $fase->id }}" class="badge-avvia">Avvia</label>
+                    @elseif($fase->stato == 2)
+                        {{-- Stato 2 (Avviato): mostra Pausa e Termina --}}
+                        <input type="checkbox" id="pausa-{{ $fase->id }}" onchange="gestisciPausa({{ $fase->id }}, this.checked)">
+                        <label for="pausa-{{ $fase->id }}" class="badge-pausa">Pausa</label>
 
-                    <input type="checkbox" id="pausa-{{ $fase->id }}" onchange="gestisciPausa({{ $fase->id }}, this.checked)">
-                    <label for="pausa-{{ $fase->id }}" class="badge-pausa">Pausa</label>
+                        <input type="checkbox" id="termina-{{ $fase->id }}" onchange="aggiornaStato({{ $fase->id }}, 'termina', this.checked)">
+                        <label for="termina-{{ $fase->id }}" class="badge-termina">Termina</label>
+                    @elseif(!is_numeric($fase->stato))
+                        {{-- Stato stringa (motivo pausa): mostra Riprendi e Termina --}}
+                        <input type="checkbox" id="riprendi-{{ $fase->id }}" onchange="riprendiFase({{ $fase->id }}, this.checked)">
+                        <label for="riprendi-{{ $fase->id }}" class="badge-avvia">Riprendi</label>
 
-                    <input type="checkbox" id="termina-{{ $fase->id }}" onchange="aggiornaStato({{ $fase->id }}, 'termina', this.checked)">
-                    <label for="termina-{{ $fase->id }}" class="badge-termina">Termina</label>
+                        <input type="checkbox" id="termina-{{ $fase->id }}" onchange="aggiornaStato({{ $fase->id }}, 'termina', this.checked)">
+                        <label for="termina-{{ $fase->id }}" class="badge-termina">Termina</label>
+                    @endif
                 </div>
             </div>
         </div>
@@ -260,6 +271,26 @@ function gestisciPausa(faseId, checked){
             window.location.reload();
         } else {
             alert('Errore: ' + (data.messaggio || 'operazione fallita'));
+        }
+    })
+    .catch(err=>console.error('Errore:', err));
+}
+
+function riprendiFase(faseId, checked){
+    if(!checked) return;
+
+    fetch('{{ route("produzione.riprendi") }}',{
+        method:'POST',
+        headers:{'X-CSRF-TOKEN':'{{ csrf_token() }}','Content-Type':'application/json'},
+        body:JSON.stringify({fase_id:faseId})
+    })
+    .then(res=>res.json())
+    .then(data=>{
+        if(data.success){
+            window.location.reload();
+        } else {
+            alert('Errore: ' + (data.messaggio || 'operazione fallita'));
+            document.getElementById('riprendi-'+faseId).checked = false;
         }
     })
     .catch(err=>console.error('Errore:', err));

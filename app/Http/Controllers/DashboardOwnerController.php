@@ -261,9 +261,10 @@ public function calcolaOreEPriorita($fase)
         $pivotOggi = DB::table('fase_operatore')
             ->whereDate('data_fine', $oggi)
             ->whereNotNull('data_inizio')
+            ->select('data_inizio', 'data_fine', 'secondi_pausa')
             ->get();
         $orePivot = $pivotOggi->sum(function ($row) {
-            return abs(Carbon::parse($row->data_fine)->diffInSeconds(Carbon::parse($row->data_inizio))) / 3600;
+            return max(abs(Carbon::parse($row->data_fine)->diffInSeconds(Carbon::parse($row->data_inizio))) - ($row->secondi_pausa ?? 0), 0) / 3600;
         });
 
         // Aggiungi ore da fasi Prinect (ordine_fasi.data_fine oggi, senza pivot data_fine)
