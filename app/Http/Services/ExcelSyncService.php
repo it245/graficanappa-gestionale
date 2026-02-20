@@ -53,13 +53,8 @@ class ExcelSyncService
         $previousReporting = error_reporting(E_ALL & ~E_DEPRECATED);
 
         try {
-            Excel::store(new DashboardMesExport, 'excel_sync/dashboard_mes.xlsx', 'local');
-
-            // Se il path configurato e diverso da storage, copia il file
-            $storagePath = storage_path('app/excel_sync/dashboard_mes.xlsx');
-            if ($path !== $storagePath && file_exists($storagePath)) {
-                copy($storagePath, $path);
-            }
+            $content = Excel::raw(new DashboardMesExport, \Maatwebsite\Excel\Excel::XLSX);
+            file_put_contents($path, $content);
 
             // Salva timestamp dell'ultima scrittura
             file_put_contents(self::getTimestampPath(), time());
