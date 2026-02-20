@@ -21,5 +21,10 @@ class Reparto extends Model
     {
         return $this->hasMany(Fase::class);
     }
+
+    public function costiOrari()
+    {
+        return $this->hasMany(CostoReparto::class)->orderByDesc('valido_dal');
+    }
 }
 

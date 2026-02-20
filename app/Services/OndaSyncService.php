@@ -37,9 +37,11 @@ class OndaSyncService
                 carta.Descrizione AS DescrizioneCarta,
                 carta.Qta AS QtaCarta,
                 carta.CodUnMis AS UMCarta,
+                t.TotMerce,
                 t.ncpcommentoprestampa AS NotePrestampa,
                 t.ncprespocommessa AS Responsabile,
                 t.OC_CommentoProduz AS CommentoProduzione,
+                materiali.CostoMateriali,
                 f.CodFase,
                 f.QtaDaLavorare,
                 f.CodUnMis AS UMFase
@@ -52,6 +54,10 @@ class OndaSyncService
                 FROM PRDDocRighe r WHERE r.IdDoc = p.IdDoc
                 ORDER BY r.Sequenza
             ) carta
+            OUTER APPLY (
+                SELECT SUM(r2.Totale) AS CostoMateriali
+                FROM PRDDocRighe r2 WHERE r2.IdDoc = p.IdDoc
+            ) materiali
             WHERE t.TipoDocumento = '2'
               AND t.DataRegistrazione >= CAST('20260218' AS datetime)
         ");
@@ -90,6 +96,8 @@ class OndaSyncService
                 'note_prestampa'         => trim($prima->NotePrestampa ?? ''),
                 'responsabile'           => trim($prima->Responsabile ?? ''),
                 'commento_produzione'    => trim($prima->CommentoProduzione ?? ''),
+                'valore_ordine'          => ($prima->TotMerce ?? 0) > 0 ? (float) $prima->TotMerce : null,
+                'costo_materiali'        => ($prima->CostoMateriali ?? 0) > 0 ? (float) $prima->CostoMateriali : null,
             ];
 
             if ($ordine) {

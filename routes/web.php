@@ -8,6 +8,7 @@ use App\Http\Controllers\ProduzioneController;
 use App\Http\Controllers\DashboardOwnerController;
 use App\Http\Controllers\PrinectController;
 use App\Http\Controllers\DashboardSpedizioneController;
+use App\Http\Controllers\CostiMarginiController;
 use App\Http\Controllers\AdminLoginController;
 use App\Http\Controllers\DashboardAdminController;
 
@@ -62,6 +63,13 @@ Route::middleware(['admin'])->prefix('admin')->group(function() {
     Route::get('/report-direzione/excel', [DashboardAdminController::class, 'reportDirezioneExcel'])->name('admin.reportDirezioneExcel');
     Route::get('/report-prinect', [DashboardAdminController::class, 'reportPrinect'])->name('admin.reportPrinect');
     Route::get('/report-prinect/excel', [DashboardAdminController::class, 'reportPrinectExcel'])->name('admin.reportPrinectExcel');
+
+    // Costi & Margini
+    Route::get('/costi/tariffe', [CostiMarginiController::class, 'configTariffe'])->name('admin.costi.tariffe');
+    Route::post('/costi/tariffe', [CostiMarginiController::class, 'salvaTariffa'])->name('admin.costi.salvaTariffa');
+    Route::delete('/costi/tariffe/{id}', [CostiMarginiController::class, 'eliminaTariffa'])->name('admin.costi.eliminaTariffa');
+    Route::get('/costi/report', [CostiMarginiController::class, 'reportCosti'])->name('admin.costi.report');
+    Route::get('/costi/report/excel', [CostiMarginiController::class, 'reportCostiExcel'])->name('admin.costi.reportExcel');
 });
 
 // Prinect — accessibile a owner e admin
