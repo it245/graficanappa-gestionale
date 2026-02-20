@@ -579,8 +579,21 @@ public function calcolaOreEPriorita($fase)
         }
     }
 
-    public function scheduling()
+    public function scheduling(PrinectService $prinect, PrinectSyncService $syncService)
     {
+        // Sync live Prinect
+        try {
+            $deviceId = env('PRINECT_DEVICE_XL106_ID', '4001');
+            $oggi = Carbon::today()->format('Y-m-d\TH:i:sP');
+            $ora = Carbon::now()->format('Y-m-d\TH:i:sP');
+            $apiOggi = $prinect->getDeviceActivity($deviceId, $oggi, $ora);
+            $rawOggi = collect($apiOggi['activities'] ?? [])
+                ->filter(fn($a) => !empty($a['id']))
+                ->values()
+                ->toArray();
+            $syncService->sincronizzaDaLive($rawOggi);
+        } catch (\Exception $e) {}
+
         $fasi = OrdineFase::with(['ordine', 'faseCatalogo.reparto', 'operatori'])
             ->where('stato', '<', 3)
             ->get()
@@ -590,10 +603,14 @@ public function calcolaOreEPriorita($fase)
             ->sortBy('priorita');
 
         $dataScheduling = $fasi->map(function ($fase) {
+            // Data inizio: dalla pivot operatore, fallback dal campo ordine_fasi
             $dataInizio = null;
             if ($fase->operatori->isNotEmpty()) {
                 $primo = $fase->operatori->sortBy('pivot.data_inizio')->first();
                 $dataInizio = $primo?->pivot->data_inizio;
+            }
+            if (!$dataInizio) {
+                $dataInizio = $fase->getAttributes()['data_inizio'] ?? null;
             }
 
             $consegna = $fase->ordine->data_prevista_consegna;
