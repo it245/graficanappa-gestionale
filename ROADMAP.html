@@ -224,13 +224,16 @@
     <li class="done">Login operatori con codice operatore + login admin protetto da password hashata</li>
     <li class="done">Middleware AdminAuth &mdash; protezione route /admin/*</li>
     <li class="done">Pagina errori personalizzate (403, 404) e health check endpoint (/health)</li>
+    <li class="done">Fix sessione owner: rimosso doppio middleware web che causava Page Expired (419) al login</li>
 </ul>
 
 <h4>Produzione &amp; Operatori</h4>
 <ul class="checklist">
     <li class="done">Dashboard Owner &mdash; vista completa di tutte le fasi attive, ordinate per priorit&agrave;</li>
     <li class="done">Dashboard Operatore &mdash; fasi filtrate per reparto assegnato</li>
-    <li class="done">Produzione: avvio, pausa, termine fase con tracciamento operatore e timestamp</li>
+    <li class="done">Produzione: avvio, pausa, riprendi, termine fase con tracciamento operatore e timestamp</li>
+    <li class="done">Flusso pausa/riprendi completo: creazione record PausaOperatore, bottone Riprendi, auto-chiusura pause a termine fase</li>
+    <li class="done">Ore effettive nette: calcolo automatico lordo meno pause accumulate (secondi_pausa su pivot fase_operatore)</li>
     <li class="done">Cascata stati fasi automatica (FaseStatoService): quando una fase termina, la successiva diventa &ldquo;pronta&rdquo;</li>
     <li class="done">Editing inline campi ordine/fase via AJAX (qta, note, stato, date, carta...)</li>
     <li class="done">Dettaglio commessa (owner + operatore) con note prestampa, responsabile, commento produzione</li>
@@ -467,7 +470,7 @@
             <td>MES Completo</td>
             <td>Gen-Feb 2026</td>
             <td><span class="version-badge badge-done">Completata</span></td>
-            <td>71/71</td>
+            <td>74/74</td>
         </tr>
         <tr>
             <td><strong>v2.0</strong></td>
@@ -536,9 +539,9 @@
 </table>
 
 <div class="section-box">
-    <strong>Totale funzionalit&agrave; pianificate:</strong> 136 &mdash; di cui 71 completate (v1.0), 65 da sviluppare (v2.0&ndash;v10.0)<br>
-    <strong>Avanzamento complessivo piano biennale:</strong> 52% (1 versione su 10 completata)<br>
-    <strong>Velocit&agrave; sviluppo v1.0:</strong> 71 funzionalit&agrave; in ~6 settimane (AI-Assisted)
+    <strong>Totale funzionalit&agrave; pianificate:</strong> 139 &mdash; di cui 74 completate (v1.0), 65 da sviluppare (v2.0&ndash;v10.0)<br>
+    <strong>Avanzamento complessivo piano biennale:</strong> 53% (1 versione su 10 completata)<br>
+    <strong>Velocit&agrave; sviluppo v1.0:</strong> 74 funzionalit&agrave; in ~6 settimane (AI-Assisted)
 </div>
 
 <div class="section-box">
