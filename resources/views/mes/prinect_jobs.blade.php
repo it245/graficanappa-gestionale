@@ -23,7 +23,7 @@
                             <th>Qta richiesta</th>
                             <th>Data consegna</th>
                             <th>Stato</th>
-                            <th>Progresso</th>
+                            <th title="Progresso workflow Prinect (prepress), non stampa effettiva">Progresso</th>
                             <th></th>
                         </tr>
                     </thead>
@@ -52,7 +52,12 @@
                             <td>{{ $job['name'] }}</td>
                             <td>{{ $job['jobCustomer']['name'] ?? '-' }}</td>
                             <td>
-                                <a href="{{ route('mes.prinect.report', $commessa) }}">{{ $commessa }}</a>
+                                @if(isset($commesseConAttivita[$commessa]))
+                                    <a href="{{ route('mes.prinect.report', $commessa) }}">{{ $commessa }}</a>
+                                    <span class="badge bg-info" style="font-size:9px;" title="Dati stampa disponibili">STAMPA</span>
+                                @else
+                                    <span class="text-muted">{{ $commessa }}</span>
+                                @endif
                             </td>
                             <td class="text-center">{{ number_format($job['deliveryAmount'] ?? 0) }}</td>
                             <td>{{ $job['dueDate'] ? \Carbon\Carbon::parse($job['dueDate'])->format('d/m/Y') : '-' }}</td>

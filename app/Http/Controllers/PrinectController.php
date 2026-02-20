@@ -125,6 +125,10 @@ class PrinectController extends Controller
         $oeePerf = round($performance * 100, 1);
         $oeeQual = round($qualita * 100, 1);
 
+        // Dati live dal workstep in corso (non ancora in DB)
+        $liveProduced = $device['deviceStatus']['workstep']['amountProduced'] ?? 0;
+        $liveWaste = $device['deviceStatus']['workstep']['wasteProduced'] ?? 0;
+
         // Alert automatici
         $alerts = [];
 
@@ -172,7 +176,8 @@ class PrinectController extends Controller
             'prodPerGiorno', 'perOperatore', 'topCommesse',
             'cambiLastra', 'timelineOggi',
             'oee', 'oeeDisp', 'oeePerf', 'oeeQual',
-            'alerts'
+            'alerts',
+            'liveProduced', 'liveWaste'
         ));
     }
 
@@ -341,7 +346,14 @@ class PrinectController extends Controller
         // Filtra solo job con id numerico e ordina per id desc
         $jobs = collect($jobs)->filter(fn($j) => is_numeric($j['id']))->sortByDesc('id')->values();
 
-        return view('mes.prinect_jobs', compact('jobs'));
+        // Commesse che hanno attivita di stampa sincronizzate
+        $commesseConAttivita = PrinectAttivita::whereNotNull('commessa_gestionale')
+            ->distinct()
+            ->pluck('commessa_gestionale')
+            ->flip()
+            ->toArray();
+
+        return view('mes.prinect_jobs', compact('jobs', 'commesseConAttivita'));
     }
 
     /**

@@ -96,6 +96,7 @@
                 <div class="card-body text-center py-3">
                     <div class="kpi-label text-success">Fogli buoni oggi</div>
                     <div class="kpi-value text-success">{{ number_format($totBuoniOggi) }}</div>
+                    <div class="kpi-sub text-success" data-live-produced><span class="live-dot green" style="width:6px;height:6px;"></span>+{{ number_format($liveProduced) }} in corso</div>
                 </div>
             </div>
         </div>
@@ -104,7 +105,7 @@
                 <div class="card-body text-center py-3">
                     <div class="kpi-label text-danger">Scarto oggi</div>
                     <div class="kpi-value text-danger">{{ number_format($totScartoOggi) }}</div>
-                    <div class="kpi-sub text-danger">{{ $percScartoOggi }}%</div>
+                    <div class="kpi-sub text-danger" data-live-waste><span class="live-dot red" style="width:6px;height:6px;"></span>+{{ number_format($liveWaste) }} in corso</div>
                 </div>
             </div>
         </div>
@@ -469,6 +470,12 @@ setInterval(() => {
         document.getElementById('liveWaste').textContent = fmt(d.waste);
         document.getElementById('liveTotalizer').textContent = fmt(d.totalizer);
         document.getElementById('liveOperatori').innerHTML = d.operatori.replace(/, /g, '<br>');
+
+        // Aggiorna "in corso" nei KPI oggi
+        const inCorsoEls = document.querySelectorAll('[data-live-produced]');
+        inCorsoEls.forEach(el => el.textContent = '+' + fmt(d.produced) + ' in corso');
+        const inCorsoWaste = document.querySelectorAll('[data-live-waste]');
+        inCorsoWaste.forEach(el => el.textContent = '+' + fmt(d.waste) + ' in corso');
     })
     .catch(() => {
         document.getElementById('liveDot').className = 'live-dot red';
