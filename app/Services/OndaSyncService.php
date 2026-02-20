@@ -37,6 +37,7 @@ class OndaSyncService
                 carta.Descrizione AS DescrizioneCarta,
                 carta.Qta AS QtaCarta,
                 carta.CodUnMis AS UMCarta,
+                t.ncpcommentoprestampa AS NotePrestampa,
                 f.CodFase,
                 f.QtaDaLavorare,
                 f.CodUnMis AS UMFase
@@ -84,6 +85,7 @@ class OndaSyncService
                 'carta'                  => trim($prima->DescrizioneCarta ?? ''),
                 'qta_carta'              => $prima->QtaCarta ?? 0,
                 'UM_carta'               => trim($prima->UMCarta ?? ''),
+                'note_prestampa'         => trim($prima->NotePrestampa ?? ''),
             ];
 
             if ($ordine) {
