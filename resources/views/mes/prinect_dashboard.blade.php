@@ -300,32 +300,28 @@
         </div>
     </div>
 
-    {{-- Attivita recenti oggi --}}
+    {{-- Attivita oggi (1 riga per commessa) --}}
     <div class="card chart-card border-0 shadow-sm mb-4">
         <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
-            <strong>Attivita oggi ({{ $attivitaOggi->count() }})</strong>
+            <strong>Attivita oggi ({{ $attivitaOggiPerCommessa->count() }} commesse, {{ $attivitaOggi->count() }} attivita)</strong>
             <a href="{{ route('mes.prinect.attivita') }}" class="btn btn-sm btn-outline-primary">Vedi tutto lo storico</a>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-sm op-table mb-0">
                     <thead class="table-light">
-                        <tr><th>Ora</th><th>Durata</th><th>Tipo</th><th>Commessa</th><th>Job</th><th>Workstep</th><th class="text-center">Buoni</th><th class="text-center">Scarto</th><th>Operatore</th></tr>
+                        <tr><th>Ultima att.</th><th>Tempo tot.</th><th>Stato</th><th>Commessa</th><th>Job</th><th>Workstep</th><th class="text-center">Buoni</th><th class="text-center">Scarto</th><th class="text-center">Att.</th><th>Operatore</th></tr>
                     </thead>
                     <tbody>
-                        @foreach($attivitaOggi->take(20) as $att)
+                        @foreach($attivitaOggiPerCommessa as $att)
                         @php
                             $jId = $att->prinect_job_id ?? null;
                             $comm = ($jId && is_numeric($jId)) ? str_pad($jId, 7, '0', STR_PAD_LEFT) . '-' . date('y') : null;
+                            $sec = $att->sec_totali ?? 0;
                         @endphp
                         <tr class="@if($att->activity_name === 'Avviamento') table-warning @else table-success @endif">
                             <td>{{ $att->start_time ? $att->start_time->format('H:i:s') : '-' }}</td>
-                            <td>
-                                @if($att->start_time && $att->end_time)
-                                    @php $d=$att->start_time->diffInSeconds($att->end_time); @endphp
-                                    {{ floor($d/60) }}m {{ $d%60 }}s
-                                @else - @endif
-                            </td>
+                            <td>@if($sec > 0){{ floor($sec/3600) > 0 ? floor($sec/3600).'h ' : '' }}{{ floor(($sec%3600)/60) }}m @else - @endif</td>
                             <td>
                                 @if($att->activity_name === 'Avviamento')
                                     <span class="badge bg-warning text-dark">Avv</span>
@@ -338,6 +334,7 @@
                             <td class="small">{{ $att->workstep_name ?? '-' }}</td>
                             <td class="text-center">@if($att->good_cycles > 0)<span class="text-success fw-bold">{{ number_format($att->good_cycles) }}</span>@else - @endif</td>
                             <td class="text-center">@if($att->waste_cycles > 0)<span class="text-danger">{{ number_format($att->waste_cycles) }}</span>@else - @endif</td>
+                            <td class="text-center"><span class="badge bg-secondary">{{ $att->n_attivita }}</span></td>
                             <td class="small">{{ $att->operatore_prinect ?? '-' }}</td>
                         </tr>
                         @endforeach

@@ -201,6 +201,29 @@ class PrinectController extends Controller
             $alerts[] = ['tipo' => 'danger', 'msg' => 'OEE critico: ' . $oee . '% — sotto soglia 40%'];
         }
 
+        // Attivita oggi raggruppate per commessa (solo ultima per commessa)
+        $attivitaOggiPerCommessa = $attivitaOggi->groupBy(function ($a) {
+            $jId = $a->prinect_job_id ?? null;
+            return ($jId && is_numeric($jId)) ? str_pad($jId, 7, '0', STR_PAD_LEFT) . '-' . date('y') : 'no-comm-' . spl_object_id($a);
+        })->map(function ($gruppo) {
+            $prima = $gruppo->first(); // gia ordinata per start_time desc, quindi la prima e la piu recente
+            return (object) [
+                'start_time' => $prima->start_time,
+                'end_time' => $prima->end_time,
+                'activity_name' => $prima->activity_name,
+                'prinect_job_id' => $prima->prinect_job_id,
+                'prinect_job_name' => $prima->prinect_job_name,
+                'workstep_name' => $prima->workstep_name,
+                'operatore_prinect' => $prima->operatore_prinect,
+                'good_cycles' => $gruppo->sum('good_cycles'),
+                'waste_cycles' => $gruppo->sum('waste_cycles'),
+                'n_attivita' => $gruppo->count(),
+                'sec_totali' => $gruppo->sum(function ($a) {
+                    return ($a->start_time && $a->end_time) ? $a->start_time->diffInSeconds($a->end_time) : 0;
+                }),
+            ];
+        })->sortByDesc('start_time')->values();
+
         // Timeline attivita oggi per grafico
         $timelineOggi = $attivitaOggi->filter(fn($a) => $a->start_time && $a->end_time)
             ->map(function ($att) {
@@ -225,7 +248,8 @@ class PrinectController extends Controller
             'cambiLastra', 'mediaLastreCommessa', 'timelineOggi',
             'oee', 'oeeDisp', 'oeePerf', 'oeeQual',
             'alerts',
-            'liveProduced', 'liveWaste'
+            'liveProduced', 'liveWaste',
+            'attivitaOggiPerCommessa'
         ));
     }
 
