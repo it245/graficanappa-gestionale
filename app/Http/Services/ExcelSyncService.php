@@ -92,6 +92,8 @@ class ExcelSyncService
 
         // Salta riga header (riga 1)
         $isFirst = true;
+        $idTrovati = [];
+
         foreach ($rows as $row) {
             if ($isFirst) {
                 $isFirst = false;
@@ -99,9 +101,41 @@ class ExcelSyncService
             }
 
             $id = $row['A'] ?? null;
+
+            // Nuova riga: colonna A vuota ma colonna B (commessa) presente
             if (!$id || !is_numeric($id)) {
+                $commessa = self::normalizeValue($row['B'] ?? null);
+                if ($commessa !== '') {
+                    $ordine = Ordine::create([
+                        'commessa' => $commessa,
+                        'cliente_nome' => self::normalizeValue($row['D'] ?? null),
+                        'cod_art' => self::normalizeValue($row['E'] ?? null),
+                        'descrizione' => self::normalizeValue($row['F'] ?? null),
+                        'qta_richiesta' => self::parseNumeric($row['G'] ?? null),
+                        'um' => self::normalizeValue($row['H'] ?? null) ?: 'FG',
+                        'data_registrazione' => self::parseExcelDate($row['J'] ?? null) ?? now()->toDateString(),
+                        'data_prevista_consegna' => self::parseExcelDate($row['K'] ?? null),
+                        'cod_carta' => self::normalizeValue($row['L'] ?? null),
+                        'carta' => self::normalizeValue($row['M'] ?? null),
+                        'qta_carta' => self::parseNumeric($row['N'] ?? null),
+                        'UM_carta' => self::normalizeValue($row['O'] ?? null),
+                        'stato' => 0,
+                    ]);
+
+                    $excelStato = self::normalizeValue($row['C'] ?? null);
+                    OrdineFase::create([
+                        'ordine_id' => $ordine->id,
+                        'fase' => self::normalizeValue($row['P'] ?? null) ?: '-',
+                        'stato' => ($excelStato !== '' && is_numeric($excelStato)) ? (int) $excelStato : 0,
+                        'qta_prod' => self::parseNumeric($row['S'] ?? null),
+                        'note' => self::normalizeValue($row['T'] ?? null),
+                        'priorita' => self::parseNumeric($row['I'] ?? null),
+                    ]);
+                }
                 continue;
             }
+
+            $idTrovati[] = (int) $id;
 
             $fase = OrdineFase::with('ordine')->find((int) $id);
             if (!$fase || $fase->stato >= 3) {
@@ -256,6 +290,24 @@ class ExcelSyncService
 
             if ($ordineChanged) {
                 $ordine->save();
+            }
+        }
+
+        // --- Eliminazione righe mancanti dall'Excel ---
+        if (!empty($idTrovati)) {
+            $fasiDaEliminare = OrdineFase::where('stato', '<', 3)
+                ->whereNotIn('id', $idTrovati)
+                ->get();
+
+            foreach ($fasiDaEliminare as $faseDaEliminare) {
+                $ordineId = $faseDaEliminare->ordine_id;
+                $faseDaEliminare->operatori()->detach();
+                $faseDaEliminare->delete();
+
+                // Se l'ordine resta senza fasi, elimina anche l'ordine
+                if (OrdineFase::where('ordine_id', $ordineId)->count() === 0) {
+                    Ordine::where('id', $ordineId)->delete();
+                }
             }
         }
     }
