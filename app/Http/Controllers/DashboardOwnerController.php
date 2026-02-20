@@ -666,7 +666,7 @@ public function calcolaOreEPriorita($fase)
 
     public function downloadExcel()
     {
-        // Genera file aggiornato e scarica
+        // Genera file aggiornato
         ExcelSyncService::exportToExcel();
 
         $path = env('EXCEL_SYNC_PATH');
@@ -680,8 +680,16 @@ public function calcolaOreEPriorita($fase)
             return redirect()->back()->with('error', 'File Excel non ancora generato.');
         }
 
-        return response()->file($filePath, [
-            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        ]);
+        return response()->download($filePath, 'dashboard_mes.xlsx');
+    }
+
+    public function apriExcel()
+    {
+        // Genera file aggiornato
+        ExcelSyncService::exportToExcel();
+
+        $fileUrl = url('/owner/excel-download');
+
+        return view('owner.apri_excel', compact('fileUrl'));
     }
 }
