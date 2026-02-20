@@ -60,34 +60,26 @@
             <p><strong>Cliente:</strong> {{ $ordine->cliente_nome }}</p>
             <p><strong>Descrizione:</strong> {{ $ordine->descrizione }}</p>
             <p><strong>Quantita totale:</strong> {{ $ordine->qta_richiesta }} {{ $ordine->um }}</p>
-            @if($ordine->note_prestampa || $ordine->responsabile || $ordine->commento_produzione)
-            <div class="row mt-2">
-                @if($ordine->note_prestampa)
+            <div class="row mt-2 g-2">
                 <div class="col-md-4">
                     <div class="border rounded p-2 h-100" style="background:#f8f9fa">
                         <strong class="d-block mb-1">Note Prestampa</strong>
-                        <span>{{ $ordine->note_prestampa }}</span>
+                        <span class="{{ $ordine->note_prestampa ? '' : 'text-muted' }}">{{ $ordine->note_prestampa ?: '-' }}</span>
                     </div>
                 </div>
-                @endif
-                @if($ordine->responsabile)
                 <div class="col-md-4">
                     <div class="border rounded p-2 h-100" style="background:#f8f9fa">
                         <strong class="d-block mb-1">Responsabile Produzione</strong>
-                        <span>{{ $ordine->responsabile }}</span>
+                        <span class="{{ $ordine->responsabile ? '' : 'text-muted' }}">{{ $ordine->responsabile ?: '-' }}</span>
                     </div>
                 </div>
-                @endif
-                @if($ordine->commento_produzione)
                 <div class="col-md-4">
                     <div class="border rounded p-2 h-100" style="background:#f8f9fa">
                         <strong class="d-block mb-1">Commento Produzione</strong>
-                        <span>{{ $ordine->commento_produzione }}</span>
+                        <span class="{{ $ordine->commento_produzione ? '' : 'text-muted' }}">{{ $ordine->commento_produzione ?: '-' }}</span>
                     </div>
                 </div>
-                @endif
             </div>
-            @endif
         </div>
     </div>
 
