@@ -375,7 +375,7 @@ public function calcolaOreEPriorita($fase)
 {
     $fasiTerminate = OrdineFase::with([
             'ordine.reparto',
-            'faseCatalogo',
+            'faseCatalogo.reparto',
             'operatori'
         ])
         ->whereIn('stato', [3, 4])
@@ -385,16 +385,16 @@ public function calcolaOreEPriorita($fase)
             // Calcolo ore e priorità
             $fase = $this->calcolaOreEPriorita($fase);
 
-            // Reparto: SOLO nome
-            $fase->reparto_nome = $fase->ordine->reparto->nome ?? '-';
+            // Reparto: da faseCatalogo (piu affidabile) oppure da ordine
+            $fase->reparto_nome = $fase->faseCatalogo->reparto->nome
+                ?? $fase->ordine->reparto->nome
+                ?? '-';
 
-            // Default
+            // DATA INIZIO: dalla pivot operatore, fallback dal campo ordine_fasi
+            $dataInizioOriginale = $fase->getAttributes()['data_inizio'] ?? null;
             $fase->data_inizio = null;
-            $fase->data_fine = null;
 
             if ($fase->operatori->isNotEmpty()) {
-
-                // DATA INIZIO = primo operatore che ha iniziato
                 $primaDataInizio = $fase->operatori
                     ->whereNotNull('pivot.data_inizio')
                     ->sortBy('pivot.data_inizio')
@@ -404,8 +404,19 @@ public function calcolaOreEPriorita($fase)
                     $fase->data_inizio = Carbon::parse($primaDataInizio)
                         ->format('d/m/Y H:i:s');
                 }
+            }
 
-                // DATA FINE = primo operatore che ha cliccato termina
+            // Fallback: data_inizio dal campo ordine_fasi (impostato da Prinect sync)
+            if (!$fase->data_inizio && $dataInizioOriginale) {
+                $fase->data_inizio = Carbon::parse($dataInizioOriginale)
+                    ->format('d/m/Y H:i:s');
+            }
+
+            // DATA FINE: dalla pivot operatore, fallback dal campo ordine_fasi
+            $dataFineOriginale = $fase->getAttributes()['data_fine'] ?? null;
+            $fase->data_fine = null;
+
+            if ($fase->operatori->isNotEmpty()) {
                 $primaDataFine = $fase->operatori
                     ->whereNotNull('pivot.data_fine')
                     ->sortBy('pivot.data_fine')
@@ -415,6 +426,12 @@ public function calcolaOreEPriorita($fase)
                     $fase->data_fine = Carbon::parse($primaDataFine)
                         ->format('d/m/Y H:i:s');
                 }
+            }
+
+            // Fallback: data_fine dal campo ordine_fasi (impostato da Prinect sync)
+            if (!$fase->data_fine && $dataFineOriginale) {
+                $fase->data_fine = Carbon::parse($dataFineOriginale)
+                    ->format('d/m/Y H:i:s');
             }
 
             return $fase;

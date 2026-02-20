@@ -419,6 +419,12 @@ class PrinectSyncService
                 if (!$fase->operatori()->where('operatore_id', $op->id)->exists()) {
                     $fase->operatori()->attach($op->id, [
                         'data_inizio' => $dataInizio,
+                        'data_fine' => $terminata ? $dataFine : null,
+                    ]);
+                } elseif ($terminata && $dataFine) {
+                    // Aggiorna data_fine sulla pivot se la fase e terminata
+                    $fase->operatori()->updateExistingPivot($op->id, [
+                        'data_fine' => $dataFine,
                     ]);
                 }
             }
