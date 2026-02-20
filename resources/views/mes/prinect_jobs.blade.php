@@ -13,8 +13,9 @@
     <div class="d-flex justify-content-between align-items-center mb-3 mt-2">
         <h2>Job Prinect ({{ $jobs->count() }})</h2>
         <div class="d-flex gap-2">
-            <a href="{{ route('mes.prinect') }}" class="btn btn-outline-secondary btn-sm">Dashboard</a>
+            <a href="{{ route('mes.prinect') }}" class="btn btn-outline-secondary btn-sm">Prinect</a>
             <a href="{{ route('mes.prinect.attivita') }}" class="btn btn-outline-primary btn-sm">Storico Attivita</a>
+            <a href="{{ route('owner.dashboard') }}" class="btn btn-dark btn-sm">Dashboard</a>
         </div>
     </div>
 

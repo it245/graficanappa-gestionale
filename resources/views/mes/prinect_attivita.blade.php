@@ -4,8 +4,10 @@
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2>Storico Attivita Prinect</h2>
-        <div>
-            <a href="{{ route('mes.prinect') }}" class="btn btn-outline-secondary btn-sm">Torna alla Dashboard</a>
+        <div class="d-flex gap-2">
+            <a href="{{ route('mes.prinect') }}" class="btn btn-outline-secondary btn-sm">Prinect</a>
+            <a href="{{ route('mes.prinect.jobs') }}" class="btn btn-outline-secondary btn-sm">Lista Job</a>
+            <a href="{{ route('owner.dashboard') }}" class="btn btn-dark btn-sm">Dashboard</a>
         </div>
     </div>
 
