@@ -104,7 +104,7 @@
     <h1>ROADMAP SVILUPPO</h1>
     <h2>Sistema Gestionale MES &mdash; Grafica Nappa srl</h2>
     <div class="piano">Piano di lavoro annuale (AI-Assisted): Febbraio 2026 &mdash; Febbraio 2027</div>
-    <div class="date">Aggiornata al 19 Febbraio 2026</div>
+    <div class="date">Aggiornata al 20 Febbraio 2026</div>
     <div class="author">Giovanni Pietropaolo &mdash; Tirocinante Sistemi Informativi</div>
 </div>
 
@@ -275,7 +275,39 @@
     <li class="done">Aggiunta fase PIEGA8TTAVO in tutti i mapping</li>
     <li class="done">Statistiche operatori &mdash; collegata a route admin con grafici Chart.js</li>
     <li class="done">Pulizia file di test sul server (phpinfo_test.php, test_cols.php, test_onda.php)</li>
+    <li class="done">Sync Excel bidirezionale: aggiunta nuove righe (col A vuota + commessa) e eliminazione righe mancanti dal file</li>
+    <li class="done">Import campi personalizzati Onda: Note Prestampa (ncpcommentoprestampa), Responsabile (ncprespocommessa), Commento Produzione (OC_CommentoProduz)</li>
+    <li class="done">Campi Onda visualizzati nel dettaglio commessa (owner + operatore) &mdash; non editabili, solo lettura da ERP</li>
 </ul>
+
+<div class="section-box">
+    <strong>Dati disponibili da Onda per future integrazioni:</strong>
+    <table style="margin-top:10px;">
+        <thead>
+            <tr><th>Campo</th><th>Tabella</th><th>Tipo</th><th>Esempio</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>ncpcommentocopertina</td><td>ATTDocTeste</td><td>varchar(50)</td><td>copertine su GMUND WOOD BUBINGA 300gr</td></tr>
+            <tr><td>ncpcommentointerno</td><td>ATTDocTeste</td><td>varchar(500)</td><td>FSC-MIX CREDIT SGSCH-COC-006534</td></tr>
+            <tr><td>ncpordinecliente</td><td>ATTDocTeste</td><td>varchar(50)</td><td>Ordine cliente: 21-1270</td></tr>
+            <tr><td>VostroRif</td><td>ATTDocTeste</td><td>varchar(40)</td><td>84/2020 del 23-09</td></tr>
+            <tr><td>NostroRif</td><td>ATTDocTeste</td><td>varchar(40)</td><td>offerta n. 0007727</td></tr>
+            <tr><td>NCPFsc</td><td>ATTDocTeste</td><td>bit</td><td>1 (flag FSC si/no)</td></tr>
+            <tr><td>ncpentratamerci</td><td>ATTDocTeste</td><td>varchar(25)</td><td>IDEBAE (codice entrata merci)</td></tr>
+            <tr><td>OC_Base / OC_Altezza</td><td>PRDDocTeste</td><td>float</td><td>14.0 &times; 24.0 cm (formato stampa)</td></tr>
+            <tr><td>OC_Pagine</td><td>PRDDocTeste</td><td>int</td><td>1 (numero pagine)</td></tr>
+            <tr><td>OC_Tiratura</td><td>PRDDocTeste</td><td>int</td><td>16000 (tiratura totale)</td></tr>
+            <tr><td>OC_TotSupporti</td><td>PRDDocTeste</td><td>int</td><td>1334 (fogli totali)</td></tr>
+            <tr><td>OC_TotScarti</td><td>PRDDocTeste</td><td>int</td><td>184 (scarti previsti)</td></tr>
+            <tr><td>OC_TotLastre</td><td>PRDDocTeste</td><td>int</td><td>4 (numero lastre = colori)</td></tr>
+            <tr><td>DataPresInizioProd</td><td>PRDDocTeste</td><td>datetime</td><td>Data prevista inizio produzione</td></tr>
+            <tr><td>OC_Note</td><td>PRDDocFasi</td><td>varchar(2600)</td><td>Note per singola fase di produzione</td></tr>
+            <tr><td>TotMerce / TotDocumento</td><td>ATTDocTeste</td><td>money</td><td>458.72 / 559.64 (importi economici)</td></tr>
+            <tr><td>CodPagamento</td><td>ATTDocTeste</td><td>varchar(4)</td><td>RB25 (tipo pagamento)</td></tr>
+            <tr><td>StatoChiusura</td><td>ATTDocTeste</td><td>smallint</td><td>1 (stato chiusura ordine)</td></tr>
+        </tbody>
+    </table>
+</div>
 
 <!-- ========== v1.3 ========== -->
 <h3><span class="version-badge badge-done">v1.3</span> Statistiche &amp; Report <span class="timeline-badge">Feb-Mar 2026</span></h3>
@@ -445,7 +477,7 @@
             <td>Admin &amp; Stabilit&agrave;</td>
             <td>Feb 2026</td>
             <td><span class="version-badge badge-done">Completata</span></td>
-            <td>15/15</td>
+            <td>18/18</td>
         </tr>
         <tr>
             <td><strong>v1.3</strong></td>
@@ -507,8 +539,8 @@
 </table>
 
 <div class="section-box">
-    <strong>Totale funzionalit&agrave; pianificate:</strong> 101 &mdash; di cui 59 completate, 42 da sviluppare<br>
-    <strong>Avanzamento complessivo piano annuale:</strong> 58%
+    <strong>Totale funzionalit&agrave; pianificate:</strong> 104 &mdash; di cui 62 completate, 42 da sviluppare<br>
+    <strong>Avanzamento complessivo piano annuale:</strong> 60%
 </div>
 
 <div class="section-box">
@@ -522,7 +554,7 @@
 <div class="footer">
     <p>Sistema Gestionale MES &mdash; Grafica Nappa srl &mdash; Aversa (CE)</p>
     <p>Sviluppo: Giovanni Pietropaolo (Tirocinante) con supporto Claude Code (Anthropic AI)</p>
-    <p style="margin-top:8px; font-size:11px; color:#aaa;">Piano di lavoro annuale AI-Assisted &middot; Feb 2026 &ndash; Feb 2027 &middot; Aggiornamento: 19/02/2026</p>
+    <p style="margin-top:8px; font-size:11px; color:#aaa;">Piano di lavoro annuale AI-Assisted &middot; Feb 2026 &ndash; Feb 2027 &middot; Aggiornamento: 20/02/2026</p>
 </div>
 
 </body>
