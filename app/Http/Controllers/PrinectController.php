@@ -139,9 +139,13 @@ class PrinectController extends Controller
                 ];
             })->sortByDesc('buoni')->take(10);
 
-        // Consumption (cambi lastra)
+        // Consumption (lastre)
         $consumption = $service->getDeviceConsumption($deviceId, $start7gg, $ora);
         $cambiLastra = $consumption['plateChanges'] ?? 0;
+
+        // Media lastre per commessa
+        $nCommesse7gg = $attivita7gg->pluck('commessa_gestionale')->filter()->unique()->count();
+        $mediaLastreCommessa = $nCommesse7gg > 0 ? round($cambiLastra / $nCommesse7gg, 1) : 0;
 
         // OEE (Overall Equipment Effectiveness) - ultimi 7 giorni
         $velocitaNominale = 18000;
@@ -207,7 +211,7 @@ class PrinectController extends Controller
             'totBuoni7gg', 'totScarto7gg', 'totFogli7gg', 'percScarto7gg',
             'secAvvOggi', 'secProdOggi',
             'prodPerGiorno', 'perOperatore', 'topCommesse',
-            'cambiLastra', 'timelineOggi',
+            'cambiLastra', 'mediaLastreCommessa', 'timelineOggi',
             'oee', 'oeeDisp', 'oeePerf', 'oeeQual',
             'alerts',
             'liveProduced', 'liveWaste'

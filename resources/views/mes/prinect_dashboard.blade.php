@@ -88,10 +88,9 @@
         </div>
     </div>
 
-    {{-- KPI CARDS --}}
-    <div class="row g-3 mb-3">
-        {{-- Oggi --}}
-        <div class="col-md-2">
+    {{-- KPI CARDS - OGGI --}}
+    <div class="row g-3 mb-2">
+        <div class="col-md-3">
             <div class="card kpi-card border-0 shadow-sm h-100 bg-success bg-opacity-10">
                 <div class="card-body text-center py-3">
                     <div class="kpi-label text-success">Fogli buoni oggi</div>
@@ -100,7 +99,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-3">
             <div class="card kpi-card border-0 shadow-sm h-100 bg-danger bg-opacity-10">
                 <div class="card-body text-center py-3">
                     <div class="kpi-label text-danger">Scarto oggi</div>
@@ -109,7 +108,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-3">
             <div class="card kpi-card border-0 shadow-sm h-100 bg-warning bg-opacity-10">
                 <div class="card-body text-center py-3">
                     <div class="kpi-label text-warning">Avviamento oggi</div>
@@ -117,7 +116,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-3">
             <div class="card kpi-card border-0 shadow-sm h-100 bg-primary bg-opacity-10">
                 <div class="card-body text-center py-3">
                     <div class="kpi-label text-primary">Produzione oggi</div>
@@ -125,8 +124,10 @@
                 </div>
             </div>
         </div>
-        {{-- 7gg --}}
-        <div class="col-md-2">
+    </div>
+    {{-- KPI CARDS - 7GG --}}
+    <div class="row g-3 mb-3">
+        <div class="col-md-4">
             <div class="card kpi-card border-0 shadow-sm h-100">
                 <div class="card-body text-center py-3">
                     <div class="kpi-label">Fogli 7gg</div>
@@ -135,11 +136,20 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-4">
             <div class="card kpi-card border-0 shadow-sm h-100">
                 <div class="card-body text-center py-3">
-                    <div class="kpi-label">Cambi lastra 7gg</div>
+                    <div class="kpi-label">Lastre 7gg</div>
                     <div class="kpi-value">{{ number_format($cambiLastra) }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card kpi-card border-0 shadow-sm h-100 bg-secondary bg-opacity-10">
+                <div class="card-body text-center py-3">
+                    <div class="kpi-label">Cambio lastre</div>
+                    <div class="kpi-value">{{ number_format($mediaLastreCommessa, 1, ',', '.') }}</div>
+                    <div class="kpi-sub text-muted">media per commessa</div>
                 </div>
             </div>
         </div>
