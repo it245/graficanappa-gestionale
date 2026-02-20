@@ -77,9 +77,9 @@
 
     /* Timeline Gantt */
     .gantt { margin: 20px 0; overflow-x: auto; }
-    .gantt table { font-size: 12px; min-width: 800px; }
+    .gantt table { font-size: 12px; min-width: 900px; }
     .gantt td, .gantt th { padding: 6px 4px; text-align: center; }
-    .gantt th.version-col { text-align: left; min-width: 160px; }
+    .gantt th.version-col { text-align: left; min-width: 200px; }
     .gantt td.version-col { text-align: left; font-weight: 700; font-size: 12px; }
     .gantt .bar { height: 22px; border-radius: 6px; min-width: 100%; }
     .bar-done { background: #28a745; }
@@ -88,6 +88,9 @@
     .bar-future { background: #adb5bd; }
     .bar-ai { background: linear-gradient(135deg, #667eea, #764ba2); }
     .gantt .q-header { font-size: 11px; background: #f8f9fa; color: #555; font-weight: 600; }
+
+    .sub-section { margin-left: 10px; margin-top: 5px; font-size: 13px; }
+    .sub-section li { list-style: disc; margin: 2px 0; }
 
     @media print {
         body { padding: 0; font-size: 11px; }
@@ -103,7 +106,7 @@
 <div class="header">
     <h1>ROADMAP SVILUPPO</h1>
     <h2>Sistema Gestionale MES &mdash; Grafica Nappa srl</h2>
-    <div class="piano">Piano di lavoro annuale (AI-Assisted): Febbraio 2026 &mdash; Febbraio 2027</div>
+    <div class="piano">Piano biennale (AI-Assisted): Febbraio 2026 &mdash; Febbraio 2028</div>
     <div class="date">Aggiornata al 20 Febbraio 2026</div>
     <div class="author">Giovanni Pietropaolo &mdash; Tirocinante Sistemi Informativi</div>
 </div>
@@ -123,7 +126,7 @@
 </div>
 
 <!-- ==================== TIMELINE GANTT ==================== -->
-<h3>Piano temporale</h3>
+<h3>Piano temporale biennale</h3>
 
 <div class="gantt">
 <table>
@@ -131,10 +134,15 @@
         <tr>
             <th class="version-col">Versione</th>
             <th colspan="4" style="background:#333;">2026</th>
-            <th colspan="1" style="background:#555;">2027</th>
+            <th colspan="4" style="background:#555;">2027</th>
+            <th colspan="1" style="background:#777;">2028</th>
         </tr>
         <tr class="q-header">
             <td class="version-col"></td>
+            <td>Q1<br><small>Gen-Mar</small></td>
+            <td>Q2<br><small>Apr-Giu</small></td>
+            <td>Q3<br><small>Lug-Set</small></td>
+            <td>Q4<br><small>Ott-Dic</small></td>
             <td>Q1<br><small>Gen-Mar</small></td>
             <td>Q2<br><small>Apr-Giu</small></td>
             <td>Q3<br><small>Lug-Set</small></td>
@@ -144,277 +152,209 @@
     </thead>
     <tbody>
         <tr>
-            <td class="version-col">v1.0&ndash;1.2 Fondamenta</td>
-            <td><div class="bar bar-done" title="Completata">&nbsp;</div></td>
-            <td></td><td></td><td></td><td></td>
+            <td class="version-col">v1.0 MES Completo</td>
+            <td><div class="bar bar-done">&nbsp;</div></td>
+            <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
         </tr>
         <tr>
-            <td class="version-col">v1.3 Report &amp; Statistiche</td>
-            <td><div class="bar bar-done" title="Completata">&nbsp;</div></td>
-            <td></td><td></td><td></td><td></td>
-        </tr>
-        <tr>
-            <td class="version-col">v1.4 Prinect Live</td>
+            <td class="version-col">v2.0 Notifiche &amp; Mobilit&agrave;</td>
             <td></td>
-            <td><div class="bar bar-done" title="Completata">&nbsp;</div></td>
-            <td></td><td></td><td></td>
-        </tr>
-        <tr>
-            <td class="version-col">v2.0 Costi &amp; Margini</td>
-            <td></td>
-            <td><div class="bar bar-future" title="Mag-Giu 2026">&nbsp;</div></td>
-            <td></td><td></td><td></td>
-        </tr>
-        <tr>
-            <td class="version-col">v2.1 Notifiche &amp; Mobilit&agrave;</td>
-            <td></td><td></td>
-            <td><div class="bar bar-future" title="Lug-Ago 2026">&nbsp;</div></td>
-            <td></td><td></td>
+            <td><div class="bar bar-next">&nbsp;</div></td>
+            <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
         </tr>
         <tr>
             <td class="version-col">v3.0 Claude AI Intelligence</td>
             <td></td><td></td>
-            <td><div class="bar bar-ai" title="Ago-Set 2026">&nbsp;</div></td>
+            <td><div class="bar bar-ai">&nbsp;</div></td>
+            <td></td><td></td><td></td><td></td><td></td><td></td>
+        </tr>
+        <tr>
+            <td class="version-col">v4.0 Pianificazione AI</td>
+            <td></td><td></td><td></td>
+            <td><div class="bar bar-ai">&nbsp;</div></td>
+            <td></td><td></td><td></td><td></td><td></td>
+        </tr>
+        <tr>
+            <td class="version-col">v5.0 Qualit&agrave; &amp; Tracciabilit&agrave;</td>
+            <td></td><td></td><td></td><td></td>
+            <td><div class="bar bar-future">&nbsp;</div></td>
+            <td></td><td></td><td></td><td></td>
+        </tr>
+        <tr>
+            <td class="version-col">v6.0 Magazzino &amp; Materiali</td>
+            <td></td><td></td><td></td><td></td><td></td>
+            <td><div class="bar bar-future">&nbsp;</div></td>
+            <td></td><td></td><td></td>
+        </tr>
+        <tr>
+            <td class="version-col">v7.0 IoT &amp; Digital Twin</td>
+            <td></td><td></td><td></td><td></td><td></td><td></td>
+            <td><div class="bar bar-future">&nbsp;</div></td>
             <td></td><td></td>
         </tr>
         <tr>
-            <td class="version-col">v3.1 Pianificazione Smart</td>
-            <td></td><td></td><td></td>
-            <td><div class="bar bar-ai" title="Ott-Nov 2026">&nbsp;</div></td>
+            <td class="version-col">v8.0 BI &amp; Analytics Avanzata</td>
+            <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+            <td><div class="bar bar-future">&nbsp;</div></td>
             <td></td>
         </tr>
         <tr>
-            <td class="version-col">v3.2 Qualit&agrave; &amp; Tracciabilit&agrave;</td>
-            <td></td><td></td><td></td>
-            <td><div class="bar bar-future" title="Nov-Dic 2026">&nbsp;</div></td>
+            <td class="version-col">v9.0 Portale Clienti &amp; API</td>
+            <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+            <td><div class="bar bar-future">&nbsp;</div></td>
             <td></td>
         </tr>
         <tr>
-            <td class="version-col">v4.0 IoT &amp; Digital Twin</td>
-            <td></td><td></td><td></td><td></td>
-            <td><div class="bar bar-future" title="Gen-Feb 2027">&nbsp;</div></td>
+            <td class="version-col">v10.0 Industria 4.0 Completa</td>
+            <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+            <td><div class="bar bar-future">&nbsp;</div></td>
         </tr>
     </tbody>
 </table>
 </div>
 
 <!-- ========== v1.0 ========== -->
-<h3><span class="version-badge badge-done">v1.0</span> Fondamenta MES <span class="timeline-badge">Gen-Feb 2026</span></h3>
-<p>Struttura base del sistema: modello dati, autenticazione operatori, dashboard produzione, gestione fasi.</p>
+<h3><span class="version-badge badge-done">v1.0</span> MES Completo &mdash; Fondamenta, Produzione, Costi <span class="timeline-badge">Gen-Feb 2026</span></h3>
+<p>Sistema gestionale MES completo: dalla gestione ordini all'analisi dei costi, passando per produzione, scheduling, integrazione Onda/Prinect e reportistica direzionale.</p>
 
+<h4>Architettura &amp; Modello Dati</h4>
 <ul class="checklist">
     <li class="done">Architettura Laravel 11 con MySQL &mdash; deploy su Windows Server / Apache</li>
-    <li class="done">Modello dati: Ordini, OrdineFasi, Operatori, Reparti, FasiCatalogo, pivot tables</li>
-    <li class="done">Login operatori con codice operatore (senza password)</li>
+    <li class="done">Modello dati: Ordini, OrdineFasi, Operatori, Reparti, FasiCatalogo, CostoReparto, PrinectAttivita, pivot tables</li>
+    <li class="done">Login operatori con codice operatore + login admin protetto da password hashata</li>
+    <li class="done">Middleware AdminAuth &mdash; protezione route /admin/*</li>
+    <li class="done">Pagina errori personalizzate (403, 404) e health check endpoint (/health)</li>
+</ul>
+
+<h4>Produzione &amp; Operatori</h4>
+<ul class="checklist">
     <li class="done">Dashboard Owner &mdash; vista completa di tutte le fasi attive, ordinate per priorit&agrave;</li>
-    <li class="done">Editing inline campi ordine/fase via AJAX (qta, note, stato, date, carta...)</li>
-    <li class="done">Import ordini da Excel (.xlsx) con mapping fasi e deduplicazione</li>
     <li class="done">Dashboard Operatore &mdash; fasi filtrate per reparto assegnato</li>
     <li class="done">Produzione: avvio, pausa, termine fase con tracciamento operatore e timestamp</li>
     <li class="done">Cascata stati fasi automatica (FaseStatoService): quando una fase termina, la successiva diventa &ldquo;pronta&rdquo;</li>
-    <li class="done">Formula priorit&agrave;: giorni_rimasti &minus; (ore/24) + (ordineFase/10000)</li>
-    <li class="done">Catalogo 96+ fasi di produzione con tempi avviamento e copie/ora per ogni fase</li>
-    <li class="done">Mapping fasi &rarr; reparti (stampa offset, digitale, plastificazione, fustella, legatoria, piegaincolla, stampa a caldo, spedizione, esterno...)</li>
-    <li class="done">Dettaglio commessa (owner + operatore) &mdash; tutte le fasi raggruppate</li>
+    <li class="done">Editing inline campi ordine/fase via AJAX (qta, note, stato, date, carta...)</li>
+    <li class="done">Dettaglio commessa (owner + operatore) con note prestampa, responsabile, commento produzione</li>
     <li class="done">Vista fasi terminate con storico</li>
-    <li class="done">Pagina errori personalizzate (403, 404)</li>
-    <li class="done">Health check endpoint (/health)</li>
+    <li class="done">Formula priorit&agrave;: giorni_rimasti &minus; (ore/24) + (ordineFase/10000)</li>
+    <li class="done">Catalogo 96+ fasi di produzione con tempi avviamento e copie/ora</li>
+    <li class="done">Mapping fasi &rarr; reparti (stampa offset, digitale, plastificazione, fustella, legatoria, piegaincolla, stampa a caldo, spedizione, esterno...)</li>
 </ul>
 
-<!-- ========== v1.1 ========== -->
-<h3><span class="version-badge badge-done">v1.1</span> Automazione &amp; Scheduling <span class="timeline-badge">Feb 2026</span></h3>
-<p>Integrazione con Onda, Gantt scheduling, dashboard spedizioni, integrazione Prinect.</p>
-
+<h4>Integrazione Onda (ERP)</h4>
 <ul class="checklist">
     <li class="done">Sincronizzazione automatica con Onda IQ (SQL Server) &mdash; import ordini + fasi da ERP</li>
-    <li class="done">Filtro import: solo ordini dal 18/02/2026, indipendentemente dallo stato Onda</li>
     <li class="done">Sync schedulata ogni ora (lun-sab 06:00&ndash;22:00) + bottone manuale</li>
     <li class="done">Auto-creazione reparti e fasi catalogo da Onda se mancanti</li>
     <li class="done">Ricalcolo automatico ore/priorit&agrave; dopo ogni sync</li>
-    <li class="done">Scheduling Produzione &mdash; interfaccia Gantt completa con 3 viste:
-        <ul style="margin:5px 0 0 20px;font-size:13px;">
-            <li>Per Macchina: turni configurati per reparto, swim lanes per esterni</li>
-            <li>Per Commessa: timeline con marker consegna</li>
-            <li>Tabella Priorit&agrave;: ordini raggruppati con margine, fine stimata, stato</li>
-        </ul>
-    </li>
-    <li class="done">Turni specifici per reparto (stampa offset 0-23, piegaincolla/fustella 6-22, stampa a caldo 6-22 + sab 6-13, altri 8-17)</li>
-    <li class="done">Macchina Bobst unificata (fustella + rilievo come unica risorsa)</li>
-    <li class="done">Pannello laterale dettaglio commessa nello scheduling</li>
-    <li class="done">KPI scheduling: commesse attive, in tempo, in ritardo (margine produzione), critiche (&ge;3gg scadute)</li>
-    <li class="done">Dashboard Spedizione dedicata &mdash; sezioni: Da spedire / Spedite oggi / In attesa</li>
-    <li class="done">Forza consegna: chiude forzatamente tutte le fasi aperte e completa la spedizione</li>
-    <li class="done">Integrazione Prinect (stampa offset) &mdash; nascosta dietro admin, pronta per v2.0:
-        <ul style="margin:5px 0 0 20px;font-size:13px;">
-            <li>Dashboard live: stato macchine, cicli buoni/scarti, tempi setup vs produzione</li>
-            <li>Storico attivit&agrave; filtrabile con sync automatica</li>
-            <li>Report per commessa: breakdown per workstep e operatore</li>
-            <li>Lista jobs Prinect con dettaglio workstep e consumo inchiostro</li>
-        </ul>
-    </li>
-    <li class="done">Comando artisan <code>onda:sync</code>, <code>prinect:sync-attivita</code>, <code>priorita:ricalcola</code></li>
+    <li class="done">Import campi personalizzati: Note Prestampa, Responsabile, Commento Produzione</li>
+    <li class="done">Import prezzi vendita (TotMerce) e costi materiali (SUM PRDDocRighe.Totale) da Onda</li>
+    <li class="done">Import ordini da Excel (.xlsx) con mapping fasi e deduplicazione</li>
+    <li class="done">Sync Excel bidirezionale: nuove righe e eliminazione righe mancanti</li>
 </ul>
 
-<!-- ========== v1.2 ========== -->
-<h3><span class="version-badge badge-done">v1.2</span> Admin &amp; Stabilit&agrave; <span class="timeline-badge">Feb 2026</span></h3>
-<p>Separazione ruolo admin, gestione operatori centralizzata, fix stabilit&agrave; sync Onda.</p>
-
+<h4>Integrazione Prinect (Stampa Offset)</h4>
 <ul class="checklist">
-    <li class="done">Ruolo Admin separato con login protetto da password (codice + password hashata)</li>
-    <li class="done">Middleware AdminAuth &mdash; protezione route /admin/*</li>
+    <li class="done">Dashboard Prinect live con auto-refresh AJAX (polling 10s)</li>
+    <li class="done">Storico attivit&agrave; filtrabile con sync automatica</li>
+    <li class="done">Report per commessa: breakdown per workstep e operatore</li>
+    <li class="done">Correlazione automatica job Prinect &harr; commessa MES</li>
+    <li class="done">Aggiornamento automatico fogli_buoni / fogli_scarto nelle fasi STAMPAXL106</li>
+    <li class="done">Calcolo OEE (disponibilit&agrave;, performance, qualit&agrave;) per macchina stampa</li>
+    <li class="done">Alert automatici: macchina ferma, scarti sopra soglia, OEE critico</li>
+</ul>
+
+<h4>Scheduling &amp; Spedizioni</h4>
+<ul class="checklist">
+    <li class="done">Scheduling Produzione &mdash; interfaccia Gantt con 3 viste (per macchina, per commessa, tabella priorit&agrave;)</li>
+    <li class="done">Turni specifici per reparto (offset 0-23, piegaincolla/fustella 6-22, stampa a caldo 6-22 + sab 6-13, altri 8-17)</li>
+    <li class="done">KPI scheduling: commesse attive, in tempo, in ritardo, critiche</li>
+    <li class="done">Dashboard Spedizione dedicata: Da spedire / Spedite oggi / In attesa</li>
+    <li class="done">Forza consegna: chiude forzatamente tutte le fasi e completa la spedizione</li>
+</ul>
+
+<h4>Admin &amp; Gestione</h4>
+<ul class="checklist">
     <li class="done">Dashboard Admin: elenco operatori con codice, ruolo, reparti, stato attivo</li>
-    <li class="done">CRUD operatori da admin: crea (con modale + codice live), modifica, attiva/disattiva</li>
-    <li class="done">Gestione operatori rimossa dall'owner e centralizzata nell'admin</li>
-    <li class="done">Route Prinect protette dietro middleware admin</li>
-    <li class="done">Fix sync Onda: driver sqlsrv su Apache (extension_dir assoluto)</li>
-    <li class="done">Fix sync Onda: colonna carta allargata a VARCHAR(255)</li>
-    <li class="done">Fix sync Onda: data_registrazione da Onda (non hardcoded)</li>
-    <li class="done">Fix sync Onda: formato data SQL Server (CAST datetime)</li>
-    <li class="done">Fix sync Onda: importa tutte le commesse indipendentemente dallo stato Onda</li>
-    <li class="done">Fix KPI scheduling: ritardo basato su margine produzione reale</li>
-    <li class="done">Aggiunta fase PIEGA8TTAVO in tutti i mapping</li>
-    <li class="done">Statistiche operatori &mdash; collegata a route admin con grafici Chart.js</li>
-    <li class="done">Pulizia file di test sul server (phpinfo_test.php, test_cols.php, test_onda.php)</li>
-    <li class="done">Sync Excel bidirezionale: aggiunta nuove righe (col A vuota + commessa) e eliminazione righe mancanti dal file</li>
-    <li class="done">Import campi personalizzati Onda: Note Prestampa (ncpcommentoprestampa), Responsabile (ncprespocommessa), Commento Produzione (OC_CommentoProduz)</li>
-    <li class="done">Campi Onda visualizzati nel dettaglio commessa (owner + operatore) &mdash; non editabili, solo lettura da ERP</li>
+    <li class="done">CRUD operatori da admin: crea, modifica, attiva/disattiva</li>
+    <li class="done">Configurazione tariffe orarie per reparto con storicizzazione (valido_dal / valido_al)</li>
 </ul>
 
-<div class="section-box">
-    <strong>Dati disponibili da Onda per future integrazioni:</strong>
-    <table style="margin-top:10px;">
-        <thead>
-            <tr><th>Campo</th><th>Tabella</th><th>Tipo</th><th>Esempio</th></tr>
-        </thead>
-        <tbody>
-            <tr><td>ncpcommentocopertina</td><td>ATTDocTeste</td><td>varchar(50)</td><td>copertine su GMUND WOOD BUBINGA 300gr</td></tr>
-            <tr><td>ncpcommentointerno</td><td>ATTDocTeste</td><td>varchar(500)</td><td>FSC-MIX CREDIT SGSCH-COC-006534</td></tr>
-            <tr><td>ncpordinecliente</td><td>ATTDocTeste</td><td>varchar(50)</td><td>Ordine cliente: 21-1270</td></tr>
-            <tr><td>VostroRif</td><td>ATTDocTeste</td><td>varchar(40)</td><td>84/2020 del 23-09</td></tr>
-            <tr><td>NostroRif</td><td>ATTDocTeste</td><td>varchar(40)</td><td>offerta n. 0007727</td></tr>
-            <tr><td>NCPFsc</td><td>ATTDocTeste</td><td>bit</td><td>1 (flag FSC si/no)</td></tr>
-            <tr><td>ncpentratamerci</td><td>ATTDocTeste</td><td>varchar(25)</td><td>IDEBAE (codice entrata merci)</td></tr>
-            <tr><td>OC_Base / OC_Altezza</td><td>PRDDocTeste</td><td>float</td><td>14.0 &times; 24.0 cm (formato stampa)</td></tr>
-            <tr><td>OC_Pagine</td><td>PRDDocTeste</td><td>int</td><td>1 (numero pagine)</td></tr>
-            <tr><td>OC_Tiratura</td><td>PRDDocTeste</td><td>int</td><td>16000 (tiratura totale)</td></tr>
-            <tr><td>OC_TotSupporti</td><td>PRDDocTeste</td><td>int</td><td>1334 (fogli totali)</td></tr>
-            <tr><td>OC_TotScarti</td><td>PRDDocTeste</td><td>int</td><td>184 (scarti previsti)</td></tr>
-            <tr><td>OC_TotLastre</td><td>PRDDocTeste</td><td>int</td><td>4 (numero lastre = colori)</td></tr>
-            <tr><td>DataPresInizioProd</td><td>PRDDocTeste</td><td>datetime</td><td>Data prevista inizio produzione</td></tr>
-            <tr><td>OC_Note</td><td>PRDDocFasi</td><td>varchar(2600)</td><td>Note per singola fase di produzione</td></tr>
-            <tr><td>TotMerce / TotDocumento</td><td>ATTDocTeste</td><td>money</td><td>458.72 / 559.64 (importi economici)</td></tr>
-            <tr><td>CodPagamento</td><td>ATTDocTeste</td><td>varchar(4)</td><td>RB25 (tipo pagamento)</td></tr>
-            <tr><td>StatoChiusura</td><td>ATTDocTeste</td><td>smallint</td><td>1 (stato chiusura ordine)</td></tr>
-        </tbody>
-    </table>
-</div>
-
-<!-- ========== v1.3 ========== -->
-<h3><span class="version-badge badge-done">v1.3</span> Statistiche &amp; Report <span class="timeline-badge">Feb-Mar 2026</span></h3>
-<p>Analisi dati produzione, confronto operatori, report automatici per il titolare.</p>
-
+<h4>Statistiche, Report &amp; Costi</h4>
 <ul class="checklist">
-    <li class="done">Statistiche operatori (admin): fasi completate, ore lavorate, quantit&agrave; prodotte per operatore</li>
-    <li class="done">Grafici confronto operatori (Chart.js): bar chart produttivit&agrave;, trend settimanale</li>
-    <li class="done">Report commessa completata: riepilogo tempi effettivi vs stimati per ogni fase</li>
-    <li class="done">Lista commesse con filtro completate/in corso e link al report dettagliato</li>
+    <li class="done">Statistiche operatori: fasi completate, ore lavorate, quantit&agrave; prodotte con grafici Chart.js</li>
+    <li class="done">Report commessa: riepilogo tempi effettivi vs stimati per ogni fase</li>
+    <li class="done">Lista commesse con filtro completate/in corso + storico archivio</li>
     <li class="done">Report produzione settimanale stampabile (KPI, top operatori, commesse in ritardo)</li>
+    <li class="done">Report Direzione multi-periodo (settimana/mese/trimestre/semestre/anno): 6 KPI con delta %, colli di bottiglia, trend produzione, performance operatori, analisi pause, scarto Prinect, clienti, commesse in ritardo &mdash; 5 grafici + export Excel 5 fogli</li>
+    <li class="done">Report Prinect multi-periodo: produzione offset, scarto %, OEE breakdown, trend, performance operatori, top commesse &mdash; 5 grafici + export Excel 3 fogli</li>
+    <li class="done">Report Costi &amp; Margini multi-periodo: calcolo costo effettivo commessa (ore_effettive &times; tariffa_oraria per fase), costo materiali da Onda, margine vendita, 6 KPI con delta %, top profittevoli / in perdita, costi per reparto &mdash; 2 grafici + export Excel 4 fogli</li>
+    <li class="done">Granularit&agrave; adattiva trend: giorno (settimana/mese), settimana (trimestre/semestre), mese (anno)</li>
     <li class="done">Export report in PDF (window.print con CSS @media print ottimizzato A4)</li>
     <li class="done">Dashboard KPI giornaliero owner: fasi completate oggi, ore lavorate, spedizioni</li>
-    <li class="done">Storico commesse: archivio consultabile con filtri per data, cliente, stato</li>
-    <li class="done">Report Direzione multi-periodo (settimana/mese/trimestre/semestre/anno): 6 KPI con delta %, colli di bottiglia, trend produzione, performance operatori, analisi pause, scarto Prinect, clienti, commesse in ritardo &mdash; 5 grafici Chart.js + export Excel 5 fogli</li>
-    <li class="done">Report Prinect multi-periodo: produzione offset, scarto %, OEE breakdown (disponibilit&agrave;/performance/qualit&agrave;), trend giornaliero, tempo avviamento vs produzione, performance operatori Prinect, top commesse per produzione e scarto &mdash; 5 grafici + export Excel 3 fogli</li>
-</ul>
-
-<!-- ========== v1.4 ========== -->
-<h3><span class="version-badge badge-done">v1.4</span> Prinect Live &amp; Automazione Avanzata <span class="timeline-badge">Feb 2026</span></h3>
-<p>Attivazione completa dell'integrazione Prinect per il monitoraggio in tempo reale della stampa offset.</p>
-
-<ul class="checklist">
-    <li class="done">Prinect: dashboard live, storico attivit&agrave;, report commessa, sync automatica</li>
-    <li class="done">Attivazione Prinect visibile all'owner (middleware owner.or.admin condiviso)</li>
-    <li class="done">Correlazione automatica job Prinect &harr; commessa MES (formato commessa da jobId)</li>
-    <li class="done">Aggiornamento automatico fogli_buoni / fogli_scarto da Prinect nelle fasi STAMPAXL106</li>
-    <li class="done">Calcolo OEE (Overall Equipment Effectiveness) per macchina stampa: disponibilit&agrave;, performance, qualit&agrave;</li>
-    <li class="done">Alert automatici: macchina ferma, scarti sopra soglia, OEE critico, cambio lastre eccessivo</li>
-    <li class="done">Dashboard real-time con auto-refresh (AJAX polling 10s)</li>
 </ul>
 
 <!-- ========== v2.0 ========== -->
-<h3><span class="version-badge badge-future">v2.0</span> Costi &amp; Margini <span class="timeline-badge">Mag-Giu 2026</span></h3>
-<p>Consuntivazione economica delle commesse: quanto costa davvero ogni lavoro?</p>
-
-<ul class="checklist">
-    <li class="todo">Costo orario per reparto/macchina (configurabile da admin)</li>
-    <li class="todo">Calcolo costo effettivo commessa: somma (ore_effettive &times; costo_orario) per fase</li>
-    <li class="todo">Confronto costo stimato vs costo effettivo per commessa</li>
-    <li class="todo">Dashboard margini: commesse pi&ugrave; profittevoli / in perdita</li>
-    <li class="todo">Integrazione costo carta da Onda</li>
-    <li class="todo">Report mensile marginalit&agrave; con trend e grafici</li>
-</ul>
-
-<!-- ========== v2.1 ========== -->
-<h3><span class="version-badge badge-future">v2.1</span> Notifiche &amp; Mobilit&agrave; <span class="timeline-badge">Lug-Ago 2026</span></h3>
-<p>Sistema di notifiche e accesso mobile per operatori e titolare.</p>
+<h3><span class="version-badge badge-next">v2.0</span> Notifiche &amp; Mobilit&agrave; <span class="timeline-badge">Apr-Giu 2026</span></h3>
+<p>Sistema di notifiche real-time e accesso mobile per operatori e titolare. L'obiettivo &egrave; eliminare la carta dal reparto.</p>
 
 <ul class="checklist">
     <li class="todo">Progressive Web App (PWA): installabile su tablet e smartphone operatori</li>
     <li class="todo">Scansione barcode/QR per avvio/termine fase da dispositivo mobile</li>
     <li class="todo">Notifiche push (browser) per commesse in ritardo critico</li>
     <li class="todo">Notifica automatica al titolare quando una commessa viene spedita</li>
-    <li class="todo">Dashboard sintetica su TV in reparto (visualizzazione a rotazione, kiosk mode)</li>
+    <li class="todo">Dashboard sintetica su TV in reparto (kiosk mode, rotazione automatica)</li>
     <li class="todo">Interfaccia responsive completa per tutti i ruoli</li>
     <li class="todo">Notifica Telegram/WhatsApp al titolare (riepilogo giornaliero serale)</li>
+    <li class="todo">WebSocket real-time (Laravel Reverb) per aggiornamento istantaneo dashboard</li>
 </ul>
 
 <!-- ========== v3.0 ========== -->
-<h3><span class="version-badge badge-ai">v3.0</span> Claude AI Intelligence <span class="timeline-badge">Ago-Set 2026</span></h3>
+<h3><span class="version-badge badge-ai">v3.0</span> Claude AI Intelligence <span class="timeline-badge">Lug-Set 2026</span></h3>
 
 <div class="ai-box">
     <strong>SUPER INTEGRAZIONE: Intelligenza Artificiale nel MES</strong><br>
-    Integrazione di Claude (Anthropic) come motore di intelligenza artificiale nel sistema gestionale.
-    L'AI analizza i dati di produzione storici e in tempo reale per fornire insight, previsioni e suggerimenti
-    operativi che un sistema tradizionale non pu&ograve; offrire.
+    Integrazione di Claude (Anthropic) come motore AI. L'AI analizza dati di produzione storici e in tempo reale
+    per fornire insight, previsioni e suggerimenti operativi.
 </div>
 
 <ul class="checklist">
     <li class="todo">Integrazione Claude API (Anthropic SDK) nel backend Laravel</li>
     <li class="todo"><strong>Assistente AI per il titolare:</strong> chat in linguaggio naturale per interrogare i dati di produzione
-        <ul style="margin:5px 0 0 20px;font-size:13px;">
+        <ul class="sub-section">
             <li>&ldquo;Quali commesse sono a rischio questa settimana?&rdquo;</li>
             <li>&ldquo;Confronta la produttivit&agrave; di febbraio con gennaio&rdquo;</li>
             <li>&ldquo;Perch&eacute; la commessa 0066550 ha sforato i tempi?&rdquo;</li>
         </ul>
     </li>
-    <li class="todo"><strong>Analisi predittiva ritardi:</strong> AI analizza pattern storici per prevedere commesse a rischio prima che diventino critiche</li>
-    <li class="todo"><strong>Ottimizzazione tempi stimati:</strong> AI ricalibra automaticamente avviamento e copie/ora in base ai dati reali accumulati</li>
-    <li class="todo"><strong>Report AI generati:</strong> il report settimanale include un paragrafo scritto dall'AI con osservazioni, anomalie e raccomandazioni</li>
+    <li class="todo"><strong>Analisi predittiva ritardi:</strong> AI analizza pattern storici per prevedere commesse a rischio</li>
+    <li class="todo"><strong>Ottimizzazione tempi stimati:</strong> AI ricalibra avviamento e copie/ora in base ai dati reali accumulati</li>
+    <li class="todo"><strong>Report AI generati:</strong> il report settimanale include osservazioni, anomalie e raccomandazioni scritte dall'AI</li>
     <li class="todo"><strong>Anomaly detection:</strong> segnalazione automatica di tempi anomali (fase troppo lunga/corta rispetto allo storico)</li>
-    <li class="todo">Cache intelligente delle risposte AI per contenere i costi API</li>
+    <li class="todo">Cache intelligente delle risposte AI (Redis) per contenere i costi API</li>
 </ul>
 
-<!-- ========== v3.1 ========== -->
-<h3><span class="version-badge badge-ai">v3.1</span> Pianificazione Intelligente <span class="timeline-badge">Ott-Nov 2026</span></h3>
+<!-- ========== v4.0 ========== -->
+<h3><span class="version-badge badge-ai">v4.0</span> Pianificazione Intelligente <span class="timeline-badge">Ott-Dic 2026</span></h3>
 
 <div class="ai-box">
     <strong>SUPER INTEGRAZIONE: Scheduling AI-Powered</strong><br>
-    L'AI non solo analizza, ma pianifica. Scheduling automatico che considera vincoli reali:
-    disponibilit&agrave; macchine, skill operatori, urgenze, setup time, e storico performance.
+    L'AI pianifica la produzione considerando vincoli reali: disponibilit&agrave; macchine, skill operatori,
+    urgenze, setup time e storico performance.
 </div>
 
 <ul class="checklist">
-    <li class="todo"><strong>Scheduling automatico AI:</strong> generazione piano di produzione ottimale con minimizzazione ritardi e setup</li>
+    <li class="todo"><strong>Scheduling automatico AI:</strong> piano di produzione ottimale con minimizzazione ritardi e setup</li>
     <li class="todo">Drag &amp; drop fasi nel Gantt per riordinamento manuale + ricalcolo AI impatto</li>
     <li class="todo"><strong>Simulazione &ldquo;what-if&rdquo; AI:</strong> &ldquo;Se arriva una commessa urgente da 5000 fogli, cosa succede al planning?&rdquo;</li>
     <li class="todo">Gestione manutenzione macchine (fermi programmati integrati nel Gantt)</li>
     <li class="todo">Previsione carico lavoro settimanale per reparto con suggerimento straordinari/turni</li>
-    <li class="todo"><strong>Assegnazione intelligente operatori:</strong> AI suggerisce chi assegnare a quale fase in base a skill, velocit&agrave; storica e disponibilit&agrave;</li>
-    <li class="todo">API pubblica REST per integrazione con sistemi esterni</li>
+    <li class="todo"><strong>Assegnazione intelligente operatori:</strong> AI suggerisce chi assegnare a quale fase in base a skill e velocit&agrave; storica</li>
+    <li class="todo">Ottimizzazione sequenza lavori per minimizzare tempi cambio formato/lastre</li>
 </ul>
 
-<!-- ========== v3.2 ========== -->
-<h3><span class="version-badge badge-future">v3.2</span> Qualit&agrave; &amp; Tracciabilit&agrave; <span class="timeline-badge">Nov-Dic 2026</span></h3>
-<p>Sistema di controllo qualit&agrave; integrato nella produzione.</p>
+<!-- ========== v5.0 ========== -->
+<h3><span class="version-badge badge-future">v5.0</span> Qualit&agrave; &amp; Tracciabilit&agrave; <span class="timeline-badge">Gen-Mar 2027</span></h3>
+<p>Sistema di controllo qualit&agrave; integrato nella produzione con tracciabilit&agrave; completa.</p>
 
 <ul class="checklist">
     <li class="todo">Checklist qualit&agrave; per fase: verifiche obbligatorie prima del termine (colore, registro, grammatura, piega)</li>
@@ -423,27 +363,89 @@
     <li class="todo">Gestione non conformit&agrave;: apertura ticket, assegnazione responsabile, azione correttiva</li>
     <li class="todo">Dashboard qualit&agrave;: % scarti per macchina, per operatore, per tipologia lavoro</li>
     <li class="todo">Storico reclami cliente collegato alla commessa</li>
+    <li class="todo">Certificazioni FSC: tracciabilit&agrave; catena di custodia carta certificata</li>
 </ul>
 
-<!-- ========== v4.0 ========== -->
-<h3><span class="version-badge badge-future">v4.0</span> IoT &amp; Digital Twin <span class="timeline-badge">Gen-Feb 2027</span></h3>
+<!-- ========== v6.0 ========== -->
+<h3><span class="version-badge badge-future">v6.0</span> Magazzino &amp; Materiali <span class="timeline-badge">Apr-Giu 2027</span></h3>
+<p>Gestione magazzino materie prime e semilavorati con integrazione automatica ai consumi di produzione.</p>
+
+<ul class="checklist">
+    <li class="todo">Anagrafica materiali: carta, lastre, inchiostri, fustelle, plastificazione con giacenza e soglia riordino</li>
+    <li class="todo">Scarico automatico materiali a fine fase: carta consumata calcolata da fogli stampati</li>
+    <li class="todo">Movimenti di magazzino: carico da fornitore, scarico produzione, rettifiche inventario</li>
+    <li class="todo">Alert scorta minima: notifica automatica quando un materiale scende sotto soglia</li>
+    <li class="todo">Costo medio ponderato materiali (FIFO) per calcolo costi commessa pi&ugrave; preciso</li>
+    <li class="todo">Integrazione con Onda per carico automatico da DDT fornitore</li>
+    <li class="todo">Report consumi mensili per tipologia materiale e per commessa</li>
+</ul>
+
+<!-- ========== v7.0 ========== -->
+<h3><span class="version-badge badge-future">v7.0</span> IoT &amp; Digital Twin <span class="timeline-badge">Lug-Set 2027</span></h3>
 
 <div class="ai-box">
     <strong>SUPER INTEGRAZIONE: Fabbrica Connessa</strong><br>
     Sensori IoT sulle macchine + digital twin dello stabilimento. Il sistema &ldquo;vede&rdquo; la fabbrica
-    in tempo reale e, combinato con l'AI, prevede guasti, ottimizza consumi energetici e
-    fornisce un gemello digitale navigabile della produzione.
+    in tempo reale e, combinato con l'AI, prevede guasti e ottimizza consumi.
 </div>
 
 <ul class="checklist">
     <li class="todo"><strong>Sensori IoT:</strong> contatori fogli, temperatura, vibrazione su macchine principali (offset, fustella, plastificatrice)</li>
     <li class="todo"><strong>Digital Twin 2D:</strong> mappa interattiva dello stabilimento con stato macchine in tempo reale</li>
-    <li class="todo"><strong>Manutenzione predittiva AI:</strong> analisi vibrazioni e pattern di utilizzo per prevedere guasti prima che accadano</li>
+    <li class="todo"><strong>Manutenzione predittiva AI:</strong> analisi vibrazioni e pattern di utilizzo per prevedere guasti</li>
     <li class="todo">Monitoraggio consumi energetici per macchina e per commessa</li>
-    <li class="todo"><strong>Conteggio automatico produzione:</strong> sensori contano i fogli &rarr; aggiornano qta_prod in tempo reale senza input manuale</li>
-    <li class="todo">Dashboard direzionale: KPI aggregati, trend 12 mesi, benchmark per reparto</li>
-    <li class="todo">Integrazione con sistema contabile per marginalit&agrave; automatica</li>
+    <li class="todo"><strong>Conteggio automatico produzione:</strong> sensori contano i fogli &rarr; aggiornano qta_prod senza input manuale</li>
+    <li class="todo">Protocollo MQTT per comunicazione sensori &rarr; server &rarr; dashboard</li>
+    <li class="todo">Storico dati sensori con grafici trend e correlazione con produttivit&agrave;</li>
+</ul>
+
+<!-- ========== v8.0 ========== -->
+<h3><span class="version-badge badge-future">v8.0</span> Business Intelligence &amp; Analytics Avanzata <span class="timeline-badge">Ott-Dic 2027</span></h3>
+<p>Dashboard direzionali avanzate con drill-down, benchmark, previsioni finanziarie e analisi multi-dimensionale.</p>
+
+<ul class="checklist">
+    <li class="todo">Dashboard direzionale interattiva con drill-down (anno &rarr; mese &rarr; settimana &rarr; giorno &rarr; commessa)</li>
+    <li class="todo">Benchmark per reparto: confronto produttivit&agrave; tra periodi, tra operatori, tra macchine</li>
+    <li class="todo">Previsione fatturato e margine trimestrale basata su portafoglio ordini + storico</li>
+    <li class="todo">Analisi ABC clienti: classificazione per fatturato, margine, volumi</li>
+    <li class="todo">Analisi costi fissi vs variabili per commessa (ammortamento macchine, costo operatore, materiali)</li>
+    <li class="todo">KPI personalizzabili dall'admin: scelta metriche, soglie alert, grafici preferiti</li>
+    <li class="todo">Export automatico report periodici via email (schedulato)</li>
+</ul>
+
+<!-- ========== v9.0 ========== -->
+<h3><span class="version-badge badge-future">v9.0</span> Portale Clienti &amp; API Pubblica <span class="timeline-badge">Ott-Dic 2027</span></h3>
+<p>Accesso clienti per monitorare lo stato dei propri ordini e API REST per integrazione con sistemi esterni.</p>
+
+<ul class="checklist">
+    <li class="todo">Portale clienti read-only: login cliente, stato commesse, tracking avanzamento fasi</li>
+    <li class="todo">Notifica automatica al cliente: commessa in lavorazione, pronta, spedita</li>
+    <li class="todo">Download documenti: DDT, certificati qualit&agrave;, foto prodotto finito</li>
+    <li class="todo">API REST pubblica documentata (OpenAPI/Swagger) per integrazione sistemi terzi</li>
+    <li class="todo">Webhook per eventi: nuova commessa, fase completata, commessa spedita</li>
+    <li class="todo">Integrazione con sistema contabile per fatturazione automatica</li>
+    <li class="todo">Single Sign-On (SSO) per accesso unificato Onda + MES + Portale Clienti</li>
+</ul>
+
+<!-- ========== v10.0 ========== -->
+<h3><span class="version-badge badge-future">v10.0</span> Industria 4.0 Completa <span class="timeline-badge">Gen-Feb 2028</span></h3>
+
+<div class="ai-box">
+    <strong>TRAGUARDO FINALE: Fabbrica Intelligente Integrata</strong><br>
+    La versione finale unifica tutte le componenti in un ecosistema coerente: AI che orchestra produzione,
+    sensori che alimentano i modelli predittivi, clienti connessi in tempo reale, e un digital twin
+    che rispecchia fedelmente ogni aspetto dello stabilimento.
+</div>
+
+<ul class="checklist">
     <li class="todo"><strong>App nativa iOS/Android</strong> per il titolare con notifiche push e dashboard sintetica</li>
+    <li class="todo"><strong>AI Coach per operatori:</strong> suggerimenti personalizzati per migliorare produttivit&agrave; e ridurre scarti</li>
+    <li class="todo">Digital Twin 3D navigabile dello stabilimento con dati real-time sovrapposti</li>
+    <li class="todo">Gestione completa manutenzione: programmata, preventiva (AI), correttiva con storico interventi</li>
+    <li class="todo">Sostenibilit&agrave;: calcolo impronta carbonio per commessa, report ESG, ottimizzazione consumi</li>
+    <li class="todo">Multi-stabilimento: architettura pronta per gestire pi&ugrave; sedi produttive</li>
+    <li class="todo">Formazione integrata: tutorial guidati per nuovi operatori basati su AI</li>
+    <li class="todo">Audit trail completo: ogni azione nel sistema &egrave; tracciata e consultabile per compliance</li>
 </ul>
 
 <!-- ========== RIEPILOGO ========== -->
@@ -462,78 +464,71 @@
     <tbody>
         <tr>
             <td><strong>v1.0</strong></td>
-            <td>Fondamenta MES</td>
+            <td>MES Completo</td>
             <td>Gen-Feb 2026</td>
             <td><span class="version-badge badge-done">Completata</span></td>
-            <td>16/16</td>
-        </tr>
-        <tr>
-            <td><strong>v1.1</strong></td>
-            <td>Automazione &amp; Scheduling</td>
-            <td>Feb 2026</td>
-            <td><span class="version-badge badge-done">Completata</span></td>
-            <td>14/14</td>
-        </tr>
-        <tr>
-            <td><strong>v1.2</strong></td>
-            <td>Admin &amp; Stabilit&agrave;</td>
-            <td>Feb 2026</td>
-            <td><span class="version-badge badge-done">Completata</span></td>
-            <td>18/18</td>
-        </tr>
-        <tr>
-            <td><strong>v1.3</strong></td>
-            <td>Statistiche &amp; Report</td>
-            <td>Feb-Mar 2026</td>
-            <td><span class="version-badge badge-done">Completata</span></td>
-            <td>10/10</td>
-        </tr>
-        <tr>
-            <td><strong>v1.4</strong></td>
-            <td>Prinect Live</td>
-            <td>Feb 2026</td>
-            <td><span class="version-badge badge-done">Completata</span></td>
-            <td>7/7</td>
+            <td>71/71</td>
         </tr>
         <tr>
             <td><strong>v2.0</strong></td>
-            <td>Costi &amp; Margini</td>
-            <td>Mag-Giu 2026</td>
-            <td><span class="version-badge badge-future">Futura</span></td>
-            <td>0/6</td>
-        </tr>
-        <tr>
-            <td><strong>v2.1</strong></td>
             <td>Notifiche &amp; Mobilit&agrave;</td>
-            <td>Lug-Ago 2026</td>
-            <td><span class="version-badge badge-future">Futura</span></td>
-            <td>0/7</td>
+            <td>Apr-Giu 2026</td>
+            <td><span class="version-badge badge-next">Prossima</span></td>
+            <td>0/8</td>
         </tr>
         <tr style="background: linear-gradient(135deg, #f5f3ff, #ede9fe);">
             <td><strong>v3.0</strong></td>
             <td>Claude AI Intelligence</td>
-            <td>Ago-Set 2026</td>
+            <td>Lug-Set 2026</td>
             <td><span class="version-badge badge-ai">AI</span></td>
             <td>0/7</td>
         </tr>
         <tr style="background: linear-gradient(135deg, #f5f3ff, #ede9fe);">
-            <td><strong>v3.1</strong></td>
+            <td><strong>v4.0</strong></td>
             <td>Pianificazione Intelligente</td>
-            <td>Ott-Nov 2026</td>
+            <td>Ott-Dic 2026</td>
             <td><span class="version-badge badge-ai">AI</span></td>
             <td>0/7</td>
         </tr>
         <tr>
-            <td><strong>v3.2</strong></td>
+            <td><strong>v5.0</strong></td>
             <td>Qualit&agrave; &amp; Tracciabilit&agrave;</td>
-            <td>Nov-Dic 2026</td>
+            <td>Gen-Mar 2027</td>
             <td><span class="version-badge badge-future">Futura</span></td>
-            <td>0/6</td>
+            <td>0/7</td>
         </tr>
         <tr>
-            <td><strong>v4.0</strong></td>
+            <td><strong>v6.0</strong></td>
+            <td>Magazzino &amp; Materiali</td>
+            <td>Apr-Giu 2027</td>
+            <td><span class="version-badge badge-future">Futura</span></td>
+            <td>0/7</td>
+        </tr>
+        <tr>
+            <td><strong>v7.0</strong></td>
             <td>IoT &amp; Digital Twin</td>
-            <td>Gen-Feb 2027</td>
+            <td>Lug-Set 2027</td>
+            <td><span class="version-badge badge-future">Futura</span></td>
+            <td>0/7</td>
+        </tr>
+        <tr>
+            <td><strong>v8.0</strong></td>
+            <td>BI &amp; Analytics Avanzata</td>
+            <td>Ott-Dic 2027</td>
+            <td><span class="version-badge badge-future">Futura</span></td>
+            <td>0/7</td>
+        </tr>
+        <tr>
+            <td><strong>v9.0</strong></td>
+            <td>Portale Clienti &amp; API</td>
+            <td>Ott-Dic 2027</td>
+            <td><span class="version-badge badge-future">Futura</span></td>
+            <td>0/7</td>
+        </tr>
+        <tr>
+            <td><strong>v10.0</strong></td>
+            <td>Industria 4.0 Completa</td>
+            <td>Gen-Feb 2028</td>
             <td><span class="version-badge badge-future">Futura</span></td>
             <td>0/8</td>
         </tr>
@@ -541,22 +536,23 @@
 </table>
 
 <div class="section-box">
-    <strong>Totale funzionalit&agrave; pianificate:</strong> 106 &mdash; di cui 65 completate, 41 da sviluppare<br>
-    <strong>Avanzamento complessivo piano annuale:</strong> 61%
+    <strong>Totale funzionalit&agrave; pianificate:</strong> 136 &mdash; di cui 71 completate (v1.0), 65 da sviluppare (v2.0&ndash;v10.0)<br>
+    <strong>Avanzamento complessivo piano biennale:</strong> 52% (1 versione su 10 completata)<br>
+    <strong>Velocit&agrave; sviluppo v1.0:</strong> 71 funzionalit&agrave; in ~6 settimane (AI-Assisted)
 </div>
 
 <div class="section-box">
-    <strong>Stack tecnologico attuale:</strong> Laravel 11 &middot; PHP 8.5 &middot; MySQL &middot; SQL Server (Onda IQ) &middot; Apache &middot; Windows Server 2022 &middot; Prinect REST API &middot; Chart.js &middot; Bootstrap 5
+    <strong>Stack tecnologico attuale (v1.0):</strong> Laravel 11 &middot; PHP 8.5 &middot; MySQL &middot; SQL Server (Onda IQ) &middot; Apache &middot; Windows Server 2022 &middot; Prinect REST API &middot; Chart.js 4 &middot; Bootstrap 5 &middot; Maatwebsite Excel
 </div>
 
 <div class="section-box">
-    <strong>Stack tecnologico previsto (2026-2027):</strong> Claude API (Anthropic) &middot; WebSocket (Laravel Reverb) &middot; PWA / Service Workers &middot; Sensori IoT (MQTT) &middot; Redis (cache AI) &middot; REST API pubblica
+    <strong>Stack tecnologico previsto (v2.0&ndash;v10.0):</strong> Claude API (Anthropic) &middot; Laravel Reverb (WebSocket) &middot; PWA / Service Workers &middot; Redis (cache AI) &middot; MQTT (IoT) &middot; REST API pubblica (OpenAPI) &middot; Telegram Bot API &middot; Three.js (Digital Twin 3D) &middot; App nativa (React Native/Flutter)
 </div>
 
 <div class="footer">
     <p>Sistema Gestionale MES &mdash; Grafica Nappa srl &mdash; Aversa (CE)</p>
     <p>Sviluppo: Giovanni Pietropaolo (Tirocinante) con supporto Claude Code (Anthropic AI)</p>
-    <p style="margin-top:8px; font-size:11px; color:#aaa;">Piano di lavoro annuale AI-Assisted &middot; Feb 2026 &ndash; Feb 2027 &middot; Aggiornamento: 20/02/2026</p>
+    <p style="margin-top:8px; font-size:11px; color:#aaa;">Piano biennale AI-Assisted &middot; Feb 2026 &ndash; Feb 2028 &middot; 10 versioni &middot; Aggiornamento: 20/02/2026</p>
 </div>
 
 </body>
