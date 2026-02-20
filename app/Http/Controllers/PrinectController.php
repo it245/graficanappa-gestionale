@@ -17,15 +17,55 @@ class PrinectController extends Controller
         $devices = $service->getDevices();
         $device = $devices['devices'][0] ?? null;
 
-        // Attivita ultime 24h dal DB locale
-        $attivitaOggi = PrinectAttivita::where('start_time', '>=', Carbon::today())
-            ->orderByDesc('start_time')
-            ->get();
+        // ===== ATTIVITA OGGI: LIVE DALLA API PRINECT (non dal DB) =====
+        $oggi = Carbon::today()->format('Y-m-d\TH:i:sP');
+        $ora = Carbon::now()->format('Y-m-d\TH:i:sP');
+        $apiOggi = $service->getDeviceActivity($deviceId, $oggi, $ora);
+        $rawOggi = collect($apiOggi['activities'] ?? [])
+            ->filter(fn($a) => !empty($a['id'])); // Filtra marker con id=null
 
-        // Attivita ultimi 7 giorni per grafici
-        $attivita7gg = PrinectAttivita::where('start_time', '>=', Carbon::now()->subDays(7))
-            ->orderBy('start_time')
-            ->get();
+        $attivitaOggi = $rawOggi->map(function ($a) {
+            return (object) [
+                'activity_name' => $a['name'] ?? null,
+                'good_cycles' => $a['goodCycles'] ?? 0,
+                'waste_cycles' => $a['wasteCycles'] ?? 0,
+                'start_time' => isset($a['startTime']) ? Carbon::parse($a['startTime']) : null,
+                'end_time' => isset($a['endTime']) ? Carbon::parse($a['endTime']) : null,
+                'prinect_job_name' => $a['workstep']['job']['name'] ?? null,
+                'prinect_job_id' => $a['workstep']['job']['id'] ?? null,
+                'workstep_name' => $a['workstep']['name'] ?? null,
+                'operatore_prinect' => !empty($a['employees'])
+                    ? implode(', ', array_map(fn($e) => trim(($e['firstName'] ?? '').' '.($e['name'] ?? '')), $a['employees']))
+                    : null,
+            ];
+        })->sortByDesc('start_time')->values();
+
+        // ===== ATTIVITA 7GG: LIVE DALLA API PRINECT =====
+        $start7gg = Carbon::now()->subDays(7)->format('Y-m-d\TH:i:sP');
+        $api7gg = $service->getDeviceActivity($deviceId, $start7gg, $ora);
+        $raw7gg = collect($api7gg['activities'] ?? [])
+            ->filter(fn($a) => !empty($a['id']));
+
+        $attivita7gg = $raw7gg->map(function ($a) {
+            $jobId = $a['workstep']['job']['id'] ?? null;
+            $commessa = ($jobId && is_numeric($jobId))
+                ? str_pad($jobId, 7, '0', STR_PAD_LEFT) . '-' . date('y', strtotime($a['startTime'] ?? 'now'))
+                : null;
+            return (object) [
+                'activity_name' => $a['name'] ?? null,
+                'good_cycles' => $a['goodCycles'] ?? 0,
+                'waste_cycles' => $a['wasteCycles'] ?? 0,
+                'start_time' => isset($a['startTime']) ? Carbon::parse($a['startTime']) : null,
+                'end_time' => isset($a['endTime']) ? Carbon::parse($a['endTime']) : null,
+                'prinect_job_name' => $a['workstep']['job']['name'] ?? null,
+                'prinect_job_id' => $jobId,
+                'commessa_gestionale' => $commessa,
+                'workstep_name' => $a['workstep']['name'] ?? null,
+                'operatore_prinect' => !empty($a['employees'])
+                    ? implode(', ', array_map(fn($e) => trim(($e['firstName'] ?? '').' '.($e['name'] ?? '')), $a['employees']))
+                    : null,
+            ];
+        })->sortBy('start_time')->values();
 
         // KPI ultimi 7 giorni
         $totBuoni7gg = $attivita7gg->sum('good_cycles');
@@ -100,15 +140,12 @@ class PrinectController extends Controller
             })->sortByDesc('buoni')->take(10);
 
         // Consumption (cambi lastra)
-        $start7gg = Carbon::now()->subDays(7)->format('Y-m-d\TH:i:sP');
-        $endNow = Carbon::now()->format('Y-m-d\TH:i:sP');
-        $consumption = $service->getDeviceConsumption($deviceId, $start7gg, $endNow);
+        $consumption = $service->getDeviceConsumption($deviceId, $start7gg, $ora);
         $cambiLastra = $consumption['plateChanges'] ?? 0;
 
         // OEE (Overall Equipment Effectiveness) - ultimi 7 giorni
-        // Turno stampa offset: 23h/giorno (0-23), velocita nominale XL106: 18000 fogli/h
         $velocitaNominale = 18000;
-        $oreTurnoPianificate7gg = 23 * 7; // ore pianificate 7 giorni
+        $oreTurnoPianificate7gg = 23 * 7;
         $secTotali7gg = $attivita7gg->sum(function ($a) {
             return ($a->start_time && $a->end_time) ? $a->start_time->diffInSeconds($a->end_time) : 0;
         });
@@ -125,30 +162,26 @@ class PrinectController extends Controller
         $oeePerf = round($performance * 100, 1);
         $oeeQual = round($qualita * 100, 1);
 
-        // Dati live dal workstep in corso (non ancora in DB)
+        // Dati live dal workstep in corso (non ancora completato)
         $liveProduced = $device['deviceStatus']['workstep']['amountProduced'] ?? 0;
         $liveWaste = $device['deviceStatus']['workstep']['wasteProduced'] ?? 0;
 
         // Alert automatici
         $alerts = [];
 
-        // 1. Macchina ferma
         $statoMacchina = $device['deviceStatus']['status'] ?? 'Idle';
         if (in_array($statoMacchina, ['Stopped', 'Error'])) {
             $alerts[] = ['tipo' => 'danger', 'msg' => 'Macchina FERMA — stato: ' . $statoMacchina];
         }
 
-        // 2. Scarti sopra soglia (>5% oggi)
         if ($percScartoOggi > 5 && $totFogliOggi > 100) {
             $alerts[] = ['tipo' => 'warning', 'msg' => 'Scarto oggi al ' . $percScartoOggi . '% — sopra soglia 5%'];
         }
 
-        // 3. Cambi lastra eccessivi (>50 in 7gg)
         if ($cambiLastra > 50) {
             $alerts[] = ['tipo' => 'warning', 'msg' => $cambiLastra . ' cambi lastra in 7 giorni — verificare setup'];
         }
 
-        // 4. OEE basso (<40%)
         if ($oee > 0 && $oee < 40) {
             $alerts[] = ['tipo' => 'danger', 'msg' => 'OEE critico: ' . $oee . '% — sotto soglia 40%'];
         }
