@@ -63,8 +63,8 @@ h2 {
 }
 
 table {
-    width: 2200px;
-    max-width: 2200px;
+    width: 2450px;
+    max-width: 2450px;
     border-collapse: collapse;
     table-layout: fixed;
     font-size: 12px;
@@ -188,8 +188,21 @@ th:nth-child(20), td:nth-child(20) {
     width: 130px;
 }
 
-/* Stato */
+/* Pausa */
 th:nth-child(21), td:nth-child(21) {
+    width: 80px;
+    text-align: center;
+}
+
+/* Ore Lavorate */
+th:nth-child(22), td:nth-child(22) {
+    width: 90px;
+    text-align: center;
+    font-weight: bold;
+}
+
+/* Stato */
+th:nth-child(23), td:nth-child(23) {
     width: 60px;
     text-align: center;
 }
@@ -299,6 +312,8 @@ th:nth-child(21), td:nth-child(21) {
                 <th>Note</th>
                 <th>Data Inizio</th>
                 <th>Data Fine</th>
+                <th>Pausa</th>
+                <th>Ore Lavorate</th>
                 <th>Stato</th>
             </tr>
         </thead>
@@ -343,11 +358,33 @@ th:nth-child(21), td:nth-child(21) {
                     <td>{{ $fase->note ?? '-' }}</td>
                     <td>{{ $fase->data_inizio ?? '-' }}</td>
                     <td>{{ $fase->data_fine ?? '-' }}</td>
+                    @php
+                        $totSecondiPausa = $fase->operatori->sum(fn($op) => $op->pivot->secondi_pausa ?? 0);
+                        $secLordo = 0;
+                        if ($fase->data_inizio && $fase->data_fine) {
+                            try {
+                                $dtInizio = \Carbon\Carbon::createFromFormat('d/m/Y H:i:s', $fase->data_inizio);
+                                $dtFine = \Carbon\Carbon::createFromFormat('d/m/Y H:i:s', $fase->data_fine);
+                                $secLordo = $dtFine->diffInSeconds($dtInizio);
+                            } catch (\Exception $e) {
+                                try {
+                                    $secLordo = \Carbon\Carbon::parse($fase->data_fine)->diffInSeconds(\Carbon\Carbon::parse($fase->data_inizio));
+                                } catch (\Exception $e2) {}
+                            }
+                        }
+                        $secNetto = max($secLordo - $totSecondiPausa, 0);
+                        $oreNette = $secNetto / 3600;
+                        // Formatta pausa come HH:MM
+                        $pausaH = floor($totSecondiPausa / 3600);
+                        $pausaM = floor(($totSecondiPausa % 3600) / 60);
+                    @endphp
+                    <td>{{ $totSecondiPausa > 0 ? sprintf('%dh %02dm', $pausaH, $pausaM) : '-' }}</td>
+                    <td>{{ $secLordo > 0 ? number_format($oreNette, 1) . 'h' : '-' }}</td>
                     <td><span class="badge-stato">{{ $fase->stato == 4 ? 'Consegnata' : 'Terminata' }}</span></td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="21" style="text-align:center; color:#6c757d; padding:20px;">Nessuna fase terminata</td>
+                    <td colspan="23" style="text-align:center; color:#6c757d; padding:20px;">Nessuna fase terminata</td>
                 </tr>
             @endforelse
         </tbody>
