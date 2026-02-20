@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\DB;
 use App\Services\FaseStatoService;
 use App\Services\OndaSyncService;
 use App\Http\Services\PrinectService;
+use App\Http\Services\PrinectSyncService;
 
 class DashboardOwnerController extends Controller
 {
@@ -423,8 +424,23 @@ public function calcolaOreEPriorita($fase)
     return view('owner.fasi_terminate', compact('fasiTerminate'));
 }
 
-    public function dettaglioCommessa($commessa, PrinectService $prinect)
+    public function dettaglioCommessa($commessa, PrinectService $prinect, PrinectSyncService $syncService)
     {
+        // Sync live: aggiorna fasi stampa da attivita Prinect di oggi
+        try {
+            $deviceId = env('PRINECT_DEVICE_XL106_ID', '4001');
+            $oggi = Carbon::today()->format('Y-m-d\TH:i:sP');
+            $ora = Carbon::now()->format('Y-m-d\TH:i:sP');
+            $apiOggi = $prinect->getDeviceActivity($deviceId, $oggi, $ora);
+            $rawOggi = collect($apiOggi['activities'] ?? [])
+                ->filter(fn($a) => !empty($a['id']))
+                ->values()
+                ->toArray();
+            $syncService->sincronizzaDaLive($rawOggi);
+        } catch (\Exception $e) {
+            // Prinect non disponibile, continua senza sync
+        }
+
         $ordini = Ordine::where('commessa', $commessa)->with('fasi.faseCatalogo.reparto', 'fasi.operatori')->get();
         if ($ordini->isEmpty()) abort(404, 'Commessa non trovata');
 
