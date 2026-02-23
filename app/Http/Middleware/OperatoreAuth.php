@@ -11,7 +11,9 @@ class OperatoreAuth
     {
         // Controlla se l'operatore è loggato in sessione
         if (!$request->session()->has('operatore_id')) {
-            // Se non è loggato, reindirizza al login
+            if ($request->expectsJson()) {
+                return response()->json(['success' => false, 'messaggio' => 'Sessione scaduta'], 401);
+            }
             return redirect()->route('operatore.login');
         }
 

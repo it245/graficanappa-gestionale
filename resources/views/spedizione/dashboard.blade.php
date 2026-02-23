@@ -205,6 +205,7 @@
         <thead class="table-dark">
             <tr>
                 <th>Azione</th>
+                <th>Note</th>
                 <th>Commessa</th>
                 <th>Cliente</th>
                 <th>Cod. Articolo</th>
@@ -212,7 +213,6 @@
                 <th>Descrizione</th>
                 <th>Data Consegna</th>
                 <th>Progresso</th>
-                <th>Note</th>
             </tr>
         </thead>
         <tbody>
@@ -235,6 +235,11 @@
                             Consegnato
                         </button>
                     </td>
+                    <td>
+                        <input type="text" class="form-control form-control-sm" style="min-width:150px"
+                               value="{{ $fase->note ?? '' }}"
+                               onblur="aggiornaNota({{ $fase->id }}, this.value)">
+                    </td>
                     <td><a href="{{ route('commesse.show', $fase->ordine->commessa ?? '-') }}" class="commessa-link">{{ $fase->ordine->commessa ?? '-' }}</a></td>
                     <td>{{ $fase->ordine->cliente_nome ?? '-' }}</td>
                     <td>{{ $fase->ordine->cod_art ?? '-' }}</td>
@@ -245,11 +250,6 @@
                         <div class="progress-bar-custom">
                             <div class="fill" style="width:{{ $pct }}%;background:{{ $pctColor }};">{{ $pct }}%</div>
                         </div>
-                    </td>
-                    <td>
-                        <input type="text" class="form-control form-control-sm" style="min-width:150px"
-                               value="{{ $fase->note ?? '' }}"
-                               onblur="aggiornaNota({{ $fase->id }}, this.value)">
                     </td>
                 </tr>
             @empty
@@ -319,13 +319,13 @@
             <tr>
                 <th>Azione</th>
                 <th>Stato</th>
+                <th>Note</th>
                 <th>Commessa</th>
                 <th>Cliente</th>
                 <th>Fase</th>
                 <th>Cod. Articolo</th>
                 <th>Descrizione</th>
                 <th>Data Consegna</th>
-                <th>Note</th>
             </tr>
         </thead>
         <tbody>
@@ -365,17 +365,17 @@
                             <span class="badge bg-warning text-dark">Pausa: {{ $statoFase }}</span>
                         @endif
                     </td>
+                    <td>
+                        <input type="text" class="form-control form-control-sm" style="min-width:150px"
+                               value="{{ $fase->note ?? '' }}"
+                               onblur="aggiornaNota({{ $fase->id }}, this.value)">
+                    </td>
                     <td><a href="{{ route('commesse.show', $fase->ordine->commessa ?? '-') }}" class="commessa-link">{{ $fase->ordine->commessa ?? '-' }}</a></td>
                     <td>{{ $fase->ordine->cliente_nome ?? '-' }}</td>
                     <td>{{ $fase->faseCatalogo->nome ?? '-' }}</td>
                     <td>{{ $fase->ordine->cod_art ?? '-' }}</td>
                     <td>{{ $fase->ordine->descrizione ?? '-' }}</td>
                     <td>{{ $fase->ordine->data_prevista_consegna ? \Carbon\Carbon::parse($fase->ordine->data_prevista_consegna)->format('d/m/Y') : '-' }}</td>
-                    <td>
-                        <input type="text" class="form-control form-control-sm" style="min-width:150px"
-                               value="{{ $fase->note ?? '' }}"
-                               onblur="aggiornaNota({{ $fase->id }}, this.value)">
-                    </td>
                 </tr>
             @endforeach
         </tbody>
@@ -436,49 +436,49 @@
 </div>
 
 <script>
+const hdrs = {
+    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+    'Content-Type': 'application/json',
+    'Accept': 'application/json'
+};
+
+function parseResponse(res) {
+    if (!res.ok && res.status === 401) {
+        alert('Sessione scaduta. Effettua di nuovo il login.');
+        window.location.reload();
+        return Promise.reject('session_expired');
+    }
+    const ct = res.headers.get('content-type') || '';
+    if (!ct.includes('application/json')) {
+        return Promise.reject('Risposta non valida dal server (status ' + res.status + ')');
+    }
+    return res.json();
+}
+
 function inviaAutomatico(faseId, btn) {
     btn.disabled = true;
     btn.textContent = 'Consegna...';
 
     fetch('{{ route("spedizione.invio") }}', {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-            'Content-Type': 'application/json'
-        },
+        method: 'POST', headers: hdrs,
         body: JSON.stringify({ fase_id: faseId })
     })
-    .then(res => res.json())
+    .then(parseResponse)
     .then(data => {
-        if (data.success) {
-            window.location.reload();
-        } else {
-            alert('Errore: ' + (data.messaggio || 'operazione fallita'));
-            btn.disabled = false;
-            btn.textContent = 'Consegnato';
-        }
+        if (data.success) { window.location.reload(); }
+        else { alert('Errore: ' + (data.messaggio || 'operazione fallita')); btn.disabled = false; btn.textContent = 'Consegnato'; }
     })
-    .catch(err => {
-        console.error('Errore:', err);
-        btn.disabled = false;
-        btn.textContent = 'Consegnato';
-    });
+    .catch(err => { if (err !== 'session_expired') { console.error('Errore:', err); alert('Errore: ' + err); } btn.disabled = false; btn.textContent = 'Consegnato'; });
 }
 
 function aggiornaNota(faseId, valore) {
     fetch('{{ route("produzione.aggiornaCampo") }}', {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-            'Content-Type': 'application/json'
-        },
+        method: 'POST', headers: hdrs,
         body: JSON.stringify({ fase_id: faseId, campo: 'note', valore: valore })
     })
-    .then(res => res.json())
-    .then(data => {
-        if (!data.success) alert('Errore salvataggio nota');
-    })
-    .catch(err => console.error('Errore:', err));
+    .then(parseResponse)
+    .then(data => { if (!data.success) alert('Errore salvataggio nota'); })
+    .catch(err => { if (err !== 'session_expired') console.error('Errore:', err); });
 }
 
 function forzaConsegna(faseId, btn) {
@@ -487,30 +487,15 @@ function forzaConsegna(faseId, btn) {
     btn.textContent = 'Consegna...';
 
     fetch('{{ route("spedizione.invio") }}', {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        },
+        method: 'POST', headers: hdrs,
         body: JSON.stringify({ fase_id: faseId, forza: true })
     })
-    .then(res => res.json().then(data => ({ ok: res.ok, data })))
-    .then(({ ok, data }) => {
-        if (ok && data.success) {
-            window.location.reload();
-        } else {
-            alert('Errore: ' + (data.messaggio || data.message || 'operazione fallita'));
-            btn.disabled = false;
-            btn.textContent = 'Forza';
-        }
+    .then(parseResponse)
+    .then(data => {
+        if (data.success) { window.location.reload(); }
+        else { alert('Errore: ' + (data.messaggio || data.message || 'operazione fallita')); btn.disabled = false; btn.textContent = 'Forza'; }
     })
-    .catch(err => {
-        alert('Errore di rete: ' + err.message);
-        console.error('Errore:', err);
-        btn.disabled = false;
-        btn.textContent = 'Forza';
-    });
+    .catch(err => { if (err !== 'session_expired') { alert('Errore: ' + err); console.error('Errore:', err); } btn.disabled = false; btn.textContent = 'Forza'; });
 }
 
 // --- Lavorazioni esterne ---
@@ -521,16 +506,15 @@ function esternoAvvia(faseId, btn) {
     if (terzista === null) return;
     btn.disabled = true;
     fetch('{{ route("produzione.avvia") }}', {
-        method: 'POST',
-        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Content-Type': 'application/json' },
+        method: 'POST', headers: hdrs,
         body: JSON.stringify({ fase_id: faseId, terzista: terzista })
     })
-    .then(res => res.json())
+    .then(parseResponse)
     .then(data => {
         if (data.success) { window.location.reload(); }
         else { alert('Errore: ' + (data.messaggio || 'operazione fallita')); btn.disabled = false; }
     })
-    .catch(err => { console.error('Errore:', err); btn.disabled = false; });
+    .catch(err => { if (err !== 'session_expired') { console.error('Errore:', err); alert('Errore: ' + err); } btn.disabled = false; });
 }
 
 function esternoPausa(faseId, btn) {
@@ -539,47 +523,44 @@ function esternoPausa(faseId, btn) {
     let motivo = motiviPausaEsterno[parseInt(scelta) - 1];
     btn.disabled = true;
     fetch('{{ route("produzione.pausa") }}', {
-        method: 'POST',
-        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Content-Type': 'application/json' },
+        method: 'POST', headers: hdrs,
         body: JSON.stringify({ fase_id: faseId, motivo: motivo })
     })
-    .then(res => res.json())
+    .then(parseResponse)
     .then(data => {
         if (data.success) { window.location.reload(); }
         else { alert('Errore: ' + (data.messaggio || 'operazione fallita')); btn.disabled = false; }
     })
-    .catch(err => { console.error('Errore:', err); btn.disabled = false; });
+    .catch(err => { if (err !== 'session_expired') { console.error('Errore:', err); alert('Errore: ' + err); } btn.disabled = false; });
 }
 
 function esternoTermina(faseId, btn) {
     if (!confirm("Sei sicuro di voler terminare questa fase esterna?")) return;
     btn.disabled = true;
     fetch('{{ route("produzione.termina") }}', {
-        method: 'POST',
-        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Content-Type': 'application/json' },
+        method: 'POST', headers: hdrs,
         body: JSON.stringify({ fase_id: faseId })
     })
-    .then(res => res.json())
+    .then(parseResponse)
     .then(data => {
         if (data.success) { window.location.reload(); }
         else { alert('Errore: ' + (data.messaggio || 'operazione fallita')); btn.disabled = false; }
     })
-    .catch(err => { console.error('Errore:', err); btn.disabled = false; });
+    .catch(err => { if (err !== 'session_expired') { console.error('Errore:', err); alert('Errore: ' + err); } btn.disabled = false; });
 }
 
 function esternoRiprendi(faseId, btn) {
     btn.disabled = true;
     fetch('{{ route("produzione.riprendi") }}', {
-        method: 'POST',
-        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Content-Type': 'application/json' },
+        method: 'POST', headers: hdrs,
         body: JSON.stringify({ fase_id: faseId })
     })
-    .then(res => res.json())
+    .then(parseResponse)
     .then(data => {
         if (data.success) { window.location.reload(); }
         else { alert('Errore: ' + (data.messaggio || 'operazione fallita')); btn.disabled = false; }
     })
-    .catch(err => { console.error('Errore:', err); btn.disabled = false; });
+    .catch(err => { if (err !== 'session_expired') { console.error('Errore:', err); alert('Errore: ' + err); } btn.disabled = false; });
 }
 
 // Ricerca
