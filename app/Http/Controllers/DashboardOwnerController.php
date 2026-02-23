@@ -593,13 +593,60 @@ public function calcolaOreEPriorita($fase)
     public function syncOnda()
     {
         try {
+            // Prima pulisci eventuali duplicati
+            $duplicatiRimossi = $this->pulisciDuplicati();
+
             $risultato = OndaSyncService::sincronizza();
             $msg = "Sync Onda completato: {$risultato['ordini_creati']} ordini creati, "
                  . "{$risultato['ordini_aggiornati']} aggiornati, {$risultato['fasi_create']} fasi create.";
+            if ($duplicatiRimossi > 0) {
+                $msg .= " ($duplicatiRimossi ordini duplicati rimossi)";
+            }
             return redirect()->route('owner.dashboard')->with('success', $msg);
         } catch (\Exception $e) {
             return redirect()->route('owner.dashboard')->with('error', 'Errore sync Onda: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Rimuovi ordini duplicati: per ogni (commessa, cod_art), tieni quello con id più basso
+     * e sposta le fasi con stato > 0 dal duplicato all'originale prima di eliminare.
+     */
+    private function pulisciDuplicati(): int
+    {
+        $rimossi = 0;
+
+        // Trova gruppi con duplicati
+        $duplicati = Ordine::select('commessa', 'cod_art', \DB::raw('COUNT(*) as cnt'), \DB::raw('MIN(id) as min_id'))
+            ->groupBy('commessa', 'cod_art')
+            ->having('cnt', '>', 1)
+            ->get();
+
+        foreach ($duplicati as $gruppo) {
+            $originaleId = $gruppo->min_id;
+
+            // Ordini duplicati (tutti tranne l'originale)
+            $ordiniDuplicati = Ordine::where('commessa', $gruppo->commessa)
+                ->where('cod_art', $gruppo->cod_art)
+                ->where('id', '!=', $originaleId)
+                ->get();
+
+            foreach ($ordiniDuplicati as $dup) {
+                // Sposta fasi con stato > 0 (lavorate) all'ordine originale
+                OrdineFase::where('ordine_id', $dup->id)
+                    ->where('stato', '>', 0)
+                    ->update(['ordine_id' => $originaleId]);
+
+                // Elimina le fasi rimanenti del duplicato
+                OrdineFase::where('ordine_id', $dup->id)->delete();
+
+                // Elimina l'ordine duplicato
+                $dup->delete();
+                $rimossi++;
+            }
+        }
+
+        return $rimossi;
     }
 
     public function scheduling(PrinectService $prinect, PrinectSyncService $syncService)
