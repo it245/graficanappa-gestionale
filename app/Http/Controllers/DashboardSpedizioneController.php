@@ -89,7 +89,18 @@ class DashboardSpedizioneController extends Controller
 
         $fasiInAttesa = $fasiInAttesa->sortByDesc('percentuale');
 
-        return view('spedizione.dashboard', compact('fasiDaSpedire', 'fasiSpediteOggi', 'fasiInAttesa', 'operatore'));
+        // Fasi esterne (reparto "esterno") non terminate
+        $repartoEsterno = Reparto::where('nome', 'esterno')->first();
+        $fasiEsterne = collect();
+        if ($repartoEsterno) {
+            $fasiEsterne = OrdineFase::where('stato', '<', 3)
+                ->whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', $repartoEsterno->id))
+                ->with(['ordine', 'faseCatalogo', 'operatori'])
+                ->get()
+                ->sortBy(fn($f) => $f->ordine->data_prevista_consegna ?? '9999-12-31');
+        }
+
+        return view('spedizione.dashboard', compact('fasiDaSpedire', 'fasiSpediteOggi', 'fasiInAttesa', 'fasiEsterne', 'operatore'));
     }
 
     public function invioAutomatico(Request $request)

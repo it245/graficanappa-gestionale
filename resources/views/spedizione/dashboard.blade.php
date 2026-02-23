@@ -169,19 +169,25 @@
 
 <!-- KPI -->
 <div class="row mx-2 mb-3">
-    <div class="col-md-4">
+    <div class="col-md-3">
         <div class="kpi-box" style="border-left: 4px solid #28a745;">
             <h3>{{ $fasiDaSpedire->count() }}</h3>
             <small>Da consegnare</small>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-3">
         <div class="kpi-box" style="border-left: 4px solid #ffc107;">
             <h3>{{ $fasiInAttesa->count() }}</h3>
             <small>In attesa (lavorazione)</small>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-3">
+        <div class="kpi-box" style="border-left: 4px solid #17a2b8;">
+            <h3>{{ $fasiEsterne->count() }}</h3>
+            <small>Lavorazioni esterne</small>
+        </div>
+    </div>
+    <div class="col-md-3">
         <div class="kpi-box" style="cursor:pointer; border-left: 4px solid #0d6efd;" data-bs-toggle="modal" data-bs-target="#modalSpediteOggi">
             <h3>{{ $fasiSpediteOggi->count() }}</h3>
             <small>Consegnate oggi <span style="font-size:11px">(clicca)</span></small>
@@ -296,6 +302,79 @@
                         <div class="progress-bar-custom">
                             <div class="fill" style="width:{{ $pct }}%;background:{{ $pctColor }};">{{ $pct }}%</div>
                         </div>
+                    </td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
+</div>
+@endif
+
+<!-- Tabella lavorazioni esterne -->
+@if($fasiEsterne->count() > 0)
+<h4 class="mx-2 mt-4" style="color:#17a2b8;">Lavorazioni Esterne</h4>
+<div class="table-wrapper">
+    <table class="table table-bordered table-sm table-striped" id="tabEsterne">
+        <thead style="background:#17a2b8; color:#fff;">
+            <tr>
+                <th>Azione</th>
+                <th>Stato</th>
+                <th>Commessa</th>
+                <th>Cliente</th>
+                <th>Fase</th>
+                <th>Cod. Articolo</th>
+                <th>Descrizione</th>
+                <th>Data Consegna</th>
+                <th>Note</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($fasiEsterne as $fase)
+                @php
+                    $rowClass = '';
+                    if ($fase->ordine && $fase->ordine->data_prevista_consegna) {
+                        $oggi = \Carbon\Carbon::today();
+                        $dataPrevista = \Carbon\Carbon::parse($fase->ordine->data_prevista_consegna);
+                        $diff = $oggi->diffInDays($dataPrevista, false);
+                        if ($diff < -5) $rowClass = 'row-scaduta';
+                        elseif ($diff <= 3) $rowClass = 'row-warning';
+                    }
+                    $statoFase = $fase->stato;
+                    $inPausa = is_string($statoFase) && !is_numeric($statoFase);
+                @endphp
+                <tr class="{{ $rowClass }} searchable">
+                    <td style="white-space:nowrap;">
+                        @if($statoFase == 0 || $statoFase == 1)
+                            <button class="btn btn-sm btn-success fw-bold" onclick="esternoAvvia({{ $fase->id }}, this)">Avvia</button>
+                        @elseif($statoFase == 2)
+                            <button class="btn btn-sm btn-warning fw-bold" onclick="esternoPausa({{ $fase->id }}, this)">Pausa</button>
+                            <button class="btn btn-sm btn-danger fw-bold" onclick="esternoTermina({{ $fase->id }}, this)">Termina</button>
+                        @elseif($inPausa)
+                            <button class="btn btn-sm btn-success fw-bold" onclick="esternoRiprendi({{ $fase->id }}, this)">Riprendi</button>
+                            <button class="btn btn-sm btn-danger fw-bold" onclick="esternoTermina({{ $fase->id }}, this)">Termina</button>
+                        @endif
+                    </td>
+                    <td>
+                        @if($statoFase == 0)
+                            <span class="badge bg-secondary">Da fare</span>
+                        @elseif($statoFase == 1)
+                            <span class="badge bg-info">Pronto</span>
+                        @elseif($statoFase == 2)
+                            <span class="badge bg-primary">In corso</span>
+                        @elseif($inPausa)
+                            <span class="badge bg-warning text-dark">Pausa: {{ $statoFase }}</span>
+                        @endif
+                    </td>
+                    <td><a href="{{ route('commesse.show', $fase->ordine->commessa ?? '-') }}" class="commessa-link">{{ $fase->ordine->commessa ?? '-' }}</a></td>
+                    <td>{{ $fase->ordine->cliente_nome ?? '-' }}</td>
+                    <td>{{ $fase->faseCatalogo->nome ?? '-' }}</td>
+                    <td>{{ $fase->ordine->cod_art ?? '-' }}</td>
+                    <td>{{ $fase->ordine->descrizione ?? '-' }}</td>
+                    <td>{{ $fase->ordine->data_prevista_consegna ? \Carbon\Carbon::parse($fase->ordine->data_prevista_consegna)->format('d/m/Y') : '-' }}</td>
+                    <td>
+                        <input type="text" class="form-control form-control-sm" style="min-width:150px"
+                               value="{{ $fase->note ?? '' }}"
+                               onblur="aggiornaNota({{ $fase->id }}, this.value)">
                     </td>
                 </tr>
             @endforeach
@@ -431,6 +510,73 @@ function forzaConsegna(faseId, btn) {
         btn.disabled = false;
         btn.textContent = 'Forza';
     });
+}
+
+// --- Lavorazioni esterne ---
+const motiviPausaEsterno = ["Attesa materiale", "Problema macchina", "Pranzo", "Altro"];
+
+function esternoAvvia(faseId, btn) {
+    btn.disabled = true;
+    fetch('{{ route("produzione.avvia") }}', {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fase_id: faseId })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) { window.location.reload(); }
+        else { alert('Errore: ' + (data.messaggio || 'operazione fallita')); btn.disabled = false; }
+    })
+    .catch(err => { console.error('Errore:', err); btn.disabled = false; });
+}
+
+function esternoPausa(faseId, btn) {
+    let scelta = prompt("Seleziona motivo pausa:\n1) Attesa materiale\n2) Problema macchina\n3) Pranzo\n4) Altro");
+    if (!scelta || !["1","2","3","4"].includes(scelta)) return;
+    let motivo = motiviPausaEsterno[parseInt(scelta) - 1];
+    btn.disabled = true;
+    fetch('{{ route("produzione.pausa") }}', {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fase_id: faseId, motivo: motivo })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) { window.location.reload(); }
+        else { alert('Errore: ' + (data.messaggio || 'operazione fallita')); btn.disabled = false; }
+    })
+    .catch(err => { console.error('Errore:', err); btn.disabled = false; });
+}
+
+function esternoTermina(faseId, btn) {
+    if (!confirm("Sei sicuro di voler terminare questa fase esterna?")) return;
+    btn.disabled = true;
+    fetch('{{ route("produzione.termina") }}', {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fase_id: faseId })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) { window.location.reload(); }
+        else { alert('Errore: ' + (data.messaggio || 'operazione fallita')); btn.disabled = false; }
+    })
+    .catch(err => { console.error('Errore:', err); btn.disabled = false; });
+}
+
+function esternoRiprendi(faseId, btn) {
+    btn.disabled = true;
+    fetch('{{ route("produzione.riprendi") }}', {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fase_id: faseId })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) { window.location.reload(); }
+        else { alert('Errore: ' + (data.messaggio || 'operazione fallita')); btn.disabled = false; }
+    })
+    .catch(err => { console.error('Errore:', err); btn.disabled = false; });
 }
 
 // Ricerca
