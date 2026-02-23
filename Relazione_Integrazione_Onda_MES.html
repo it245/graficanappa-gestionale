@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Relazione Integrazione Onda IQ - MES Grafica Nappa</title>
+    <style>
+        @page { margin: 20mm 18mm; size: A4; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Calibri, Arial, sans-serif; font-size: 11pt; color: #222; line-height: 1.5; padding: 0 20px; }
+
+        /* Header */
+        .header { text-align: center; border-bottom: 3px solid #1a4d8f; padding-bottom: 14px; margin-bottom: 20px; margin-top: 10px; }
+        .header h1 { font-size: 20pt; color: #1a4d8f; margin-bottom: 2px; }
+        .header h2 { font-size: 13pt; color: #555; font-weight: 400; }
+        .header .date { font-size: 10pt; color: #888; margin-top: 6px; }
+        .header .logo-area { font-size: 9pt; color: #999; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 2px; }
+
+        /* Sections */
+        h3 { font-size: 13pt; color: #1a4d8f; border-bottom: 2px solid #e0e0e0; padding-bottom: 4px; margin-top: 22px; margin-bottom: 10px; }
+        h4 { font-size: 11pt; color: #333; margin-top: 14px; margin-bottom: 6px; }
+
+        p, li { font-size: 10.5pt; }
+        ul { margin-left: 18px; margin-bottom: 8px; }
+        li { margin-bottom: 3px; }
+
+        /* Tables */
+        table { width: 100%; border-collapse: collapse; margin: 8px 0 14px 0; font-size: 10pt; }
+        th { background: #1a4d8f; color: #fff; padding: 6px 8px; text-align: left; font-weight: 600; font-size: 9.5pt; }
+        td { padding: 5px 8px; border-bottom: 1px solid #ddd; }
+        tr:nth-child(even) td { background: #f7f9fc; }
+        .tag { display: inline-block; padding: 1px 7px; border-radius: 3px; font-size: 8.5pt; font-weight: 600; }
+        .tag-green { background: #d4edda; color: #155724; }
+        .tag-blue { background: #cce5ff; color: #004085; }
+        .tag-orange { background: #fff3cd; color: #856404; }
+        .tag-red { background: #f8d7da; color: #721c24; }
+        .tag-gray { background: #e9ecef; color: #555; }
+
+        /* KPI boxes */
+        .kpi-row { display: flex; gap: 12px; margin: 10px 0 16px 0; }
+        .kpi-box { flex: 1; border: 1.5px solid #1a4d8f; border-radius: 8px; padding: 10px; text-align: center; }
+        .kpi-box .kpi-label { font-size: 9pt; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
+        .kpi-box .kpi-value { font-size: 20pt; font-weight: 700; color: #1a4d8f; }
+        .kpi-box .kpi-sub { font-size: 8.5pt; color: #999; }
+
+        /* Highlight box */
+        .highlight { background: #f0f5ff; border-left: 4px solid #1a4d8f; padding: 10px 14px; margin: 10px 0; border-radius: 0 6px 6px 0; }
+        .highlight strong { color: #1a4d8f; }
+
+        .priority-high { font-weight: 700; color: #c0392b; }
+        .priority-med { font-weight: 600; color: #e67e22; }
+        .priority-low { color: #7f8c8d; }
+
+        /* Footer */
+        .footer { margin-top: 30px; padding-top: 10px; border-top: 2px solid #e0e0e0; font-size: 8.5pt; color: #999; text-align: center; }
+
+        /* Page break */
+        .page-break { page-break-before: always; }
+
+        @media print {
+            body { padding: 0; }
+            .no-print { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- INTESTAZIONE -->
+<div class="header">
+    <div class="logo-area">Grafica Nappa s.r.l.</div>
+    <h1>Integrazione Onda IQ &harr; MES</h1>
+    <h2>Stato attuale e proposte di ampliamento dati</h2>
+    <div class="date">23 Febbraio 2026 &mdash; A cura di Giovanni (Sviluppo MES)</div>
+</div>
+
+<!-- 1. PANORAMICA -->
+<h3>1. Panoramica del sistema</h3>
+<p>
+    Il sistema MES (Manufacturing Execution System) sviluppato internamente si integra con il gestionale
+    <strong>Onda IQ</strong> (database SQL Server) per sincronizzare automaticamente gli ordini di produzione,
+    le fasi di lavorazione e i dati cliente. La sincronizzazione avviene ogni <strong>2 minuti</strong> tramite
+    comando schedulato (<code>onda:sync</code>).
+</p>
+
+<div class="kpi-row">
+    <div class="kpi-box">
+        <div class="kpi-label">Tabelle Onda lette</div>
+        <div class="kpi-value">5</div>
+        <div class="kpi-sub">su 851 disponibili</div>
+    </div>
+    <div class="kpi-box">
+        <div class="kpi-label">Campi importati</div>
+        <div class="kpi-value">19</div>
+        <div class="kpi-sub">campi attivi nel sync</div>
+    </div>
+    <div class="kpi-box">
+        <div class="kpi-label">Macchine in Onda</div>
+        <div class="kpi-value">38</div>
+        <div class="kpi-sub">anagrafica completa</div>
+    </div>
+    <div class="kpi-box">
+        <div class="kpi-label">Operatori in Onda</div>
+        <div class="kpi-value">33</div>
+        <div class="kpi-sub">con centri di lavoro</div>
+    </div>
+</div>
+
+<!-- 2. STATO ATTUALE -->
+<h3>2. Dati attualmente importati da Onda</h3>
+<p>Di seguito le tabelle e i campi che il sync legge attualmente dal database Onda:</p>
+
+<table>
+    <thead>
+        <tr>
+            <th style="width:22%">Tabella Onda</th>
+            <th style="width:25%">Campo</th>
+            <th style="width:25%">Destinazione MES</th>
+            <th>Descrizione</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr><td rowspan="5"><strong>ATTDocTeste</strong><br><span class="tag tag-green">Testata ordine</span></td>
+            <td>CodCommessa</td><td>ordini.commessa</td><td>Numero commessa</td></tr>
+        <tr><td>DataRegistrazione</td><td>ordini.data_registrazione</td><td>Data inserimento ordine</td></tr>
+        <tr><td>TotMerce</td><td>ordini.valore_ordine</td><td>Importo netto ordine</td></tr>
+        <tr><td>ncpcommentoprestampa</td><td>ordini.note_prestampa</td><td>Note per la prestampa</td></tr>
+        <tr><td>ncprespocommessa</td><td>ordini.responsabile</td><td>Responsabile commessa</td></tr>
+
+        <tr><td rowspan="5"><strong>PRDDocTeste</strong><br><span class="tag tag-blue">Produzione</span></td>
+            <td>CodArt</td><td>ordini.cod_art</td><td>Codice articolo</td></tr>
+        <tr><td>OC_Descrizione</td><td>ordini.descrizione</td><td>Descrizione prodotto</td></tr>
+        <tr><td>NCPRagioneSociale</td><td>ordini.cliente_nome</td><td>Nome cliente</td></tr>
+        <tr><td>QtaDaProdurre</td><td>ordini.qta_richiesta</td><td>Quantit&agrave; da produrre</td></tr>
+        <tr><td>DataPresConsegna</td><td>ordini.data_prevista_consegna</td><td>Data consegna prevista</td></tr>
+
+        <tr><td rowspan="4"><strong>PRDDocFasi</strong><br><span class="tag tag-orange">Fasi lavorazione</span></td>
+            <td>CodFase</td><td>ordine_fasi.fase</td><td>Nome fase/centro lavoro</td></tr>
+        <tr><td>CodMacchina</td><td><em>(rimappatura reparto)</em></td><td>Per distinguere STAMPA offset/digitale</td></tr>
+        <tr><td>QtaDaLavorare</td><td>ordine_fasi.qta_fase</td><td>Quantit&agrave; per fase</td></tr>
+        <tr><td>CodUnMis</td><td>ordine_fasi.um</td><td>Unit&agrave; di misura</td></tr>
+
+        <tr><td rowspan="3"><strong>PRDDocRighe</strong><br><span class="tag tag-gray">Materiali</span></td>
+            <td>CodArt + Descrizione</td><td>ordini.cod_carta / carta</td><td>Carta utilizzata</td></tr>
+        <tr><td>Qta + CodUnMis</td><td>ordini.qta_carta / UM_carta</td><td>Quantit&agrave; carta</td></tr>
+        <tr><td>SUM(Totale)</td><td>ordini.costo_materiali</td><td>Costo totale materiali</td></tr>
+
+        <tr><td><strong>STDAnagrafiche</strong><br><span class="tag tag-gray">Anagrafica</span></td>
+            <td>RagioneSociale</td><td>ordini.cliente_nome</td><td>Fallback nome cliente</td></tr>
+    </tbody>
+</table>
+
+<!-- 3. PAGE BREAK + PROPOSTE -->
+<div class="page-break"></div>
+
+<h3>3. Dati disponibili in Onda non ancora utilizzati</h3>
+<p>
+    L'analisi del database Onda ha evidenziato numerose tabelle e campi utili che attualmente
+    <strong>non vengono importati</strong> nel MES. Di seguito le proposte organizzate per priorit&agrave;.
+</p>
+
+<!-- PRIORITA' ALTA -->
+<h4>3.1 &mdash; Priorit&agrave; ALTA <span class="tag tag-red">Impatto immediato</span></h4>
+
+<table>
+    <thead>
+        <tr>
+            <th>Tabella</th>
+            <th>Campi</th>
+            <th>Beneficio per il MES</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>PRDDocFasi</strong><br>(campi aggiuntivi)</td>
+            <td>
+                <code>TempoAttPrev</code> &mdash; Tempo avviamento previsto<br>
+                <code>TempoLavPrev</code> &mdash; Tempo lavorazione previsto<br>
+                <code>QtaLavorata</code> &mdash; Quantit&agrave; gi&agrave; prodotta<br>
+                <code>CodOperaio</code> &mdash; Operatore assegnato<br>
+                <code>OC_Tiratura</code> &mdash; Tiratura prevista<br>
+                <code>OC_Note</code> &mdash; Note fase
+            </td>
+            <td>
+                <strong>Scheduling pi&ugrave; preciso:</strong> con i tempi previsti si possono calcolare
+                le date di fine lavorazione, individuare colli di bottiglia e ottimizzare la pianificazione.
+                La quantit&agrave; gi&agrave; prodotta permette di mostrare l'avanzamento reale.
+            </td>
+        </tr>
+        <tr>
+            <td><strong>PRDMacchinari</strong><br>(38 record)</td>
+            <td>
+                <code>Descrizione</code> &mdash; Nome macchina<br>
+                <code>OC_Velocita</code> &mdash; Velocit&agrave; (fogli/h)<br>
+                <code>OC_LarghezzaCM</code> / <code>OC_AltezzaCM</code><br>
+                <code>CostoLav</code> &mdash; Costo orario<br>
+                <code>OC_NumMaxColori</code> &mdash; Nr colori<br>
+                <code>OC_FogliScartoIniz</code> &mdash; Scarto iniziale std
+            </td>
+            <td>
+                <strong>Anagrafica macchine completa:</strong> permette di mostrare nella dashboard
+                la capacit&agrave; produttiva, calcolare tempi stimati, e confrontare
+                prestazioni reali (Prinect/Fiery) vs. nominali.
+            </td>
+        </tr>
+        <tr>
+            <td><strong>PRDOperai</strong><br>(33 record)</td>
+            <td>
+                <code>CodOperaio</code> / <code>Descrizione</code><br>
+                <code>CodCentro</code> &mdash; Centro di lavoro<br>
+                <code>CostoMan</code> &mdash; Costo manodopera<br>
+                <code>Mail</code> / <code>Cellulare</code>
+            </td>
+            <td>
+                <strong>Gestione personale:</strong> associare operatori alle fasi,
+                calcolare costi manodopera, e permettere notifiche.
+                Oggi i nomi operatori nel MES sono inseriti a mano.
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+<!-- PRIORITA' MEDIA -->
+<h4>3.2 &mdash; Priorit&agrave; MEDIA <span class="tag tag-orange">Valore aggiunto</span></h4>
+
+<table>
+    <thead>
+        <tr>
+            <th>Tabella</th>
+            <th>Campi</th>
+            <th>Beneficio per il MES</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>PRDDocFeedback</strong><br>(26.555 record)</td>
+            <td>
+                <code>DataReg</code> &mdash; Data registrazione<br>
+                <code>QtaProdotta</code> &mdash; Pezzi prodotti<br>
+                <code>CodMacchina</code> / <code>CodOperaio</code><br>
+                <code>TempoLavorazione</code><br>
+                <code>CodCausale</code> &mdash; Tipo operazione (VERS, SCAM, ecc.)
+            </td>
+            <td>
+                <strong>Storico produzione:</strong> dati consuntivi reali registrati dagli operatori
+                in Onda. Permette di confrontare tempi previsti vs. consuntivi e creare
+                report di produttivit&agrave; storica.
+            </td>
+        </tr>
+        <tr>
+            <td><strong>STDAnagraficaClienti</strong><br>(3.726 record)</td>
+            <td>
+                <code>CodPagamento</code> &mdash; Condizioni pagamento<br>
+                <code>Fido</code> &mdash; Limite di credito<br>
+                <code>Bloccato</code> &mdash; Cliente bloccato<br>
+                <code>Priorita</code> &mdash; Priorit&agrave; cliente<br>
+                <code>IdAgente1</code> &mdash; Agente commerciale
+            </td>
+            <td>
+                <strong>Gestione clienti:</strong> mostrare alert per clienti bloccati o con fido superato,
+                dare priorit&agrave; automatica agli ordini in base alla priorit&agrave; cliente,
+                visualizzare condizioni commerciali.
+            </td>
+        </tr>
+        <tr>
+            <td><strong>PRDDocFasi</strong><br>(tempi consuntivi)</td>
+            <td>
+                <code>TempoAttCons</code> &mdash; Tempo avviamento effettivo<br>
+                <code>TempoLavCons</code> &mdash; Tempo lavoro effettivo<br>
+                <code>CostoAttCons</code> / <code>CostoLavCons</code>
+            </td>
+            <td>
+                <strong>Analisi efficienza:</strong> confronto tempi previsti vs. consuntivi per fase,
+                calcolo costi reali di produzione, individuazione inefficienze.
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+<!-- PRIORITA' BASSA -->
+<h4>3.3 &mdash; Priorit&agrave; BASSA <span class="tag tag-gray">Sviluppo futuro</span></h4>
+
+<table>
+    <thead>
+        <tr>
+            <th>Tabella</th>
+            <th>Contenuto</th>
+            <th>Utilizzo potenziale</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>MAGAnagraficaArticoli</strong></td>
+            <td>12.788 articoli con dimensioni, grammature, costi, specifiche tecniche</td>
+            <td>Scheda tecnica prodotto nella dashboard MES, verifica specifiche in fase di produzione</td>
+        </tr>
+        <tr>
+            <td><strong>MAGGiacenze</strong></td>
+            <td>19.522 record di giacenza per articolo e deposito</td>
+            <td>Verifica disponibilit&agrave; carta/materiali prima di avviare la produzione, alert scorte basse</td>
+        </tr>
+        <tr>
+            <td><strong>PRDCentriLavoro</strong></td>
+            <td>18 centri di lavoro con responsabile e calendario</td>
+            <td>Mappatura centri &harr; reparti MES, pianificazione capacit&agrave;</td>
+        </tr>
+        <tr>
+            <td><strong>PRDFasi</strong></td>
+            <td>357 fasi standard con tempi e costi predefiniti</td>
+            <td>Catalogo fasi completo con tempi standard per preventivazione</td>
+        </tr>
+        <tr>
+            <td><strong>PRDCalendarioNonLavorativo</strong></td>
+            <td>Giorni non lavorativi (festivit&agrave;, ferie, ecc.)</td>
+            <td>Calcolo date consegna nette, scheduling pi&ugrave; realistico</td>
+        </tr>
+    </tbody>
+</table>
+
+<!-- 4. RIEPILOGO -->
+<div class="page-break"></div>
+
+<h3>4. Riepilogo interventi proposti</h3>
+
+<div class="highlight">
+    <strong>Nota:</strong> tutti gli interventi proposti sono in <strong>sola lettura</strong> dal database Onda.
+    Il MES non scrive mai su Onda: la sincronizzazione &egrave; unidirezionale (Onda &rarr; MES).
+    Non ci sono rischi di alterare i dati del gestionale.
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th style="width:5%">#</th>
+            <th style="width:30%">Intervento</th>
+            <th style="width:12%">Priorit&agrave;</th>
+            <th style="width:13%">Complessit&agrave;</th>
+            <th>Risultato atteso</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>1</td>
+            <td><strong>Tempi previsti fasi</strong><br><small>PRDDocFasi &rarr; TempoAttPrev, TempoLavPrev</small></td>
+            <td><span class="priority-high">ALTA</span></td>
+            <td><span class="tag tag-green">Bassa</span></td>
+            <td>Scheduling automatico con date fine stimate, barre Gantt pi&ugrave; precise</td>
+        </tr>
+        <tr>
+            <td>2</td>
+            <td><strong>Anagrafica macchine</strong><br><small>PRDMacchinari (import una tantum + sync)</small></td>
+            <td><span class="priority-high">ALTA</span></td>
+            <td><span class="tag tag-green">Bassa</span></td>
+            <td>Dashboard con capacit&agrave; produttiva, confronto prestazioni reali vs nominali</td>
+        </tr>
+        <tr>
+            <td>3</td>
+            <td><strong>Anagrafica operatori</strong><br><small>PRDOperai (import una tantum + sync)</small></td>
+            <td><span class="priority-high">ALTA</span></td>
+            <td><span class="tag tag-green">Bassa</span></td>
+            <td>Nomi operatori automatici, assegnazione fasi, calcolo costi manodopera</td>
+        </tr>
+        <tr>
+            <td>4</td>
+            <td><strong>Quantit&agrave; gi&agrave; prodotta</strong><br><small>PRDDocFasi.QtaLavorata</small></td>
+            <td><span class="priority-high">ALTA</span></td>
+            <td><span class="tag tag-green">Bassa</span></td>
+            <td>Barra avanzamento reale per ogni fase, confronto MES vs Onda</td>
+        </tr>
+        <tr>
+            <td>5</td>
+            <td><strong>Storico produzione Onda</strong><br><small>PRDDocFeedback (26.555 record)</small></td>
+            <td><span class="priority-med">MEDIA</span></td>
+            <td><span class="tag tag-orange">Media</span></td>
+            <td>Report produttivit&agrave; storica, analisi tempi consuntivi, trend</td>
+        </tr>
+        <tr>
+            <td>6</td>
+            <td><strong>Dati cliente estesi</strong><br><small>STDAnagraficaClienti (fido, priorit&agrave;, pagamento)</small></td>
+            <td><span class="priority-med">MEDIA</span></td>
+            <td><span class="tag tag-green">Bassa</span></td>
+            <td>Alert clienti bloccati, priorit&agrave; automatica, info commerciali</td>
+        </tr>
+        <tr>
+            <td>7</td>
+            <td><strong>Giacenze magazzino</strong><br><small>MAGGiacenze (19.522 record)</small></td>
+            <td class="priority-low">BASSA</td>
+            <td><span class="tag tag-orange">Media</span></td>
+            <td>Verifica materiali disponibili prima di avviare lavorazione</td>
+        </tr>
+        <tr>
+            <td>8</td>
+            <td><strong>Calendario non lavorativo</strong><br><small>PRDCalendarioNonLavorativo</small></td>
+            <td class="priority-low">BASSA</td>
+            <td><span class="tag tag-green">Bassa</span></td>
+            <td>Date consegna calcolate su giorni lavorativi effettivi</td>
+        </tr>
+    </tbody>
+</table>
+
+<!-- 5. ARCHITETTURA -->
+<h3>5. Architettura attuale della sincronizzazione</h3>
+
+<div style="text-align:center; margin: 16px 0;">
+    <div style="display:inline-block; text-align:left; font-family: 'Courier New', monospace; font-size: 10pt; background: #f8f9fa; padding: 16px 24px; border-radius: 8px; border: 1px solid #ddd;">
+<pre style="margin:0;">
+ ┌─────────────────┐         ┌──────────────────┐
+ │   ONDA IQ       │         │   MES Laravel    │
+ │  (SQL Server)   │────────>│  (MySQL)         │
+ │                 │  ogni   │                  │
+ │ ATTDocTeste     │ 2 min   │ ordini           │
+ │ PRDDocTeste     │         │ ordine_fasi      │
+ │ PRDDocFasi      │         │ fasi_catalogo    │
+ │ PRDDocRighe     │         │ reparti          │
+ │ STDAnagrafiche  │         │                  │
+ └─────────────────┘         └──────────────────┘
+                                     │
+                    ┌────────────────┼────────────────┐
+                    v                v                v
+             ┌────────────┐  ┌────────────┐  ┌────────────┐
+             │ Dashboard  │  │ Prinect    │  │ Fiery      │
+             │ Owner/Prod │  │ XL 106     │  │ V900       │
+             │            │  │ (REST API) │  │ (REST API) │
+             └────────────┘  └────────────┘  └────────────┘
+</pre>
+    </div>
+</div>
+
+<h3>6. Prossimi passi</h3>
+<p>Si propone di procedere in questo ordine:</p>
+<ol style="margin-left: 18px; margin-bottom: 12px;">
+    <li><strong>Fase 1</strong> (immediata) &mdash; Importare tempi previsti + quantit&agrave; prodotta dalle fasi. Interventi 1 e 4: richiede solo l'aggiunta di campi nella query SQL esistente.</li>
+    <li><strong>Fase 2</strong> (1-2 giorni) &mdash; Importare anagrafica macchine e operatori. Interventi 2 e 3: creazione tabelle + comando sync dedicato.</li>
+    <li><strong>Fase 3</strong> (successiva) &mdash; Dati cliente e storico produzione. Interventi 5 e 6: arricchimento dashboard con informazioni commerciali e analitiche.</li>
+    <li><strong>Fase 4</strong> (futura) &mdash; Giacenze e calendario. Interventi 7 e 8: funzionalit&agrave; avanzate di pianificazione.</li>
+</ol>
+
+<div class="highlight">
+    <strong>Nota tecnica:</strong> gli interventi di Fase 1 richiedono la modifica di un solo file
+    (<code>OndaSyncService.php</code>) e possono essere completati in poche ore senza
+    impatto sul funzionamento attuale del sistema.
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+    Grafica Nappa s.r.l. &mdash; Sistema MES v1.0 &mdash; Documento generato il 23/02/2026<br>
+    Riservato ad uso interno
+</div>
+
+</body>
+</html>
