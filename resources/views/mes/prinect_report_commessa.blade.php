@@ -5,7 +5,7 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
             <h2>Report Commessa {{ $commessa }}</h2>
-            <p class="text-muted mb-0">{{ $jobName }} (Job ID: {{ $jobId }})</p>
+            <p class="text-muted mb-0">{{ $jobName }} (Job ID: <a href="{{ route('mes.prinect.jobDetail', $jobId) }}">{{ $jobId }}</a>)</p>
         </div>
         <div>
             <a href="{{ route('mes.prinect.attivita') }}" class="btn btn-outline-secondary btn-sm">Torna allo Storico</a>
