@@ -103,7 +103,8 @@
                 <div class="card-body text-center p-2">
                     @if($preview)
                         <img src="data:{{ $preview['mimeType'] }};base64,{{ $preview['data'] }}"
-                             alt="Preview" style="max-width:100%; max-height:250px; border-radius:8px; border:1px solid #dee2e6;">
+                             alt="Preview" style="max-width:100%; max-height:250px; border-radius:8px; border:1px solid #dee2e6; cursor:pointer;"
+                             onclick="document.getElementById('previewModal').style.display='flex'">
                     @else
                         <div class="text-muted py-4">Nessuna anteprima disponibile</div>
                     @endif
@@ -329,6 +330,12 @@
     </div>
     @endif
 </div>
+
+@if($preview)
+<div id="previewModal" onclick="this.style.display='none'" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center; cursor:pointer;">
+    <img src="data:{{ $preview['mimeType'] }};base64,{{ $preview['data'] }}" alt="Preview" style="max-width:95vw; max-height:95vh; border-radius:8px;">
+</div>
+@endif
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <script>
