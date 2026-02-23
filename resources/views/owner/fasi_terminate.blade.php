@@ -356,19 +356,30 @@ th:nth-child(23), td:nth-child(23) {
                     </td>
                     <td>{{ $fase->qta_prod ?? '-' }}</td>
                     <td>{{ $fase->note ?? '-' }}</td>
-                    <td>{{ $fase->data_inizio ?? '-' }}</td>
-                    <td>{{ $fase->data_fine ?? '-' }}</td>
+                    <td>{{ $fase->data_inizio ?? ($fase->operatori->count() > 0 ? $fase->operatori->min('pivot.data_inizio') : '-') }}</td>
+                    <td>{{ $fase->data_fine ?? ($fase->operatori->count() > 0 ? $fase->operatori->max('pivot.data_fine') : '-') }}</td>
                     @php
                         $totSecondiPausa = $fase->operatori->sum(fn($op) => $op->pivot->secondi_pausa ?? 0);
                         $secLordo = 0;
-                        if ($fase->data_inizio && $fase->data_fine) {
+
+                        // Usa date della fase, oppure fallback sulle date dal pivot (primo operatore)
+                        $rawInizio = $fase->data_inizio;
+                        $rawFine = $fase->data_fine;
+                        if (!$rawInizio && $fase->operatori->count() > 0) {
+                            $rawInizio = $fase->operatori->min('pivot.data_inizio');
+                        }
+                        if (!$rawFine && $fase->operatori->count() > 0) {
+                            $rawFine = $fase->operatori->max('pivot.data_fine');
+                        }
+
+                        if ($rawInizio && $rawFine) {
                             try {
-                                $dtInizio = \Carbon\Carbon::createFromFormat('d/m/Y H:i:s', $fase->data_inizio);
-                                $dtFine = \Carbon\Carbon::createFromFormat('d/m/Y H:i:s', $fase->data_fine);
+                                $dtInizio = \Carbon\Carbon::createFromFormat('d/m/Y H:i:s', $rawInizio) ?: \Carbon\Carbon::parse($rawInizio);
+                                $dtFine = \Carbon\Carbon::createFromFormat('d/m/Y H:i:s', $rawFine) ?: \Carbon\Carbon::parse($rawFine);
                                 $secLordo = $dtFine->diffInSeconds($dtInizio);
                             } catch (\Exception $e) {
                                 try {
-                                    $secLordo = \Carbon\Carbon::parse($fase->data_fine)->diffInSeconds(\Carbon\Carbon::parse($fase->data_inizio));
+                                    $secLordo = \Carbon\Carbon::parse($rawFine)->diffInSeconds(\Carbon\Carbon::parse($rawInizio));
                                 } catch (\Exception $e2) {}
                             }
                         }

@@ -32,6 +32,9 @@ class ProduzioneController extends Controller
         }
 
         $fase->stato = 2; // fase avviata
+        if (!$fase->data_inizio) {
+            $fase->data_inizio = now()->format('d/m/Y H:i:s');
+        }
         $fase->save();
 
         $fase->load('operatori');
