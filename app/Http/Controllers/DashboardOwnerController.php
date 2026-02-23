@@ -185,8 +185,8 @@ public function calcolaOreEPriorita($fase)
         // Ordine fase dalla config (es. STAMPA=10, PLASTIFICA=20, BRT=999)
         $fasePriorita = config('fasi_priorita')[$fase->fase] ?? 500;
 
-        // Priorità = giorni rimasti - ore/24 + ordineFase/10000
-        $prioritaCalcolata = round($giorni_rimasti - ($fase->ore / 24) + ($fasePriorita / 10000), 2);
+        // Priorità = giorni rimasti - ore/24 + ordineFase/100
+        $prioritaCalcolata = round($giorni_rimasti - ($fase->ore / 24) + ($fasePriorita / 100), 2);
 
         $fase->priorita = $prioritaCalcolata;
         return $fase;
@@ -217,6 +217,12 @@ public function calcolaOreEPriorita($fase)
             ->get()
             ->map(function ($fase) {
                 $fase = $this->calcolaOreEPriorita($fase);
+
+                // Reparto: override per STAMPA digitale (formato ≤ 33x48)
+                $fase->reparto_nome = $fase->faseCatalogo->reparto->nome ?? '-';
+                if ($fase->fase === 'STAMPA' && app(\App\Http\Services\FierySyncService::class)->isFormatoDigitale($fase->ordine->cod_carta ?? null)) {
+                    $fase->reparto_nome = 'digitale';
+                }
 
                 if ($fase->operatori->isNotEmpty()) {
                     $primaData = $fase->operatori->sortBy('pivot.data_inizio')->first()->pivot->data_inizio;
@@ -446,6 +452,10 @@ public function calcolaOreEPriorita($fase)
             $fase->reparto_nome = $fase->faseCatalogo->reparto->nome
                 ?? $fase->ordine->reparto->nome
                 ?? '-';
+            // Override per STAMPA digitale (formato ≤ 33x48)
+            if ($fase->fase === 'STAMPA' && app(\App\Http\Services\FierySyncService::class)->isFormatoDigitale($fase->ordine->cod_carta ?? null)) {
+                $fase->reparto_nome = 'digitale';
+            }
 
             // DATA INIZIO: dalla pivot operatore, fallback dal campo ordine_fasi
             $dataInizioOriginale = $fase->getAttributes()['data_inizio'] ?? null;
@@ -522,6 +532,10 @@ public function calcolaOreEPriorita($fase)
             return $ordine->fasi->map(function ($fase) use ($ordine) {
                 $fase->ordine = $ordine;
                 $fase->reparto_nome = $fase->faseCatalogo->reparto->nome ?? '-';
+                // Override per STAMPA digitale (formato ≤ 33x48)
+                if ($fase->fase === 'STAMPA' && app(\App\Http\Services\FierySyncService::class)->isFormatoDigitale($ordine->cod_carta ?? null)) {
+                    $fase->reparto_nome = 'digitale';
+                }
                 $fase = $this->calcolaOreEPriorita($fase);
                 return $fase;
             });
