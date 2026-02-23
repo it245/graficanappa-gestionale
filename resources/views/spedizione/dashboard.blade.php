@@ -466,7 +466,7 @@ function inviaAutomatico(faseId, btn) {
     .then(parseResponse)
     .then(data => {
         if (data.success) { window.location.reload(); }
-        else { alert('Errore: ' + (data.messaggio || 'operazione fallita')); btn.disabled = false; btn.textContent = 'Consegnato'; }
+        else { alert('Errore: ' + (data.messaggio || data.message || 'operazione fallita')); btn.disabled = false; btn.textContent = 'Consegnato'; }
     })
     .catch(err => { if (err !== 'session_expired') { console.error('Errore:', err); alert('Errore: ' + err); } btn.disabled = false; btn.textContent = 'Consegnato'; });
 }
@@ -512,7 +512,7 @@ function esternoAvvia(faseId, btn) {
     .then(parseResponse)
     .then(data => {
         if (data.success) { window.location.reload(); }
-        else { alert('Errore: ' + (data.messaggio || 'operazione fallita')); btn.disabled = false; }
+        else { alert('Errore: ' + (data.messaggio || data.message || 'operazione fallita')); btn.disabled = false; }
     })
     .catch(err => { if (err !== 'session_expired') { console.error('Errore:', err); alert('Errore: ' + err); } btn.disabled = false; });
 }
@@ -529,7 +529,7 @@ function esternoPausa(faseId, btn) {
     .then(parseResponse)
     .then(data => {
         if (data.success) { window.location.reload(); }
-        else { alert('Errore: ' + (data.messaggio || 'operazione fallita')); btn.disabled = false; }
+        else { alert('Errore: ' + (data.messaggio || data.message || 'operazione fallita')); btn.disabled = false; }
     })
     .catch(err => { if (err !== 'session_expired') { console.error('Errore:', err); alert('Errore: ' + err); } btn.disabled = false; });
 }
@@ -544,7 +544,7 @@ function esternoTermina(faseId, btn) {
     .then(parseResponse)
     .then(data => {
         if (data.success) { window.location.reload(); }
-        else { alert('Errore: ' + (data.messaggio || 'operazione fallita')); btn.disabled = false; }
+        else { alert('Errore: ' + (data.messaggio || data.message || 'operazione fallita')); btn.disabled = false; }
     })
     .catch(err => { if (err !== 'session_expired') { console.error('Errore:', err); alert('Errore: ' + err); } btn.disabled = false; });
 }
@@ -558,7 +558,7 @@ function esternoRiprendi(faseId, btn) {
     .then(parseResponse)
     .then(data => {
         if (data.success) { window.location.reload(); }
-        else { alert('Errore: ' + (data.messaggio || 'operazione fallita')); btn.disabled = false; }
+        else { alert('Errore: ' + (data.messaggio || data.message || 'operazione fallita')); btn.disabled = false; }
     })
     .catch(err => { if (err !== 'session_expired') { console.error('Errore:', err); alert('Errore: ' + err); } btn.disabled = false; });
 }

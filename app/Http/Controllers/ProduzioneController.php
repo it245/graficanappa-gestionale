@@ -19,43 +19,48 @@ class ProduzioneController extends Controller
 
     public function avviaFase(Request $request)
     {
-        $fase = OrdineFase::with('operatori')->find($request->fase_id);
-        if (!$fase) {
-            return response()->json(['success' => false, 'messaggio' => 'Fase non trovata']);
+        try {
+            $fase = OrdineFase::with('operatori')->find($request->fase_id);
+            if (!$fase) {
+                return response()->json(['success' => false, 'messaggio' => 'Fase non trovata']);
+            }
+
+            $operatoreId = session('operatore_id');
+
+            // Aggiunge l'operatore se non presente
+            if ($operatoreId && !$fase->operatori->contains($operatoreId)) {
+                $fase->operatori()->attach($operatoreId, ['data_inizio' => now(),'data_fine'=>null]);
+            }
+
+            // Se viene inviato il nome del terzista, salvalo nelle note
+            if ($request->filled('terzista')) {
+                $fase->note = 'Inviato a: ' . $request->input('terzista');
+            }
+
+            $fase->stato = 2; // fase avviata
+            if (!$fase->data_inizio) {
+                $fase->data_inizio = now()->format('d/m/Y H:i:s');
+            }
+            $fase->save();
+
+            $fase->load('operatori');
+
+            $operatori = $fase->operatori->map(function($op){
+                return [
+                    'nome' => $op->nome,
+                    'data_inizio' => $op->pivot->data_inizio ? Carbon::parse($op->pivot->data_inizio)->format('d/m/Y H:i:s') : '-'
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'nuovo_stato' => $this->statoLabel($fase->stato),
+                'operatori' => $operatori
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('avviaFase errore: ' . $e->getMessage(), ['fase_id' => $request->fase_id, 'trace' => $e->getTraceAsString()]);
+            return response()->json(['success' => false, 'messaggio' => $e->getMessage()], 500);
         }
-
-        $operatoreId = session('operatore_id');
-
-        // Aggiunge l'operatore se non presente
-        if (!$fase->operatori->contains($operatoreId)) {
-            $fase->operatori()->attach($operatoreId, ['data_inizio' => now(),'data_fine'=>null]);
-        }
-
-        // Se viene inviato il nome del terzista, salvalo nelle note
-        if ($request->filled('terzista')) {
-            $fase->note = 'Inviato a: ' . $request->input('terzista');
-        }
-
-        $fase->stato = 2; // fase avviata
-        if (!$fase->data_inizio) {
-            $fase->data_inizio = now()->format('d/m/Y H:i:s');
-        }
-        $fase->save();
-
-        $fase->load('operatori');
-
-        $operatori = $fase->operatori->map(function($op){
-            return [
-                'nome' => $op->nome,
-                'data_inizio' => $op->pivot->data_inizio ? Carbon::parse($op->pivot->data_inizio)->format('d/m/Y H:i:s') : '-'
-            ];
-        });
-
-        return response()->json([
-            'success' => true,
-            'nuovo_stato' => $this->statoLabel($fase->stato),
-            'operatori' => $operatori
-        ]);
     }
 
    public function terminaFase(Request $request)
