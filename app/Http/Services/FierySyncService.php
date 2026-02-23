@@ -53,7 +53,7 @@ class FierySyncService
             if (in_array($fase->stato, [0, '0', 1, '1'])) {
                 $fase->stato = 2;
                 if (!$fase->data_inizio) {
-                    $fase->data_inizio = now()->format('d/m/Y H:i:s');
+                    $fase->data_inizio = now()->format('Y-m-d H:i:s');
                 }
                 if (!$fase->operatore_id) {
                     $fase->operatore_id = $operatore->id;
@@ -144,7 +144,7 @@ class FierySyncService
         foreach ($fasiDaTerminare as $fase) {
             $fase->stato = 3;
             if (!$fase->data_fine) {
-                $fase->data_fine = now()->format('d/m/Y H:i:s');
+                $fase->data_fine = now()->format('Y-m-d H:i:s');
             }
             $fase->save();
 
