@@ -112,16 +112,56 @@ class FierySyncService
     }
 
     /**
-     * Trova le fasi del reparto digitale per un ordine.
+     * Trova le fasi gestite dalla Fiery per un ordine:
+     * 1. Fasi del reparto digitale (UVSPOT, FOIL, ZUND, STAMPAINDIGO, ecc.)
+     * 2. Fasi STAMPA su ordini con formato carta ≤ 33x48 (stampa digitale)
      */
     protected function troveFasiDigitali(int $ordineId)
     {
-        return OrdineFase::where('ordine_id', $ordineId)
-            ->whereHas('faseCatalogo', function ($q) {
-                $q->where('reparto_id', self::REPARTO_DIGITALE_ID);
+        $ordine = Ordine::find($ordineId);
+
+        // Fasi esplicitamente digitali (reparto_id=4)
+        $query = OrdineFase::where('ordine_id', $ordineId)
+            ->where(function ($q) use ($ordine) {
+                // Reparto digitale
+                $q->whereHas('faseCatalogo', function ($sub) {
+                    $sub->where('reparto_id', self::REPARTO_DIGITALE_ID);
+                });
+
+                // Oppure fase STAMPA con formato carta ≤ 33x48
+                if ($ordine && $this->isFormatoDigitale($ordine->cod_carta)) {
+                    $q->orWhere(function ($sub) {
+                        $sub->where('fase', 'STAMPA');
+                    });
+                }
             })
-            ->with('operatori')
-            ->get();
+            ->with('operatori');
+
+        return $query->get();
+    }
+
+    /**
+     * Verifica se il cod_carta indica un formato compatibile con la stampa digitale (≤ 33x48).
+     * Formati cod_carta: "IPO.33.48.250", "PO.70.100.350", ecc.
+     * Pattern: PREFISSO.LARGHEZZA.ALTEZZA.GRAMMATURA
+     */
+    public function isFormatoDigitale(?string $codCarta): bool
+    {
+        if (!$codCarta) return false;
+
+        // Estrai numeri dal cod_carta: "IPO.33.48.250" → [33, 48, 250]
+        if (!preg_match('/\.(\d+)\.(\d+)\./', $codCarta, $matches)) {
+            return false;
+        }
+
+        $dim1 = (int) $matches[1];
+        $dim2 = (int) $matches[2];
+
+        // Il formato massimo della digitale è 33x48
+        $minDim = min($dim1, $dim2);
+        $maxDim = max($dim1, $dim2);
+
+        return $minDim <= 33 && $maxDim <= 48;
     }
 
     /**
@@ -130,11 +170,14 @@ class FierySyncService
      */
     protected function terminaFasiPrecedenti(Operatore $operatore, int $ordineCorrenteId): void
     {
-        // Trova fasi digitali avviate (stato=2) su altre commesse con questo operatore
+        // Trova fasi avviate (stato=2) su altre commesse con questo operatore
+        // Include sia fasi reparto digitale che fasi STAMPA su formati ≤ 33x48
         $fasiDaTerminare = OrdineFase::where('stato', 2)
             ->where('ordine_id', '!=', $ordineCorrenteId)
-            ->whereHas('faseCatalogo', function ($q) {
-                $q->where('reparto_id', self::REPARTO_DIGITALE_ID);
+            ->where(function ($q) {
+                $q->whereHas('faseCatalogo', function ($sub) {
+                    $sub->where('reparto_id', self::REPARTO_DIGITALE_ID);
+                })->orWhere('fase', 'STAMPA');
             })
             ->whereHas('operatori', function ($q) use ($operatore) {
                 $q->where('operatore_id', $operatore->id);

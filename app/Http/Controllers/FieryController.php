@@ -103,10 +103,19 @@ class FieryController extends Controller
         ])->where('attivo', 1)->first();
         $debug['5_operatore_trovato'] = $operatore ? ($operatore->nome . ' ' . $operatore->cognome . ' (id=' . $operatore->id . ')') : 'NON TROVATO';
 
-        // Step 6: Fasi digitali
+        // Step 5b: Formato carta
+        $debug['5b_cod_carta'] = $ordine->cod_carta;
+        $debug['5b_formato_digitale'] = $syncService->isFormatoDigitale($ordine->cod_carta);
+
+        // Step 6: Fasi digitali (incluse STAMPA se formato ≤ 33x48)
         $fasiDigitali = OrdineFase::where('ordine_id', $ordine->id)
-            ->whereHas('faseCatalogo', function ($q) {
-                $q->where('reparto_id', 4);
+            ->where(function ($q) use ($ordine, $syncService) {
+                $q->whereHas('faseCatalogo', function ($sub) {
+                    $sub->where('reparto_id', 4);
+                });
+                if ($syncService->isFormatoDigitale($ordine->cod_carta)) {
+                    $q->orWhere('fase', 'STAMPA');
+                }
             })
             ->get();
         $debug['6_fasi_digitali_count'] = $fasiDigitali->count();
