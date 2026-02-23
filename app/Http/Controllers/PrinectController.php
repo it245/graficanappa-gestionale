@@ -411,20 +411,20 @@ class PrinectController extends Controller
      */
     public function jobs(PrinectService $service)
     {
-        $data = $service->getJobs();
-        $jobs = $data['jobs'] ?? [];
+        // Cache risposta API Prinect per 5 minuti
+        $cached = cache()->remember('prinect_jobs_list', 300, function () use ($service) {
+            $data = $service->getJobs();
+            $milestoneData = $service->getMilestones();
+            return ['jobs' => $data['jobs'] ?? [], 'milestones' => $milestoneData['milestoneDefs'] ?? []];
+        });
 
-        // Filtra solo job con id numerico e ordina per id desc
-        $jobs = collect($jobs)->filter(fn($j) => is_numeric($j['id']))->sortByDesc('id')->values();
+        $jobs = collect($cached['jobs'])->filter(fn($j) => is_numeric($j['id']))->sortByDesc('id')->values();
 
-        // Milestone definitions per decodifica nomi
-        $milestoneData = $service->getMilestones();
         $milestoneMap = [];
-        foreach (($milestoneData['milestoneDefs'] ?? []) as $m) {
+        foreach ($cached['milestones'] as $m) {
             $milestoneMap[$m['id']] = $m['name'];
         }
 
-        // Commesse che hanno attivita di stampa sincronizzate
         $commesseConAttivita = PrinectAttivita::whereNotNull('commessa_gestionale')
             ->distinct()
             ->pluck('commessa_gestionale')
