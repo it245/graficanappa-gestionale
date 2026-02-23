@@ -22,36 +22,40 @@ class FierySyncService
     /**
      * Sincronizza lo stato Fiery con le fasi del MES.
      * - Se la Fiery sta stampando un job → avvia la fase digitale corrispondente
-     * - Se il job cambia → termina la fase precedente e avvia la nuova
+     * - Se il job cambia o la Fiery è idle → termina le fasi della commessa precedente
      */
     public function sincronizza(): ?array
     {
         $status = $this->fiery->getServerStatus();
         if (!$status || !$status['online']) return null;
 
-        $jobName = $status['stampa']['documento'] ?? null;
-        $commessaCode = $this->estraiCommessa($jobName);
-
-        if (!$commessaCode) return null;
-
-        // Cerca TUTTI gli ordini della commessa (possono essere più articoli)
-        $ordini = Ordine::where('commessa', $commessaCode)->get();
-        if ($ordini->isEmpty()) return null;
-
         $operatore = $this->getOperatoreFiery();
         if (!$operatore) return null;
 
-        // Trova fasi digitali per TUTTI gli ordini della commessa
+        $jobName = $status['stampa']['documento'] ?? null;
+        $commessaCode = $this->estraiCommessa($jobName);
+
+        // Se non c'è job attivo o commessa non trovata → non fare nulla (idle)
+        if (!$commessaCode) {
+            return null;
+        }
+
+        $ordini = Ordine::where('commessa', $commessaCode)->get();
+        if ($ordini->isEmpty()) {
+            return null;
+        }
+
+        // Termina fasi digitali di ALTRE commesse ancora avviate da questo operatore
+        $ordineIds = $ordini->pluck('id')->toArray();
+        $this->terminaFasiPrecedenti($operatore, $ordineIds);
+
+        // Trova fasi digitali per TUTTI gli ordini della commessa corrente
         $fasiDigitali = collect();
         foreach ($ordini as $ordine) {
             $fasi = $this->troveFasiDigitali($ordine);
             $fasiDigitali = $fasiDigitali->merge($fasi);
         }
         if ($fasiDigitali->isEmpty()) return null;
-
-        // Termina eventuali fasi digitali di ALTRE commesse ancora avviate da questo operatore
-        $ordineIds = $ordini->pluck('id')->toArray();
-        $this->terminaFasiPrecedenti($operatore, $ordineIds);
 
         // Avvia le fasi digitali della commessa corrente
         $faseAvviata = null;
