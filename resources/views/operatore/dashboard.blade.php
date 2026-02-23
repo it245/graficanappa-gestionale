@@ -123,7 +123,7 @@
                 <th>Carta</th>
                 <th>Quantità Carta</th>
                 <th>UM Carta</th>
-                <th>Note</th>
+                <th>Note Operatore</th>
                 <th>Ore</th>
                 <th>Timeout</th>
             </tr>

@@ -482,6 +482,7 @@ function aggiornaNota(faseId, valore) {
 }
 
 function forzaConsegna(faseId, btn) {
+    if (!confirm("Sei sicuro di voler forzare la consegna?")) return;
     btn.disabled = true;
     btn.textContent = 'Consegna...';
 
@@ -516,11 +517,13 @@ function forzaConsegna(faseId, btn) {
 const motiviPausaEsterno = ["Attesa materiale", "Problema macchina", "Pranzo", "Altro"];
 
 function esternoAvvia(faseId, btn) {
+    var terzista = prompt("A chi viene inviato il prodotto (terzista)?");
+    if (terzista === null) return;
     btn.disabled = true;
     fetch('{{ route("produzione.avvia") }}', {
         method: 'POST',
         headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fase_id: faseId })
+        body: JSON.stringify({ fase_id: faseId, terzista: terzista })
     })
     .then(res => res.json())
     .then(data => {

@@ -31,6 +31,11 @@ class ProduzioneController extends Controller
             $fase->operatori()->attach($operatoreId, ['data_inizio' => now(),'data_fine'=>null]);
         }
 
+        // Se viene inviato il nome del terzista, salvalo nelle note
+        if ($request->filled('terzista')) {
+            $fase->note = 'Inviato a: ' . $request->input('terzista');
+        }
+
         $fase->stato = 2; // fase avviata
         if (!$fase->data_inizio) {
             $fase->data_inizio = now()->format('d/m/Y H:i:s');

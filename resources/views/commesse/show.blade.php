@@ -69,7 +69,7 @@
                 </div>
                 <div class="col-md-4">
                     <div class="border rounded p-2 h-100" style="background:#f8f9fa">
-                        <strong class="d-block mb-1">Responsabile Produzione</strong>
+                        <strong class="d-block mb-1">Operatore Prestampa</strong>
                         <span class="{{ $ordine->responsabile ? '' : 'text-muted' }}">{{ $ordine->responsabile ?: '-' }}</span>
                     </div>
                 </div>
@@ -83,21 +83,26 @@
         </div>
     </div>
 
-    <!-- Fase selezionata (con pulsanti) -->
+    <!-- Tutte le fasi gestibili dall'operatore -->
     @foreach($fasiGestibili as $fase)
-        @if($fase->id === $faseSelezionataId)
-        <div class="card mb-3 border-primary">
-            <div class="card-header bg-primary text-white">
+        @php
+            $isSelezionata = ($fase->id === $faseSelezionataId);
+            $badgeBg = [0=>'bg-secondary',1=>'bg-info',2=>'bg-warning text-dark',3=>'bg-success'];
+        @endphp
+        <div class="card mb-3 {{ $isSelezionata ? 'border-primary' : '' }}" id="card-fase-{{ $fase->id }}">
+            <div class="card-header {{ $isSelezionata ? 'bg-primary text-white' : 'bg-light' }}">
                 <strong>{{ $fase->faseCatalogo->nome ?? '-' }}</strong>
-                @php $badgeBg = [0=>'bg-secondary',1=>'bg-info',2=>'bg-warning text-dark',3=>'bg-success']; @endphp
-                <span class="badge {{ $badgeBg[$fase->stato] ?? 'bg-dark' }} ms-2 fs-5">{{ $fase->stato }}</span>
-            </div>
-            <div class="card-body border-bottom py-2">
-                <small class="text-muted">{{ $fase->ordine_descrizione ?? $fase->ordine->descrizione ?? '-' }}</small>
+                <span class="badge {{ $badgeBg[$fase->stato] ?? 'bg-dark' }} ms-2 fs-5" id="badge-fase-{{ $fase->id }}">{{ $fase->stato }}</span>
+                <span class="ms-2" id="operatori-fase-{{ $fase->id }}">
+                    @foreach($fase->operatori as $op)
+                        <small class="badge bg-light text-dark">{{ $op->nome }} ({{ $op->pivot->data_inizio ? \Carbon\Carbon::parse($op->pivot->data_inizio)->format('d/m/Y H:i:s') : '-' }})</small>
+                    @endforeach
+                </span>
             </div>
             <div class="card-body d-flex align-items-start gap-3">
                 <div class="flex-grow-1">
-                    <label for="note-fase-{{ $fase->id }}"><strong>Note:</strong></label>
+                    <small class="text-muted d-block mb-2">{{ $fase->ordine_descrizione ?? $fase->ordine->descrizione ?? '-' }}</small>
+                    <label for="note-fase-{{ $fase->id }}"><strong>Note Operatore:</strong></label>
                     <textarea id="note-fase-{{ $fase->id }}" class="form-control" rows="2"
                               onblur="aggiornaCampo({{ $fase->id }}, 'note', this.value)">{{ $fase->note ?? '' }}</textarea>
                     <div class="mt-2">
@@ -107,69 +112,27 @@
                                onblur="aggiornaCampo({{ $fase->id }}, 'qta_prod', this.value)">
                     </div>
                 </div>
-                <div class="azioni-cerchi">
+                <div class="azioni-cerchi" id="azioni-fase-{{ $fase->id }}">
                     @if(is_numeric($fase->stato) && $fase->stato < 2)
-                        {{-- Stato 0/1: mostra Avvia --}}
                         <input type="checkbox" id="avvia-{{ $fase->id }}" onchange="aggiornaStato({{ $fase->id }}, 'avvia', this.checked)">
                         <label for="avvia-{{ $fase->id }}" class="badge-avvia">Avvia</label>
                     @elseif($fase->stato == 2)
-                        {{-- Stato 2 (Avviato): mostra Pausa e Termina --}}
                         <input type="checkbox" id="pausa-{{ $fase->id }}" onchange="gestisciPausa({{ $fase->id }}, this.checked)">
                         <label for="pausa-{{ $fase->id }}" class="badge-pausa">Pausa</label>
-
                         <input type="checkbox" id="termina-{{ $fase->id }}" onchange="aggiornaStato({{ $fase->id }}, 'termina', this.checked)">
                         <label for="termina-{{ $fase->id }}" class="badge-termina">Termina</label>
                     @elseif(!is_numeric($fase->stato))
-                        {{-- Stato stringa (motivo pausa): mostra Riprendi e Termina --}}
                         <input type="checkbox" id="riprendi-{{ $fase->id }}" onchange="riprendiFase({{ $fase->id }}, this.checked)">
                         <label for="riprendi-{{ $fase->id }}" class="badge-avvia">Riprendi</label>
-
                         <input type="checkbox" id="termina-{{ $fase->id }}" onchange="aggiornaStato({{ $fase->id }}, 'termina', this.checked)">
                         <label for="termina-{{ $fase->id }}" class="badge-termina">Termina</label>
+                    @elseif($fase->stato == 3)
+                        <span class="text-success fw-bold">Terminata</span>
                     @endif
                 </div>
             </div>
         </div>
-        @endif
     @endforeach
-
-
-    <!-- Tabella altre fasi del tuo reparto (sola lettura) -->
-    @php
-        $altreFasiMieNonSelezionate = $fasiGestibili->filter(fn($f) => $f->id !== $faseSelezionataId);
-    @endphp
-    @if($altreFasiMieNonSelezionate->isNotEmpty())
-    <h4>Altre tue fasi</h4>
-    <table class="table table-sm table-bordered">
-        <thead class="table-dark">
-            <tr>
-                <th>Fase</th>
-                <th>Descrizione</th>
-                <th>Stato</th>
-                <th>Operatori</th>
-                <th>Qta Prodotta</th>
-                <th>Timeout</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($altreFasiMieNonSelezionate as $fase)
-            <tr style="cursor:pointer" onclick="window.location='{{ route('commesse.show', $ordine->commessa) }}?fase={{ $fase->id }}'">
-                <td><a href="{{ route('commesse.show', $ordine->commessa) }}?fase={{ $fase->id }}" style="color:#000; text-decoration:underline; font-weight:bold">{{ $fase->faseCatalogo->nome ?? '-' }}</a></td>
-                <td><small>{{ Str::limit($fase->ordine_descrizione ?? $fase->ordine->descrizione ?? '-', 60) }}</small></td>
-                @php $sb = [0=>'#e9ecef',1=>'#cfe2ff',2=>'#fff3cd',3=>'#d1e7dd']; @endphp
-                <td id="stato-{{ $fase->id }}" style="background:{{ $sb[$fase->stato] ?? '#e9ecef' }};font-weight:bold;text-align:center;">{{ $fase->stato }}</td>
-                <td>
-                    @foreach($fase->operatori as $op)
-                        {{ $op->nome }} ({{ $op->pivot->data_inizio ? \Carbon\Carbon::parse($op->pivot->data_inizio)->format('d/m/Y H:i:s') : '-' }})<br>
-                    @endforeach
-                </td>
-                <td>{{ $fase->qta_prod ?? '-' }}</td>
-                <td>{{ $fase->timeout ?? '-' }}</td>
-            </tr>
-            @endforeach
-        </tbody>
-    </table>
-    @endif
 
     <!-- Fasi di altri reparti (sola lettura) -->
     @php
@@ -219,6 +182,44 @@
 
 <script>
 const motiviPausa = ["Attesa materiale", "Problema macchina", "Pranzo", "Altro"];
+const badgeBgMap = {0:'bg-secondary',1:'bg-info',2:'bg-warning text-dark',3:'bg-success'};
+
+function updateBadge(faseId, stato) {
+    const badge = document.getElementById('badge-fase-'+faseId);
+    if (!badge) return;
+    badge.className = 'badge ms-2 fs-5 ' + (badgeBgMap[stato] || 'bg-dark');
+    badge.textContent = stato;
+}
+
+function updateButtons(faseId, nuovoStato) {
+    const container = document.getElementById('azioni-fase-'+faseId);
+    if (!container) return;
+
+    if (nuovoStato == 2) {
+        container.innerHTML =
+            '<input type="checkbox" id="pausa-'+faseId+'" onchange="gestisciPausa('+faseId+', this.checked)">' +
+            '<label for="pausa-'+faseId+'" class="badge-pausa">Pausa</label>' +
+            '<input type="checkbox" id="termina-'+faseId+'" onchange="aggiornaStato('+faseId+', \'termina\', this.checked)">' +
+            '<label for="termina-'+faseId+'" class="badge-termina">Termina</label>';
+    } else if (nuovoStato == 3) {
+        container.innerHTML = '<span class="text-success fw-bold">Terminata</span>';
+    } else if (typeof nuovoStato === 'string' && isNaN(nuovoStato)) {
+        // Stato pausa (stringa motivo)
+        container.innerHTML =
+            '<input type="checkbox" id="riprendi-'+faseId+'" onchange="riprendiFase('+faseId+', this.checked)">' +
+            '<label for="riprendi-'+faseId+'" class="badge-avvia">Riprendi</label>' +
+            '<input type="checkbox" id="termina-'+faseId+'" onchange="aggiornaStato('+faseId+', \'termina\', this.checked)">' +
+            '<label for="termina-'+faseId+'" class="badge-termina">Termina</label>';
+    }
+}
+
+function updateOperatori(faseId, operatori) {
+    const container = document.getElementById('operatori-fase-'+faseId);
+    if (!container || !operatori) return;
+    container.innerHTML = operatori.map(function(op) {
+        return '<small class="badge bg-light text-dark">' + op.nome + ' (' + op.data_inizio + ')</small>';
+    }).join(' ');
+}
 
 function aggiornaStato(faseId, azione, checked){
     if(!checked) return;
@@ -239,7 +240,10 @@ function aggiornaStato(faseId, azione, checked){
     .then(res=>res.json())
     .then(data=>{
         if(data.success){
-            window.location.reload();
+            var nuovoStato = azione==='avvia' ? 2 : 3;
+            updateBadge(faseId, nuovoStato);
+            updateButtons(faseId, nuovoStato);
+            if(data.operatori) updateOperatori(faseId, data.operatori);
         } else {
             alert('Errore: ' + (data.messaggio || 'operazione fallita'));
         }
@@ -268,7 +272,8 @@ function gestisciPausa(faseId, checked){
     .then(res=>res.json())
     .then(data=>{
         if(data.success){
-            window.location.reload();
+            updateBadge(faseId, data.nuovo_stato);
+            updateButtons(faseId, data.nuovo_stato);
         } else {
             alert('Errore: ' + (data.messaggio || 'operazione fallita'));
         }
@@ -287,7 +292,8 @@ function riprendiFase(faseId, checked){
     .then(res=>res.json())
     .then(data=>{
         if(data.success){
-            window.location.reload();
+            updateBadge(faseId, 2);
+            updateButtons(faseId, 2);
         } else {
             alert('Errore: ' + (data.messaggio || 'operazione fallita'));
             document.getElementById('riprendi-'+faseId).checked = false;

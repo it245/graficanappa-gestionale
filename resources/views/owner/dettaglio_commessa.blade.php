@@ -122,7 +122,7 @@
 <div class="row g-2 mb-3" style="font-size:13px;">
     <div class="col-md-4">
         <div class="border rounded p-2 h-100" style="background:#f8f9fa">
-            <strong class="d-block mb-1">Responsabile Produzione</strong>
+            <strong class="d-block mb-1">Operatore Prestampa</strong>
             <span class="{{ $ordine->responsabile ? '' : 'text-muted' }}">{{ $ordine->responsabile ?: '-' }}</span>
         </div>
     </div>
