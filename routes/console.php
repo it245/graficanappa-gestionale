@@ -24,3 +24,6 @@ Schedule::command('onda:sync')->hourly()->between('6:00', '22:00')->days([1, 2, 
 
 // Sync bidirezionale Excel ↔ DB ogni 2 minuti (lun-sab, 6:00-22:00)
 Schedule::command('excel:sync')->everyTwoMinutes()->between('6:00', '22:00')->days([1, 2, 3, 4, 5, 6])->withoutOverlapping();
+
+// Sync automatico Fiery ogni 2 minuti (lun-sab, 6:00-22:00)
+Schedule::command('fiery:sync')->everyTwoMinutes()->between('6:00', '22:00')->days([1, 2, 3, 4, 5, 6])->withoutOverlapping();
