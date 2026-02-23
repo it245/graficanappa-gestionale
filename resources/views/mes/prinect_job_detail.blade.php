@@ -241,6 +241,7 @@
             <div style="position:relative; height:200px;">
                 <canvas id="inkChartTotal"></canvas>
             </div>
+            <div id="inkTotalsTable" class="mt-3"></div>
         </div>
     </div>
     @endif
@@ -379,6 +380,16 @@
                 plugins: { legend: { display: false } }
             }
         });
+
+        // Tabella riepilogo kg precisi
+        const totalKg = values.reduce((s, v) => s + v, 0);
+        let html = '<table class="table table-sm mb-0" style="font-size:13px;"><thead class="table-light"><tr><th>Colore</th><th class="text-end">kg/1000 fogli</th></tr></thead><tbody>';
+        labels.forEach((l, i) => {
+            html += '<tr><td><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:' + colors[i] + ';vertical-align:middle;margin-right:6px;"></span>' + l + '</td><td class="text-end fw-bold">' + values[i].toFixed(3) + '</td></tr>';
+        });
+        html += '<tr style="border-top:2px solid #333;"><td class="fw-bold">Totale</td><td class="text-end fw-bold">' + totalKg.toFixed(3) + '</td></tr>';
+        html += '</tbody></table>';
+        document.getElementById('inkTotalsTable').innerHTML = html;
     }
 })();
 @endif
