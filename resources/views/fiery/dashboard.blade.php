@@ -113,8 +113,28 @@
 
     @if($status)
     <div class="row">
+        {{-- Card Operatore --}}
+        <div class="col-md-3">
+            <div class="fiery-card">
+                <h5>Operatore</h5>
+                <div style="font-size:18px; font-weight:600;" id="operatore-nome">{{ config('fiery.operatore') }}</div>
+                <div id="commessa-container" class="mt-3">
+                    @if(!empty($status['commessa']))
+                    <div class="job-info">
+                        <span class="label">Commessa</span>
+                        <span class="value">{{ $status['commessa']['commessa'] }}</span>
+                    </div>
+                    <div class="job-info mt-2">
+                        <span class="label">Cliente</span>
+                        <span class="value">{{ $status['commessa']['cliente'] }}</span>
+                    </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+
         {{-- Card Stato Macchina --}}
-        <div class="col-md-4">
+        <div class="col-md-3">
             <div class="fiery-card">
                 <h5>Stato Macchina</h5>
                 <div id="stato-container">
@@ -135,7 +155,7 @@
         </div>
 
         {{-- Card Job in Stampa --}}
-        <div class="col-md-5">
+        <div class="col-md-4">
             <div class="fiery-card">
                 <h5>Job in Stampa</h5>
                 <div id="stampa-container">
@@ -171,7 +191,7 @@
         </div>
 
         {{-- Card RIP / Elaborazione --}}
-        <div class="col-md-3">
+        <div class="col-md-2">
             <div class="fiery-card">
                 <h5>Elaborazione (RIP)</h5>
                 <div id="rip-container">
@@ -262,6 +282,16 @@ setInterval(function() {
                     '</div>';
             } else {
                 sc.innerHTML = '<div class="text-muted">Nessun job in stampa</div>';
+            }
+
+            // Aggiorna commessa
+            var cc = document.getElementById('commessa-container');
+            if (cc && data.commessa) {
+                cc.innerHTML =
+                    '<div class="job-info"><span class="label">Commessa</span><span class="value">' + data.commessa.commessa + '</span></div>' +
+                    '<div class="job-info mt-2"><span class="label">Cliente</span><span class="value">' + data.commessa.cliente + '</span></div>';
+            } else if (cc) {
+                cc.innerHTML = '';
             }
 
             // Aggiorna RIP

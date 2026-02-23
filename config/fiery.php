@@ -6,4 +6,5 @@ return [
     'password' => env('FIERY_PASSWORD', ''),
     'api_key' => env('FIERY_API_KEY', ''),
     'timeout' => 15,
+    'operatore' => env('FIERY_OPERATORE', 'Francesco Verde'),
 ];
