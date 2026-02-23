@@ -39,7 +39,7 @@ class ProduzioneController extends Controller
 
             $fase->stato = 2; // fase avviata
             if (!$fase->data_inizio) {
-                $fase->data_inizio = now()->format('d/m/Y H:i:s');
+                $fase->data_inizio = now()->format('Y-m-d H:i:s');
             }
             $fase->save();
 
@@ -95,7 +95,7 @@ class ProduzioneController extends Controller
     }
 
     $fase->stato = 3; // fase terminata
-    $fase->data_fine = now()->format('d/m/Y H:i:s');
+    $fase->data_fine = now()->format('Y-m-d H:i:s');
     $fase->timeout = null;
     $fase->save();
 
