@@ -54,6 +54,84 @@ h2, p {
     transform: scale(1.15);
 }
 
+/* Hamburger */
+.hamburger-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    transition: transform 0.15s ease;
+}
+.hamburger-btn:hover { transform: scale(1.1); }
+.hamburger-btn span {
+    display: block;
+    width: 28px;
+    height: 3px;
+    background: #333;
+    border-radius: 2px;
+}
+
+/* Sidebar */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 9998;
+}
+.sidebar-overlay.open { display: block; }
+
+.sidebar-menu {
+    position: fixed;
+    top: 0; left: -300px;
+    width: 280px;
+    height: 100%;
+    background: #fff;
+    z-index: 9999;
+    box-shadow: 2px 0 12px rgba(0,0,0,0.2);
+    transition: left 0.25s ease;
+    overflow-y: auto;
+    padding-top: 15px;
+}
+.sidebar-menu.open { left: 0; }
+
+.sidebar-menu .sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 18px 15px;
+    border-bottom: 1px solid #dee2e6;
+    margin-bottom: 5px;
+}
+.sidebar-menu .sidebar-header h5 { margin: 0; font-size: 16px; font-weight: 700; }
+.sidebar-close {
+    background: none; border: none; font-size: 22px; cursor: pointer; color: #666;
+}
+.sidebar-close:hover { color: #000; }
+
+.sidebar-menu .sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 18px;
+    text-decoration: none;
+    color: #333;
+    font-size: 14px;
+    font-weight: 500;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.sidebar-menu .sidebar-item:hover {
+    background: #f5f5f5;
+    color: #000;
+}
+.sidebar-menu .sidebar-item img { height: 28px; width: 28px; object-fit: contain; }
+.sidebar-menu .sidebar-item svg { width: 28px; height: 28px; flex-shrink: 0; }
+
 /* =========================
    TABELLA (EXCEL STYLE)
    ========================= */
@@ -355,6 +433,11 @@ tr:hover td {
     {{-- ICONE AZIONI --}}
     <div class="mb-3 d-flex align-items-center action-icons">
 
+        {{-- HAMBURGER --}}
+        <button class="hamburger-btn" id="hamburgerBtn" title="Menu">
+            <span></span><span></span><span></span>
+        </button>
+
         {{-- ICONA FILTRO --}}
         <img
             src="{{ asset('images/icons8-filtro-50.png') }}"
@@ -363,67 +446,84 @@ tr:hover td {
             alt="Filtri"
         >
 
-        {{-- Visualizza fasi terminate --}}
-        <a href="{{ route('owner.fasiTerminate') }}" title="Visualizza fasi terminate">
-            <img src="{{ asset('images/out-of-the-box.png') }}" alt="Fasi terminate">
-        </a>
-
-        {{-- Scheduling Produzione --}}
-        <a href="{{ route('owner.scheduling') }}" title="Scheduling Produzione (Gantt)">
-            <img src="{{ asset('images/icons8-report-grafico-a-torta-50.png') }}" alt="Scheduling">
-        </a>
-
-        {{-- Prinect Live (Stampa Offset) --}}
-        <a href="{{ route('mes.prinect') }}" title="Prinect Live - Stampa Offset">
-            <svg xmlns="http://www.w3.org/2000/svg" width="35" height="35" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="cursor:pointer; transition:transform 0.15s ease;" onmouseover="this.style.transform='scale(1.15)'" onmouseout="this.style.transform='scale(1)'">
-                <rect x="6" y="2" width="12" height="6" rx="1"/><rect x="2" y="8" width="20" height="8" rx="1"/><rect x="6" y="16" width="12" height="6" rx="1"/><line x1="6" y1="12" x2="2" y2="12"/><line x1="22" y1="12" x2="18" y2="12"/>
-            </svg>
-        </a>
-
-        {{-- Fiery V900 (Stampa Digitale) --}}
-        <a href="{{ route('mes.fiery') }}" title="Fiery V900 - Stampa Digitale">
-            <svg xmlns="http://www.w3.org/2000/svg" width="35" height="35" viewBox="0 0 24 24" fill="none" stroke="#e65100" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="cursor:pointer; transition:transform 0.15s ease;" onmouseover="this.style.transform='scale(1.15)'" onmouseout="this.style.transform='scale(1)'">
-                <rect x="2" y="6" width="20" height="12" rx="2"/><line x1="6" y1="10" x2="6" y2="14"/><line x1="10" y1="10" x2="10" y2="14"/><line x1="14" y1="10" x2="14" y2="14"/><line x1="18" y1="10" x2="18" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/>
-            </svg>
-        </a>
-
-        {{-- Apri Excel in rete --}}
-        <a href="#" onclick="alert('Apri da Esplora Risorse:\n\n\\\\gestionale\\mes\\dashboard_mes.xlsx'); return false;" title="Apri Excel Dashboard (\\gestionale\mes\)">
-            <svg xmlns="http://www.w3.org/2000/svg" width="35" height="35" viewBox="0 0 24 24" fill="none" stroke="#198754" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="cursor:pointer; transition:transform 0.15s ease;" onmouseover="this.style.transform='scale(1.15)'" onmouseout="this.style.transform='scale(1)'">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><polyline points="10 9 9 9 8 9"/>
-            </svg>
-        </a>
-
         {{-- Stampa celle selezionate --}}
         <button id="printButton" class="btn p-0" style="background:none; border:none;" title="Stampa celle selezionate">
             <img src="{{ asset('images/printer.png') }}" alt="Stampa">
         </button>
+    </div>
 
-        {{-- Aggiungi riga manuale --}}
-        <a href="#" data-bs-toggle="modal" data-bs-target="#aggiungiRigaModal" title="Aggiungi riga">
-            <img src="{{ asset('images/icons8-ddt-64 (1).png') }}" alt="Aggiungi riga" style="height:35px">
+    {{-- SIDEBAR OVERLAY --}}
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    {{-- SIDEBAR MENU --}}
+    <div class="sidebar-menu" id="sidebarMenu">
+        <div class="sidebar-header">
+            <h5>Menu</h5>
+            <button class="sidebar-close" id="sidebarClose">&times;</button>
+        </div>
+
+        {{-- Visualizza fasi terminate --}}
+        <a href="{{ route('owner.fasiTerminate') }}" class="sidebar-item">
+            <img src="{{ asset('images/out-of-the-box.png') }}" alt="">
+            <span>Fasi terminate</span>
         </a>
 
-        {{-- Report consegnati oggi --}}
-        <a href="#" data-bs-toggle="modal" data-bs-target="#modalSpedizioniOggi" title="Consegnati oggi" class="position-relative" id="btnConsegnati">
-            <img src="{{ asset('images/icons8-consegnato-50.png') }}" alt="Consegnati oggi" style="height:35px">
-            @if($spedizioniOggi->count() > 0)
-                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:10px;" id="badgeConsegnati">
-                    {{ $spedizioniOggi->count() }}
-                </span>
-            @endif
+        {{-- Scheduling Produzione --}}
+        <a href="{{ route('owner.scheduling') }}" class="sidebar-item">
+            <img src="{{ asset('images/icons8-report-grafico-a-torta-50.png') }}" alt="">
+            <span>Scheduling Produzione</span>
+        </a>
+
+        {{-- Prinect Live --}}
+        <a href="{{ route('mes.prinect') }}" class="sidebar-item">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="6" y="2" width="12" height="6" rx="1"/><rect x="2" y="8" width="20" height="8" rx="1"/><rect x="6" y="16" width="12" height="6" rx="1"/><line x1="6" y1="12" x2="2" y2="12"/><line x1="22" y1="12" x2="18" y2="12"/>
+            </svg>
+            <span>Prinect Live (Offset)</span>
+        </a>
+
+        {{-- Fiery V900 --}}
+        <a href="{{ route('mes.fiery') }}" class="sidebar-item">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#e65100" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="6" width="20" height="12" rx="2"/><line x1="6" y1="10" x2="6" y2="14"/><line x1="10" y1="10" x2="10" y2="14"/><line x1="14" y1="10" x2="14" y2="14"/><line x1="18" y1="10" x2="18" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/>
+            </svg>
+            <span>Fiery V900 (Digitale)</span>
+        </a>
+
+        {{-- Apri Excel --}}
+        <a href="#" class="sidebar-item" onclick="alert('Apri da Esplora Risorse:\n\n\\\\gestionale\\mes\\dashboard_mes.xlsx'); closeSidebar(); return false;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#198754" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><polyline points="10 9 9 9 8 9"/>
+            </svg>
+            <span>Apri Excel Dashboard</span>
+        </a>
+
+        {{-- Aggiungi riga --}}
+        <a href="#" class="sidebar-item" data-bs-toggle="modal" data-bs-target="#aggiungiRigaModal" onclick="closeSidebar()">
+            <img src="{{ asset('images/icons8-ddt-64 (1).png') }}" alt="">
+            <span>Aggiungi riga</span>
+        </a>
+
+        {{-- Consegnati oggi --}}
+        <a href="#" class="sidebar-item" data-bs-toggle="modal" data-bs-target="#modalSpedizioniOggi" onclick="closeSidebar()" id="btnConsegnati">
+            <img src="{{ asset('images/icons8-consegnato-50.png') }}" alt="">
+            <span>Consegnati oggi
+                @if($spedizioniOggi->count() > 0)
+                    <span class="badge rounded-pill bg-danger" style="font-size:11px; vertical-align:middle;">{{ $spedizioniOggi->count() }}</span>
+                @endif
+            </span>
         </a>
 
         {{-- Sync Onda --}}
-        <form method="POST" action="{{ route('owner.syncOnda') }}" style="display:inline;" onsubmit="this.querySelector('button').disabled=true;">
+        <form method="POST" action="{{ route('owner.syncOnda') }}" style="margin:0;" onsubmit="this.querySelector('button').disabled=true;">
             @csrf
-            <button type="submit" class="btn p-0" style="background:none; border:none;" title="Sincronizza ordini da Onda">
-                <svg xmlns="http://www.w3.org/2000/svg" width="35" height="35" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="cursor:pointer; transition:transform 0.15s ease;" onmouseover="this.style.transform='scale(1.15)'" onmouseout="this.style.transform='scale(1)'">
+            <button type="submit" class="sidebar-item" style="width:100%; background:none; border:none; border-bottom:1px solid #f0f0f0; text-align:left; font-size:14px; font-weight:500; color:#333;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M21.5 2v6h-6"/><path d="M2.5 22v-6h6"/><path d="M2.5 11.5a10 10 0 0 1 18.8-4.3"/><path d="M21.5 12.5a10 10 0 0 1-18.8 4.2"/>
                 </svg>
+                <span>Sincronizza Onda</span>
             </button>
         </form>
-
     </div>
     
         {{-- FILTRI --}}
@@ -656,6 +756,25 @@ tr:hover td {
         </div>
     </div>
 </div>
+
+<script>
+// Sidebar menu
+function openSidebar() {
+    document.getElementById('sidebarMenu').classList.add('open');
+    document.getElementById('sidebarOverlay').classList.add('open');
+}
+function closeSidebar() {
+    document.getElementById('sidebarMenu').classList.remove('open');
+    document.getElementById('sidebarOverlay').classList.remove('open');
+}
+document.getElementById('hamburgerBtn').addEventListener('click', openSidebar);
+document.getElementById('sidebarOverlay').addEventListener('click', closeSidebar);
+document.getElementById('sidebarClose').addEventListener('click', closeSidebar);
+// Chiudi sidebar quando si clicca un link (non form)
+document.querySelectorAll('.sidebar-menu a.sidebar-item').forEach(function(el) {
+    el.addEventListener('click', function() { setTimeout(closeSidebar, 100); });
+});
+</script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function(){
