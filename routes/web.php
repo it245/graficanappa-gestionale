@@ -11,6 +11,7 @@ use App\Http\Controllers\DashboardSpedizioneController;
 use App\Http\Controllers\CostiMarginiController;
 use App\Http\Controllers\AdminLoginController;
 use App\Http\Controllers\DashboardAdminController;
+use App\Http\Controllers\FieryController;
 
 // Operatori
 Route::prefix('operatore')->group(function() {
@@ -80,6 +81,12 @@ Route::middleware(['owner.or.admin'])->prefix('mes/prinect')->group(function() {
     Route::get('/report/{commessa}', [PrinectController::class, 'reportCommessa'])->name('mes.prinect.report');
     Route::get('/jobs', [PrinectController::class, 'jobs'])->name('mes.prinect.jobs');
     Route::get('/job/{jobId}', [PrinectController::class, 'jobDetail'])->name('mes.prinect.jobDetail');
+});
+
+// Fiery V900 — accessibile a owner e admin
+Route::middleware(['owner.or.admin'])->prefix('mes/fiery')->group(function() {
+    Route::get('/', [FieryController::class, 'index'])->name('mes.fiery');
+    Route::get('/status', [FieryController::class, 'statusJson'])->name('mes.fiery.status');
 });
 
 // Produzione
