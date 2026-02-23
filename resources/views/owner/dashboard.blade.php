@@ -35,10 +35,19 @@ h2, p {
     padding-left: 0 !important;
 }
 
+.action-icons {
+    gap: 14px;
+}
+.action-icons img,
+.action-icons svg,
+.action-icons a,
+.action-icons button,
+.action-icons form {
+    margin: 0 !important;
+}
 .action-icons img {
     height: 35px;
     cursor: pointer;
-    margin-right: 14px;
     transition: transform 0.15s ease;
 }
 .action-icons img:hover {
