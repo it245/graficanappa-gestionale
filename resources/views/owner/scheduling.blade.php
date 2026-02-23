@@ -113,7 +113,9 @@
         margin:0 24px 20px; overflow-x:auto; border:1px solid #2a2a45;
         border-radius:0 0 12px 12px; background:#1a1a34;
         box-shadow:0 4px 20px rgba(0,0,0,0.3);
+        scrollbar-width:none; /* Firefox */
     }
+    .gantt-wrapper::-webkit-scrollbar-horizontal { height:0; display:none; }
     .gantt-row { display:flex; border-bottom:1px solid #2a2a45; min-height:50px; }
     .gantt-row:nth-child(even) { background:#1e1e3a; }
     .gantt-row:hover { background:#252550; }
@@ -263,7 +265,7 @@
     .empty-state p { font-size:16px; }
 
     /* ===== SCROLLBAR DARK ===== */
-    .gantt-wrapper::-webkit-scrollbar,
+    .gantt-wrapper::-webkit-scrollbar { width:10px; height:0; }
     .prio-table-wrap::-webkit-scrollbar { height:10px; width:10px; }
     .gantt-wrapper::-webkit-scrollbar-track,
     .prio-table-wrap::-webkit-scrollbar-track { background:#16162e; }
