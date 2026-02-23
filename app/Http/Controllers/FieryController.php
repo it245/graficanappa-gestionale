@@ -3,15 +3,25 @@
 namespace App\Http\Controllers;
 
 use App\Http\Services\FieryService;
+use App\Http\Services\FierySyncService;
 use App\Models\Ordine;
 use App\Models\OrdineFase;
 use Illuminate\Http\Request;
 
 class FieryController extends Controller
 {
-    public function index(FieryService $fiery)
+    public function index(FieryService $fiery, FierySyncService $syncService)
     {
         $status = $fiery->getServerStatus();
+
+        if ($status && ($status['stampa']['documento'] ?? null)) {
+            // Sync automatico: assegna operatore e avvia fase digitale
+            try {
+                $syncService->sincronizza();
+            } catch (\Exception $e) {
+                // Non bloccare la dashboard se il sync fallisce
+            }
+        }
 
         if ($status) {
             $status['commessa'] = $this->cercaCommessa($status['stampa']['documento'] ?? null);
@@ -20,7 +30,7 @@ class FieryController extends Controller
         return view('fiery.dashboard', compact('status'));
     }
 
-    public function statusJson(FieryService $fiery)
+    public function statusJson(FieryService $fiery, FierySyncService $syncService)
     {
         $status = $fiery->getServerStatus();
 
@@ -30,6 +40,14 @@ class FieryController extends Controller
                 'stato' => 'offline',
                 'avviso' => 'Fiery non raggiungibile',
             ]);
+        }
+
+        if ($status['stampa']['documento'] ?? null) {
+            try {
+                $syncService->sincronizza();
+            } catch (\Exception $e) {
+                // Non bloccare il polling
+            }
         }
 
         $status['commessa'] = $this->cercaCommessa($status['stampa']['documento'] ?? null);
@@ -46,7 +64,6 @@ class FieryController extends Controller
     {
         if (!$jobName) return null;
 
-        // Estrai il numero prima del primo underscore
         if (!preg_match('/^(\d+)_/', $jobName, $matches)) {
             return null;
         }
