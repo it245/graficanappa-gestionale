@@ -53,7 +53,7 @@ class FaseStatoService
         if ($fase->qta_prod > 0 && $fase->qta_fase > 0 && $fase->qta_prod >= $fase->qta_fase) {
             if ($fase->stato < 3) {
                 $fase->stato = 3;
-                $fase->data_fine = now()->format('d/m/Y H:i:s');
+                $fase->data_fine = now()->format('Y-m-d H:i:s');
                 $fase->save();
                 // Ricalcola stati delle fasi successive
                 self::ricalcolaStati($fase->ordine_id);

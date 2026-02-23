@@ -19,15 +19,15 @@ class DashboardSpedizioneController extends Controller
         $repartoSpedizione = Reparto::where('nome', 'spedizione')->first();
         if (!$repartoSpedizione) abort(404, 'Reparto spedizione non trovato');
 
-        // Fasi spedizione con stato 1 (pronto) - consegnabili solo se tutte le altre fasi della commessa sono terminate
-        $fasiSpedizione = OrdineFase::where('stato', 1)
+        // Fasi spedizione con stato 0 o 1 (candidati per "Da consegnare" o "In attesa")
+        $fasiSpedizione = OrdineFase::whereIn('stato', [0, 1])
             ->whereHas('faseCatalogo', function ($q) use ($repartoSpedizione) {
                 $q->where('reparto_id', $repartoSpedizione->id);
             })
             ->with(['ordine', 'faseCatalogo', 'operatori'])
             ->get();
 
-        // Filtra: mostra solo se tutte le altre fasi (non spedizione) della stessa commessa sono terminate (>=3)
+        // "Da consegnare" = tutte le altre fasi (non spedizione) della stessa commessa sono terminate (>=3)
         $fasiDaSpedire = $fasiSpedizione->filter(function ($fase) use ($repartoSpedizione) {
             $altreFasi = OrdineFase::where('ordine_id', $fase->ordine_id)
                 ->where('id', '!=', $fase->id)
@@ -40,6 +40,14 @@ class DashboardSpedizioneController extends Controller
         })->sortBy(function ($fase) {
             return $fase->ordine->data_prevista_consegna ?? '9999-12-31';
         });
+
+        // Auto-promuovi fasi stato 0→1 che sono pronte per la spedizione
+        foreach ($fasiDaSpedire as $fase) {
+            if ($fase->stato == 0) {
+                $fase->stato = 1;
+                $fase->save();
+            }
+        }
 
         // Calcola percentuale completamento per ogni fase da spedire
         foreach ($fasiDaSpedire as $fase) {
@@ -58,13 +66,9 @@ class DashboardSpedizioneController extends Controller
             ->get()
             ->sortByDesc('data_fine');
 
-        // Fasi in attesa (le fasi BRT non ancora pronte perché altre fasi non terminate)
-        $fasiInAttesa = OrdineFase::whereIn('stato', [0])
-            ->whereHas('faseCatalogo', function ($q) use ($repartoSpedizione) {
-                $q->where('reparto_id', $repartoSpedizione->id);
-            })
-            ->with(['ordine', 'faseCatalogo'])
-            ->get();
+        // Fasi in attesa: fasi spedizione stato 0 le cui altre fasi NON sono tutte terminate
+        $fasiDaSpedireIds = $fasiDaSpedire->pluck('id')->toArray();
+        $fasiInAttesa = $fasiSpedizione->filter(fn($f) => !in_array($f->id, $fasiDaSpedireIds));
 
         foreach ($fasiInAttesa as $fase) {
             $totaleFasi = OrdineFase::where('ordine_id', $fase->ordine_id)
