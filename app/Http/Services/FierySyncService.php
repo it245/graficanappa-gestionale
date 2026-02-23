@@ -34,18 +34,24 @@ class FierySyncService
 
         if (!$commessaCode) return null;
 
-        $ordine = Ordine::where('commessa', $commessaCode)->first();
-        if (!$ordine) return null;
+        // Cerca TUTTI gli ordini della commessa (possono essere più articoli)
+        $ordini = Ordine::where('commessa', $commessaCode)->get();
+        if ($ordini->isEmpty()) return null;
 
         $operatore = $this->getOperatoreFiery();
         if (!$operatore) return null;
 
-        // Trova fasi digitali per questa commessa
-        $fasiDigitali = $this->troveFasiDigitali($ordine->id);
+        // Trova fasi digitali per TUTTI gli ordini della commessa
+        $fasiDigitali = collect();
+        foreach ($ordini as $ordine) {
+            $fasi = $this->troveFasiDigitali($ordine);
+            $fasiDigitali = $fasiDigitali->merge($fasi);
+        }
         if ($fasiDigitali->isEmpty()) return null;
 
         // Termina eventuali fasi digitali di ALTRE commesse ancora avviate da questo operatore
-        $this->terminaFasiPrecedenti($operatore, $ordine->id);
+        $ordineIds = $ordini->pluck('id')->toArray();
+        $this->terminaFasiPrecedenti($operatore, $ordineIds);
 
         // Avvia le fasi digitali della commessa corrente
         $faseAvviata = null;
@@ -74,7 +80,7 @@ class FierySyncService
 
         return [
             'commessa' => $commessaCode,
-            'cliente' => $ordine->cliente_nome,
+            'cliente' => $ordini->first()->cliente_nome,
             'operatore' => $operatore->nome . ' ' . ($operatore->cognome ?? ''),
             'fase_avviata' => $faseAvviata?->fase,
         ];
@@ -116,12 +122,9 @@ class FierySyncService
      * 1. Fasi del reparto digitale (UVSPOT, FOIL, ZUND, STAMPAINDIGO, ecc.)
      * 2. Fasi STAMPA su ordini con formato carta ≤ 33x48 (stampa digitale)
      */
-    protected function troveFasiDigitali(int $ordineId)
+    protected function troveFasiDigitali(Ordine $ordine)
     {
-        $ordine = Ordine::find($ordineId);
-
-        // Fasi esplicitamente digitali (reparto_id=4)
-        $query = OrdineFase::where('ordine_id', $ordineId)
+        $query = OrdineFase::where('ordine_id', $ordine->id)
             ->where(function ($q) use ($ordine) {
                 // Reparto digitale
                 $q->whereHas('faseCatalogo', function ($sub) {
@@ -129,10 +132,8 @@ class FierySyncService
                 });
 
                 // Oppure fase STAMPA con formato carta ≤ 33x48
-                if ($ordine && $this->isFormatoDigitale($ordine->cod_carta)) {
-                    $q->orWhere(function ($sub) {
-                        $sub->where('fase', 'STAMPA');
-                    });
+                if ($this->isFormatoDigitale($ordine->cod_carta)) {
+                    $q->orWhere('fase', 'STAMPA');
                 }
             })
             ->with('operatori');
@@ -168,12 +169,12 @@ class FierySyncService
      * Termina le fasi digitali avviate su ALTRE commesse dallo stesso operatore.
      * (L'operatore ha iniziato un nuovo job → il precedente è terminato)
      */
-    protected function terminaFasiPrecedenti(Operatore $operatore, int $ordineCorrenteId): void
+    protected function terminaFasiPrecedenti(Operatore $operatore, array $ordineCorrenteIds): void
     {
         // Trova fasi avviate (stato=2) su altre commesse con questo operatore
         // Include sia fasi reparto digitale che fasi STAMPA su formati ≤ 33x48
         $fasiDaTerminare = OrdineFase::where('stato', 2)
-            ->where('ordine_id', '!=', $ordineCorrenteId)
+            ->whereNotIn('ordine_id', $ordineCorrenteIds)
             ->where(function ($q) {
                 $q->whereHas('faseCatalogo', function ($sub) {
                     $sub->where('reparto_id', self::REPARTO_DIGITALE_ID);

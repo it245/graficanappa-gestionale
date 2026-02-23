@@ -84,12 +84,20 @@ class FieryController extends Controller
             return response()->json($debug);
         }
 
-        // Step 4: Cerca ordine
-        $ordine = \App\Models\Ordine::where('commessa', $commessaCode)->first();
-        $debug['4_ordine_trovato'] = $ordine ? true : false;
-        $debug['4_ordine_id'] = $ordine?->id;
+        // Step 4: Cerca TUTTI gli ordini della commessa
+        $ordini = \App\Models\Ordine::where('commessa', $commessaCode)->get();
+        $debug['4_ordini_count'] = $ordini->count();
+        $debug['4_ordini'] = $ordini->map(function($o) use ($syncService) {
+            return [
+                'id' => $o->id,
+                'cod_art' => $o->cod_art,
+                'descrizione' => substr($o->descrizione, 0, 60),
+                'cod_carta' => $o->cod_carta,
+                'formato_digitale' => $syncService->isFormatoDigitale($o->cod_carta),
+            ];
+        })->toArray();
 
-        if (!$ordine) {
+        if ($ordini->isEmpty()) {
             return response()->json($debug);
         }
 
@@ -103,51 +111,32 @@ class FieryController extends Controller
         ])->where('attivo', 1)->first();
         $debug['5_operatore_trovato'] = $operatore ? ($operatore->nome . ' ' . $operatore->cognome . ' (id=' . $operatore->id . ')') : 'NON TROVATO';
 
-        // Step 5b: Formato carta
-        $debug['5b_cod_carta'] = $ordine->cod_carta;
-        $debug['5b_formato_digitale'] = $syncService->isFormatoDigitale($ordine->cod_carta);
-
-        // Step 6: Fasi digitali (incluse STAMPA se formato ≤ 33x48)
-        $fasiDigitali = OrdineFase::where('ordine_id', $ordine->id)
-            ->where(function ($q) use ($ordine, $syncService) {
-                $q->whereHas('faseCatalogo', function ($sub) {
-                    $sub->where('reparto_id', 4);
-                });
-                if ($syncService->isFormatoDigitale($ordine->cod_carta)) {
-                    $q->orWhere('fase', 'STAMPA');
-                }
-            })
-            ->get();
-        $debug['6_fasi_digitali_count'] = $fasiDigitali->count();
-        $debug['6_fasi_digitali'] = $fasiDigitali->map(function($f) {
+        // Step 6: Fasi digitali per OGNI ordine
+        $tutteFasiDigitali = collect();
+        foreach ($ordini as $ordine) {
+            $fasi = OrdineFase::where('ordine_id', $ordine->id)
+                ->where(function ($q) use ($ordine, $syncService) {
+                    $q->whereHas('faseCatalogo', function ($sub) {
+                        $sub->where('reparto_id', 4);
+                    });
+                    if ($syncService->isFormatoDigitale($ordine->cod_carta)) {
+                        $q->orWhere('fase', 'STAMPA');
+                    }
+                })
+                ->get();
+            $tutteFasiDigitali = $tutteFasiDigitali->merge($fasi);
+        }
+        $debug['6_fasi_digitali_count'] = $tutteFasiDigitali->count();
+        $debug['6_fasi_digitali'] = $tutteFasiDigitali->map(function($f) {
             return [
                 'id' => $f->id,
                 'fase' => $f->fase,
                 'stato' => $f->stato,
+                'ordine_id' => $f->ordine_id,
                 'fase_catalogo_id' => $f->fase_catalogo_id,
                 'operatore_id' => $f->operatore_id,
             ];
         })->toArray();
-
-        // Step 7: TUTTE le fasi dell'ordine (per confronto)
-        $tutteFasi = OrdineFase::where('ordine_id', $ordine->id)->get();
-        $debug['7_tutte_fasi'] = $tutteFasi->map(function($f) {
-            return [
-                'id' => $f->id,
-                'fase' => $f->fase,
-                'stato' => $f->stato,
-                'fase_catalogo_id' => $f->fase_catalogo_id,
-                'reparto' => $f->reparto,
-            ];
-        })->toArray();
-
-        // Step 8: Verifica fase_catalogo per UVSPOT.MGI.9M
-        $uvspot = \App\Models\FasiCatalogo::where('nome', 'UVSPOT.MGI.9M')->first();
-        $debug['8_uvspot_catalogo'] = $uvspot ? [
-            'id' => $uvspot->id,
-            'nome' => $uvspot->nome,
-            'reparto_id' => $uvspot->reparto_id,
-        ] : 'NON TROVATO IN CATALOGO';
 
         // Step 9: Prova sync
         try {
