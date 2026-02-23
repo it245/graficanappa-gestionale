@@ -272,6 +272,19 @@
     .gantt-wrapper::-webkit-scrollbar-thumb:hover,
     .prio-table-wrap::-webkit-scrollbar-thumb:hover { background:#5a5a7c; }
 
+    /* ===== SCROLLBAR ORIZZONTALE FISSA ===== */
+    .gantt-hscroll {
+        position:fixed; bottom:0; left:24px; right:24px;
+        height:18px; overflow-x:auto; overflow-y:hidden;
+        background:#16162e; border-top:1px solid #3a3a5c;
+        z-index:100;
+    }
+    .gantt-hscroll::-webkit-scrollbar { height:12px; }
+    .gantt-hscroll::-webkit-scrollbar-track { background:#16162e; }
+    .gantt-hscroll::-webkit-scrollbar-thumb { background:#5a5a7c; border-radius:6px; }
+    .gantt-hscroll::-webkit-scrollbar-thumb:hover { background:#7a7a9c; }
+    .gantt-hscroll-inner { height:1px; }
+
     /* ===== SIDE PANEL ===== */
     .side-overlay {
         position:fixed; top:0; left:0; right:0; bottom:0;
@@ -449,6 +462,11 @@
             <tbody id="tabellaBody"></tbody>
         </table>
     </div>
+</div>
+
+<!-- SCROLLBAR ORIZZONTALE FISSA -->
+<div class="gantt-hscroll" id="ganttHScroll">
+    <div class="gantt-hscroll-inner" id="ganttHScrollInner"></div>
 </div>
 
 <!-- TOOLTIP -->
@@ -1394,6 +1412,57 @@ document.getElementById('spClose').onclick = closeSidePanel;
 document.getElementById('sideOverlay').onclick = closeSidePanel;
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSidePanel(); });
 
+// ===================== SCROLLBAR ORIZZONTALE FISSA =====================
+
+const hScroll = document.getElementById('ganttHScroll');
+const hScrollInner = document.getElementById('ganttHScrollInner');
+let activeGanttWrapper = null;
+let syncing = false;
+
+function syncHScroll() {
+    // Trova il wrapper Gantt attivo (tab visibile)
+    const activeTab = document.querySelector('.tab-content.active');
+    if (!activeTab) { hScroll.style.display = 'none'; return; }
+
+    const wrapper = activeTab.querySelector('.gantt-wrapper');
+    if (!wrapper || wrapper.scrollWidth <= wrapper.clientWidth) {
+        hScroll.style.display = 'none';
+        return;
+    }
+
+    // Aggiorna la larghezza interna e la posizione della scrollbar
+    hScroll.style.display = 'block';
+    // Allinea la larghezza della scrollbar fissa al wrapper
+    const rect = wrapper.getBoundingClientRect();
+    hScroll.style.left = rect.left + 'px';
+    hScroll.style.width = rect.width + 'px';
+    hScrollInner.style.width = wrapper.scrollWidth + 'px';
+
+    // Se il wrapper è cambiato, ricollega gli eventi
+    if (activeGanttWrapper !== wrapper) {
+        if (activeGanttWrapper) {
+            activeGanttWrapper.removeEventListener('scroll', onWrapperScroll);
+        }
+        activeGanttWrapper = wrapper;
+        activeGanttWrapper.addEventListener('scroll', onWrapperScroll);
+        hScroll.scrollLeft = wrapper.scrollLeft;
+    }
+}
+
+function onWrapperScroll() {
+    if (syncing) return;
+    syncing = true;
+    hScroll.scrollLeft = activeGanttWrapper.scrollLeft;
+    syncing = false;
+}
+
+hScroll.addEventListener('scroll', function() {
+    if (syncing || !activeGanttWrapper) return;
+    syncing = true;
+    activeGanttWrapper.scrollLeft = hScroll.scrollLeft;
+    syncing = false;
+});
+
 // ===================== INIT =====================
 
 function renderAll() {
@@ -1402,7 +1471,19 @@ function renderAll() {
     renderGanttMacchina();
     renderGanttCommessa();
     renderTabella();
+    requestAnimationFrame(syncHScroll);
 }
+
+// Aggiorna scrollbar al cambio tab
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        activeGanttWrapper = null;
+        requestAnimationFrame(syncHScroll);
+    });
+});
+
+// Aggiorna scrollbar al resize
+window.addEventListener('resize', () => requestAnimationFrame(syncHScroll));
 
 renderAll();
 </script>
