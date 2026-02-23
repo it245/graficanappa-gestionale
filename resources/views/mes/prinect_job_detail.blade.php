@@ -224,16 +224,24 @@
                             <div class="fw-bold" style="font-size:14px;">{{ $pt ? floor($pt['duration']/3600).'h'.floor(($pt['duration']%3600)/60).'m' : '-' }}</div>
                         </div>
                     </div>
-                    @if(!empty($ws['ink']['inkConsumptions']))
-                    <h6 class="mb-2" style="font-size:12px;">Consumo inchiostro (kg/1000 fogli)</h6>
-                    <div style="position:relative; height:120px;">
-                        <canvas id="inkChart_{{ $loop->index }}"></canvas>
-                    </div>
-                    @endif
+
+
                 </div>
             </div>
         </div>
         @endforeach
+    </div>
+    @endif
+
+    {{-- GRAFICO CONSUMO INCHIOSTRO TOTALE --}}
+    @if($wsConInk->isNotEmpty())
+    <div class="card border-0 shadow-sm mb-3" style="border-radius:12px;">
+        <div class="card-header bg-white border-0"><strong>Consumo inchiostro totale (kg/1000 fogli)</strong></div>
+        <div class="card-body">
+            <div style="position:relative; height:200px;">
+                <canvas id="inkChartTotal"></canvas>
+            </div>
+        </div>
     </div>
     @endif
 
@@ -323,12 +331,25 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <script>
-@foreach($wsConInk ?? collect() as $ws)
-@if(!empty($ws['ink']['inkConsumptions']))
+@if(isset($wsConInk) && $wsConInk->isNotEmpty())
 (function(){
-    const inks = @json($ws['ink']['inkConsumptions']);
-    const labels = inks.map(i => i.color || '?');
-    const values = inks.map(i => i.estimatedConsumption || 0);
+    // Somma consumi inchiostro di tutti i workstep
+    const allInks = [
+        @foreach($wsConInk as $ws)
+            @if(!empty($ws['ink']['inkConsumptions']))
+                ...@json($ws['ink']['inkConsumptions']),
+            @endif
+        @endforeach
+    ];
+
+    const totals = {};
+    allInks.forEach(i => {
+        const color = i.color || '?';
+        totals[color] = (totals[color] || 0) + (i.estimatedConsumption || 0);
+    });
+
+    const labels = Object.keys(totals);
+    const values = Object.values(totals).map(v => Math.round(v * 1000) / 1000);
     const colors = labels.map(l => {
         const n = l.toLowerCase();
         if (n.includes('cyan')) return '#00bcd4';
@@ -337,26 +358,29 @@
         if (n.includes('black') || n.includes('nero')) return '#333';
         return '#9e9e9e';
     });
-    new Chart(document.getElementById('inkChart_{{ $loop->index }}'), {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'kg/1000',
-                data: values,
-                backgroundColor: colors,
-                borderRadius: 6
-            }]
-        },
-        options: {
-            responsive:true, maintainAspectRatio:false, resizeDelay:0,
-            animation:false,
-            scales:{ y:{ beginAtZero:true, title:{ display:true, text:'kg/1000 fogli' } } },
-            plugins:{ legend:{ display:false } }
-        }
-    });
+
+    const el = document.getElementById('inkChartTotal');
+    if (el) {
+        new Chart(el, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'kg/1000',
+                    data: values,
+                    backgroundColor: colors,
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                animation: false,
+                scales: { y: { beginAtZero: true, title: { display: true, text: 'kg/1000 fogli' } } },
+                plugins: { legend: { display: false } }
+            }
+        });
+    }
 })();
 @endif
-@endforeach
 </script>
 @endsection
