@@ -107,7 +107,7 @@
     <h1>ROADMAP SVILUPPO</h1>
     <h2>Sistema Gestionale MES &mdash; Grafica Nappa srl</h2>
     <div class="piano">Piano biennale (AI-Assisted): Febbraio 2026 &mdash; Febbraio 2028</div>
-    <div class="date">Aggiornata al 20 Febbraio 2026</div>
+    <div class="date">Aggiornata al 23 Febbraio 2026</div>
     <div class="author">Giovanni Pietropaolo &mdash; Tirocinante Sistemi Informativi</div>
 </div>
 
@@ -215,7 +215,7 @@
 
 <!-- ========== v1.0 ========== -->
 <h3><span class="version-badge badge-done">v1.0</span> MES Completo &mdash; Fondamenta, Produzione, Costi <span class="timeline-badge">Gen-Feb 2026</span></h3>
-<p>Sistema gestionale MES completo: dalla gestione ordini all'analisi dei costi, passando per produzione, scheduling, integrazione Onda/Prinect e reportistica direzionale.</p>
+<p>Sistema gestionale MES completo: dalla gestione ordini all'analisi dei costi, passando per produzione, scheduling, integrazione Onda/Prinect/Fiery e reportistica direzionale.</p>
 
 <h4>Architettura &amp; Modello Dati</h4>
 <ul class="checklist">
@@ -253,6 +253,8 @@
     <li class="done">Import prezzi vendita (TotMerce) e costi materiali (SUM PRDDocRighe.Totale) da Onda</li>
     <li class="done">Import ordini da Excel (.xlsx) con mapping fasi e deduplicazione</li>
     <li class="done">Sync Excel bidirezionale: nuove righe e eliminazione righe mancanti</li>
+    <li class="done">Import massivo dal foglio Excel del titolare (foglio &ldquo;tutto&rdquo;) con comando artisan import:excel-tutto</li>
+    <li class="done">Scheduler automatico Laravel: sync Excel + Fiery ogni minuto (Windows Task Scheduler)</li>
 </ul>
 
 <h4>Integrazione Prinect (Stampa Offset)</h4>
@@ -266,12 +268,20 @@
     <li class="done">Alert automatici: macchina ferma, scarti sopra soglia, OEE critico</li>
 </ul>
 
+<h4>Integrazione Fiery (Stampa Digitale)</h4>
+<ul class="checklist">
+    <li class="done">Dashboard Fiery V900 live con stato job in tempo reale</li>
+    <li class="done">Sync automatica Fiery &rarr; MES: avanzamento fasi stampa digitale (STAMPAINDIGO)</li>
+    <li class="done">Terminazione automatica fasi precedenti al cambio commessa su Fiery</li>
+</ul>
+
 <h4>Scheduling &amp; Spedizioni</h4>
 <ul class="checklist">
     <li class="done">Scheduling Produzione &mdash; interfaccia Gantt con 3 viste (per macchina, per commessa, tabella priorit&agrave;)</li>
     <li class="done">Turni specifici per reparto (offset 0-23, piegaincolla/fustella 6-22, stampa a caldo 6-22 + sab 6-13, altri 8-17)</li>
     <li class="done">KPI scheduling: commesse attive, in tempo, in ritardo, critiche</li>
     <li class="done">Dashboard Spedizione dedicata: Da spedire / Spedite oggi / In attesa</li>
+    <li class="done">Dashboard Spedizione: gestione lavorazioni esterne (reparto esterno) con pulsanti Avvia/Pausa/Termina/Riprendi</li>
     <li class="done">Forza consegna: chiude forzatamente tutte le fasi e completa la spedizione</li>
 </ul>
 
@@ -294,6 +304,7 @@
     <li class="done">Granularit&agrave; adattiva trend: giorno (settimana/mese), settimana (trimestre/semestre), mese (anno)</li>
     <li class="done">Export report in PDF (window.print con CSS @media print ottimizzato A4)</li>
     <li class="done">Dashboard KPI giornaliero owner: fasi completate oggi, ore lavorate, spedizioni</li>
+    <li class="done">Dashboard Owner: menu hamburger laterale per azioni rapide (filtro e stampa sempre visibili)</li>
 </ul>
 
 <!-- ========== v2.0 ========== -->
@@ -470,7 +481,7 @@
             <td>MES Completo</td>
             <td>Gen-Feb 2026</td>
             <td><span class="version-badge badge-done">Completata</span></td>
-            <td>74/74</td>
+            <td>81/81</td>
         </tr>
         <tr>
             <td><strong>v2.0</strong></td>
@@ -539,9 +550,9 @@
 </table>
 
 <div class="section-box">
-    <strong>Totale funzionalit&agrave; pianificate:</strong> 139 &mdash; di cui 74 completate (v1.0), 65 da sviluppare (v2.0&ndash;v10.0)<br>
-    <strong>Avanzamento complessivo piano biennale:</strong> 53% (1 versione su 10 completata)<br>
-    <strong>Velocit&agrave; sviluppo v1.0:</strong> 74 funzionalit&agrave; in ~6 settimane (AI-Assisted)
+    <strong>Totale funzionalit&agrave; pianificate:</strong> 146 &mdash; di cui 81 completate (v1.0), 65 da sviluppare (v2.0&ndash;v10.0)<br>
+    <strong>Avanzamento complessivo piano biennale:</strong> 55% (1 versione su 10 completata)<br>
+    <strong>Velocit&agrave; sviluppo v1.0:</strong> 81 funzionalit&agrave; in ~7 settimane (AI-Assisted)
 </div>
 
 <div class="section-box">
@@ -555,7 +566,7 @@
 <div class="footer">
     <p>Sistema Gestionale MES &mdash; Grafica Nappa srl &mdash; Aversa (CE)</p>
     <p>Sviluppo: Giovanni Pietropaolo (Tirocinante) con supporto Claude Code (Anthropic AI)</p>
-    <p style="margin-top:8px; font-size:11px; color:#aaa;">Piano biennale AI-Assisted &middot; Feb 2026 &ndash; Feb 2028 &middot; 10 versioni &middot; Aggiornamento: 20/02/2026</p>
+    <p style="margin-top:8px; font-size:11px; color:#aaa;">Piano biennale AI-Assisted &middot; Feb 2026 &ndash; Feb 2028 &middot; 10 versioni &middot; Aggiornamento: 23/02/2026</p>
 </div>
 
 </body>
