@@ -69,14 +69,26 @@ class OperatoreSeeder extends Seeder
             ]);
         }
 
-        // Owner globale
+        // Owner globale - Antonio
         $numero++;
         Operatore::create([
             'nome' => 'Antonio',
             'cognome' => 'Nappa',
             'codice_operatore' => 'OWN'.str_pad($numero,3,'0',STR_PAD_LEFT),
             'ruolo' => 'owner',
-            'reparto_id' => null, // Owner globale, senza reparto specifico
+            'reparto_id' => null,
+            'attivo' => 1,
+            'password' => Hash::make('password123'),
+        ]);
+
+        // Owner globale - Generoso
+        $numero++;
+        Operatore::create([
+            'nome' => 'Generoso',
+            'cognome' => 'Nappa',
+            'codice_operatore' => 'OWN'.str_pad($numero,3,'0',STR_PAD_LEFT),
+            'ruolo' => 'owner',
+            'reparto_id' => null,
             'attivo' => 1,
             'password' => Hash::make('password123'),
         ]);
