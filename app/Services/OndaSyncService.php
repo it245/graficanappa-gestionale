@@ -43,6 +43,7 @@ class OndaSyncService
                 t.OC_CommentoProduz AS CommentoProduzione,
                 materiali.CostoMateriali,
                 f.CodFase,
+                f.CodMacchina,
                 f.QtaDaLavorare,
                 f.CodUnMis AS UMFase
             FROM ATTDocTeste t
@@ -119,6 +120,24 @@ class OndaSyncService
                 $faseNome = trim($riga->CodFase ?? '');
                 if (!$faseNome) continue;
 
+                // Rimappa STAMPA generico in base alla macchina assegnata in Onda
+                if ($faseNome === 'STAMPA') {
+                    $macchina = trim($riga->CodMacchina ?? '');
+                    if (stripos($macchina, 'INDIGO') !== false) {
+                        // HPINDIGOCO → STAMPAINDIGO, HPINDIGOBN → STAMPAINDIGOBN
+                        if (stripos($macchina, 'BN') !== false || stripos($macchina, 'MONO') !== false) {
+                            $faseNome = 'STAMPAINDIGOBN';
+                        } else {
+                            $faseNome = 'STAMPAINDIGO';
+                        }
+                    } elseif (preg_match('/XL106[.-]?(\d+)/i', $macchina, $m)) {
+                        // XL106-1 → STAMPAXL106.1
+                        $faseNome = 'STAMPAXL106.' . $m[1];
+                    } elseif (stripos($macchina, 'XL106') !== false) {
+                        $faseNome = 'STAMPAXL106';
+                    }
+                }
+
                 $chiaveFase = $faseNome . '|' . ($riga->QtaDaLavorare ?? 0);
                 if (isset($fasiViste[$chiaveFase])) continue;
                 $fasiViste[$chiaveFase] = true;
@@ -142,6 +161,25 @@ class OndaSyncService
                     'priorita'         => $prioritaFase,
                     'stato'            => 0,
                 ];
+
+                // Se la fase è stata rimappata da STAMPA generico, aggiorna la fase esistente
+                $faseOriginaleOnda = trim($riga->CodFase ?? '');
+                if ($faseOriginaleOnda === 'STAMPA' && $faseNome !== 'STAMPA') {
+                    $faseStampaGenerica = OrdineFase::where('ordine_id', $ordine->id)
+                        ->where('fase', 'STAMPA')
+                        ->first();
+                    if ($faseStampaGenerica) {
+                        $faseStampaGenerica->update([
+                            'fase'             => $faseNome,
+                            'fase_catalogo_id' => $faseCatalogo->id,
+                            'qta_fase'         => $riga->QtaDaLavorare ?? 0,
+                            'um'               => trim($riga->UMFase ?? 'FG'),
+                            'priorita'         => $prioritaFase,
+                        ]);
+                        $fasiCreate++;
+                        continue;
+                    }
+                }
 
                 // Logica dedup come OrdiniImport: monofase / max 2 fasi / multifase
                 if ($tipo === 'monofase') {
