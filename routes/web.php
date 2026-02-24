@@ -65,6 +65,9 @@ Route::middleware(['admin'])->prefix('admin')->group(function() {
     Route::get('/report-prinect', [DashboardAdminController::class, 'reportPrinect'])->name('admin.reportPrinect');
     Route::get('/report-prinect/excel', [DashboardAdminController::class, 'reportPrinectExcel'])->name('admin.reportPrinectExcel');
 
+    // Report operatori-reparti-fasi
+    Route::get('/report-operatori', [DashboardAdminController::class, 'reportOperatori'])->name('admin.reportOperatori');
+
     // Costi & Margini
     Route::get('/costi/tariffe', [CostiMarginiController::class, 'configTariffe'])->name('admin.costi.tariffe');
     Route::post('/costi/tariffe', [CostiMarginiController::class, 'salvaTariffa'])->name('admin.costi.salvaTariffa');

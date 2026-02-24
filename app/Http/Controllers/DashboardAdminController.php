@@ -1499,4 +1499,19 @@ class DashboardAdminController extends Controller
             "ReportPrinect_{$periodo}_{$labelPeriodo}.xlsx"
         );
     }
+
+    public function reportOperatori()
+    {
+        $operatori = Operatore::where('attivo', 1)
+            ->with('reparti')
+            ->orderBy('cognome')
+            ->orderBy('nome')
+            ->get();
+
+        $fasiPerReparto = \App\Models\FasiCatalogo::orderBy('nome')
+            ->get()
+            ->groupBy('reparto_id');
+
+        return view('admin.report_operatori', compact('operatori', 'fasiPerReparto'));
+    }
 }
