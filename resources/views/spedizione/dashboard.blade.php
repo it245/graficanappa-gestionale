@@ -366,7 +366,7 @@
 
 <script>
 const hdrs = {
-    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+    'X-CSRF-TOKEN': csrfToken(),
     'Content-Type': 'application/json',
     'Accept': 'application/json'
 };

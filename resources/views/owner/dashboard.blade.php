@@ -808,7 +808,7 @@ function aggiornaCampo(faseId, campo, valore){
 
     fetch('{{ route("owner.aggiornaCampo") }}', {
         method: 'POST',
-        headers: {'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Content-Type': 'application/json'},
+        headers: {'X-CSRF-TOKEN': csrfToken(), 'Content-Type': 'application/json'},
         body: JSON.stringify({ fase_id: faseId, campo: campo, valore: valore })
     })
     .then(r => r.json())
@@ -833,7 +833,7 @@ function aggiornaStato(faseId, testo) {
     }
     fetch('{{ route("owner.aggiornaStato") }}', {
         method: 'POST',
-        headers: {'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Content-Type': 'application/json'},
+        headers: {'X-CSRF-TOKEN': csrfToken(), 'Content-Type': 'application/json'},
         body: JSON.stringify({ fase_id: faseId, stato: nuovoStato })
     })
     .then(r => r.json())

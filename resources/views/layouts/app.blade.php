@@ -3,6 +3,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>MES GRAFICA NAPPA</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
@@ -42,8 +43,32 @@
     @endif
     @yield('content')
 </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js">
-        
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    // CSRF token globale: tutte le fetch lo leggono dalla meta tag
+    window.csrfToken = function() {
+        return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    };
+
+    // Intercetta tutte le fetch: aggiunge CSRF header e gestisce 419 (Page Expired)
+    (function() {
+        var originalFetch = window.fetch;
+        window.fetch = function(url, options) {
+            options = options || {};
+            if (options.headers && options.headers['X-CSRF-TOKEN']) {
+                options.headers['X-CSRF-TOKEN'] = csrfToken();
+            }
+            return originalFetch.call(this, url, options).then(function(response) {
+                if (response.status === 419) {
+                    // Token scaduto: ricarica la pagina per ottenerne uno nuovo
+                    alert('Sessione scaduta. La pagina verra ricaricata.');
+                    window.location.reload();
+                    return Promise.reject('Token scaduto');
+                }
+                return response;
+            });
+        };
+    })();
     </script>
     </body>
 </html>

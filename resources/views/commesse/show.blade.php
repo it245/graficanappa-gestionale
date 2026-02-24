@@ -319,7 +319,7 @@ function aggiornaStato(faseId, azione, checked){
 
     fetch(route, {
         method:'POST',
-        headers:{'X-CSRF-TOKEN':'{{ csrf_token() }}','Content-Type':'application/json'},
+        headers:{'X-CSRF-TOKEN':csrfToken(),'Content-Type':'application/json'},
         body:JSON.stringify({fase_id:faseId})
     })
     .then(res=>res.json())
@@ -369,7 +369,7 @@ function confermaTermina() {
 
     fetch('{{ route("produzione.termina") }}', {
         method:'POST',
-        headers:{'X-CSRF-TOKEN':'{{ csrf_token() }}','Content-Type':'application/json'},
+        headers:{'X-CSRF-TOKEN':csrfToken(),'Content-Type':'application/json'},
         body:JSON.stringify({fase_id: faseId, qta_prodotta: parseInt(qtaProdotta), scarti: parseInt(scarti) || 0})
     })
     .then(res=>res.json())
@@ -411,7 +411,7 @@ function gestisciPausa(faseId, checked){
 
     fetch('{{ route("produzione.pausa") }}',{
         method:'POST',
-        headers:{'X-CSRF-TOKEN':'{{ csrf_token() }}','Content-Type':'application/json'},
+        headers:{'X-CSRF-TOKEN':csrfToken(),'Content-Type':'application/json'},
         body:JSON.stringify({fase_id:faseId, motivo:motivo})
     })
     .then(res=>res.json())
@@ -431,7 +431,7 @@ function riprendiFase(faseId, checked){
 
     fetch('{{ route("produzione.riprendi") }}',{
         method:'POST',
-        headers:{'X-CSRF-TOKEN':'{{ csrf_token() }}','Content-Type':'application/json'},
+        headers:{'X-CSRF-TOKEN':csrfToken(),'Content-Type':'application/json'},
         body:JSON.stringify({fase_id:faseId})
     })
     .then(res=>res.json())
@@ -450,7 +450,7 @@ function riprendiFase(faseId, checked){
 function aggiornaCampo(faseId, campo, valore){
     fetch('{{ route("produzione.aggiornaCampo") }}',{
         method:'POST',
-        headers:{'X-CSRF-TOKEN':'{{ csrf_token() }}','Content-Type':'application/json'},
+        headers:{'X-CSRF-TOKEN':csrfToken(),'Content-Type':'application/json'},
         body:JSON.stringify({fase_id:faseId, campo:campo, valore:valore})
     })
     .then(res=>res.json())
