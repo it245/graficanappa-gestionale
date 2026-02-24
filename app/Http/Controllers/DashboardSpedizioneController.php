@@ -115,6 +115,24 @@ class DashboardSpedizioneController extends Controller
         return view('spedizione.dashboard', compact('fasiDaSpedire', 'fasiSpediteOggi', 'fasiInAttesa', 'fasiEsterne', 'operatore'));
     }
 
+    public function esterne(Request $request)
+    {
+        $operatore = auth()->guard('operatore')->user();
+        if (!$operatore) abort(403, 'Accesso negato');
+
+        $repartoEsterno = Reparto::where('nome', 'esterno')->first();
+        $fasiEsterne = collect();
+        if ($repartoEsterno) {
+            $fasiEsterne = OrdineFase::where('stato', '<', 3)
+                ->whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', $repartoEsterno->id))
+                ->with(['ordine', 'faseCatalogo', 'operatori'])
+                ->get()
+                ->sortBy(fn($f) => $f->ordine->data_prevista_consegna ?? '9999-12-31');
+        }
+
+        return view('spedizione.esterne', compact('fasiEsterne', 'operatore'));
+    }
+
     public function invioAutomatico(Request $request)
     {
         try {
