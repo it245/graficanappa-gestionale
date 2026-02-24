@@ -12,7 +12,7 @@ class DashboardSpedizioneController extends Controller
 {
     public function index(Request $request)
     {
-        $operatore = auth()->guard('operatore')->user();
+        $operatore = $request->attributes->get('operatore') ?? auth()->guard('operatore')->user();
         if (!$operatore) abort(403, 'Accesso negato');
 
         // Reparto spedizione
@@ -117,7 +117,7 @@ class DashboardSpedizioneController extends Controller
 
     public function esterne(Request $request)
     {
-        $operatore = auth()->guard('operatore')->user();
+        $operatore = $request->attributes->get('operatore') ?? auth()->guard('operatore')->user();
         if (!$operatore) abort(403, 'Accesso negato');
 
         $repartoEsterno = Reparto::where('nome', 'esterno')->first();
@@ -168,7 +168,7 @@ class DashboardSpedizioneController extends Controller
             }
 
             $adesso = now()->format('Y-m-d H:i:s');
-            $operatoreId = session('operatore_id');
+            $operatoreId = $request->attributes->get('operatore_id') ?? session('operatore_id');
 
             // Tutte le fasi della commessa vanno a stato=4 (consegnato)
             $tutteLeFasiCommessa = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $commessa))

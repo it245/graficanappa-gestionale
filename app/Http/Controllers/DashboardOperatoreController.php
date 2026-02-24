@@ -10,8 +10,8 @@ class DashboardOperatoreController extends Controller
 {
     public function index(Request $request)
     {
-        // Operatore loggato
-        $operatore = auth()->guard('operatore')->user();
+        // Operatore loggato (da token per-tab o fallback sessione)
+        $operatore = $request->attributes->get('operatore') ?? auth()->guard('operatore')->user();
         if (!$operatore) abort(403, 'Accesso negato');
 
         // Recupera gli ID dei reparti dell'operatore (molti-a-molti)

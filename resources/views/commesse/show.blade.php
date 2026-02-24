@@ -32,7 +32,7 @@
 </style>
 
 @php
-    $operatore = auth('operatore')->user();
+    $operatore = request()->attributes->get('operatore') ?? auth('operatore')->user();
     $repartiOperatore = $operatore?->reparti?->pluck('id')->toArray() ?? [];
     $isSpedizione = $operatore?->reparti?->pluck('nome')->map(fn($n) => strtolower($n))->contains('spedizione');
 
@@ -246,10 +246,6 @@
             <div class="modal-body">
                 <input type="hidden" id="terminaFaseId">
                 <div class="mb-3">
-                    <label class="form-label fw-bold">Quantit&agrave; Richiesta (riferimento)</label>
-                    <input type="number" id="terminaQtaFase" class="form-control" readonly style="background:#e9ecef">
-                </div>
-                <div class="mb-3">
                     <label class="form-label fw-bold">Qta prodotta <span class="text-danger">*</span></label>
                     <input type="number" id="terminaQtaProdotta" class="form-control" min="0" required>
                 </div>
@@ -343,7 +339,6 @@ function apriModalTermina(faseId) {
     var qtaProd = parseInt(cb ? cb.getAttribute('data-qta-prod') : 0) || 0;
 
     document.getElementById('terminaFaseId').value = faseId;
-    document.getElementById('terminaQtaFase').value = qtaFase;
 
     // Pre-fill: fogli_buoni se > 0, altrimenti qta_prod se > 0, altrimenti vuoto
     var prefillQta = fogliBuoni > 0 ? fogliBuoni : (qtaProd > 0 ? qtaProd : '');

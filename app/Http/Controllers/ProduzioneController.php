@@ -25,7 +25,7 @@ class ProduzioneController extends Controller
                 return response()->json(['success' => false, 'messaggio' => 'Fase non trovata']);
             }
 
-            $operatoreId = session('operatore_id');
+            $operatoreId = $request->attributes->get('operatore_id') ?? session('operatore_id');
 
             // Aggiunge l'operatore se non presente
             if ($operatoreId && !$fase->operatori->contains($operatoreId)) {
@@ -84,7 +84,7 @@ class ProduzioneController extends Controller
         return response()->json(['success' => false, 'messaggio' => 'Fase non trovata']);
     }
 
-    $operatoreId = session('operatore_id');
+    $operatoreId = $request->attributes->get('operatore_id') ?? session('operatore_id');
 
     // Auto-chiusura pausa aperta (se l'operatore termina senza aver ripreso)
     $pausaAperta = PausaOperatore::where('operatore_id', $operatoreId)
@@ -144,7 +144,7 @@ class ProduzioneController extends Controller
             return response()->json(['success' => false, 'messaggio' => 'Motivo della pausa mancante']);
         }
 
-        $operatoreId = session('operatore_id');
+        $operatoreId = $request->attributes->get('operatore_id') ?? session('operatore_id');
 
         // Crea record pausa aperta
         PausaOperatore::create([
@@ -173,7 +173,7 @@ class ProduzioneController extends Controller
             return response()->json(['success' => false, 'messaggio' => 'Fase non trovata']);
         }
 
-        $operatoreId = session('operatore_id');
+        $operatoreId = $request->attributes->get('operatore_id') ?? session('operatore_id');
 
         // Trova pausa aperta per questo operatore/ordine/fase
         $pausa = PausaOperatore::where('operatore_id', $operatoreId)

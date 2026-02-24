@@ -59,7 +59,9 @@ class CommessaController extends Controller
             }
         }
 
-        $operatore = \App\Models\Operatore::with('reparti')->find(session('operatore_id'));
+        $operatore = \App\Models\Operatore::with('reparti')->find(
+            request()->attributes->get('operatore_id') ?? session('operatore_id')
+        );
 
         return view('commesse.show', compact('ordine', 'prossime', 'operatore', 'preview'));
     }

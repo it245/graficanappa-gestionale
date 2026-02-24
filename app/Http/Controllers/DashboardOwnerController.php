@@ -192,7 +192,7 @@ public function calcolaOreEPriorita($fase)
         return $fase;
     }
 
-    public function index(PrinectService $prinect, PrinectSyncService $syncService)
+    public function index(Request $request, PrinectService $prinect, PrinectSyncService $syncService)
     {
         // Sync Excel: importa eventuali modifiche dal file
         ExcelSyncService::syncIfModified();
@@ -298,9 +298,11 @@ public function calcolaOreEPriorita($fase)
         // Sync Excel: aggiorna il file con i dati freschi
         ExcelSyncService::exportToExcel();
 
+        $operatore = $request->attributes->get('operatore') ?? auth()->guard('operatore')->user();
+
         return view('owner.dashboard', compact(
             'fasi', 'reparti', 'fasiCatalogo', 'spedizioniOggi',
-            'fasiCompletateOggi', 'oreLavorateOggi', 'commesseSpediteOggi', 'fasiAttive'
+            'fasiCompletateOggi', 'oreLavorateOggi', 'commesseSpediteOggi', 'fasiAttive', 'operatore'
         ));
     }
 

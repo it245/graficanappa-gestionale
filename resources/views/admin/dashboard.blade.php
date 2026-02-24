@@ -5,7 +5,7 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
             <h2>Dashboard Admin</h2>
-            <p class="text-muted mb-0">Benvenuto, {{ session('operatore_nome') }}</p>
+            <p class="text-muted mb-0">Benvenuto, {{ request()->attributes->get('operatore_nome') ?? session('operatore_nome') }}</p>
         </div>
         <div>
             <a href="#" class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#aggiungiOperatoreModal">+ Nuovo operatore</a>
