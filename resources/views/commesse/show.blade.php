@@ -89,71 +89,71 @@
         </div>
     </div>
 
-    {{-- Anteprima foglio di stampa --}}
-    @if(!empty($preview))
-    <div class="row mb-3">
-        <div class="col-md-4">
-            <div class="card p-3 text-center shadow-sm">
-                <div class="fw-bold mb-2" style="font-size:13px;">Anteprima foglio di stampa</div>
-                <img src="data:{{ $preview['mimeType'] }};base64,{{ $preview['data'] }}"
-                     alt="Preview" style="max-width:100%; max-height:220px; border-radius:8px; cursor:pointer;"
-                     onclick="window.open(this.src)">
-            </div>
-        </div>
-    </div>
-    @endif
-
-    <!-- Fase selezionata (con pulsanti) -->
+    <!-- Fase selezionata (con pulsanti) + Anteprima affiancata -->
     @foreach($fasiGestibili as $fase)
         @if($fase->id === $faseSelezionataId)
-        <div class="card mb-3 border-primary" id="card-fase-{{ $fase->id }}">
-            <div class="card-header bg-primary text-white">
-                <strong>{{ $fase->faseCatalogo->nome_display ?? '-' }}</strong>
-                @php $badgeBg = [0=>'bg-secondary',1=>'bg-info',2=>'bg-warning text-dark',3=>'bg-success']; @endphp
-                <span class="badge {{ $badgeBg[$fase->stato] ?? 'bg-dark' }} ms-2 fs-5" id="badge-fase-{{ $fase->id }}">{{ $fase->stato }}</span>
-                <span class="ms-2" id="operatori-fase-{{ $fase->id }}">
-                    @foreach($fase->operatori as $op)
-                        <small class="badge bg-light text-dark">{{ $op->nome }} ({{ $op->pivot->data_inizio ? \Carbon\Carbon::parse($op->pivot->data_inizio)->format('d/m/Y H:i:s') : '-' }})</small>
-                    @endforeach
-                </span>
-            </div>
-            <div class="card-body border-bottom py-2">
-                <small class="text-muted">{{ $fase->ordine_descrizione ?? $fase->ordine->descrizione ?? '-' }}</small>
-            </div>
-            <div class="card-body d-flex align-items-start gap-3">
-                <div class="flex-grow-1">
-                    <label for="note-fase-{{ $fase->id }}"><strong>Note Operatore:</strong></label>
-                    <textarea id="note-fase-{{ $fase->id }}" class="form-control" rows="2"
-                              onblur="aggiornaCampo({{ $fase->id }}, 'note', this.value)">{{ $fase->note ?? '' }}</textarea>
-                    <div class="mt-2">
-                        <label><strong>Qta prodotta:</strong></label>
-                        <input type="text" class="form-control form-control-sm" style="width:120px"
-                               value="{{ $fase->qta_prod ?? '' }}"
-                               onblur="aggiornaCampo({{ $fase->id }}, 'qta_prod', this.value)">
+        <div class="row mb-3">
+            <div class="{{ !empty($preview) ? 'col-md-8' : 'col-12' }}">
+                <div class="card border-primary h-100" id="card-fase-{{ $fase->id }}">
+                    <div class="card-header bg-primary text-white">
+                        <strong>{{ $fase->faseCatalogo->nome_display ?? '-' }}</strong>
+                        @php $badgeBg = [0=>'bg-secondary',1=>'bg-info',2=>'bg-warning text-dark',3=>'bg-success']; @endphp
+                        <span class="badge {{ $badgeBg[$fase->stato] ?? 'bg-dark' }} ms-2 fs-5" id="badge-fase-{{ $fase->id }}">{{ $fase->stato }}</span>
+                        <span class="ms-2" id="operatori-fase-{{ $fase->id }}">
+                            @foreach($fase->operatori as $op)
+                                <small class="badge bg-light text-dark">{{ $op->nome }} ({{ $op->pivot->data_inizio ? \Carbon\Carbon::parse($op->pivot->data_inizio)->format('d/m/Y H:i:s') : '-' }})</small>
+                            @endforeach
+                        </span>
+                    </div>
+                    <div class="card-body border-bottom py-2">
+                        <small class="text-muted">{{ $fase->ordine_descrizione ?? $fase->ordine->descrizione ?? '-' }}</small>
+                    </div>
+                    <div class="card-body d-flex align-items-start gap-3">
+                        <div class="flex-grow-1">
+                            <label for="note-fase-{{ $fase->id }}"><strong>Note Operatore:</strong></label>
+                            <textarea id="note-fase-{{ $fase->id }}" class="form-control" rows="2"
+                                      onblur="aggiornaCampo({{ $fase->id }}, 'note', this.value)">{{ $fase->note ?? '' }}</textarea>
+                            <div class="mt-2">
+                                <label><strong>Qta prodotta:</strong></label>
+                                <input type="text" class="form-control form-control-sm" style="width:120px"
+                                       value="{{ $fase->qta_prod ?? '' }}"
+                                       onblur="aggiornaCampo({{ $fase->id }}, 'qta_prod', this.value)">
+                            </div>
+                        </div>
+                        <div class="azioni-cerchi" id="azioni-fase-{{ $fase->id }}">
+                            {{-- Tutti e 3 i bottoni sempre visibili --}}
+                            <input type="checkbox" id="avvia-{{ $fase->id }}" onchange="aggiornaStato({{ $fase->id }}, 'avvia', this.checked)">
+                            <label for="avvia-{{ $fase->id }}" class="badge-avvia">Avvia</label>
+
+                            <input type="checkbox" id="pausa-{{ $fase->id }}" onchange="gestisciPausa({{ $fase->id }}, this.checked)">
+                            <label for="pausa-{{ $fase->id }}" class="badge-pausa">Pausa</label>
+
+                            <input type="checkbox" id="termina-{{ $fase->id }}"
+                                   data-qta-fase="{{ $fase->qta_fase ?? 0 }}"
+                                   data-fogli-buoni="{{ $fase->fogli_buoni ?? 0 }}"
+                                   data-fogli-scarto="{{ $fase->fogli_scarto ?? 0 }}"
+                                   data-qta-prod="{{ $fase->qta_prod ?? 0 }}"
+                                   onchange="aggiornaStato({{ $fase->id }}, 'termina', this.checked)">
+                            <label for="termina-{{ $fase->id }}" class="badge-termina">Termina</label>
+
+                            @if(!is_numeric($fase->stato))
+                                <input type="checkbox" id="riprendi-{{ $fase->id }}" onchange="riprendiFase({{ $fase->id }}, this.checked)">
+                                <label for="riprendi-{{ $fase->id }}" class="badge-avvia">Riprendi</label>
+                            @endif
+                        </div>
                     </div>
                 </div>
-                <div class="azioni-cerchi" id="azioni-fase-{{ $fase->id }}">
-                    {{-- Tutti e 3 i bottoni sempre visibili --}}
-                    <input type="checkbox" id="avvia-{{ $fase->id }}" onchange="aggiornaStato({{ $fase->id }}, 'avvia', this.checked)">
-                    <label for="avvia-{{ $fase->id }}" class="badge-avvia">Avvia</label>
-
-                    <input type="checkbox" id="pausa-{{ $fase->id }}" onchange="gestisciPausa({{ $fase->id }}, this.checked)">
-                    <label for="pausa-{{ $fase->id }}" class="badge-pausa">Pausa</label>
-
-                    <input type="checkbox" id="termina-{{ $fase->id }}"
-                           data-qta-fase="{{ $fase->qta_fase ?? 0 }}"
-                           data-fogli-buoni="{{ $fase->fogli_buoni ?? 0 }}"
-                           data-fogli-scarto="{{ $fase->fogli_scarto ?? 0 }}"
-                           data-qta-prod="{{ $fase->qta_prod ?? 0 }}"
-                           onchange="aggiornaStato({{ $fase->id }}, 'termina', this.checked)">
-                    <label for="termina-{{ $fase->id }}" class="badge-termina">Termina</label>
-
-                    @if(!is_numeric($fase->stato))
-                        <input type="checkbox" id="riprendi-{{ $fase->id }}" onchange="riprendiFase({{ $fase->id }}, this.checked)">
-                        <label for="riprendi-{{ $fase->id }}" class="badge-avvia">Riprendi</label>
-                    @endif
+            </div>
+            @if(!empty($preview))
+            <div class="col-md-4">
+                <div class="card p-3 text-center shadow-sm h-100 d-flex align-items-center justify-content-center">
+                    <div class="fw-bold mb-2" style="font-size:13px;">Anteprima foglio di stampa</div>
+                    <img src="data:{{ $preview['mimeType'] }};base64,{{ $preview['data'] }}"
+                         alt="Preview" style="max-width:100%; max-height:260px; border-radius:8px; cursor:pointer;"
+                         onclick="window.open(this.src)">
                 </div>
             </div>
+            @endif
         </div>
         @endif
     @endforeach
