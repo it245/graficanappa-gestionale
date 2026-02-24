@@ -113,12 +113,6 @@
                             <label for="note-fase-{{ $fase->id }}"><strong>Note Operatore:</strong></label>
                             <textarea id="note-fase-{{ $fase->id }}" class="form-control" rows="2"
                                       onblur="aggiornaCampo({{ $fase->id }}, 'note', this.value)">{{ $fase->note ?? '' }}</textarea>
-                            <div class="mt-2">
-                                <label><strong>Qta prodotta:</strong></label>
-                                <input type="text" class="form-control form-control-sm" style="width:120px"
-                                       value="{{ $fase->qta_prod ?? '' }}"
-                                       onblur="aggiornaCampo({{ $fase->id }}, 'qta_prod', this.value)">
-                            </div>
                         </div>
                         <div class="azioni-cerchi" id="azioni-fase-{{ $fase->id }}">
                             {{-- Tutti e 3 i bottoni sempre visibili --}}
@@ -129,7 +123,7 @@
                             <label for="pausa-{{ $fase->id }}" class="badge-pausa">Pausa</label>
 
                             <input type="checkbox" id="termina-{{ $fase->id }}"
-                                   data-qta-fase="{{ $fase->qta_fase ?? 0 }}"
+                                   data-qta-fase="{{ $ordine->qta_richiesta ?? 0 }}"
                                    data-fogli-buoni="{{ $fase->fogli_buoni ?? 0 }}"
                                    data-fogli-scarto="{{ $fase->fogli_scarto ?? 0 }}"
                                    data-qta-prod="{{ $fase->qta_prod ?? 0 }}"
@@ -252,7 +246,7 @@
             <div class="modal-body">
                 <input type="hidden" id="terminaFaseId">
                 <div class="mb-3">
-                    <label class="form-label fw-bold">Qta target (riferimento)</label>
+                    <label class="form-label fw-bold">Quantit&agrave; Richiesta (riferimento)</label>
                     <input type="number" id="terminaQtaFase" class="form-control" readonly style="background:#e9ecef">
                 </div>
                 <div class="mb-3">
