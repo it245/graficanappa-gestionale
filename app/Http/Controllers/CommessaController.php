@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Ordine;
 use App\Models\OrdineFase;
-use App\Services\PrinectService;
+use App\Http\Services\PrinectService;
 
 class CommessaController extends Controller
 {
