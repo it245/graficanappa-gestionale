@@ -16,7 +16,7 @@ class Ordine extends Model
         'data_registrazione', 'data_prevista_consegna', 'pronto_consegna', 'note',
         'ore_lavorate', 'timeout_macchina','cod_carta','carta','qta_carta','UM_carta',
         'valore_ordine', 'costo_materiali',
-        'note_prestampa', 'responsabile', 'commento_produzione'
+        'note_prestampa', 'responsabile', 'commento_produzione', 'ordine_cliente'
     ];
 
     public function articoli()

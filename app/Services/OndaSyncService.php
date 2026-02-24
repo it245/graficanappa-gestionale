@@ -41,6 +41,7 @@ class OndaSyncService
                 t.ncpcommentoprestampa AS NotePrestampa,
                 t.ncprespocommessa AS Responsabile,
                 t.OC_CommentoProduz AS CommentoProduzione,
+                t.ncpordinecliente AS OrdineCliente,
                 materiali.CostoMateriali,
                 f.CodFase,
                 f.CodMacchina,
@@ -96,6 +97,7 @@ class OndaSyncService
                 'note_prestampa'         => trim($prima->NotePrestampa ?? ''),
                 'responsabile'           => trim($prima->Responsabile ?? ''),
                 'commento_produzione'    => trim($prima->CommentoProduzione ?? ''),
+                'ordine_cliente'         => trim($prima->OrdineCliente ?? '') ?: null,
                 'valore_ordine'          => ($prima->TotMerce ?? 0) > 0 ? (float) $prima->TotMerce : null,
                 'costo_materiali'        => ($prima->CostoMateriali ?? 0) > 0 ? (float) $prima->CostoMateriali : null,
             ];

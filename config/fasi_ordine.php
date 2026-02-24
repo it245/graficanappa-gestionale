@@ -1,0 +1,171 @@
+<?php
+
+return [
+    // === STAMPA ===
+    'AVVIAMENTISTAMPA.EST1.1' => 1,
+    'STAMPA' => 2,
+    'STAMPA.OFFSET11.EST' => 3,
+    'STAMPA.ESTERNA' => 3,
+    'STAMPABUSTE.EST' => 4,
+    'STAMPAXL106' => 5,
+    'STAMPAXL106.1' => 6,
+    'STAMPAXL106.2' => 7,
+    'STAMPAXL106.3' => 8,
+    'STAMPAXL106.4' => 9,
+    'STAMPAXL106.5' => 10,
+    'STAMPAXL106.6' => 11,
+    'STAMPAXL106.7' => 12,
+    'STAMPAINDIGO' => 13,
+    'STAMPAINDIGOBN' => 14,
+    'STAMPAINDIGOBIANCO' => 14,
+
+    // === PLASTIFICAZIONE ===
+    'PLAOPA1LATO' => 15,
+    'PLAOPABV' => 16,
+    'PLAPOLIESARG1LATO' => 17,
+    'PLASAB1LATO' => 18,
+    'PLASABBIA1LATO' => 19,
+    'PLASOFTBV' => 20,
+    'PLASOFTBVEST' => 21,
+    'PLASOFTTOUCH1' => 22,
+
+    // === STAMPA A CALDO / LAMINATURA ===
+    'STAMPACALDOJOH' => 23,
+    'STAMPACALDOJOH0,1' => 24,
+    'STAMPACALDO04' => 23,
+    'STAMPACALDOBR' => 23,
+    'stampalaminaoro' => 23,
+    'STAMPALAMINAORO' => 23,
+    'PLALUX1LATO' => 25,
+    'PLALUXBV' => 26,
+
+    // === FOIL / UV / SERIGRAFIA ===
+    'FOIL.MGI.30M' => 27,
+    'FOILMGI' => 28,
+    'UVSERIGRAFICOEST' => 29,
+    'UVSPOT.MGI.30M' => 30,
+    'UVSPOT.MGI.9M' => 31,
+    'UVSPOTEST' => 32,
+    'UVSPOTSPESSEST' => 33,
+
+    // === TAGLIO ===
+    'TAGLIACARTE' => 34,
+    'TAGLIACARTE.IML' => 35,
+    'TAGLIOINDIGO' => 36,
+
+    // === ACCOPPIATURA / RILIEVO / FUSTELLA ===
+    'ACCOPPIATURA.FOG.33.48INT' => 37,
+    'FUSTBOBSTRILIEVI' => 38,
+    'RILIEVOASECCOJOH' => 39,
+    'STAMPASECCO' => 39,
+    'FUST.STARPACK.74X104' => 40,
+    'FUSTBIML75X106' => 41,
+    'FUSTbIML75X106' => 42,
+    'FUSTBOBST75X106' => 43,
+    'FUSTIML75X106' => 43,
+    'FUSTELLATURA72X51' => 43,
+    'FUSTSTELG33.44' => 44,
+    'FUSTSTELP25.35' => 45,
+
+    // === FINITURA / NUMERAZIONE ===
+    'FIN01' => 46,
+    'FIN03' => 47,
+    'FIN04' => 48,
+    'NUM33.44' => 49,
+
+    // === PIEGA-INCOLLA ===
+    'PI01' => 50,
+    'PI02' => 51,
+    'PI03' => 52,
+
+    // === BROSSURA / CARTONATO ===
+    'BROSSCOPBANDELLAEST' => 53,
+    'BROSSCOPEST' => 54,
+    'BROSSFILOREFE/A4EST' => 55,
+    'BROSSFILOREFE/A5EST' => 56,
+    'BROSSFRESATA/A5EST' => 56,
+    'BROSSFRESATA/A4EST' => 56,
+    'CARTONATO.GEN' => 57,
+
+    // === LEGATORIA / PIEGA ===
+    'CORDONATURAPETRATTO' => 58,
+    'DEKIA-Difficile' => 59,
+    'DEKIA-semplice' => 59,
+    'PIEGA2ANTECORDONE' => 60,
+    'PIEGA2ANTESINGOLO' => 61,
+    'PIEGA3ANTESINGOLO' => 62,
+    'PIEGA8ANTESINGOLO' => 63,
+    'PIEGA8TTAVO' => 63,
+    'PIEGA6ANTESINGOLO' => 63,
+    'PIEGAMANUALE' => 64,
+
+    // === PUNTO METALLICO / SPIRALE ===
+    'PUNTOMETALLICO' => 65,
+    'PUNTOMETALLICOEST' => 66,
+    'PUNTOMETALLICOESTCOPERT.' => 67,
+    'PUNTOMETAMANUALE' => 68,
+    'SPIRBLOCCOLIBROA3' => 69,
+    'SPIRBLOCCOLIBROA4' => 70,
+    'SPIRBLOCCOLIBROA5' => 71,
+
+    // === NUMERAZIONE / PERFORAZIONE ===
+    'NUM.PROGR.' => 72,
+    'PERF.BUC' => 73,
+
+    // === ACCOPPIATURA / ALLESTIMENTO / INCOLLAGGIO ===
+    'accopp+fust' => 74,
+    'ACCOPPIATURA.FOGLI' => 75,
+    'Allest.Manuale' => 76,
+    'ALLEST.SHOPPER' => 77,
+    'ALLEST.SHOPPER030' => 78,
+    'ALLESTIMENTO.ESPOSITORI' => 78,
+    'APPL.BIADESIVO30' => 79,
+    'appl.laccetto' => 80,
+    'ARROT2ANGOLI' => 81,
+    'ARROT4ANGOLI' => 82,
+    'blocchi.manuale' => 83,
+    'INCOLLAGGIO.PATTINA' => 84,
+    'INCOLLAGGIOBLOCCHI' => 85,
+    'LAVGEN' => 86,
+    'SFUST' => 87,
+    'SFUST.IML.FUSTELLATO' => 88,
+    'ZUND' => 89,
+    'APPL.CORDONCINO0,035' => 90,
+
+    // === FINESTRATURA ===
+    'FINESTRATURA.INT' => 91,
+    'FINESTRATURA.MANUALE' => 91,
+
+    // === ESTERNO ===
+    '4graph' => 92,
+    'ALL.COFANETTO.ISMAsrl' => 93,
+    'PMDUPLO36COP' => 94,
+    'STAMPACALDOJOHEST' => 95,
+    'EXTALL.COFANETTO.LEGOKART' => 92,
+    'EXTAllest.Manuale' => 92,
+    'EXTALLEST.SHOPPER' => 92,
+    'EXTALLESTIMENTO.ESPOSITOR' => 92,
+    'EXTAPPL.CORDONCINO0,035' => 92,
+    'EXTAVVIAMENTISTAMPA.EST1.' => 92,
+    'EXTBROSSCOPEST' => 92,
+    'EXTBROSSFILOREFE/A4EST' => 92,
+    'EXTBROSSFILOREFE/A5EST' => 92,
+    'EXTBROSSFRESATA/A4EST' => 92,
+    'EXTBROSSFRESATA/A5EST' => 92,
+    'EXTCARTONATO' => 92,
+    'EXTCARTONATO.GEN' => 92,
+    'EXTFUSTELLATURA72X51' => 92,
+    'EXTPUNTOMETALLICOEST' => 92,
+    'EXTSTAMPA.OFFSET11.EST' => 92,
+    'EXTSTAMPABUSTE.EST' => 92,
+    'EXTSTAMPASECCO' => 92,
+    'EXTUVSPOTEST' => 92,
+    'EXTUVSPOTSPESSEST' => 92,
+    'est STAMPACALDOJOH' => 92,
+    'est FUSTSTELG33.44' => 92,
+    'est FUSTBOBST75X106' => 92,
+
+    // === SPEDIZIONE ===
+    'BRT1' => 96,
+    'brt1' => 96,
+];

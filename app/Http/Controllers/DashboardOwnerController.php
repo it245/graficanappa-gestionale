@@ -527,7 +527,11 @@ public function calcolaOreEPriorita($fase)
                 $fase = $this->calcolaOreEPriorita($fase);
                 return $fase;
             });
-        })->sortBy('priorita');
+        })->sortBy(function ($fase) {
+            $nome = $fase->faseCatalogo->nome ?? '';
+            $ordine = config('fasi_ordine');
+            return $ordine[$nome] ?? $ordine[strtolower($nome)] ?? 999;
+        });
 
         // Anteprima foglio di stampa da Prinect API
         $preview = null;

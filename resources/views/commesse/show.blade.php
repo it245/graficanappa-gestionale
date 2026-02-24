@@ -35,6 +35,12 @@
     $operatore = auth('operatore')->user();
     $repartiOperatore = $operatore?->reparti?->pluck('id')->toArray() ?? [];
     $isSpedizione = $operatore?->reparti?->pluck('nome')->map(fn($n) => strtolower($n))->contains('spedizione');
+
+    $ordineFasi = config('fasi_ordine');
+    $getFaseOrdine = function($fase) use ($ordineFasi) {
+        $nome = $fase->faseCatalogo->nome ?? '';
+        return $ordineFasi[$nome] ?? $ordineFasi[strtolower($nome)] ?? 999;
+    };
 @endphp
 
 <!-- Header -->
@@ -154,7 +160,7 @@
 
     <!-- Altre fasi del tuo reparto (sola lettura) -->
     @php
-        $altreFasiMieNonSelezionate = $fasiGestibili->filter(fn($f) => $f->id !== $faseSelezionataId);
+        $altreFasiMieNonSelezionate = $fasiGestibili->filter(fn($f) => $f->id !== $faseSelezionataId)->sortBy($getFaseOrdine)->values();
     @endphp
     @if($altreFasiMieNonSelezionate->isNotEmpty())
     <h4>Altre fasi del reparto</h4>
@@ -193,7 +199,7 @@
     @php
         $altreFasi = $ordine->fasi->filter(function($f) use ($repartiOperatore) {
             return !in_array($f->faseCatalogo->reparto_id ?? null, $repartiOperatore);
-        });
+        })->sortBy($getFaseOrdine)->values();
     @endphp
     @if($altreFasi->count() > 0)
     <h4>Altre fasi</h4>
