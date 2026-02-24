@@ -182,9 +182,9 @@
         </div>
     </div>
     <div class="col-md-3">
-        <div class="kpi-box" style="border-left: 4px solid #17a2b8;">
+        <div class="kpi-box" style="cursor:pointer; border-left: 4px solid #17a2b8;" onclick="toggleEsterne()">
             <h3>{{ $fasiEsterne->count() }}</h3>
-            <small>Lavorazioni esterne</small>
+            <small>Lavorazioni esterne <span style="font-size:11px">(clicca)</span></small>
         </div>
     </div>
     <div class="col-md-3">
@@ -310,7 +310,8 @@
 </div>
 @endif
 
-<!-- Tabella lavorazioni esterne -->
+<!-- Lavorazioni esterne (nascosto, toggle da KPI box) -->
+<div id="sectionEsterne" style="display:none;">
 @if($fasiEsterne->count() > 0)
 <h4 class="mx-2 mt-4" style="color:#17a2b8;">Lavorazioni Esterne</h4>
 <div class="table-wrapper">
@@ -381,7 +382,10 @@
         </tbody>
     </table>
 </div>
+@else
+<p class="text-muted text-center py-3">Nessuna lavorazione esterna</p>
 @endif
+</div>
 
 <!-- Modal Spedite Oggi -->
 <div class="modal fade" id="modalSpediteOggi" tabindex="-1">
@@ -496,6 +500,12 @@ function forzaConsegna(faseId, btn) {
         else { alert('Errore: ' + (data.messaggio || data.message || 'operazione fallita')); btn.disabled = false; btn.textContent = 'Forza'; }
     })
     .catch(err => { if (err !== 'session_expired') { alert('Errore: ' + err); console.error('Errore:', err); } btn.disabled = false; btn.textContent = 'Forza'; });
+}
+
+// Toggle lavorazioni esterne
+function toggleEsterne() {
+    var section = document.getElementById('sectionEsterne');
+    section.style.display = section.style.display === 'none' ? '' : 'none';
 }
 
 // --- Lavorazioni esterne ---
