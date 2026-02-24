@@ -83,12 +83,26 @@
         </div>
     </div>
 
+    {{-- Anteprima foglio di stampa --}}
+    @if(!empty($preview))
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <div class="card p-3 text-center shadow-sm">
+                <div class="fw-bold mb-2" style="font-size:13px;">Anteprima foglio di stampa</div>
+                <img src="data:{{ $preview['mimeType'] }};base64,{{ $preview['data'] }}"
+                     alt="Preview" style="max-width:100%; max-height:220px; border-radius:8px; cursor:pointer;"
+                     onclick="window.open(this.src)">
+            </div>
+        </div>
+    </div>
+    @endif
+
     <!-- Fase selezionata (con pulsanti) -->
     @foreach($fasiGestibili as $fase)
         @if($fase->id === $faseSelezionataId)
         <div class="card mb-3 border-primary" id="card-fase-{{ $fase->id }}">
             <div class="card-header bg-primary text-white">
-                <strong>{{ $fase->faseCatalogo->nome ?? '-' }}</strong>
+                <strong>{{ $fase->faseCatalogo->nome_display ?? '-' }}</strong>
                 @php $badgeBg = [0=>'bg-secondary',1=>'bg-info',2=>'bg-warning text-dark',3=>'bg-success']; @endphp
                 <span class="badge {{ $badgeBg[$fase->stato] ?? 'bg-dark' }} ms-2 fs-5" id="badge-fase-{{ $fase->id }}">{{ $fase->stato }}</span>
                 <span class="ms-2" id="operatori-fase-{{ $fase->id }}">
@@ -120,7 +134,12 @@
                     <input type="checkbox" id="pausa-{{ $fase->id }}" onchange="gestisciPausa({{ $fase->id }}, this.checked)">
                     <label for="pausa-{{ $fase->id }}" class="badge-pausa">Pausa</label>
 
-                    <input type="checkbox" id="termina-{{ $fase->id }}" onchange="aggiornaStato({{ $fase->id }}, 'termina', this.checked)">
+                    <input type="checkbox" id="termina-{{ $fase->id }}"
+                           data-qta-fase="{{ $fase->qta_fase ?? 0 }}"
+                           data-fogli-buoni="{{ $fase->fogli_buoni ?? 0 }}"
+                           data-fogli-scarto="{{ $fase->fogli_scarto ?? 0 }}"
+                           data-qta-prod="{{ $fase->qta_prod ?? 0 }}"
+                           onchange="aggiornaStato({{ $fase->id }}, 'termina', this.checked)">
                     <label for="termina-{{ $fase->id }}" class="badge-termina">Termina</label>
 
                     @if(!is_numeric($fase->stato))
@@ -153,7 +172,7 @@
         <tbody>
             @foreach($altreFasiMieNonSelezionate as $fase)
             <tr style="cursor:pointer" onclick="window.location='{{ route('commesse.show', $ordine->commessa) }}?fase={{ $fase->id }}'">
-                <td><a href="{{ route('commesse.show', $ordine->commessa) }}?fase={{ $fase->id }}" style="color:#000; text-decoration:underline; font-weight:bold">{{ $fase->faseCatalogo->nome ?? '-' }}</a></td>
+                <td><a href="{{ route('commesse.show', $ordine->commessa) }}?fase={{ $fase->id }}" style="color:#000; text-decoration:underline; font-weight:bold">{{ $fase->faseCatalogo->nome_display ?? '-' }}</a></td>
                 <td><small>{{ Str::limit($fase->ordine_descrizione ?? $fase->ordine->descrizione ?? '-', 60) }}</small></td>
                 @php $sb = [0=>'#e9ecef',1=>'#cfe2ff',2=>'#fff3cd',3=>'#d1e7dd']; @endphp
                 <td id="stato-{{ $fase->id }}" style="background:{{ $sb[$fase->stato] ?? '#e9ecef' }};font-weight:bold;text-align:center;">{{ $fase->stato }}</td>
@@ -189,7 +208,7 @@
         <tbody>
             @foreach($altreFasi as $fase)
             <tr>
-                <td>{{ $fase->faseCatalogo->nome ?? '-' }}</td>
+                <td>{{ $fase->faseCatalogo->nome_display ?? '-' }}</td>
                 @php $sb2 = [0=>'#e9ecef',1=>'#cfe2ff',2=>'#fff3cd',3=>'#d1e7dd']; @endphp
                 <td style="background:{{ $sb2[$fase->stato] ?? '#e9ecef' }};font-weight:bold;text-align:center;">{{ $fase->stato }}</td>
                 <td>
@@ -214,6 +233,37 @@
             </li>
         @endforeach
     </ul>
+</div>
+
+<!-- Modal Termina Fase -->
+<div class="modal fade" id="modalTermina" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Termina Fase</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="terminaFaseId">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Qta target (riferimento)</label>
+                    <input type="number" id="terminaQtaFase" class="form-control" readonly style="background:#e9ecef">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Qta prodotta <span class="text-danger">*</span></label>
+                    <input type="number" id="terminaQtaProdotta" class="form-control" min="0" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Scarti</label>
+                    <input type="number" id="terminaScarti" class="form-control" min="0" value="0">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                <button type="button" class="btn btn-danger fw-bold" onclick="confermaTermina()">Conferma e Termina</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -261,13 +311,11 @@ function updateOperatori(faseId, operatori) {
 function aggiornaStato(faseId, azione, checked){
     if(!checked) return;
     if(azione === 'termina'){
-        if(!confirm("Sei sicuro di voler terminare questa fase?")){
-            document.getElementById('termina-'+faseId).checked = false;
-            return;
-        }
+        apriModalTermina(faseId);
+        return;
     }
 
-    let route = azione==='avvia' ? '{{ route("produzione.avvia") }}' : '{{ route("produzione.termina") }}';
+    let route = '{{ route("produzione.avvia") }}';
 
     fetch(route, {
         method:'POST',
@@ -277,9 +325,8 @@ function aggiornaStato(faseId, azione, checked){
     .then(res=>res.json())
     .then(data=>{
         if(data.success){
-            var nuovoStato = azione==='avvia' ? 2 : 3;
-            updateBadge(faseId, nuovoStato);
-            updateButtons(faseId, nuovoStato);
+            updateBadge(faseId, 2);
+            updateButtons(faseId, 2);
             if(data.operatori) updateOperatori(faseId, data.operatori);
         } else {
             alert('Errore: ' + (data.messaggio || 'operazione fallita'));
@@ -287,6 +334,67 @@ function aggiornaStato(faseId, azione, checked){
     })
     .catch(err=>console.error('Errore:', err));
 }
+
+function apriModalTermina(faseId) {
+    var cb = document.getElementById('termina-'+faseId);
+    var qtaFase = cb ? cb.getAttribute('data-qta-fase') : 0;
+    var fogliBuoni = parseInt(cb ? cb.getAttribute('data-fogli-buoni') : 0) || 0;
+    var fogliScarto = parseInt(cb ? cb.getAttribute('data-fogli-scarto') : 0) || 0;
+    var qtaProd = parseInt(cb ? cb.getAttribute('data-qta-prod') : 0) || 0;
+
+    document.getElementById('terminaFaseId').value = faseId;
+    document.getElementById('terminaQtaFase').value = qtaFase;
+
+    // Pre-fill: fogli_buoni se > 0, altrimenti qta_prod se > 0, altrimenti vuoto
+    var prefillQta = fogliBuoni > 0 ? fogliBuoni : (qtaProd > 0 ? qtaProd : '');
+    document.getElementById('terminaQtaProdotta').value = prefillQta;
+
+    // Pre-fill scarti da fogli_scarto se > 0
+    document.getElementById('terminaScarti').value = fogliScarto > 0 ? fogliScarto : 0;
+
+    new bootstrap.Modal(document.getElementById('modalTermina')).show();
+}
+
+function confermaTermina() {
+    var faseId = document.getElementById('terminaFaseId').value;
+    var qtaProdotta = document.getElementById('terminaQtaProdotta').value;
+    var scarti = document.getElementById('terminaScarti').value;
+
+    if (qtaProdotta === '' || parseInt(qtaProdotta) < 0) {
+        alert('Inserire la quantita prodotta (>= 0)');
+        return;
+    }
+
+    bootstrap.Modal.getInstance(document.getElementById('modalTermina')).hide();
+
+    fetch('{{ route("produzione.termina") }}', {
+        method:'POST',
+        headers:{'X-CSRF-TOKEN':'{{ csrf_token() }}','Content-Type':'application/json'},
+        body:JSON.stringify({fase_id: faseId, qta_prodotta: parseInt(qtaProdotta), scarti: parseInt(scarti) || 0})
+    })
+    .then(res=>res.json())
+    .then(data=>{
+        if(data.success){
+            updateBadge(faseId, 3);
+            updateButtons(faseId, 3);
+            updateOperatori(faseId, []);
+        } else {
+            alert('Errore: ' + (data.messaggio || 'operazione fallita'));
+            document.getElementById('termina-'+faseId).checked = false;
+        }
+    })
+    .catch(err=>{
+        console.error('Errore:', err);
+        document.getElementById('termina-'+faseId).checked = false;
+    });
+}
+
+// Reset checkbox when modal is dismissed without confirming
+document.getElementById('modalTermina').addEventListener('hidden.bs.modal', function() {
+    var faseId = document.getElementById('terminaFaseId').value;
+    var cb = document.getElementById('termina-'+faseId);
+    if (cb) cb.checked = false;
+});
 
 function gestisciPausa(faseId, checked){
     if(!checked) return;

@@ -344,7 +344,7 @@ th:nth-child(23), td:nth-child(23) {
                     <td>{{ $fase->ordine->carta ?? '-' }}</td>
                     <td>{{ $fase->ordine->qta_carta ?? '-' }}</td>
                     <td>{{ $fase->ordine->UM_carta ?? '-' }}</td>
-                    <td>{{ $fase->faseCatalogo->nome ?? '-' }}</td>
+                    <td>{{ $fase->faseCatalogo->nome_display ?? '-' }}</td>
                     <td>{{ $fase->reparto_nome ?? '-' }}</td>
                     <td>
                         @forelse($fase->operatori as $op)

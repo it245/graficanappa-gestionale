@@ -174,7 +174,7 @@
                         {{ $fase->stato }}
                     </span>
                 </td>
-                <td>{{ $fase->faseCatalogo->nome ?? $fase->fase ?? '-' }}</td>
+                <td>{{ $fase->faseCatalogo->nome_display ?? $fase->fase ?? '-' }}</td>
                 <td>{{ $fase->reparto_nome ?? '-' }}</td>
                 <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'qta_carta', this.innerText)">{{ $fase->ordine->qta_carta ?? '-' }}</td>
                 <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'qta_prod', this.innerText)">{{ $fase->qta_prod ?? '-' }}</td>

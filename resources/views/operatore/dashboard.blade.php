@@ -149,7 +149,7 @@
                             {{ $op->nome }} ({{ $op->pivot->data_inizio ? \Carbon\Carbon::parse($op->pivot->data_inizio)->format('d/m/Y H:i:s') : '-' }})<br>
                         @endforeach
                     </td>
-                    <td>{{ $fase->faseCatalogo->nome ?? '-' }}</td>
+                    <td>{{ $fase->faseCatalogo->nome_display ?? '-' }}</td>
                     @php $statoBg = [0 => '#e9ecef', 1 => '#cfe2ff', 2 => '#fff3cd', 3 => '#d1e7dd']; @endphp
                     <td id="stato-{{ $fase->id }}" style="background:{{ $statoBg[$fase->stato] ?? '#e9ecef' }};font-weight:bold;text-align:center;">{{ $fase->stato }}</td>
 

@@ -4,10 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Ordine;
 use App\Models\OrdineFase;
+use App\Services\PrinectService;
 
 class CommessaController extends Controller
 {
-    public function show($commessa)
+    public function show($commessa, PrinectService $prinect)
     {
         // Carica TUTTI gli ordini con questa commessa (fondente, latte, ecc.)
         $ordini = Ordine::where('commessa', $commessa)
@@ -37,8 +38,29 @@ class CommessaController extends Controller
             : Ordine::where('commessa', '!=', $commessa)->orderBy('data_prevista_consegna', 'asc')->limit(5)->get();
 
 
+        // Anteprima foglio di stampa da Prinect API
+        $preview = null;
+        $jobId = ltrim(substr($commessa, 0, 7), '0');
+        if ($jobId && is_numeric($jobId)) {
+            try {
+                $wsData = $prinect->getJobWorksteps($jobId);
+                foreach ($wsData['worksteps'] ?? [] as $ws) {
+                    if (isset($ws['types']) && in_array('ConventionalPrinting', $ws['types'])) {
+                        $prevData = $prinect->getWorkstepPreview($jobId, $ws['id']);
+                        $previews = $prevData['previews'] ?? [];
+                        if (!empty($previews)) {
+                            $preview = $previews[0];
+                        }
+                        break;
+                    }
+                }
+            } catch (\Exception $e) {
+                // Prinect non disponibile, nessuna anteprima
+            }
+        }
+
         $operatore = \App\Models\Operatore::with('reparti')->find(session('operatore_id'));
 
-        return view('commesse.show', compact('ordine', 'prossime', 'operatore'));
+        return view('commesse.show', compact('ordine', 'prossime', 'operatore', 'preview'));
     }
 }

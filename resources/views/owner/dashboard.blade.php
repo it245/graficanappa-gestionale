@@ -692,7 +692,7 @@ tr:hover td {
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'carta', this.innerText)">{{ $fase->ordine->carta ?? '-' }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'qta_carta', this.innerText)">{{ $fase->ordine->qta_carta ?? '-' }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'UM_carta', this.innerText)">{{ $fase->ordine->UM_carta ?? '-' }}</td>
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'fase', this.innerText)">{{ $fase->faseCatalogo->nome ?? '-' }}</td>
+                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'fase', this.innerText)">{{ $fase->faseCatalogo->nome_display ?? '-' }}</td>
                     <td>{{ $fase->faseCatalogo->reparto->nome ?? '-' }}</td>
                     <td>
                         @forelse($fase->operatori as $op)
@@ -738,7 +738,7 @@ tr:hover td {
                             <td><strong>{{ $sp->ordine->commessa ?? '-' }}</strong></td>
                             <td>{{ $sp->ordine->cliente_nome ?? '-' }}</td>
                             <td style="white-space:normal; max-width:350px;">{{ $sp->ordine->descrizione ?? '-' }}</td>
-                            <td>{{ $sp->faseCatalogo->nome ?? $sp->fase ?? '-' }}</td>
+                            <td>{{ $sp->faseCatalogo->nome_display ?? $sp->fase ?? '-' }}</td>
                             <td>
                                 @foreach($sp->operatori as $op)
                                     {{ $op->nome }} {{ $op->cognome }}@if(!$loop->last), @endif

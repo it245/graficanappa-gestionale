@@ -285,7 +285,7 @@
                 @php
                     $pct = $fase->percentuale ?? 0;
                     $pctColor = $pct >= 75 ? '#17a2b8' : ($pct >= 50 ? '#ffc107' : '#dc3545');
-                    $nomiMancanti = $fase->fasiNonTerminate->map(fn($f) => $f->faseCatalogo->nome ?? '-')->implode(', ');
+                    $nomiMancanti = $fase->fasiNonTerminate->map(fn($f) => $f->faseCatalogo->nome_display ?? '-')->implode(', ');
                 @endphp
                 <tr class="searchable">
                     <td style="text-align:center; vertical-align:middle;">

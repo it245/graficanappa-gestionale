@@ -90,10 +90,20 @@
                             <button class="btn btn-sm btn-success fw-bold" onclick="esternoAvvia({{ $fase->id }}, this)">Avvia</button>
                         @elseif($statoFase == 2)
                             <button class="btn btn-sm btn-warning fw-bold" onclick="esternoPausa({{ $fase->id }}, this)">Pausa</button>
-                            <button class="btn btn-sm btn-danger fw-bold" onclick="esternoTermina({{ $fase->id }}, this)">Termina</button>
+                            <button class="btn btn-sm btn-danger fw-bold"
+                                    data-qta-fase="{{ $fase->qta_fase ?? 0 }}"
+                                    data-fogli-buoni="{{ $fase->fogli_buoni ?? 0 }}"
+                                    data-fogli-scarto="{{ $fase->fogli_scarto ?? 0 }}"
+                                    data-qta-prod="{{ $fase->qta_prod ?? 0 }}"
+                                    onclick="esternoTermina({{ $fase->id }}, this)">Termina</button>
                         @elseif($inPausa)
                             <button class="btn btn-sm btn-success fw-bold" onclick="esternoRiprendi({{ $fase->id }}, this)">Riprendi</button>
-                            <button class="btn btn-sm btn-danger fw-bold" onclick="esternoTermina({{ $fase->id }}, this)">Termina</button>
+                            <button class="btn btn-sm btn-danger fw-bold"
+                                    data-qta-fase="{{ $fase->qta_fase ?? 0 }}"
+                                    data-fogli-buoni="{{ $fase->fogli_buoni ?? 0 }}"
+                                    data-fogli-scarto="{{ $fase->fogli_scarto ?? 0 }}"
+                                    data-qta-prod="{{ $fase->qta_prod ?? 0 }}"
+                                    onclick="esternoTermina({{ $fase->id }}, this)">Termina</button>
                         @endif
                     </td>
                     <td>
@@ -114,7 +124,7 @@
                     </td>
                     <td><a href="{{ route('commesse.show', $fase->ordine->commessa ?? '-') }}" class="commessa-link">{{ $fase->ordine->commessa ?? '-' }}</a></td>
                     <td>{{ $fase->ordine->cliente_nome ?? '-' }}</td>
-                    <td>{{ $fase->faseCatalogo->nome ?? '-' }}</td>
+                    <td>{{ $fase->faseCatalogo->nome_display ?? '-' }}</td>
                     <td>{{ $fase->ordine->cod_art ?? '-' }}</td>
                     <td>{{ $fase->ordine->descrizione ?? '-' }}</td>
                     <td>{{ $fase->ordine->data_prevista_consegna ? \Carbon\Carbon::parse($fase->ordine->data_prevista_consegna)->format('d/m/Y') : '-' }}</td>
@@ -126,6 +136,37 @@
             @endforelse
         </tbody>
     </table>
+</div>
+
+<!-- Modal Termina Fase -->
+<div class="modal fade" id="modalTerminaEsterno" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Termina Fase Esterna</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="terminaEsternoFaseId">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Qta target (riferimento)</label>
+                    <input type="number" id="terminaEsternoQtaFase" class="form-control" readonly style="background:#e9ecef">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Qta prodotta <span class="text-danger">*</span></label>
+                    <input type="number" id="terminaEsternoQtaProdotta" class="form-control" min="0" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Scarti</label>
+                    <input type="number" id="terminaEsternoScarti" class="form-control" min="0" value="0">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                <button type="button" class="btn btn-danger fw-bold" onclick="confermaTerminaEsterno()">Conferma e Termina</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Modal selezione terzista -->
@@ -259,18 +300,46 @@ function esternoPausa(faseId, btn) {
 }
 
 function esternoTermina(faseId, btn) {
-    if (!confirm("Sei sicuro di voler terminare questa fase esterna?")) return;
-    btn.disabled = true;
+    var qtaFase = btn.getAttribute('data-qta-fase') || 0;
+    var fogliBuoni = parseInt(btn.getAttribute('data-fogli-buoni') || 0) || 0;
+    var fogliScarto = parseInt(btn.getAttribute('data-fogli-scarto') || 0) || 0;
+    var qtaProd = parseInt(btn.getAttribute('data-qta-prod') || 0) || 0;
+
+    document.getElementById('terminaEsternoFaseId').value = faseId;
+    document.getElementById('terminaEsternoQtaFase').value = qtaFase;
+
+    // Pre-fill: fogli_buoni se > 0, altrimenti qta_prod se > 0, altrimenti vuoto
+    var prefillQta = fogliBuoni > 0 ? fogliBuoni : (qtaProd > 0 ? qtaProd : '');
+    document.getElementById('terminaEsternoQtaProdotta').value = prefillQta;
+
+    // Pre-fill scarti da fogli_scarto se > 0
+    document.getElementById('terminaEsternoScarti').value = fogliScarto > 0 ? fogliScarto : 0;
+
+    new bootstrap.Modal(document.getElementById('modalTerminaEsterno')).show();
+}
+
+function confermaTerminaEsterno() {
+    var faseId = document.getElementById('terminaEsternoFaseId').value;
+    var qtaProdotta = document.getElementById('terminaEsternoQtaProdotta').value;
+    var scarti = document.getElementById('terminaEsternoScarti').value;
+
+    if (qtaProdotta === '' || parseInt(qtaProdotta) < 0) {
+        alert('Inserire la quantita prodotta (>= 0)');
+        return;
+    }
+
+    bootstrap.Modal.getInstance(document.getElementById('modalTerminaEsterno')).hide();
+
     fetch('{{ route("produzione.termina") }}', {
         method: 'POST', headers: hdrs,
-        body: JSON.stringify({ fase_id: faseId })
+        body: JSON.stringify({ fase_id: faseId, qta_prodotta: parseInt(qtaProdotta), scarti: parseInt(scarti) || 0 })
     })
     .then(parseResponse)
     .then(data => {
         if (data.success) { window.location.reload(); }
-        else { alert('Errore: ' + (data.messaggio || data.message || 'operazione fallita')); btn.disabled = false; }
+        else { alert('Errore: ' + (data.messaggio || data.message || 'operazione fallita')); }
     })
-    .catch(err => { if (err !== 'session_expired') { console.error('Errore:', err); alert('Errore: ' + err); } btn.disabled = false; });
+    .catch(err => { if (err !== 'session_expired') { console.error('Errore:', err); alert('Errore: ' + err); } });
 }
 
 function esternoRiprendi(faseId, btn) {

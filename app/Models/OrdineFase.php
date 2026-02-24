@@ -22,6 +22,7 @@ class OrdineFase extends Model
         'reparto',
         'fase_catalogo_id',
         'qta_prod',
+        'scarti',
         'qta_fase',
         'um',
         'note',

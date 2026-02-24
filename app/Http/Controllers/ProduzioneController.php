@@ -65,6 +65,20 @@ class ProduzioneController extends Controller
 
    public function terminaFase(Request $request)
 {
+    $validator = Validator::make($request->all(), [
+        'fase_id'       => 'required',
+        'qta_prodotta'  => 'required|integer|min:0',
+        'scarti'        => 'nullable|integer|min:0',
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'success' => false,
+            'messaggio' => 'Inserire la quantita prodotta.',
+            'errors' => $validator->errors()
+        ], 422);
+    }
+
     $fase = OrdineFase::with('operatori')->find($request->fase_id);
     if (!$fase) {
         return response()->json(['success' => false, 'messaggio' => 'Fase non trovata']);
@@ -94,6 +108,8 @@ class ProduzioneController extends Controller
         }
     }
 
+    $fase->qta_prod = $request->qta_prodotta;
+    $fase->scarti = $request->scarti ?? 0;
     $fase->stato = 3; // fase terminata
     $fase->data_fine = now()->format('Y-m-d H:i:s');
     $fase->timeout = null;
