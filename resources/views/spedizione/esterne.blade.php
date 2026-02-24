@@ -128,6 +128,54 @@
     </table>
 </div>
 
+<!-- Modal selezione terzista -->
+<div class="modal fade" id="modalTerzista" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">Seleziona fornitore (terzista)</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="terzistaFaseId">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Fornitore</label>
+                    <select id="terzistaSelect" class="form-select" onchange="toggleAltroTerzista()">
+                        <option value="">-- Seleziona --</option>
+                        <option>4GRAPH S.R.L.</option>
+                        <option>CARD S.R.L.</option>
+                        <option>CLEVEX S.R.L.</option>
+                        <option>KRESIA SRL</option>
+                        <option>LASER LINE FUSTELLE S.R.L.</option>
+                        <option>LEGATORIA SALVATORE TONTI SRL</option>
+                        <option>LEGOKART S.A.S.</option>
+                        <option>LEGRAF S.R.L.</option>
+                        <option>LP FUSTELLE S.R.L.</option>
+                        <option>PACKINGRAF SRL</option>
+                        <option>POLYEDRA S.P.A.</option>
+                        <option>SAE SRL</option>
+                        <option>SOL GROUP SRL</option>
+                        <option>SOLUZIONI IMBALLAGGI SRL</option>
+                        <option>TECNOCART S.R.L.</option>
+                        <option>TIPOGRAFIA BIANCO S.R.L.</option>
+                        <option>TIPOGRAFIA EFFEGI SRL</option>
+                        <option>TIPOLITOGRAFIA NEO PRINT SERVICE</option>
+                        <option value="__altro__">Altro...</option>
+                    </select>
+                </div>
+                <div class="mb-3" id="terzistaAltroWrap" style="display:none;">
+                    <label class="form-label fw-bold">Nome fornitore</label>
+                    <input type="text" id="terzistaAltroInput" class="form-control" placeholder="Scrivi il nome del fornitore...">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                <button type="button" class="btn btn-success fw-bold" onclick="confermaTerzista()">Conferma e Avvia</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 </div>
 
 <script>
@@ -163,9 +211,24 @@ function aggiornaNota(faseId, valore) {
 const motiviPausaEsterno = ["Attesa materiale", "Problema macchina", "Pranzo", "Altro"];
 
 function esternoAvvia(faseId, btn) {
-    var terzista = prompt("A chi viene inviato il prodotto (terzista)?");
-    if (terzista === null) return;
-    btn.disabled = true;
+    document.getElementById('terzistaFaseId').value = faseId;
+    document.getElementById('terzistaSelect').value = '';
+    document.getElementById('terzistaAltroInput').value = '';
+    document.getElementById('terzistaAltroWrap').style.display = 'none';
+    new bootstrap.Modal(document.getElementById('modalTerzista')).show();
+}
+
+function toggleAltroTerzista() {
+    var wrap = document.getElementById('terzistaAltroWrap');
+    wrap.style.display = document.getElementById('terzistaSelect').value === '__altro__' ? '' : 'none';
+}
+
+function confermaTerzista() {
+    var sel = document.getElementById('terzistaSelect').value;
+    var terzista = sel === '__altro__' ? document.getElementById('terzistaAltroInput').value.trim() : sel;
+    if (!terzista) { alert('Seleziona un fornitore'); return; }
+    var faseId = document.getElementById('terzistaFaseId').value;
+    bootstrap.Modal.getInstance(document.getElementById('modalTerzista')).hide();
     fetch('{{ route("produzione.avvia") }}', {
         method: 'POST', headers: hdrs,
         body: JSON.stringify({ fase_id: faseId, terzista: terzista })
@@ -173,9 +236,9 @@ function esternoAvvia(faseId, btn) {
     .then(parseResponse)
     .then(data => {
         if (data.success) { window.location.reload(); }
-        else { alert('Errore: ' + (data.messaggio || data.message || 'operazione fallita')); btn.disabled = false; }
+        else { alert('Errore: ' + (data.messaggio || data.message || 'operazione fallita')); }
     })
-    .catch(err => { if (err !== 'session_expired') { console.error('Errore:', err); alert('Errore: ' + err); } btn.disabled = false; });
+    .catch(err => { if (err !== 'session_expired') { console.error('Errore:', err); alert('Errore: ' + err); } });
 }
 
 function esternoPausa(faseId, btn) {
