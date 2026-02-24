@@ -94,11 +94,13 @@ class DashboardAdminController extends Controller
             'reparto_principale' => 'required|exists:reparti,id',
             'reparto_secondario' => 'nullable|exists:reparti,id',
             'password' => 'nullable|string|min:4',
+            'codice_operatore' => 'required|string|max:20|unique:operatori,codice_operatore,' . $id,
         ]);
 
         $operatore->nome = ucfirst(strtolower($request->nome));
         $operatore->cognome = ucfirst(strtolower($request->cognome));
         $operatore->ruolo = $request->ruolo;
+        $operatore->codice_operatore = strtoupper($request->codice_operatore);
         $operatore->reparto_id = $request->reparto_principale;
 
         if ($request->filled('password')) {

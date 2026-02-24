@@ -37,7 +37,7 @@
         @if($operatore)
             <div class="mb-3">
                 <label class="form-label">Codice operatore</label>
-                <input type="text" class="form-control" value="{{ $operatore->codice_operatore }}" disabled>
+                <input type="text" name="codice_operatore" class="form-control" value="{{ old('codice_operatore', $operatore->codice_operatore) }}" required>
             </div>
         @endif
 
