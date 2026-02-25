@@ -334,15 +334,18 @@ class OndaSyncService
         $righeDDT = DB::connection('onda')->select("
             SELECT t.IdDoc, r.CodCommessa, t.DataDocumento, t.NumeroDocumento,
                    a.RagioneSociale AS Cliente,
+                   v.RagioneSociale AS Vettore,
                    SUM(r.Qta) AS QtaDDT
             FROM ATTDocTeste t
             JOIN ATTDocRighe r ON t.IdDoc = r.IdDoc
             LEFT JOIN STDAnagrafiche a ON t.IdAnagrafica = a.IdAnagrafica
+            LEFT JOIN ATTDocCoda c ON t.IdDoc = c.IdDoc
+            LEFT JOIN STDAnagrafiche v ON c.IdVettore1 = v.IdAnagrafica
             WHERE t.TipoDocumento = 3
               AND t.DataRegistrazione >= DATEADD(day, -7, GETDATE())
               AND r.CodCommessa IS NOT NULL AND r.CodCommessa != ''
               AND r.TipoRiga = 1
-            GROUP BY t.IdDoc, r.CodCommessa, t.DataDocumento, t.NumeroDocumento, a.RagioneSociale
+            GROUP BY t.IdDoc, r.CodCommessa, t.DataDocumento, t.NumeroDocumento, a.RagioneSociale, v.RagioneSociale
         ");
 
         if (empty($righeDDT)) {
@@ -372,6 +375,7 @@ class OndaSyncService
             $ordine->update([
                 'ddt_vendita_id'      => $idDoc,
                 'numero_ddt_vendita'  => trim($riga->NumeroDocumento ?? ''),
+                'vettore_ddt'         => trim($riga->Vettore ?? ''),
                 'qta_ddt_vendita'     => $qtaDDT,
             ]);
 

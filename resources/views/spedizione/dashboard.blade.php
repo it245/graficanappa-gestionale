@@ -282,7 +282,7 @@
                 <th>Qta Ordine</th>
                 <th>Qta DDT</th>
                 <th>Suggerimento</th>
-                <th>Tracking BRT</th>
+                <th>Vettore</th>
             </tr>
         </thead>
         <tbody>
@@ -292,6 +292,8 @@
                     $qtaDDT = $fase->ordine->qta_ddt_vendita ?? 0;
                     $suggerimento = $qtaDDT >= $qtaOrdine ? 'totale' : 'parziale';
                     $numDDT = $fase->ordine->numero_ddt_vendita ?? '';
+                    $vettore = $fase->ordine->vettore_ddt ?? '';
+                    $isBRT = stripos($vettore, 'BRT') !== false;
                 @endphp
                 <tr class="searchable">
                     <td style="white-space:nowrap;">
@@ -311,12 +313,14 @@
                             <span class="badge bg-warning text-dark">Parziale</span>
                         @endif
                     </td>
-                    <td>
-                        @if($numDDT)
-                            <button class="btn btn-sm btn-outline-danger fw-bold" id="btnTrackDDT_{{ $fase->id }}" onclick="apriTrackingDDT('{{ $numDDT }}', this)">
+                    <td style="white-space:nowrap;">
+                        @if($isBRT && $numDDT)
+                            <button class="btn btn-sm btn-outline-danger fw-bold" onclick="apriTrackingDDT('{{ $numDDT }}', this)">
                                 <span class="spinner-border spinner-border-sm d-none" role="status"></span>
-                                Tracking
+                                BRT Tracking
                             </button>
+                        @elseif($vettore)
+                            <span class="badge bg-secondary">{{ $vettore }}</span>
                         @else
                             <span class="text-muted">-</span>
                         @endif

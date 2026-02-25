@@ -9,14 +9,17 @@ use App\Models\Ordine;
 class BackfillNumeroDDT extends Command
 {
     protected $signature = 'app:backfill-numero-ddt';
-    protected $description = 'Popola numero_ddt_vendita da Onda per ordini esistenti con ddt_vendita_id';
+    protected $description = 'Popola numero_ddt_vendita e vettore_ddt da Onda per ordini esistenti con ddt_vendita_id';
 
     public function handle()
     {
         $ordini = Ordine::whereNotNull('ddt_vendita_id')
             ->where('ddt_vendita_id', '!=', 0)
             ->where(function ($q) {
-                $q->whereNull('numero_ddt_vendita')->orWhere('numero_ddt_vendita', '');
+                $q->whereNull('numero_ddt_vendita')
+                  ->orWhere('numero_ddt_vendita', '')
+                  ->orWhereNull('vettore_ddt')
+                  ->orWhere('vettore_ddt', '');
             })
             ->get();
 
@@ -25,15 +28,22 @@ class BackfillNumeroDDT extends Command
         $aggiornati = 0;
         foreach ($ordini as $ordine) {
             try {
-                $ddt = DB::connection('onda')->select(
-                    'SELECT NumeroDocumento FROM ATTDocTeste WHERE IdDoc = ?',
-                    [$ordine->ddt_vendita_id]
-                );
+                $ddt = DB::connection('onda')->select("
+                    SELECT t.NumeroDocumento, v.RagioneSociale AS Vettore
+                    FROM ATTDocTeste t
+                    LEFT JOIN ATTDocCoda c ON t.IdDoc = c.IdDoc
+                    LEFT JOIN STDAnagrafiche v ON c.IdVettore1 = v.IdAnagrafica
+                    WHERE t.IdDoc = ?
+                ", [$ordine->ddt_vendita_id]);
 
                 if (!empty($ddt)) {
                     $numDoc = trim($ddt[0]->NumeroDocumento);
-                    $ordine->update(['numero_ddt_vendita' => $numDoc]);
-                    $this->line("  #{$ordine->id} {$ordine->commessa} -> DDT {$numDoc}");
+                    $vettore = trim($ddt[0]->Vettore ?? '');
+                    $ordine->update([
+                        'numero_ddt_vendita' => $numDoc,
+                        'vettore_ddt' => $vettore,
+                    ]);
+                    $this->line("  #{$ordine->id} {$ordine->commessa} -> DDT {$numDoc} | Vettore: {$vettore}");
                     $aggiornati++;
                 } else {
                     $this->warn("  #{$ordine->id} ddt_id={$ordine->ddt_vendita_id} non trovato in Onda");
