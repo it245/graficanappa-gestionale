@@ -132,7 +132,15 @@ class DashboardSpedizioneController extends Controller
                 ->sortBy(fn($f) => $f->ordine->data_prevista_consegna ?? '9999-12-31');
         }
 
-        return view('spedizione.dashboard', compact('fasiDaSpedire', 'fasiSpediteOggi', 'fasiInAttesa', 'fasiEsterne', 'fasiDDT', 'fasiParziali', 'operatore'));
+        // Spedizioni BRT: DDT unici con vettore BRT
+        $spedizioniBRT = Ordine::where('vettore_ddt', 'LIKE', '%BRT%')
+            ->whereNotNull('numero_ddt_vendita')
+            ->where('numero_ddt_vendita', '!=', '')
+            ->orderByDesc('ddt_vendita_id')
+            ->get()
+            ->groupBy('numero_ddt_vendita');
+
+        return view('spedizione.dashboard', compact('fasiDaSpedire', 'fasiSpediteOggi', 'fasiInAttesa', 'fasiEsterne', 'fasiDDT', 'fasiParziali', 'spedizioniBRT', 'operatore'));
     }
 
     public function esterne(Request $request)

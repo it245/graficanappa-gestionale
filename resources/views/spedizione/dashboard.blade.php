@@ -262,6 +262,12 @@
             <small>Parziali oggi</small>
         </div>
     </div>
+    <div class="col-md-2">
+        <div class="kpi-box" style="cursor:pointer; border-left: 4px solid #d4380d;" data-bs-toggle="modal" data-bs-target="#modalBRT">
+            <h3>{{ $spedizioniBRT->count() }}</h3>
+            <small>Spedizioni BRT</small>
+        </div>
+    </div>
 </div>
 
 <!-- Ricerca -->
@@ -610,6 +616,73 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Spedizioni BRT -->
+<div class="modal fade" id="modalBRT" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#d4380d; color:#fff;">
+                <h5 class="modal-title">Spedizioni BRT ({{ $spedizioniBRT->count() }} DDT)</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="overflow-x:auto;">
+                @if($spedizioniBRT->count() > 0)
+                <div class="mb-2">
+                    <button class="btn btn-sm btn-outline-danger fw-bold" id="btnCaricaTuttiBRT" onclick="caricaTuttiTrackingBRT()">
+                        <span class="spinner-border spinner-border-sm d-none" id="spinnerTuttiBRT" role="status"></span>
+                        Carica tutti i tracking
+                    </button>
+                    <span id="brtProgressLabel" class="ms-2 text-muted small"></span>
+                </div>
+                <table class="table table-bordered table-sm" style="white-space:nowrap;">
+                    <thead style="background:#d4380d; color:#fff;">
+                        <tr>
+                            <th>DDT</th>
+                            <th>Commesse</th>
+                            <th>Cliente</th>
+                            <th>Stato BRT</th>
+                            <th>Data Consegna</th>
+                            <th>Destinatario</th>
+                            <th>Colli</th>
+                            <th>Azione</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($spedizioniBRT as $numDDT => $ordiniGruppo)
+                        @php
+                            $primo = $ordiniGruppo->first();
+                            $commesse = $ordiniGruppo->pluck('commessa')->unique()->implode(', ');
+                        @endphp
+                        <tr id="brt_row_{{ md5($numDDT) }}">
+                            <td class="fw-bold">{{ ltrim($numDDT, '0') }}</td>
+                            <td>{{ $commesse }}</td>
+                            <td>{{ $primo->cliente_nome ?? '-' }}</td>
+                            <td id="brt_stato_{{ md5($numDDT) }}">
+                                <span class="badge bg-light text-muted">Da verificare</span>
+                            </td>
+                            <td id="brt_data_{{ md5($numDDT) }}">-</td>
+                            <td id="brt_dest_{{ md5($numDDT) }}">-</td>
+                            <td id="brt_colli_{{ md5($numDDT) }}">-</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-danger" onclick="caricaTrackingBRT('{{ $numDDT }}', '{{ md5($numDDT) }}', this)">
+                                    <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+                                    Tracking
+                                </button>
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+                @else
+                <p class="text-muted text-center py-3">Nessuna spedizione BRT</p>
+                @endif
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
             </div>
         </div>
     </div>
@@ -967,6 +1040,150 @@ function apriTrackingDDT(numeroDDT, btn) {
             document.getElementById('trackingErrore').className = 'alert alert-danger';
             document.getElementById('trackingErrore').classList.remove('d-none');
         }
+    });
+}
+
+// === Tracking BRT KPI ===
+function caricaTrackingBRT(numeroDDT, hash, btn) {
+    var spinner = btn.querySelector('.spinner-border');
+    if (spinner) spinner.classList.remove('d-none');
+    btn.disabled = true;
+
+    fetch('{{ route("spedizione.trackingByDDT") }}', {
+        method: 'POST', headers: getHdrs(),
+        body: JSON.stringify({ numero_ddt: numeroDDT })
+    })
+    .then(parseResponse)
+    .then(function(data) {
+        if (spinner) spinner.classList.add('d-none');
+
+        var statoEl = document.getElementById('brt_stato_' + hash);
+        var dataEl = document.getElementById('brt_data_' + hash);
+        var destEl = document.getElementById('brt_dest_' + hash);
+        var colliEl = document.getElementById('brt_colli_' + hash);
+
+        if (data.error) {
+            statoEl.innerHTML = '<span class="badge bg-warning text-dark">Non registrata</span>';
+            btn.classList.replace('btn-outline-danger', 'btn-outline-secondary');
+            btn.innerHTML = 'N/D';
+            return;
+        }
+
+        if (!data.bolla || !data.bolla.spedizione_id) {
+            statoEl.innerHTML = '<span class="badge bg-info">In elaborazione</span>';
+            btn.innerHTML = 'Dettagli';
+            btn.disabled = false;
+            btn.onclick = function() { apriTrackingDDT(numeroDDT, btn); };
+            return;
+        }
+
+        var bolla = data.bolla;
+        var stato = data.stato || 'SCONOSCIUTO';
+        var badgeClass = 'bg-secondary';
+        if (stato.indexOf('CONSEGNATA') >= 0) badgeClass = 'bg-success';
+        else if (stato.indexOf('IN TRANSITO') >= 0 || stato.indexOf('PARTITA') >= 0) badgeClass = 'bg-primary';
+        else if (stato.indexOf('CONSEGNA') >= 0) badgeClass = 'bg-warning text-dark';
+        else if (stato.indexOf('RITIRATA') >= 0) badgeClass = 'bg-info';
+
+        statoEl.innerHTML = '<span class="badge ' + badgeClass + '">' + stato + '</span>';
+        dataEl.textContent = bolla.data_consegna ? (bolla.data_consegna + ' ' + (bolla.ora_consegna || '')) : '-';
+        destEl.textContent = [bolla.destinatario_ragione_sociale, bolla.destinatario_localita].filter(Boolean).join(' - ') || '-';
+        colliEl.textContent = bolla.colli || '-';
+
+        btn.innerHTML = 'Dettagli';
+        btn.disabled = false;
+        btn.onclick = function() { apriTrackingDDT(numeroDDT, btn); };
+    })
+    .catch(function(err) {
+        if (spinner) spinner.classList.add('d-none');
+        var statoEl = document.getElementById('brt_stato_' + hash);
+        if (statoEl) statoEl.innerHTML = '<span class="badge bg-danger">Errore</span>';
+        btn.disabled = false;
+    });
+}
+
+var brtDDTList = [
+    @foreach($spedizioniBRT as $numDDT => $ordiniGruppo)
+        { ddt: '{{ $numDDT }}', hash: '{{ md5($numDDT) }}' },
+    @endforeach
+];
+
+function caricaTuttiTrackingBRT() {
+    var btnAll = document.getElementById('btnCaricaTuttiBRT');
+    var spinnerAll = document.getElementById('spinnerTuttiBRT');
+    var labelProgress = document.getElementById('brtProgressLabel');
+    btnAll.disabled = true;
+    spinnerAll.classList.remove('d-none');
+
+    var i = 0;
+    var total = brtDDTList.length;
+
+    function next() {
+        if (i >= total) {
+            spinnerAll.classList.add('d-none');
+            btnAll.disabled = false;
+            btnAll.textContent = 'Completato';
+            labelProgress.textContent = total + '/' + total;
+            return;
+        }
+        var item = brtDDTList[i];
+        labelProgress.textContent = (i + 1) + '/' + total + '...';
+        var rowBtn = document.querySelector('#brt_row_' + item.hash + ' button');
+        caricaTrackingBRTSequential(item.ddt, item.hash, function() {
+            i++;
+            setTimeout(next, 300);
+        });
+    }
+    next();
+}
+
+function caricaTrackingBRTSequential(numeroDDT, hash, callback) {
+    fetch('{{ route("spedizione.trackingByDDT") }}', {
+        method: 'POST', headers: getHdrs(),
+        body: JSON.stringify({ numero_ddt: numeroDDT })
+    })
+    .then(parseResponse)
+    .then(function(data) {
+        var statoEl = document.getElementById('brt_stato_' + hash);
+        var dataEl = document.getElementById('brt_data_' + hash);
+        var destEl = document.getElementById('brt_dest_' + hash);
+        var colliEl = document.getElementById('brt_colli_' + hash);
+        var rowBtn = document.querySelector('#brt_row_' + hash + ' button');
+
+        if (data.error) {
+            statoEl.innerHTML = '<span class="badge bg-warning text-dark">Non registrata</span>';
+            if (rowBtn) { rowBtn.classList.replace('btn-outline-danger', 'btn-outline-secondary'); rowBtn.innerHTML = 'N/D'; }
+            callback();
+            return;
+        }
+
+        if (!data.bolla || !data.bolla.spedizione_id) {
+            statoEl.innerHTML = '<span class="badge bg-info">In elaborazione</span>';
+            if (rowBtn) { rowBtn.innerHTML = 'Dettagli'; rowBtn.disabled = false; rowBtn.onclick = function() { apriTrackingDDT(numeroDDT, rowBtn); }; }
+            callback();
+            return;
+        }
+
+        var bolla = data.bolla;
+        var stato = data.stato || 'SCONOSCIUTO';
+        var badgeClass = 'bg-secondary';
+        if (stato.indexOf('CONSEGNATA') >= 0) badgeClass = 'bg-success';
+        else if (stato.indexOf('IN TRANSITO') >= 0 || stato.indexOf('PARTITA') >= 0) badgeClass = 'bg-primary';
+        else if (stato.indexOf('CONSEGNA') >= 0) badgeClass = 'bg-warning text-dark';
+        else if (stato.indexOf('RITIRATA') >= 0) badgeClass = 'bg-info';
+
+        statoEl.innerHTML = '<span class="badge ' + badgeClass + '">' + stato + '</span>';
+        dataEl.textContent = bolla.data_consegna ? (bolla.data_consegna + ' ' + (bolla.ora_consegna || '')) : '-';
+        destEl.textContent = [bolla.destinatario_ragione_sociale, bolla.destinatario_localita].filter(Boolean).join(' - ') || '-';
+        colliEl.textContent = bolla.colli || '-';
+
+        if (rowBtn) { rowBtn.innerHTML = 'Dettagli'; rowBtn.disabled = false; rowBtn.onclick = function() { apriTrackingDDT(numeroDDT, rowBtn); }; }
+        callback();
+    })
+    .catch(function(err) {
+        var statoEl = document.getElementById('brt_stato_' + hash);
+        if (statoEl) statoEl.innerHTML = '<span class="badge bg-danger">Errore</span>';
+        callback();
     });
 }
 
