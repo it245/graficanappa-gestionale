@@ -487,8 +487,8 @@ class OndaSyncService
             'BROSSFRESATA/A5EST' => 'monofase',
             'PIEGA6ANTESINGOLO' => 'monofase',
             // max 2 fasi
-            'STAMPAINDIGO' => 'max 2 fasi',
-            'STAMPAINDIGOBN' => 'max 2 fasi',
+            'STAMPAINDIGO' => 'monofase',
+            'STAMPAINDIGOBN' => 'monofase',
             'STAMPAXL106' => 'max 2 fasi',
             'STAMPAXL106.1' => 'max 2 fasi',
             'STAMPAXL106.2' => 'max 2 fasi',
@@ -497,7 +497,7 @@ class OndaSyncService
             'STAMPAXL106.5' => 'max 2 fasi',
             'STAMPAXL106.6' => 'max 2 fasi',
             'STAMPAXL106.7' => 'max 2 fasi',
-            'STAMPAINDIGOBIANCO' => 'max 2 fasi',
+            'STAMPAINDIGOBIANCO' => 'monofase',
 
             // Nuove fasi EXT e altre → monofase
             'est STAMPACALDOJOH' => 'monofase',

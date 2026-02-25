@@ -52,10 +52,17 @@ class FierySyncService
         $this->terminaFasiPrecedenti($operatore, $ordineIds);
 
         // Trova fasi digitali per TUTTI gli ordini della commessa corrente
+        // Deduplica per nome fase: una sola per commessa (es. STAMPAINDIGO è monofase)
         $fasiDigitali = collect();
+        $fasiGiaViste = [];
         foreach ($ordini as $ordine) {
             $fasi = $this->troveFasiDigitali($ordine);
-            $fasiDigitali = $fasiDigitali->merge($fasi);
+            foreach ($fasi as $fase) {
+                if (!isset($fasiGiaViste[$fase->fase])) {
+                    $fasiDigitali->push($fase);
+                    $fasiGiaViste[$fase->fase] = true;
+                }
+            }
         }
         if ($fasiDigitali->isEmpty()) return null;
 
