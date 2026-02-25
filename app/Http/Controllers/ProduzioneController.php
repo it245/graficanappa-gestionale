@@ -115,9 +115,8 @@ class ProduzioneController extends Controller
     $fase->timeout = null;
 
     // Rientro da esterno con lavorazioni aggiuntive
-    if ($request->filled('note_rientro')) {
-        $noteRientro = '[RIENTRO] ' . $request->note_rientro;
-        $fase->note = $fase->note ? $fase->note . ' | ' . $noteRientro : $noteRientro;
+    if ($request->boolean('rientro')) {
+        $fase->note = ($fase->note ?? '') . ', rientro in attesa di lavorazioni';
     }
 
     $fase->save();

@@ -162,28 +162,12 @@
                     </button>
                 </div>
 
-                <!-- Step 2: Dati -->
-                <div id="stepDatiQta" style="display:none;">
-                    <input type="hidden" id="terminaEsternoQtaFase">
-                    <input type="hidden" id="terminaEsternoQtaProdotta">
-                    <input type="hidden" id="terminaEsternoScarti" value="0">
-
-                    <!-- Campo note rientro (solo per rientro) -->
-                    <div id="noteRientroWrap" style="display:none;">
-                        <div class="alert alert-warning mb-3">
-                            <strong>Rientro con lavorazioni aggiuntive</strong>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Descrivi lavorazioni necessarie</label>
-                            <textarea id="terminaEsternoNoteRientro" class="form-control" rows="3" placeholder="Es. Richiede plastificazione, rifilatura non conforme..."></textarea>
-                        </div>
-                    </div>
-                </div>
+                <input type="hidden" id="terminaEsternoQtaFase">
+                <input type="hidden" id="terminaEsternoQtaProdotta">
+                <input type="hidden" id="terminaEsternoScarti" value="0">
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
-                <button type="button" class="btn btn-outline-secondary" id="btnIndietroTermina" style="display:none;" onclick="tornaStepTipo()">Indietro</button>
-                <button type="button" class="btn btn-danger fw-bold" id="btnConfermaTermina" style="display:none;" onclick="confermaTerminaEsterno()">Conferma e Termina</button>
             </div>
         </div>
     </div>
@@ -322,10 +306,8 @@ function esternoPausa(faseId, btn) {
 }
 
 let tipoRientroSelezionato = 'terminata';
-let terminaBtnRef = null;
 
 function esternoTermina(faseId, btn) {
-    terminaBtnRef = btn;
     var qtaFase = btn.getAttribute('data-qta-fase') || 0;
     var fogliBuoni = parseInt(btn.getAttribute('data-fogli-buoni') || 0) || 0;
     var fogliScarto = parseInt(btn.getAttribute('data-fogli-scarto') || 0) || 0;
@@ -339,11 +321,7 @@ function esternoTermina(faseId, btn) {
     document.getElementById('terminaEsternoScarti').value = fogliScarto > 0 ? fogliScarto : 0;
     document.getElementById('terminaEsternoNoteRientro').value = '';
 
-    // Reset al step 1
     document.getElementById('stepTipoRientro').style.display = '';
-    document.getElementById('stepDatiQta').style.display = 'none';
-    document.getElementById('btnConfermaTermina').style.display = 'none';
-    document.getElementById('btnIndietroTermina').style.display = 'none';
     tipoRientroSelezionato = 'terminata';
 
     new bootstrap.Modal(document.getElementById('modalTerminaEsterno')).show();
@@ -351,52 +329,11 @@ function esternoTermina(faseId, btn) {
 
 function setTipoRientro(tipo) {
     tipoRientroSelezionato = tipo;
-    document.getElementById('stepTipoRientro').style.display = 'none';
-    document.getElementById('stepDatiQta').style.display = '';
-    document.getElementById('btnConfermaTermina').style.display = '';
-    document.getElementById('btnIndietroTermina').style.display = '';
-    document.getElementById('noteRientroWrap').style.display = tipo === 'rientro' ? '' : 'none';
-
-    if (tipo === 'rientro') {
-        document.getElementById('btnConfermaTermina').textContent = 'Conferma Rientro';
-        document.getElementById('btnConfermaTermina').className = 'btn btn-warning fw-bold';
-    } else {
-        document.getElementById('btnConfermaTermina').textContent = 'Conferma e Termina';
-        document.getElementById('btnConfermaTermina').className = 'btn btn-danger fw-bold';
-    }
-}
-
-function tornaStepTipo() {
-    document.getElementById('stepTipoRientro').style.display = '';
-    document.getElementById('stepDatiQta').style.display = 'none';
-    document.getElementById('btnConfermaTermina').style.display = 'none';
-    document.getElementById('btnIndietroTermina').style.display = 'none';
-}
-
-function confermaTerminaEsterno() {
-    var faseId = document.getElementById('terminaEsternoFaseId').value;
-    var qtaProdotta = document.getElementById('terminaEsternoQtaProdotta').value;
-    var scarti = document.getElementById('terminaEsternoScarti').value;
-
-    if (qtaProdotta === '' || parseInt(qtaProdotta) < 0) {
-        alert('Inserire la quantita prodotta (>= 0)');
-        return;
-    }
-
-    var noteRientro = '';
-    if (tipoRientroSelezionato === 'rientro') {
-        noteRientro = document.getElementById('terminaEsternoNoteRientro').value.trim();
-        if (!noteRientro) {
-            alert('Descrivi le lavorazioni aggiuntive necessarie');
-            return;
-        }
-    }
-
-    var btn = document.getElementById('btnConfermaTermina');
-    btn.disabled = true;
-    btn.textContent = 'Invio...';
-
     bootstrap.Modal.getInstance(document.getElementById('modalTerminaEsterno')).hide();
+
+    var faseId = document.getElementById('terminaEsternoFaseId').value;
+    var qtaProdotta = document.getElementById('terminaEsternoQtaProdotta').value || 0;
+    var scarti = document.getElementById('terminaEsternoScarti').value || 0;
 
     var body = {
         fase_id: faseId,
@@ -404,8 +341,8 @@ function confermaTerminaEsterno() {
         scarti: parseInt(scarti) || 0
     };
 
-    if (tipoRientroSelezionato === 'rientro') {
-        body.note_rientro = noteRientro;
+    if (tipo === 'rientro') {
+        body.rientro = true;
     }
 
     fetch('{{ route("produzione.termina") }}', {
@@ -415,9 +352,9 @@ function confermaTerminaEsterno() {
     .then(parseResponse)
     .then(data => {
         if (data.success) { window.location.reload(); }
-        else { alert('Errore: ' + (data.messaggio || data.message || 'operazione fallita')); btn.disabled = false; }
+        else { alert('Errore: ' + (data.messaggio || data.message || 'operazione fallita')); }
     })
-    .catch(err => { if (err !== 'session_expired') { console.error('Errore:', err); alert('Errore: ' + err); } btn.disabled = false; });
+    .catch(err => { if (err !== 'session_expired') { console.error('Errore:', err); alert('Errore: ' + err); } });
 }
 
 function esternoRiprendi(faseId, btn) {
