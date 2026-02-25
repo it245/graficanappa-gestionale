@@ -173,6 +173,39 @@
     </div>
 </div>
 
+<!-- Modal Pausa -->
+<div class="modal fade" id="modalPausaEsterno" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title">Pausa Fase Esterna</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="pausaEsternoFaseId">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Motivo della pausa</label>
+                    <select id="pausaMotivoSelect" class="form-select" onchange="toggleAltroPausa()">
+                        <option value="">-- Seleziona --</option>
+                        <option>Attesa materiale</option>
+                        <option>Problema macchina</option>
+                        <option>Pranzo</option>
+                        <option value="__altro__">Altro...</option>
+                    </select>
+                </div>
+                <div class="mb-3" id="pausaAltroWrap" style="display:none;">
+                    <label class="form-label fw-bold">Specifica motivo</label>
+                    <input type="text" id="pausaAltroInput" class="form-control" placeholder="Scrivi il motivo...">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                <button type="button" class="btn btn-warning fw-bold" onclick="confermaPausa()">Conferma Pausa</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Modal selezione terzista -->
 <div class="modal fade" id="modalTerzista" tabindex="-1">
     <div class="modal-dialog">
@@ -255,8 +288,6 @@ function aggiornaNota(faseId, valore) {
     .catch(err => { if (err !== 'session_expired') console.error('Errore:', err); });
 }
 
-const motiviPausaEsterno = ["Attesa materiale", "Problema macchina", "Pranzo", "Altro"];
-
 function esternoAvvia(faseId, btn) {
     document.getElementById('terzistaFaseId').value = faseId;
     document.getElementById('terzistaSelect').value = '';
@@ -289,10 +320,24 @@ function confermaTerzista() {
 }
 
 function esternoPausa(faseId, btn) {
-    let scelta = prompt("Seleziona motivo pausa:\n1) Attesa materiale\n2) Problema macchina\n3) Pranzo\n4) Altro");
-    if (!scelta || !["1","2","3","4"].includes(scelta)) return;
-    let motivo = motiviPausaEsterno[parseInt(scelta) - 1];
-    btn.disabled = true;
+    document.getElementById('pausaEsternoFaseId').value = faseId;
+    document.getElementById('pausaMotivoSelect').value = '';
+    document.getElementById('pausaAltroInput').value = '';
+    document.getElementById('pausaAltroWrap').style.display = 'none';
+    new bootstrap.Modal(document.getElementById('modalPausaEsterno')).show();
+}
+
+function toggleAltroPausa() {
+    document.getElementById('pausaAltroWrap').style.display =
+        document.getElementById('pausaMotivoSelect').value === '__altro__' ? '' : 'none';
+}
+
+function confermaPausa() {
+    var sel = document.getElementById('pausaMotivoSelect').value;
+    var motivo = sel === '__altro__' ? (document.getElementById('pausaAltroInput').value.trim() || 'Altro') : sel;
+    if (!motivo) { alert('Seleziona un motivo'); return; }
+    var faseId = document.getElementById('pausaEsternoFaseId').value;
+    bootstrap.Modal.getInstance(document.getElementById('modalPausaEsterno')).hide();
     fetch('{{ route("produzione.pausa") }}', {
         method: 'POST', headers: getHdrs(),
         body: JSON.stringify({ fase_id: faseId, motivo: motivo })
@@ -300,9 +345,9 @@ function esternoPausa(faseId, btn) {
     .then(parseResponse)
     .then(data => {
         if (data.success) { window.location.reload(); }
-        else { alert('Errore: ' + (data.messaggio || data.message || 'operazione fallita')); btn.disabled = false; }
+        else { alert('Errore: ' + (data.messaggio || data.message || 'operazione fallita')); }
     })
-    .catch(err => { if (err !== 'session_expired') { console.error('Errore:', err); alert('Errore: ' + err); } btn.disabled = false; });
+    .catch(err => { if (err !== 'session_expired') { console.error('Errore:', err); alert('Errore: ' + err); } });
 }
 
 let tipoRientroSelezionato = 'terminata';
