@@ -365,11 +365,13 @@
 </div>
 
 <script>
-const hdrs = {
-    'X-CSRF-TOKEN': csrfToken(),
-    'Content-Type': 'application/json',
-    'Accept': 'application/json'
-};
+function getHdrs() {
+    return {
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    };
+}
 
 function parseResponse(res) {
     if (!res.ok && res.status === 401) {
@@ -389,7 +391,7 @@ function inviaAutomatico(faseId, btn) {
     btn.textContent = 'Consegna...';
 
     fetch('{{ route("spedizione.invio") }}', {
-        method: 'POST', headers: hdrs,
+        method: 'POST', headers: getHdrs(),
         body: JSON.stringify({ fase_id: faseId })
     })
     .then(parseResponse)
@@ -402,7 +404,7 @@ function inviaAutomatico(faseId, btn) {
 
 function aggiornaNota(faseId, valore) {
     fetch('{{ route("produzione.aggiornaCampo") }}', {
-        method: 'POST', headers: hdrs,
+        method: 'POST', headers: getHdrs(),
         body: JSON.stringify({ fase_id: faseId, campo: 'note', valore: valore })
     })
     .then(parseResponse)
@@ -416,7 +418,7 @@ function forzaConsegna(faseId, btn) {
     btn.textContent = 'Consegna...';
 
     fetch('{{ route("spedizione.invio") }}', {
-        method: 'POST', headers: hdrs,
+        method: 'POST', headers: getHdrs(),
         body: JSON.stringify({ fase_id: faseId, forza: true })
     })
     .then(parseResponse)

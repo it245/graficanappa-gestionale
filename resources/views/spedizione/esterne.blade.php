@@ -220,11 +220,13 @@
 </div>
 
 <script>
-const hdrs = {
-    'X-CSRF-TOKEN': csrfToken(),
-    'Content-Type': 'application/json',
-    'Accept': 'application/json'
-};
+function getHdrs() {
+    return {
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    };
+}
 
 function parseResponse(res) {
     if (!res.ok && res.status === 401) {
@@ -241,7 +243,7 @@ function parseResponse(res) {
 
 function aggiornaNota(faseId, valore) {
     fetch('{{ route("produzione.aggiornaCampo") }}', {
-        method: 'POST', headers: hdrs,
+        method: 'POST', headers: getHdrs(),
         body: JSON.stringify({ fase_id: faseId, campo: 'note', valore: valore })
     })
     .then(parseResponse)
@@ -271,7 +273,7 @@ function confermaTerzista() {
     var faseId = document.getElementById('terzistaFaseId').value;
     bootstrap.Modal.getInstance(document.getElementById('modalTerzista')).hide();
     fetch('{{ route("produzione.avvia") }}', {
-        method: 'POST', headers: hdrs,
+        method: 'POST', headers: getHdrs(),
         body: JSON.stringify({ fase_id: faseId, terzista: terzista })
     })
     .then(parseResponse)
@@ -288,7 +290,7 @@ function esternoPausa(faseId, btn) {
     let motivo = motiviPausaEsterno[parseInt(scelta) - 1];
     btn.disabled = true;
     fetch('{{ route("produzione.pausa") }}', {
-        method: 'POST', headers: hdrs,
+        method: 'POST', headers: getHdrs(),
         body: JSON.stringify({ fase_id: faseId, motivo: motivo })
     })
     .then(parseResponse)
@@ -331,7 +333,7 @@ function confermaTerminaEsterno() {
     bootstrap.Modal.getInstance(document.getElementById('modalTerminaEsterno')).hide();
 
     fetch('{{ route("produzione.termina") }}', {
-        method: 'POST', headers: hdrs,
+        method: 'POST', headers: getHdrs(),
         body: JSON.stringify({ fase_id: faseId, qta_prodotta: parseInt(qtaProdotta), scarti: parseInt(scarti) || 0 })
     })
     .then(parseResponse)
@@ -345,7 +347,7 @@ function confermaTerminaEsterno() {
 function esternoRiprendi(faseId, btn) {
     btn.disabled = true;
     fetch('{{ route("produzione.riprendi") }}', {
-        method: 'POST', headers: hdrs,
+        method: 'POST', headers: getHdrs(),
         body: JSON.stringify({ fase_id: faseId })
     })
     .then(parseResponse)
