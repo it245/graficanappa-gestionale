@@ -182,9 +182,60 @@
     }
     .segnacollo-row input { flex: 1; }
 
+    /* Hamburger */
+    .hamburger-btn {
+        background: none; border: none; cursor: pointer; padding: 4px;
+        display: flex; flex-direction: column; gap: 5px; transition: transform 0.15s ease;
+    }
+    .hamburger-btn:hover { transform: scale(1.1); }
+    .hamburger-btn span {
+        display: block; width: 28px; height: 3px; background: #333; border-radius: 2px;
+    }
+    /* Sidebar */
+    .sidebar-overlay {
+        display: none; position: fixed; top:0; left:0; right:0; bottom:0;
+        background: rgba(0,0,0,0.4); z-index: 9998;
+    }
+    .sidebar-overlay.open { display: block; }
+    .sidebar-menu {
+        position: fixed; top:0; left:-300px; width: 280px; height: 100%;
+        background: #fff; z-index: 9999; box-shadow: 2px 0 12px rgba(0,0,0,0.2);
+        transition: left 0.25s ease; overflow-y: auto; padding-top: 15px;
+    }
+    .sidebar-menu.open { left: 0; }
+    .sidebar-menu .sidebar-header {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 10px 18px 15px; border-bottom: 1px solid #dee2e6; margin-bottom: 5px;
+    }
+    .sidebar-menu .sidebar-header h5 { margin: 0; font-size: 16px; font-weight: 700; }
+    .sidebar-close { background: none; border: none; font-size: 22px; cursor: pointer; color: #666; }
+    .sidebar-close:hover { color: #000; }
+    .sidebar-menu .sidebar-item {
+        display: flex; align-items: center; gap: 12px; padding: 12px 18px;
+        text-decoration: none; color: #333; font-size: 14px; font-weight: 500;
+        border-bottom: 1px solid #f0f0f0; cursor: pointer; transition: background 0.15s;
+    }
+    .sidebar-menu .sidebar-item:hover { background: #f5f5f5; color: #000; }
+    .sidebar-menu .sidebar-item .kpi-inline {
+        font-size: 20px; font-weight: 700; min-width: 28px; text-align: center;
+    }
+
 </style>
 
+@php
+    $consegneTotali = $fasiSpediteOggi->where('tipo_consegna', 'totale')->count();
+    $consegneParziali = $fasiSpediteOggi->where('tipo_consegna', 'parziale')->count();
+    $consegneSenzaTipo = $fasiSpediteOggi->whereNull('tipo_consegna')->count();
+    $consegneTotali += $consegneSenzaTipo;
+@endphp
+
 <div class="top-bar">
+    <div style="display:flex; align-items:center; gap:12px;">
+        <button class="hamburger-btn" id="hamburgerBtn" title="Menu">
+            <span></span><span></span><span></span>
+        </button>
+        <h2 class="mb-0">Dashboard Spedizione</h2>
+    </div>
     <div class="operatore-info" id="operatoreInfo">
         <img src="{{ asset('images/icons8-utente-uomo-cerchiato-50.png') }}" alt="Operatore">
         <div class="operatore-popup" id="operatorePopup">
@@ -198,76 +249,52 @@
     </div>
 </div>
 
-<h2>Dashboard Spedizione</h2>
+<!-- Sidebar overlay -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-@php
-    $consegneTotali = $fasiSpediteOggi->where('tipo_consegna', 'totale')->count();
-    $consegneParziali = $fasiSpediteOggi->where('tipo_consegna', 'parziale')->count();
-    // Vecchie consegne senza tipo_consegna contale come totali
-    $consegneSenzaTipo = $fasiSpediteOggi->whereNull('tipo_consegna')->count();
-    $consegneTotali += $consegneSenzaTipo;
-@endphp
-
-<!-- KPI -->
-<div class="row mx-2 mb-3">
-    <div class="col-md-2">
-        <div class="kpi-box" style="border-left: 4px solid #28a745;">
-            <h3>{{ $fasiDaSpedire->count() }}</h3>
-            <small>Da consegnare</small>
-        </div>
+<!-- Sidebar menu -->
+<div class="sidebar-menu" id="sidebarMenu">
+    <div class="sidebar-header">
+        <h5>Riepilogo</h5>
+        <button class="sidebar-close" id="sidebarClose">&times;</button>
     </div>
-    <div class="col-md-2">
-        <div class="kpi-box" style="border-left: 4px solid #ffc107;">
-            <h3>{{ $fasiInAttesa->count() }}</h3>
-            <small>In attesa</small>
-        </div>
+    <div class="sidebar-item">
+        <span class="kpi-inline" style="color:#28a745;">{{ $fasiDaSpedire->count() }}</span>
+        <span>Da consegnare</span>
     </div>
-    <div class="col-md-2">
-        <a href="{{ route('spedizione.esterne') }}" style="text-decoration:none; color:inherit;">
-            <div class="kpi-box" style="cursor:pointer; border-left: 4px solid #17a2b8;">
-                <h3>{{ $fasiEsterne->count() }}</h3>
-                <small>Lav. esterne <span style="font-size:11px">(apri)</span></small>
-            </div>
-        </a>
+    <div class="sidebar-item">
+        <span class="kpi-inline" style="color:#ffc107;">{{ $fasiInAttesa->count() }}</span>
+        <span>In attesa</span>
     </div>
-    <div class="col-md-2">
-        <div class="kpi-box" style="cursor:pointer; border-left: 4px solid #0d6efd;" data-bs-toggle="modal" data-bs-target="#modalSpediteOggi">
-            <h3>{{ $fasiSpediteOggi->count() }}</h3>
-            <small>Consegnate oggi</small>
-        </div>
+    <div class="sidebar-item">
+        <span class="kpi-inline" style="color:#6f42c1;">{{ $fasiDDT->count() }}</span>
+        <span>DDT Emesse</span>
     </div>
-    <div class="col-md-2">
-        <div class="kpi-box" style="border-left: 4px solid #6f42c1;">
-            <h3>{{ $fasiDDT->count() }}</h3>
-            <small>DDT Emesse</small>
-        </div>
+    <div class="sidebar-item">
+        <span class="kpi-inline" style="color:#fd7e14;">{{ $fasiParziali->count() }}</span>
+        <span>Parziali in attesa</span>
     </div>
-    <div class="col-md-2">
-        <div class="kpi-box" style="border-left: 4px solid #fd7e14;">
-            <h3>{{ $fasiParziali->count() }}</h3>
-            <small>Parziali in attesa</small>
-        </div>
+    <div class="sidebar-item">
+        <span class="kpi-inline" style="color:#198754;">{{ $consegneTotali }}</span>
+        <span>Consegne totali oggi</span>
     </div>
-</div>
-<div class="row mx-2 mb-3">
-    <div class="col-md-2">
-        <div class="kpi-box" style="border-left: 4px solid #198754;">
-            <h3>{{ $consegneTotali }}</h3>
-            <small>Totali oggi</small>
-        </div>
+    <div class="sidebar-item">
+        <span class="kpi-inline" style="color:#fd7e14;">{{ $consegneParziali }}</span>
+        <span>Consegne parziali oggi</span>
     </div>
-    <div class="col-md-2">
-        <div class="kpi-box" style="border-left: 4px solid #fd7e14;">
-            <h3>{{ $consegneParziali }}</h3>
-            <small>Parziali oggi</small>
-        </div>
-    </div>
-    <div class="col-md-2">
-        <div class="kpi-box" style="cursor:pointer; border-left: 4px solid #d4380d;" data-bs-toggle="modal" data-bs-target="#modalBRT">
-            <h3>{{ $spedizioniBRT->count() }}</h3>
-            <small>Spedizioni BRT</small>
-        </div>
-    </div>
+    <hr style="margin:4px 18px;">
+    <a href="{{ route('spedizione.esterne') }}" class="sidebar-item">
+        <span class="kpi-inline" style="color:#17a2b8;">{{ $fasiEsterne->count() }}</span>
+        <span>Lav. esterne</span>
+    </a>
+    <a href="#" class="sidebar-item" data-bs-toggle="modal" data-bs-target="#modalSpediteOggi" onclick="closeSidebar()">
+        <span class="kpi-inline" style="color:#0d6efd;">{{ $fasiSpediteOggi->count() }}</span>
+        <span>Consegnate oggi</span>
+    </a>
+    <a href="#" class="sidebar-item" data-bs-toggle="modal" data-bs-target="#modalBRT" onclick="closeSidebar()">
+        <span class="kpi-inline" style="color:#d4380d;">{{ $spedizioniBRT->count() }}</span>
+        <span>Spedizioni BRT</span>
+    </a>
 </div>
 
 <!-- Ricerca -->
@@ -668,9 +695,8 @@
                             <td id="brt_dest_{{ md5($numDDT) }}">-</td>
                             <td id="brt_colli_{{ md5($numDDT) }}">-</td>
                             <td>
-                                <button class="btn btn-sm btn-outline-danger" onclick="caricaTrackingBRT('{{ $numDDT }}', '{{ md5($numDDT) }}', this)">
-                                    <span class="spinner-border spinner-border-sm d-none" role="status"></span>
-                                    Tracking
+                                <button class="btn btn-sm btn-outline-danger" onclick="apriTrackingDDT('{{ $numDDT }}', this)">
+                                    Dettagli
                                 </button>
                             </td>
                         </tr>
@@ -1044,64 +1070,6 @@ function apriTrackingDDT(numeroDDT, btn) {
 }
 
 // === Tracking BRT KPI ===
-function caricaTrackingBRT(numeroDDT, hash, btn) {
-    var spinner = btn.querySelector('.spinner-border');
-    if (spinner) spinner.classList.remove('d-none');
-    btn.disabled = true;
-
-    fetch('{{ route("spedizione.trackingByDDT") }}', {
-        method: 'POST', headers: getHdrs(),
-        body: JSON.stringify({ numero_ddt: numeroDDT })
-    })
-    .then(parseResponse)
-    .then(function(data) {
-        if (spinner) spinner.classList.add('d-none');
-
-        var statoEl = document.getElementById('brt_stato_' + hash);
-        var dataEl = document.getElementById('brt_data_' + hash);
-        var destEl = document.getElementById('brt_dest_' + hash);
-        var colliEl = document.getElementById('brt_colli_' + hash);
-
-        if (data.error) {
-            statoEl.innerHTML = '<span class="badge bg-warning text-dark">Non registrata</span>';
-            btn.classList.replace('btn-outline-danger', 'btn-outline-secondary');
-            btn.innerHTML = 'N/D';
-            return;
-        }
-
-        if (!data.bolla || !data.bolla.spedizione_id) {
-            statoEl.innerHTML = '<span class="badge bg-info">In elaborazione</span>';
-            btn.innerHTML = 'Dettagli';
-            btn.disabled = false;
-            btn.onclick = function() { apriTrackingDDT(numeroDDT, btn); };
-            return;
-        }
-
-        var bolla = data.bolla;
-        var stato = data.stato || 'SCONOSCIUTO';
-        var badgeClass = 'bg-secondary';
-        if (stato.indexOf('CONSEGNATA') >= 0) badgeClass = 'bg-success';
-        else if (stato.indexOf('IN TRANSITO') >= 0 || stato.indexOf('PARTITA') >= 0) badgeClass = 'bg-primary';
-        else if (stato.indexOf('CONSEGNA') >= 0) badgeClass = 'bg-warning text-dark';
-        else if (stato.indexOf('RITIRATA') >= 0) badgeClass = 'bg-info';
-
-        statoEl.innerHTML = '<span class="badge ' + badgeClass + '">' + stato + '</span>';
-        dataEl.textContent = bolla.data_consegna ? (bolla.data_consegna + ' ' + (bolla.ora_consegna || '')) : '-';
-        destEl.textContent = [bolla.destinatario_ragione_sociale, bolla.destinatario_localita].filter(Boolean).join(' - ') || '-';
-        colliEl.textContent = bolla.colli || '-';
-
-        btn.innerHTML = 'Dettagli';
-        btn.disabled = false;
-        btn.onclick = function() { apriTrackingDDT(numeroDDT, btn); };
-    })
-    .catch(function(err) {
-        if (spinner) spinner.classList.add('d-none');
-        var statoEl = document.getElementById('brt_stato_' + hash);
-        if (statoEl) statoEl.innerHTML = '<span class="badge bg-danger">Errore</span>';
-        btn.disabled = false;
-    });
-}
-
 var brtDDTList = [
     @foreach($spedizioniBRT as $numDDT => $ordiniGruppo)
         { ddt: '{{ $numDDT }}', hash: '{{ md5($numDDT) }}' },
@@ -1128,8 +1096,7 @@ function caricaTuttiTrackingBRT() {
         }
         var item = brtDDTList[i];
         labelProgress.textContent = (i + 1) + '/' + total + '...';
-        var rowBtn = document.querySelector('#brt_row_' + item.hash + ' button');
-        caricaTrackingBRTSequential(item.ddt, item.hash, function() {
+        caricaStatoBRT(item.ddt, item.hash, function() {
             i++;
             setTimeout(next, 300);
         });
@@ -1137,7 +1104,7 @@ function caricaTuttiTrackingBRT() {
     next();
 }
 
-function caricaTrackingBRTSequential(numeroDDT, hash, callback) {
+function caricaStatoBRT(numeroDDT, hash, callback) {
     fetch('{{ route("spedizione.trackingByDDT") }}', {
         method: 'POST', headers: getHdrs(),
         body: JSON.stringify({ numero_ddt: numeroDDT })
@@ -1148,18 +1115,15 @@ function caricaTrackingBRTSequential(numeroDDT, hash, callback) {
         var dataEl = document.getElementById('brt_data_' + hash);
         var destEl = document.getElementById('brt_dest_' + hash);
         var colliEl = document.getElementById('brt_colli_' + hash);
-        var rowBtn = document.querySelector('#brt_row_' + hash + ' button');
 
         if (data.error) {
             statoEl.innerHTML = '<span class="badge bg-warning text-dark">Non registrata</span>';
-            if (rowBtn) { rowBtn.classList.replace('btn-outline-danger', 'btn-outline-secondary'); rowBtn.innerHTML = 'N/D'; }
             callback();
             return;
         }
 
         if (!data.bolla || !data.bolla.spedizione_id) {
             statoEl.innerHTML = '<span class="badge bg-info">In elaborazione</span>';
-            if (rowBtn) { rowBtn.innerHTML = 'Dettagli'; rowBtn.disabled = false; rowBtn.onclick = function() { apriTrackingDDT(numeroDDT, rowBtn); }; }
             callback();
             return;
         }
@@ -1176,8 +1140,6 @@ function caricaTrackingBRTSequential(numeroDDT, hash, callback) {
         dataEl.textContent = bolla.data_consegna ? (bolla.data_consegna + ' ' + (bolla.ora_consegna || '')) : '-';
         destEl.textContent = [bolla.destinatario_ragione_sociale, bolla.destinatario_localita].filter(Boolean).join(' - ') || '-';
         colliEl.textContent = bolla.colli || '-';
-
-        if (rowBtn) { rowBtn.innerHTML = 'Dettagli'; rowBtn.disabled = false; rowBtn.onclick = function() { apriTrackingDDT(numeroDDT, rowBtn); }; }
         callback();
     })
     .catch(function(err) {
@@ -1194,6 +1156,22 @@ document.getElementById('searchBox').addEventListener('input', function() {
         const text = row.innerText.toLowerCase();
         row.style.display = (!query || text.includes(query)) ? '' : 'none';
     });
+});
+
+// Sidebar
+function openSidebar() {
+    document.getElementById('sidebarMenu').classList.add('open');
+    document.getElementById('sidebarOverlay').classList.add('open');
+}
+function closeSidebar() {
+    document.getElementById('sidebarMenu').classList.remove('open');
+    document.getElementById('sidebarOverlay').classList.remove('open');
+}
+document.getElementById('hamburgerBtn').addEventListener('click', openSidebar);
+document.getElementById('sidebarOverlay').addEventListener('click', closeSidebar);
+document.getElementById('sidebarClose').addEventListener('click', closeSidebar);
+document.querySelectorAll('.sidebar-menu a.sidebar-item').forEach(function(el) {
+    el.addEventListener('click', function() { setTimeout(closeSidebar, 100); });
 });
 
 // Popup operatore

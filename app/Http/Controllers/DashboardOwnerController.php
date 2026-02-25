@@ -295,6 +295,14 @@ public function calcolaOreEPriorita($fase)
 
         $fasiAttive = OrdineFase::where('stato', 2)->count();
 
+        // Spedizioni BRT: DDT unici con vettore BRT
+        $spedizioniBRT = Ordine::where('vettore_ddt', 'LIKE', '%BRT%')
+            ->whereNotNull('numero_ddt_vendita')
+            ->where('numero_ddt_vendita', '!=', '')
+            ->orderByDesc('ddt_vendita_id')
+            ->get()
+            ->groupBy('numero_ddt_vendita');
+
         // Sync Excel: aggiorna il file con i dati freschi
         ExcelSyncService::exportToExcel();
 
@@ -302,7 +310,7 @@ public function calcolaOreEPriorita($fase)
 
         return view('owner.dashboard', compact(
             'fasi', 'reparti', 'fasiCatalogo', 'spedizioniOggi',
-            'fasiCompletateOggi', 'oreLavorateOggi', 'commesseSpediteOggi', 'fasiAttive', 'operatore'
+            'fasiCompletateOggi', 'oreLavorateOggi', 'commesseSpediteOggi', 'fasiAttive', 'spedizioniBRT', 'operatore'
         ));
     }
 

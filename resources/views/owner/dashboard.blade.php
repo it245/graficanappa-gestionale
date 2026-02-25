@@ -531,6 +531,18 @@ tr:hover td {
             </span>
         </a>
 
+        {{-- Spedizioni BRT --}}
+        <a href="#" class="sidebar-item" data-bs-toggle="modal" data-bs-target="#modalBRT" onclick="closeSidebar()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#d4380d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+            </svg>
+            <span>Spedizioni BRT
+                @if($spedizioniBRT->count() > 0)
+                    <span class="badge rounded-pill bg-danger" style="font-size:11px; vertical-align:middle;">{{ $spedizioniBRT->count() }}</span>
+                @endif
+            </span>
+        </a>
+
         {{-- Sync Onda --}}
         <form method="POST" action="{{ route('owner.syncOnda') }}" style="margin:0;" onsubmit="this.querySelector('button').disabled=true;">
             @csrf
@@ -774,6 +786,136 @@ tr:hover td {
     </div>
 </div>
 
+<!-- Modal Spedizioni BRT -->
+<div class="modal fade" id="modalBRT" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#d4380d; color:#fff;">
+                <h5 class="modal-title">Spedizioni BRT ({{ $spedizioniBRT->count() }} DDT)</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="overflow-x:auto;">
+                @if($spedizioniBRT->count() > 0)
+                <div class="mb-2">
+                    <button class="btn btn-sm btn-outline-danger fw-bold" id="btnCaricaTuttiBRT" onclick="caricaTuttiTrackingBRT()">
+                        <span class="spinner-border spinner-border-sm d-none" id="spinnerTuttiBRT" role="status"></span>
+                        Carica tutti i tracking
+                    </button>
+                    <span id="brtProgressLabel" class="ms-2 text-muted small"></span>
+                </div>
+                <table class="table table-bordered table-sm" style="white-space:nowrap;">
+                    <thead style="background:#d4380d; color:#fff;">
+                        <tr>
+                            <th>DDT</th>
+                            <th>Commesse</th>
+                            <th>Cliente</th>
+                            <th>Stato BRT</th>
+                            <th>Data Consegna</th>
+                            <th>Destinatario</th>
+                            <th>Colli</th>
+                            <th>Azione</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($spedizioniBRT as $numDDT => $ordiniGruppo)
+                        @php
+                            $primo = $ordiniGruppo->first();
+                            $commesse = $ordiniGruppo->pluck('commessa')->unique()->implode(', ');
+                        @endphp
+                        <tr id="brt_row_{{ md5($numDDT) }}">
+                            <td class="fw-bold">{{ ltrim($numDDT, '0') }}</td>
+                            <td>{{ $commesse }}</td>
+                            <td>{{ $primo->cliente_nome ?? '-' }}</td>
+                            <td id="brt_stato_{{ md5($numDDT) }}">
+                                <span class="badge bg-light text-muted">Da verificare</span>
+                            </td>
+                            <td id="brt_data_{{ md5($numDDT) }}">-</td>
+                            <td id="brt_dest_{{ md5($numDDT) }}">-</td>
+                            <td id="brt_colli_{{ md5($numDDT) }}">-</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-danger" onclick="apriTrackingDDT('{{ $numDDT }}', this)">
+                                    Dettagli
+                                </button>
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+                @else
+                <p class="text-muted text-center py-3">Nessuna spedizione BRT</p>
+                @endif
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Tracking BRT Dettagli -->
+<div class="modal fade" id="modalTracking" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#d4380d; color:#fff;">
+                <h5 class="modal-title">Tracking BRT - <span id="trackingSegnacollo"></span></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="trackingLoading" class="text-center py-4">
+                    <div class="spinner-border text-danger" role="status"></div>
+                    <p class="mt-2">Caricamento tracking...</p>
+                </div>
+                <div id="trackingErrore" class="alert alert-danger d-none"></div>
+                <div id="trackingContenuto" class="d-none">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Stato spedizione:</strong>
+                            <span id="trackingStato" class="badge bg-secondary ms-1"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Data consegna BRT:</strong>
+                            <span id="trackingDataConsegna"></span>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Destinatario:</strong>
+                            <span id="trackingDestinatario"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Filiale:</strong>
+                            <span id="trackingFiliale"></span>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Colli:</strong>
+                            <span id="trackingColli"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Peso (kg):</strong>
+                            <span id="trackingPeso"></span>
+                        </div>
+                    </div>
+                    <hr>
+                    <h6>Eventi</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                            <thead class="table-light">
+                                <tr><th>Data</th><th>Ora</th><th>Descrizione</th><th>Filiale</th></tr>
+                            </thead>
+                            <tbody id="trackingEventi"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 // Sidebar menu
 function openSidebar() {
@@ -787,9 +929,164 @@ function closeSidebar() {
 document.getElementById('hamburgerBtn').addEventListener('click', openSidebar);
 document.getElementById('sidebarOverlay').addEventListener('click', closeSidebar);
 document.getElementById('sidebarClose').addEventListener('click', closeSidebar);
-// Chiudi sidebar quando si clicca un link (non form)
 document.querySelectorAll('.sidebar-menu a.sidebar-item').forEach(function(el) {
     el.addEventListener('click', function() { setTimeout(closeSidebar, 100); });
+});
+
+// === BRT Tracking ===
+function getBrtHdrs() {
+    return {
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    };
+}
+
+var brtDDTList = [
+    @foreach($spedizioniBRT as $numDDT => $ordiniGruppo)
+        { ddt: '{{ $numDDT }}', hash: '{{ md5($numDDT) }}' },
+    @endforeach
+];
+
+function caricaTuttiTrackingBRT() {
+    var btnAll = document.getElementById('btnCaricaTuttiBRT');
+    var spinnerAll = document.getElementById('spinnerTuttiBRT');
+    var labelProgress = document.getElementById('brtProgressLabel');
+    btnAll.disabled = true;
+    spinnerAll.classList.remove('d-none');
+
+    var i = 0;
+    var total = brtDDTList.length;
+
+    function next() {
+        if (i >= total) {
+            spinnerAll.classList.add('d-none');
+            btnAll.disabled = false;
+            btnAll.textContent = 'Completato';
+            labelProgress.textContent = total + '/' + total;
+            return;
+        }
+        labelProgress.textContent = (i + 1) + '/' + total + '...';
+        caricaStatoBRT(brtDDTList[i].ddt, brtDDTList[i].hash, function() {
+            i++;
+            setTimeout(next, 300);
+        });
+    }
+    next();
+}
+
+function caricaStatoBRT(numeroDDT, hash, callback) {
+    fetch('{{ route("owner.trackingByDDT") }}', {
+        method: 'POST', headers: getBrtHdrs(),
+        body: JSON.stringify({ numero_ddt: numeroDDT })
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+        var statoEl = document.getElementById('brt_stato_' + hash);
+        var dataEl = document.getElementById('brt_data_' + hash);
+        var destEl = document.getElementById('brt_dest_' + hash);
+        var colliEl = document.getElementById('brt_colli_' + hash);
+
+        if (data.error) {
+            statoEl.innerHTML = '<span class="badge bg-warning text-dark">Non registrata</span>';
+            callback(); return;
+        }
+        if (!data.bolla || !data.bolla.spedizione_id) {
+            statoEl.innerHTML = '<span class="badge bg-info">In elaborazione</span>';
+            callback(); return;
+        }
+
+        var bolla = data.bolla;
+        var stato = data.stato || 'SCONOSCIUTO';
+        var badgeClass = 'bg-secondary';
+        if (stato.indexOf('CONSEGNATA') >= 0) badgeClass = 'bg-success';
+        else if (stato.indexOf('IN TRANSITO') >= 0 || stato.indexOf('PARTITA') >= 0) badgeClass = 'bg-primary';
+        else if (stato.indexOf('CONSEGNA') >= 0) badgeClass = 'bg-warning text-dark';
+        else if (stato.indexOf('RITIRATA') >= 0) badgeClass = 'bg-info';
+
+        statoEl.innerHTML = '<span class="badge ' + badgeClass + '">' + stato + '</span>';
+        dataEl.textContent = bolla.data_consegna ? (bolla.data_consegna + ' ' + (bolla.ora_consegna || '')) : '-';
+        destEl.textContent = [bolla.destinatario_ragione_sociale, bolla.destinatario_localita].filter(Boolean).join(' - ') || '-';
+        colliEl.textContent = bolla.colli || '-';
+        callback();
+    })
+    .catch(function() {
+        var statoEl = document.getElementById('brt_stato_' + hash);
+        if (statoEl) statoEl.innerHTML = '<span class="badge bg-danger">Errore</span>';
+        callback();
+    });
+}
+
+function apriTrackingDDT(numeroDDT, btn) {
+    var ddtLabel = numeroDDT.replace(/^0+/, '') || numeroDDT;
+    document.getElementById('trackingSegnacollo').textContent = 'DDT ' + ddtLabel;
+    document.getElementById('trackingLoading').classList.remove('d-none');
+    document.getElementById('trackingErrore').classList.add('d-none');
+    document.getElementById('trackingContenuto').classList.add('d-none');
+    new bootstrap.Modal(document.getElementById('modalTracking')).show();
+
+    fetch('{{ route("owner.trackingByDDT") }}', {
+        method: 'POST', headers: getBrtHdrs(),
+        body: JSON.stringify({ numero_ddt: numeroDDT })
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+        document.getElementById('trackingLoading').classList.add('d-none');
+        if (data.error) {
+            document.getElementById('trackingErrore').textContent = data.message || 'Nessuna spedizione trovata';
+            document.getElementById('trackingErrore').classList.remove('d-none');
+            return;
+        }
+        if (!data.bolla || !data.bolla.spedizione_id) {
+            document.getElementById('trackingErrore').innerHTML = '<strong>Spedizione trovata</strong> (ID: ' + (data.spedizione_id || '?') + ')<br>In attesa di elaborazione da BRT.';
+            document.getElementById('trackingErrore').className = 'alert alert-warning';
+            document.getElementById('trackingErrore').classList.remove('d-none');
+            return;
+        }
+        var bolla = data.bolla;
+        document.getElementById('trackingSegnacollo').textContent = 'DDT ' + (bolla.rif_mittente_alfa || ddtLabel) + ' (Sped. ' + bolla.spedizione_id + ')';
+
+        var statoEl = document.getElementById('trackingStato');
+        statoEl.textContent = data.stato || 'IN ELABORAZIONE';
+        if ((data.stato || '').indexOf('CONSEGNATA') >= 0) statoEl.className = 'badge bg-success ms-1';
+        else if ((data.stato || '').indexOf('PARTITA') >= 0) statoEl.className = 'badge bg-warning text-dark ms-1';
+        else statoEl.className = 'badge bg-info ms-1';
+
+        document.getElementById('trackingDataConsegna').textContent = bolla.data_consegna ? (bolla.data_consegna + ' ' + (bolla.ora_consegna || '')) : '-';
+        document.getElementById('trackingDestinatario').textContent = [bolla.destinatario_ragione_sociale, bolla.destinatario_localita, bolla.destinatario_provincia].filter(Boolean).join(' - ') || '-';
+        document.getElementById('trackingFiliale').textContent = bolla.filiale_arrivo || '-';
+        document.getElementById('trackingColli').textContent = bolla.colli || '-';
+        document.getElementById('trackingPeso').textContent = bolla.peso_kg || '-';
+
+        var eventiBody = document.getElementById('trackingEventi');
+        eventiBody.innerHTML = '';
+        var eventi = data.eventi || [];
+        if (eventi.length === 0) {
+            eventiBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Nessun evento</td></tr>';
+        } else {
+            eventi.forEach(function(ev) {
+                var tr = document.createElement('tr');
+                tr.innerHTML = '<td>' + (ev.data || '-') + '</td><td>' + (ev.ora || '-') + '</td><td>' + (ev.descrizione || '-') + '</td><td>' + (ev.filiale || '-') + '</td>';
+                eventiBody.appendChild(tr);
+            });
+        }
+        document.getElementById('trackingContenuto').classList.remove('d-none');
+    })
+    .catch(function(err) {
+        document.getElementById('trackingLoading').classList.add('d-none');
+        document.getElementById('trackingErrore').textContent = 'Errore connessione: ' + err;
+        document.getElementById('trackingErrore').className = 'alert alert-danger';
+        document.getElementById('trackingErrore').classList.remove('d-none');
+    });
+}
+
+// Auto-carica tracking BRT quando il modal viene aperto
+var brtModalCaricato = false;
+document.getElementById('modalBRT').addEventListener('shown.bs.modal', function() {
+    if (!brtModalCaricato && brtDDTList.length > 0) {
+        brtModalCaricato = true;
+        caricaTuttiTrackingBRT();
+    }
 });
 </script>
 

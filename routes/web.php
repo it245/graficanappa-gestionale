@@ -39,7 +39,7 @@ Route::post('/owner/elimina-fase', [DashboardOwnerController::class, 'eliminaFas
 Route::get('/owner/scheduling', [DashboardOwnerController::class, 'scheduling'])->name('owner.scheduling');
 Route::get('/owner/excel-download', [DashboardOwnerController::class, 'downloadExcel'])->name('owner.downloadExcel');
 Route::get('/owner/esterne', [DashboardOwnerController::class, 'esterne'])->name('owner.esterne');
-
+Route::post('/owner/tracking-ddt', [DashboardSpedizioneController::class, 'trackingByDDT'])->name('owner.trackingByDDT');
 
 });
 
