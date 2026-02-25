@@ -702,9 +702,36 @@ function schedulaPerMacchina(data) {
     return Object.values(macchine).sort((a, b) => b.ore_totali - a.ore_totali);
 }
 
+// Cache dello scheduling completo (calcolato su TUTTI i dati, non filtrati)
+let _fullScheduleCache = null;
+function getFullSchedule() {
+    if (!_fullScheduleCache) _fullScheduleCache = schedulaPerMacchina(DATA);
+    return _fullScheduleCache;
+}
+
+// Filtra le macchine schedulate mantenendo i tempi reali di coda
+function filterScheduledMacchine(macchine) {
+    let result = macchine.map(m => ({...m, fasi: [...m.fasi]}));
+    if (filtroReparti.size > 0) {
+        result = result.filter(m => filtroReparti.has(m.nome));
+    }
+    if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        result = result.map(m => ({
+            ...m,
+            fasi: m.fasi.filter(f =>
+                f.commessa.toLowerCase().includes(q) || f.cliente.toLowerCase().includes(q) ||
+                f.descrizione.toLowerCase().includes(q) || f.fase.toLowerCase().includes(q) ||
+                f.reparto.toLowerCase().includes(q)
+            )
+        })).filter(m => m.fasi.length > 0);
+    }
+    return result;
+}
+
 function schedulaPerCommessa(data) {
-    // Usa i tempi calcolati da schedulaPerMacchina per mantenere coerenza
-    const macchine = schedulaPerMacchina(data);
+    // Usa SEMPRE lo scheduling completo per tempi reali di coda
+    const macchine = getFullSchedule();
     const commesse = {};
     macchine.forEach(m => m.fasi.forEach(f => {
         const key = f.commessa;
@@ -714,12 +741,18 @@ function schedulaPerCommessa(data) {
         };
         commesse[key].fasi.push({...f});
     }));
-    Object.values(commesse).forEach(c => {
+
+    // Filtra per reparto e ricerca
+    const filtered = filterData(DATA);
+    const filteredCommesse = new Set(filtered.map(f => f.commessa));
+
+    const result = Object.values(commesse).filter(c => filteredCommesse.has(c.commessa));
+    result.forEach(c => {
         c.fasi.sort((a, b) => a.start_h - b.start_h);
         c.ore_totali = Math.max(...c.fasi.map(f => f.end_h), 0);
         c.priorita_min = Math.min(...c.fasi.map(f => f.priorita));
     });
-    return Object.values(commesse).sort((a, b) => a.priorita_min - b.priorita_min);
+    return result.sort((a, b) => a.priorita_min - b.priorita_min);
 }
 
 // ===================== HELPERS =====================
@@ -870,11 +903,8 @@ function renderDayLines(timeline, maxCalH, repartoNome) {
 // ===================== KPI =====================
 
 function renderKPI() {
-    const filtered = filterData(DATA);
-    const oreTotali = Math.round(filtered.reduce((s, f) => s + f.ore, 0));
-
-    // Usa lo scheduling reale per calcolare margine (come la tabella)
-    const macchine = schedulaPerMacchina(filtered);
+    const macchine = filterScheduledMacchine(getFullSchedule());
+    const oreTotali = Math.round(macchine.reduce((s, m) => s + m.fasi.reduce((s2, f) => s2 + f.ore, 0), 0));
     const commMap = {};
     macchine.forEach(m => m.fasi.forEach(f => {
         if (!commMap[f.commessa]) commMap[f.commessa] = {
@@ -972,8 +1002,7 @@ function hideTooltip() { document.getElementById('tooltip').style.display = 'non
 // ===================== GANTT PER MACCHINA =====================
 
 function renderGanttMacchina() {
-    const filtered = filterData(DATA);
-    const macchine = schedulaPerMacchina(filtered);
+    const macchine = filterScheduledMacchine(getFullSchedule());
     const container = document.getElementById('ganttMacchina');
     container.innerHTML = '';
 
@@ -1142,8 +1171,7 @@ function renderGanttCommessa() {
 let prioFilter = 'all'; // 'all', 'ritardo', 'critico'
 
 function renderTabella() {
-    const filtered = filterData(DATA);
-    const macchine = schedulaPerMacchina(filtered);
+    const macchine = filterScheduledMacchine(getFullSchedule());
 
     // Raggruppa fasi per commessa
     const commMap = {};
@@ -1313,8 +1341,8 @@ document.getElementById('searchGlobal').addEventListener('input', function() {
 // ===================== SIDE PANEL =====================
 
 function openSidePanel(commessaId) {
-    // Raccogli tutte le fasi di questa commessa (con scheduling calcolato)
-    const macchine = schedulaPerMacchina(filterData(DATA));
+    // Raccogli tutte le fasi di questa commessa dallo scheduling completo
+    const macchine = getFullSchedule();
     const allFasi = [];
     macchine.forEach(m => m.fasi.forEach(f => { if (f.commessa === commessaId) allFasi.push(f); }));
 
