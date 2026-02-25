@@ -370,8 +370,9 @@ class OndaSyncService
             }
 
             $ordine->update([
-                'ddt_vendita_id'  => $idDoc,
-                'qta_ddt_vendita' => $qtaDDT,
+                'ddt_vendita_id'      => $idDoc,
+                'numero_ddt_vendita'  => trim($riga->NumeroDocumento ?? ''),
+                'qta_ddt_vendita'     => $qtaDDT,
             ]);
 
             $aggiornati++;

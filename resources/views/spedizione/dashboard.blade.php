@@ -282,6 +282,7 @@
                 <th>Qta Ordine</th>
                 <th>Qta DDT</th>
                 <th>Suggerimento</th>
+                <th>Tracking BRT</th>
             </tr>
         </thead>
         <tbody>
@@ -290,6 +291,7 @@
                     $qtaOrdine = $fase->ordine->qta_richiesta ?? 0;
                     $qtaDDT = $fase->ordine->qta_ddt_vendita ?? 0;
                     $suggerimento = $qtaDDT >= $qtaOrdine ? 'totale' : 'parziale';
+                    $numDDT = $fase->ordine->numero_ddt_vendita ?? '';
                 @endphp
                 <tr class="searchable">
                     <td style="white-space:nowrap;">
@@ -307,6 +309,16 @@
                             <span class="badge bg-success">Totale</span>
                         @else
                             <span class="badge bg-warning text-dark">Parziale</span>
+                        @endif
+                    </td>
+                    <td>
+                        @if($numDDT)
+                            <button class="btn btn-sm btn-outline-danger fw-bold" id="btnTrackDDT_{{ $fase->id }}" onclick="apriTrackingDDT('{{ $numDDT }}', this)">
+                                <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+                                Tracking
+                            </button>
+                        @else
+                            <span class="text-muted">-</span>
                         @endif
                     </td>
                 </tr>
@@ -807,48 +819,55 @@ function apriTracking(segnacollo) {
             return;
         }
 
-        // Parse risposta BRT - struttura tipica con array di spedizioni
-        var spedizione = null;
-        if (data.parcelHistory && data.parcelHistory.length > 0) {
-            spedizione = data.parcelHistory[0];
-        } else if (data.length > 0) {
-            spedizione = data[0];
-        } else {
-            spedizione = data;
+        // Parse risposta BRT reale: ttParcelIdResponse.bolla
+        var resp = data.ttParcelIdResponse;
+        if (!resp || !resp.bolla) {
+            document.getElementById('trackingErrore').textContent = 'Risposta BRT non valida';
+            document.getElementById('trackingErrore').classList.remove('d-none');
+            return;
         }
+        var bolla = resp.bolla;
+        var sped = bolla.dati_spedizione || {};
+        var cons = bolla.dati_consegna || {};
+        var dest = bolla.destinatario || {};
+        var merce = bolla.merce || {};
 
-        // Stato
+        // Stato: ricava dall'ultimo evento con descrizione
         var statoEl = document.getElementById('trackingStato');
-        var statoDesc = spedizione.lastStatus || spedizione.shipmentStatusDescription || spedizione.statusDescription || '-';
+        var listaEventi = resp.lista_eventi || [];
+        var eventiReali = listaEventi.filter(function(e) { return e.evento && e.evento.descrizione; });
+        var statoDesc = eventiReali.length > 0 ? eventiReali[0].evento.descrizione : '-';
         statoEl.textContent = statoDesc;
-        if (statoDesc.toLowerCase().indexOf('consegnat') >= 0 || statoDesc.toLowerCase().indexOf('deliver') >= 0) {
+        if (statoDesc.indexOf('CONSEGNATA') >= 0) {
             statoEl.className = 'badge bg-success ms-1';
-        } else if (statoDesc.toLowerCase().indexOf('transit') >= 0 || statoDesc.toLowerCase().indexOf('viaggio') >= 0) {
+        } else if (statoDesc.indexOf('CONSEGNA') >= 0 || statoDesc.indexOf('PARTITA') >= 0) {
             statoEl.className = 'badge bg-warning text-dark ms-1';
         } else {
             statoEl.className = 'badge bg-info ms-1';
         }
 
         // Dettagli
-        document.getElementById('trackingDataConsegna').textContent = spedizione.deliveryDate || spedizione.lastEventDate || '-';
-        document.getElementById('trackingDestinatario').textContent = spedizione.recipientName || spedizione.consigneeName || '-';
-        document.getElementById('trackingFiliale').textContent = spedizione.deliveryBranchName || spedizione.branchName || '-';
-        document.getElementById('trackingColli').textContent = spedizione.numberOfParcels || spedizione.parcels || '-';
-        document.getElementById('trackingPeso').textContent = spedizione.weightKg || spedizione.weight || '-';
+        var dataConsegna = cons.data_consegna_merce ? (cons.data_consegna_merce + ' ' + (cons.ora_consegna_merce || '')) : '-';
+        document.getElementById('trackingDataConsegna').textContent = dataConsegna;
+        var destLabel = [dest.ragione_sociale, dest.localita, dest.sigla_provincia].filter(Boolean).join(' - ') || '-';
+        document.getElementById('trackingDestinatario').textContent = destLabel;
+        document.getElementById('trackingFiliale').textContent = sped.filiale_arrivo || '-';
+        document.getElementById('trackingColli').textContent = merce.colli || '-';
+        document.getElementById('trackingPeso').textContent = merce.peso_kg || '-';
 
         // Eventi
         var eventiBody = document.getElementById('trackingEventi');
         eventiBody.innerHTML = '';
-        var eventi = spedizione.events || spedizione.history || [];
-        if (eventi.length === 0) {
+        if (eventiReali.length === 0) {
             eventiBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Nessun evento disponibile</td></tr>';
         } else {
-            eventi.forEach(function(ev) {
+            eventiReali.forEach(function(item) {
+                var ev = item.evento;
                 var tr = document.createElement('tr');
-                tr.innerHTML = '<td>' + (ev.date || ev.eventDate || '-') + '</td>' +
-                               '<td>' + (ev.time || ev.eventTime || '-') + '</td>' +
-                               '<td>' + (ev.description || ev.eventDescription || ev.statusDescription || '-') + '</td>' +
-                               '<td>' + (ev.branchName || ev.filiale || '-') + '</td>';
+                tr.innerHTML = '<td>' + (ev.data || '-') + '</td>' +
+                               '<td>' + (ev.ora || '-') + '</td>' +
+                               '<td>' + (ev.descrizione || '-') + '</td>' +
+                               '<td>' + (ev.filiale || '-') + '</td>';
                 eventiBody.appendChild(tr);
             });
         }
@@ -860,6 +879,76 @@ function apriTracking(segnacollo) {
         if (err !== 'session_expired') {
             document.getElementById('trackingErrore').textContent = 'Errore di connessione: ' + err;
             document.getElementById('trackingErrore').classList.remove('d-none');
+        }
+    });
+}
+
+// Tracking BRT via numero DDT (SOAP)
+function apriTrackingDDT(numeroDDT, btn) {
+    var spinner = btn.querySelector('.spinner-border');
+    spinner.classList.remove('d-none');
+    btn.disabled = true;
+
+    fetch('{{ route("spedizione.trackingByDDT") }}', {
+        method: 'POST', headers: getHdrs(),
+        body: JSON.stringify({ numero_ddt: numeroDDT })
+    })
+    .then(parseResponse)
+    .then(function(data) {
+        spinner.classList.add('d-none');
+        btn.disabled = false;
+
+        if (data.error) {
+            alert(data.message || 'Nessun tracking trovato per DDT ' + numeroDDT);
+            return;
+        }
+
+        // Mostra nel modal tracking
+        document.getElementById('trackingSegnacollo').textContent = 'DDT ' + (data.bolla ? data.bolla.rif_mittente_alfa : numeroDDT);
+        document.getElementById('trackingLoading').classList.add('d-none');
+        document.getElementById('trackingErrore').classList.add('d-none');
+
+        // Stato
+        var statoEl = document.getElementById('trackingStato');
+        statoEl.textContent = data.stato || '-';
+        if ((data.stato || '').indexOf('CONSEGNATA') >= 0) {
+            statoEl.className = 'badge bg-success ms-1';
+        } else if ((data.stato || '').indexOf('CONSEGNA') >= 0 || (data.stato || '').indexOf('PARTITA') >= 0) {
+            statoEl.className = 'badge bg-warning text-dark ms-1';
+        } else {
+            statoEl.className = 'badge bg-info ms-1';
+        }
+
+        var bolla = data.bolla || {};
+        document.getElementById('trackingDataConsegna').textContent = bolla.data_consegna ? (bolla.data_consegna + ' ' + (bolla.ora_consegna || '')) : '-';
+        var destLabel = [bolla.destinatario_ragione_sociale, bolla.destinatario_localita, bolla.destinatario_provincia].filter(Boolean).join(' - ') || '-';
+        document.getElementById('trackingDestinatario').textContent = destLabel;
+        document.getElementById('trackingFiliale').textContent = bolla.filiale_arrivo || '-';
+        document.getElementById('trackingColli').textContent = bolla.colli || '-';
+        document.getElementById('trackingPeso').textContent = bolla.peso_kg || '-';
+
+        // Eventi
+        var eventiBody = document.getElementById('trackingEventi');
+        eventiBody.innerHTML = '';
+        var eventi = data.eventi || [];
+        if (eventi.length === 0) {
+            eventiBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Nessun evento</td></tr>';
+        } else {
+            eventi.forEach(function(ev) {
+                var tr = document.createElement('tr');
+                tr.innerHTML = '<td>' + (ev.data || '-') + '</td><td>' + (ev.ora || '-') + '</td><td>' + (ev.descrizione || '-') + '</td><td>' + (ev.filiale || '-') + '</td>';
+                eventiBody.appendChild(tr);
+            });
+        }
+
+        document.getElementById('trackingContenuto').classList.remove('d-none');
+        new bootstrap.Modal(document.getElementById('modalTracking')).show();
+    })
+    .catch(function(err) {
+        spinner.classList.add('d-none');
+        btn.disabled = false;
+        if (err !== 'session_expired') {
+            alert('Errore connessione: ' + err);
         }
     });
 }

@@ -17,7 +17,7 @@ class Ordine extends Model
         'ore_lavorate', 'timeout_macchina','cod_carta','carta','qta_carta','UM_carta',
         'valore_ordine', 'costo_materiali',
         'note_prestampa', 'responsabile', 'commento_produzione', 'ordine_cliente',
-        'ddt_vendita_id', 'qta_ddt_vendita',
+        'ddt_vendita_id', 'numero_ddt_vendita', 'qta_ddt_vendita',
     ];
 
     public function articoli()

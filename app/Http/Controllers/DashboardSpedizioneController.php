@@ -274,6 +274,50 @@ class DashboardSpedizioneController extends Controller
         return response()->json($data);
     }
 
+    public function trackingTest(Request $request)
+    {
+        $segnacollo = $request->query('segnacollo');
+        $data = null;
+
+        if ($segnacollo) {
+            $brt = new BrtService();
+            $data = $brt->getTracking(trim($segnacollo));
+        }
+
+        return view('spedizione.tracking-test', compact('segnacollo', 'data'));
+    }
+
+    public function trackingJson(Request $request, $segnacollo)
+    {
+        $brt = new BrtService();
+        $data = $brt->getTracking(trim($segnacollo));
+
+        return response()->json($data, 200, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    }
+
+    /**
+     * Tracking via SOAP: cerca per numero DDT (riferimento mittente alfabetico)
+     */
+    public function trackingByDDT(Request $request)
+    {
+        $numeroDDT = $request->input('numero_ddt');
+        if (!$numeroDDT) {
+            return response()->json(['error' => true, 'message' => 'Numero DDT mancante']);
+        }
+
+        $brt = new BrtService();
+        $data = $brt->getTrackingByDDT($numeroDDT);
+
+        if (!$data) {
+            return response()->json([
+                'error' => true,
+                'message' => 'Nessuna spedizione BRT trovata per DDT ' . ltrim($numeroDDT, '0'),
+            ]);
+        }
+
+        return response()->json($data);
+    }
+
     public function recuperaConsegna(Request $request)
     {
         try {

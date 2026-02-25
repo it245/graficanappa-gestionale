@@ -114,7 +114,12 @@ Route::prefix('spedizione')->middleware(['operatore.auth'])->group(function() {
     Route::post('/invio', [DashboardSpedizioneController::class, 'invioAutomatico'])->name('spedizione.invio');
     Route::post('/recupera', [DashboardSpedizioneController::class, 'recuperaConsegna'])->name('spedizione.recupera');
     Route::post('/tracking', [DashboardSpedizioneController::class, 'tracking'])->name('spedizione.tracking');
+    Route::post('/tracking-ddt', [DashboardSpedizioneController::class, 'trackingByDDT'])->name('spedizione.trackingByDDT');
 });
+
+// Tracking BRT test (accesso diretto)
+Route::get('/spedizione/tracking-test', [DashboardSpedizioneController::class, 'trackingTest'])->name('spedizione.trackingTest');
+Route::get('/spedizione/tracking-json/{segnacollo}', [DashboardSpedizioneController::class, 'trackingJson'])->name('spedizione.trackingJson');
 
 // Health check
 Route::get('/health', fn() => 'MES OK');
