@@ -290,8 +290,8 @@ class OndaSyncService
             $anno = $riga->DataDocumento ? date('y', strtotime($riga->DataDocumento)) : date('y');
             $numCommessa = str_pad($numGrezzo, 7, '0', STR_PAD_LEFT) . '-' . $anno;
 
-            // Cerca la prima fase esterna non ancora avviata per questa commessa
-            $fase = OrdineFase::whereHas('ordine', function ($q) use ($numCommessa) {
+            // Cerca TUTTE le fasi esterne non ancora avviate per questa commessa
+            $fasi = OrdineFase::whereHas('ordine', function ($q) use ($numCommessa) {
                     $q->where('commessa', $numCommessa);
                 })
                 ->whereHas('faseCatalogo', function ($q) use ($repartoEsterno) {
@@ -300,22 +300,24 @@ class OndaSyncService
                 ->whereIn('stato', [0, 1])
                 ->whereNull('ddt_fornitore_id')
                 ->orderBy('id')
-                ->first();
+                ->get();
 
-            if (!$fase) {
+            if ($fasi->isEmpty()) {
                 continue;
             }
 
-            $fase->update([
-                'stato'            => 2,
-                'data_inizio'      => $dataDoc,
-                'note'             => 'Inviato a: ' . $fornitore,
-                'ddt_fornitore_id' => $idDoc,
-            ]);
+            foreach ($fasi as $fase) {
+                $fase->update([
+                    'stato'            => 2,
+                    'data_inizio'      => $dataDoc,
+                    'note'             => 'Inviato a: ' . $fornitore,
+                    'ddt_fornitore_id' => $idDoc,
+                ]);
 
-            $avviate++;
+                $avviate++;
 
-            Log::info("DDT Fornitore: avviata fase esterna #{$fase->id} per commessa {$numCommessa} (DDT {$idDoc}, fornitore: {$fornitore})");
+                Log::info("DDT Fornitore: avviata fase esterna #{$fase->id} per commessa {$numCommessa} (DDT {$idDoc}, fornitore: {$fornitore})");
+            }
         }
 
         return $avviate;

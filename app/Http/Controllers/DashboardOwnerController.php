@@ -752,17 +752,57 @@ public function calcolaOreEPriorita($fase)
     public function esterne()
     {
         $repartoEsterno = Reparto::where('nome', 'esterno')->first();
-        $fasiEsterne = collect();
+        $commesseEsterne = collect();
 
         if ($repartoEsterno) {
             $fasiEsterne = OrdineFase::where('stato', '<', 3)
                 ->whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', $repartoEsterno->id))
                 ->with(['ordine', 'faseCatalogo'])
-                ->get()
-                ->sortBy(fn($f) => $f->ordine->data_prevista_consegna ?? '9999-12-31');
+                ->get();
+
+            // Raggruppa per commessa (ordine_id)
+            $commesseEsterne = $fasiEsterne->groupBy('ordine_id')->map(function ($fasi) {
+                $prima = $fasi->first();
+                $ordine = $prima->ordine;
+
+                // Estrai fornitore dalla nota della prima fase con "Inviato a:"
+                $fornitore = '-';
+                foreach ($fasi as $f) {
+                    if (preg_match('/Inviato a:\s*(.+)/i', $f->note ?? '', $mf)) {
+                        $fornitore = trim($mf[1]);
+                        break;
+                    }
+                }
+
+                // Stato complessivo: il "peggiore" (priorità: pausa > in corso > pronto > da fare)
+                $stati = $fasi->pluck('stato');
+                if ($stati->contains(fn($s) => is_string($s) && !is_numeric($s))) {
+                    $statoPausa = $fasi->first(fn($f) => is_string($f->stato) && !is_numeric($f->stato));
+                    $stato = $statoPausa->stato;
+                } elseif ($stati->contains(2)) {
+                    $stato = 2;
+                } elseif ($stati->contains(1)) {
+                    $stato = 1;
+                } else {
+                    $stato = 0;
+                }
+
+                // Data invio: la prima data_inizio disponibile
+                $dataInvio = $fasi->whereNotNull('data_inizio')->min('data_inizio');
+
+                return (object) [
+                    'ordine'        => $ordine,
+                    'fornitore'     => $fornitore,
+                    'stato'         => $stato,
+                    'fasi'          => $fasi->pluck('faseCatalogo.nome_display', 'id')->filter()->values()->implode(', ') ?: $fasi->pluck('fase')->implode(', '),
+                    'num_fasi'      => $fasi->count(),
+                    'data_invio'    => $dataInvio,
+                    'note'          => $fasi->pluck('note')->filter()->unique()->implode(' | '),
+                ];
+            })->sortBy(fn($c) => $c->ordine->data_prevista_consegna ?? '9999-12-31')->values();
         }
 
-        return view('owner.esterne', compact('fasiEsterne'));
+        return view('owner.esterne', compact('commesseEsterne'));
     }
 
 }

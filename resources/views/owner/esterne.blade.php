@@ -10,6 +10,7 @@
     }
     table th, table td { white-space:nowrap; font-size:13px; }
     td.desc-col { white-space:normal; min-width:280px; max-width:400px; }
+    td.fasi-col { white-space:normal; min-width:180px; max-width:300px; font-size:12px; }
     .search-box {
         max-width:600px; margin:12px 8px; font-size:18px; padding:12px 20px;
         border-radius:10px; border:2px solid #dee2e6; transition:border-color 0.2s;
@@ -24,7 +25,7 @@
 
 <div class="d-flex align-items-center mx-2 mb-2 mt-2">
     <a href="{{ route('owner.dashboard') }}" class="btn btn-outline-secondary btn-sm me-3">&larr; Dashboard</a>
-    <h2 class="mb-0" style="color:#17a2b8;">Lavorazioni Esterne ({{ $fasiEsterne->count() }})</h2>
+    <h2 class="mb-0" style="color:#17a2b8;">Lavorazioni Esterne ({{ $commesseEsterne->count() }})</h2>
 </div>
 
 <input type="text" id="searchBox" class="form-control search-box" placeholder="Cerca commessa, cliente, fornitore, fase...">
@@ -37,34 +38,26 @@
                 <th>Fornitore</th>
                 <th>Commessa</th>
                 <th>Cliente</th>
-                <th>Fase</th>
+                <th>Fasi ({{ $commesseEsterne->sum('num_fasi') }})</th>
                 <th>Cod. Articolo</th>
                 <th>Descrizione</th>
                 <th>Data Consegna</th>
                 <th>Data Invio</th>
-                <th>Note</th>
             </tr>
         </thead>
         <tbody>
-            @forelse($fasiEsterne as $fase)
+            @forelse($commesseEsterne as $riga)
                 @php
                     $rowClass = '';
-                    if ($fase->ordine && $fase->ordine->data_prevista_consegna) {
+                    if ($riga->ordine && $riga->ordine->data_prevista_consegna) {
                         $oggi = \Carbon\Carbon::today();
-                        $dataPrevista = \Carbon\Carbon::parse($fase->ordine->data_prevista_consegna);
+                        $dataPrevista = \Carbon\Carbon::parse($riga->ordine->data_prevista_consegna);
                         $diff = $oggi->diffInDays($dataPrevista, false);
                         if ($diff < -5) $rowClass = 'row-scaduta';
                         elseif ($diff <= 3) $rowClass = 'row-warning';
                     }
-                    $statoFase = $fase->stato;
+                    $statoFase = $riga->stato;
                     $inPausa = is_string($statoFase) && !is_numeric($statoFase);
-
-                    // Estrai fornitore dalla nota "Inviato a: NOME"
-                    $fornitore = '-';
-                    $note = $fase->note ?? '';
-                    if (preg_match('/Inviato a:\s*(.+)/i', $note, $mf)) {
-                        $fornitore = trim($mf[1]);
-                    }
                 @endphp
                 <tr class="{{ $rowClass }} searchable">
                     <td>
@@ -78,19 +71,18 @@
                             <span class="badge bg-warning text-dark badge-stato">Pausa: {{ $statoFase }}</span>
                         @endif
                     </td>
-                    <td><strong>{{ $fornitore }}</strong></td>
-                    <td><a href="{{ route('owner.dettaglioCommessa', $fase->ordine->commessa ?? '-') }}" class="commessa-link">{{ $fase->ordine->commessa ?? '-' }}</a></td>
-                    <td>{{ $fase->ordine->cliente_nome ?? '-' }}</td>
-                    <td>{{ $fase->faseCatalogo->nome_display ?? $fase->fase ?? '-' }}</td>
-                    <td>{{ $fase->ordine->cod_art ?? '-' }}</td>
-                    <td class="desc-col">{{ $fase->ordine->descrizione ?? '-' }}</td>
-                    <td>{{ $fase->ordine->data_prevista_consegna ? \Carbon\Carbon::parse($fase->ordine->data_prevista_consegna)->format('d/m/Y') : '-' }}</td>
-                    <td>{{ $fase->data_inizio ? \Carbon\Carbon::parse($fase->data_inizio)->format('d/m/Y') : '-' }}</td>
-                    <td>{{ $note }}</td>
+                    <td><strong>{{ $riga->fornitore }}</strong></td>
+                    <td><a href="{{ route('owner.dettaglioCommessa', $riga->ordine->commessa ?? '-') }}" class="commessa-link">{{ $riga->ordine->commessa ?? '-' }}</a></td>
+                    <td>{{ $riga->ordine->cliente_nome ?? '-' }}</td>
+                    <td class="fasi-col">{{ $riga->fasi }} @if($riga->num_fasi > 1)<span class="badge bg-secondary">{{ $riga->num_fasi }}</span>@endif</td>
+                    <td>{{ $riga->ordine->cod_art ?? '-' }}</td>
+                    <td class="desc-col">{{ $riga->ordine->descrizione ?? '-' }}</td>
+                    <td>{{ $riga->ordine->data_prevista_consegna ? \Carbon\Carbon::parse($riga->ordine->data_prevista_consegna)->format('d/m/Y') : '-' }}</td>
+                    <td>{{ $riga->data_invio ? \Carbon\Carbon::parse($riga->data_invio)->format('d/m/Y') : '-' }}</td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="10" class="text-center text-muted py-3">Nessuna lavorazione esterna</td>
+                    <td colspan="9" class="text-center text-muted py-3">Nessuna lavorazione esterna</td>
                 </tr>
             @endforelse
         </tbody>
