@@ -330,8 +330,9 @@ class OndaSyncService
     {
         $aggiornati = 0;
 
+        // CodCommessa è nelle RIGHE della DDT, non nella testa
         $righeDDT = DB::connection('onda')->select("
-            SELECT t.IdDoc, t.CodCommessa, t.DataDocumento, t.NumeroDocumento,
+            SELECT t.IdDoc, r.CodCommessa, t.DataDocumento, t.NumeroDocumento,
                    a.RagioneSociale AS Cliente,
                    SUM(r.Qta) AS QtaDDT
             FROM ATTDocTeste t
@@ -339,8 +340,9 @@ class OndaSyncService
             LEFT JOIN STDAnagrafiche a ON t.IdAnagrafica = a.IdAnagrafica
             WHERE t.TipoDocumento = 3
               AND t.DataRegistrazione >= DATEADD(day, -7, GETDATE())
-              AND t.CodCommessa IS NOT NULL AND t.CodCommessa != ''
-            GROUP BY t.IdDoc, t.CodCommessa, t.DataDocumento, t.NumeroDocumento, a.RagioneSociale
+              AND r.CodCommessa IS NOT NULL AND r.CodCommessa != ''
+              AND r.TipoRiga = 1
+            GROUP BY t.IdDoc, r.CodCommessa, t.DataDocumento, t.NumeroDocumento, a.RagioneSociale
         ");
 
         if (empty($righeDDT)) {
@@ -353,15 +355,10 @@ class OndaSyncService
 
             $idDoc = $riga->IdDoc;
             $qtaDDT = (float) ($riga->QtaDDT ?? 0);
-            $dataDoc = $riga->DataDocumento;
 
-            // Formato MES: 00XXXXX-YY (7 cifre zero-padded + trattino + anno 2 cifre)
-            $anno = $dataDoc ? date('y', strtotime($dataDoc)) : date('y');
-            $codMES = str_pad($codCommessa, 7, '0', STR_PAD_LEFT) . '-' . $anno;
-
-            // Cerca ordine: prima match diretto, poi formato convertito
-            $ordine = Ordine::where('commessa', $codCommessa)->first()
-                   ?? Ordine::where('commessa', $codMES)->first();
+            // CodCommessa nelle righe è già nel formato completo (es. 0066398-26)
+            // Cerca ordine con match diretto
+            $ordine = Ordine::where('commessa', $codCommessa)->first();
 
             if (!$ordine) {
                 continue;
