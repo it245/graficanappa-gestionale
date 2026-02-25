@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'brt' => [
+        'base_url' => env('BRT_API_URL', 'https://api.brt.it/rest/v1'),
+        'user_id' => env('BRT_USER_ID'),
+        'password' => env('BRT_PASSWORD'),
+    ],
+
 ];

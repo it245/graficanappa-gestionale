@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\OrdineFase;
 use App\Models\Ordine;
 use App\Models\Reparto;
+use App\Http\Services\BrtService;
 use Carbon\Carbon;
 
 class DashboardSpedizioneController extends Controller
@@ -219,6 +220,19 @@ class DashboardSpedizioneController extends Controller
                 'messaggio' => 'Errore server: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    public function tracking(Request $request)
+    {
+        $segnacollo = $request->input('segnacollo');
+        if (!$segnacollo) {
+            return response()->json(['error' => true, 'message' => 'Segnacollo mancante']);
+        }
+
+        $brt = new BrtService();
+        $data = $brt->getTracking($segnacollo);
+
+        return response()->json($data);
     }
 
     public function recuperaConsegna(Request $request)

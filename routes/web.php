@@ -113,6 +113,7 @@ Route::prefix('spedizione')->middleware(['operatore.auth'])->group(function() {
     Route::get('/esterne', [DashboardSpedizioneController::class, 'esterne'])->name('spedizione.esterne');
     Route::post('/invio', [DashboardSpedizioneController::class, 'invioAutomatico'])->name('spedizione.invio');
     Route::post('/recupera', [DashboardSpedizioneController::class, 'recuperaConsegna'])->name('spedizione.recupera');
+    Route::post('/tracking', [DashboardSpedizioneController::class, 'tracking'])->name('spedizione.tracking');
 });
 
 // Health check

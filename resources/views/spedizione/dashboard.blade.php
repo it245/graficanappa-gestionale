@@ -405,7 +405,13 @@
                                     <span class="badge bg-success">Totale</span>
                                 @endif
                             </td>
-                            <td>{{ $fase->segnacollo_brt ?? '-' }}</td>
+                            <td>
+                                @if($fase->segnacollo_brt)
+                                    <a href="#" class="fw-bold text-primary" style="text-decoration:underline;cursor:pointer;" onclick="apriTracking('{{ $fase->segnacollo_brt }}'); return false;">{{ $fase->segnacollo_brt }}</a>
+                                @else
+                                    -
+                                @endif
+                            </td>
                             <td>{{ $fase->data_fine ? \Carbon\Carbon::parse($fase->data_fine)->format('H:i:s') : '-' }}</td>
                             <td>
                                 @foreach($fase->operatori as $op)
@@ -419,6 +425,75 @@
                 @else
                 <p class="text-muted text-center py-3">Nessuna consegna effettuata oggi</p>
                 @endif
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Tracking BRT -->
+<div class="modal fade" id="modalTracking" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#d4380d; color:#fff;">
+                <h5 class="modal-title">Tracking BRT - <span id="trackingSegnacollo"></span></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="trackingLoading" class="text-center py-4">
+                    <div class="spinner-border text-danger" role="status"></div>
+                    <p class="mt-2">Caricamento tracking...</p>
+                </div>
+                <div id="trackingErrore" class="alert alert-danger d-none"></div>
+                <div id="trackingContenuto" class="d-none">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Stato spedizione:</strong>
+                            <span id="trackingStato" class="badge bg-secondary ms-1"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Data consegna BRT:</strong>
+                            <span id="trackingDataConsegna"></span>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Destinatario:</strong>
+                            <span id="trackingDestinatario"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Filiale:</strong>
+                            <span id="trackingFiliale"></span>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Colli:</strong>
+                            <span id="trackingColli"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Peso (kg):</strong>
+                            <span id="trackingPeso"></span>
+                        </div>
+                    </div>
+                    <hr>
+                    <h6>Eventi</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Ora</th>
+                                    <th>Descrizione</th>
+                                    <th>Filiale</th>
+                                </tr>
+                            </thead>
+                            <tbody id="trackingEventi"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
             </div>
         </div>
     </div>
@@ -496,6 +571,87 @@ function recuperaConsegna(faseId, btn) {
         else { alert('Errore: ' + (data.messaggio || 'operazione fallita')); btn.disabled = false; }
     })
     .catch(err => { if (err !== 'session_expired') { console.error('Errore:', err); alert('Errore: ' + err); } btn.disabled = false; });
+}
+
+// Tracking BRT
+function apriTracking(segnacollo) {
+    document.getElementById('trackingSegnacollo').textContent = segnacollo;
+    document.getElementById('trackingLoading').classList.remove('d-none');
+    document.getElementById('trackingErrore').classList.add('d-none');
+    document.getElementById('trackingContenuto').classList.add('d-none');
+
+    var modal = new bootstrap.Modal(document.getElementById('modalTracking'));
+    modal.show();
+
+    fetch('{{ route("spedizione.tracking") }}', {
+        method: 'POST', headers: getHdrs(),
+        body: JSON.stringify({ segnacollo: segnacollo })
+    })
+    .then(parseResponse)
+    .then(function(data) {
+        document.getElementById('trackingLoading').classList.add('d-none');
+
+        if (data.error) {
+            document.getElementById('trackingErrore').textContent = data.message || 'Errore nel recupero tracking';
+            document.getElementById('trackingErrore').classList.remove('d-none');
+            return;
+        }
+
+        // Parse risposta BRT - struttura tipica con array di spedizioni
+        var spedizione = null;
+        if (data.parcelHistory && data.parcelHistory.length > 0) {
+            spedizione = data.parcelHistory[0];
+        } else if (data.length > 0) {
+            spedizione = data[0];
+        } else {
+            spedizione = data;
+        }
+
+        // Stato
+        var statoEl = document.getElementById('trackingStato');
+        var statoDesc = spedizione.lastStatus || spedizione.shipmentStatusDescription || spedizione.statusDescription || '-';
+        statoEl.textContent = statoDesc;
+        if (statoDesc.toLowerCase().indexOf('consegnat') >= 0 || statoDesc.toLowerCase().indexOf('deliver') >= 0) {
+            statoEl.className = 'badge bg-success ms-1';
+        } else if (statoDesc.toLowerCase().indexOf('transit') >= 0 || statoDesc.toLowerCase().indexOf('viaggio') >= 0) {
+            statoEl.className = 'badge bg-warning text-dark ms-1';
+        } else {
+            statoEl.className = 'badge bg-info ms-1';
+        }
+
+        // Dettagli
+        document.getElementById('trackingDataConsegna').textContent = spedizione.deliveryDate || spedizione.lastEventDate || '-';
+        document.getElementById('trackingDestinatario').textContent = spedizione.recipientName || spedizione.consigneeName || '-';
+        document.getElementById('trackingFiliale').textContent = spedizione.deliveryBranchName || spedizione.branchName || '-';
+        document.getElementById('trackingColli').textContent = spedizione.numberOfParcels || spedizione.parcels || '-';
+        document.getElementById('trackingPeso').textContent = spedizione.weightKg || spedizione.weight || '-';
+
+        // Eventi
+        var eventiBody = document.getElementById('trackingEventi');
+        eventiBody.innerHTML = '';
+        var eventi = spedizione.events || spedizione.history || [];
+        if (eventi.length === 0) {
+            eventiBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Nessun evento disponibile</td></tr>';
+        } else {
+            eventi.forEach(function(ev) {
+                var tr = document.createElement('tr');
+                tr.innerHTML = '<td>' + (ev.date || ev.eventDate || '-') + '</td>' +
+                               '<td>' + (ev.time || ev.eventTime || '-') + '</td>' +
+                               '<td>' + (ev.description || ev.eventDescription || ev.statusDescription || '-') + '</td>' +
+                               '<td>' + (ev.branchName || ev.filiale || '-') + '</td>';
+                eventiBody.appendChild(tr);
+            });
+        }
+
+        document.getElementById('trackingContenuto').classList.remove('d-none');
+    })
+    .catch(function(err) {
+        document.getElementById('trackingLoading').classList.add('d-none');
+        if (err !== 'session_expired') {
+            document.getElementById('trackingErrore').textContent = 'Errore di connessione: ' + err;
+            document.getElementById('trackingErrore').classList.remove('d-none');
+        }
+    });
 }
 
 // Ricerca
