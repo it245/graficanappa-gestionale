@@ -4,7 +4,7 @@
 <div class="container-fluid px-0">
    <style>
     html, body {
-        margin:0; padding:0; overflow-x:hidden; width:100%;
+        margin:0; padding:0; width:100%;
     }
     h2, p { margin-left:8px; margin-right:8px; }
     .top-bar {
@@ -124,7 +124,6 @@
                 <th>Quantità Carta</th>
                 <th>UM Carta</th>
                 <th>Note Operatore</th>
-                <th>Ore</th>
                 <th>Timeout</th>
             </tr>
         </thead>
@@ -174,7 +173,6 @@
                     <td>{{ $fase->ordine->qta_carta ?? '-' }}</td>
                     <td>{{ $fase->ordine->UM_carta ?? '-' }}</td>
                     <td>{{ $fase->note ?? '-' }}</td>
-                    <td>{{ $fase->ore ?? '-' }}</td>
                     <td id="timeout-{{ $fase->id }}">{{ $fase->timeout ?? '-' }}</td>
                 </tr>
             @endforeach

@@ -24,6 +24,9 @@ class SyncOnda extends Command
             $ddtAvviate = OndaSyncService::sincronizzaDDTFornitore();
             $this->info("Fasi esterne avviate da DDT fornitore: {$ddtAvviate}");
 
+            $ddtVendita = OndaSyncService::sincronizzaDDTVendita();
+            $this->info("Ordini aggiornati con DDT vendita: {$ddtVendita}");
+
             $this->info('Sync completato.');
         } catch (\Exception $e) {
             $this->error('Errore: ' . $e->getMessage());

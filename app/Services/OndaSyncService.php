@@ -321,6 +321,69 @@ class OndaSyncService
         return $avviate;
     }
 
+    /**
+     * Sincronizza DDT vendita (TipoDocumento=3) da Onda:
+     * segna sull'ordine MES che è stata emessa una DDT vendita,
+     * così la dashboard spedizione può mostrare le consegne da confermare.
+     */
+    public static function sincronizzaDDTVendita(): int
+    {
+        $aggiornati = 0;
+
+        $righeDDT = DB::connection('onda')->select("
+            SELECT t.IdDoc, t.CodCommessa, t.DataDocumento, t.NumeroDocumento,
+                   a.RagioneSociale AS Cliente,
+                   SUM(r.Qta) AS QtaDDT
+            FROM ATTDocTeste t
+            JOIN ATTDocRighe r ON t.IdDoc = r.IdDoc
+            LEFT JOIN STDAnagrafiche a ON t.IdAnagrafica = a.IdAnagrafica
+            WHERE t.TipoDocumento = 3
+              AND t.DataRegistrazione >= DATEADD(day, -7, GETDATE())
+              AND t.CodCommessa IS NOT NULL AND t.CodCommessa != ''
+            GROUP BY t.IdDoc, t.CodCommessa, t.DataDocumento, t.NumeroDocumento, a.RagioneSociale
+        ");
+
+        if (empty($righeDDT)) {
+            return 0;
+        }
+
+        foreach ($righeDDT as $riga) {
+            $codCommessa = trim($riga->CodCommessa ?? '');
+            if (!$codCommessa) continue;
+
+            $idDoc = $riga->IdDoc;
+            $qtaDDT = (float) ($riga->QtaDDT ?? 0);
+            $dataDoc = $riga->DataDocumento;
+
+            // Formato MES: 00XXXXX-YY (7 cifre zero-padded + trattino + anno 2 cifre)
+            $anno = $dataDoc ? date('y', strtotime($dataDoc)) : date('y');
+            $codMES = str_pad($codCommessa, 7, '0', STR_PAD_LEFT) . '-' . $anno;
+
+            // Cerca ordine: prima match diretto, poi formato convertito
+            $ordine = Ordine::where('commessa', $codCommessa)->first()
+                   ?? Ordine::where('commessa', $codMES)->first();
+
+            if (!$ordine) {
+                continue;
+            }
+
+            // Idempotenza: skip se ordine ha già un ddt_vendita_id
+            if ($ordine->ddt_vendita_id) {
+                continue;
+            }
+
+            $ordine->update([
+                'ddt_vendita_id'  => $idDoc,
+                'qta_ddt_vendita' => $qtaDDT,
+            ]);
+
+            $aggiornati++;
+            Log::info("DDT Vendita: aggiornato ordine #{$ordine->id} commessa {$ordine->commessa} con DDT {$idDoc} (qta DDT: {$qtaDDT})");
+        }
+
+        return $aggiornati;
+    }
+
     private static function getMappaReparti(): array
     {
         return [

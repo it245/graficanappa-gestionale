@@ -703,25 +703,20 @@ function schedulaPerMacchina(data) {
 }
 
 function schedulaPerCommessa(data) {
+    // Usa i tempi calcolati da schedulaPerMacchina per mantenere coerenza
+    const macchine = schedulaPerMacchina(data);
     const commesse = {};
-    data.forEach(f => {
+    macchine.forEach(m => m.fasi.forEach(f => {
         const key = f.commessa;
         if (!commesse[key]) commesse[key] = {
             commessa: key, cliente: f.cliente, descrizione: f.descrizione,
             consegna: f.consegna, giorni_consegna: f.giorni_consegna, fasi: []
         };
         commesse[key].fasi.push({...f});
-    });
+    }));
     Object.values(commesse).forEach(c => {
-        c.fasi.sort((a, b) => faseOrdine(a.fase) - faseOrdine(b.fase));
-        let cursor = skipToWorkTime(0, c.fasi[0]?.reparto || '');
-        c.fasi.forEach(fase => {
-            cursor = skipToWorkTime(cursor, fase.reparto);
-            fase.start_h = cursor;
-            fase.end_h = advanceCursor(cursor, Math.max(fase.ore, 0.1), fase.reparto);
-            cursor = fase.end_h;
-        });
-        c.ore_totali = cursor;
+        c.fasi.sort((a, b) => a.start_h - b.start_h);
+        c.ore_totali = Math.max(...c.fasi.map(f => f.end_h), 0);
         c.priorita_min = Math.min(...c.fasi.map(f => f.priorita));
     });
     return Object.values(commesse).sort((a, b) => a.priorita_min - b.priorita_min);

@@ -20,11 +20,30 @@ class DashboardSpedizioneController extends Controller
         $repartoSpedizione = Reparto::where('nome', 'spedizione')->first();
         if (!$repartoSpedizione) abort(404, 'Reparto spedizione non trovato');
 
+        // Fasi DDT vendita: ordini con ddt_vendita_id, fase spedizione stato < 4, tipo_consegna IS NULL
+        $fasiDDT = OrdineFase::whereHas('ordine', fn($q) => $q->whereNotNull('ddt_vendita_id'))
+            ->where('stato', '<', 4)
+            ->where(fn($q) => $q->whereNull('tipo_consegna'))
+            ->whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', $repartoSpedizione->id))
+            ->with(['ordine', 'faseCatalogo'])
+            ->get();
+
+        // Fasi parziali: tipo_consegna='parziale' e stato < 4
+        $fasiParziali = OrdineFase::where('tipo_consegna', 'parziale')
+            ->where('stato', '<', 4)
+            ->whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', $repartoSpedizione->id))
+            ->with(['ordine', 'faseCatalogo', 'operatori'])
+            ->get();
+
+        // IDs da escludere dalle sezioni normali (DDT + parziali)
+        $idsDDTeParziali = $fasiDDT->pluck('id')->merge($fasiParziali->pluck('id'))->toArray();
+
         // Fasi spedizione con stato 0 o 1 (candidati per "Da consegnare" o "In attesa")
         $fasiSpedizione = OrdineFase::whereIn('stato', [0, 1])
             ->whereHas('faseCatalogo', function ($q) use ($repartoSpedizione) {
                 $q->where('reparto_id', $repartoSpedizione->id);
             })
+            ->whereNotIn('id', $idsDDTeParziali)
             ->with(['ordine', 'faseCatalogo', 'operatori'])
             ->get();
 
@@ -113,7 +132,7 @@ class DashboardSpedizioneController extends Controller
                 ->sortBy(fn($f) => $f->ordine->data_prevista_consegna ?? '9999-12-31');
         }
 
-        return view('spedizione.dashboard', compact('fasiDaSpedire', 'fasiSpediteOggi', 'fasiInAttesa', 'fasiEsterne', 'operatore'));
+        return view('spedizione.dashboard', compact('fasiDaSpedire', 'fasiSpediteOggi', 'fasiInAttesa', 'fasiEsterne', 'fasiDDT', 'fasiParziali', 'operatore'));
     }
 
     public function esterne(Request $request)
@@ -172,41 +191,61 @@ class DashboardSpedizioneController extends Controller
             $adesso = now()->format('Y-m-d H:i:s');
             $operatoreId = $request->attributes->get('operatore_id') ?? session('operatore_id');
 
-            // Tutte le fasi della commessa vanno a stato=4 (consegnato)
-            $tutteLeFasiCommessa = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
-                ->where('stato', '<', 4)
-                ->get();
-
-            foreach ($tutteLeFasiCommessa as $f) {
-                $f->stato = 4;
-                if (!$f->data_fine) {
-                    $f->data_fine = $adesso;
+            if ($tipoConsegna === 'parziale') {
+                // Consegna parziale: aggiorna solo la fase spedizione, NON promuovere a stato=4
+                $fase->tipo_consegna = 'parziale';
+                $fase->segnacollo_brt = $request->input('segnacollo_brt') ?: null;
+                $fase->data_fine = $adesso;
+                if (!$fase->data_inizio) {
+                    $fase->data_inizio = $adesso;
                 }
-                if (!$f->data_inizio) {
-                    $f->data_inizio = $adesso;
+                // Stato resta < 4 (promuovi a 2 se era 0/1)
+                if ($fase->stato < 2) {
+                    $fase->stato = 2;
                 }
-                $f->save();
-            }
+                $fase->save();
 
-            // Salva tipo consegna e segnacollo BRT sulla fase spedizione
-            $fase->tipo_consegna = $tipoConsegna;
-            $fase->segnacollo_brt = $request->input('segnacollo_brt') ?: null;
-            $fase->save();
+                // Attach operatore
+                if ($operatoreId && !$fase->operatori->contains($operatoreId)) {
+                    $fase->operatori()->attach($operatoreId, ['data_inizio' => now(), 'data_fine' => now()]);
+                }
+            } else {
+                // Consegna totale: tutte le fasi della commessa vanno a stato=4 (consegnato)
+                $tutteLeFasiCommessa = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
+                    ->where('stato', '<', 4)
+                    ->get();
 
-            // Attach operatore spedizione alle fasi BRT
-            $fasiSpedizioneCommessa = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
-                ->where('stato', 4)
-                ->where(function ($q) use ($repartoSpedizione) {
-                    if ($repartoSpedizione) {
-                        $q->whereHas('faseCatalogo', fn($q2) => $q2->where('reparto_id', $repartoSpedizione->id));
+                foreach ($tutteLeFasiCommessa as $f) {
+                    $f->stato = 4;
+                    if (!$f->data_fine) {
+                        $f->data_fine = $adesso;
                     }
-                })
-                ->with('operatori')
-                ->get();
+                    if (!$f->data_inizio) {
+                        $f->data_inizio = $adesso;
+                    }
+                    $f->save();
+                }
 
-            foreach ($fasiSpedizioneCommessa as $faseSped) {
-                if ($operatoreId && !$faseSped->operatori->contains($operatoreId)) {
-                    $faseSped->operatori()->attach($operatoreId, ['data_inizio' => now(), 'data_fine' => now()]);
+                // Salva tipo consegna e segnacollo BRT sulla fase spedizione
+                $fase->tipo_consegna = 'totale';
+                $fase->segnacollo_brt = $request->input('segnacollo_brt') ?: null;
+                $fase->save();
+
+                // Attach operatore spedizione alle fasi BRT
+                $fasiSpedizioneCommessa = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
+                    ->where('stato', 4)
+                    ->where(function ($q) use ($repartoSpedizione) {
+                        if ($repartoSpedizione) {
+                            $q->whereHas('faseCatalogo', fn($q2) => $q2->where('reparto_id', $repartoSpedizione->id));
+                        }
+                    })
+                    ->with('operatori')
+                    ->get();
+
+                foreach ($fasiSpedizioneCommessa as $faseSped) {
+                    if ($operatoreId && !$faseSped->operatori->contains($operatoreId)) {
+                        $faseSped->operatori()->attach($operatoreId, ['data_inizio' => now(), 'data_fine' => now()]);
+                    }
                 }
             }
 

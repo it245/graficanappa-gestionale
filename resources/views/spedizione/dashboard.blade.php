@@ -210,6 +210,20 @@
         </div>
     </div>
     <div class="col-md-2">
+        <div class="kpi-box" style="border-left: 4px solid #6f42c1;">
+            <h3>{{ $fasiDDT->count() }}</h3>
+            <small>DDT Emesse</small>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="kpi-box" style="border-left: 4px solid #fd7e14;">
+            <h3>{{ $fasiParziali->count() }}</h3>
+            <small>Parziali in attesa</small>
+        </div>
+    </div>
+</div>
+<div class="row mx-2 mb-3">
+    <div class="col-md-2">
         <div class="kpi-box" style="border-left: 4px solid #198754;">
             <h3>{{ $consegneTotali }}</h3>
             <small>Totali oggi</small>
@@ -225,6 +239,55 @@
 
 <!-- Ricerca -->
 <input type="text" id="searchBox" class="form-control search-box" placeholder="Cerca commessa, cliente, descrizione...">
+
+<!-- Tabella DDT Emesse da Onda -->
+@if($fasiDDT->count() > 0)
+<h4 class="mx-2 mt-2" style="color:#6f42c1;">DDT Emesse da Onda</h4>
+<div class="table-wrapper">
+    <table class="table table-bordered table-sm" id="tabDDT">
+        <thead style="background:#6f42c1; color:#fff;">
+            <tr>
+                <th>Azione</th>
+                <th>Commessa</th>
+                <th>Cliente</th>
+                <th>Cod. Articolo</th>
+                <th>Descrizione</th>
+                <th>Qta Ordine</th>
+                <th>Qta DDT</th>
+                <th>Suggerimento</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($fasiDDT as $fase)
+                @php
+                    $qtaOrdine = $fase->ordine->qta_richiesta ?? 0;
+                    $qtaDDT = $fase->ordine->qta_ddt_vendita ?? 0;
+                    $suggerimento = $qtaDDT >= $qtaOrdine ? 'totale' : 'parziale';
+                @endphp
+                <tr class="searchable">
+                    <td style="white-space:nowrap;">
+                        <button class="btn-consegna btn-consegna-green" onclick="apriModalConsegnaDDT({{ $fase->id }}, 'totale')">Totale</button>
+                        <button class="btn-consegna btn-consegna-orange" onclick="apriModalConsegnaDDT({{ $fase->id }}, 'parziale')">Parziale</button>
+                    </td>
+                    <td><a href="{{ route('commesse.show', $fase->ordine->commessa ?? '-') }}" class="commessa-link">{{ $fase->ordine->commessa ?? '-' }}</a></td>
+                    <td>{{ $fase->ordine->cliente_nome ?? '-' }}</td>
+                    <td>{{ $fase->ordine->cod_art ?? '-' }}</td>
+                    <td>{{ $fase->ordine->descrizione ?? '-' }}</td>
+                    <td>{{ $qtaOrdine }}</td>
+                    <td>{{ $qtaDDT }}</td>
+                    <td>
+                        @if($suggerimento === 'totale')
+                            <span class="badge bg-success">Totale</span>
+                        @else
+                            <span class="badge bg-warning text-dark">Parziale</span>
+                        @endif
+                    </td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
+</div>
+@endif
 
 <!-- Tabella fasi da spedire -->
 <h4 class="mx-2 mt-2" style="color:#28a745;">Da consegnare</h4>
@@ -286,6 +349,47 @@
         </tbody>
     </table>
 </div>
+
+<!-- Tabella Consegne Parziali -->
+@if($fasiParziali->count() > 0)
+<h4 class="mx-2 mt-4" style="color:#fd7e14;">Consegne Parziali</h4>
+<div class="table-wrapper">
+    <table class="table table-bordered table-sm" id="tabParziali">
+        <thead style="background:#fd7e14; color:#fff;">
+            <tr>
+                <th>Azione</th>
+                <th>Commessa</th>
+                <th>Cliente</th>
+                <th>Cod. Articolo</th>
+                <th>Descrizione</th>
+                <th>Segnacollo BRT</th>
+                <th>Data cons. parziale</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($fasiParziali as $fase)
+                <tr class="searchable">
+                    <td>
+                        <button class="btn-consegna btn-consegna-green" onclick="apriModalConsegnaDDT({{ $fase->id }}, 'totale')">Consegna Totale</button>
+                    </td>
+                    <td><a href="{{ route('commesse.show', $fase->ordine->commessa ?? '-') }}" class="commessa-link">{{ $fase->ordine->commessa ?? '-' }}</a></td>
+                    <td>{{ $fase->ordine->cliente_nome ?? '-' }}</td>
+                    <td>{{ $fase->ordine->cod_art ?? '-' }}</td>
+                    <td>{{ $fase->ordine->descrizione ?? '-' }}</td>
+                    <td>
+                        @if($fase->segnacollo_brt)
+                            <a href="#" class="fw-bold text-primary" style="text-decoration:underline;cursor:pointer;" onclick="apriTracking('{{ $fase->segnacollo_brt }}'); return false;">{{ $fase->segnacollo_brt }}</a>
+                        @else
+                            -
+                        @endif
+                    </td>
+                    <td>{{ $fase->data_fine ? \Carbon\Carbon::parse($fase->data_fine)->format('d/m/Y H:i') : '-' }}</td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
+</div>
+@endif
 
 <!-- Tabella fasi in attesa -->
 @if($fasiInAttesa->count() > 0)
@@ -430,6 +534,36 @@
     </div>
 </div>
 
+<!-- Modal Segnacollo DDT -->
+<div class="modal fade" id="modalSegnacollo" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#6f42c1; color:#fff;">
+                <h5 class="modal-title">Segnacollo BRT</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="msDDT_faseId">
+                <input type="hidden" id="msDDT_tipo">
+                <div class="mb-3">
+                    <label for="msDDT_segnacollo" class="form-label fw-bold">Segnacollo BRT <small class="text-muted">(opzionale)</small></label>
+                    <input type="text" class="form-control form-control-lg" id="msDDT_segnacollo" placeholder="Es. 067138050411341" maxlength="50">
+                </div>
+                <div id="msDDT_tipoLabel" class="mb-3 text-center">
+                    <span class="badge bg-success fs-6" id="msDDT_badgeTotale" style="display:none;">Consegna Totale</span>
+                    <span class="badge bg-warning text-dark fs-6" id="msDDT_badgeParziale" style="display:none;">Consegna Parziale</span>
+                </div>
+                <button type="button" class="btn btn-lg w-100 fw-bold py-3" id="msDDT_btnConferma" onclick="confermaDDT()">
+                    Conferma
+                </button>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Modal Tracking BRT -->
 <div class="modal fade" id="modalTracking" tabindex="-1">
     <div class="modal-dialog modal-lg">
@@ -539,6 +673,47 @@ function inviaConsegna(tipo) {
     fetch('{{ route("spedizione.invio") }}', {
         method: 'POST', headers: getHdrs(),
         body: JSON.stringify({ fase_id: parseInt(faseId), tipo_consegna: tipo, forza: forza, segnacollo_brt: document.getElementById('mc_segnacollo').value.trim() || null })
+    })
+    .then(parseResponse)
+    .then(data => {
+        if (data.success) { window.location.reload(); }
+        else { alert('Errore: ' + (data.messaggio || data.message || 'operazione fallita')); }
+    })
+    .catch(err => { if (err !== 'session_expired') { console.error('Errore:', err); alert('Errore: ' + err); } });
+}
+
+function apriModalConsegnaDDT(faseId, tipo) {
+    document.getElementById('msDDT_faseId').value = faseId;
+    document.getElementById('msDDT_tipo').value = tipo;
+    document.getElementById('msDDT_segnacollo').value = '';
+
+    var btnConferma = document.getElementById('msDDT_btnConferma');
+    var badgeTotale = document.getElementById('msDDT_badgeTotale');
+    var badgeParziale = document.getElementById('msDDT_badgeParziale');
+
+    if (tipo === 'totale') {
+        badgeTotale.style.display = 'inline-block';
+        badgeParziale.style.display = 'none';
+        btnConferma.className = 'btn btn-success btn-lg w-100 fw-bold py-3';
+    } else {
+        badgeTotale.style.display = 'none';
+        badgeParziale.style.display = 'inline-block';
+        btnConferma.className = 'btn btn-warning btn-lg w-100 fw-bold py-3 text-dark';
+    }
+
+    new bootstrap.Modal(document.getElementById('modalSegnacollo')).show();
+}
+
+function confermaDDT() {
+    var faseId = document.getElementById('msDDT_faseId').value;
+    var tipo = document.getElementById('msDDT_tipo').value;
+    var segnacollo = document.getElementById('msDDT_segnacollo').value.trim() || null;
+
+    bootstrap.Modal.getInstance(document.getElementById('modalSegnacollo')).hide();
+
+    fetch('{{ route("spedizione.invio") }}', {
+        method: 'POST', headers: getHdrs(),
+        body: JSON.stringify({ fase_id: parseInt(faseId), tipo_consegna: tipo, forza: true, segnacollo_brt: segnacollo })
     })
     .then(parseResponse)
     .then(data => {
