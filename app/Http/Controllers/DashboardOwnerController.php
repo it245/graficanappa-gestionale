@@ -749,4 +749,20 @@ public function calcolaOreEPriorita($fase)
         return response()->download($filePath, 'dashboard_mes.xlsx');
     }
 
+    public function esterne()
+    {
+        $repartoEsterno = Reparto::where('nome', 'esterno')->first();
+        $fasiEsterne = collect();
+
+        if ($repartoEsterno) {
+            $fasiEsterne = OrdineFase::where('stato', '<', 3)
+                ->whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', $repartoEsterno->id))
+                ->with(['ordine', 'faseCatalogo'])
+                ->get()
+                ->sortBy(fn($f) => $f->ordine->data_prevista_consegna ?? '9999-12-31');
+        }
+
+        return view('owner.esterne', compact('fasiEsterne'));
+    }
+
 }
