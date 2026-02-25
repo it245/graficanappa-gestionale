@@ -62,8 +62,10 @@ $tests = [
 ];
 
 echo "\n=== 3. Scoperta altri endpoint ===\n";
-foreach ($tests as [$method, $path, $body]) {
-    $body = $body ?? null;
+foreach ($tests as $test) {
+    $method = $test[0];
+    $path = $test[1];
+    $body = $test[2] ?? null;
     $url = "https://api.brt.it{$path}";
     $r = brtRequest($method, $url, $userID, $password, $body);
     $label = "{$method} {$path}";
