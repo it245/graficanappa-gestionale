@@ -760,7 +760,7 @@ public function calcolaOreEPriorita($fase)
                 ->with(['ordine', 'faseCatalogo'])
                 ->get();
 
-            // Raggruppa per commessa (ordine_id)
+            // Raggruppa per commessa, solo quelle con fornitore (DDT sincronizzata)
             $commesseEsterne = $fasiEsterne->groupBy('ordine_id')->map(function ($fasi) {
                 $prima = $fasi->first();
                 $ordine = $prima->ordine;
@@ -799,7 +799,8 @@ public function calcolaOreEPriorita($fase)
                     'data_invio'    => $dataInvio,
                     'note'          => $fasi->pluck('note')->filter()->unique()->implode(' | '),
                 ];
-            })->sortBy(fn($c) => $c->ordine->data_prevista_consegna ?? '9999-12-31')->values();
+            })->filter(fn($c) => $c->fornitore !== '-')
+              ->sortBy(fn($c) => $c->ordine->data_prevista_consegna ?? '9999-12-31')->values();
         }
 
         return view('owner.esterne', compact('commesseEsterne'));
