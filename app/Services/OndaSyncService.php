@@ -244,6 +244,79 @@ class OndaSyncService
         ];
     }
 
+    /**
+     * Sincronizza DDT emesse a fornitore da Onda: avvia automaticamente
+     * le fasi esterne nel MES quando trova una DDT con commessa.
+     */
+    public static function sincronizzaDDTFornitore(): int
+    {
+        $avviate = 0;
+
+        // Query DDT a fornitore degli ultimi 30 giorni
+        $righeDDT = DB::connection('onda')->select("
+            SELECT t.IdDoc, t.DataDocumento, t.IdAnagrafica, a.RagioneSociale,
+                   r.Descrizione, r.Qta, r.CodUnMis
+            FROM ATTDocTeste t
+            JOIN ATTDocRighe r ON t.IdDoc = r.IdDoc
+            LEFT JOIN STDAnagrafiche a ON t.IdAnagrafica = a.IdAnagrafica
+            WHERE t.TipoDocumento = 7
+              AND t.DataRegistrazione >= DATEADD(day, -30, GETDATE())
+        ");
+
+        if (empty($righeDDT)) {
+            return 0;
+        }
+
+        $repartoEsterno = Reparto::where('nome', 'esterno')->first();
+        if (!$repartoEsterno) {
+            Log::warning('DDT Fornitore sync: reparto "esterno" non trovato');
+            return 0;
+        }
+
+        foreach ($righeDDT as $riga) {
+            $descrizione = $riga->Descrizione ?? '';
+
+            // Estrai numero commessa dalla descrizione
+            if (!preg_match('/Commessa n°\s*(\d+)/i', $descrizione, $m)) {
+                continue;
+            }
+
+            $numCommessa = $m[1];
+            $fornitore = trim($riga->RagioneSociale ?? '');
+            $idDoc = $riga->IdDoc;
+            $dataDoc = $riga->DataDocumento ? date('Y-m-d H:i:s', strtotime($riga->DataDocumento)) : now();
+
+            // Cerca la prima fase esterna non ancora avviata per questa commessa
+            $fase = OrdineFase::whereHas('ordine', function ($q) use ($numCommessa) {
+                    $q->where('commessa', $numCommessa);
+                })
+                ->whereHas('faseCatalogo', function ($q) use ($repartoEsterno) {
+                    $q->where('reparto_id', $repartoEsterno->id);
+                })
+                ->whereIn('stato', [0, 1])
+                ->whereNull('ddt_fornitore_id')
+                ->orderBy('id')
+                ->first();
+
+            if (!$fase) {
+                continue;
+            }
+
+            $fase->update([
+                'stato'            => 2,
+                'data_inizio'      => $dataDoc,
+                'note'             => 'Inviato a: ' . $fornitore,
+                'ddt_fornitore_id' => $idDoc,
+            ]);
+
+            $avviate++;
+
+            Log::info("DDT Fornitore: avviata fase esterna #{$fase->id} per commessa {$numCommessa} (DDT {$idDoc}, fornitore: {$fornitore})");
+        }
+
+        return $avviate;
+    }
+
     private static function getMappaReparti(): array
     {
         return [

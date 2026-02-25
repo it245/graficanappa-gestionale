@@ -20,6 +20,10 @@ class SyncOnda extends Command
             $this->info("Ordini creati: {$risultato['ordini_creati']}");
             $this->info("Ordini aggiornati: {$risultato['ordini_aggiornati']}");
             $this->info("Fasi create: {$risultato['fasi_create']}");
+
+            $ddtAvviate = OndaSyncService::sincronizzaDDTFornitore();
+            $this->info("Fasi esterne avviate da DDT fornitore: {$ddtAvviate}");
+
             $this->info('Sync completato.');
         } catch (\Exception $e) {
             $this->error('Errore: ' . $e->getMessage());
