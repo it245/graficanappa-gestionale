@@ -305,13 +305,22 @@ class DashboardSpedizioneController extends Controller
             return response()->json(['error' => true, 'message' => 'Numero DDT mancante']);
         }
 
+        if (!class_exists('SoapClient')) {
+            return response()->json([
+                'error' => true,
+                'message' => 'Estensione PHP SOAP non installata sul server',
+            ]);
+        }
+
         $brt = new BrtService();
+        $ddtSenzaZeri = ltrim($numeroDDT, '0');
+
         $data = $brt->getTrackingByDDT($numeroDDT);
 
         if (!$data) {
             return response()->json([
                 'error' => true,
-                'message' => 'Nessuna spedizione BRT trovata per DDT ' . ltrim($numeroDDT, '0'),
+                'message' => "DDT {$ddtSenzaZeri}: spedizione non ancora registrata in BRT. Il tracking sarà disponibile dopo il ritiro del corriere.",
             ]);
         }
 

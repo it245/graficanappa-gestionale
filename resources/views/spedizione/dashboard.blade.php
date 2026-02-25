@@ -885,9 +885,14 @@ function apriTracking(segnacollo) {
 
 // Tracking BRT via numero DDT (SOAP)
 function apriTrackingDDT(numeroDDT, btn) {
-    var spinner = btn.querySelector('.spinner-border');
-    spinner.classList.remove('d-none');
-    btn.disabled = true;
+    var ddtLabel = numeroDDT.replace(/^0+/, '') || numeroDDT;
+
+    // Apri modal subito con loading
+    document.getElementById('trackingSegnacollo').textContent = 'DDT ' + ddtLabel;
+    document.getElementById('trackingLoading').classList.remove('d-none');
+    document.getElementById('trackingErrore').classList.add('d-none');
+    document.getElementById('trackingContenuto').classList.add('d-none');
+    new bootstrap.Modal(document.getElementById('modalTracking')).show();
 
     fetch('{{ route("spedizione.trackingByDDT") }}', {
         method: 'POST', headers: getHdrs(),
@@ -895,22 +900,30 @@ function apriTrackingDDT(numeroDDT, btn) {
     })
     .then(parseResponse)
     .then(function(data) {
-        spinner.classList.add('d-none');
-        btn.disabled = false;
+        document.getElementById('trackingLoading').classList.add('d-none');
 
         if (data.error) {
-            alert(data.message || 'Nessun tracking trovato per DDT ' + numeroDDT);
+            document.getElementById('trackingErrore').textContent = data.message || 'Nessuna spedizione BRT trovata per DDT ' + ddtLabel;
+            document.getElementById('trackingErrore').classList.remove('d-none');
             return;
         }
 
-        // Mostra nel modal tracking
-        document.getElementById('trackingSegnacollo').textContent = 'DDT ' + (data.bolla ? data.bolla.rif_mittente_alfa : numeroDDT);
-        document.getElementById('trackingLoading').classList.add('d-none');
-        document.getElementById('trackingErrore').classList.add('d-none');
+        // Se non c'è bolla, la spedizione esiste ma non è ancora elaborata
+        if (!data.bolla || !data.bolla.spedizione_id) {
+            document.getElementById('trackingErrore').innerHTML = '<strong>Spedizione trovata</strong> (ID: ' + (data.spedizione_id || '?') + ')<br>In attesa di elaborazione da BRT. Il tracking sarà disponibile dopo il ritiro del corriere.';
+            document.getElementById('trackingErrore').className = 'alert alert-warning';
+            document.getElementById('trackingErrore').classList.remove('d-none');
+            return;
+        }
+
+        var bolla = data.bolla;
+
+        // Titolo con DDT senza zeri
+        document.getElementById('trackingSegnacollo').textContent = 'DDT ' + (bolla.rif_mittente_alfa || ddtLabel) + ' (Sped. ' + bolla.spedizione_id + ')';
 
         // Stato
         var statoEl = document.getElementById('trackingStato');
-        statoEl.textContent = data.stato || '-';
+        statoEl.textContent = data.stato || 'IN ELABORAZIONE';
         if ((data.stato || '').indexOf('CONSEGNATA') >= 0) {
             statoEl.className = 'badge bg-success ms-1';
         } else if ((data.stato || '').indexOf('CONSEGNA') >= 0 || (data.stato || '').indexOf('PARTITA') >= 0) {
@@ -919,7 +932,7 @@ function apriTrackingDDT(numeroDDT, btn) {
             statoEl.className = 'badge bg-info ms-1';
         }
 
-        var bolla = data.bolla || {};
+        // Dettagli bolla
         document.getElementById('trackingDataConsegna').textContent = bolla.data_consegna ? (bolla.data_consegna + ' ' + (bolla.ora_consegna || '')) : '-';
         var destLabel = [bolla.destinatario_ragione_sociale, bolla.destinatario_localita, bolla.destinatario_provincia].filter(Boolean).join(' - ') || '-';
         document.getElementById('trackingDestinatario').textContent = destLabel;
@@ -932,7 +945,7 @@ function apriTrackingDDT(numeroDDT, btn) {
         eventiBody.innerHTML = '';
         var eventi = data.eventi || [];
         if (eventi.length === 0) {
-            eventiBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Nessun evento</td></tr>';
+            eventiBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Nessun evento disponibile</td></tr>';
         } else {
             eventi.forEach(function(ev) {
                 var tr = document.createElement('tr');
@@ -942,13 +955,13 @@ function apriTrackingDDT(numeroDDT, btn) {
         }
 
         document.getElementById('trackingContenuto').classList.remove('d-none');
-        new bootstrap.Modal(document.getElementById('modalTracking')).show();
     })
     .catch(function(err) {
-        spinner.classList.add('d-none');
-        btn.disabled = false;
+        document.getElementById('trackingLoading').classList.add('d-none');
         if (err !== 'session_expired') {
-            alert('Errore connessione: ' + err);
+            document.getElementById('trackingErrore').textContent = 'Errore connessione BRT: ' + err;
+            document.getElementById('trackingErrore').className = 'alert alert-danger';
+            document.getElementById('trackingErrore').classList.remove('d-none');
         }
     });
 }
