@@ -281,10 +281,14 @@ class OndaSyncService
                 continue;
             }
 
-            $numCommessa = $m[1];
+            $numGrezzo = $m[1];
             $fornitore = trim($riga->RagioneSociale ?? '');
             $idDoc = $riga->IdDoc;
             $dataDoc = $riga->DataDocumento ? date('Y-m-d H:i:s', strtotime($riga->DataDocumento)) : now();
+
+            // Formato MES: 00XXXXX-YY (7 cifre zero-padded + trattino + anno 2 cifre)
+            $anno = $riga->DataDocumento ? date('y', strtotime($riga->DataDocumento)) : date('y');
+            $numCommessa = str_pad($numGrezzo, 7, '0', STR_PAD_LEFT) . '-' . $anno;
 
             // Cerca la prima fase esterna non ancora avviata per questa commessa
             $fase = OrdineFase::whereHas('ordine', function ($q) use ($numCommessa) {
