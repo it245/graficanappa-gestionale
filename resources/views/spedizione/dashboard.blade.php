@@ -77,6 +77,14 @@
         transform: translateY(-1px);
         box-shadow: 0 3px 8px rgba(220,53,69,0.35);
     }
+    .btn-consegna-orange {
+        background: linear-gradient(135deg, #fd7e14, #e8690b);
+    }
+    .btn-consegna-orange:hover {
+        background: linear-gradient(135deg, #e8690b, #d35400);
+        transform: translateY(-1px);
+        box-shadow: 0 3px 8px rgba(253,126,20,0.35);
+    }
     .btn-consegna:disabled {
         background: #6c757d !important;
         cursor: not-allowed;
@@ -147,31 +155,6 @@
         margin-top: 4px;
     }
 
-    /* Modal consegna */
-    .modal-consegna .tipo-btn {
-        display: block;
-        width: 100%;
-        padding: 18px;
-        margin-bottom: 12px;
-        border-radius: 12px;
-        border: 2px solid #dee2e6;
-        background: #fff;
-        cursor: pointer;
-        text-align: left;
-        transition: all 0.2s;
-    }
-    .modal-consegna .tipo-btn:hover {
-        border-color: #0d6efd;
-        background: #f0f6ff;
-    }
-    .modal-consegna .tipo-btn.active {
-        border-color: #0d6efd;
-        background: #e8f0fe;
-    }
-    .modal-consegna .tipo-btn h5 { margin:0 0 4px; font-size:16px; }
-    .modal-consegna .tipo-btn small { color:#6c757d; }
-    .qta-parziale-row { display:none; margin-top:12px; }
-    .qta-parziale-row.show { display:block; }
 </style>
 
 <div class="top-bar">
@@ -275,10 +258,9 @@
                     $pctColor = $pct == 100 ? '#28a745' : ($pct >= 75 ? '#17a2b8' : ($pct >= 50 ? '#ffc107' : '#dc3545'));
                 @endphp
                 <tr class="{{ $rowClass }} searchable">
-                    <td>
-                        <button class="btn-consegna btn-consegna-green" onclick="apriModalConsegna({{ $fase->id }}, '{{ $fase->ordine->qta_richiesta ?? '' }}', false)">
-                            Consegna
-                        </button>
+                    <td style="white-space:nowrap;">
+                        <button class="btn-consegna btn-consegna-green" onclick="inviaConsegna({{ $fase->id }}, 'totale', false, this)">Totale</button>
+                        <button class="btn-consegna btn-consegna-orange" onclick="inviaConsegna({{ $fase->id }}, 'parziale', false, this)">Parziale</button>
                     </td>
                     <td>
                         <input type="text" class="form-control form-control-sm" style="min-width:150px"
@@ -330,10 +312,9 @@
                     $pctColor = $pct >= 75 ? '#17a2b8' : ($pct >= 50 ? '#ffc107' : '#dc3545');
                 @endphp
                 <tr class="searchable">
-                    <td style="text-align:center; vertical-align:middle;">
-                        <button class="btn-consegna btn-consegna-red" onclick="apriModalConsegna({{ $fase->id }}, '{{ $fase->ordine->qta_richiesta ?? '' }}', true)">
-                            Consegna
-                        </button>
+                    <td style="text-align:center; vertical-align:middle; white-space:nowrap;">
+                        <button class="btn-consegna btn-consegna-red" onclick="inviaConsegna({{ $fase->id }}, 'totale', true, this)">Totale</button>
+                        <button class="btn-consegna btn-consegna-orange" onclick="inviaConsegna({{ $fase->id }}, 'parziale', true, this)">Parziale</button>
                         <div class="fasi-mancanti">{{ $fase->fasiNonTerminate->count() }} fase/i aperte</div>
                     </td>
                     <td><a href="{{ route('commesse.show', $fase->ordine->commessa ?? '-') }}" class="commessa-link">{{ $fase->ordine->commessa ?? '-' }}</a></td>
@@ -354,41 +335,6 @@
 </div>
 @endif
 
-<!-- Modal Consegna -->
-<div class="modal fade modal-consegna" id="modalConsegna" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Tipo di consegna</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <input type="hidden" id="mc_faseId">
-                <input type="hidden" id="mc_forza">
-
-                <button type="button" class="tipo-btn active" id="btnTotale" onclick="selezionaTipo('totale')">
-                    <h5>Consegna totale</h5>
-                    <small>Tutta la quantita ordinata viene consegnata</small>
-                </button>
-                <button type="button" class="tipo-btn" id="btnParziale" onclick="selezionaTipo('parziale')">
-                    <h5>Consegna parziale</h5>
-                    <small>Solo una parte della quantita viene consegnata</small>
-                </button>
-
-                <div class="qta-parziale-row" id="qtaParzRow">
-                    <label class="form-label fw-bold">Quantita consegnata:</label>
-                    <input type="number" class="form-control" id="mc_qtaConsegnata" min="1" placeholder="Es. 500">
-                    <small class="text-muted">Quantita ordinata: <strong id="mc_qtaRichiesta">-</strong></small>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
-                <button type="button" class="btn btn-success fw-bold" id="btnConfermaConsegna" onclick="confermaConsegna()">Conferma consegna</button>
-            </div>
-        </div>
-    </div>
-</div>
-
 <!-- Modal Spedite Oggi -->
 <div class="modal fade" id="modalSpediteOggi" tabindex="-1">
     <div class="modal-dialog modal-xl">
@@ -408,7 +354,6 @@
                             <th>Descrizione</th>
                             <th>Qta Ordinata</th>
                             <th>Tipo</th>
-                            <th>Qta Consegnata</th>
                             <th>Ora Consegna</th>
                             <th>Operatore</th>
                         </tr>
@@ -428,7 +373,6 @@
                                     <span class="badge bg-success">Totale</span>
                                 @endif
                             </td>
-                            <td>{{ $fase->tipo_consegna === 'parziale' ? number_format($fase->qta_consegnata ?? 0) : '-' }}</td>
                             <td>{{ $fase->data_fine ? \Carbon\Carbon::parse($fase->data_fine)->format('H:i:s') : '-' }}</td>
                             <td>
                                 @foreach($fase->operatori as $op)
@@ -471,69 +415,24 @@ function parseResponse(res) {
     return res.json();
 }
 
-// ===== Modal consegna =====
-let tipoSelezionato = 'totale';
+function inviaConsegna(faseId, tipo, forza, btn) {
+    var msg = tipo === 'parziale' ? 'Confermi consegna PARZIALE?' : 'Confermi consegna TOTALE?';
+    if (forza) msg += '\n(Attenzione: ci sono fasi non terminate)';
+    if (!confirm(msg)) return;
 
-function apriModalConsegna(faseId, qtaRichiesta, forza) {
-    document.getElementById('mc_faseId').value = faseId;
-    document.getElementById('mc_forza').value = forza ? '1' : '0';
-    document.getElementById('mc_qtaRichiesta').textContent = qtaRichiesta || '-';
-    document.getElementById('mc_qtaConsegnata').value = '';
-    selezionaTipo('totale');
-    new bootstrap.Modal(document.getElementById('modalConsegna')).show();
-}
-
-function selezionaTipo(tipo) {
-    tipoSelezionato = tipo;
-    document.getElementById('btnTotale').classList.toggle('active', tipo === 'totale');
-    document.getElementById('btnParziale').classList.toggle('active', tipo === 'parziale');
-    document.getElementById('qtaParzRow').classList.toggle('show', tipo === 'parziale');
-    if (tipo === 'parziale') {
-        document.getElementById('mc_qtaConsegnata').focus();
-    }
-}
-
-function confermaConsegna() {
-    const faseId = document.getElementById('mc_faseId').value;
-    const forza = document.getElementById('mc_forza').value === '1';
-    const qta = document.getElementById('mc_qtaConsegnata').value;
-
-    if (tipoSelezionato === 'parziale' && (!qta || parseInt(qta) <= 0)) {
-        alert('Inserisci la quantita consegnata');
-        return;
-    }
-
-    const btn = document.getElementById('btnConfermaConsegna');
     btn.disabled = true;
-    btn.textContent = 'Invio...';
-
-    const body = {
-        fase_id: parseInt(faseId),
-        tipo_consegna: tipoSelezionato,
-        forza: forza
-    };
-    if (tipoSelezionato === 'parziale') {
-        body.qta_consegnata = parseInt(qta);
-    }
+    btn.textContent = '...';
 
     fetch('{{ route("spedizione.invio") }}', {
         method: 'POST', headers: getHdrs(),
-        body: JSON.stringify(body)
+        body: JSON.stringify({ fase_id: faseId, tipo_consegna: tipo, forza: forza })
     })
     .then(parseResponse)
     .then(data => {
         if (data.success) { window.location.reload(); }
-        else {
-            alert('Errore: ' + (data.messaggio || data.message || 'operazione fallita'));
-            btn.disabled = false;
-            btn.textContent = 'Conferma consegna';
-        }
+        else { alert('Errore: ' + (data.messaggio || data.message || 'operazione fallita')); btn.disabled = false; btn.textContent = tipo === 'parziale' ? 'Parziale' : 'Totale'; }
     })
-    .catch(err => {
-        if (err !== 'session_expired') { console.error('Errore:', err); alert('Errore: ' + err); }
-        btn.disabled = false;
-        btn.textContent = 'Conferma consegna';
-    });
+    .catch(err => { if (err !== 'session_expired') { console.error('Errore:', err); alert('Errore: ' + err); } btn.disabled = false; btn.textContent = tipo === 'parziale' ? 'Parziale' : 'Totale'; });
 }
 
 function aggiornaNota(faseId, valore) {

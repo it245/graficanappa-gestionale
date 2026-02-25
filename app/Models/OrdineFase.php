@@ -29,7 +29,6 @@ class OrdineFase extends Model
         'priorita',
         'ore',
         'tipo_consegna',
-        'qta_consegnata',
     ];
 
     /* ===================== RELAZIONI ===================== */

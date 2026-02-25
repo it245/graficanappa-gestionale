@@ -10,14 +10,13 @@ return new class extends Migration
     {
         Schema::table('ordine_fasi', function (Blueprint $table) {
             $table->string('tipo_consegna', 20)->nullable()->after('note'); // 'totale' o 'parziale'
-            $table->integer('qta_consegnata')->nullable()->after('tipo_consegna');
         });
     }
 
     public function down(): void
     {
         Schema::table('ordine_fasi', function (Blueprint $table) {
-            $table->dropColumn(['tipo_consegna', 'qta_consegnata']);
+            $table->dropColumn(['tipo_consegna']);
         });
     }
 };

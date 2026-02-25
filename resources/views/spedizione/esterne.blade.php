@@ -162,20 +162,11 @@
                     </button>
                 </div>
 
-                <!-- Step 2: Dati quantita -->
+                <!-- Step 2: Dati -->
                 <div id="stepDatiQta" style="display:none;">
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Qta target (riferimento)</label>
-                        <input type="number" id="terminaEsternoQtaFase" class="form-control" readonly style="background:#e9ecef">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Qta prodotta <span class="text-danger">*</span></label>
-                        <input type="number" id="terminaEsternoQtaProdotta" class="form-control" min="0" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Scarti</label>
-                        <input type="number" id="terminaEsternoScarti" class="form-control" min="0" value="0">
-                    </div>
+                    <input type="hidden" id="terminaEsternoQtaFase">
+                    <input type="hidden" id="terminaEsternoQtaProdotta">
+                    <input type="hidden" id="terminaEsternoScarti" value="0">
 
                     <!-- Campo note rientro (solo per rientro) -->
                     <div id="noteRientroWrap" style="display:none;">
