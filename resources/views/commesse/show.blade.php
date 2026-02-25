@@ -262,8 +262,40 @@
     </div>
 </div>
 
+<!-- Modal Pausa -->
+<div class="modal fade" id="modalPausa" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title">Pausa Fase</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="pausaFaseId">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Motivo della pausa</label>
+                    <select id="pausaMotivoSelect" class="form-select" onchange="toggleAltroPausa()">
+                        <option value="">-- Seleziona --</option>
+                        <option>Attesa materiale</option>
+                        <option>Problema macchina</option>
+                        <option>Pranzo</option>
+                        <option value="__altro__">Altro...</option>
+                    </select>
+                </div>
+                <div class="mb-3" id="pausaAltroWrap" style="display:none;">
+                    <label class="form-label fw-bold">Specifica motivo</label>
+                    <input type="text" id="pausaAltroInput" class="form-control" placeholder="Scrivi il motivo...">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                <button type="button" class="btn btn-warning fw-bold" onclick="confermaPausa()">Conferma Pausa</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
-const motiviPausa = ["Attesa materiale", "Problema macchina", "Pranzo", "Altro"];
 const badgeBgMap = {0:'bg-secondary',1:'bg-info',2:'bg-warning text-dark',3:'bg-success'};
 
 function updateBadge(faseId, stato) {
@@ -393,16 +425,30 @@ document.getElementById('modalTermina').addEventListener('hidden.bs.modal', func
 
 function gestisciPausa(faseId, checked){
     if(!checked) return;
+    document.getElementById('pausaFaseId').value = faseId;
+    document.getElementById('pausaMotivoSelect').value = '';
+    document.getElementById('pausaAltroInput').value = '';
+    document.getElementById('pausaAltroWrap').style.display = 'none';
+    new bootstrap.Modal(document.getElementById('modalPausa')).show();
+}
 
-    let scelta = prompt(
-        "Seleziona motivo pausa:\n1) Attesa materiale\n2) Problema macchina\n3) Pranzo\n4) Altro"
-    );
-    if(!scelta || !["1","2","3","4"].includes(scelta)){
-        document.getElementById('pausa-'+faseId).checked=false;
-        return alert('Selezione non valida!');
-    }
+document.getElementById('modalPausa').addEventListener('hidden.bs.modal', function() {
+    var faseId = document.getElementById('pausaFaseId').value;
+    var cb = document.getElementById('pausa-'+faseId);
+    if (cb) cb.checked = false;
+});
 
-    let motivo = motiviPausa[parseInt(scelta)-1];
+function toggleAltroPausa() {
+    document.getElementById('pausaAltroWrap').style.display =
+        document.getElementById('pausaMotivoSelect').value === '__altro__' ? '' : 'none';
+}
+
+function confermaPausa() {
+    var sel = document.getElementById('pausaMotivoSelect').value;
+    var motivo = sel === '__altro__' ? (document.getElementById('pausaAltroInput').value.trim() || 'Altro') : sel;
+    if (!motivo) { alert('Seleziona un motivo'); return; }
+    var faseId = document.getElementById('pausaFaseId').value;
+    bootstrap.Modal.getInstance(document.getElementById('modalPausa')).hide();
 
     fetch('{{ route("produzione.pausa") }}',{
         method:'POST',
