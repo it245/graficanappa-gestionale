@@ -1267,5 +1267,14 @@ function toggleScanner(scannerId, inputId) {
         if (modalId === 'modalSegnacollo') fermaScanner('msDDT_scanner');
     });
 });
+
+// Auto-carica tracking BRT quando il modal viene aperto
+var brtModalCaricato = false;
+document.getElementById('modalBRT').addEventListener('shown.bs.modal', function() {
+    if (!brtModalCaricato && brtDDTList.length > 0) {
+        brtModalCaricato = true;
+        caricaTuttiTrackingBRT();
+    }
+});
 </script>
 @endsection
