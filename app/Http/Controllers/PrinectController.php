@@ -329,7 +329,7 @@ class PrinectController extends Controller
     /**
      * Report commessa con KPI e grafici
      */
-    public function reportCommessa($commessa, PrinectService $service = null)
+    public function reportCommessa($commessa, PrinectService $service)
     {
         $attivita = PrinectAttivita::where('commessa_gestionale', $commessa)
             ->orderBy('start_time')
@@ -350,12 +350,12 @@ class PrinectController extends Controller
         $tempoProduzioneSec = 0;
         $usaWorkstep = false;
 
-        if ($service && is_numeric($jobId)) {
+        if (is_numeric($jobId)) {
             try {
                 $wsData = $service->getJobWorksteps($jobId);
                 $worksteps = collect($wsData['worksteps'] ?? [])
                     ->filter(fn($ws) => in_array('ConventionalPrinting', $ws['types'] ?? []))
-                    ->filter(fn($ws) => ($ws['amountProduced'] ?? 0) > 0 || ($ws['wasteProduced'] ?? 0) > 0);
+                    ->filter(fn($ws) => in_array($ws['status'] ?? '', ['COMPLETED', 'RUNNING']));
 
                 if ($worksteps->isNotEmpty()) {
                     $usaWorkstep = true;
