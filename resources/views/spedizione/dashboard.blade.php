@@ -155,6 +155,33 @@
         margin-top: 4px;
     }
 
+    .scanner-container {
+        width: 100%;
+        max-width: 100%;
+        border-radius: 10px;
+        overflow: hidden;
+        margin-top: 8px;
+        display: none;
+    }
+    .scanner-container.active { display: block; }
+    .scanner-container video { border-radius: 10px; }
+    .btn-scan {
+        border: none;
+        background: transparent;
+        padding: 6px 10px;
+        cursor: pointer;
+        font-size: 20px;
+        color: #0d6efd;
+        vertical-align: middle;
+    }
+    .btn-scan:hover { color: #0b5ed7; }
+    .segnacollo-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .segnacollo-row input { flex: 1; }
+
 </style>
 
 <div class="top-bar">
@@ -450,7 +477,11 @@
                 <input type="hidden" id="mc_forza">
                 <div class="mb-3">
                     <label for="mc_segnacollo" class="form-label fw-bold">Segnacollo BRT <small class="text-muted">(opzionale)</small></label>
-                    <input type="text" class="form-control form-control-lg" id="mc_segnacollo" placeholder="Es. 067138050411341" maxlength="50">
+                    <div class="segnacollo-row">
+                        <input type="text" class="form-control form-control-lg" id="mc_segnacollo" placeholder="Es. 067138050411341" maxlength="50">
+                        <button type="button" class="btn-scan" title="Scansiona codice a barre" onclick="toggleScanner('mc_scanner', 'mc_segnacollo')">&#128247;</button>
+                    </div>
+                    <div id="mc_scanner" class="scanner-container"></div>
                 </div>
                 <button type="button" class="btn btn-success btn-lg w-100 mb-3 fw-bold py-3" onclick="inviaConsegna('totale')">
                     Consegna Totale
@@ -547,7 +578,11 @@
                 <input type="hidden" id="msDDT_tipo">
                 <div class="mb-3">
                     <label for="msDDT_segnacollo" class="form-label fw-bold">Segnacollo BRT <small class="text-muted">(opzionale)</small></label>
-                    <input type="text" class="form-control form-control-lg" id="msDDT_segnacollo" placeholder="Es. 067138050411341" maxlength="50">
+                    <div class="segnacollo-row">
+                        <input type="text" class="form-control form-control-lg" id="msDDT_segnacollo" placeholder="Es. 067138050411341" maxlength="50">
+                        <button type="button" class="btn-scan" title="Scansiona codice a barre" onclick="toggleScanner('msDDT_scanner', 'msDDT_segnacollo')">&#128247;</button>
+                    </div>
+                    <div id="msDDT_scanner" class="scanner-container"></div>
                 </div>
                 <div id="msDDT_tipoLabel" class="mb-3 text-center">
                     <span class="badge bg-success fs-6" id="msDDT_badgeTotale" style="display:none;">Consegna Totale</span>
@@ -847,6 +882,67 @@ document.addEventListener('click', function(e){
     if(!document.getElementById('operatoreInfo').contains(e.target)){
         document.getElementById('operatorePopup').style.display='none';
     }
+});
+
+// === Scanner codice a barre ===
+var scannerInstances = {};
+
+function avviaScanner(scannerId, inputId) {
+    var container = document.getElementById(scannerId);
+    container.classList.add('active');
+
+    var scanner = new Html5Qrcode(scannerId, {
+        formatsToSupport: [
+            Html5QrcodeSupportedFormats.CODE_128,
+            Html5QrcodeSupportedFormats.CODE_39,
+            Html5QrcodeSupportedFormats.EAN_13,
+            Html5QrcodeSupportedFormats.EAN_8,
+            Html5QrcodeSupportedFormats.QR_CODE
+        ]
+    });
+    scannerInstances[scannerId] = scanner;
+
+    scanner.start(
+        { facingMode: 'environment' },
+        { fps: 10, qrbox: { width: 280, height: 120 } },
+        function(decodedText) {
+            document.getElementById(inputId).value = decodedText;
+            fermaScanner(scannerId);
+        },
+        function() { /* ignore scan errors */ }
+    ).catch(function(err) {
+        console.error('Errore avvio scanner:', err);
+        alert('Impossibile avviare la fotocamera. Verifica i permessi.');
+        container.classList.remove('active');
+    });
+}
+
+function fermaScanner(scannerId) {
+    var scanner = scannerInstances[scannerId];
+    if (scanner) {
+        scanner.stop().then(function() {
+            scanner.clear();
+        }).catch(function() {});
+        delete scannerInstances[scannerId];
+    }
+    var container = document.getElementById(scannerId);
+    if (container) container.classList.remove('active');
+}
+
+function toggleScanner(scannerId, inputId) {
+    if (scannerInstances[scannerId]) {
+        fermaScanner(scannerId);
+    } else {
+        avviaScanner(scannerId, inputId);
+    }
+}
+
+// Ferma scanner quando i modal vengono chiusi
+['modalConsegna', 'modalSegnacollo'].forEach(function(modalId) {
+    document.getElementById(modalId).addEventListener('hidden.bs.modal', function() {
+        if (modalId === 'modalConsegna') fermaScanner('mc_scanner');
+        if (modalId === 'modalSegnacollo') fermaScanner('msDDT_scanner');
+    });
 });
 </script>
 @endsection
