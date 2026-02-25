@@ -329,7 +329,7 @@ class PrinectController extends Controller
     /**
      * Report commessa con KPI e grafici
      */
-    public function reportCommessa($commessa)
+    public function reportCommessa($commessa, PrinectService $service = null)
     {
         $attivita = PrinectAttivita::where('commessa_gestionale', $commessa)
             ->orderBy('start_time')
@@ -342,37 +342,83 @@ class PrinectController extends Controller
         $jobName = $attivita->first()->prinect_job_name ?? '-';
         $jobId = $attivita->first()->prinect_job_id ?? '-';
 
-        $totBuoni = $attivita->sum('good_cycles');
-        $totScarto = $attivita->sum('waste_cycles');
-        $totFogli = $totBuoni + $totScarto;
-        $percScarto = $totFogli > 0 ? round(($totScarto / $totFogli) * 100, 1) : 0;
-
+        // Dati workstep da Prinect API (include volta e dati completi)
+        $perWorkstep = collect();
+        $totBuoni = 0;
+        $totScarto = 0;
         $tempoAvviamentoSec = 0;
         $tempoProduzioneSec = 0;
+        $usaWorkstep = false;
 
-        foreach ($attivita as $att) {
-            if (!$att->start_time || !$att->end_time) continue;
-            $diff = $att->start_time->diffInSeconds($att->end_time);
-            if ($att->activity_name === 'Avviamento') {
-                $tempoAvviamentoSec += $diff;
-            } else {
-                $tempoProduzioneSec += $diff;
+        if ($service && is_numeric($jobId)) {
+            try {
+                $wsData = $service->getJobWorksteps($jobId);
+                $worksteps = collect($wsData['worksteps'] ?? [])
+                    ->filter(fn($ws) => in_array('ConventionalPrinting', $ws['types'] ?? []))
+                    ->filter(fn($ws) => ($ws['amountProduced'] ?? 0) > 0 || ($ws['wasteProduced'] ?? 0) > 0);
+
+                if ($worksteps->isNotEmpty()) {
+                    $usaWorkstep = true;
+
+                    foreach ($worksteps as $ws) {
+                        $nome = $ws['name'] ?? '-';
+                        $buoni = $ws['amountProduced'] ?? 0;
+                        $scarto = $ws['wasteProduced'] ?? 0;
+                        $totBuoni += $buoni;
+                        $totScarto += $scarto;
+
+                        $times = collect($ws['actualTimes'] ?? []);
+                        $secAvv = (int) ($times->firstWhere('timeTypeName', 'Tempo di avviamento')['duration'] ?? 0);
+                        $secProd = (int) ($times->firstWhere('timeTypeName', 'Tempo di esecuzione')['duration'] ?? 0);
+                        $tempoAvviamentoSec += $secAvv;
+                        $tempoProduzioneSec += $secProd;
+
+                        $perWorkstep[$nome] = (object) [
+                            'buoni' => $buoni,
+                            'scarto' => $scarto,
+                            'sec_avviamento' => $secAvv,
+                            'sec_produzione' => $secProd,
+                            'n_attivita' => $attivita->where('workstep_name', $nome)->count() ?: '-',
+                            'stato' => $ws['status'] ?? '-',
+                        ];
+                    }
+                }
+            } catch (\Exception $e) {
+                // Prinect non disponibile, fallback su attivita
             }
         }
 
-        $tempoTotaleSec = $tempoAvviamentoSec + $tempoProduzioneSec;
+        // Fallback: usa attivita se workstep non disponibili
+        if (!$usaWorkstep) {
+            $totBuoni = $attivita->sum('good_cycles');
+            $totScarto = $attivita->sum('waste_cycles');
 
-        $perWorkstep = $attivita->groupBy('workstep_name')->map(function ($gruppo) {
-            return (object) [
-                'buoni' => $gruppo->sum('good_cycles'),
-                'scarto' => $gruppo->sum('waste_cycles'),
-                'sec_avviamento' => $gruppo->where('activity_name', 'Avviamento')
-                    ->sum(fn($a) => $a->start_time && $a->end_time ? $a->start_time->diffInSeconds($a->end_time) : 0),
-                'sec_produzione' => $gruppo->where('activity_name', '!=', 'Avviamento')
-                    ->sum(fn($a) => $a->start_time && $a->end_time ? $a->start_time->diffInSeconds($a->end_time) : 0),
-                'n_attivita' => $gruppo->count(),
-            ];
-        });
+            foreach ($attivita as $att) {
+                if (!$att->start_time || !$att->end_time) continue;
+                $diff = $att->start_time->diffInSeconds($att->end_time);
+                if ($att->activity_name === 'Avviamento') {
+                    $tempoAvviamentoSec += $diff;
+                } else {
+                    $tempoProduzioneSec += $diff;
+                }
+            }
+
+            $perWorkstep = $attivita->groupBy('workstep_name')->map(function ($gruppo) {
+                return (object) [
+                    'buoni' => $gruppo->sum('good_cycles'),
+                    'scarto' => $gruppo->sum('waste_cycles'),
+                    'sec_avviamento' => $gruppo->where('activity_name', 'Avviamento')
+                        ->sum(fn($a) => $a->start_time && $a->end_time ? $a->start_time->diffInSeconds($a->end_time) : 0),
+                    'sec_produzione' => $gruppo->where('activity_name', '!=', 'Avviamento')
+                        ->sum(fn($a) => $a->start_time && $a->end_time ? $a->start_time->diffInSeconds($a->end_time) : 0),
+                    'n_attivita' => $gruppo->count(),
+                ];
+            });
+        }
+
+        $totFogli = $totBuoni + $totScarto;
+        $percScarto = $totFogli > 0 ? round(($totScarto / $totFogli) * 100, 1) : 0;
+        $tempoTotaleSec = $tempoAvviamentoSec + $tempoProduzioneSec;
 
         $perOperatore = collect();
         foreach ($attivita as $att) {
