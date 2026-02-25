@@ -344,6 +344,10 @@
             <div class="modal-body">
                 <input type="hidden" id="mc_faseId">
                 <input type="hidden" id="mc_forza">
+                <div class="mb-3">
+                    <label for="mc_segnacollo" class="form-label fw-bold">Segnacollo BRT <small class="text-muted">(opzionale)</small></label>
+                    <input type="text" class="form-control form-control-lg" id="mc_segnacollo" placeholder="Es. 067138050411341" maxlength="50">
+                </div>
                 <button type="button" class="btn btn-success btn-lg w-100 mb-3 fw-bold py-3" onclick="inviaConsegna('totale')">
                     Consegna Totale
                 </button>
@@ -378,6 +382,7 @@
                             <th>Descrizione</th>
                             <th>Qta Ordinata</th>
                             <th>Tipo</th>
+                            <th>Segnacollo BRT</th>
                             <th>Ora Consegna</th>
                             <th>Operatore</th>
                         </tr>
@@ -400,6 +405,7 @@
                                     <span class="badge bg-success">Totale</span>
                                 @endif
                             </td>
+                            <td>{{ $fase->segnacollo_brt ?? '-' }}</td>
                             <td>{{ $fase->data_fine ? \Carbon\Carbon::parse($fase->data_fine)->format('H:i:s') : '-' }}</td>
                             <td>
                                 @foreach($fase->operatori as $op)
@@ -445,6 +451,7 @@ function parseResponse(res) {
 function apriModalConsegna(faseId, forza) {
     document.getElementById('mc_faseId').value = faseId;
     document.getElementById('mc_forza').value = forza ? '1' : '0';
+    document.getElementById('mc_segnacollo').value = '';
     new bootstrap.Modal(document.getElementById('modalConsegna')).show();
 }
 
@@ -456,7 +463,7 @@ function inviaConsegna(tipo) {
 
     fetch('{{ route("spedizione.invio") }}', {
         method: 'POST', headers: getHdrs(),
-        body: JSON.stringify({ fase_id: parseInt(faseId), tipo_consegna: tipo, forza: forza })
+        body: JSON.stringify({ fase_id: parseInt(faseId), tipo_consegna: tipo, forza: forza, segnacollo_brt: document.getElementById('mc_segnacollo').value.trim() || null })
     })
     .then(parseResponse)
     .then(data => {

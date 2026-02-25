@@ -187,8 +187,9 @@ class DashboardSpedizioneController extends Controller
                 $f->save();
             }
 
-            // Salva tipo consegna sulla fase spedizione
+            // Salva tipo consegna e segnacollo BRT sulla fase spedizione
             $fase->tipo_consegna = $tipoConsegna;
+            $fase->segnacollo_brt = $request->input('segnacollo_brt') ?: null;
             $fase->save();
 
             // Attach operatore spedizione alle fasi BRT
@@ -246,6 +247,7 @@ class DashboardSpedizioneController extends Controller
                 $f->data_fine = null;
                 $f->data_inizio = null;
                 $f->tipo_consegna = null;
+                $f->segnacollo_brt = null;
                 $f->save();
             }
 

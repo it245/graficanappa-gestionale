@@ -30,6 +30,7 @@ class OrdineFase extends Model
         'ore',
         'tipo_consegna',
         'ddt_fornitore_id',
+        'segnacollo_brt',
     ];
 
     /* ===================== RELAZIONI ===================== */
