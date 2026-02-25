@@ -453,6 +453,7 @@ public function calcolaOreEPriorita($fase)
 
             // DATA INIZIO: dalla pivot operatore, fallback dal campo ordine_fasi
             $dataInizioOriginale = $fase->getAttributes()['data_inizio'] ?? null;
+            $carbonInizio = null;
             $fase->data_inizio = null;
 
             if ($fase->operatori->isNotEmpty()) {
@@ -462,19 +463,20 @@ public function calcolaOreEPriorita($fase)
                     ->first()?->pivot->data_inizio;
 
                 if ($primaDataInizio) {
-                    $fase->data_inizio = Carbon::parse($primaDataInizio)
-                        ->format('d/m/Y H:i:s');
+                    $carbonInizio = Carbon::parse($primaDataInizio);
+                    $fase->data_inizio = $carbonInizio->format('d/m/Y H:i:s');
                 }
             }
 
             // Fallback: data_inizio dal campo ordine_fasi (impostato da Prinect sync)
             if (!$fase->data_inizio && $dataInizioOriginale) {
-                $fase->data_inizio = Carbon::parse($dataInizioOriginale)
-                    ->format('d/m/Y H:i:s');
+                $carbonInizio = Carbon::parse($dataInizioOriginale);
+                $fase->data_inizio = $carbonInizio->format('d/m/Y H:i:s');
             }
 
             // DATA FINE: dalla pivot operatore, fallback dal campo ordine_fasi
             $dataFineOriginale = $fase->getAttributes()['data_fine'] ?? null;
+            $carbonFine = null;
             $fase->data_fine = null;
 
             if ($fase->operatori->isNotEmpty()) {
@@ -484,15 +486,22 @@ public function calcolaOreEPriorita($fase)
                     ->first()?->pivot->data_fine;
 
                 if ($primaDataFine) {
-                    $fase->data_fine = Carbon::parse($primaDataFine)
-                        ->format('d/m/Y H:i:s');
+                    $carbonFine = Carbon::parse($primaDataFine);
+                    $fase->data_fine = $carbonFine->format('d/m/Y H:i:s');
                 }
             }
 
             // Fallback: data_fine dal campo ordine_fasi (impostato da Prinect sync)
             if (!$fase->data_fine && $dataFineOriginale) {
-                $fase->data_fine = Carbon::parse($dataFineOriginale)
-                    ->format('d/m/Y H:i:s');
+                $carbonFine = Carbon::parse($dataFineOriginale);
+                $fase->data_fine = $carbonFine->format('d/m/Y H:i:s');
+            }
+
+            // Calcolo ore lavorate e pausa
+            $fase->secondi_pausa_totale = $fase->operatori->sum(fn($op) => $op->pivot->secondi_pausa ?? 0);
+            $fase->secondi_lordo = 0;
+            if ($carbonInizio && $carbonFine) {
+                $fase->secondi_lordo = $carbonFine->diffInSeconds($carbonInizio);
             }
 
             return $fase;
