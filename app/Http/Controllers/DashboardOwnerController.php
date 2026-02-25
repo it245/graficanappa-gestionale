@@ -501,7 +501,7 @@ public function calcolaOreEPriorita($fase)
             $fase->secondi_pausa_totale = $fase->operatori->sum(fn($op) => $op->pivot->secondi_pausa ?? 0);
             $fase->secondi_lordo = 0;
             if ($carbonInizio && $carbonFine) {
-                $fase->secondi_lordo = $carbonFine->diffInSeconds($carbonInizio);
+                $fase->secondi_lordo = abs($carbonFine->getTimestamp() - $carbonInizio->getTimestamp());
             }
 
             return $fase;

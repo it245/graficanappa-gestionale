@@ -361,13 +361,43 @@ th:nth-child(23), td:nth-child(23) {
                     @php
                         $totSecondiPausa = $fase->secondi_pausa_totale ?? 0;
                         $secLordo = $fase->secondi_lordo ?? 0;
+
+                        // Fallback: calcola dalle date mostrate se secondi_lordo non calcolato
+                        if ($secLordo == 0) {
+                            $diStr = $fase->data_inizio ?? ($fase->operatori->count() > 0 ? $fase->operatori->min('pivot.data_inizio') : null);
+                            $dfStr = $fase->data_fine ?? ($fase->operatori->count() > 0 ? $fase->operatori->max('pivot.data_fine') : null);
+                            if ($diStr && $dfStr) {
+                                try {
+                                    $di = \Carbon\Carbon::createFromFormat('d/m/Y H:i:s', $diStr);
+                                    $df = \Carbon\Carbon::createFromFormat('d/m/Y H:i:s', $dfStr);
+                                    if ($di && $df) $secLordo = abs($df->getTimestamp() - $di->getTimestamp());
+                                } catch (\Exception $e) {
+                                    try {
+                                        $secLordo = abs(\Carbon\Carbon::parse($dfStr)->getTimestamp() - \Carbon\Carbon::parse($diStr)->getTimestamp());
+                                    } catch (\Exception $e2) {}
+                                }
+                            }
+                        }
+
                         $secNetto = max($secLordo - $totSecondiPausa, 0);
                         $oreNette = $secNetto / 3600;
                         $pausaH = floor($totSecondiPausa / 3600);
                         $pausaM = floor(($totSecondiPausa % 3600) / 60);
                     @endphp
                     <td>{{ $totSecondiPausa > 0 ? sprintf('%dh %02dm', $pausaH, $pausaM) : '-' }}</td>
-                    <td>{{ $secLordo > 0 ? number_format($oreNette, 1) . 'h' : '-' }}</td>
+                    <td>
+                        @if($secLordo > 0)
+                            @if($oreNette >= 1)
+                                {{ number_format($oreNette, 1) }}h
+                            @elseif($secNetto >= 60)
+                                {{ floor($secNetto / 60) }}m
+                            @else
+                                {{ $secNetto }}s
+                            @endif
+                        @else
+                            -
+                        @endif
+                    </td>
                     <td><span class="badge-stato">{{ $fase->stato == 4 ? 'Consegnata' : 'Terminata' }}</span></td>
                 </tr>
             @empty
