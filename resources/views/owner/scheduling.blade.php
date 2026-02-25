@@ -1468,12 +1468,24 @@ hScroll.addEventListener('scroll', function() {
 // ===================== INIT =====================
 
 function renderAll() {
+    // Salva posizione scroll orizzontale prima di ricostruire il DOM
+    const wrappers = document.querySelectorAll('.gantt-wrapper');
+    const savedScroll = Array.from(wrappers).map(w => w.scrollLeft);
+
     renderKPI();
     renderFilterChips();
     renderGanttMacchina();
     renderGanttCommessa();
     renderTabella();
-    requestAnimationFrame(syncHScroll);
+
+    // Ripristina posizione scroll dopo il render
+    requestAnimationFrame(() => {
+        const newWrappers = document.querySelectorAll('.gantt-wrapper');
+        newWrappers.forEach((w, i) => {
+            if (savedScroll[i]) w.scrollLeft = savedScroll[i];
+        });
+        syncHScroll();
+    });
 }
 
 // Aggiorna scrollbar al cambio tab
