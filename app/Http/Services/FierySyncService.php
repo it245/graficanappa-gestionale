@@ -35,8 +35,9 @@ class FierySyncService
         $jobName = $status['stampa']['documento'] ?? null;
         $commessaCode = $this->estraiCommessa($jobName);
 
-        // Se non c'è job attivo o commessa non trovata → non fare nulla (idle)
+        // Se non c'è job attivo o commessa non trovata → Fiery idle, termina fasi aperte
         if (!$commessaCode) {
+            $this->terminaFasiIdle($operatore);
             return null;
         }
 
@@ -197,6 +198,36 @@ class FierySyncService
             $fase->save();
 
             // Aggiorna data_fine sulla pivot
+            $fase->operatori()->updateExistingPivot($operatore->id, [
+                'data_fine' => now(),
+            ]);
+        }
+    }
+
+    /**
+     * Fiery idle: termina TUTTE le fasi digitali ancora avviate da questo operatore.
+     * Chiamato quando il Fiery non sta stampando nulla → la stampa è finita.
+     */
+    protected function terminaFasiIdle(Operatore $operatore): void
+    {
+        $fasiAperte = OrdineFase::where('stato', 2)
+            ->where(function ($q) {
+                $q->whereHas('faseCatalogo', function ($sub) {
+                    $sub->where('reparto_id', self::REPARTO_DIGITALE_ID);
+                })->orWhere('fase', 'STAMPA');
+            })
+            ->whereHas('operatori', function ($q) use ($operatore) {
+                $q->where('operatore_id', $operatore->id);
+            })
+            ->get();
+
+        foreach ($fasiAperte as $fase) {
+            $fase->stato = 3;
+            if (!$fase->data_fine) {
+                $fase->data_fine = now()->format('Y-m-d H:i:s');
+            }
+            $fase->save();
+
             $fase->operatori()->updateExistingPivot($operatore->id, [
                 'data_fine' => now(),
             ]);
