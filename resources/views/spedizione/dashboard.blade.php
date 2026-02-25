@@ -371,6 +371,7 @@
                 <table class="table table-bordered table-sm" style="white-space:nowrap;">
                     <thead class="table-success">
                         <tr>
+                            <th>Azione</th>
                             <th>Commessa</th>
                             <th>Cliente</th>
                             <th>Cod. Articolo</th>
@@ -384,6 +385,9 @@
                     <tbody>
                         @foreach($fasiSpediteOggi as $fase)
                         <tr>
+                            <td>
+                                <button class="btn btn-sm btn-outline-danger fw-bold" onclick="recuperaConsegna({{ $fase->id }}, this)">Recupera</button>
+                            </td>
                             <td><strong>{{ $fase->ordine->commessa ?? '-' }}</strong></td>
                             <td>{{ $fase->ordine->cliente_nome ?? '-' }}</td>
                             <td>{{ $fase->ordine->cod_art ?? '-' }}</td>
@@ -470,6 +474,21 @@ function aggiornaNota(faseId, valore) {
     .then(parseResponse)
     .then(data => { if (!data.success) alert('Errore salvataggio nota'); })
     .catch(err => { if (err !== 'session_expired') console.error('Errore:', err); });
+}
+
+function recuperaConsegna(faseId, btn) {
+    if (!confirm('Annullare la consegna? La commessa tornerà in "Da consegnare".')) return;
+    btn.disabled = true;
+    fetch('{{ route("spedizione.recupera") }}', {
+        method: 'POST', headers: getHdrs(),
+        body: JSON.stringify({ fase_id: faseId })
+    })
+    .then(parseResponse)
+    .then(data => {
+        if (data.success) { window.location.reload(); }
+        else { alert('Errore: ' + (data.messaggio || 'operazione fallita')); btn.disabled = false; }
+    })
+    .catch(err => { if (err !== 'session_expired') { console.error('Errore:', err); alert('Errore: ' + err); } btn.disabled = false; });
 }
 
 // Ricerca

@@ -219,4 +219,59 @@ class DashboardSpedizioneController extends Controller
             ], 500);
         }
     }
+
+    public function recuperaConsegna(Request $request)
+    {
+        try {
+            $fase = OrdineFase::with('ordine')->find($request->fase_id);
+            if (!$fase) {
+                return response()->json(['success' => false, 'messaggio' => 'Fase non trovata']);
+            }
+
+            $commessa = $fase->ordine->commessa ?? null;
+            if (!$commessa) {
+                return response()->json(['success' => false, 'messaggio' => 'Commessa non trovata']);
+            }
+
+            $repartoSpedizione = Reparto::where('nome', 'spedizione')->first();
+
+            // Ripristina fasi spedizione: stato 1 (pronto), rimuovi data_fine e tipo_consegna
+            $fasiSped = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
+                ->whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', $repartoSpedizione->id))
+                ->where('stato', 4)
+                ->get();
+
+            foreach ($fasiSped as $f) {
+                $f->stato = 1;
+                $f->data_fine = null;
+                $f->data_inizio = null;
+                $f->tipo_consegna = null;
+                $f->save();
+            }
+
+            // Ripristina fasi non-spedizione: stato 3 (terminato) - erano già terminate prima della consegna
+            $fasiAltro = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
+                ->where(function ($q) use ($repartoSpedizione) {
+                    $q->whereDoesntHave('faseCatalogo')
+                       ->orWhereHas('faseCatalogo', fn($q2) => $q2->where('reparto_id', '!=', $repartoSpedizione->id));
+                })
+                ->where('stato', 4)
+                ->get();
+
+            foreach ($fasiAltro as $f) {
+                $f->stato = 3;
+                $f->save();
+            }
+
+            return response()->json([
+                'success' => true,
+                'messaggio' => 'Consegna annullata - commessa ' . $commessa
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'messaggio' => 'Errore server: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }
