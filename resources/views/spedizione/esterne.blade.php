@@ -319,7 +319,6 @@ function esternoTermina(faseId, btn) {
     var prefillQta = fogliBuoni > 0 ? fogliBuoni : (qtaProd > 0 ? qtaProd : '');
     document.getElementById('terminaEsternoQtaProdotta').value = prefillQta;
     document.getElementById('terminaEsternoScarti').value = fogliScarto > 0 ? fogliScarto : 0;
-    document.getElementById('terminaEsternoNoteRientro').value = '';
 
     document.getElementById('stepTipoRientro').style.display = '';
     tipoRientroSelezionato = 'terminata';
