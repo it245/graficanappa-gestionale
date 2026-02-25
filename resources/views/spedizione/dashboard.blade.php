@@ -48,21 +48,41 @@
         margin: 0 4px;
     }
     table th, table td { white-space:nowrap; }
-    td:nth-child(6){ white-space:normal; min-width:300px; }
+    td:nth-child(7){ white-space:normal; min-width:300px; }
 
-    .btn-invia {
-        background-color: #28a745;
+    .btn-consegna {
         color: #fff;
         border: none;
         padding: 8px 20px;
-        border-radius: 5px;
+        border-radius: 8px;
         font-weight: bold;
         font-size: 14px;
         cursor: pointer;
-        transition: background-color 0.2s;
+        transition: all 0.2s;
+        white-space: nowrap;
     }
-    .btn-invia:hover { background-color: #218838; }
-    .btn-invia:disabled { background-color: #6c757d; cursor: not-allowed; }
+    .btn-consegna-green {
+        background: linear-gradient(135deg, #28a745, #218838);
+    }
+    .btn-consegna-green:hover {
+        background: linear-gradient(135deg, #218838, #1e7e34);
+        transform: translateY(-1px);
+        box-shadow: 0 3px 8px rgba(40,167,69,0.35);
+    }
+    .btn-consegna-red {
+        background: linear-gradient(135deg, #dc3545, #c82333);
+    }
+    .btn-consegna-red:hover {
+        background: linear-gradient(135deg, #c82333, #a71d2a);
+        transform: translateY(-1px);
+        box-shadow: 0 3px 8px rgba(220,53,69,0.35);
+    }
+    .btn-consegna:disabled {
+        background: #6c757d !important;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
 
     .kpi-box {
         background: #fff;
@@ -121,34 +141,37 @@
     }
     a.commessa-link:hover { color: #0d6efd; }
 
-    .btn-forza {
-        background: linear-gradient(135deg, #dc3545, #c82333);
-        color: #fff;
-        border: none;
-        padding: 8px 18px;
-        border-radius: 8px;
-        font-weight: bold;
-        font-size: 13px;
-        cursor: pointer;
-        transition: all 0.2s;
-        white-space: nowrap;
-    }
-    .btn-forza:hover {
-        background: linear-gradient(135deg, #c82333, #a71d2a);
-        transform: translateY(-1px);
-        box-shadow: 0 3px 8px rgba(220,53,69,0.35);
-    }
-    .btn-forza:disabled {
-        background: #6c757d;
-        cursor: not-allowed;
-        transform: none;
-        box-shadow: none;
-    }
     .fasi-mancanti {
         font-size: 11px;
         color: #dc3545;
         margin-top: 4px;
     }
+
+    /* Modal consegna */
+    .modal-consegna .tipo-btn {
+        display: block;
+        width: 100%;
+        padding: 18px;
+        margin-bottom: 12px;
+        border-radius: 12px;
+        border: 2px solid #dee2e6;
+        background: #fff;
+        cursor: pointer;
+        text-align: left;
+        transition: all 0.2s;
+    }
+    .modal-consegna .tipo-btn:hover {
+        border-color: #0d6efd;
+        background: #f0f6ff;
+    }
+    .modal-consegna .tipo-btn.active {
+        border-color: #0d6efd;
+        background: #e8f0fe;
+    }
+    .modal-consegna .tipo-btn h5 { margin:0 0 4px; font-size:16px; }
+    .modal-consegna .tipo-btn small { color:#6c757d; }
+    .qta-parziale-row { display:none; margin-top:12px; }
+    .qta-parziale-row.show { display:block; }
 </style>
 
 <div class="top-bar">
@@ -167,32 +190,52 @@
 
 <h2>Dashboard Spedizione</h2>
 
+@php
+    $consegneTotali = $fasiSpediteOggi->where('tipo_consegna', 'totale')->count();
+    $consegneParziali = $fasiSpediteOggi->where('tipo_consegna', 'parziale')->count();
+    // Vecchie consegne senza tipo_consegna contale come totali
+    $consegneSenzaTipo = $fasiSpediteOggi->whereNull('tipo_consegna')->count();
+    $consegneTotali += $consegneSenzaTipo;
+@endphp
+
 <!-- KPI -->
 <div class="row mx-2 mb-3">
-    <div class="col-md-3">
+    <div class="col-md-2">
         <div class="kpi-box" style="border-left: 4px solid #28a745;">
             <h3>{{ $fasiDaSpedire->count() }}</h3>
             <small>Da consegnare</small>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-2">
         <div class="kpi-box" style="border-left: 4px solid #ffc107;">
             <h3>{{ $fasiInAttesa->count() }}</h3>
-            <small>In attesa (lavorazione)</small>
+            <small>In attesa</small>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-2">
         <a href="{{ route('spedizione.esterne') }}" style="text-decoration:none; color:inherit;">
             <div class="kpi-box" style="cursor:pointer; border-left: 4px solid #17a2b8;">
                 <h3>{{ $fasiEsterne->count() }}</h3>
-                <small>Lavorazioni esterne <span style="font-size:11px">(apri)</span></small>
+                <small>Lav. esterne <span style="font-size:11px">(apri)</span></small>
             </div>
         </a>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-2">
         <div class="kpi-box" style="cursor:pointer; border-left: 4px solid #0d6efd;" data-bs-toggle="modal" data-bs-target="#modalSpediteOggi">
             <h3>{{ $fasiSpediteOggi->count() }}</h3>
-            <small>Consegnate oggi <span style="font-size:11px">(clicca)</span></small>
+            <small>Consegnate oggi</small>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="kpi-box" style="border-left: 4px solid #198754;">
+            <h3>{{ $consegneTotali }}</h3>
+            <small>Totali oggi</small>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="kpi-box" style="border-left: 4px solid #fd7e14;">
+            <h3>{{ $consegneParziali }}</h3>
+            <small>Parziali oggi</small>
         </div>
     </div>
 </div>
@@ -233,8 +276,8 @@
                 @endphp
                 <tr class="{{ $rowClass }} searchable">
                     <td>
-                        <button class="btn-invia" onclick="inviaAutomatico({{ $fase->id }}, this)">
-                            Consegnato
+                        <button class="btn-consegna btn-consegna-green" onclick="apriModalConsegna({{ $fase->id }}, '{{ $fase->ordine->qta_richiesta ?? '' }}', false)">
+                            Consegna
                         </button>
                     </td>
                     <td>
@@ -270,7 +313,7 @@
     <table class="table table-bordered table-sm" id="tabInAttesa">
         <thead style="background:#ffc107; color:#000;">
             <tr>
-                <th>Forza Consegna</th>
+                <th>Azione</th>
                 <th>Commessa</th>
                 <th>Cliente</th>
                 <th>Cod. Articolo</th>
@@ -285,12 +328,11 @@
                 @php
                     $pct = $fase->percentuale ?? 0;
                     $pctColor = $pct >= 75 ? '#17a2b8' : ($pct >= 50 ? '#ffc107' : '#dc3545');
-                    $nomiMancanti = $fase->fasiNonTerminate->map(fn($f) => $f->faseCatalogo->nome_display ?? '-')->implode(', ');
                 @endphp
                 <tr class="searchable">
                     <td style="text-align:center; vertical-align:middle;">
-                        <button class="btn-forza" onclick="forzaConsegna({{ $fase->id }}, this)">
-                            Forza
+                        <button class="btn-consegna btn-consegna-red" onclick="apriModalConsegna({{ $fase->id }}, '{{ $fase->ordine->qta_richiesta ?? '' }}', true)">
+                            Consegna
                         </button>
                         <div class="fasi-mancanti">{{ $fase->fasiNonTerminate->count() }} fase/i aperte</div>
                     </td>
@@ -312,6 +354,41 @@
 </div>
 @endif
 
+<!-- Modal Consegna -->
+<div class="modal fade modal-consegna" id="modalConsegna" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Tipo di consegna</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="mc_faseId">
+                <input type="hidden" id="mc_forza">
+
+                <button type="button" class="tipo-btn active" id="btnTotale" onclick="selezionaTipo('totale')">
+                    <h5>Consegna totale</h5>
+                    <small>Tutta la quantita ordinata viene consegnata</small>
+                </button>
+                <button type="button" class="tipo-btn" id="btnParziale" onclick="selezionaTipo('parziale')">
+                    <h5>Consegna parziale</h5>
+                    <small>Solo una parte della quantita viene consegnata</small>
+                </button>
+
+                <div class="qta-parziale-row" id="qtaParzRow">
+                    <label class="form-label fw-bold">Quantita consegnata:</label>
+                    <input type="number" class="form-control" id="mc_qtaConsegnata" min="1" placeholder="Es. 500">
+                    <small class="text-muted">Quantita ordinata: <strong id="mc_qtaRichiesta">-</strong></small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                <button type="button" class="btn btn-success fw-bold" id="btnConfermaConsegna" onclick="confermaConsegna()">Conferma consegna</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Modal Spedite Oggi -->
 <div class="modal fade" id="modalSpediteOggi" tabindex="-1">
     <div class="modal-dialog modal-xl">
@@ -329,8 +406,9 @@
                             <th>Cliente</th>
                             <th>Cod. Articolo</th>
                             <th>Descrizione</th>
-                            <th>Quantita</th>
-                            <th>UM</th>
+                            <th>Qta Ordinata</th>
+                            <th>Tipo</th>
+                            <th>Qta Consegnata</th>
                             <th>Ora Consegna</th>
                             <th>Operatore</th>
                         </tr>
@@ -343,7 +421,14 @@
                             <td>{{ $fase->ordine->cod_art ?? '-' }}</td>
                             <td>{{ $fase->ordine->descrizione ?? '-' }}</td>
                             <td>{{ $fase->ordine->qta_richiesta ?? '-' }}</td>
-                            <td>{{ $fase->ordine->um ?? '-' }}</td>
+                            <td>
+                                @if($fase->tipo_consegna === 'parziale')
+                                    <span class="badge bg-warning text-dark">Parziale</span>
+                                @else
+                                    <span class="badge bg-success">Totale</span>
+                                @endif
+                            </td>
+                            <td>{{ $fase->tipo_consegna === 'parziale' ? number_format($fase->qta_consegnata ?? 0) : '-' }}</td>
                             <td>{{ $fase->data_fine ? \Carbon\Carbon::parse($fase->data_fine)->format('H:i:s') : '-' }}</td>
                             <td>
                                 @foreach($fase->operatori as $op)
@@ -386,20 +471,69 @@ function parseResponse(res) {
     return res.json();
 }
 
-function inviaAutomatico(faseId, btn) {
+// ===== Modal consegna =====
+let tipoSelezionato = 'totale';
+
+function apriModalConsegna(faseId, qtaRichiesta, forza) {
+    document.getElementById('mc_faseId').value = faseId;
+    document.getElementById('mc_forza').value = forza ? '1' : '0';
+    document.getElementById('mc_qtaRichiesta').textContent = qtaRichiesta || '-';
+    document.getElementById('mc_qtaConsegnata').value = '';
+    selezionaTipo('totale');
+    new bootstrap.Modal(document.getElementById('modalConsegna')).show();
+}
+
+function selezionaTipo(tipo) {
+    tipoSelezionato = tipo;
+    document.getElementById('btnTotale').classList.toggle('active', tipo === 'totale');
+    document.getElementById('btnParziale').classList.toggle('active', tipo === 'parziale');
+    document.getElementById('qtaParzRow').classList.toggle('show', tipo === 'parziale');
+    if (tipo === 'parziale') {
+        document.getElementById('mc_qtaConsegnata').focus();
+    }
+}
+
+function confermaConsegna() {
+    const faseId = document.getElementById('mc_faseId').value;
+    const forza = document.getElementById('mc_forza').value === '1';
+    const qta = document.getElementById('mc_qtaConsegnata').value;
+
+    if (tipoSelezionato === 'parziale' && (!qta || parseInt(qta) <= 0)) {
+        alert('Inserisci la quantita consegnata');
+        return;
+    }
+
+    const btn = document.getElementById('btnConfermaConsegna');
     btn.disabled = true;
-    btn.textContent = 'Consegna...';
+    btn.textContent = 'Invio...';
+
+    const body = {
+        fase_id: parseInt(faseId),
+        tipo_consegna: tipoSelezionato,
+        forza: forza
+    };
+    if (tipoSelezionato === 'parziale') {
+        body.qta_consegnata = parseInt(qta);
+    }
 
     fetch('{{ route("spedizione.invio") }}', {
         method: 'POST', headers: getHdrs(),
-        body: JSON.stringify({ fase_id: faseId })
+        body: JSON.stringify(body)
     })
     .then(parseResponse)
     .then(data => {
         if (data.success) { window.location.reload(); }
-        else { alert('Errore: ' + (data.messaggio || data.message || 'operazione fallita')); btn.disabled = false; btn.textContent = 'Consegnato'; }
+        else {
+            alert('Errore: ' + (data.messaggio || data.message || 'operazione fallita'));
+            btn.disabled = false;
+            btn.textContent = 'Conferma consegna';
+        }
     })
-    .catch(err => { if (err !== 'session_expired') { console.error('Errore:', err); alert('Errore: ' + err); } btn.disabled = false; btn.textContent = 'Consegnato'; });
+    .catch(err => {
+        if (err !== 'session_expired') { console.error('Errore:', err); alert('Errore: ' + err); }
+        btn.disabled = false;
+        btn.textContent = 'Conferma consegna';
+    });
 }
 
 function aggiornaNota(faseId, valore) {
@@ -410,23 +544,6 @@ function aggiornaNota(faseId, valore) {
     .then(parseResponse)
     .then(data => { if (!data.success) alert('Errore salvataggio nota'); })
     .catch(err => { if (err !== 'session_expired') console.error('Errore:', err); });
-}
-
-function forzaConsegna(faseId, btn) {
-    if (!confirm("Sei sicuro di voler forzare la consegna?")) return;
-    btn.disabled = true;
-    btn.textContent = 'Consegna...';
-
-    fetch('{{ route("spedizione.invio") }}', {
-        method: 'POST', headers: getHdrs(),
-        body: JSON.stringify({ fase_id: faseId, forza: true })
-    })
-    .then(parseResponse)
-    .then(data => {
-        if (data.success) { window.location.reload(); }
-        else { alert('Errore: ' + (data.messaggio || data.message || 'operazione fallita')); btn.disabled = false; btn.textContent = 'Forza'; }
-    })
-    .catch(err => { if (err !== 'session_expired') { alert('Errore: ' + err); console.error('Errore:', err); } btn.disabled = false; btn.textContent = 'Forza'; });
 }
 
 // Ricerca

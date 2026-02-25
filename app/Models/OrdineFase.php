@@ -28,6 +28,8 @@ class OrdineFase extends Model
         'note',
         'priorita',
         'ore',
+        'tipo_consegna',
+        'qta_consegnata',
     ];
 
     /* ===================== RELAZIONI ===================== */

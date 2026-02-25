@@ -146,6 +146,8 @@ class DashboardSpedizioneController extends Controller
             }
 
             $forza = $request->boolean('forza', false);
+            $tipoConsegna = $request->input('tipo_consegna', 'totale'); // 'totale' o 'parziale'
+            $qtaConsegnata = $request->input('qta_consegnata');
 
             $repartoSpedizione = Reparto::where('nome', 'spedizione')->first();
             $commessa = $fase->ordine->commessa ?? null;
@@ -186,6 +188,13 @@ class DashboardSpedizioneController extends Controller
                 $f->save();
             }
 
+            // Salva tipo consegna e qta sulla fase spedizione
+            $fase->tipo_consegna = $tipoConsegna;
+            if ($tipoConsegna === 'parziale' && $qtaConsegnata !== null) {
+                $fase->qta_consegnata = (int) $qtaConsegnata;
+            }
+            $fase->save();
+
             // Attach operatore spedizione alle fasi BRT
             $fasiSpedizioneCommessa = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
                 ->where('stato', 4)
@@ -205,7 +214,7 @@ class DashboardSpedizioneController extends Controller
 
             return response()->json([
                 'success' => true,
-                'messaggio' => 'Consegnato - commessa ' . $commessa
+                'messaggio' => ($tipoConsegna === 'parziale' ? 'Consegna parziale' : 'Consegnato') . ' - commessa ' . $commessa
             ]);
         } catch (\Exception $e) {
             return response()->json([
