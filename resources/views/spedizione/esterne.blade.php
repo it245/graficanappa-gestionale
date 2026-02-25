@@ -148,22 +148,51 @@
             </div>
             <div class="modal-body">
                 <input type="hidden" id="terminaEsternoFaseId">
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Qta target (riferimento)</label>
-                    <input type="number" id="terminaEsternoQtaFase" class="form-control" readonly style="background:#e9ecef">
+
+                <!-- Step 1: Tipo rientro -->
+                <div id="stepTipoRientro">
+                    <p class="fw-bold mb-3">La lavorazione esterna e completata?</p>
+                    <button type="button" class="btn btn-success btn-lg w-100 mb-3" onclick="setTipoRientro('terminata')">
+                        <strong>Terminata</strong><br>
+                        <small>La lavorazione e completata, nessuna azione aggiuntiva</small>
+                    </button>
+                    <button type="button" class="btn btn-warning btn-lg w-100 text-dark" onclick="setTipoRientro('rientro')">
+                        <strong>Rientrata - servono altre lavorazioni</strong><br>
+                        <small>Il materiale e rientrato ma servono lavorazioni aggiuntive</small>
+                    </button>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Qta prodotta <span class="text-danger">*</span></label>
-                    <input type="number" id="terminaEsternoQtaProdotta" class="form-control" min="0" required>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Scarti</label>
-                    <input type="number" id="terminaEsternoScarti" class="form-control" min="0" value="0">
+
+                <!-- Step 2: Dati quantita -->
+                <div id="stepDatiQta" style="display:none;">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Qta target (riferimento)</label>
+                        <input type="number" id="terminaEsternoQtaFase" class="form-control" readonly style="background:#e9ecef">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Qta prodotta <span class="text-danger">*</span></label>
+                        <input type="number" id="terminaEsternoQtaProdotta" class="form-control" min="0" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Scarti</label>
+                        <input type="number" id="terminaEsternoScarti" class="form-control" min="0" value="0">
+                    </div>
+
+                    <!-- Campo note rientro (solo per rientro) -->
+                    <div id="noteRientroWrap" style="display:none;">
+                        <div class="alert alert-warning mb-3">
+                            <strong>Rientro con lavorazioni aggiuntive</strong>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Descrivi lavorazioni necessarie</label>
+                            <textarea id="terminaEsternoNoteRientro" class="form-control" rows="3" placeholder="Es. Richiede plastificazione, rifilatura non conforme..."></textarea>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
-                <button type="button" class="btn btn-danger fw-bold" onclick="confermaTerminaEsterno()">Conferma e Termina</button>
+                <button type="button" class="btn btn-outline-secondary" id="btnIndietroTermina" style="display:none;" onclick="tornaStepTipo()">Indietro</button>
+                <button type="button" class="btn btn-danger fw-bold" id="btnConfermaTermina" style="display:none;" onclick="confermaTerminaEsterno()">Conferma e Termina</button>
             </div>
         </div>
     </div>
@@ -301,7 +330,11 @@ function esternoPausa(faseId, btn) {
     .catch(err => { if (err !== 'session_expired') { console.error('Errore:', err); alert('Errore: ' + err); } btn.disabled = false; });
 }
 
+let tipoRientroSelezionato = 'terminata';
+let terminaBtnRef = null;
+
 function esternoTermina(faseId, btn) {
+    terminaBtnRef = btn;
     var qtaFase = btn.getAttribute('data-qta-fase') || 0;
     var fogliBuoni = parseInt(btn.getAttribute('data-fogli-buoni') || 0) || 0;
     var fogliScarto = parseInt(btn.getAttribute('data-fogli-scarto') || 0) || 0;
@@ -310,14 +343,43 @@ function esternoTermina(faseId, btn) {
     document.getElementById('terminaEsternoFaseId').value = faseId;
     document.getElementById('terminaEsternoQtaFase').value = qtaFase;
 
-    // Pre-fill: fogli_buoni se > 0, altrimenti qta_prod se > 0, altrimenti vuoto
     var prefillQta = fogliBuoni > 0 ? fogliBuoni : (qtaProd > 0 ? qtaProd : '');
     document.getElementById('terminaEsternoQtaProdotta').value = prefillQta;
-
-    // Pre-fill scarti da fogli_scarto se > 0
     document.getElementById('terminaEsternoScarti').value = fogliScarto > 0 ? fogliScarto : 0;
+    document.getElementById('terminaEsternoNoteRientro').value = '';
+
+    // Reset al step 1
+    document.getElementById('stepTipoRientro').style.display = '';
+    document.getElementById('stepDatiQta').style.display = 'none';
+    document.getElementById('btnConfermaTermina').style.display = 'none';
+    document.getElementById('btnIndietroTermina').style.display = 'none';
+    tipoRientroSelezionato = 'terminata';
 
     new bootstrap.Modal(document.getElementById('modalTerminaEsterno')).show();
+}
+
+function setTipoRientro(tipo) {
+    tipoRientroSelezionato = tipo;
+    document.getElementById('stepTipoRientro').style.display = 'none';
+    document.getElementById('stepDatiQta').style.display = '';
+    document.getElementById('btnConfermaTermina').style.display = '';
+    document.getElementById('btnIndietroTermina').style.display = '';
+    document.getElementById('noteRientroWrap').style.display = tipo === 'rientro' ? '' : 'none';
+
+    if (tipo === 'rientro') {
+        document.getElementById('btnConfermaTermina').textContent = 'Conferma Rientro';
+        document.getElementById('btnConfermaTermina').className = 'btn btn-warning fw-bold';
+    } else {
+        document.getElementById('btnConfermaTermina').textContent = 'Conferma e Termina';
+        document.getElementById('btnConfermaTermina').className = 'btn btn-danger fw-bold';
+    }
+}
+
+function tornaStepTipo() {
+    document.getElementById('stepTipoRientro').style.display = '';
+    document.getElementById('stepDatiQta').style.display = 'none';
+    document.getElementById('btnConfermaTermina').style.display = 'none';
+    document.getElementById('btnIndietroTermina').style.display = 'none';
 }
 
 function confermaTerminaEsterno() {
@@ -330,18 +392,41 @@ function confermaTerminaEsterno() {
         return;
     }
 
+    var noteRientro = '';
+    if (tipoRientroSelezionato === 'rientro') {
+        noteRientro = document.getElementById('terminaEsternoNoteRientro').value.trim();
+        if (!noteRientro) {
+            alert('Descrivi le lavorazioni aggiuntive necessarie');
+            return;
+        }
+    }
+
+    var btn = document.getElementById('btnConfermaTermina');
+    btn.disabled = true;
+    btn.textContent = 'Invio...';
+
     bootstrap.Modal.getInstance(document.getElementById('modalTerminaEsterno')).hide();
+
+    var body = {
+        fase_id: faseId,
+        qta_prodotta: parseInt(qtaProdotta),
+        scarti: parseInt(scarti) || 0
+    };
+
+    if (tipoRientroSelezionato === 'rientro') {
+        body.note_rientro = noteRientro;
+    }
 
     fetch('{{ route("produzione.termina") }}', {
         method: 'POST', headers: getHdrs(),
-        body: JSON.stringify({ fase_id: faseId, qta_prodotta: parseInt(qtaProdotta), scarti: parseInt(scarti) || 0 })
+        body: JSON.stringify(body)
     })
     .then(parseResponse)
     .then(data => {
         if (data.success) { window.location.reload(); }
-        else { alert('Errore: ' + (data.messaggio || data.message || 'operazione fallita')); }
+        else { alert('Errore: ' + (data.messaggio || data.message || 'operazione fallita')); btn.disabled = false; }
     })
-    .catch(err => { if (err !== 'session_expired') { console.error('Errore:', err); alert('Errore: ' + err); } });
+    .catch(err => { if (err !== 'session_expired') { console.error('Errore:', err); alert('Errore: ' + err); } btn.disabled = false; });
 }
 
 function esternoRiprendi(faseId, btn) {

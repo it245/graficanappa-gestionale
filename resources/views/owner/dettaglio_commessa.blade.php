@@ -146,7 +146,40 @@
     $statoBg = [0 => '#e9ecef', 1 => '#cfe2ff', 2 => '#fff3cd', 3 => '#d1e7dd', 4 => '#c3c3c3'];
     $statoColor = [0 => '#333', 1 => '#084298', 2 => '#664d03', 3 => '#0f5132', 4 => '#1a1a1a'];
     $statoLabel = [0 => 'Caricato', 1 => 'Pronto', 2 => 'Avviato', 3 => 'Terminato', 4 => 'Consegnato'];
+
+    $totaleFasi = $fasi->count();
+    $fasiTerminateCont = $fasi->where('stato', '>=', 3)->count();
+    $fasiAvviate = $fasi->where('stato', 2)->count();
+    $pctCompletamento = $totaleFasi > 0 ? round(($fasiTerminateCont / $totaleFasi) * 100) : 0;
+    $pctAvviate = $totaleFasi > 0 ? round(($fasiAvviate / $totaleFasi) * 100) : 0;
 @endphp
+
+{{-- Barra progresso fasi --}}
+<div class="row g-2 mb-3">
+    <div class="col-12">
+        <div class="border rounded p-3" style="background:#fff;">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <strong style="font-size:14px;">Progresso fasi</strong>
+                <span style="font-size:13px; color:#6c757d;">{{ $fasiTerminateCont }}/{{ $totaleFasi }} terminate {{ $fasiAvviate > 0 ? '· '.$fasiAvviate.' in corso' : '' }}</span>
+            </div>
+            <div style="height:24px; border-radius:12px; background:#e9ecef; overflow:hidden; position:relative;">
+                @if($pctCompletamento > 0)
+                <div style="height:100%; width:{{ $pctCompletamento }}%; background:linear-gradient(90deg, #198754, #28a745); border-radius:12px 0 0 12px; position:absolute; left:0; top:0; z-index:2; transition:width 0.5s;">
+                    <span style="position:absolute; right:8px; top:50%; transform:translateY(-50%); font-size:11px; font-weight:bold; color:#fff;">{{ $pctCompletamento }}%</span>
+                </div>
+                @endif
+                @if($pctAvviate > 0)
+                <div style="height:100%; width:{{ $pctCompletamento + $pctAvviate }}%; background:#ffc107; border-radius:12px 0 0 12px; position:absolute; left:0; top:0; z-index:1; transition:width 0.5s;"></div>
+                @endif
+            </div>
+            <div class="d-flex gap-3 mt-2" style="font-size:11px; color:#6c757d;">
+                <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#28a745;"></span> Terminate</span>
+                <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#ffc107;"></span> In corso</span>
+                <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#e9ecef;border:1px solid #ccc;"></span> Da fare</span>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div style="overflow-x:auto; margin-top:10px;">
     <table>

@@ -113,6 +113,13 @@ class ProduzioneController extends Controller
     $fase->stato = 3; // fase terminata
     $fase->data_fine = now()->format('Y-m-d H:i:s');
     $fase->timeout = null;
+
+    // Rientro da esterno con lavorazioni aggiuntive
+    if ($request->filled('note_rientro')) {
+        $noteRientro = '[RIENTRO] ' . $request->note_rientro;
+        $fase->note = $fase->note ? $fase->note . ' | ' . $noteRientro : $noteRientro;
+    }
+
     $fase->save();
 
     // Aggiorna la data_fine nella pivot per l'operatore corrente
