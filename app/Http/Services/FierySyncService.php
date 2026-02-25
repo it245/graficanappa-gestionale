@@ -35,9 +35,10 @@ class FierySyncService
         $jobName = $status['stampa']['documento'] ?? null;
         $commessaCode = $this->estraiCommessa($jobName);
 
-        // Se non c'è job attivo o commessa non trovata → Fiery idle, termina fasi aperte
+        // Se non c'è job attivo o commessa non trovata → Fiery idle
         if (!$commessaCode) {
-            $this->terminaFasiIdle($operatore);
+            // Dopo le 17 la macchina è ferma: termina fasi aperte
+            $this->terminaFasiDopoOrario($operatore);
             return null;
         }
 
@@ -205,11 +206,18 @@ class FierySyncService
     }
 
     /**
-     * Fiery idle: termina TUTTE le fasi digitali ancora avviate da questo operatore.
-     * Chiamato quando il Fiery non sta stampando nulla → la stampa è finita.
+     * Dopo le 17:00 la macchina è ferma.
+     * Se il Fiery è idle e ci sono fasi aperte → termina con data_fine = 17:00
+     * del giorno in cui la fase è stata avviata (o oggi se avviata oggi).
      */
-    protected function terminaFasiIdle(Operatore $operatore): void
+    const ORA_FINE_TURNO = 17;
+
+    protected function terminaFasiDopoOrario(Operatore $operatore): void
     {
+        if (now()->hour < self::ORA_FINE_TURNO) {
+            return; // Prima delle 17, potrebbe essere uno stop temporaneo
+        }
+
         $fasiAperte = OrdineFase::where('stato', 2)
             ->where(function ($q) {
                 $q->whereHas('faseCatalogo', function ($sub) {
@@ -221,15 +229,17 @@ class FierySyncService
             })
             ->get();
 
+        $fineTurnoOggi = Carbon::today()->setHour(self::ORA_FINE_TURNO);
+
         foreach ($fasiAperte as $fase) {
             $fase->stato = 3;
             if (!$fase->data_fine) {
-                $fase->data_fine = now()->format('Y-m-d H:i:s');
+                $fase->data_fine = $fineTurnoOggi->format('Y-m-d H:i:s');
             }
             $fase->save();
 
             $fase->operatori()->updateExistingPivot($operatore->id, [
-                'data_fine' => now(),
+                'data_fine' => $fineTurnoOggi,
             ]);
         }
     }
