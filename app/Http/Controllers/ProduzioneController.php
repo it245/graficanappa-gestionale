@@ -110,15 +110,22 @@ class ProduzioneController extends Controller
 
     $fase->qta_prod = $request->qta_prodotta;
     $fase->scarti = $request->scarti ?? 0;
-    $fase->stato = 3; // fase terminata
-    $fase->data_fine = now()->format('Y-m-d H:i:s');
     $fase->timeout = null;
 
-    // Rientro da esterno con lavorazioni aggiuntive
+    // Rientro da esterno con lavorazioni aggiuntive: resta a stato 2
     if ($request->boolean('rientro')) {
         $fase->note = ($fase->note ?? '') . ', rientro in attesa di lavorazioni';
+        $fase->save();
+
+        return response()->json([
+            'success' => true,
+            'nuovo_stato' => $this->statoLabel($fase->stato),
+            'operatori' => $fase->operatori->map(fn($op) => ['nome' => $op->nome])
+        ]);
     }
 
+    $fase->stato = 3; // fase terminata
+    $fase->data_fine = now()->format('Y-m-d H:i:s');
     $fase->save();
 
     // Aggiorna la data_fine nella pivot per l'operatore corrente
