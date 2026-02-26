@@ -73,8 +73,11 @@ class BrtService
     }
 
     /**
-     * Trova l'ID spedizione BRT dal numero DDT (riferimento mittente alfabetico).
-     * Il numero DDT in Onda è zero-padded (es. 0000437), BRT lo riceve senza zeri (es. 437).
+     * Trova l'ID spedizione BRT dal numero DDT.
+     * Prova diverse strategie di ricerca:
+     * 1. RIFERIMENTO_MITTENTE_ALFABETICO = DDT (es. "466")
+     * 2. RIFERIMENTO_MITTENTE_NUMERICO = DDT
+     * 3. Entrambi i campi
      */
     public function getSpedizioneIdByDDT(string $numeroDDT): ?string
     {
@@ -86,12 +89,39 @@ class BrtService
                 'https://wsr.brt.it:10052/web/GetIdSpedizioneByRMAService/GetIdSpedizioneByRMA?wsdl'
             );
 
-            $result = $soap->getidspedizionebyrma([
-                'arg0' => [
-                    'CLIENTE_ID' => $this->userID,
-                    'RIFERIMENTO_MITTENTE_ALFABETICO' => $rma,
-                ]
+            // Strategia 1: cerca per RIFERIMENTO_MITTENTE_ALFABETICO
+            $id = $this->cercaSpedizione($soap, ['RIFERIMENTO_MITTENTE_ALFABETICO' => $rma]);
+            if ($id) return $id;
+
+            // Strategia 2: cerca per RIFERIMENTO_MITTENTE_NUMERICO
+            $id = $this->cercaSpedizione($soap, ['RIFERIMENTO_MITTENTE_NUMERICO' => $rma]);
+            if ($id) return $id;
+
+            // Strategia 3: cerca con entrambi
+            $id = $this->cercaSpedizione($soap, [
+                'RIFERIMENTO_MITTENTE_ALFABETICO' => $rma,
+                'RIFERIMENTO_MITTENTE_NUMERICO' => $rma,
             ]);
+
+            return $id;
+        } catch (\Exception $e) {
+            Log::warning('BRT SOAP GetIdSpedizioneByRMA errore', [
+                'ddt' => $numeroDDT,
+                'error' => $e->getMessage(),
+            ]);
+            return null;
+        }
+    }
+
+    /**
+     * Esegue la ricerca SOAP con i parametri dati.
+     */
+    protected function cercaSpedizione(SoapClient $soap, array $params): ?string
+    {
+        try {
+            $args = array_merge(['CLIENTE_ID' => $this->userID], $params);
+
+            $result = $soap->getidspedizionebyrma(['arg0' => $args]);
 
             $esito = $result->return->ESITO ?? -1;
             $spedizioneId = $result->return->SPEDIZIONE_ID ?? null;
@@ -102,10 +132,6 @@ class BrtService
 
             return null;
         } catch (\Exception $e) {
-            Log::warning('BRT SOAP GetIdSpedizioneByRMA errore', [
-                'ddt' => $numeroDDT,
-                'error' => $e->getMessage(),
-            ]);
             return null;
         }
     }

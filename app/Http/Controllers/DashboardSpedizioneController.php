@@ -328,7 +328,7 @@ class DashboardSpedizioneController extends Controller
         if (!$data) {
             return response()->json([
                 'error' => true,
-                'message' => "DDT {$ddtSenzaZeri}: spedizione non ancora registrata in BRT. Il tracking sarà disponibile dopo il ritiro del corriere.",
+                'message' => "DDT {$ddtSenzaZeri}: tracking non ancora disponibile. Le spedizioni recenti vengono indicizzate da BRT entro 24-48 ore dal ritiro.",
             ]);
         }
 
