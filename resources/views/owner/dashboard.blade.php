@@ -734,11 +734,16 @@ tr:hover td {
                     @php
                         $descOwner = $fase->ordine->descrizione ?? '';
                         $clienteOwner = $fase->ordine->cliente_nome ?? '';
-                        $coloriOwner = \App\Helpers\DescrizioneParser::parseColori($descOwner, $clienteOwner);
-                        $fustellaOwner = \App\Helpers\DescrizioneParser::parseFustella($descOwner);
+                        $repartoOwner = strtolower($fase->faseCatalogo->reparto->nome ?? '');
                         $noteExtra = '';
-                        if ($coloriOwner) $noteExtra .= '[COL: '.$coloriOwner.'] ';
-                        if ($fustellaOwner) $noteExtra .= '[FS: '.$fustellaOwner.'] ';
+                        if (in_array($repartoOwner, ['stampa offset', 'digitale'])) {
+                            $coloriOwner = \App\Helpers\DescrizioneParser::parseColori($descOwner, $clienteOwner, $repartoOwner);
+                            if ($coloriOwner) $noteExtra .= '[COL: '.$coloriOwner.'] ';
+                        }
+                        if (str_contains($repartoOwner, 'fustella')) {
+                            $fustellaOwner = \App\Helpers\DescrizioneParser::parseFustella($descOwner);
+                            if ($fustellaOwner) $noteExtra .= '[FS: '.$fustellaOwner.'] ';
+                        }
                     @endphp
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'note', this.innerText)">
                         @if($noteExtra)<small class="fw-bold">{{ $noteExtra }}</small><br>@endif{{ $fase->note ?? '-' }}

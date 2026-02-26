@@ -237,7 +237,23 @@
                         -
                     @endforelse
                 </td>
-                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'note', this.innerText)">{{ $fase->note ?? '-' }}</td>
+                @php
+                    $descDett = $fase->ordine->descrizione ?? '';
+                    $clienteDett = $fase->ordine->cliente_nome ?? '';
+                    $repartoDett = strtolower($fase->reparto_nome ?? '');
+                    $noteExtraDett = '';
+                    if (in_array($repartoDett, ['stampa offset', 'digitale'])) {
+                        $coloriDett2 = \App\Helpers\DescrizioneParser::parseColori($descDett, $clienteDett, $repartoDett);
+                        if ($coloriDett2) $noteExtraDett .= '[COL: '.$coloriDett2.'] ';
+                    }
+                    if (str_contains($repartoDett, 'fustella')) {
+                        $fustellaDett2 = \App\Helpers\DescrizioneParser::parseFustella($descDett);
+                        if ($fustellaDett2) $noteExtraDett .= '[FS: '.$fustellaDett2.'] ';
+                    }
+                @endphp
+                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'note', this.innerText)">
+                    @if($noteExtraDett)<small class="fw-bold">{{ $noteExtraDett }}</small><br>@endif{{ $fase->note ?? '-' }}
+                </td>
                 <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'descrizione', this.innerText)">{{ $fase->ordine->descrizione ?? '-' }}</td>
                 <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_inizio', this.innerText)">{{ $fase->data_inizio ?? '-' }}</td>
                 <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_fine', this.innerText)">{{ $fase->data_fine ?? '-' }}</td>

@@ -66,13 +66,18 @@ class DescrizioneParser
             '/\bFUSTELLATURA\b/i',
             '/\bSENZA\b/i',
             '/\(RISERVA\b/i',
-            '/\(CON\s+LASTRINA\b/i',
+            '/\(\s*(?:USARE|CON\s+LASTRINA)\b/i',  // istruzioni tecniche tra parentesi
             '/\bBrossura\b/i',
             '/\bPunto\s+Metallico\b/i',
             '/\bspedizione\b/i',
             '/\bPLAST\.\s/i',
             '/\bPlastificazione\b/i',
             '/\bFascettatura\b/i',
+            '/\b\d{2,}[\.,]\d{3}\b/',              // quantità formattate: "50.500", "30.000"
+            '/\bASTUCCI\b/i',                       // tipo prodotto
+            '/\bTOTALI\b/i',                        // totali
+            '/\bStampa,/i',                          // "Stampa," come separatore di lavorazioni
+            '/\bStella\s+\d/i',                      // "Stella 273-959"
         ];
 
         foreach ($delimitatori as $d) {
@@ -121,17 +126,14 @@ class DescrizioneParser
     }
 
     /**
-     * Estrae il codice fustella (FSxxxx) dalla descrizione.
-     * Prende il primo codice FS trovato.
+     * Estrae tutti i codici fustella (FSxxxx) dalla descrizione.
+     * Restituisce tutti i codici FS unici trovati, separati da " / ".
      */
     public static function parseFustella(string $descrizione): ?string
     {
-        if (preg_match('/\b(FS\d{3,5}(?:_[A-Z0-9\-]+)?)\b/', $descrizione, $m)) {
-            // Restituisci solo il codice base FSxxxx
-            if (preg_match('/^(FS\d{3,5})/', $m[1], $base)) {
-                return $base[1];
-            }
-            return $m[1];
+        if (preg_match_all('/\b(FS\d{3,5})\b/', $descrizione, $m)) {
+            $codes = array_unique($m[1]);
+            return implode(' / ', $codes);
         }
         return null;
     }

@@ -81,11 +81,13 @@
         border-radius: 6px 6px 0 0;
         font-size: 18px;
         font-weight: bold;
-        cursor: pointer;
         user-select: none;
         display: flex;
         justify-content: space-between;
         align-items: center;
+    }
+    .reparto-section h3[onclick] {
+        cursor: pointer;
     }
     .reparto-section h3 .toggle-icon {
         transition: transform 0.3s;
@@ -152,10 +154,11 @@
 @if(!empty($fasiPerReparto))
     {{-- MULTI-REPARTO: sezioni separate per ogni reparto --}}
     @foreach($fasiPerReparto as $repartoId => $info)
+        @php $repartoLower = strtolower($info['nome']); $sempreAperto = in_array($repartoLower, ['finestre', 'legatoria']); @endphp
         <div class="reparto-section">
-            <h3 onclick="toggleReparto(this)">
+            <h3 @if(!$sempreAperto)onclick="toggleReparto(this)"@endif>
                 <span>{{ $info['nome'] }} <small>({{ $info['fasi']->count() }})</small></span>
-                <span class="toggle-icon">&#9660;</span>
+                @if(!$sempreAperto)<span class="toggle-icon">&#9660;</span>@endif
             </h3>
             <div class="reparto-body">
             <div class="table-wrapper">
