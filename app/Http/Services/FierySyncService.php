@@ -125,15 +125,28 @@ class FierySyncService
 
     /**
      * Sync dei job completati dall'API v5.
-     * Per ogni job completed con codice commessa:
-     * - Trova le fasi digitali della commessa
-     * - Aggiorna qta_prod con copies_printed (se maggiore del valore attuale)
-     * - Auto-termina se raggiunta la quantità target
+     * SOLO per fasi già in stato 2 (avviate): aggiorna qta_prod e auto-termina.
+     * NON avvia fasi nuove da dati storici (lo fa solo il WebTools per il job corrente).
      */
     protected function syncJobCompletati(Operatore $operatore): void
     {
         $jobs = $this->fiery->getJobs();
         if (!$jobs) return;
+
+        // Trova tutte le fasi digitali in stato 2 (avviate) di questo operatore
+        $fasiAvviate = OrdineFase::where('stato', 2)
+            ->where(function ($q) {
+                $q->whereHas('faseCatalogo', function ($sub) {
+                    $sub->where('reparto_id', self::REPARTO_DIGITALE_ID);
+                })->orWhere('fase', 'STAMPA');
+            })
+            ->whereHas('operatori', function ($q) use ($operatore) {
+                $q->where('operatore_id', $operatore->id);
+            })
+            ->with('ordine')
+            ->get();
+
+        if ($fasiAvviate->isEmpty()) return;
 
         // Raggruppa job completati per commessa, prendi max copies_printed
         $completatiPerCommessa = [];
@@ -146,48 +159,23 @@ class FierySyncService
             if (!isset($completatiPerCommessa[$code])) {
                 $completatiPerCommessa[$code] = 0;
             }
-            // Usa il MAX delle copie tra tutti i job della stessa commessa
-            // (ogni job è un file diverso: copertina, interni, ecc. ma le copie sono per prodotto)
             $completatiPerCommessa[$code] = max($completatiPerCommessa[$code], $job['copies_printed']);
         }
 
-        // Per ogni commessa con job completati, aggiorna le fasi MES
-        foreach ($completatiPerCommessa as $commessaCode => $maxCopie) {
-            $ordini = Ordine::where('commessa', $commessaCode)->get();
-            if ($ordini->isEmpty()) continue;
+        // Per ogni fase avviata, cerca se la sua commessa ha job completati
+        foreach ($fasiAvviate as $fase) {
+            $commessaCode = $fase->ordine->commessa ?? null;
+            if (!$commessaCode) continue;
+            if (!isset($completatiPerCommessa[$commessaCode])) continue;
 
-            foreach ($ordini as $ordine) {
-                $fasi = $this->troveFasiDigitali($ordine);
-                foreach ($fasi as $fase) {
-                    // Solo fasi avviate (stato 2) o non ancora avviate (0, 1)
-                    if (!in_array($fase->stato, [0, '0', 1, '1', 2, '2'])) continue;
+            $maxCopie = $completatiPerCommessa[$commessaCode];
+            $qtaAttuale = (int) ($fase->qta_prod ?: 0);
 
-                    $qtaAttuale = (int) ($fase->qta_prod ?: 0);
-
-                    // Aggiorna solo se il nuovo valore è maggiore (idempotente)
-                    if ($maxCopie > $qtaAttuale) {
-                        // Se la fase non è ancora avviata, avviala
-                        if (in_array($fase->stato, [0, '0', 1, '1'])) {
-                            $fase->stato = 2;
-                            if (!$fase->data_inizio) {
-                                $fase->data_inizio = now()->format('Y-m-d H:i:s');
-                            }
-                            if (!$fase->operatore_id) {
-                                $fase->operatore_id = $operatore->id;
-                            }
-                            if (!$fase->operatori()->where('operatore_id', $operatore->id)->exists()) {
-                                $fase->operatori()->attach($operatore->id, [
-                                    'data_inizio' => now(),
-                                    'data_fine' => null,
-                                ]);
-                            }
-                        }
-
-                        $fase->qta_prod = $maxCopie;
-                        $this->autoTerminaSeCompletata($fase, $operatore);
-                        $fase->save();
-                    }
-                }
+            // Aggiorna solo se il nuovo valore è maggiore (idempotente)
+            if ($maxCopie > $qtaAttuale) {
+                $fase->qta_prod = $maxCopie;
+                $this->autoTerminaSeCompletata($fase, $operatore);
+                $fase->save();
             }
         }
     }
