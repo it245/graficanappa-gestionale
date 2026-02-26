@@ -120,8 +120,10 @@
 </style>
 
 <div class="top-bar">
-    <div class="operatore-info" id="operatoreInfo">
-        <img src="{{ asset('images/icons8-utente-uomo-cerchiato-50.png') }}" alt="Operatore">
+    <div style="display:flex; align-items:center; gap:10px;">
+        <img src="{{ asset('images/logo_gn.png') }}" alt="Logo" style="height:40px;">
+        <div class="operatore-info" id="operatoreInfo">
+            <img src="{{ asset('images/icons8-utente-uomo-cerchiato-50.png') }}" alt="Operatore">
         <div class="operatore-popup" id="operatorePopup">
             <div><strong>{{ $operatore->nome }} {{ $operatore->cognome }}</strong></div>
             <div>
@@ -136,6 +138,7 @@
                 <button type="submit" class="btn btn-secondary btn-sm mt-2">Logout</button>
             </form>
         </div>
+    </div>
     </div>
     <div class="action-icons">
         <img src="{{ asset('images/icons8-ricerca-50.png') }}"

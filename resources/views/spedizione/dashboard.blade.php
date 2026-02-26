@@ -231,6 +231,7 @@
 
 <div class="top-bar">
     <div style="display:flex; align-items:center; gap:12px;">
+        <img src="{{ asset('images/logo_gn.png') }}" alt="Logo" style="height:40px;">
         <button class="hamburger-btn" id="hamburgerBtn" title="Menu">
             <span></span><span></span><span></span>
         </button>

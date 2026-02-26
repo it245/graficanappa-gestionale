@@ -393,6 +393,15 @@
                         <span>Utente: {{ $status['stampa']['utente'] }}</span>
                     </div>
                 </div>
+                @if(!empty($jobData['commessa_sheets']) && $jobData['commessa_sheets']['file_count'] > 1)
+                <div id="commessa-sheets-info" style="margin-top:10px; padding:8px 14px; background:rgba(96,165,250,0.08); border:1px solid rgba(96,165,250,0.15); border-radius:8px; font-size:13px; color:#9aa0a6;">
+                    Commessa {{ $jobData['commessa_sheets']['commessa'] }}: <strong style="color:#60a5fa;">{{ $jobData['commessa_sheets']['fogli_totali'] }}</strong> fogli totali da <strong style="color:#e8eaed;">{{ $jobData['commessa_sheets']['file_count'] }}</strong> file
+                </div>
+                @elseif(!empty($jobData['commessa_sheets']))
+                <div id="commessa-sheets-info" style="margin-top:10px; padding:8px 14px; background:rgba(96,165,250,0.08); border:1px solid rgba(96,165,250,0.15); border-radius:8px; font-size:13px; color:#9aa0a6;">
+                    Fogli totali commessa: <strong style="color:#60a5fa;">{{ $jobData['commessa_sheets']['fogli_totali'] }}</strong>
+                </div>
+                @endif
             @else
                 <div class="no-job-msg" id="no-print">Nessun job in stampa</div>
             @endif
@@ -609,6 +618,20 @@ setInterval(function() {
                             '<span>Utente: ' + (data.stampa.utente || '') + '</span>' +
                         '</div>' +
                     '</div>';
+                // Fogli totali commessa
+                var csInfo = document.getElementById('commessa-sheets-info');
+                if (data.jobs && data.jobs.commessa_sheets) {
+                    var cs = data.jobs.commessa_sheets;
+                    var csHtml = '';
+                    if (cs.file_count > 1) {
+                        csHtml = '<div id="commessa-sheets-info" style="margin-top:10px; padding:8px 14px; background:rgba(96,165,250,0.08); border:1px solid rgba(96,165,250,0.15); border-radius:8px; font-size:13px; color:#9aa0a6;">' +
+                            'Commessa ' + cs.commessa + ': <strong style="color:#60a5fa;">' + cs.fogli_totali + '</strong> fogli totali da <strong style="color:#e8eaed;">' + cs.file_count + '</strong> file</div>';
+                    } else {
+                        csHtml = '<div id="commessa-sheets-info" style="margin-top:10px; padding:8px 14px; background:rgba(96,165,250,0.08); border:1px solid rgba(96,165,250,0.15); border-radius:8px; font-size:13px; color:#9aa0a6;">' +
+                            'Fogli totali commessa: <strong style="color:#60a5fa;">' + cs.fogli_totali + '</strong></div>';
+                    }
+                    sc.innerHTML += csHtml;
+                }
             } else {
                 sc.innerHTML = '<div class="no-job-msg">Nessun job in stampa</div>';
             }

@@ -397,7 +397,10 @@ tr:hover td {
 
 </style>
     <div class="d-flex align-items-center justify-content-between mb-2 mx-2">
-        <h2 class="mb-0">Dashboard Owner</h2>
+        <div style="display:flex; align-items:center; gap:10px;">
+            <img src="{{ asset('images/logo_gn.png') }}" alt="Logo" style="height:40px;">
+            <h2 class="mb-0">Dashboard Owner</h2>
+        </div>
         <div class="operatore-info" id="operatoreInfo" style="position:relative; display:flex; align-items:center; gap:10px; cursor:pointer;">
             <img src="{{ asset('images/icons8-utente-uomo-cerchiato-50.png') }}" alt="Operatore" style="width:50px; height:50px; border-radius:50%;">
             <div class="operatore-popup" id="operatorePopup" style="position:absolute; top:60px; right:0; background:#fff; border:1px solid #ccc; padding:10px; border-radius:5px; box-shadow:0 2px 10px rgba(0,0,0,0.2); display:none; z-index:1000; min-width:200px;">

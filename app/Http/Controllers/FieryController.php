@@ -101,11 +101,34 @@ class FieryController extends Controller
         // Completati: ultimi 15 (i più recenti per data)
         $completed = array_slice(array_reverse($completed), 0, 15);
 
+        // Fogli totali per la commessa in stampa (somma da tutti i file/job della stessa commessa)
+        $commessaSheets = null;
+        if ($printing && $printing['commessa']) {
+            $printCommessa = $printing['commessa'];
+            $totalSheets = 0;
+            $totalCopies = 0;
+            $fileCount = 0;
+            foreach ($jobs as $job) {
+                if ($job['commessa'] === $printCommessa && $job['total_sheets'] > 0) {
+                    $totalSheets += $job['total_sheets'];
+                    $totalCopies += $job['copies_printed'];
+                    $fileCount++;
+                }
+            }
+            $commessaSheets = [
+                'commessa' => $printCommessa,
+                'fogli_totali' => $totalSheets,
+                'copie_totali' => $totalCopies,
+                'file_count' => $fileCount,
+            ];
+        }
+
         return [
             'printing' => $printing,
             'queue' => $queue,
             'completed' => $completed,
             'total' => count($jobs),
+            'commessa_sheets' => $commessaSheets,
         ];
     }
 
