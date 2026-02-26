@@ -97,6 +97,22 @@ class FierySyncService
                 // Fase già in corso: aggiorna qta_prod con le copie fatte dalla Fiery
                 if ($copieFatte > 0) {
                     $fase->qta_prod = $copieFatte;
+
+                    // Auto-termina se ha raggiunto la quantità richiesta
+                    $qtaTarget = $fase->ordine->qta_carta ?: ($fase->ordine->qta_richiesta ?: 0);
+                    if ($qtaTarget > 0 && $copieFatte >= $qtaTarget) {
+                        $fase->stato = 3;
+                        if (!$fase->data_fine) {
+                            $fase->data_fine = now()->format('Y-m-d H:i:s');
+                        }
+                        // Aggiorna data_fine sulla pivot
+                        if ($operatore) {
+                            $fase->operatori()->updateExistingPivot($operatore->id, [
+                                'data_fine' => now(),
+                            ]);
+                        }
+                    }
+
                     $fase->save();
                 }
             }
@@ -190,14 +206,13 @@ class FierySyncService
     }
 
     /**
-     * Termina le fasi digitali avviate su ALTRE commesse dallo stesso operatore.
-     * (L'operatore ha iniziato un nuovo job → il precedente è terminato)
+     * Auto-termina solo le fasi che hanno raggiunto la quantità richiesta.
+     * Se qta_prod >= qta_carta (o qta_richiesta), la fase è completata.
+     * Altrimenti resta in stato 2 e l'operatore la termina manualmente.
      */
     protected function terminaFasiPrecedenti(Operatore $operatore, array $ordineCorrenteIds): void
     {
-        // Trova fasi avviate (stato=2) su altre commesse con questo operatore
-        // Include sia fasi reparto digitale che fasi STAMPA su formati ≤ 33x48
-        $fasiDaTerminare = OrdineFase::where('stato', 2)
+        $fasiDaValutare = OrdineFase::where('stato', 2)
             ->whereNotIn('ordine_id', $ordineCorrenteIds)
             ->where(function ($q) {
                 $q->whereHas('faseCatalogo', function ($sub) {
@@ -207,35 +222,31 @@ class FierySyncService
             ->whereHas('operatori', function ($q) use ($operatore) {
                 $q->where('operatore_id', $operatore->id);
             })
+            ->with('ordine')
             ->get();
 
-        foreach ($fasiDaTerminare as $fase) {
-            $fase->stato = 3;
-            if (!$fase->data_fine) {
-                $fase->data_fine = now()->format('Y-m-d H:i:s');
-            }
-            $fase->save();
+        foreach ($fasiDaValutare as $fase) {
+            $qtaTarget = $fase->ordine->qta_carta ?: ($fase->ordine->qta_richiesta ?: 0);
+            $qtaProd = $fase->qta_prod ?: 0;
 
-            // Aggiorna data_fine sulla pivot
-            $fase->operatori()->updateExistingPivot($operatore->id, [
-                'data_fine' => now(),
-            ]);
+            if ($qtaTarget > 0 && $qtaProd >= $qtaTarget) {
+                $fase->stato = 3;
+                if (!$fase->data_fine) {
+                    $fase->data_fine = now()->format('Y-m-d H:i:s');
+                }
+                $fase->save();
+
+                $fase->operatori()->updateExistingPivot($operatore->id, [
+                    'data_fine' => now(),
+                ]);
+            }
+            // Se qta_prod < qta_target: resta in stato 2, l'operatore termina manualmente
         }
     }
 
-    /**
-     * Dopo le 17:00 la macchina è ferma.
-     * Se il Fiery è idle e ci sono fasi aperte → termina con data_fine = 17:00
-     * del giorno in cui la fase è stata avviata (o oggi se avviata oggi).
-     */
-    const ORA_FINE_TURNO = 17;
-
     protected function terminaFasiDopoOrario(Operatore $operatore): void
     {
-        if (now()->hour < self::ORA_FINE_TURNO) {
-            return; // Prima delle 17, potrebbe essere uno stop temporaneo
-        }
-
+        // Stessa logica: termina solo fasi con qta_prod >= qta richiesta
         $fasiAperte = OrdineFase::where('stato', 2)
             ->where(function ($q) {
                 $q->whereHas('faseCatalogo', function ($sub) {
@@ -245,20 +256,24 @@ class FierySyncService
             ->whereHas('operatori', function ($q) use ($operatore) {
                 $q->where('operatore_id', $operatore->id);
             })
+            ->with('ordine')
             ->get();
 
-        $fineTurnoOggi = Carbon::today()->setHour(self::ORA_FINE_TURNO);
-
         foreach ($fasiAperte as $fase) {
-            $fase->stato = 3;
-            if (!$fase->data_fine) {
-                $fase->data_fine = $fineTurnoOggi->format('Y-m-d H:i:s');
-            }
-            $fase->save();
+            $qtaTarget = $fase->ordine->qta_carta ?: ($fase->ordine->qta_richiesta ?: 0);
+            $qtaProd = $fase->qta_prod ?: 0;
 
-            $fase->operatori()->updateExistingPivot($operatore->id, [
-                'data_fine' => $fineTurnoOggi,
-            ]);
+            if ($qtaTarget > 0 && $qtaProd >= $qtaTarget) {
+                $fase->stato = 3;
+                if (!$fase->data_fine) {
+                    $fase->data_fine = now()->format('Y-m-d H:i:s');
+                }
+                $fase->save();
+
+                $fase->operatori()->updateExistingPivot($operatore->id, [
+                    'data_fine' => now(),
+                ]);
+            }
         }
     }
 }
