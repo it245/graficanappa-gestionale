@@ -212,7 +212,7 @@ public function calcolaOreEPriorita($fase)
             // Prinect non disponibile, continua senza sync
         }
 
-        $fasi = OrdineFase::with(['ordine', 'faseCatalogo', 'operatori' => fn($q) => $q->select('operatori.id', 'nome')])
+        $fasi = OrdineFase::with(['ordine', 'faseCatalogo.reparto', 'operatori' => fn($q) => $q->select('operatori.id', 'nome')])
             ->where('stato', '<', 3)
             ->get()
             ->map(function ($fase) {
