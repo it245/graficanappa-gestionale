@@ -176,7 +176,7 @@ class DashboardOperatoreController extends Controller
 
         // Flag per colonne condizionali
         $nomiReparti = $operatore->reparti->pluck('nome')->map(fn($n) => strtolower($n))->toArray();
-        $showColori = !empty(array_intersect($nomiReparti, ['stampa offset', 'digitale']));
+        $showColori = !empty(array_intersect($nomiReparti, ['stampa offset']));
         $showFustella = !empty(array_filter($nomiReparti, fn($n) => str_contains($n, 'fustella')));
 
         // Raggruppa fasi per reparto (per operatori multi-reparto)

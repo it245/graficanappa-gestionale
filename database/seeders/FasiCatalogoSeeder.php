@@ -62,9 +62,13 @@ class FasiCatalogoSeeder extends Seeder
             'FINESTRATURA.MANUALE' => 'finestre',
             'FINESTRATURA.INT' => 'finestre',
 
+            // FINITURA DIGITALE
+            'CORDONATURAPETRATTO' => 'finitura digitale',
+            'DEKIA-Difficile' => 'finitura digitale',
+            'DEKIA-semplice' => 'finitura digitale',
+            'PIEGA2ANTECORDONE' => 'finitura digitale',
+
             // LEGATORIA
-            'CORDONATURAPETRATTO' => 'legatoria',
-            'DEKIA-Difficile' => 'legatoria',
             'INCOLLAGGIO.PATTINA' => 'legatoria',
             'INCOLLAGGIOBLOCCHI' => 'legatoria',
             'NUM.PROGR.' => 'legatoria',

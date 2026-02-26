@@ -86,25 +86,8 @@
         justify-content: space-between;
         align-items: center;
     }
-    .reparto-section h3[onclick] {
-        cursor: pointer;
-    }
-    .reparto-section h3 .toggle-icon {
-        transition: transform 0.3s;
-        font-size: 14px;
-    }
-    .reparto-section h3.chiuso .toggle-icon {
-        transform: rotate(-90deg);
-    }
-    .reparto-section h3.chiuso {
-        border-radius: 6px;
-    }
     .reparto-body {
-        transition: max-height 0.3s ease;
         overflow: hidden;
-    }
-    .reparto-body.chiuso {
-        display: none;
     }
 
     /* Lampeggio tasto Avvia quando stato = 2 */
@@ -157,11 +140,9 @@
 @if(!empty($fasiPerReparto))
     {{-- MULTI-REPARTO: sezioni separate per ogni reparto --}}
     @foreach($fasiPerReparto as $repartoId => $info)
-        @php $repartoLower = strtolower($info['nome']); $sempreAperto = in_array($repartoLower, ['finestre', 'legatoria']); @endphp
         <div class="reparto-section">
-            <h3 @if(!$sempreAperto)onclick="toggleReparto(this)"@endif>
+            <h3>
                 <span>{{ $info['nome'] }} <small>({{ $info['fasi']->count() }})</small></span>
-                @if(!$sempreAperto)<span class="toggle-icon">&#9660;</span>@endif
             </h3>
             <div class="reparto-body">
             <div class="table-wrapper">
@@ -277,10 +258,5 @@ function cercaCommessa(){
     };
 }
 
-function toggleReparto(h3) {
-    var body = h3.nextElementSibling;
-    h3.classList.toggle('chiuso');
-    body.classList.toggle('chiuso');
-}
 </script>
 @endsection
