@@ -3,7 +3,7 @@
 @section('content')
 <div class="container-fluid px-3">
 <style>
-    body { background: #0f1117; }
+    body { background: #f0f2f5; }
     .fiery-header {
         display: flex;
         align-items: center;
@@ -14,43 +14,44 @@
     .fiery-header .machine-name {
         font-size: 22px;
         font-weight: 700;
-        color: #e8eaed;
+        color: #1a1a2e;
         letter-spacing: -0.5px;
     }
     .fiery-header .machine-name small {
         font-size: 13px;
         font-weight: 400;
-        color: #9aa0a6;
+        color: #6c757d;
         margin-left: 12px;
     }
     .fiery-header .nav-links a {
-        color: #9aa0a6;
+        color: #495057;
         text-decoration: none;
         font-size: 13px;
         padding: 6px 14px;
-        border: 1px solid #2d2f36;
+        border: 1px solid #dee2e6;
         border-radius: 6px;
         margin-left: 8px;
         transition: all 0.2s;
     }
     .fiery-header .nav-links a:hover {
-        background: #1e2028;
-        border-color: #4a4d56;
-        color: #e8eaed;
+        background: #e9ecef;
+        border-color: #adb5bd;
+        color: #212529;
     }
 
     .fc {
-        background: #1a1c24;
+        background: #fff;
         border-radius: 14px;
-        border: 1px solid #2d2f36;
+        border: 1px solid #dee2e6;
         padding: 20px 24px;
         margin-bottom: 16px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.06);
     }
     .fc-label {
         font-size: 11px;
         font-weight: 600;
         text-transform: uppercase;
-        color: #6b7280;
+        color: #6c757d;
         letter-spacing: 1px;
         margin-bottom: 12px;
     }
@@ -66,29 +67,29 @@
         font-weight: 700;
         letter-spacing: 0.3px;
     }
-    .sp-stampa { background: rgba(34,197,94,0.12); color: #22c55e; }
-    .sp-idle { background: rgba(107,114,128,0.15); color: #9ca3af; }
-    .sp-errore { background: rgba(239,68,68,0.12); color: #ef4444; }
-    .sp-offline { background: rgba(239,68,68,0.12); color: #ef4444; }
+    .sp-stampa { background: #d1fae5; color: #059669; }
+    .sp-idle { background: #f3f4f6; color: #6b7280; }
+    .sp-errore { background: #fee2e2; color: #dc2626; }
+    .sp-offline { background: #fee2e2; color: #dc2626; }
 
     .status-dot {
         width: 10px;
         height: 10px;
         border-radius: 50%;
     }
-    .sd-stampa { background: #22c55e; box-shadow: 0 0 8px rgba(34,197,94,0.5); animation: glow 2s infinite; }
-    .sd-idle { background: #6b7280; }
-    .sd-errore { background: #ef4444; box-shadow: 0 0 8px rgba(239,68,68,0.5); animation: glow 1s infinite; }
-    .sd-offline { background: #ef4444; }
+    .sd-stampa { background: #059669; box-shadow: 0 0 8px rgba(5,150,105,0.5); animation: glow 2s infinite; }
+    .sd-idle { background: #9ca3af; }
+    .sd-errore { background: #dc2626; box-shadow: 0 0 8px rgba(220,38,38,0.5); animation: glow 1s infinite; }
+    .sd-offline { background: #dc2626; }
     @keyframes glow {
         0%, 100% { opacity: 1; }
         50% { opacity: 0.3; }
     }
 
     .warning-bar {
-        background: rgba(251,191,36,0.1);
-        color: #fbbf24;
-        border: 1px solid rgba(251,191,36,0.2);
+        background: #fef3c7;
+        color: #92400e;
+        border: 1px solid #fcd34d;
         border-radius: 8px;
         padding: 8px 16px;
         font-size: 13px;
@@ -101,7 +102,7 @@
     }
     .big-progress-bar {
         height: 32px;
-        background: #2d2f36;
+        background: #e5e7eb;
         border-radius: 16px;
         overflow: hidden;
         position: relative;
@@ -109,7 +110,7 @@
     .big-progress-fill {
         height: 100%;
         border-radius: 16px;
-        background: linear-gradient(90deg, #22c55e, #10b981);
+        background: linear-gradient(90deg, #059669, #10b981);
         transition: width 0.8s ease;
         position: relative;
         overflow: hidden;
@@ -118,7 +119,7 @@
         content: '';
         position: absolute;
         top: 0; left: -100%; width: 200%; height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
         animation: shimmer 3s infinite;
     }
     @keyframes shimmer {
@@ -134,50 +135,50 @@
         font-size: 14px;
         font-weight: 700;
         color: #fff;
-        text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        text-shadow: 0 1px 3px rgba(0,0,0,0.2);
     }
     .big-progress-stats {
         display: flex;
         justify-content: space-between;
         margin-top: 10px;
         font-size: 13px;
-        color: #9aa0a6;
+        color: #6b7280;
     }
 
     /* Info values */
     .info-label {
         font-size: 11px;
-        color: #6b7280;
+        color: #6c757d;
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
     .info-value {
         font-size: 18px;
         font-weight: 700;
-        color: #e8eaed;
+        color: #1a1a2e;
         margin-top: 2px;
     }
     .info-value-sm {
         font-size: 14px;
         font-weight: 600;
-        color: #e8eaed;
+        color: #343a40;
     }
     .info-value .commessa-link {
-        color: #60a5fa;
+        color: #2563eb;
         text-decoration: none;
     }
 
     /* RIP */
     .rip-active {
-        background: rgba(59,130,246,0.1);
-        border: 1px solid rgba(59,130,246,0.2);
-        color: #60a5fa;
+        background: #dbeafe;
+        border: 1px solid #93c5fd;
+        color: #1d4ed8;
         padding: 10px 16px;
         border-radius: 8px;
         font-size: 13px;
     }
     .rip-idle-box {
-        color: #4b5563;
+        color: #9ca3af;
         font-size: 13px;
     }
 
@@ -191,25 +192,25 @@
         font-size: 10px;
         text-transform: uppercase;
         letter-spacing: 1px;
-        color: #6b7280;
+        color: #6c757d;
         font-weight: 600;
         padding: 8px 12px;
-        border-bottom: 1px solid #2d2f36;
+        border-bottom: 2px solid #dee2e6;
         text-align: left;
     }
     .job-table tbody td {
         font-size: 13px;
-        color: #d1d5db;
+        color: #495057;
         padding: 10px 12px;
-        border-bottom: 1px solid rgba(45,47,54,0.5);
+        border-bottom: 1px solid #f1f3f5;
         vertical-align: middle;
     }
     .job-table tbody tr:hover {
-        background: rgba(255,255,255,0.02);
+        background: #f8f9fa;
     }
     .job-table .job-title {
         font-weight: 500;
-        color: #e8eaed;
+        color: #212529;
         max-width: 320px;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -217,8 +218,8 @@
     }
     .job-table .commessa-tag {
         display: inline-block;
-        background: rgba(96,165,250,0.1);
-        color: #60a5fa;
+        background: #dbeafe;
+        color: #1d4ed8;
         font-size: 11px;
         font-weight: 600;
         padding: 2px 8px;
@@ -226,7 +227,7 @@
     }
     .job-table .client-name {
         font-size: 11px;
-        color: #9aa0a6;
+        color: #6c757d;
     }
 
     /* State pills in tables */
@@ -237,17 +238,17 @@
         padding: 3px 10px;
         border-radius: 12px;
     }
-    .state-queue { background: rgba(251,191,36,0.12); color: #fbbf24; }
-    .state-completed { background: rgba(34,197,94,0.12); color: #22c55e; }
-    .state-printing { background: rgba(34,197,94,0.2); color: #22c55e; }
-    .state-waiting { background: rgba(59,130,246,0.12); color: #60a5fa; }
-    .state-canceled { background: rgba(239,68,68,0.12); color: #ef4444; }
+    .state-queue { background: #fef3c7; color: #92400e; }
+    .state-completed { background: #d1fae5; color: #059669; }
+    .state-printing { background: #d1fae5; color: #059669; }
+    .state-waiting { background: #dbeafe; color: #1d4ed8; }
+    .state-canceled { background: #fee2e2; color: #dc2626; }
 
     /* Mini progress in table */
     .mini-progress {
         width: 80px;
         height: 6px;
-        background: #2d2f36;
+        background: #e5e7eb;
         border-radius: 3px;
         overflow: hidden;
         display: inline-block;
@@ -255,12 +256,12 @@
     }
     .mini-progress .fill {
         height: 100%;
-        background: #22c55e;
+        background: #059669;
         border-radius: 3px;
     }
     .copies-text {
         font-size: 12px;
-        color: #9aa0a6;
+        color: #6c757d;
         margin-left: 6px;
     }
 
@@ -268,15 +269,15 @@
     .section-title {
         font-size: 14px;
         font-weight: 700;
-        color: #e8eaed;
+        color: #212529;
         margin-bottom: 16px;
         display: flex;
         align-items: center;
         gap: 8px;
     }
     .section-title .count-badge {
-        background: #2d2f36;
-        color: #9aa0a6;
+        background: #e9ecef;
+        color: #495057;
         font-size: 11px;
         padding: 2px 8px;
         border-radius: 10px;
@@ -284,7 +285,7 @@
 
     .timestamp-info {
         font-size: 11px;
-        color: #4b5563;
+        color: #adb5bd;
         text-align: right;
         margin-top: 8px;
     }
@@ -293,7 +294,7 @@
     .print-doc-name {
         font-size: 16px;
         font-weight: 600;
-        color: #e8eaed;
+        color: #212529;
         word-break: break-all;
         line-height: 1.4;
     }
@@ -301,11 +302,11 @@
     .operatore-name {
         font-size: 20px;
         font-weight: 700;
-        color: #e8eaed;
+        color: #1a1a2e;
     }
 
     .no-job-msg {
-        color: #4b5563;
+        color: #adb5bd;
         font-size: 14px;
         padding: 20px 0;
     }
@@ -319,11 +320,11 @@
         margin-bottom: 16px;
     }
     .offline-screen h3 {
-        color: #ef4444;
+        color: #dc2626;
         font-weight: 700;
     }
     .offline-screen p {
-        color: #6b7280;
+        color: #6c757d;
         font-size: 14px;
     }
 </style>
@@ -375,8 +376,8 @@
                 <div class="print-doc-name" id="print-doc">{{ $status['stampa']['documento'] }}</div>
                 @if(!empty($status['commessa']))
                 <div class="mt-2" id="commessa-inline">
-                    <span style="color:#60a5fa;font-weight:600;">{{ $status['commessa']['commessa'] }}</span>
-                    <span style="color:#9aa0a6;margin-left:8px;">{{ $status['commessa']['cliente'] }}</span>
+                    <span style="color:#1d4ed8;font-weight:600;">{{ $status['commessa']['commessa'] }}</span>
+                    <span style="color:#6c757d;margin-left:8px;">{{ $status['commessa']['cliente'] }}</span>
                 </div>
                 @else
                 <div class="mt-2" id="commessa-inline"></div>
@@ -394,10 +395,10 @@
                     </div>
                 </div>
                 @if(!empty($jobData['commessa_sheets']) && $jobData['commessa_sheets']['fogli_totali'] > 0)
-                <div id="commessa-sheets-info" style="margin-top:10px; padding:8px 14px; background:rgba(96,165,250,0.08); border:1px solid rgba(96,165,250,0.15); border-radius:8px; font-size:13px; color:#9aa0a6;">
-                    Fogli totali commessa: <strong style="color:#60a5fa;">{{ $jobData['commessa_sheets']['fogli_totali'] }}</strong>
+                <div id="commessa-sheets-info" style="margin-top:10px; padding:8px 14px; background:#dbeafe; border:1px solid #93c5fd; border-radius:8px; font-size:13px; color:#495057;">
+                    Fogli totali commessa: <strong style="color:#1d4ed8;">{{ $jobData['commessa_sheets']['fogli_totali'] }}</strong>
                     <span style="margin-left:8px;">{{ $jobData['commessa_sheets']['copie_totali'] }} copie</span>
-                    <span style="margin-left:8px; color:#4b5563;">{{ $jobData['commessa_sheets']['run_count'] }} run</span>
+                    <span style="margin-left:8px; color:#6c757d;">{{ $jobData['commessa_sheets']['run_count'] }} run</span>
                 </div>
                 @endif
             @else
@@ -424,7 +425,7 @@
                 </div>
                 <div>
                     <div class="info-label">Descrizione</div>
-                    <div class="info-value-sm" style="font-size:12px;color:#9aa0a6;">{{ \Illuminate\Support\Str::limit($status['commessa']['descrizione'] ?? '', 80) }}</div>
+                    <div class="info-value-sm" style="font-size:12px;color:#6c757d;">{{ \Illuminate\Support\Str::limit($status['commessa']['descrizione'] ?? '', 80) }}</div>
                 </div>
                 @endif
             </div>
@@ -436,15 +437,15 @@
             <div class="fc-label">Statistiche coda</div>
             <div class="row text-center">
                 <div class="col-4">
-                    <div class="info-value" style="color:#22c55e;" id="stat-completed">{{ count($jobData['completed']) }}</div>
+                    <div class="info-value" style="color:#059669;" id="stat-completed">{{ count($jobData['completed']) }}</div>
                     <div class="info-label">Completati</div>
                 </div>
                 <div class="col-4">
-                    <div class="info-value" style="color:#fbbf24;" id="stat-queue">{{ count($jobData['queue']) }}</div>
+                    <div class="info-value" style="color:#d97706;" id="stat-queue">{{ count($jobData['queue']) }}</div>
                     <div class="info-label">In coda</div>
                 </div>
                 <div class="col-4">
-                    <div class="info-value" style="color:#9aa0a6;" id="stat-total">{{ $jobData['total'] }}</div>
+                    <div class="info-value" style="color:#495057;" id="stat-total">{{ $jobData['total'] }}</div>
                     <div class="info-label">Totale</div>
                 </div>
             </div>
@@ -527,7 +528,7 @@
                 </td>
                 <td>{{ $job['total_sheets'] }}</td>
                 <td>{{ $job['duplex'] ? 'B/V' : 'Solo F' }}</td>
-                <td style="font-size:12px;color:#9aa0a6;">{{ $job['date'] }}</td>
+                <td style="font-size:12px;color:#6c757d;">{{ $job['date'] }}</td>
             </tr>
             @endforeach
         </tbody>
@@ -599,8 +600,8 @@ setInterval(function() {
                 var commHtml = '';
                 if (data.commessa) {
                     commHtml = '<div class="mt-2" id="commessa-inline">' +
-                        '<span style="color:#60a5fa;font-weight:600;">' + data.commessa.commessa + '</span>' +
-                        '<span style="color:#9aa0a6;margin-left:8px;">' + data.commessa.cliente + '</span></div>';
+                        '<span style="color:#1d4ed8;font-weight:600;">' + data.commessa.commessa + '</span>' +
+                        '<span style="color:#6c757d;margin-left:8px;">' + data.commessa.cliente + '</span></div>';
                 }
                 sc.innerHTML =
                     '<div class="print-doc-name">' + data.stampa.documento + '</div>' +
@@ -619,10 +620,10 @@ setInterval(function() {
                 // Fogli totali commessa (da Accounting)
                 if (data.jobs && data.jobs.commessa_sheets && data.jobs.commessa_sheets.fogli_totali > 0) {
                     var cs = data.jobs.commessa_sheets;
-                    sc.innerHTML += '<div id="commessa-sheets-info" style="margin-top:10px; padding:8px 14px; background:rgba(96,165,250,0.08); border:1px solid rgba(96,165,250,0.15); border-radius:8px; font-size:13px; color:#9aa0a6;">' +
-                        'Fogli totali commessa: <strong style="color:#60a5fa;">' + cs.fogli_totali + '</strong>' +
+                    sc.innerHTML += '<div id="commessa-sheets-info" style="margin-top:10px; padding:8px 14px; background:#dbeafe; border:1px solid #93c5fd; border-radius:8px; font-size:13px; color:#495057;">' +
+                        'Fogli totali commessa: <strong style="color:#1d4ed8;">' + cs.fogli_totali + '</strong>' +
                         '<span style="margin-left:8px;">' + cs.copie_totali + ' copie</span>' +
-                        '<span style="margin-left:8px; color:#4b5563;">' + cs.run_count + ' run</span></div>';
+                        '<span style="margin-left:8px; color:#6c757d;">' + cs.run_count + ' run</span></div>';
                 }
             } else {
                 sc.innerHTML = '<div class="no-job-msg">Nessun job in stampa</div>';
@@ -666,7 +667,7 @@ setInterval(function() {
                     data.jobs.completed.forEach(function(j) {
                         var pct = j.num_copies > 0 ? Math.round((j.copies_printed / j.num_copies) * 100) : 100;
                         var mesHtml = j.mes ? '<span class="commessa-tag">' + j.mes.commessa + '</span><div class="client-name">' + j.mes.cliente + '</div>' : '';
-                        ch += '<tr><td class="job-title">' + j.title + '</td><td>' + mesHtml + '</td><td><div class="mini-progress"><div class="fill" style="width:' + pct + '%"></div></div><span class="copies-text">' + j.copies_printed + '/' + j.num_copies + '</span></td><td>' + j.total_sheets + '</td><td>' + (j.duplex ? 'B/V' : 'Solo F') + '</td><td style="font-size:12px;color:#9aa0a6;">' + j.date + '</td></tr>';
+                        ch += '<tr><td class="job-title">' + j.title + '</td><td>' + mesHtml + '</td><td><div class="mini-progress"><div class="fill" style="width:' + pct + '%"></div></div><span class="copies-text">' + j.copies_printed + '/' + j.num_copies + '</span></td><td>' + j.total_sheets + '</td><td>' + (j.duplex ? 'B/V' : 'Solo F') + '</td><td style="font-size:12px;color:#6c757d;">' + j.date + '</td></tr>';
                     });
                     cb.innerHTML = ch;
                 }
