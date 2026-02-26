@@ -21,8 +21,8 @@ class DescrizioneParser
             return '4C';
         }
 
-        // Cerca pattern: "stampa [a] NUM[/NUM] colori/colore [DETTAGLI]"
-        $pattern = '/stampa\s+(?:a\s+)?(\d+(?:\/\d+)?)\s*colou?r[ei]?\b(.{0,120})/is';
+        // Cerca pattern: "stampa [a] NUM[/+NUM] colori/colore [DETTAGLI]"
+        $pattern = '/stampa\s+(?:a\s+)?(\d+(?:[\/+]\d+)?)\s*colou?r[ei]?\b(.{0,120})/is';
 
         if (preg_match($pattern, $descrizione, $m)) {
             $numColori = trim($m[1]);
@@ -104,6 +104,9 @@ class DescrizioneParser
      */
     protected static function formattaNumColori(string $num): string
     {
+        // Normalizza: 4+4 → 4/4
+        $num = str_replace('+', '/', $num);
+
         // Fronte/retro uguali a 4: standard CMYK
         if (in_array($num, ['4', '4/4'])) {
             return '4C';
