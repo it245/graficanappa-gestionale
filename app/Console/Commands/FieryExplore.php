@@ -14,14 +14,13 @@ class FieryExplore extends Command
     {
         $host = config('fiery.host');
         $baseUrl = 'https://' . $host;
-        $http = Http::withoutVerifying()->timeout(15);
 
         $this->info("=== FIERY EXPLORE: {$host} ===\n");
 
         // 1. WebTools status (no auth)
         $this->info('--- 1. WebTools Server Status (no auth) ---');
         try {
-            $r = $http->get($baseUrl . '/wt4/home/get_server_status', ['client_locale' => 'it_IT']);
+            $r = Http::withoutVerifying()->timeout(15)->get($baseUrl . '/wt4/home/get_server_status', ['client_locale' => 'it_IT']);
             if ($r->successful()) {
                 $data = $r->json();
                 $this->line(json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
@@ -36,7 +35,7 @@ class FieryExplore extends Command
         $this->info("\n--- 2. Login API v5 ---");
         $cookies = null;
         try {
-            $loginR = $http->post($baseUrl . '/live/api/v5/login', [
+            $loginR = Http::withoutVerifying()->timeout(15)->post($baseUrl . '/live/api/v5/login', [
                 'username' => config('fiery.username'),
                 'password' => config('fiery.password'),
                 'accessrights' => config('fiery.api_key'),
@@ -63,101 +62,87 @@ class FieryExplore extends Command
             $cookieArray[$cookie->getName()] = $cookie->getValue();
         }
 
-        $authed = fn() => Http::withoutVerifying()->timeout(15)->withCookies($cookieArray, $host);
+        $authed = fn() => Http::withoutVerifying()->timeout(30)->withCookies($cookieArray, $host);
 
-        // 3. Status API
-        $this->info("\n--- 3. API v5 Status ---");
-        try {
-            $r = $authed()->get($baseUrl . '/live/api/v5/status');
-            $this->line($r->successful() ? json_encode($r->json(), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) : "HTTP {$r->status()}");
-        } catch (\Exception $e) {
-            $this->error($e->getMessage());
-        }
-
-        // 4. Jobs list
-        $this->info("\n--- 4. API v5 Jobs (lista completa) ---");
+        // 3. Jobs list - riepilogo tabellare
+        $this->info("\n--- 3. API v5 Jobs (tutti) ---");
         try {
             $r = $authed()->get($baseUrl . '/live/api/v5/jobs');
             if ($r->successful()) {
-                $jobs = $r->json();
-                $this->line("Totale job: " . count($jobs));
-                // Mostra i primi 5 job con tutti i campi
-                $sample = array_slice($jobs, 0, 5);
-                $this->line(json_encode($sample, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+                $json = $r->json();
+                $items = $json['data']['items'] ?? $json;
+                $total = $json['data']['totalItems'] ?? count($items);
+                $this->line("Totale job: {$total}");
+
+                // Tabella riepilogativa
+                $this->info("\nRiepilogo job:");
+                $this->line(str_pad('TITLE', 55) . str_pad('STATE', 18) . str_pad('COPIE', 12) . 'FOGLI');
+                $this->line(str_repeat('-', 100));
+
+                foreach ($items as $job) {
+                    $title = substr($job['title'] ?? '?', 0, 53);
+                    $state = $job['state'] ?? $job['status'] ?? '?';
+                    $copieStampate = $job['copies printed'] ?? '?';
+                    $copieTotali = $job['num copies'] ?? '?';
+                    $fogliStampati = $job['total sheets printed'] ?? '?';
+
+                    $this->line(
+                        str_pad($title, 55) .
+                        str_pad($state, 18) .
+                        str_pad("{$copieStampate}/{$copieTotali}", 12) .
+                        $fogliStampati
+                    );
+                }
+
+                // Mostra dettaglio del job in stampa (se presente)
+                $printing = collect($items)->firstWhere('state', 'printing');
+                if ($printing) {
+                    $this->info("\n--- Job in stampa (dettaglio) ---");
+                    // Mostra solo i campi utili
+                    $campiUtili = [
+                        'id', 'title', 'username', 'state', 'status',
+                        'copies printed', 'num copies',
+                        'total pages printed', 'total sheets printed',
+                        'total color pages printed', 'total bw pages printed',
+                        'media size', 'media weight', 'media type',
+                        'input slot', 'EFDuplex', 'date',
+                    ];
+                    $dettaglio = array_intersect_key($printing, array_flip($campiUtili));
+                    $this->line(json_encode($dettaglio, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+                }
             } else {
-                $this->error("HTTP {$r->status()}: " . $r->body());
+                $this->error("HTTP {$r->status()}: " . substr($r->body(), 0, 300));
             }
         } catch (\Exception $e) {
             $this->error($e->getMessage());
         }
 
-        // 5. Printed jobs
-        $this->info("\n--- 5. API v5 Jobs Printed ---");
+        // 4. Accounting - solo conteggio, senza stampare il body enorme
+        $this->info("\n--- 4. API v5 Accounting (solo conteggio) ---");
         try {
-            $r = $authed()->get($baseUrl . '/live/api/v5/jobs', ['state' => 'printed']);
-            if ($r->successful()) {
-                $jobs = $r->json();
-                $this->line("Job stampati: " . count($jobs));
-                $sample = array_slice($jobs, 0, 3);
-                $this->line(json_encode($sample, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-            } else {
-                $this->error("HTTP {$r->status()}");
-            }
-        } catch (\Exception $e) {
-            $this->error($e->getMessage());
-        }
-
-        // 6. Processing jobs
-        $this->info("\n--- 6. API v5 Jobs Processing ---");
-        try {
-            $r = $authed()->get($baseUrl . '/live/api/v5/jobs', ['state' => 'processing']);
-            if ($r->successful()) {
-                $this->line(json_encode($r->json(), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-            } else {
-                $this->error("HTTP {$r->status()}");
-            }
-        } catch (\Exception $e) {
-            $this->error($e->getMessage());
-        }
-
-        // 7. Printers/devices
-        $this->info("\n--- 7. API v5 Printers ---");
-        try {
-            $r = $authed()->get($baseUrl . '/live/api/v5/printers');
-            if ($r->successful()) {
-                $this->line(json_encode($r->json(), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-            } else {
-                $this->error("HTTP {$r->status()}");
-            }
-        } catch (\Exception $e) {
-            $this->error($e->getMessage());
-        }
-
-        // 8. Job accounting/log
-        $this->info("\n--- 8. API v5 Accounting ---");
-        try {
+            // Usa streaming per evitare OOM: scarica solo i primi bytes per capire la struttura
             $r = $authed()->get($baseUrl . '/live/api/v5/accounting');
             if ($r->successful()) {
-                $data = $r->json();
-                $this->line("Entries: " . count($data));
-                $sample = array_slice($data, 0, 3);
-                $this->line(json_encode($sample, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+                // Prendi solo i primi 2000 chars per evitare OOM
+                $bodyPreview = substr($r->body(), 0, 2000);
+                $this->line("Accounting disponibile (response troppo grande per stampare tutto)");
+                $this->line("Preview primi 2000 chars:");
+                $this->line($bodyPreview . "\n...(troncato)");
             } else {
-                $this->error("HTTP {$r->status()}: " . substr($r->body(), 0, 200));
+                $this->error("HTTP {$r->status()}");
             }
         } catch (\Exception $e) {
-            $this->error($e->getMessage());
+            $this->error('Accounting: ' . $e->getMessage());
         }
 
-        // 9. Job log
-        $this->info("\n--- 9. API v5 Job Log ---");
+        // 5. Job log - solo primi 3
+        $this->info("\n--- 5. API v5 Job Log (primi 3) ---");
         try {
             $r = $authed()->get($baseUrl . '/live/api/v5/joblog');
             if ($r->successful()) {
-                $data = $r->json();
-                $this->line("Log entries: " . (is_array($data) ? count($data) : 'N/A'));
-                $sample = is_array($data) ? array_slice($data, 0, 3) : $data;
-                $this->line(json_encode($sample, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+                $bodyPreview = substr($r->body(), 0, 2000);
+                $this->line("Preview primi 2000 chars:");
+                $this->line($bodyPreview . "\n...(troncato)");
             } else {
                 $this->error("HTTP {$r->status()}: " . substr($r->body(), 0, 200));
             }
