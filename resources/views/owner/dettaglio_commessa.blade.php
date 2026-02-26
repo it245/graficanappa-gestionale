@@ -251,8 +251,8 @@
                         if ($fustellaDett2) $noteExtraDett .= '[FS: '.$fustellaDett2.'] ';
                     }
                 @endphp
-                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'note', this.innerText)">
-                    @if($noteExtraDett)<small class="fw-bold">{{ $noteExtraDett }}</small><br>@endif{{ $fase->note ?? '-' }}
+                <td>
+                    @if($noteExtraDett)<small class="fw-bold">{{ $noteExtraDett }}</small><br>@endif<span contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'note', this.innerText)">{{ $fase->note ?? '-' }}</span>
                 </td>
                 <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'descrizione', this.innerText)">{{ $fase->ordine->descrizione ?? '-' }}</td>
                 <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_inizio', this.innerText)">{{ $fase->data_inizio ?? '-' }}</td>
