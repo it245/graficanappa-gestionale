@@ -221,6 +221,54 @@ class FieryService
     }
 
     /**
+     * Fogli totali per commessa dall'Accounting API (tutti i run storici).
+     * Cachea i dati per 5 minuti per evitare chiamate ripetute.
+     * Ritorna array ['commessa' => ['fogli' => X, 'copie' => Y, 'run' => Z, 'run_dettaglio' => [...]]]
+     */
+    public function getAccountingPerCommessa(): ?array
+    {
+        return Cache::remember('fiery_accounting_commesse', 300, function () {
+            $json = $this->apiGet('/live/api/v5/accounting');
+            if (!$json) return null;
+
+            $items = $json['data']['items'] ?? $json;
+            if (!is_array($items)) return null;
+
+            $perCommessa = [];
+            foreach ($items as $entry) {
+                $title = $entry['title'] ?? '';
+                $commessa = $this->estraiCommessaDaTitolo($title);
+                if (!$commessa) continue;
+
+                $fogli = (int) ($entry['total sheets printed'] ?? 0);
+                $copie = (int) ($entry['copies printed'] ?? 0);
+                $printStatus = $entry['print status'] ?? '';
+
+                if (!isset($perCommessa[$commessa])) {
+                    $perCommessa[$commessa] = [
+                        'fogli' => 0,
+                        'copie' => 0,
+                        'run' => 0,
+                        'run_dettaglio' => [],
+                    ];
+                }
+
+                $perCommessa[$commessa]['fogli'] += $fogli;
+                $perCommessa[$commessa]['copie'] += $copie;
+                $perCommessa[$commessa]['run']++;
+                $perCommessa[$commessa]['run_dettaglio'][] = [
+                    'title' => $title,
+                    'copie' => $copie,
+                    'fogli' => $fogli,
+                    'status' => $printStatus,
+                ];
+            }
+
+            return $perCommessa;
+        });
+    }
+
+    /**
      * Verifica se il Fiery è raggiungibile
      */
     public function isOnline(): bool
