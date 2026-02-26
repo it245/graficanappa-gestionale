@@ -788,7 +788,7 @@ tr:hover td {
 
 <!-- Modal Spedizioni BRT -->
 <div class="modal fade" id="modalBRT" tabindex="-1">
-    <div class="modal-dialog modal-xl">
+    <div class="modal-dialog modal-fullscreen">
         <div class="modal-content">
             <div class="modal-header" style="background:#d4380d; color:#fff; padding:18px 24px;">
                 <h5 class="modal-title" style="font-size:22px; font-weight:700;">Spedizioni BRT ({{ $spedizioniBRT->count() }} DDT)</h5>
