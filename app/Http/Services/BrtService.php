@@ -216,6 +216,17 @@ class BrtService
             // Stato dalla descrizione dell'ultimo evento
             $data['stato'] = !empty($eventi) ? $eventi[0]['descrizione'] : 'SCONOSCIUTO';
 
+            // Fallback: se data_consegna è vuota ma c'è un evento CONSEGNATA, usa quella data
+            if (isset($data['bolla']) && empty($data['bolla']['data_consegna']) && !empty($eventi)) {
+                foreach ($eventi as $ev) {
+                    if (stripos($ev['descrizione'], 'CONSEGNATA') !== false) {
+                        $data['bolla']['data_consegna'] = $ev['data'];
+                        $data['bolla']['ora_consegna'] = $ev['ora'];
+                        break;
+                    }
+                }
+            }
+
             return $data;
         } catch (\Exception $e) {
             Log::warning('BRT SOAP Tracking errore', [
