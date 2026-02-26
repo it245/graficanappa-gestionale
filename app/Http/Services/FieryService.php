@@ -71,10 +71,8 @@ class FieryService
 
         // Avvisi/errori
         $avviso = $device['statusString'] ?? null;
-        if ($deviceState === 'STR_ERROR') {
+        if ($deviceState === 'STR_ERROR' || $deviceState === 'ERROR') {
             $stato = 'errore';
-        } elseif ($deviceState === 'STR_WARNING') {
-            // mantieni lo stato corrente ma segna l'avviso
         }
 
         // RIP (elaborazione)
@@ -114,64 +112,111 @@ class FieryService
     }
 
     /**
-     * Status API REST (sempre disponibile)
+     * Login API v5 e ritorna array di cookie.
+     * Cachea i cookie per 10 minuti per evitare login ripetuti.
      */
-    public function getApiStatus(): ?array
+    private function apiLogin(): ?array
     {
-        try {
-            $loginResponse = $this->http()->post($this->baseUrl . '/live/api/v5/login', [
-                'username' => $this->username,
-                'password' => $this->password,
-            ]);
+        return Cache::remember('fiery_api_cookies', 600, function () {
+            try {
+                $loginResponse = $this->http()->post($this->baseUrl . '/live/api/v5/login', [
+                    'username' => $this->username,
+                    'password' => $this->password,
+                    'accessrights' => $this->apiKey,
+                ]);
 
-            if (!$loginResponse->successful()) {
+                if (!$loginResponse->successful()) {
+                    return null;
+                }
+
+                $cookieJar = $loginResponse->cookies();
+                $cookies = [];
+                foreach ($cookieJar as $cookie) {
+                    $cookies[$cookie->getName()] = $cookie->getValue();
+                }
+                return $cookies;
+            } catch (\Exception $e) {
                 return null;
             }
-
-            $cookies = $loginResponse->cookies();
-            $statusResponse = $this->http()
-                ->withCookies($cookies, $this->host)
-                ->get($this->baseUrl . '/live/api/v5/status');
-
-            if ($statusResponse->successful()) {
-                $data = $statusResponse->json();
-                return $data['data']['item'] ?? null;
-            }
-        } catch (\Exception $e) {
-            // API non disponibile
-        }
-
-        return null;
+        });
     }
 
     /**
-     * Lista job (richiede licenza API attiva)
+     * Chiamata autenticata API v5
+     */
+    private function apiGet(string $endpoint, array $query = [])
+    {
+        $cookies = $this->apiLogin();
+        if (!$cookies) return null;
+
+        try {
+            $response = $this->http()
+                ->timeout(30)
+                ->withCookies($cookies, $this->host)
+                ->get($this->baseUrl . $endpoint, $query);
+
+            if ($response->status() === 401) {
+                // Cookie scaduti, riprova con login fresco
+                Cache::forget('fiery_api_cookies');
+                $cookies = $this->apiLogin();
+                if (!$cookies) return null;
+
+                $response = $this->http()
+                    ->timeout(30)
+                    ->withCookies($cookies, $this->host)
+                    ->get($this->baseUrl . $endpoint, $query);
+            }
+
+            return $response->successful() ? $response->json() : null;
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Lista completa job dal API v5 con dati strutturati.
+     * Ritorna array di job con campi normalizzati.
      */
     public function getJobs(): ?array
     {
-        try {
-            $loginResponse = $this->http()->post($this->baseUrl . '/live/api/v5/login', [
-                'username' => $this->username,
-                'password' => $this->password,
-                'accessrights' => $this->apiKey,
-            ]);
+        $json = $this->apiGet('/live/api/v5/jobs');
+        if (!$json) return null;
 
-            if (!$loginResponse->successful()) {
-                return null;
-            }
+        $items = $json['data']['items'] ?? [];
 
-            $cookies = $loginResponse->cookies();
-            $jobsResponse = $this->http()
-                ->withCookies($cookies, $this->host)
-                ->get($this->baseUrl . '/live/api/v5/jobs');
+        return collect($items)->map(function ($job) {
+            return [
+                'id' => $job['id'] ?? null,
+                'title' => $job['title'] ?? '',
+                'state' => $job['state'] ?? '',
+                'status' => $job['status'] ?? '',
+                'date' => $job['date'] ?? '',
+                'username' => $job['username'] ?? '',
+                'copies_printed' => (int) ($job['copies printed'] ?? 0),
+                'num_copies' => (int) ($job['num copies'] ?? 0),
+                'total_sheets' => (int) ($job['total sheets printed'] ?? 0),
+                'total_pages' => (int) ($job['total pages printed'] ?? 0),
+                'total_color' => (int) ($job['total color pages printed'] ?? 0),
+                'total_bw' => (int) ($job['total bw pages printed'] ?? 0),
+                'num_pages' => (int) ($job['num pages'] ?? 0),
+                'media_size' => $job['media size'] ?? '',
+                'media_weight' => $job['media weight'] ?? '',
+                'duplex' => ($job['EFDuplex'] ?? 'False') !== 'False',
+                'input_slot' => $job['input slot'] ?? '',
+                'commessa' => $this->estraiCommessaDaTitolo($job['title'] ?? ''),
+            ];
+        })->toArray();
+    }
 
-            if ($jobsResponse->successful()) {
-                return $jobsResponse->json();
-            }
-        } catch (\Exception $e) {
-            // Licenza API probabilmente scaduta
+    /**
+     * Estrae il codice commessa dal titolo del job Fiery.
+     * "66590_PieghevoliVari_33x48.pdf" → "0066590-26"
+     */
+    public function estraiCommessaDaTitolo(string $title): ?string
+    {
+        if (preg_match('/^(\d{4,6})_/', $title, $m)) {
+            return '00' . $m[1] . '-26';
         }
-
         return null;
     }
 

@@ -3,319 +3,661 @@
 @section('content')
 <div class="container-fluid px-3">
 <style>
-    .fiery-card {
-        background: #fff;
-        border-radius: 12px;
-        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-        padding: 24px;
-        margin-bottom: 20px;
-    }
-    .fiery-card h5 {
-        font-size: 14px;
-        font-weight: 600;
-        text-transform: uppercase;
-        color: #6c757d;
-        margin-bottom: 16px;
-        letter-spacing: 0.5px;
-    }
-    .stato-badge {
-        display: inline-flex;
+    body { background: #0f1117; }
+    .fiery-header {
+        display: flex;
         align-items: center;
-        gap: 8px;
+        justify-content: space-between;
+        margin-bottom: 24px;
+        padding: 16px 0;
+    }
+    .fiery-header .machine-name {
         font-size: 22px;
         font-weight: 700;
-        padding: 8px 20px;
-        border-radius: 8px;
+        color: #e8eaed;
+        letter-spacing: -0.5px;
     }
-    .stato-stampa { background: #d4edda; color: #155724; }
-    .stato-idle { background: #e2e3e5; color: #383d41; }
-    .stato-errore { background: #f8d7da; color: #721c24; }
-    .stato-offline { background: #f8d7da; color: #721c24; }
-    .stato-dot {
-        width: 12px;
-        height: 12px;
+    .fiery-header .machine-name small {
+        font-size: 13px;
+        font-weight: 400;
+        color: #9aa0a6;
+        margin-left: 12px;
+    }
+    .fiery-header .nav-links a {
+        color: #9aa0a6;
+        text-decoration: none;
+        font-size: 13px;
+        padding: 6px 14px;
+        border: 1px solid #2d2f36;
+        border-radius: 6px;
+        margin-left: 8px;
+        transition: all 0.2s;
+    }
+    .fiery-header .nav-links a:hover {
+        background: #1e2028;
+        border-color: #4a4d56;
+        color: #e8eaed;
+    }
+
+    .fc {
+        background: #1a1c24;
+        border-radius: 14px;
+        border: 1px solid #2d2f36;
+        padding: 20px 24px;
+        margin-bottom: 16px;
+    }
+    .fc-label {
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: #6b7280;
+        letter-spacing: 1px;
+        margin-bottom: 12px;
+    }
+
+    /* Status badge */
+    .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 22px;
+        border-radius: 50px;
+        font-size: 16px;
+        font-weight: 700;
+        letter-spacing: 0.3px;
+    }
+    .sp-stampa { background: rgba(34,197,94,0.12); color: #22c55e; }
+    .sp-idle { background: rgba(107,114,128,0.15); color: #9ca3af; }
+    .sp-errore { background: rgba(239,68,68,0.12); color: #ef4444; }
+    .sp-offline { background: rgba(239,68,68,0.12); color: #ef4444; }
+
+    .status-dot {
+        width: 10px;
+        height: 10px;
         border-radius: 50%;
-        display: inline-block;
-        animation: pulse 2s infinite;
     }
-    .dot-stampa { background: #28a745; }
-    .dot-idle { background: #6c757d; animation: none; }
-    .dot-errore { background: #dc3545; }
-    .dot-offline { background: #dc3545; animation: none; }
-    @keyframes pulse {
+    .sd-stampa { background: #22c55e; box-shadow: 0 0 8px rgba(34,197,94,0.5); animation: glow 2s infinite; }
+    .sd-idle { background: #6b7280; }
+    .sd-errore { background: #ef4444; box-shadow: 0 0 8px rgba(239,68,68,0.5); animation: glow 1s infinite; }
+    .sd-offline { background: #ef4444; }
+    @keyframes glow {
         0%, 100% { opacity: 1; }
-        50% { opacity: 0.4; }
+        50% { opacity: 0.3; }
     }
-    .avviso-box {
-        background: #fff3cd;
-        color: #856404;
-        border: 1px solid #ffc107;
+
+    .warning-bar {
+        background: rgba(251,191,36,0.1);
+        color: #fbbf24;
+        border: 1px solid rgba(251,191,36,0.2);
         border-radius: 8px;
-        padding: 10px 16px;
-        font-size: 14px;
+        padding: 8px 16px;
+        font-size: 13px;
         margin-top: 12px;
     }
-    .job-info {
-        font-size: 16px;
-        color: #212529;
+
+    /* Big progress */
+    .big-progress-wrap {
+        margin-top: 16px;
     }
-    .job-info .label {
-        color: #6c757d;
-        font-size: 13px;
-    }
-    .job-info .value {
-        font-weight: 600;
-        display: block;
-        margin-top: 2px;
-    }
-    .progress-bar-fiery {
-        height: 24px;
-        border-radius: 12px;
-        background: #e9ecef;
+    .big-progress-bar {
+        height: 32px;
+        background: #2d2f36;
+        border-radius: 16px;
         overflow: hidden;
-        margin-top: 8px;
+        position: relative;
     }
-    .progress-bar-fiery .fill {
+    .big-progress-fill {
         height: 100%;
-        background: linear-gradient(90deg, #28a745, #20c997);
-        border-radius: 12px;
-        transition: width 0.5s ease;
+        border-radius: 16px;
+        background: linear-gradient(90deg, #22c55e, #10b981);
+        transition: width 0.8s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    .big-progress-fill::after {
+        content: '';
+        position: absolute;
+        top: 0; left: -100%; width: 200%; height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+        animation: shimmer 3s infinite;
+    }
+    @keyframes shimmer {
+        0% { transform: translateX(-50%); }
+        100% { transform: translateX(50%); }
+    }
+    .big-progress-text {
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
         display: flex;
         align-items: center;
         justify-content: center;
+        font-size: 14px;
+        font-weight: 700;
         color: #fff;
+        text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
+    .big-progress-stats {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 10px;
+        font-size: 13px;
+        color: #9aa0a6;
+    }
+
+    /* Info values */
+    .info-label {
+        font-size: 11px;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .info-value {
+        font-size: 18px;
+        font-weight: 700;
+        color: #e8eaed;
+        margin-top: 2px;
+    }
+    .info-value-sm {
+        font-size: 14px;
         font-weight: 600;
+        color: #e8eaed;
+    }
+    .info-value .commessa-link {
+        color: #60a5fa;
+        text-decoration: none;
+    }
+
+    /* RIP */
+    .rip-active {
+        background: rgba(59,130,246,0.1);
+        border: 1px solid rgba(59,130,246,0.2);
+        color: #60a5fa;
+        padding: 10px 16px;
+        border-radius: 8px;
         font-size: 13px;
     }
-    .rip-section {
-        padding: 12px 16px;
-        border-radius: 8px;
-        background: #f8f9fa;
+    .rip-idle-box {
+        color: #4b5563;
+        font-size: 13px;
     }
-    .rip-idle { color: #6c757d; }
-    .rip-busy { color: #0d6efd; }
-    .refresh-info {
+
+    /* Job tables */
+    .job-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+    .job-table thead th {
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #6b7280;
+        font-weight: 600;
+        padding: 8px 12px;
+        border-bottom: 1px solid #2d2f36;
+        text-align: left;
+    }
+    .job-table tbody td {
+        font-size: 13px;
+        color: #d1d5db;
+        padding: 10px 12px;
+        border-bottom: 1px solid rgba(45,47,54,0.5);
+        vertical-align: middle;
+    }
+    .job-table tbody tr:hover {
+        background: rgba(255,255,255,0.02);
+    }
+    .job-table .job-title {
+        font-weight: 500;
+        color: #e8eaed;
+        max-width: 320px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .job-table .commessa-tag {
+        display: inline-block;
+        background: rgba(96,165,250,0.1);
+        color: #60a5fa;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 4px;
+    }
+    .job-table .client-name {
+        font-size: 11px;
+        color: #9aa0a6;
+    }
+
+    /* State pills in tables */
+    .state-pill {
+        display: inline-block;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 3px 10px;
+        border-radius: 12px;
+    }
+    .state-queue { background: rgba(251,191,36,0.12); color: #fbbf24; }
+    .state-completed { background: rgba(34,197,94,0.12); color: #22c55e; }
+    .state-printing { background: rgba(34,197,94,0.2); color: #22c55e; }
+    .state-waiting { background: rgba(59,130,246,0.12); color: #60a5fa; }
+    .state-canceled { background: rgba(239,68,68,0.12); color: #ef4444; }
+
+    /* Mini progress in table */
+    .mini-progress {
+        width: 80px;
+        height: 6px;
+        background: #2d2f36;
+        border-radius: 3px;
+        overflow: hidden;
+        display: inline-block;
+        vertical-align: middle;
+    }
+    .mini-progress .fill {
+        height: 100%;
+        background: #22c55e;
+        border-radius: 3px;
+    }
+    .copies-text {
         font-size: 12px;
-        color: #adb5bd;
+        color: #9aa0a6;
+        margin-left: 6px;
+    }
+
+    /* Section titles */
+    .section-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: #e8eaed;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .section-title .count-badge {
+        background: #2d2f36;
+        color: #9aa0a6;
+        font-size: 11px;
+        padding: 2px 8px;
+        border-radius: 10px;
+    }
+
+    .timestamp-info {
+        font-size: 11px;
+        color: #4b5563;
         text-align: right;
         margin-top: 8px;
     }
-    .back-btn {
+
+    /* Print doc name - big */
+    .print-doc-name {
+        font-size: 16px;
+        font-weight: 600;
+        color: #e8eaed;
+        word-break: break-all;
+        line-height: 1.4;
+    }
+
+    .operatore-name {
+        font-size: 20px;
+        font-weight: 700;
+        color: #e8eaed;
+    }
+
+    .no-job-msg {
+        color: #4b5563;
+        font-size: 14px;
+        padding: 20px 0;
+    }
+
+    .offline-screen {
+        text-align: center;
+        padding: 60px 20px;
+    }
+    .offline-screen .icon {
+        font-size: 48px;
         margin-bottom: 16px;
+    }
+    .offline-screen h3 {
+        color: #ef4444;
+        font-weight: 700;
+    }
+    .offline-screen p {
+        color: #6b7280;
+        font-size: 14px;
     }
 </style>
 
-    <div class="back-btn">
-        <a href="{{ route('owner.dashboard') }}" class="btn btn-outline-secondary btn-sm">← Dashboard</a>
-        <a href="{{ route('mes.prinect') }}" class="btn btn-outline-secondary btn-sm">Prinect XL106</a>
-        <span class="ms-3 fw-bold" style="font-size:20px;">Canon imagePRESS V900 — Fiery P400</span>
+<div class="fiery-header">
+    <div>
+        <span class="machine-name">Canon imagePRESS V900 <small>Fiery P400</small></span>
     </div>
+    <div class="nav-links">
+        <a href="{{ route('owner.dashboard') }}">Dashboard</a>
+        <a href="{{ route('mes.prinect') }}">Prinect XL106</a>
+    </div>
+</div>
 
-    @if($status)
-    <div class="row">
-        {{-- Card Operatore --}}
-        <div class="col-md-3">
-            <div class="fiery-card">
-                <h5>Operatore</h5>
-                <div style="font-size:18px; font-weight:600;" id="operatore-nome">{{ config('fiery.operatore') }}</div>
-                <div id="commessa-container" class="mt-3">
-                    @if(!empty($status['commessa']))
-                    <div class="job-info">
-                        <span class="label">Commessa</span>
-                        <span class="value">{{ $status['commessa']['commessa'] }}</span>
-                    </div>
-                    <div class="job-info mt-2">
-                        <span class="label">Cliente</span>
-                        <span class="value">{{ $status['commessa']['cliente'] }}</span>
-                    </div>
-                    @endif
-                </div>
-            </div>
-        </div>
-
-        {{-- Card Stato Macchina --}}
-        <div class="col-md-3">
-            <div class="fiery-card">
-                <h5>Stato Macchina</h5>
+@if($status)
+<div class="row">
+    {{-- Col sinistra: Stato + Job in stampa --}}
+    <div class="col-lg-8">
+        {{-- Riga stato --}}
+        <div class="fc">
+            <div class="d-flex align-items-center justify-content-between">
                 <div id="stato-container">
-                    <span class="stato-badge stato-{{ $status['stato'] }}">
-                        <span class="stato-dot dot-{{ $status['stato'] }}"></span>
+                    <span class="status-pill sp-{{ $status['stato'] }}">
+                        <span class="status-dot sd-{{ $status['stato'] }}"></span>
                         {{ ucfirst($status['stato']) }}
                     </span>
                 </div>
-                @if($status['avviso'])
-                <div class="avviso-box" id="avviso-box">
-                    ⚠ {{ $status['avviso'] }}
+                <div>
+                    @if(!$status['rip']['idle'] && $status['rip']['documento'])
+                    <div class="rip-active" id="rip-container">
+                        RIP: {{ $status['rip']['documento'] }}
+                    </div>
+                    @else
+                    <span class="rip-idle-box" id="rip-container">RIP idle</span>
+                    @endif
+                </div>
+                <div class="timestamp-info" id="ultimo-aggiornamento">{{ $status['ultimo_aggiornamento'] }}</div>
+            </div>
+            @if($status['avviso'])
+            <div class="warning-bar" id="avviso-box">{{ $status['avviso'] }}</div>
+            @endif
+        </div>
+
+        {{-- Job in stampa --}}
+        <div class="fc" id="print-card">
+            <div class="fc-label">Job in stampa</div>
+            <div id="stampa-container">
+            @if($status['stampa']['documento'])
+                <div class="print-doc-name" id="print-doc">{{ $status['stampa']['documento'] }}</div>
+                @if(!empty($status['commessa']))
+                <div class="mt-2" id="commessa-inline">
+                    <span style="color:#60a5fa;font-weight:600;">{{ $status['commessa']['commessa'] }}</span>
+                    <span style="color:#9aa0a6;margin-left:8px;">{{ $status['commessa']['cliente'] }}</span>
+                </div>
+                @else
+                <div class="mt-2" id="commessa-inline"></div>
+                @endif
+
+                <div class="big-progress-wrap">
+                    <div class="big-progress-bar">
+                        <div class="big-progress-fill" id="progress-fill" style="width:{{ $status['stampa']['progresso'] }}%"></div>
+                        <div class="big-progress-text" id="progress-text">{{ $status['stampa']['progresso'] }}%</div>
+                    </div>
+                    <div class="big-progress-stats">
+                        <span id="copies-info">Copie: <strong>{{ $status['stampa']['copie_fatte'] }}</strong> / {{ $status['stampa']['copie_totali'] }}</span>
+                        <span id="pages-info">Pagine: {{ $status['stampa']['pagine'] }}</span>
+                        <span>Utente: {{ $status['stampa']['utente'] }}</span>
+                    </div>
+                </div>
+            @else
+                <div class="no-job-msg" id="no-print">Nessun job in stampa</div>
+            @endif
+            </div>
+        </div>
+    </div>
+
+    {{-- Col destra: Operatore + Info --}}
+    <div class="col-lg-4">
+        <div class="fc">
+            <div class="fc-label">Operatore assegnato</div>
+            <div class="operatore-name" id="operatore-nome">{{ config('fiery.operatore') }}</div>
+            <div id="commessa-detail" class="mt-3">
+                @if(!empty($status['commessa']))
+                <div class="mb-2">
+                    <div class="info-label">Commessa</div>
+                    <div class="info-value">{{ $status['commessa']['commessa'] }}</div>
+                </div>
+                <div class="mb-2">
+                    <div class="info-label">Cliente</div>
+                    <div class="info-value-sm">{{ $status['commessa']['cliente'] }}</div>
+                </div>
+                <div>
+                    <div class="info-label">Descrizione</div>
+                    <div class="info-value-sm" style="font-size:12px;color:#9aa0a6;">{{ \Illuminate\Support\Str::limit($status['commessa']['descrizione'] ?? '', 80) }}</div>
                 </div>
                 @endif
-                <div class="refresh-info" id="ultimo-aggiornamento">
-                    {{ $status['ultimo_aggiornamento'] }}
-                </div>
             </div>
         </div>
 
-        {{-- Card Job in Stampa --}}
-        <div class="col-md-4">
-            <div class="fiery-card">
-                <h5>Job in Stampa</h5>
-                <div id="stampa-container">
-                    @if($status['stampa']['documento'])
-                    <div class="job-info">
-                        <span class="label">Documento</span>
-                        <span class="value" id="print-doc">{{ $status['stampa']['documento'] }}</span>
-                    </div>
-                    <div class="row mt-3">
-                        <div class="col-6">
-                            <div class="job-info">
-                                <span class="label">Copie</span>
-                                <span class="value" id="print-copies">{{ $status['stampa']['copie'] }}</span>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="job-info">
-                                <span class="label">Pagine</span>
-                                <span class="value" id="print-pages">{{ $status['stampa']['pagine'] }}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="progress-bar-fiery mt-3">
-                        <div class="fill" id="print-progress" style="width: {{ $status['stampa']['progresso'] }}%">
-                            {{ $status['stampa']['progresso'] }}%
-                        </div>
-                    </div>
-                    @else
-                    <div class="text-muted" id="no-print">Nessun job in stampa</div>
-                    @endif
+        {{-- Stats --}}
+        @if(!empty($jobData))
+        <div class="fc">
+            <div class="fc-label">Statistiche coda</div>
+            <div class="row text-center">
+                <div class="col-4">
+                    <div class="info-value" style="color:#22c55e;" id="stat-completed">{{ count($jobData['completed']) }}</div>
+                    <div class="info-label">Completati</div>
+                </div>
+                <div class="col-4">
+                    <div class="info-value" style="color:#fbbf24;" id="stat-queue">{{ count($jobData['queue']) }}</div>
+                    <div class="info-label">In coda</div>
+                </div>
+                <div class="col-4">
+                    <div class="info-value" style="color:#9aa0a6;" id="stat-total">{{ $jobData['total'] }}</div>
+                    <div class="info-label">Totale</div>
                 </div>
             </div>
         </div>
-
-        {{-- Card RIP / Elaborazione --}}
-        <div class="col-md-2">
-            <div class="fiery-card">
-                <h5>Elaborazione (RIP)</h5>
-                <div id="rip-container">
-                    @if(!$status['rip']['idle'] && $status['rip']['documento'])
-                    <div class="rip-section rip-busy">
-                        <strong>In elaborazione</strong><br>
-                        <span id="rip-doc">{{ $status['rip']['documento'] }}</span><br>
-                        <small id="rip-size">{{ number_format($status['rip']['dimensione'] / 1024, 1) }} MB</small>
-                    </div>
-                    @else
-                    <div class="rip-section rip-idle">
-                        <strong>Idle</strong><br>
-                        <span class="text-muted">Nessuna elaborazione</span>
-                    </div>
-                    @endif
-                </div>
-            </div>
-        </div>
+        @endif
     </div>
+</div>
 
-    @else
-    <div class="row">
-        <div class="col-12">
-            <div class="fiery-card text-center">
-                <div class="stato-badge stato-offline">
-                    <span class="stato-dot dot-offline"></span>
-                    Fiery P400 non raggiungibile
-                </div>
-                <p class="text-muted mt-3">Verificare che la stampante sia accesa e raggiungibile su {{ config('fiery.host') }}</p>
-            </div>
-        </div>
+{{-- Job in coda --}}
+@if(!empty($jobData['queue']))
+<div class="fc">
+    <div class="section-title">
+        Coda di stampa
+        <span class="count-badge">{{ count($jobData['queue']) }}</span>
     </div>
-    @endif
+    <table class="job-table">
+        <thead>
+            <tr>
+                <th>Job</th>
+                <th>Commessa</th>
+                <th>Pagine</th>
+                <th>Copie</th>
+                <th>Stato</th>
+            </tr>
+        </thead>
+        <tbody id="queue-body">
+            @foreach($jobData['queue'] as $job)
+            <tr>
+                <td class="job-title">{{ $job['title'] }}</td>
+                <td>
+                    @if($job['mes'])
+                        <span class="commessa-tag">{{ $job['mes']['commessa'] }}</span>
+                        <div class="client-name">{{ $job['mes']['cliente'] }}</div>
+                    @endif
+                </td>
+                <td>{{ $job['num_pages'] }}</td>
+                <td>{{ $job['num_copies'] ?: '-' }}</td>
+                <td><span class="state-pill state-queue">In coda</span></td>
+            </tr>
+            @endforeach
+        </tbody>
+    </table>
+</div>
+@endif
+
+{{-- Job completati recenti --}}
+@if(!empty($jobData['completed']))
+<div class="fc">
+    <div class="section-title">
+        Completati di recente
+        <span class="count-badge">{{ count($jobData['completed']) }}</span>
+    </div>
+    <table class="job-table">
+        <thead>
+            <tr>
+                <th>Job</th>
+                <th>Commessa</th>
+                <th>Copie</th>
+                <th>Fogli</th>
+                <th>Duplex</th>
+                <th>Data</th>
+            </tr>
+        </thead>
+        <tbody id="completed-body">
+            @foreach($jobData['completed'] as $job)
+            @php
+                $pct = $job['num_copies'] > 0 ? round(($job['copies_printed'] / $job['num_copies']) * 100) : 100;
+            @endphp
+            <tr>
+                <td class="job-title">{{ $job['title'] }}</td>
+                <td>
+                    @if($job['mes'])
+                        <span class="commessa-tag">{{ $job['mes']['commessa'] }}</span>
+                        <div class="client-name">{{ $job['mes']['cliente'] }}</div>
+                    @endif
+                </td>
+                <td>
+                    <div class="mini-progress"><div class="fill" style="width:{{ $pct }}%"></div></div>
+                    <span class="copies-text">{{ $job['copies_printed'] }}/{{ $job['num_copies'] }}</span>
+                </td>
+                <td>{{ $job['total_sheets'] }}</td>
+                <td>{{ $job['duplex'] ? 'B/V' : 'Solo F' }}</td>
+                <td style="font-size:12px;color:#9aa0a6;">{{ $job['date'] }}</td>
+            </tr>
+            @endforeach
+        </tbody>
+    </table>
+</div>
+@endif
+
+@else
+{{-- Offline --}}
+<div class="fc">
+    <div class="offline-screen">
+        <div class="icon">&#9888;</div>
+        <h3>Fiery P400 non raggiungibile</h3>
+        <p>Verificare che la stampante sia accesa e raggiungibile su <strong>{{ config('fiery.host') }}</strong></p>
+    </div>
+</div>
+@endif
 </div>
 
 <script>
-// Auto-refresh ogni 30 secondi
 setInterval(function() {
     fetch('{{ route("mes.fiery.status") }}')
         .then(r => r.json())
         .then(data => {
             if (!data.online) {
                 document.getElementById('stato-container').innerHTML =
-                    '<span class="stato-badge stato-offline"><span class="stato-dot dot-offline"></span>Offline</span>';
+                    '<span class="status-pill sp-offline"><span class="status-dot sd-offline"></span>Offline</span>';
                 return;
             }
 
-            // Aggiorna stato
+            // Stato
             document.getElementById('stato-container').innerHTML =
-                '<span class="stato-badge stato-' + data.stato + '">' +
-                '<span class="stato-dot dot-' + data.stato + '"></span>' +
-                data.stato.charAt(0).toUpperCase() + data.stato.slice(1) +
-                '</span>';
+                '<span class="status-pill sp-' + data.stato + '">' +
+                '<span class="status-dot sd-' + data.stato + '"></span>' +
+                data.stato.charAt(0).toUpperCase() + data.stato.slice(1) + '</span>';
 
-            // Aggiorna avviso
-            var avvisoBox = document.getElementById('avviso-box');
+            // Avviso
+            var avvBox = document.getElementById('avviso-box');
             if (data.avviso) {
-                if (!avvisoBox) {
-                    avvisoBox = document.createElement('div');
-                    avvisoBox.id = 'avviso-box';
-                    avvisoBox.className = 'avviso-box';
-                    document.getElementById('stato-container').parentNode.appendChild(avvisoBox);
+                if (!avvBox) {
+                    avvBox = document.createElement('div');
+                    avvBox.id = 'avviso-box';
+                    avvBox.className = 'warning-bar';
+                    document.getElementById('stato-container').closest('.fc').appendChild(avvBox);
                 }
-                avvisoBox.innerHTML = '\u26A0 ' + data.avviso;
-                avvisoBox.style.display = '';
-            } else if (avvisoBox) {
-                avvisoBox.style.display = 'none';
+                avvBox.textContent = data.avviso;
+                avvBox.style.display = '';
+            } else if (avvBox) {
+                avvBox.style.display = 'none';
             }
 
-            // Aggiorna timestamp
+            // Timestamp
             var ts = document.getElementById('ultimo-aggiornamento');
             if (ts && data.ultimo_aggiornamento) ts.textContent = data.ultimo_aggiornamento;
 
-            // Aggiorna stampa
-            var sc = document.getElementById('stampa-container');
-            if (data.stampa && data.stampa.documento) {
-                sc.innerHTML =
-                    '<div class="job-info">' +
-                        '<span class="label">Documento</span>' +
-                        '<span class="value">' + data.stampa.documento + '</span>' +
-                    '</div>' +
-                    '<div class="row mt-3">' +
-                        '<div class="col-6"><div class="job-info"><span class="label">Copie</span><span class="value">' + data.stampa.copie + '</span></div></div>' +
-                        '<div class="col-6"><div class="job-info"><span class="label">Pagine</span><span class="value">' + data.stampa.pagine + '</span></div></div>' +
-                    '</div>' +
-                    '<div class="progress-bar-fiery mt-3">' +
-                        '<div class="fill" style="width:' + data.stampa.progresso + '%">' + data.stampa.progresso + '%</div>' +
-                    '</div>';
-            } else {
-                sc.innerHTML = '<div class="text-muted">Nessun job in stampa</div>';
-            }
-
-            // Aggiorna commessa
-            var cc = document.getElementById('commessa-container');
-            if (cc && data.commessa) {
-                cc.innerHTML =
-                    '<div class="job-info"><span class="label">Commessa</span><span class="value">' + data.commessa.commessa + '</span></div>' +
-                    '<div class="job-info mt-2"><span class="label">Cliente</span><span class="value">' + data.commessa.cliente + '</span></div>';
-            } else if (cc) {
-                cc.innerHTML = '';
-            }
-
-            // Aggiorna RIP
+            // RIP
             var rc = document.getElementById('rip-container');
             if (data.rip && !data.rip.idle && data.rip.documento) {
-                var sizeMB = (data.rip.dimensione / 1024).toFixed(1);
-                rc.innerHTML =
-                    '<div class="rip-section rip-busy">' +
-                        '<strong>In elaborazione</strong><br>' +
-                        '<span>' + data.rip.documento + '</span><br>' +
-                        '<small>' + sizeMB + ' MB</small>' +
+                rc.className = 'rip-active';
+                rc.innerHTML = 'RIP: ' + data.rip.documento;
+            } else {
+                rc.className = 'rip-idle-box';
+                rc.innerHTML = 'RIP idle';
+            }
+
+            // Job in stampa
+            var sc = document.getElementById('stampa-container');
+            if (data.stampa && data.stampa.documento) {
+                var commHtml = '';
+                if (data.commessa) {
+                    commHtml = '<div class="mt-2" id="commessa-inline">' +
+                        '<span style="color:#60a5fa;font-weight:600;">' + data.commessa.commessa + '</span>' +
+                        '<span style="color:#9aa0a6;margin-left:8px;">' + data.commessa.cliente + '</span></div>';
+                }
+                sc.innerHTML =
+                    '<div class="print-doc-name">' + data.stampa.documento + '</div>' +
+                    commHtml +
+                    '<div class="big-progress-wrap">' +
+                        '<div class="big-progress-bar">' +
+                            '<div class="big-progress-fill" style="width:' + data.stampa.progresso + '%"></div>' +
+                            '<div class="big-progress-text">' + data.stampa.progresso + '%</div>' +
+                        '</div>' +
+                        '<div class="big-progress-stats">' +
+                            '<span>Copie: <strong>' + data.stampa.copie_fatte + '</strong> / ' + data.stampa.copie_totali + '</span>' +
+                            '<span>Pagine: ' + data.stampa.pagine + '</span>' +
+                            '<span>Utente: ' + (data.stampa.utente || '') + '</span>' +
+                        '</div>' +
                     '</div>';
             } else {
-                rc.innerHTML =
-                    '<div class="rip-section rip-idle">' +
-                        '<strong>Idle</strong><br>' +
-                        '<span class="text-muted">Nessuna elaborazione</span>' +
-                    '</div>';
+                sc.innerHTML = '<div class="no-job-msg">Nessun job in stampa</div>';
+            }
+
+            // Commessa detail (sidebar)
+            var cd = document.getElementById('commessa-detail');
+            if (cd && data.commessa) {
+                cd.innerHTML =
+                    '<div class="mb-2"><div class="info-label">Commessa</div><div class="info-value">' + data.commessa.commessa + '</div></div>' +
+                    '<div class="mb-2"><div class="info-label">Cliente</div><div class="info-value-sm">' + data.commessa.cliente + '</div></div>';
+            } else if (cd) {
+                cd.innerHTML = '';
+            }
+
+            // Job tables (API v5)
+            if (data.jobs) {
+                // Stats
+                var sc2 = document.getElementById('stat-completed');
+                var sq = document.getElementById('stat-queue');
+                var st = document.getElementById('stat-total');
+                if (sc2) sc2.textContent = data.jobs.completed.length;
+                if (sq) sq.textContent = data.jobs.queue.length;
+                if (st) st.textContent = data.jobs.total;
+
+                // Queue table
+                var qb = document.getElementById('queue-body');
+                if (qb) {
+                    var qh = '';
+                    data.jobs.queue.forEach(function(j) {
+                        var mesHtml = j.mes ? '<span class="commessa-tag">' + j.mes.commessa + '</span><div class="client-name">' + j.mes.cliente + '</div>' : '';
+                        qh += '<tr><td class="job-title">' + j.title + '</td><td>' + mesHtml + '</td><td>' + j.num_pages + '</td><td>' + (j.num_copies || '-') + '</td><td><span class="state-pill state-queue">In coda</span></td></tr>';
+                    });
+                    qb.innerHTML = qh;
+                }
+
+                // Completed table
+                var cb = document.getElementById('completed-body');
+                if (cb) {
+                    var ch = '';
+                    data.jobs.completed.forEach(function(j) {
+                        var pct = j.num_copies > 0 ? Math.round((j.copies_printed / j.num_copies) * 100) : 100;
+                        var mesHtml = j.mes ? '<span class="commessa-tag">' + j.mes.commessa + '</span><div class="client-name">' + j.mes.cliente + '</div>' : '';
+                        ch += '<tr><td class="job-title">' + j.title + '</td><td>' + mesHtml + '</td><td><div class="mini-progress"><div class="fill" style="width:' + pct + '%"></div></div><span class="copies-text">' + j.copies_printed + '/' + j.num_copies + '</span></td><td>' + j.total_sheets + '</td><td>' + (j.duplex ? 'B/V' : 'Solo F') + '</td><td style="font-size:12px;color:#9aa0a6;">' + j.date + '</td></tr>';
+                    });
+                    cb.innerHTML = ch;
+                }
             }
         })
-        .catch(function() {
-            document.getElementById('stato-container').innerHTML =
-                '<span class="stato-badge stato-offline"><span class="stato-dot dot-offline"></span>Errore connessione</span>';
-        });
-}, 30000);
+        .catch(function() {});
+}, 15000);
 </script>
 @endsection

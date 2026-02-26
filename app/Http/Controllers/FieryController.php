@@ -15,7 +15,6 @@ class FieryController extends Controller
         $status = $fiery->getServerStatus();
 
         if ($status && ($status['stampa']['documento'] ?? null)) {
-            // Sync automatico: assegna operatore e avvia fase digitale
             try {
                 $syncService->sincronizza();
             } catch (\Exception $e) {
@@ -27,7 +26,11 @@ class FieryController extends Controller
             $status['commessa'] = $this->cercaCommessa($status['stampa']['documento'] ?? null);
         }
 
-        return view('fiery.dashboard', compact('status'));
+        // Job list da API v5
+        $jobs = $fiery->getJobs();
+        $jobData = $this->organizzaJobs($jobs);
+
+        return view('fiery.dashboard', compact('status', 'jobData'));
     }
 
     public function statusJson(FieryService $fiery, FierySyncService $syncService)
@@ -52,17 +55,67 @@ class FieryController extends Controller
 
         $status['commessa'] = $this->cercaCommessa($status['stampa']['documento'] ?? null);
 
+        // Job list da API v5
+        $jobs = app(FieryService::class)->getJobs();
+        $status['jobs'] = $this->organizzaJobs($jobs);
+
         return response()->json($status);
     }
 
     /**
-     * Diagnostica sync: mostra passo passo cosa succede
+     * Organizza i job in categorie per la dashboard
+     */
+    private function organizzaJobs(?array $jobs): array
+    {
+        if (!$jobs) {
+            return ['printing' => null, 'queue' => [], 'completed' => [], 'total' => 0];
+        }
+
+        $printing = null;
+        $queue = [];
+        $completed = [];
+
+        foreach ($jobs as $job) {
+            // Aggiungi info commessa dal MES
+            $job['mes'] = null;
+            if ($job['commessa']) {
+                $ordine = Ordine::where('commessa', $job['commessa'])->first();
+                if ($ordine) {
+                    $job['mes'] = [
+                        'commessa' => $ordine->commessa,
+                        'cliente' => $ordine->cliente_nome,
+                        'cod_art' => $ordine->cod_art,
+                    ];
+                }
+            }
+
+            if ($job['state'] === 'printing') {
+                $printing = $job;
+            } elseif (in_array($job['state'], ['done spooling', 'waiting', 'processing', 'ripping'])) {
+                $queue[] = $job;
+            } elseif ($job['state'] === 'completed') {
+                $completed[] = $job;
+            }
+        }
+
+        // Completati: ultimi 15 (i più recenti per data)
+        $completed = array_slice(array_reverse($completed), 0, 15);
+
+        return [
+            'printing' => $printing,
+            'queue' => $queue,
+            'completed' => $completed,
+            'total' => count($jobs),
+        ];
+    }
+
+    /**
+     * Diagnostica sync
      */
     public function debugSync(FieryService $fiery, FierySyncService $syncService)
     {
         $debug = [];
 
-        // Step 1: Status Fiery
         $status = $fiery->getServerStatus();
         $debug['1_fiery_online'] = $status ? true : false;
         $debug['1_stato'] = $status['stato'] ?? 'N/A';
@@ -71,11 +124,9 @@ class FieryController extends Controller
             return response()->json($debug);
         }
 
-        // Step 2: Job in stampa
         $jobName = $status['stampa']['documento'] ?? null;
         $debug['2_job_in_stampa'] = $jobName;
 
-        // Step 3: Estrai commessa
         $commessaCode = $syncService->estraiCommessa($jobName);
         $debug['3_commessa_estratta'] = $commessaCode;
 
@@ -84,8 +135,7 @@ class FieryController extends Controller
             return response()->json($debug);
         }
 
-        // Step 4: Cerca TUTTI gli ordini della commessa
-        $ordini = \App\Models\Ordine::where('commessa', $commessaCode)->get();
+        $ordini = Ordine::where('commessa', $commessaCode)->get();
         $debug['4_ordini_count'] = $ordini->count();
         $debug['4_ordini'] = $ordini->map(function($o) use ($syncService) {
             return [
@@ -101,7 +151,6 @@ class FieryController extends Controller
             return response()->json($debug);
         }
 
-        // Step 5: Cerca operatore
         $nomeOp = config('fiery.operatore', 'Francesco Verde');
         $debug['5_operatore_config'] = $nomeOp;
         $parts = explode(' ', $nomeOp, 2);
@@ -111,7 +160,6 @@ class FieryController extends Controller
         ])->where('attivo', 1)->first();
         $debug['5_operatore_trovato'] = $operatore ? ($operatore->nome . ' ' . $operatore->cognome . ' (id=' . $operatore->id . ')') : 'NON TROVATO';
 
-        // Step 6: Fasi digitali per OGNI ordine
         $tutteFasiDigitali = collect();
         foreach ($ordini as $ordine) {
             $fasi = OrdineFase::where('ordine_id', $ordine->id)
@@ -133,12 +181,9 @@ class FieryController extends Controller
                 'fase' => $f->fase,
                 'stato' => $f->stato,
                 'ordine_id' => $f->ordine_id,
-                'fase_catalogo_id' => $f->fase_catalogo_id,
-                'operatore_id' => $f->operatore_id,
             ];
         })->toArray();
 
-        // Step 9: Prova sync
         try {
             $risultato = $syncService->sincronizza();
             $debug['9_sync_risultato'] = $risultato;
@@ -150,9 +195,7 @@ class FieryController extends Controller
     }
 
     /**
-     * Estrae il numero dal nome job Fiery e cerca la commessa nel MES.
-     * Job Fiery: "66539_Schede_BrochureMaurelliGroup_2026_33x48.pdf"
-     * Commessa MES: "0066539-26" (prefisso 00, suffisso -26)
+     * Estrae il numero dal nome job e cerca la commessa nel MES.
      */
     private function cercaCommessa(?string $jobName): ?array
     {
@@ -168,7 +211,6 @@ class FieryController extends Controller
         $ordine = Ordine::where('commessa', $commessaCode)->first();
         if (!$ordine) return null;
 
-        // Cerca operatori assegnati alle fasi attive (stato 2 = avviata)
         $fasiAttive = OrdineFase::where('ordine_id', $ordine->id)
             ->where('stato', 2)
             ->with(['operatori' => function($q) {
