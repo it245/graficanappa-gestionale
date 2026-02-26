@@ -652,30 +652,30 @@
 <div class="modal fade" id="modalBRT" tabindex="-1">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
-            <div class="modal-header" style="background:#d4380d; color:#fff;">
-                <h5 class="modal-title">Spedizioni BRT ({{ $spedizioniBRT->count() }} DDT)</h5>
+            <div class="modal-header" style="background:#d4380d; color:#fff; padding:18px 24px;">
+                <h5 class="modal-title" style="font-size:22px; font-weight:700;">Spedizioni BRT ({{ $spedizioniBRT->count() }} DDT)</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body" style="overflow-x:auto;">
+            <div class="modal-body" style="overflow-x:auto; padding:20px 24px;">
                 @if($spedizioniBRT->count() > 0)
-                <div class="mb-2">
-                    <button class="btn btn-sm btn-outline-danger fw-bold" id="btnCaricaTuttiBRT" onclick="caricaTuttiTrackingBRT()">
+                <div class="mb-3">
+                    <button class="btn btn-outline-danger fw-bold" style="font-size:15px; padding:8px 18px;" id="btnCaricaTuttiBRT" onclick="caricaTuttiTrackingBRT()">
                         <span class="spinner-border spinner-border-sm d-none" id="spinnerTuttiBRT" role="status"></span>
                         Carica tutti i tracking
                     </button>
-                    <span id="brtProgressLabel" class="ms-2 text-muted small"></span>
+                    <span id="brtProgressLabel" class="ms-2 text-muted" style="font-size:14px;"></span>
                 </div>
-                <table class="table table-bordered table-sm" style="white-space:nowrap;">
+                <table class="table table-bordered" style="white-space:nowrap; font-size:15px;">
                     <thead style="background:#d4380d; color:#fff;">
                         <tr>
-                            <th>DDT</th>
-                            <th>Commesse</th>
-                            <th>Cliente</th>
-                            <th>Stato BRT</th>
-                            <th>Data Consegna</th>
-                            <th>Destinatario</th>
-                            <th>Colli</th>
-                            <th>Azione</th>
+                            <th style="padding:12px 14px;">DDT</th>
+                            <th style="padding:12px 14px;">Commesse</th>
+                            <th style="padding:12px 14px;">Cliente</th>
+                            <th style="padding:12px 14px;">Stato BRT</th>
+                            <th style="padding:12px 14px;">Data Consegna</th>
+                            <th style="padding:12px 14px;">Destinatario</th>
+                            <th style="padding:12px 14px;">Colli</th>
+                            <th style="padding:12px 14px;">Azione</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -685,17 +685,17 @@
                             $commesse = $ordiniGruppo->pluck('commessa')->unique()->implode(', ');
                         @endphp
                         <tr id="brt_row_{{ md5($numDDT) }}">
-                            <td class="fw-bold">{{ ltrim($numDDT, '0') }}</td>
-                            <td>{{ $commesse }}</td>
-                            <td>{{ $primo->cliente_nome ?? '-' }}</td>
-                            <td id="brt_stato_{{ md5($numDDT) }}">
-                                <span class="badge bg-light text-muted">Da verificare</span>
+                            <td class="fw-bold" style="padding:10px 14px; font-size:16px;">{{ ltrim($numDDT, '0') }}</td>
+                            <td style="padding:10px 14px;">{{ $commesse }}</td>
+                            <td style="padding:10px 14px;">{{ $primo->cliente_nome ?? '-' }}</td>
+                            <td id="brt_stato_{{ md5($numDDT) }}" style="padding:10px 14px;">
+                                <span class="badge bg-light text-muted" style="font-size:13px; padding:6px 10px;">Da verificare</span>
                             </td>
-                            <td id="brt_data_{{ md5($numDDT) }}">-</td>
-                            <td id="brt_dest_{{ md5($numDDT) }}">-</td>
-                            <td id="brt_colli_{{ md5($numDDT) }}">-</td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-danger" onclick="apriTrackingDDT('{{ $numDDT }}', this)">
+                            <td id="brt_data_{{ md5($numDDT) }}" style="padding:10px 14px;">-</td>
+                            <td id="brt_dest_{{ md5($numDDT) }}" style="padding:10px 14px;">-</td>
+                            <td id="brt_colli_{{ md5($numDDT) }}" style="padding:10px 14px;">-</td>
+                            <td style="padding:10px 14px;">
+                                <button class="btn btn-outline-danger fw-bold" style="font-size:14px; padding:6px 16px;" onclick="apriTrackingDDT('{{ $numDDT }}', this)">
                                     Dettagli
                                 </button>
                             </td>
@@ -704,11 +704,11 @@
                     </tbody>
                 </table>
                 @else
-                <p class="text-muted text-center py-3">Nessuna spedizione BRT</p>
+                <p class="text-muted text-center py-4" style="font-size:16px;">Nessuna spedizione BRT</p>
                 @endif
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+            <div class="modal-footer" style="padding:14px 24px;">
+                <button type="button" class="btn btn-secondary" style="font-size:15px; padding:8px 20px;" data-bs-dismiss="modal">Chiudi</button>
             </div>
         </div>
     </div>
