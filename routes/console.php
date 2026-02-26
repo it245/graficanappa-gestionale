@@ -19,11 +19,11 @@ Artisan::command('priorita:ricalcola', function () {
     $this->info('Ricalcolo completato.');
 })->describe('Ricalcola tutte le priorità degli ordini');
 
-// Sync automatico Onda ogni ora (lun-sab, 6:00-22:00)
-Schedule::command('onda:sync')->hourly()->between('6:00', '22:00')->days([1, 2, 3, 4, 5, 6]);
+// Sync automatico Onda ogni ora (h24)
+Schedule::command('onda:sync')->hourly();
 
-// Sync bidirezionale Excel ↔ DB ogni 2 minuti (lun-sab, 6:00-22:00)
-Schedule::command('excel:sync')->everyTwoMinutes()->between('6:00', '22:00')->days([1, 2, 3, 4, 5, 6])->withoutOverlapping();
+// Sync bidirezionale Excel ↔ DB ogni 2 minuti (h24)
+Schedule::command('excel:sync')->everyTwoMinutes()->withoutOverlapping();
 
-// Sync automatico Fiery ogni minuto (lun-sab, 6:00-22:00)
-Schedule::command('fiery:sync')->everyMinute()->between('6:00', '22:00')->days([1, 2, 3, 4, 5, 6])->withoutOverlapping();
+// Sync automatico Fiery ogni minuto (h24)
+Schedule::command('fiery:sync')->everyMinute()->withoutOverlapping();
