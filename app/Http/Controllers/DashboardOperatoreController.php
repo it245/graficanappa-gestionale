@@ -138,7 +138,7 @@ class DashboardOperatoreController extends Controller
             ->whereHas('faseCatalogo', function ($q) use ($reparti) {
                 $q->whereIn('reparto_id', $reparti);
             })
-            ->with(['ordine', 'faseCatalogo', 'operatori'])
+            ->with(['ordine', 'faseCatalogo.reparto', 'operatori'])
             ->get()
             ->map(function ($fase) use ($fasiInfo) {
                 $qta_carta = $fase->ordine->qta_carta ?? 0;
@@ -166,6 +166,20 @@ class DashboardOperatoreController extends Controller
             })
             ->sortBy('priorita');
 
-        return view('operatore.dashboard', compact('fasiVisibili', 'operatore'));
+        // Raggruppa fasi per reparto (per operatori multi-reparto)
+        $repartiOperatore = $operatore->reparti->sortBy('nome');
+        $fasiPerReparto = [];
+        if ($repartiOperatore->count() > 1) {
+            foreach ($repartiOperatore as $rep) {
+                $fasiPerReparto[$rep->id] = [
+                    'nome' => ucfirst($rep->nome),
+                    'fasi' => $fasiVisibili->filter(function ($fase) use ($rep) {
+                        return optional($fase->faseCatalogo)->reparto_id == $rep->id;
+                    }),
+                ];
+            }
+        }
+
+        return view('operatore.dashboard', compact('fasiVisibili', 'operatore', 'fasiPerReparto'));
     }
 }

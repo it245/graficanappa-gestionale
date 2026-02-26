@@ -68,6 +68,31 @@
         color:#000;
         text-decoration: underline;
     }
+
+    /* Sezioni reparto separate */
+    .reparto-section {
+        margin-bottom: 30px;
+    }
+    .reparto-section h3 {
+        background: #343a40;
+        color: #fff;
+        padding: 10px 15px;
+        margin: 0 4px 0 4px;
+        border-radius: 6px 6px 0 0;
+        font-size: 18px;
+        font-weight: bold;
+    }
+
+    /* Lampeggio tasto Avvia quando stato = 2 */
+    @keyframes lampeggio {
+        0%, 100% { opacity: 1; background-color: #28a745; }
+        50% { opacity: 0.3; background-color: #ff6600; }
+    }
+    .badge-avvia-lampeggia {
+        animation: lampeggio 1s ease-in-out infinite;
+        color: #fff !important;
+        font-weight: bold;
+    }
 </style>
 
 <div class="top-bar">
@@ -102,83 +127,82 @@
 
 <h2>Dashboard Operatore</h2>
 
-<div class="table-wrapper">
-    <table class="table table-bordered table-sm table-striped">
-        <thead class="table-dark">
-            <tr>
-                <th>Priorità</th>
-                <th>Operatori</th>
-                <th>Fase</th>
-                <th>Stato</th>
-                <th>Commessa</th>
-                <th>Data Registrazione</th>
-                <th>Cliente</th>
-                <th>Codice Articolo</th>
-                <th>Descrizione Articolo</th>
-                <th>Quantità Richiesta</th>
-                <th>UM</th>
-                <th>Data Prevista Consegna</th>
-                <th>Qta Prodotta</th>
-                <th>Codice Carta</th>
-                <th>Carta</th>
-                <th>Quantità Carta</th>
-                <th>UM Carta</th>
-                <th>Note Operatore</th>
-                <th>Timeout</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($fasiVisibili as $fase)
-                @php
-                    $rowClass = '';
-                    if ($fase->ordine && $fase->ordine->data_prevista_consegna) {
-                        $oggi = \Carbon\Carbon::today();
-                        $dataPrevista = \Carbon\Carbon::parse($fase->ordine->data_prevista_consegna);
-                        $diff = $oggi->diffInDays($dataPrevista, false);
-                        if ($diff < -5) $rowClass = 'scaduta';
-                        elseif ($diff <= 3) $rowClass = 'warning-strong';
-                        elseif ($diff <= 5) $rowClass = 'warning-light';
-                    }
-                @endphp
-
-                <tr id="fase-{{ $fase->id }}" class="{{ $rowClass }}">
-                    <td>{{ $fase->priorita !== null ? number_format($fase->priorita, 2) : '-' }}</td>
-                    <td id="operatore-{{ $fase->id }}">
-                        @foreach($fase->operatori as $op)
-                            {{ $op->nome }} ({{ $op->pivot->data_inizio ? \Carbon\Carbon::parse($op->pivot->data_inizio)->format('d/m/Y H:i:s') : '-' }})<br>
-                        @endforeach
-                    </td>
-                    <td>{{ $fase->faseCatalogo->nome_display ?? '-' }}</td>
-                    @php $statoBg = [0 => '#e9ecef', 1 => '#cfe2ff', 2 => '#fff3cd', 3 => '#d1e7dd']; @endphp
-                    <td id="stato-{{ $fase->id }}" style="background:{{ $statoBg[$fase->stato] ?? '#e9ecef' }};font-weight:bold;text-align:center;">{{ $fase->stato }}</td>
-
-                    {{-- COMMESSA CLICCABILE --}}
-                    <td>
-                        <a href="{{ route('commesse.show', $fase->ordine->commessa) }}?fase={{ $fase->id }}" class="commessa-link"
-                           style="font-weight:bold">
-                           {{ $fase->ordine->commessa }}
-                        </a>
-                    </td>
-
-                    <td>{{ $fase->ordine->data_registrazione ? \Carbon\Carbon::parse($fase->ordine->data_registrazione)->format('d/m/Y') : '-' }}</td>
-                    <td>{{ $fase->ordine->cliente_nome ?? '-' }}</td>
-                    <td>{{ $fase->ordine->cod_art ?? '-' }}</td>
-                    <td class="descrizione">{{ $fase->ordine->descrizione ?? '-' }}</td>
-                    <td>{{ $fase->ordine->qta_richiesta ?? '-' }}</td>
-                    <td>{{ $fase->ordine->um ?? '-' }}</td>
-                    <td>{{ $fase->ordine->data_prevista_consegna ? \Carbon\Carbon::parse($fase->ordine->data_prevista_consegna)->format('d/m/Y') : '-' }}</td>
-                    <td>{{ $fase->qta_prod ?? '-' }}</td>
-                    <td>{{ $fase->ordine->cod_carta ?? '-' }}</td>
-                    <td>{{ $fase->ordine->carta ?? '-' }}</td>
-                    <td>{{ $fase->ordine->qta_carta ?? '-' }}</td>
-                    <td>{{ $fase->ordine->UM_carta ?? '-' }}</td>
-                    <td>{{ $fase->note ?? '-' }}</td>
-                    <td id="timeout-{{ $fase->id }}">{{ $fase->timeout ?? '-' }}</td>
+@if(!empty($fasiPerReparto))
+    {{-- MULTI-REPARTO: sezioni separate per ogni reparto --}}
+    @foreach($fasiPerReparto as $repartoId => $info)
+        <div class="reparto-section">
+            <h3>{{ $info['nome'] }}</h3>
+            <div class="table-wrapper">
+                <table class="table table-bordered table-sm table-striped">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Priorità</th>
+                            <th>Operatori</th>
+                            <th>Fase</th>
+                            <th>Stato</th>
+                            <th>Commessa</th>
+                            <th>Data Registrazione</th>
+                            <th>Cliente</th>
+                            <th>Codice Articolo</th>
+                            <th>Descrizione Articolo</th>
+                            <th>Quantità Richiesta</th>
+                            <th>UM</th>
+                            <th>Data Prevista Consegna</th>
+                            <th>Qta Prodotta</th>
+                            <th>Codice Carta</th>
+                            <th>Carta</th>
+                            <th>Quantità Carta</th>
+                            <th>UM Carta</th>
+                            <th>Note Operatore</th>
+                            <th>Timeout</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($info['fasi'] as $fase)
+                            @include('operatore._fase_row', ['fase' => $fase])
+                        @empty
+                            <tr><td colspan="19" class="text-center text-muted">Nessuna fase attiva</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    @endforeach
+@else
+    {{-- SINGOLO REPARTO: tabella unica come prima --}}
+    <div class="table-wrapper">
+        <table class="table table-bordered table-sm table-striped">
+            <thead class="table-dark">
+                <tr>
+                    <th>Priorità</th>
+                    <th>Operatori</th>
+                    <th>Fase</th>
+                    <th>Stato</th>
+                    <th>Commessa</th>
+                    <th>Data Registrazione</th>
+                    <th>Cliente</th>
+                    <th>Codice Articolo</th>
+                    <th>Descrizione Articolo</th>
+                    <th>Quantità Richiesta</th>
+                    <th>UM</th>
+                    <th>Data Prevista Consegna</th>
+                    <th>Qta Prodotta</th>
+                    <th>Codice Carta</th>
+                    <th>Carta</th>
+                    <th>Quantità Carta</th>
+                    <th>UM Carta</th>
+                    <th>Note Operatore</th>
+                    <th>Timeout</th>
                 </tr>
-            @endforeach
-        </tbody>
-    </table>
-</div>
+            </thead>
+            <tbody>
+                @foreach($fasiVisibili as $fase)
+                    @include('operatore._fase_row', ['fase' => $fase])
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+@endif
 </div>
 
 <script>

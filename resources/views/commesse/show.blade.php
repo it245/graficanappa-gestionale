@@ -29,6 +29,15 @@
     opacity: 0.7;
     box-shadow: inset 0 0 2px rgba(0,0,0,0.5);
 }
+
+/* Lampeggio tasto Avvia quando stato = 2 */
+@keyframes lampeggio-avvia {
+    0%, 100% { opacity: 1; background-color: #28a745; }
+    50% { opacity: 0.3; background-color: #ff6600; }
+}
+.badge-avvia.lampeggia {
+    animation: lampeggio-avvia 1s ease-in-out infinite;
+}
 </style>
 
 @php
@@ -117,7 +126,7 @@
                         <div class="azioni-cerchi" id="azioni-fase-{{ $fase->id }}">
                             {{-- Tutti e 3 i bottoni sempre visibili --}}
                             <input type="checkbox" id="avvia-{{ $fase->id }}" onchange="aggiornaStato({{ $fase->id }}, 'avvia', this.checked)">
-                            <label for="avvia-{{ $fase->id }}" class="badge-avvia">Avvia</label>
+                            <label for="avvia-{{ $fase->id }}" class="badge-avvia{{ $fase->stato == 2 ? ' lampeggia' : '' }}">Avvia</label>
 
                             <input type="checkbox" id="pausa-{{ $fase->id }}" onchange="gestisciPausa({{ $fase->id }}, this.checked)">
                             <label for="pausa-{{ $fase->id }}" class="badge-pausa">Pausa</label>
@@ -310,9 +319,10 @@ function updateButtons(faseId, nuovoStato) {
     if (!container) return;
 
     // I 3 bottoni base sempre visibili
+    var lampeggiaClass = (nuovoStato == 2) ? ' lampeggia' : '';
     let html =
         '<input type="checkbox" id="avvia-'+faseId+'" onchange="aggiornaStato('+faseId+', \'avvia\', this.checked)">' +
-        '<label for="avvia-'+faseId+'" class="badge-avvia">Avvia</label>' +
+        '<label for="avvia-'+faseId+'" class="badge-avvia'+lampeggiaClass+'">Avvia</label>' +
         '<input type="checkbox" id="pausa-'+faseId+'" onchange="gestisciPausa('+faseId+', this.checked)">' +
         '<label for="pausa-'+faseId+'" class="badge-pausa">Pausa</label>' +
         '<input type="checkbox" id="termina-'+faseId+'" onchange="aggiornaStato('+faseId+', \'termina\', this.checked)">' +
