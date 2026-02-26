@@ -81,6 +81,28 @@
         border-radius: 6px 6px 0 0;
         font-size: 18px;
         font-weight: bold;
+        cursor: pointer;
+        user-select: none;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .reparto-section h3 .toggle-icon {
+        transition: transform 0.3s;
+        font-size: 14px;
+    }
+    .reparto-section h3.chiuso .toggle-icon {
+        transform: rotate(-90deg);
+    }
+    .reparto-section h3.chiuso {
+        border-radius: 6px;
+    }
+    .reparto-body {
+        transition: max-height 0.3s ease;
+        overflow: hidden;
+    }
+    .reparto-body.chiuso {
+        display: none;
     }
 
     /* Lampeggio tasto Avvia quando stato = 2 */
@@ -131,7 +153,11 @@
     {{-- MULTI-REPARTO: sezioni separate per ogni reparto --}}
     @foreach($fasiPerReparto as $repartoId => $info)
         <div class="reparto-section">
-            <h3>{{ $info['nome'] }}</h3>
+            <h3 onclick="toggleReparto(this)">
+                <span>{{ $info['nome'] }} <small>({{ $info['fasi']->count() }})</small></span>
+                <span class="toggle-icon">&#9660;</span>
+            </h3>
+            <div class="reparto-body">
             <div class="table-wrapper">
                 <table class="table table-bordered table-sm table-striped">
                     <thead class="table-dark">
@@ -165,6 +191,7 @@
                         @endforelse
                     </tbody>
                 </table>
+            </div>
             </div>
         </div>
     @endforeach
@@ -240,6 +267,12 @@ function cercaCommessa(){
             document.querySelectorAll("tbody tr").forEach(riga=>riga.style.display='');
         }
     };
+}
+
+function toggleReparto(h3) {
+    var body = h3.nextElementSibling;
+    h3.classList.toggle('chiuso');
+    body.classList.toggle('chiuso');
 }
 </script>
 @endsection
