@@ -126,11 +126,11 @@
 @endphp
 <div class="row g-2 mb-2" style="font-size:13px;">
     <div class="col-auto">
-        <strong>Colori:</strong> <span class="badge bg-primary" style="font-size:13px;">{{ $coloriDett }}</span>
+        <strong>Colori:</strong> {{ $coloriDett }}
     </div>
     @if($fustellaDett)
     <div class="col-auto">
-        <strong>Fustella:</strong> <span class="badge bg-dark" style="font-size:13px;">{{ $fustellaDett }}</span>
+        <strong>Fustella:</strong> {{ $fustellaDett }}
     </div>
     @endif
 </div>

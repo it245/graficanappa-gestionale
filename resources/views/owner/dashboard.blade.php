@@ -741,7 +741,7 @@ tr:hover td {
                         if ($fustellaOwner) $noteExtra .= '[FS: '.$fustellaOwner.'] ';
                     @endphp
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'note', this.innerText)">
-                        @if($noteExtra)<small class="text-primary fw-bold">{{ $noteExtra }}</small><br>@endif{{ $fase->note ?? '-' }}
+                        @if($noteExtra)<small class="fw-bold">{{ $noteExtra }}</small><br>@endif{{ $fase->note ?? '-' }}
                     </td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_inizio', this.innerText)">{{ formatItalianDate($fase->data_inizio, true) }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_fine', this.innerText)">{{ formatItalianDate($fase->data_fine, true) }}</td>

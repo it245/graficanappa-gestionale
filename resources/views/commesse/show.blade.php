@@ -82,9 +82,9 @@
             <p><strong>Descrizione:</strong> {{ $ordine->descrizione }}</p>
             <p><strong>Quantita totale:</strong> {{ $ordine->qta_richiesta }} {{ $ordine->um }}</p>
             <p>
-                <strong>Colori:</strong> <span class="badge bg-primary fs-6">{{ $coloriCalc }}</span>
+                <strong>Colori:</strong> {{ $coloriCalc }}
                 @if($fustellaCalc)
-                    &nbsp; <strong>Fustella:</strong> <span class="badge bg-dark fs-6">{{ $fustellaCalc }}</span>
+                    &nbsp; <strong>Fustella:</strong> {{ $fustellaCalc }}
                 @endif
             </p>
             <div class="row mt-2 g-2">
