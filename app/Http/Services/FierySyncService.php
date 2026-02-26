@@ -21,8 +21,9 @@ class FierySyncService
 
     /**
      * Sincronizza lo stato Fiery con le fasi del MES.
-     * - Se la Fiery sta stampando un job → avvia la fase digitale corrispondente
-     * - Se il job cambia o la Fiery è idle → termina le fasi della commessa precedente
+     *
+     * 1. WebTools: rileva job attualmente in stampa → avvia fase
+     * 2. API v5 Jobs: processa TUTTI i job completati → aggiorna qta_prod e auto-termina
      */
     public function sincronizza(): ?array
     {
@@ -36,24 +37,37 @@ class FierySyncService
         $commessaCode = $this->estraiCommessa($jobName);
         $copieFatte = (int) ($status['stampa']['copie_fatte'] ?? 0);
 
-        // Se non c'è job attivo o commessa non trovata → Fiery idle
+        // Se non c'è job attivo → Fiery idle
         if (!$commessaCode) {
-            // Dopo le 17 la macchina è ferma: termina fasi aperte
             $this->terminaFasiDopoOrario($operatore);
-            return null;
         }
 
-        $ordini = Ordine::where('commessa', $commessaCode)->get();
-        if ($ordini->isEmpty()) {
-            return null;
+        // === FASE 1: Sync job in stampa (WebTools - real-time) ===
+        $risultato = null;
+        if ($commessaCode) {
+            $risultato = $this->syncJobInStampa($commessaCode, $copieFatte, $operatore);
         }
+
+        // === FASE 2: Sync job completati (API v5 - storico) ===
+        $this->syncJobCompletati($operatore);
+
+        return $risultato;
+    }
+
+    /**
+     * Sync del job attualmente in stampa (da WebTools).
+     * Avvia la fase digitale corrispondente e aggiorna qta_prod real-time.
+     */
+    protected function syncJobInStampa(string $commessaCode, int $copieFatte, Operatore $operatore): ?array
+    {
+        $ordini = Ordine::where('commessa', $commessaCode)->get();
+        if ($ordini->isEmpty()) return null;
 
         // Termina fasi digitali di ALTRE commesse ancora avviate da questo operatore
         $ordineIds = $ordini->pluck('id')->toArray();
         $this->terminaFasiPrecedenti($operatore, $ordineIds);
 
         // Trova fasi digitali per TUTTI gli ordini della commessa corrente
-        // Deduplica per nome fase: una sola per commessa (es. STAMPAINDIGO è monofase)
         $fasiDigitali = collect();
         $fasiGiaViste = [];
         foreach ($ordini as $ordine) {
@@ -78,41 +92,24 @@ class FierySyncService
                 if (!$fase->operatore_id) {
                     $fase->operatore_id = $operatore->id;
                 }
-                // Salva copie stampate dalla Fiery
                 if ($copieFatte > 0) {
                     $fase->qta_prod = $copieFatte;
                 }
                 $fase->save();
 
-                // Aggiungi operatore alla pivot se non presente
                 if (!$fase->operatori()->where('operatore_id', $operatore->id)->exists()) {
                     $fase->operatori()->attach($operatore->id, [
                         'data_inizio' => now(),
                         'data_fine' => null,
                     ]);
                 }
-
                 $faseAvviata = $fase;
+
             } elseif ($fase->stato == 2) {
-                // Fase già in corso: aggiorna qta_prod con le copie fatte dalla Fiery
+                // Fase già in corso: aggiorna qta_prod
                 if ($copieFatte > 0) {
                     $fase->qta_prod = $copieFatte;
-
-                    // Auto-termina se ha raggiunto la quantità richiesta
-                    $qtaTarget = $fase->ordine->qta_carta ?: ($fase->ordine->qta_richiesta ?: 0);
-                    if ($qtaTarget > 0 && $copieFatte >= $qtaTarget) {
-                        $fase->stato = 3;
-                        if (!$fase->data_fine) {
-                            $fase->data_fine = now()->format('Y-m-d H:i:s');
-                        }
-                        // Aggiorna data_fine sulla pivot
-                        if ($operatore) {
-                            $fase->operatori()->updateExistingPivot($operatore->id, [
-                                'data_fine' => now(),
-                            ]);
-                        }
-                    }
-
+                    $this->autoTerminaSeCompletata($fase, $operatore);
                     $fase->save();
                 }
             }
@@ -124,6 +121,97 @@ class FierySyncService
             'operatore' => $operatore->nome . ' ' . ($operatore->cognome ?? ''),
             'fase_avviata' => $faseAvviata?->fase,
         ];
+    }
+
+    /**
+     * Sync dei job completati dall'API v5.
+     * Per ogni job completed con codice commessa:
+     * - Trova le fasi digitali della commessa
+     * - Aggiorna qta_prod con copies_printed (se maggiore del valore attuale)
+     * - Auto-termina se raggiunta la quantità target
+     */
+    protected function syncJobCompletati(Operatore $operatore): void
+    {
+        $jobs = $this->fiery->getJobs();
+        if (!$jobs) return;
+
+        // Raggruppa job completati per commessa, prendi max copies_printed
+        $completatiPerCommessa = [];
+        foreach ($jobs as $job) {
+            if ($job['state'] !== 'completed') continue;
+            if (!$job['commessa']) continue;
+            if ($job['copies_printed'] <= 0) continue;
+
+            $code = $job['commessa'];
+            if (!isset($completatiPerCommessa[$code])) {
+                $completatiPerCommessa[$code] = 0;
+            }
+            // Usa il MAX delle copie tra tutti i job della stessa commessa
+            // (ogni job è un file diverso: copertina, interni, ecc. ma le copie sono per prodotto)
+            $completatiPerCommessa[$code] = max($completatiPerCommessa[$code], $job['copies_printed']);
+        }
+
+        // Per ogni commessa con job completati, aggiorna le fasi MES
+        foreach ($completatiPerCommessa as $commessaCode => $maxCopie) {
+            $ordini = Ordine::where('commessa', $commessaCode)->get();
+            if ($ordini->isEmpty()) continue;
+
+            foreach ($ordini as $ordine) {
+                $fasi = $this->troveFasiDigitali($ordine);
+                foreach ($fasi as $fase) {
+                    // Solo fasi avviate (stato 2) o non ancora avviate (0, 1)
+                    if (!in_array($fase->stato, [0, '0', 1, '1', 2, '2'])) continue;
+
+                    $qtaAttuale = (int) ($fase->qta_prod ?: 0);
+
+                    // Aggiorna solo se il nuovo valore è maggiore (idempotente)
+                    if ($maxCopie > $qtaAttuale) {
+                        // Se la fase non è ancora avviata, avviala
+                        if (in_array($fase->stato, [0, '0', 1, '1'])) {
+                            $fase->stato = 2;
+                            if (!$fase->data_inizio) {
+                                $fase->data_inizio = now()->format('Y-m-d H:i:s');
+                            }
+                            if (!$fase->operatore_id) {
+                                $fase->operatore_id = $operatore->id;
+                            }
+                            if (!$fase->operatori()->where('operatore_id', $operatore->id)->exists()) {
+                                $fase->operatori()->attach($operatore->id, [
+                                    'data_inizio' => now(),
+                                    'data_fine' => null,
+                                ]);
+                            }
+                        }
+
+                        $fase->qta_prod = $maxCopie;
+                        $this->autoTerminaSeCompletata($fase, $operatore);
+                        $fase->save();
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Auto-termina la fase se qta_prod >= target (qta_carta o qta_richiesta).
+     * Modifica la fase in-place (il chiamante deve fare save).
+     */
+    protected function autoTerminaSeCompletata(OrdineFase $fase, Operatore $operatore): void
+    {
+        if ($fase->stato != 2) return;
+
+        $qtaTarget = $fase->ordine->qta_carta ?: ($fase->ordine->qta_richiesta ?: 0);
+        $qtaProd = (int) ($fase->qta_prod ?: 0);
+
+        if ($qtaTarget > 0 && $qtaProd >= $qtaTarget) {
+            $fase->stato = 3;
+            if (!$fase->data_fine) {
+                $fase->data_fine = now()->format('Y-m-d H:i:s');
+            }
+            $fase->operatori()->updateExistingPivot($operatore->id, [
+                'data_fine' => now(),
+            ]);
+        }
     }
 
     /**
@@ -176,21 +264,18 @@ class FierySyncService
                     $q->orWhere('fase', 'STAMPA');
                 }
             })
-            ->with('operatori');
+            ->with(['operatori', 'ordine']);
 
         return $query->get();
     }
 
     /**
      * Verifica se il cod_carta indica un formato compatibile con la stampa digitale (≤ 33x48).
-     * Formati cod_carta: "IPO.33.48.250", "PO.70.100.350", ecc.
-     * Pattern: PREFISSO.LARGHEZZA.ALTEZZA.GRAMMATURA
      */
     public function isFormatoDigitale(?string $codCarta): bool
     {
         if (!$codCarta) return false;
 
-        // Estrai numeri dal cod_carta: "IPO.33.48.250" → [33, 48, 250]
         if (!preg_match('/\.(\d+)\.(\d+)\./', $codCarta, $matches)) {
             return false;
         }
@@ -198,7 +283,6 @@ class FierySyncService
         $dim1 = (int) $matches[1];
         $dim2 = (int) $matches[2];
 
-        // Il formato massimo della digitale è 33x48
         $minDim = min($dim1, $dim2);
         $maxDim = max($dim1, $dim2);
 
@@ -206,9 +290,7 @@ class FierySyncService
     }
 
     /**
-     * Auto-termina solo le fasi che hanno raggiunto la quantità richiesta.
-     * Se qta_prod >= qta_carta (o qta_richiesta), la fase è completata.
-     * Altrimenti resta in stato 2 e l'operatore la termina manualmente.
+     * Termina fasi di altre commesse (se qta_prod >= target).
      */
     protected function terminaFasiPrecedenti(Operatore $operatore, array $ordineCorrenteIds): void
     {
@@ -226,27 +308,13 @@ class FierySyncService
             ->get();
 
         foreach ($fasiDaValutare as $fase) {
-            $qtaTarget = $fase->ordine->qta_carta ?: ($fase->ordine->qta_richiesta ?: 0);
-            $qtaProd = $fase->qta_prod ?: 0;
-
-            if ($qtaTarget > 0 && $qtaProd >= $qtaTarget) {
-                $fase->stato = 3;
-                if (!$fase->data_fine) {
-                    $fase->data_fine = now()->format('Y-m-d H:i:s');
-                }
-                $fase->save();
-
-                $fase->operatori()->updateExistingPivot($operatore->id, [
-                    'data_fine' => now(),
-                ]);
-            }
-            // Se qta_prod < qta_target: resta in stato 2, l'operatore termina manualmente
+            $this->autoTerminaSeCompletata($fase, $operatore);
+            $fase->save();
         }
     }
 
     protected function terminaFasiDopoOrario(Operatore $operatore): void
     {
-        // Stessa logica: termina solo fasi con qta_prod >= qta richiesta
         $fasiAperte = OrdineFase::where('stato', 2)
             ->where(function ($q) {
                 $q->whereHas('faseCatalogo', function ($sub) {
@@ -260,20 +328,8 @@ class FierySyncService
             ->get();
 
         foreach ($fasiAperte as $fase) {
-            $qtaTarget = $fase->ordine->qta_carta ?: ($fase->ordine->qta_richiesta ?: 0);
-            $qtaProd = $fase->qta_prod ?: 0;
-
-            if ($qtaTarget > 0 && $qtaProd >= $qtaTarget) {
-                $fase->stato = 3;
-                if (!$fase->data_fine) {
-                    $fase->data_fine = now()->format('Y-m-d H:i:s');
-                }
-                $fase->save();
-
-                $fase->operatori()->updateExistingPivot($operatore->id, [
-                    'data_fine' => now(),
-                ]);
-            }
+            $this->autoTerminaSeCompletata($fase, $operatore);
+            $fase->save();
         }
     }
 }
