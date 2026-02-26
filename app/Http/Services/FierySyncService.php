@@ -34,6 +34,7 @@ class FierySyncService
 
         $jobName = $status['stampa']['documento'] ?? null;
         $commessaCode = $this->estraiCommessa($jobName);
+        $copieFatte = (int) ($status['stampa']['copie_fatte'] ?? 0);
 
         // Se non c'è job attivo o commessa non trovata → Fiery idle
         if (!$commessaCode) {
@@ -77,6 +78,10 @@ class FierySyncService
                 if (!$fase->operatore_id) {
                     $fase->operatore_id = $operatore->id;
                 }
+                // Salva copie stampate dalla Fiery
+                if ($copieFatte > 0) {
+                    $fase->qta_prod = $copieFatte;
+                }
                 $fase->save();
 
                 // Aggiungi operatore alla pivot se non presente
@@ -88,6 +93,12 @@ class FierySyncService
                 }
 
                 $faseAvviata = $fase;
+            } elseif ($fase->stato == 2) {
+                // Fase già in corso: aggiorna qta_prod con le copie fatte dalla Fiery
+                if ($copieFatte > 0) {
+                    $fase->qta_prod = $copieFatte;
+                    $fase->save();
+                }
             }
         }
 
