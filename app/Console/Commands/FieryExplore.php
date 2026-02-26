@@ -57,7 +57,13 @@ class FieryExplore extends Command
             return 1;
         }
 
-        $authed = fn() => $http->withCookies($cookies, $host);
+        // Converti CookieJar in array associativo per withCookies()
+        $cookieArray = [];
+        foreach ($cookies as $cookie) {
+            $cookieArray[$cookie->getName()] = $cookie->getValue();
+        }
+
+        $authed = fn() => Http::withoutVerifying()->timeout(15)->withCookies($cookieArray, $host);
 
         // 3. Status API
         $this->info("\n--- 3. API v5 Status ---");
