@@ -409,8 +409,8 @@ function confermaTermina() {
     var qtaProdotta = document.getElementById('terminaQtaProdotta').value;
     var scarti = document.getElementById('terminaScarti').value;
 
-    if (qtaProdotta === '' || parseInt(qtaProdotta) < 0) {
-        alert('Inserire la quantita prodotta (>= 0)');
+    if (qtaProdotta === '' || parseInt(qtaProdotta) <= 0) {
+        alert('Inserire la quantita prodotta (deve essere maggiore di 0)');
         return;
     }
 

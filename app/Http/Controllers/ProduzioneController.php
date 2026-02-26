@@ -67,7 +67,7 @@ class ProduzioneController extends Controller
 {
     $validator = Validator::make($request->all(), [
         'fase_id'       => 'required',
-        'qta_prodotta'  => 'required|integer|min:0',
+        'qta_prodotta'  => 'required|integer|min:1',
         'scarti'        => 'nullable|integer|min:0',
     ]);
 
