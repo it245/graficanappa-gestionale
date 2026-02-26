@@ -55,12 +55,16 @@ class FasiCatalogoSeeder extends Seeder
             'FUSTSTELP25.35' => 'fustella cilindrica',
             'RILIEVOASECCOJOH' => 'fustella',
 
+            // FINESTRE
+            'FIN01' => 'finestre',
+            'FIN03' => 'finestre',
+            'FIN04' => 'finestre',
+            'FINESTRATURA.MANUALE' => 'finestre',
+            'FINESTRATURA.INT' => 'finestre',
+
             // LEGATORIA
             'CORDONATURAPETRATTO' => 'legatoria',
             'DEKIA-Difficile' => 'legatoria',
-            'FIN01' => 'legatoria',
-            'FIN03' => 'legatoria',
-            'FIN04' => 'legatoria',
             'INCOLLAGGIO.PATTINA' => 'legatoria',
             'INCOLLAGGIOBLOCCHI' => 'legatoria',
             'NUM.PROGR.' => 'legatoria',
