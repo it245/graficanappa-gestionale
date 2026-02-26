@@ -170,6 +170,8 @@
                             <th>Data Registrazione</th>
                             <th>Cliente</th>
                             <th>Codice Articolo</th>
+                            @if($showColori)<th>Colori</th>@endif
+                            @if($showFustella)<th>Fustella</th>@endif
                             <th>Descrizione Articolo</th>
                             <th>Quantità Richiesta</th>
                             <th>UM</th>
@@ -187,7 +189,7 @@
                         @forelse($info['fasi'] as $fase)
                             @include('operatore._fase_row', ['fase' => $fase])
                         @empty
-                            <tr><td colspan="19" class="text-center text-muted">Nessuna fase attiva</td></tr>
+                            <tr><td colspan="{{ 19 + ($showColori ? 1 : 0) + ($showFustella ? 1 : 0) }}" class="text-center text-muted">Nessuna fase attiva</td></tr>
                         @endforelse
                     </tbody>
                 </table>

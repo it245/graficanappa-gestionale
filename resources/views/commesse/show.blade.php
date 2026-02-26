@@ -72,9 +72,21 @@
     <!-- Card info ordine -->
     <div class="card mb-3">
         <div class="card-body">
+            @php
+                $desc = $ordine->descrizione ?? '';
+                $cliente = $ordine->cliente_nome ?? '';
+                $coloriCalc = \App\Helpers\DescrizioneParser::parseColori($desc, $cliente);
+                $fustellaCalc = \App\Helpers\DescrizioneParser::parseFustella($desc);
+            @endphp
             <p><strong>Cliente:</strong> {{ $ordine->cliente_nome }}</p>
             <p><strong>Descrizione:</strong> {{ $ordine->descrizione }}</p>
             <p><strong>Quantita totale:</strong> {{ $ordine->qta_richiesta }} {{ $ordine->um }}</p>
+            <p>
+                <strong>Colori:</strong> <span class="badge bg-primary fs-6">{{ $coloriCalc }}</span>
+                @if($fustellaCalc)
+                    &nbsp; <strong>Fustella:</strong> <span class="badge bg-dark fs-6">{{ $fustellaCalc }}</span>
+                @endif
+            </p>
             <div class="row mt-2 g-2">
                 <div class="col-md-4">
                     <div class="border rounded p-2 h-100" style="background:#f8f9fa">

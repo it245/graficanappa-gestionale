@@ -32,6 +32,8 @@
     <td>{{ $fase->ordine->data_registrazione ? \Carbon\Carbon::parse($fase->ordine->data_registrazione)->format('d/m/Y') : '-' }}</td>
     <td>{{ $fase->ordine->cliente_nome ?? '-' }}</td>
     <td>{{ $fase->ordine->cod_art ?? '-' }}</td>
+    @if($showColori ?? false)<td><strong>{{ $fase->colori ?? '-' }}</strong></td>@endif
+    @if($showFustella ?? false)<td>{{ $fase->fustella_codice ?? '-' }}</td>@endif
     <td class="descrizione">{{ $fase->ordine->descrizione ?? '-' }}</td>
     <td>{{ $fase->ordine->qta_richiesta ?? '-' }}</td>
     <td>{{ $fase->ordine->um ?? '-' }}</td>

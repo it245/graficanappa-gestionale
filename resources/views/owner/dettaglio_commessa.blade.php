@@ -118,6 +118,24 @@
 </div>
 @endif
 
+{{-- Colori e Fustella --}}
+@if($ordine)
+@php
+    $coloriDett = \App\Helpers\DescrizioneParser::parseColori($ordine->descrizione ?? '', $ordine->cliente_nome ?? '');
+    $fustellaDett = \App\Helpers\DescrizioneParser::parseFustella($ordine->descrizione ?? '');
+@endphp
+<div class="row g-2 mb-2" style="font-size:13px;">
+    <div class="col-auto">
+        <strong>Colori:</strong> <span class="badge bg-primary" style="font-size:13px;">{{ $coloriDett }}</span>
+    </div>
+    @if($fustellaDett)
+    <div class="col-auto">
+        <strong>Fustella:</strong> <span class="badge bg-dark" style="font-size:13px;">{{ $fustellaDett }}</span>
+    </div>
+    @endif
+</div>
+@endif
+
 {{-- Info Onda --}}
 @if($ordine)
 <div class="row g-2 mb-3" style="font-size:13px;">

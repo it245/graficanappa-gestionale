@@ -731,7 +731,18 @@ tr:hover td {
                         @endforelse
                     </td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'qta_prod', this.innerText)">{{ $fase->qta_prod ?? '-' }}</td>
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'note', this.innerText)">{{ $fase->note ?? '-' }}</td>
+                    @php
+                        $descOwner = $fase->ordine->descrizione ?? '';
+                        $clienteOwner = $fase->ordine->cliente_nome ?? '';
+                        $coloriOwner = \App\Helpers\DescrizioneParser::parseColori($descOwner, $clienteOwner);
+                        $fustellaOwner = \App\Helpers\DescrizioneParser::parseFustella($descOwner);
+                        $noteExtra = '';
+                        if ($coloriOwner) $noteExtra .= '[COL: '.$coloriOwner.'] ';
+                        if ($fustellaOwner) $noteExtra .= '[FS: '.$fustellaOwner.'] ';
+                    @endphp
+                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'note', this.innerText)">
+                        @if($noteExtra)<small class="text-primary fw-bold">{{ $noteExtra }}</small><br>@endif{{ $fase->note ?? '-' }}
+                    </td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_inizio', this.innerText)">{{ formatItalianDate($fase->data_inizio, true) }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_fine', this.innerText)">{{ formatItalianDate($fase->data_fine, true) }}</td>
                 </tr>

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\OrdineFase;
+use App\Helpers\DescrizioneParser;
 use Carbon\Carbon;
 
 class DashboardOperatoreController extends Controller
@@ -162,9 +163,21 @@ class DashboardOperatoreController extends Controller
                 // Priorità = giorni rimasti - ore/24 + ordineFase/10000
                 $fase->priorita = round($giorni_rimasti - ($fase->ore / 24) + ($fasePriorita / 10000), 2);
 
+                // Colori e Fustella dalla descrizione
+                $desc = $fase->ordine->descrizione ?? '';
+                $cliente = $fase->ordine->cliente_nome ?? '';
+                $repNome = optional($fase->faseCatalogo)->reparto->nome ?? '';
+                $fase->colori = DescrizioneParser::parseColori($desc, $cliente, $repNome);
+                $fase->fustella_codice = DescrizioneParser::parseFustella($desc);
+
                 return $fase;
             })
             ->sortBy('priorita');
+
+        // Flag per colonne condizionali
+        $nomiReparti = $operatore->reparti->pluck('nome')->map(fn($n) => strtolower($n))->toArray();
+        $showColori = !empty(array_intersect($nomiReparti, ['stampa offset', 'digitale']));
+        $showFustella = !empty(array_filter($nomiReparti, fn($n) => str_contains($n, 'fustella')));
 
         // Raggruppa fasi per reparto (per operatori multi-reparto)
         $repartiOperatore = $operatore->reparti->sortBy('nome');
@@ -180,6 +193,6 @@ class DashboardOperatoreController extends Controller
             }
         }
 
-        return view('operatore.dashboard', compact('fasiVisibili', 'operatore', 'fasiPerReparto'));
+        return view('operatore.dashboard', compact('fasiVisibili', 'operatore', 'fasiPerReparto', 'showColori', 'showFustella'));
     }
 }
