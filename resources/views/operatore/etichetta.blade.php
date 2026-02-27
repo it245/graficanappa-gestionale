@@ -96,21 +96,20 @@
         letter-spacing: 0.3px;
     }
     .etichetta-preview .header-row img {
-        height: 22mm;
+        height: 28mm;
     }
 
     /* --- Corpo info --- */
     .etichetta-preview .info-top {
-        font-size: 10.5pt;
+        font-size: 11pt;
+        font-weight: 700;
         line-height: 1.5;
-        color: #222;
+        color: #111;
     }
     .etichetta-preview .info-top .field {
         margin-bottom: 0.8mm;
     }
     .etichetta-preview .info-top .label {
-        font-weight: 600;
-        color: #333;
         display: inline-block;
         min-width: 22mm;
     }
@@ -119,12 +118,10 @@
     .etichetta-preview .articolo-row {
         text-align: center;
         font-weight: 700;
-        font-size: 13pt;
+        font-size: 16pt;
         padding: 2mm 0;
         margin: 1.5mm 0;
-        background: #f5f5f5;
-        border-radius: 1.5mm;
-        color: #111;
+        color: #000;
         letter-spacing: 0.2px;
     }
 
@@ -137,13 +134,12 @@
         margin-top: 1mm;
     }
     .etichetta-preview .info-bottom .fields-left {
-        font-size: 10.5pt;
+        font-size: 11pt;
+        font-weight: 700;
         line-height: 1.6;
-        color: #222;
+        color: #111;
     }
     .etichetta-preview .info-bottom .fields-left .label {
-        font-weight: 600;
-        color: #333;
         display: inline-block;
         min-width: 22mm;
     }
@@ -185,9 +181,7 @@
             page-break-after: always;
         }
         .etichetta-preview .articolo-row {
-            background: #f0f0f0 !important;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
+            background: none !important;
         }
         @page {
             size: 150mm 100mm;
