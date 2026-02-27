@@ -158,6 +158,11 @@
         </div>
         <div class="mb-3">
             <label class="form-label">Codice EAN <small class="text-muted">(scansiona o digita)</small></label>
+            @if($eanSalvato)
+                <div class="alert alert-success py-1 px-2 mb-2" style="font-size:13px;">
+                    EAN salvato: <strong>{{ $eanSalvato->codice_ean }}</strong> (precompilato)
+                </div>
+            @endif
             <div class="scanner-area" id="scanner-area">
                 <div id="scanner-reader"></div>
                 <button type="button" class="btn btn-outline-primary btn-sm mt-2" id="btn-scan" onclick="toggleScanner()">
@@ -165,6 +170,7 @@
                 </button>
             </div>
             <input type="text" id="campo-ean-manuale" class="form-control mt-2"
+                   value="{{ $eanSalvato->codice_ean ?? '' }}"
                    placeholder="Oppure digita il codice EAN..." autocomplete="off">
         </div>
     @endif
@@ -412,8 +418,10 @@ function stampa() {
 
     @if($isItalianaConfetti)
     var ean = document.getElementById('campo-ean').value;
+    var articolo = document.getElementById('campo-articolo').value;
     @else
     var ean = document.getElementById('campo-ean-manuale').value;
+    var articolo = document.getElementById('campo-articolo-manuale').value;
     @endif
 
     var pzcassa = document.getElementById('campo-pzcassa').value;
@@ -426,6 +434,21 @@ function stampa() {
         alert('Inserisci i pezzi per cassa.');
         return;
     }
+
+    @if(!$isItalianaConfetti)
+    // Salva EAN nel database per le prossime volte
+    if (articolo && ean) {
+        fetch("{{ route('operatore.etichetta.salvaEan') }}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken(),
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ articolo: articolo, codice_ean: ean })
+        });
+    }
+    @endif
 
     window.print();
 }

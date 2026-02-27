@@ -25,6 +25,7 @@ Route::prefix('operatore')->group(function() {
 
         // Etichette EAN
         Route::get('/etichetta/search-ean', [EtichettaController::class, 'searchEan'])->name('operatore.etichetta.searchEan');
+        Route::post('/etichetta/salva-ean', [EtichettaController::class, 'salvaEan'])->name('operatore.etichetta.salvaEan');
         Route::get('/etichetta/{ordine}', [EtichettaController::class, 'show'])->name('operatore.etichetta');
     });
 });

@@ -28,9 +28,15 @@ class EtichettaController extends Controller
         // Per altri clienti: articolo = descrizione ordine (precompilato)
         $articoloDefault = $ordine->descrizione ?? '';
 
+        // Cerca EAN già salvato per questo articolo (non-IC)
+        $eanSalvato = null;
+        if (!$isItalianaConfetti && $articoloDefault) {
+            $eanSalvato = EanProdotto::where('articolo', $articoloDefault)->first();
+        }
+
         return view('operatore.etichetta', compact(
             'ordine', 'lotto', 'cliente', 'data',
-            'isItalianaConfetti', 'eanProdotti', 'articoloDefault'
+            'isItalianaConfetti', 'eanProdotti', 'articoloDefault', 'eanSalvato'
         ));
     }
 
@@ -45,5 +51,22 @@ class EtichettaController extends Controller
             ->get(['id', 'articolo', 'codice_ean']);
 
         return response()->json($risultati);
+    }
+
+    public function salvaEan(Request $request)
+    {
+        $articolo = trim($request->input('articolo', ''));
+        $codiceEan = trim($request->input('codice_ean', ''));
+
+        if (!$articolo || !$codiceEan) {
+            return response()->json(['ok' => false, 'msg' => 'Articolo e codice EAN richiesti'], 422);
+        }
+
+        EanProdotto::updateOrCreate(
+            ['articolo' => $articolo],
+            ['codice_ean' => $codiceEan]
+        );
+
+        return response()->json(['ok' => true]);
     }
 }
