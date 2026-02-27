@@ -81,8 +81,7 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding-bottom: 2.5mm;
-        border-bottom: 0.5pt solid #bbb;
+        padding-bottom: 2mm;
         margin-bottom: 3mm;
     }
     .etichetta-preview .header-row .azienda-info {
