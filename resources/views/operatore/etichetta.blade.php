@@ -125,6 +125,7 @@
         margin: 1.5mm 0;
         color: #000;
         letter-spacing: 0.2px;
+        word-wrap: break-word;
     }
 
     /* --- Zona bassa: campi sx + QR dx --- */
@@ -326,6 +327,16 @@ function aggiornaAnteprima() {
     document.getElementById('print-lotto').textContent = lotto;
     document.getElementById('print-data').textContent = data;
     document.getElementById('print-ean').textContent = ean;
+
+    // Auto-ridimensiona articolo se troppo lungo
+    var articoloEl = document.getElementById('print-articolo');
+    var etichetta = document.getElementById('etichetta');
+    articoloEl.style.fontSize = '20pt';
+    var sizes = [20, 18, 16, 14, 12, 11, 10];
+    for (var i = 0; i < sizes.length; i++) {
+        articoloEl.style.fontSize = sizes[i] + 'pt';
+        if (etichetta.scrollHeight <= etichetta.clientHeight) break;
+    }
 
     // Genera QR code se c'è un codice EAN
     var canvas = document.getElementById('qrcode');
