@@ -193,6 +193,16 @@ class DashboardOperatoreController extends Controller
             }
         }
 
-        return view('operatore.dashboard', compact('fasiVisibili', 'operatore', 'fasiPerReparto', 'showColori', 'showFustella'));
+        // Storico fasi terminate (ultimi 30 giorni)
+        $fasiTerminate = OrdineFase::whereIn('stato', [3, 4])
+            ->whereHas('faseCatalogo', function ($q) use ($reparti) {
+                $q->whereIn('reparto_id', $reparti);
+            })
+            ->whereDate('data_fine', '>=', Carbon::today()->subDays(30))
+            ->with(['ordine', 'faseCatalogo.reparto'])
+            ->orderByDesc('data_fine')
+            ->get();
+
+        return view('operatore.dashboard', compact('fasiVisibili', 'operatore', 'fasiPerReparto', 'showColori', 'showFustella', 'fasiTerminate'));
     }
 }
