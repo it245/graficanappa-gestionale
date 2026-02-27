@@ -116,9 +116,9 @@
         min-width: 22mm;
     }
 
-    /* --- Articolo centrato e bold --- */
+    /* --- Articolo bold --- */
     .etichetta-preview .articolo-row {
-        text-align: center;
+        text-align: left;
         font-family: 'Vani', 'Segoe UI', Arial, sans-serif;
         font-weight: 700;
         font-size: 24pt;
