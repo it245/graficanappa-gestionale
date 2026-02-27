@@ -546,6 +546,18 @@ tr:hover td {
             </span>
         </a>
 
+        {{-- Storico consegne --}}
+        <a href="#" class="sidebar-item" data-bs-toggle="modal" data-bs-target="#modalStorico" onclick="closeSidebar()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#6c757d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+            </svg>
+            <span>Storico consegne
+                @if($storicoConsegne->count() > 0)
+                    <span class="badge rounded-pill bg-secondary" style="font-size:11px; vertical-align:middle;">{{ $storicoConsegne->count() }}</span>
+                @endif
+            </span>
+        </a>
+
         {{-- Sync Onda --}}
         <form method="POST" action="{{ route('owner.syncOnda') }}" style="margin:0;" onsubmit="this.querySelector('button').disabled=true;">
             @csrf
@@ -866,6 +878,68 @@ tr:hover td {
             </div>
             <div class="modal-footer" style="padding:14px 24px;">
                 <button type="button" class="btn btn-secondary" style="font-size:15px; padding:8px 20px;" data-bs-dismiss="modal">Chiudi</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Storico Consegne -->
+<div class="modal fade" id="modalStorico" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#6c757d; color:#fff;">
+                <h5 class="modal-title">Storico consegne (ultimi 30 giorni)</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="overflow-x:auto;">
+                @if($storicoConsegne->count() > 0)
+                @foreach($storicoConsegne->groupBy(fn($f) => \Carbon\Carbon::parse($f->data_fine)->format('Y-m-d')) as $dataStorico => $fasiGiorno)
+                <h6 class="mt-3 mb-2 fw-bold" style="color:#333;">
+                    {{ \Carbon\Carbon::parse($dataStorico)->format('d/m/Y') }}
+                    <span class="badge bg-secondary ms-1">{{ $fasiGiorno->count() }}</span>
+                </h6>
+                <table class="table table-bordered table-sm mb-3" style="white-space:nowrap;">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Commessa</th>
+                            <th>Cliente</th>
+                            <th>Cod. Articolo</th>
+                            <th>Descrizione</th>
+                            <th>Qta</th>
+                            <th>Tipo</th>
+                            <th>Ora</th>
+                            <th>Operatore</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($fasiGiorno as $faseStorico)
+                        <tr>
+                            <td><strong>{{ $faseStorico->ordine->commessa ?? '-' }}</strong></td>
+                            <td>{{ $faseStorico->ordine->cliente_nome ?? '-' }}</td>
+                            <td>{{ $faseStorico->ordine->cod_art ?? '-' }}</td>
+                            <td>{{ $faseStorico->ordine->descrizione ?? '-' }}</td>
+                            <td>{{ $faseStorico->ordine->qta_richiesta ?? '-' }}</td>
+                            <td>
+                                @if($faseStorico->tipo_consegna === 'parziale')
+                                    <span class="badge bg-warning text-dark">Parziale</span>
+                                @else
+                                    <span class="badge bg-success">Totale</span>
+                                @endif
+                            </td>
+                            <td>{{ $faseStorico->data_fine ? \Carbon\Carbon::parse($faseStorico->data_fine)->format('H:i') : '-' }}</td>
+                            <td>
+                                @foreach($faseStorico->operatori as $op)
+                                    {{ $op->nome }} {{ $op->cognome }}<br>
+                                @endforeach
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+                @endforeach
+                @else
+                <p class="text-muted text-center py-3">Nessuna consegna negli ultimi 30 giorni</p>
+                @endif
             </div>
         </div>
     </div>

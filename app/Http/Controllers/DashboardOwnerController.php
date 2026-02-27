@@ -295,6 +295,20 @@ public function calcolaOreEPriorita($fase)
 
         $fasiAttive = OrdineFase::where('stato', 2)->count();
 
+        // Storico consegne (ultimi 30 giorni, escluso oggi)
+        $storicoConsegne = collect();
+        if ($repartoSpedizione) {
+            $storicoConsegne = OrdineFase::where('stato', 4)
+                ->whereDate('data_fine', '<', Carbon::today())
+                ->whereDate('data_fine', '>=', Carbon::today()->subDays(30))
+                ->whereHas('faseCatalogo', function ($q) use ($repartoSpedizione) {
+                    $q->where('reparto_id', $repartoSpedizione->id);
+                })
+                ->with(['ordine', 'faseCatalogo', 'operatori'])
+                ->orderByDesc('data_fine')
+                ->get();
+        }
+
         // Spedizioni BRT: DDT unici con vettore BRT
         $spedizioniBRT = Ordine::where('vettore_ddt', 'LIKE', '%BRT%')
             ->whereNotNull('numero_ddt_vendita')
@@ -309,7 +323,7 @@ public function calcolaOreEPriorita($fase)
         $operatore = $request->attributes->get('operatore') ?? auth()->guard('operatore')->user();
 
         return view('owner.dashboard', compact(
-            'fasi', 'reparti', 'fasiCatalogo', 'spedizioniOggi',
+            'fasi', 'reparti', 'fasiCatalogo', 'spedizioniOggi', 'storicoConsegne',
             'fasiCompletateOggi', 'oreLavorateOggi', 'commesseSpediteOggi', 'fasiAttive', 'spedizioniBRT', 'operatore'
         ));
     }
