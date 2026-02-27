@@ -207,6 +207,11 @@
         <label class="form-label">Cliente</label>
         <input type="text" id="campo-cliente" class="form-control" value="{{ $cliente }}">
     </div>
+    @if($ordine->descrizione)
+    <div class="alert alert-light py-2 px-3 mb-3" style="font-size:13px; border:1px solid #dee2e6;">
+        <strong>Descrizione ordine:</strong> {{ $ordine->descrizione }}
+    </div>
+    @endif
 
     @if($isItalianaConfetti)
         {{-- ITALIANA CONFETTI: dropdown ricerca EAN --}}

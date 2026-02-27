@@ -121,7 +121,32 @@ class OndaSyncService
                 $logOrdiniCreati[] = $commessa . ' - ' . trim($prima->ClienteNome ?? '');
             }
 
-            // 4. Fasi: raccogli fasi uniche per questo gruppo
+            // 4. Assicura che esista sempre la fase BRT1 (spedizione)
+            $hasBrt = OrdineFase::where('ordine_id', $ordine->id)
+                ->where(function ($q) {
+                    $q->where('fase', 'BRT1')->orWhere('fase', 'brt1');
+                })->exists();
+
+            if (!$hasBrt) {
+                $repartoBrt = Reparto::firstOrCreate(['nome' => 'spedizione']);
+                $faseCatalogoBrt = FasiCatalogo::firstOrCreate(
+                    ['nome' => 'BRT1'],
+                    ['reparto_id' => $repartoBrt->id]
+                );
+                OrdineFase::create([
+                    'ordine_id'        => $ordine->id,
+                    'fase'             => 'BRT1',
+                    'fase_catalogo_id' => $faseCatalogoBrt->id,
+                    'qta_fase'         => $ordine->qta_richiesta ?? 0,
+                    'um'               => 'FG',
+                    'priorita'         => $mappaPriorita['BRT1'] ?? 96,
+                    'stato'            => 0,
+                ]);
+                $fasiCreate++;
+                $logFasiCreate[] = $commessa . ' → BRT1 (auto)';
+            }
+
+            // 5. Fasi: raccogli fasi uniche per questo gruppo
             $fasiViste = [];
             foreach ($righe as $riga) {
                 $faseNome = trim($riga->CodFase ?? '');
@@ -494,8 +519,8 @@ class OndaSyncService
             'UVSERIGRAFICOEST' => 'esterno',
             'UVSPOT.MGI.30M' => 'digitale',
             'UVSPOT.MGI.9M' => 'digitale',
-            'UVSPOTEST' => 'digitale',
-            'UVSPOTSPESSEST' => 'digitale',
+            'UVSPOTEST' => 'esterno',
+            'UVSPOTSPESSEST' => 'esterno',
             'ZUND' => 'digitale',
             'APPL.CORDONCINO0,035' => 'legatoria',
             '4graph' => 'esterno',

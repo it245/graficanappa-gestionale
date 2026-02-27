@@ -244,6 +244,32 @@ class ImportExcelTutto extends Command
                 $fasiCreate++;
             }
 
+            // Assicura che esista sempre la fase BRT1 (spedizione)
+            if (!$dryRun && $ordine) {
+                $hasBrt = OrdineFase::where('ordine_id', $ordine->id)
+                    ->where(function ($q) {
+                        $q->where('fase', 'BRT1')->orWhere('fase', 'brt1')->orWhere('fase', 'BRT');
+                    })->exists();
+
+                if (!$hasBrt) {
+                    $repartoBrt = Reparto::firstOrCreate(['nome' => 'spedizione']);
+                    $faseCatalogoBrt = FasiCatalogo::firstOrCreate(
+                        ['nome' => 'BRT1'],
+                        ['reparto_id' => $repartoBrt->id]
+                    );
+                    OrdineFase::create([
+                        'ordine_id'        => $ordine->id,
+                        'fase'             => 'BRT1',
+                        'fase_catalogo_id' => $faseCatalogoBrt->id,
+                        'qta_fase'         => $ordine->qta_richiesta ?? 0,
+                        'um'               => 'FG',
+                        'priorita'         => 96,
+                        'stato'            => 0,
+                    ]);
+                    $fasiCreate++;
+                }
+            }
+
             $bar->advance();
         }
 

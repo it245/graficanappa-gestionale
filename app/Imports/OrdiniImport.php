@@ -240,8 +240,8 @@ private function convertiData($valore) {
     'UVSERIGRAFICOEST' => 'esterno',
     'UVSPOT.MGI.30M' => 'digitale',
     'UVSPOT.MGI.9M' => 'digitale',
-    'UVSPOTEST' => 'digitale',
-    'UVSPOTSPESSEST' => 'digitale',
+    'UVSPOTEST' => 'esterno',
+    'UVSPOTSPESSEST' => 'esterno',
 
     'ZUND' => 'digitale',
     'APPL.CORDONCINO0,035' => 'legatoria',
