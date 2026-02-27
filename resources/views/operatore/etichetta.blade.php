@@ -86,17 +86,20 @@
         margin-bottom: 3mm;
     }
     .etichetta-preview .header-row .azienda-info {
-        font-size: 7.5pt;
+        font-size: 9pt;
+        font-weight: 700;
         line-height: 1.4;
-        color: #444;
+        color: #111;
     }
     .etichetta-preview .header-row .azienda-info strong {
-        font-size: 9pt;
-        color: #222;
+        font-size: 11pt;
+        color: #000;
         letter-spacing: 0.3px;
     }
     .etichetta-preview .header-row img {
         height: 28mm;
+        image-rendering: -webkit-optimize-contrast;
+        image-rendering: crisp-edges;
     }
 
     /* --- Corpo info --- */
