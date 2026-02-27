@@ -66,49 +66,56 @@
         height: 100mm;
         border: 1px solid #000;
         margin: 30px auto;
-        padding: 8mm;
+        padding: 5mm 6mm;
         font-family: Arial, Helvetica, sans-serif;
-        position: relative;
         box-sizing: border-box;
         background: #fff;
         display: flex;
         flex-direction: column;
+        overflow: hidden;
     }
     .etichetta-preview .header-row {
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
-        margin-bottom: 3mm;
+        margin-bottom: 2mm;
     }
     .etichetta-preview .header-row .azienda-info {
-        font-size: 8pt;
-        line-height: 1.4;
+        font-size: 7pt;
+        line-height: 1.3;
         color: #333;
     }
     .etichetta-preview .header-row img {
-        height: 14mm;
+        height: 12mm;
     }
     .etichetta-preview .info-row {
-        font-size: 13pt;
-        line-height: 1.6;
+        font-size: 11pt;
+        line-height: 1.4;
         flex: 1;
     }
     .etichetta-preview .info-row .label {
         font-weight: bold;
     }
-    .etichetta-preview .barcode-row {
+    .etichetta-preview .articolo-row {
         text-align: center;
+        font-weight: bold;
+        font-size: 12pt;
+        margin: 1mm 0;
+    }
+    .etichetta-preview .bottom-row {
+        display: flex;
+        align-items: flex-end;
         margin-top: auto;
-        padding-top: 2mm;
+        gap: 4mm;
     }
-    .etichetta-preview .barcode-row canvas {
-        max-width: 35mm;
-        max-height: 35mm;
+    .etichetta-preview .bottom-row canvas {
+        width: 25mm;
+        height: 25mm;
+        flex-shrink: 0;
     }
-    .etichetta-preview .ean-text {
-        font-size: 9pt;
-        letter-spacing: 1px;
-        margin-top: 1mm;
+    .etichetta-preview .bottom-row .ean-text {
+        font-size: 8pt;
+        letter-spacing: 0.5px;
     }
 
     /* ===== PRINT ===== */
@@ -215,13 +222,12 @@
     </div>
     <div class="info-row">
         <div><span class="label">Cliente:</span> <span id="print-cliente">{{ $cliente }}</span></div>
-        <div><span class="label">Articolo:</span> <span id="print-articolo"></span></div>
-        <div>&nbsp;</div>
+        <div class="articolo-row" id="print-articolo"></div>
         <div><span class="label">Pz x cassa:</span> <span id="print-pzcassa"></span></div>
         <div><span class="label">Lotto:</span> <span id="print-lotto">{{ $lotto }}</span></div>
         <div><span class="label">Data:</span> <span id="print-data">{{ $data }}</span></div>
     </div>
-    <div class="barcode-row">
+    <div class="bottom-row">
         <canvas id="qrcode"></canvas>
         <div class="ean-text" id="print-ean"></div>
     </div>
@@ -262,7 +268,7 @@ function aggiornaAnteprima() {
         new QRious({
             element: canvas,
             value: ean,
-            size: 150,
+            size: 120,
             level: 'M'
         });
         canvas.style.display = '';
