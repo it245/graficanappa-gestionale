@@ -22,6 +22,7 @@ class RepartiSeeder extends Seeder
             ['id' => 10, 'nome' => 'stampa a caldo'],
             ['id' => 11, 'nome' => 'stampa offset'],
             ['id'=> 12, 'nome'=>'esterno'],
+            ['id'=> 13, 'nome'=>'rilievo'],
         ];
 
         foreach ($reparti as $reparto) {

@@ -53,7 +53,7 @@ class FasiCatalogoSeeder extends Seeder
             'FUSTBOBSTRILIEVI' => 'fustella piana',
             'FUSTSTELG33.44' => 'fustella cilindrica',
             'FUSTSTELP25.35' => 'fustella cilindrica',
-            'RILIEVOASECCOJOH' => 'fustella',
+            'RILIEVOASECCOJOH' => 'rilievo',
 
             // FINESTRE
             'FIN01' => 'finestre',

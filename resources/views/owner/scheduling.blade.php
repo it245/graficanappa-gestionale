@@ -637,7 +637,7 @@ function isBobst(fase) {
     const reparto = (fase.reparto || '').toLowerCase();
     if (reparto === 'esterno') return false; // esterni no
     if (nome.startsWith('sfust')) return false; // sfustellatura è legatoria
-    return nome.includes('fust') || nome.includes('rilievo');
+    return nome.includes('fust') || nome.includes('rilievo') || reparto === 'rilievo';
 }
 
 function schedulaPerMacchina(data) {
