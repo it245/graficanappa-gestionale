@@ -44,10 +44,10 @@ class ImportExcelTutto extends Command
 
     /**
      * Colonne del foglio "tutto":
-     *  A=operatore, B=dataregistrazione, C=commessa, D=cliente, E=stato,
-     *  F=codart, G=descrizione, H=qta richiesta, I=fase, J=um,
-     *  K=qtaprodotta, L=datapresconsegna, M=codcarta, N=carta,
-     *  O=qtacarta, P=note, Q=ore, R=time out
+     *  A=dataregistrazione, B=commessa, C=cliente, D=stato,
+     *  E=codart, F=descrizione, G=qta richiesta, H=fase, I=um carta,
+     *  J=qtaprodotta, K=datapresconsegna, L=pronto per consegna,
+     *  M=codcarta, N=carta, O=qtacarta, P=note, Q=ore, R=time out
      */
     public function handle()
     {
@@ -107,10 +107,10 @@ class ImportExcelTutto extends Command
         $skippedNoStato = 0;
 
         for ($rowNum = 2; $rowNum <= $highRow; $rowNum++) {
-            $commessa = trim((string) ($sheet->getCell("C{$rowNum}")->getValue() ?? ''));
+            $commessa = trim((string) ($sheet->getCell("B{$rowNum}")->getValue() ?? ''));
             if (!$commessa) continue;
 
-            $statoRaw = $sheet->getCell("E{$rowNum}")->getValue();
+            $statoRaw = $sheet->getCell("D{$rowNum}")->getValue();
             if ($statoRaw === null || $statoRaw === '') {
                 $skippedNoStato++;
                 continue;
@@ -124,22 +124,22 @@ class ImportExcelTutto extends Command
 
             $righe[] = [
                 'commessa'         => $commessa,
-                'cliente'          => trim((string) ($sheet->getCell("D{$rowNum}")->getValue() ?? '')),
+                'cliente'          => trim((string) ($sheet->getCell("C{$rowNum}")->getValue() ?? '')),
                 'stato_excel'      => $statoExcel,
                 'stato_mes'        => self::MAPPA_STATI[$statoExcel],
-                'cod_art'          => trim((string) ($sheet->getCell("F{$rowNum}")->getValue() ?? '')),
-                'descrizione'      => trim((string) ($sheet->getCell("G{$rowNum}")->getValue() ?? '')),
-                'qta_richiesta'    => $this->parseNumeric($sheet->getCell("H{$rowNum}")->getValue()),
-                'fase'             => trim((string) ($sheet->getCell("I{$rowNum}")->getValue() ?? '')),
-                'um'               => trim((string) ($sheet->getCell("J{$rowNum}")->getValue() ?? '')) ?: 'FG',
-                'qta_prod'         => $this->parseNumeric($sheet->getCell("K{$rowNum}")->getValue()),
-                'data_consegna'    => $this->parseExcelDate($sheet->getCell("L{$rowNum}")->getValue()),
+                'cod_art'          => trim((string) ($sheet->getCell("E{$rowNum}")->getValue() ?? '')),
+                'descrizione'      => trim((string) ($sheet->getCell("F{$rowNum}")->getValue() ?? '')),
+                'qta_richiesta'    => $this->parseNumeric($sheet->getCell("G{$rowNum}")->getValue()),
+                'fase'             => trim((string) ($sheet->getCell("H{$rowNum}")->getValue() ?? '')),
+                'um'               => trim((string) ($sheet->getCell("I{$rowNum}")->getValue() ?? '')) ?: 'FG',
+                'qta_prod'         => $this->parseNumeric($sheet->getCell("J{$rowNum}")->getValue()),
+                'data_consegna'    => $this->parseExcelDate($sheet->getCell("K{$rowNum}")->getValue()),
                 'cod_carta'        => trim((string) ($sheet->getCell("M{$rowNum}")->getValue() ?? '')),
                 'carta'            => trim((string) ($sheet->getCell("N{$rowNum}")->getValue() ?? '')),
                 'qta_carta'        => $this->parseNumeric($sheet->getCell("O{$rowNum}")->getValue()),
                 'note'             => trim((string) ($sheet->getCell("P{$rowNum}")->getValue() ?? '')),
                 'ore'              => $this->parseNumeric($sheet->getCell("Q{$rowNum}")->getValue()),
-                'data_registrazione' => $this->parseExcelDate($sheet->getCell("B{$rowNum}")->getValue()),
+                'data_registrazione' => $this->parseExcelDate($sheet->getCell("A{$rowNum}")->getValue()),
             ];
         }
 
