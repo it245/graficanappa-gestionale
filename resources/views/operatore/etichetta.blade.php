@@ -64,58 +64,101 @@
     .etichetta-preview {
         width: 150mm;
         height: 100mm;
-        border: 1px solid #000;
+        border: 1px solid #ccc;
         margin: 30px auto;
-        padding: 5mm 6mm;
-        font-family: Arial, Helvetica, sans-serif;
+        padding: 5mm 7mm;
+        font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
         box-sizing: border-box;
         background: #fff;
         display: flex;
         flex-direction: column;
         overflow: hidden;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
     }
+
+    /* --- Header: info azienda sx + logo dx --- */
     .etichetta-preview .header-row {
         display: flex;
         justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 2mm;
+        align-items: center;
+        padding-bottom: 2.5mm;
+        border-bottom: 0.5pt solid #bbb;
+        margin-bottom: 3mm;
     }
     .etichetta-preview .header-row .azienda-info {
-        font-size: 7pt;
-        line-height: 1.3;
-        color: #333;
+        font-size: 7.5pt;
+        line-height: 1.4;
+        color: #444;
+    }
+    .etichetta-preview .header-row .azienda-info strong {
+        font-size: 9pt;
+        color: #222;
+        letter-spacing: 0.3px;
     }
     .etichetta-preview .header-row img {
-        height: 12mm;
+        height: 13mm;
     }
+
+    /* --- Corpo info --- */
     .etichetta-preview .info-row {
-        font-size: 11pt;
-        line-height: 1.4;
+        font-size: 10.5pt;
+        line-height: 1.5;
         flex: 1;
+        color: #222;
+    }
+    .etichetta-preview .info-row .field {
+        margin-bottom: 0.8mm;
     }
     .etichetta-preview .info-row .label {
-        font-weight: bold;
+        font-weight: 600;
+        color: #333;
+        display: inline-block;
+        min-width: 22mm;
     }
+
+    /* --- Articolo centrato e bold --- */
     .etichetta-preview .articolo-row {
         text-align: center;
-        font-weight: bold;
-        font-size: 12pt;
-        margin: 1mm 0;
+        font-weight: 700;
+        font-size: 13pt;
+        padding: 2mm 0;
+        margin: 1.5mm 0;
+        background: #f5f5f5;
+        border-radius: 1.5mm;
+        color: #111;
+        letter-spacing: 0.2px;
     }
+
+    /* --- Footer: QR sx + codice EAN --- */
     .etichetta-preview .bottom-row {
         display: flex;
-        align-items: flex-end;
+        align-items: center;
         margin-top: auto;
+        padding-top: 2mm;
+        border-top: 0.5pt solid #bbb;
         gap: 4mm;
     }
     .etichetta-preview .bottom-row canvas {
-        width: 25mm;
-        height: 25mm;
+        width: 22mm;
+        height: 22mm;
         flex-shrink: 0;
     }
-    .etichetta-preview .bottom-row .ean-text {
-        font-size: 8pt;
+    .etichetta-preview .bottom-row .ean-info {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    .etichetta-preview .bottom-row .ean-label {
+        font-size: 7pt;
+        color: #888;
+        text-transform: uppercase;
         letter-spacing: 0.5px;
+    }
+    .etichetta-preview .bottom-row .ean-text {
+        font-size: 10pt;
+        font-weight: 600;
+        letter-spacing: 1px;
+        color: #222;
     }
 
     /* ===== PRINT ===== */
@@ -128,7 +171,13 @@
             margin: 0;
             width: 150mm;
             height: 100mm;
+            box-shadow: none;
             page-break-after: always;
+        }
+        .etichetta-preview .articolo-row {
+            background: #f0f0f0 !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
         }
         @page {
             size: 150mm 100mm;
@@ -221,15 +270,18 @@
         <img src="{{ asset('images/logo_gn.png') }}" alt="Grafica Nappa">
     </div>
     <div class="info-row">
-        <div><span class="label">Cliente:</span> <span id="print-cliente">{{ $cliente }}</span></div>
+        <div class="field"><span class="label">Cliente</span> <span id="print-cliente">{{ $cliente }}</span></div>
         <div class="articolo-row" id="print-articolo"></div>
-        <div><span class="label">Pz x cassa:</span> <span id="print-pzcassa"></span></div>
-        <div><span class="label">Lotto:</span> <span id="print-lotto">{{ $lotto }}</span></div>
-        <div><span class="label">Data:</span> <span id="print-data">{{ $data }}</span></div>
+        <div class="field"><span class="label">Pz x cassa</span> <span id="print-pzcassa"></span></div>
+        <div class="field"><span class="label">Lotto</span> <span id="print-lotto">{{ $lotto }}</span></div>
+        <div class="field"><span class="label">Data</span> <span id="print-data">{{ $data }}</span></div>
     </div>
     <div class="bottom-row">
         <canvas id="qrcode"></canvas>
-        <div class="ean-text" id="print-ean"></div>
+        <div class="ean-info">
+            <span class="ean-label">Codice EAN</span>
+            <span class="ean-text" id="print-ean"></span>
+        </div>
     </div>
 </div>
 
