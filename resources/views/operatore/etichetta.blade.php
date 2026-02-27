@@ -96,7 +96,7 @@
         letter-spacing: 0.3px;
     }
     .etichetta-preview .header-row img {
-        height: 13mm;
+        height: 18mm;
     }
 
     /* --- Corpo info --- */
