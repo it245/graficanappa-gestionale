@@ -118,7 +118,7 @@
     .etichetta-preview .articolo-row {
         text-align: center;
         font-weight: 700;
-        font-size: 16pt;
+        font-size: 20pt;
         padding: 2mm 0;
         margin: 1.5mm 0;
         color: #000;
