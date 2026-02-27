@@ -78,7 +78,7 @@ class ImportExcelTutto extends Command
         // ReadFilter: solo colonne A-R per risparmiare memoria
         $colFilter = new class implements IReadFilter {
             public function readCell($columnAddress, $row, $worksheetName = '') {
-                return $columnAddress <= 'R';
+                return strlen($columnAddress) === 1 && $columnAddress <= 'R';
             }
         };
 
