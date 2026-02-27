@@ -94,11 +94,12 @@
         margin-top: auto;
         padding-top: 2mm;
     }
-    .etichetta-preview .barcode-row svg {
-        max-width: 100%;
+    .etichetta-preview .barcode-row canvas {
+        max-width: 35mm;
+        max-height: 35mm;
     }
     .etichetta-preview .ean-text {
-        font-size: 11pt;
+        font-size: 9pt;
         letter-spacing: 1px;
         margin-top: 1mm;
     }
@@ -132,6 +133,20 @@
     <div class="mb-3">
         <label class="form-label">Cliente</label>
         <input type="text" id="campo-cliente" class="form-control" value="{{ $cliente }}">
+    </div>
+    <div class="row">
+        <div class="col-6 mb-3">
+            <label class="form-label">Via</label>
+            <input type="text" id="campo-via" class="form-control" placeholder="Via/indirizzo">
+        </div>
+        <div class="col-3 mb-3">
+            <label class="form-label">CAP</label>
+            <input type="text" id="campo-cap" class="form-control" placeholder="CAP">
+        </div>
+        <div class="col-3 mb-3">
+            <label class="form-label">Tel</label>
+            <input type="text" id="campo-tel" class="form-control" placeholder="Telefono">
+        </div>
     </div>
 
     @if($isItalianaConfetti)
@@ -202,6 +217,8 @@
     </div>
     <div class="info-row">
         <div><span class="label">Cliente:</span> <span id="print-cliente">{{ $cliente }}</span></div>
+        <div id="print-via-row" style="display:none;"><span class="label">Via:</span> <span id="print-via"></span></div>
+        <div id="print-cap-tel-row" style="display:none;"><span id="print-cap"></span> <span id="print-tel"></span></div>
         <div><span class="label">Articolo:</span> <span id="print-articolo"></span></div>
         <div>&nbsp;</div>
         <div><span class="label">Pz x cassa:</span> <span id="print-pzcassa"></span></div>
@@ -209,13 +226,13 @@
         <div><span class="label">Data:</span> <span id="print-data">{{ $data }}</span></div>
     </div>
     <div class="barcode-row">
-        <svg id="barcode"></svg>
+        <canvas id="qrcode"></canvas>
         <div class="ean-text" id="print-ean"></div>
     </div>
 </div>
 
-{{-- JsBarcode CDN --}}
-<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+{{-- QRious CDN (QR code generator) --}}
+<script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
 
 <script>
 // ===== Aggiornamento anteprima in tempo reale =====
@@ -235,6 +252,9 @@ function aggiornaAnteprima() {
     var pzcassa = document.getElementById('campo-pzcassa').value;
     var lotto = document.getElementById('campo-lotto').value;
     var data = document.getElementById('campo-data').value;
+    var via = document.getElementById('campo-via').value;
+    var cap = document.getElementById('campo-cap').value;
+    var tel = document.getElementById('campo-tel').value;
 
     document.getElementById('print-cliente').textContent = cliente;
     document.getElementById('print-articolo').textContent = articolo;
@@ -243,22 +263,37 @@ function aggiornaAnteprima() {
     document.getElementById('print-data').textContent = data;
     document.getElementById('print-ean').textContent = ean;
 
-    // Genera barcode se c'è un codice EAN
-    if (ean && ean.length >= 4) {
-        try {
-            JsBarcode("#barcode", ean, {
-                format: "CODE128",
-                width: 2,
-                height: 50,
-                displayValue: false,
-                margin: 0
-            });
-            document.getElementById('barcode').style.display = '';
-        } catch(e) {
-            document.getElementById('barcode').style.display = 'none';
-        }
+    // Via
+    var viaRow = document.getElementById('print-via-row');
+    if (via) {
+        document.getElementById('print-via').textContent = via;
+        viaRow.style.display = '';
     } else {
-        document.getElementById('barcode').style.display = 'none';
+        viaRow.style.display = 'none';
+    }
+
+    // CAP + Tel
+    var capTelRow = document.getElementById('print-cap-tel-row');
+    if (cap || tel) {
+        document.getElementById('print-cap').textContent = cap ? 'CAP: ' + cap : '';
+        document.getElementById('print-tel').textContent = tel ? '  Tel: ' + tel : '';
+        capTelRow.style.display = '';
+    } else {
+        capTelRow.style.display = 'none';
+    }
+
+    // Genera QR code se c'è un codice EAN
+    var canvas = document.getElementById('qrcode');
+    if (ean && ean.length >= 4) {
+        new QRious({
+            element: canvas,
+            value: ean,
+            size: 150,
+            level: 'M'
+        });
+        canvas.style.display = '';
+    } else {
+        canvas.style.display = 'none';
     }
 }
 

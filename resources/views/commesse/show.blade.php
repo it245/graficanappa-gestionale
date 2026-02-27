@@ -55,10 +55,15 @@
 <!-- Header -->
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h2>Commessa {{ $ordine->commessa }}</h2>
-    <a href="{{ $isSpedizione ? route('spedizione.dashboard') : route('operatore.dashboard') }}" class="btn btn-primary d-flex align-items-center">
-        <img src="{{ asset('images/turn-left_15441589.png') }}" alt="Dashboard" style="width:20px; height:20px; margin-right:5px;">
-        Dashboard
-    </a>
+    <div class="d-flex gap-2">
+        <a href="{{ route('operatore.etichetta', $ordine->id) }}" class="btn btn-outline-dark d-flex align-items-center">
+            🏷️ Stampa Etichetta
+        </a>
+        <a href="{{ $isSpedizione ? route('spedizione.dashboard') : route('operatore.dashboard') }}" class="btn btn-primary d-flex align-items-center">
+            <img src="{{ asset('images/turn-left_15441589.png') }}" alt="Dashboard" style="width:20px; height:20px; margin-right:5px;">
+            Dashboard
+        </a>
+    </div>
 </div>
 
 @php
