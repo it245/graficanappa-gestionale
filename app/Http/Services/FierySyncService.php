@@ -191,7 +191,17 @@ class FierySyncService
         $qtaTarget = $fase->ordine->qta_carta ?: ($fase->ordine->qta_richiesta ?: 0);
         $qtaProd = (int) ($fase->qta_prod ?: 0);
 
-        if ($qtaTarget > 0 && $qtaProd >= $qtaTarget) {
+        $completata = ($qtaTarget > 0 && $qtaProd >= $qtaTarget);
+
+        // Check scarti_previsti: qta_prod + scarti_previsti >= qta_carta
+        if (!$completata && $fase->scarti_previsti > 0 && $qtaProd > 0) {
+            $qtaCarta = (int) ($fase->ordine->qta_carta ?? 0);
+            if ($qtaCarta > 0 && ($qtaProd + $fase->scarti_previsti) >= $qtaCarta) {
+                $completata = true;
+            }
+        }
+
+        if ($completata) {
             $fase->stato = 3;
             if (!$fase->data_fine) {
                 $fase->data_fine = now()->format('Y-m-d H:i:s');

@@ -60,10 +60,12 @@ class FaseStatoService
             return;
         }
 
-        // Controllo via fogli_buoni + scarti_previsti >= qta_carta
-        if ($fase->fogli_buoni > 0 && $fase->scarti_previsti > 0) {
+        // Controllo via fogli prodotti + scarti_previsti >= qta_carta
+        // fogli_buoni (Prinect/offset) o qta_prod (Fiery/digitale)
+        $fogliProdotti = max($fase->fogli_buoni ?? 0, $fase->qta_prod ?? 0);
+        if ($fogliProdotti > 0 && $fase->scarti_previsti > 0) {
             $qtaCarta = $fase->ordine->qta_carta ?? 0;
-            if ($qtaCarta > 0 && ($fase->fogli_buoni + $fase->scarti_previsti) >= $qtaCarta) {
+            if ($qtaCarta > 0 && ($fogliProdotti + $fase->scarti_previsti) >= $qtaCarta) {
                 if ($fase->stato < 3) {
                     $fase->stato = 3;
                     $fase->data_fine = now()->format('Y-m-d H:i:s');
