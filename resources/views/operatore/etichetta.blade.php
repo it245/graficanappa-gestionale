@@ -278,7 +278,7 @@
             Via Gramsci, 19 — 81031 Aversa (CE)<br>
             Tel +39 081 8906734
         </div>
-        <img src="{{ asset('images/logo_graficanappa.jpg') }}" alt="Grafica Nappa">
+        <img src="{{ asset('images/logo_graficanappa.png') }}" alt="Grafica Nappa">
     </div>
     <div class="info-top">
         <div class="field"><span class="label">Cliente:</span> <span id="print-cliente">{{ $cliente }}</span></div>
