@@ -119,8 +119,9 @@
     /* --- Articolo centrato e bold --- */
     .etichetta-preview .articolo-row {
         text-align: center;
+        font-family: 'Vani', 'Segoe UI', Arial, sans-serif;
         font-weight: 700;
-        font-size: 20pt;
+        font-size: 24pt;
         padding: 2mm 0;
         margin: 1.5mm 0;
         color: #000;
@@ -331,8 +332,8 @@ function aggiornaAnteprima() {
     // Auto-ridimensiona articolo se troppo lungo
     var articoloEl = document.getElementById('print-articolo');
     var etichetta = document.getElementById('etichetta');
-    articoloEl.style.fontSize = '20pt';
-    var sizes = [20, 18, 16, 14, 12, 11, 10];
+    articoloEl.style.fontSize = '24pt';
+    var sizes = [24, 22, 20, 18, 16, 14, 12];
     for (var i = 0; i < sizes.length; i++) {
         articoloEl.style.fontSize = sizes[i] + 'pt';
         if (etichetta.scrollHeight <= etichetta.clientHeight) break;
