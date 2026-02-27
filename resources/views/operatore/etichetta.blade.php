@@ -74,11 +74,18 @@
         display: flex;
         flex-direction: column;
     }
-    .etichetta-preview .logo-row {
-        text-align: right;
+    .etichetta-preview .header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
         margin-bottom: 3mm;
     }
-    .etichetta-preview .logo-row img {
+    .etichetta-preview .header-row .azienda-info {
+        font-size: 8pt;
+        line-height: 1.4;
+        color: #333;
+    }
+    .etichetta-preview .header-row img {
         height: 14mm;
     }
     .etichetta-preview .info-row {
@@ -133,20 +140,6 @@
     <div class="mb-3">
         <label class="form-label">Cliente</label>
         <input type="text" id="campo-cliente" class="form-control" value="{{ $cliente }}">
-    </div>
-    <div class="row">
-        <div class="col-6 mb-3">
-            <label class="form-label">Via</label>
-            <input type="text" id="campo-via" class="form-control" placeholder="Via/indirizzo">
-        </div>
-        <div class="col-3 mb-3">
-            <label class="form-label">CAP</label>
-            <input type="text" id="campo-cap" class="form-control" placeholder="CAP">
-        </div>
-        <div class="col-3 mb-3">
-            <label class="form-label">Tel</label>
-            <input type="text" id="campo-tel" class="form-control" placeholder="Telefono">
-        </div>
     </div>
 
     @if($isItalianaConfetti)
@@ -212,13 +205,16 @@
 
 {{-- ===== ANTEPRIMA ETICHETTA (stampabile) ===== --}}
 <div class="etichetta-preview" id="etichetta">
-    <div class="logo-row">
+    <div class="header-row">
+        <div class="azienda-info">
+            <strong>Grafica Nappa S.r.l.</strong><br>
+            Via Gramsci, 19 — 81031 Aversa (CE)<br>
+            Tel +39 081 8906734
+        </div>
         <img src="{{ asset('images/logo_gn.png') }}" alt="Grafica Nappa">
     </div>
     <div class="info-row">
         <div><span class="label">Cliente:</span> <span id="print-cliente">{{ $cliente }}</span></div>
-        <div id="print-via-row" style="display:none;"><span class="label">Via:</span> <span id="print-via"></span></div>
-        <div id="print-cap-tel-row" style="display:none;"><span id="print-cap"></span> <span id="print-tel"></span></div>
         <div><span class="label">Articolo:</span> <span id="print-articolo"></span></div>
         <div>&nbsp;</div>
         <div><span class="label">Pz x cassa:</span> <span id="print-pzcassa"></span></div>
@@ -252,9 +248,6 @@ function aggiornaAnteprima() {
     var pzcassa = document.getElementById('campo-pzcassa').value;
     var lotto = document.getElementById('campo-lotto').value;
     var data = document.getElementById('campo-data').value;
-    var via = document.getElementById('campo-via').value;
-    var cap = document.getElementById('campo-cap').value;
-    var tel = document.getElementById('campo-tel').value;
 
     document.getElementById('print-cliente').textContent = cliente;
     document.getElementById('print-articolo').textContent = articolo;
@@ -262,25 +255,6 @@ function aggiornaAnteprima() {
     document.getElementById('print-lotto').textContent = lotto;
     document.getElementById('print-data').textContent = data;
     document.getElementById('print-ean').textContent = ean;
-
-    // Via
-    var viaRow = document.getElementById('print-via-row');
-    if (via) {
-        document.getElementById('print-via').textContent = via;
-        viaRow.style.display = '';
-    } else {
-        viaRow.style.display = 'none';
-    }
-
-    // CAP + Tel
-    var capTelRow = document.getElementById('print-cap-tel-row');
-    if (cap || tel) {
-        document.getElementById('print-cap').textContent = cap ? 'CAP: ' + cap : '';
-        document.getElementById('print-tel').textContent = tel ? '  Tel: ' + tel : '';
-        capTelRow.style.display = '';
-    } else {
-        capTelRow.style.display = 'none';
-    }
 
     // Genera QR code se c'è un codice EAN
     var canvas = document.getElementById('qrcode');
