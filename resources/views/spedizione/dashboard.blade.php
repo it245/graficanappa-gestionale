@@ -175,12 +175,6 @@
         vertical-align: middle;
     }
     .btn-scan:hover { color: #0b5ed7; }
-    .segnacollo-row {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
-    .segnacollo-row input { flex: 1; }
 
     /* Hamburger */
     .hamburger-btn {
@@ -444,7 +438,6 @@
                 <th>Cliente</th>
                 <th>Cod. Articolo</th>
                 <th>Descrizione</th>
-                <th>Segnacollo BRT</th>
                 <th>Data cons. parziale</th>
             </tr>
         </thead>
@@ -458,13 +451,6 @@
                     <td>{{ $fase->ordine->cliente_nome ?? '-' }}</td>
                     <td>{{ $fase->ordine->cod_art ?? '-' }}</td>
                     <td>{{ $fase->ordine->descrizione ?? '-' }}</td>
-                    <td>
-                        @if($fase->segnacollo_brt)
-                            <a href="#" class="fw-bold text-primary" style="text-decoration:underline;cursor:pointer;" onclick="apriTracking('{{ $fase->segnacollo_brt }}'); return false;">{{ $fase->segnacollo_brt }}</a>
-                        @else
-                            -
-                        @endif
-                    </td>
                     <td>{{ $fase->data_fine ? \Carbon\Carbon::parse($fase->data_fine)->format('d/m/Y H:i') : '-' }}</td>
                 </tr>
             @endforeach
@@ -530,14 +516,6 @@
             <div class="modal-body">
                 <input type="hidden" id="mc_faseId">
                 <input type="hidden" id="mc_forza">
-                <div class="mb-3">
-                    <label for="mc_segnacollo" class="form-label fw-bold">Segnacollo BRT <small class="text-muted">(opzionale)</small></label>
-                    <div class="segnacollo-row">
-                        <input type="text" class="form-control form-control-lg" id="mc_segnacollo" placeholder="Es. 067138050411341" maxlength="50">
-                        <button type="button" class="btn-scan" title="Scansiona codice a barre" onclick="toggleScanner('mc_scanner', 'mc_segnacollo')">&#128247;</button>
-                    </div>
-                    <div id="mc_scanner" class="scanner-container"></div>
-                </div>
                 <button type="button" class="btn btn-success btn-lg w-100 mb-3 fw-bold py-3" onclick="inviaConsegna('totale')">
                     Consegna Totale
                 </button>
@@ -572,7 +550,6 @@
                             <th>Descrizione</th>
                             <th>Qta Ordinata</th>
                             <th>Tipo</th>
-                            <th>Segnacollo BRT</th>
                             <th>Ora Consegna</th>
                             <th>Operatore</th>
                         </tr>
@@ -593,13 +570,6 @@
                                     <span class="badge bg-warning text-dark">Parziale</span>
                                 @else
                                     <span class="badge bg-success">Totale</span>
-                                @endif
-                            </td>
-                            <td>
-                                @if($fase->segnacollo_brt)
-                                    <a href="#" class="fw-bold text-primary" style="text-decoration:underline;cursor:pointer;" onclick="apriTracking('{{ $fase->segnacollo_brt }}'); return false;">{{ $fase->segnacollo_brt }}</a>
-                                @else
-                                    -
                                 @endif
                             </td>
                             <td>{{ $fase->data_fine ? \Carbon\Carbon::parse($fase->data_fine)->format('H:i:s') : '-' }}</td>
@@ -644,7 +614,6 @@
                             <th>Descrizione</th>
                             <th>Qta</th>
                             <th>Tipo</th>
-                            <th>Segnacollo BRT</th>
                             <th>Ora</th>
                             <th>Operatore</th>
                         </tr>
@@ -664,13 +633,6 @@
                                     <span class="badge bg-success">Totale</span>
                                 @endif
                             </td>
-                            <td>
-                                @if($fase->segnacollo_brt)
-                                    <a href="#" class="fw-bold text-primary" style="text-decoration:underline;cursor:pointer;" onclick="apriTracking('{{ $fase->segnacollo_brt }}'); return false;">{{ $fase->segnacollo_brt }}</a>
-                                @else
-                                    -
-                                @endif
-                            </td>
                             <td>{{ $fase->data_fine ? \Carbon\Carbon::parse($fase->data_fine)->format('H:i') : '-' }}</td>
                             <td>
                                 @foreach($fase->operatori as $op)
@@ -685,40 +647,6 @@
                 @else
                 <p class="text-muted text-center py-3">Nessuna consegna negli ultimi 30 giorni</p>
                 @endif
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal Segnacollo DDT -->
-<div class="modal fade" id="modalSegnacollo" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header" style="background:#6f42c1; color:#fff;">
-                <h5 class="modal-title">Segnacollo BRT</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <input type="hidden" id="msDDT_faseId">
-                <input type="hidden" id="msDDT_tipo">
-                <div class="mb-3">
-                    <label for="msDDT_segnacollo" class="form-label fw-bold">Segnacollo BRT <small class="text-muted">(opzionale)</small></label>
-                    <div class="segnacollo-row">
-                        <input type="text" class="form-control form-control-lg" id="msDDT_segnacollo" placeholder="Es. 067138050411341" maxlength="50">
-                        <button type="button" class="btn-scan" title="Scansiona codice a barre" onclick="toggleScanner('msDDT_scanner', 'msDDT_segnacollo')">&#128247;</button>
-                    </div>
-                    <div id="msDDT_scanner" class="scanner-container"></div>
-                </div>
-                <div id="msDDT_tipoLabel" class="mb-3 text-center">
-                    <span class="badge bg-success fs-6" id="msDDT_badgeTotale" style="display:none;">Consegna Totale</span>
-                    <span class="badge bg-warning text-dark fs-6" id="msDDT_badgeParziale" style="display:none;">Consegna Parziale</span>
-                </div>
-                <button type="button" class="btn btn-lg w-100 fw-bold py-3" id="msDDT_btnConferma" onclick="confermaDDT()">
-                    Conferma
-                </button>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
             </div>
         </div>
     </div>
@@ -886,7 +814,6 @@ function parseResponse(res) {
 function apriModalConsegna(faseId, forza) {
     document.getElementById('mc_faseId').value = faseId;
     document.getElementById('mc_forza').value = forza ? '1' : '0';
-    document.getElementById('mc_segnacollo').value = '';
     new bootstrap.Modal(document.getElementById('modalConsegna')).show();
 }
 
@@ -898,7 +825,7 @@ function inviaConsegna(tipo) {
 
     fetch('{{ route("spedizione.invio") }}', {
         method: 'POST', headers: getHdrs(),
-        body: JSON.stringify({ fase_id: parseInt(faseId), tipo_consegna: tipo, forza: forza, segnacollo_brt: document.getElementById('mc_segnacollo').value.trim() || null })
+        body: JSON.stringify({ fase_id: parseInt(faseId), tipo_consegna: tipo, forza: forza })
     })
     .then(parseResponse)
     .then(data => {
@@ -909,37 +836,11 @@ function inviaConsegna(tipo) {
 }
 
 function apriModalConsegnaDDT(faseId, tipo) {
-    document.getElementById('msDDT_faseId').value = faseId;
-    document.getElementById('msDDT_tipo').value = tipo;
-    document.getElementById('msDDT_segnacollo').value = '';
-
-    var btnConferma = document.getElementById('msDDT_btnConferma');
-    var badgeTotale = document.getElementById('msDDT_badgeTotale');
-    var badgeParziale = document.getElementById('msDDT_badgeParziale');
-
-    if (tipo === 'totale') {
-        badgeTotale.style.display = 'inline-block';
-        badgeParziale.style.display = 'none';
-        btnConferma.className = 'btn btn-success btn-lg w-100 fw-bold py-3';
-    } else {
-        badgeTotale.style.display = 'none';
-        badgeParziale.style.display = 'inline-block';
-        btnConferma.className = 'btn btn-warning btn-lg w-100 fw-bold py-3 text-dark';
-    }
-
-    new bootstrap.Modal(document.getElementById('modalSegnacollo')).show();
-}
-
-function confermaDDT() {
-    var faseId = document.getElementById('msDDT_faseId').value;
-    var tipo = document.getElementById('msDDT_tipo').value;
-    var segnacollo = document.getElementById('msDDT_segnacollo').value.trim() || null;
-
-    bootstrap.Modal.getInstance(document.getElementById('modalSegnacollo')).hide();
+    if (!confirm('Confermi consegna ' + tipo + '?')) return;
 
     fetch('{{ route("spedizione.invio") }}', {
         method: 'POST', headers: getHdrs(),
-        body: JSON.stringify({ fase_id: parseInt(faseId), tipo_consegna: tipo, forza: true, segnacollo_brt: segnacollo })
+        body: JSON.stringify({ fase_id: parseInt(faseId), tipo_consegna: tipo, forza: true })
     })
     .then(parseResponse)
     .then(data => {
@@ -975,93 +876,6 @@ function recuperaConsegna(faseId, btn) {
 }
 
 // Tracking BRT
-function apriTracking(segnacollo) {
-    document.getElementById('trackingSegnacollo').textContent = segnacollo;
-    document.getElementById('trackingLoading').classList.remove('d-none');
-    document.getElementById('trackingErrore').classList.add('d-none');
-    document.getElementById('trackingContenuto').classList.add('d-none');
-
-    var modal = new bootstrap.Modal(document.getElementById('modalTracking'));
-    modal.show();
-
-    fetch('{{ route("spedizione.tracking") }}', {
-        method: 'POST', headers: getHdrs(),
-        body: JSON.stringify({ segnacollo: segnacollo })
-    })
-    .then(parseResponse)
-    .then(function(data) {
-        document.getElementById('trackingLoading').classList.add('d-none');
-
-        if (data.error) {
-            document.getElementById('trackingErrore').textContent = data.message || 'Errore nel recupero tracking';
-            document.getElementById('trackingErrore').classList.remove('d-none');
-            return;
-        }
-
-        // Parse risposta BRT reale: ttParcelIdResponse.bolla
-        var resp = data.ttParcelIdResponse;
-        if (!resp || !resp.bolla) {
-            document.getElementById('trackingErrore').textContent = 'Risposta BRT non valida';
-            document.getElementById('trackingErrore').classList.remove('d-none');
-            return;
-        }
-        var bolla = resp.bolla;
-        var sped = bolla.dati_spedizione || {};
-        var cons = bolla.dati_consegna || {};
-        var dest = bolla.destinatario || {};
-        var merce = bolla.merce || {};
-
-        // Stato: ricava dall'ultimo evento con descrizione
-        var statoEl = document.getElementById('trackingStato');
-        var listaEventi = resp.lista_eventi || [];
-        var eventiReali = listaEventi.filter(function(e) { return e.evento && e.evento.descrizione; });
-        var statoDesc = eventiReali.length > 0 ? eventiReali[0].evento.descrizione : '-';
-        statoEl.textContent = statoDesc;
-        if (statoDesc.indexOf('CONSEGNATA') >= 0) {
-            statoEl.className = 'badge bg-success ms-1';
-        } else if (statoDesc.indexOf('CONSEGNA') >= 0 || statoDesc.indexOf('PARTITA') >= 0) {
-            statoEl.className = 'badge bg-warning text-dark ms-1';
-        } else {
-            statoEl.className = 'badge bg-info ms-1';
-        }
-
-        // Dettagli
-        var dataConsegna = cons.data_consegna_merce ? (cons.data_consegna_merce + ' ' + (cons.ora_consegna_merce || '')) : '-';
-        document.getElementById('trackingDataConsegna').textContent = dataConsegna;
-        var destLabel = [dest.ragione_sociale, dest.localita, dest.sigla_provincia].filter(Boolean).join(' - ') || '-';
-        document.getElementById('trackingDestinatario').textContent = destLabel;
-        document.getElementById('trackingFiliale').textContent = sped.filiale_arrivo || '-';
-        document.getElementById('trackingColli').textContent = merce.colli || '-';
-        document.getElementById('trackingPeso').textContent = merce.peso_kg || '-';
-
-        // Eventi
-        var eventiBody = document.getElementById('trackingEventi');
-        eventiBody.innerHTML = '';
-        if (eventiReali.length === 0) {
-            eventiBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Nessun evento disponibile</td></tr>';
-        } else {
-            eventiReali.forEach(function(item) {
-                var ev = item.evento;
-                var tr = document.createElement('tr');
-                tr.innerHTML = '<td>' + (ev.data || '-') + '</td>' +
-                               '<td>' + (ev.ora || '-') + '</td>' +
-                               '<td>' + (ev.descrizione || '-') + '</td>' +
-                               '<td>' + (ev.filiale || '-') + '</td>';
-                eventiBody.appendChild(tr);
-            });
-        }
-
-        document.getElementById('trackingContenuto').classList.remove('d-none');
-    })
-    .catch(function(err) {
-        document.getElementById('trackingLoading').classList.add('d-none');
-        if (err !== 'session_expired') {
-            document.getElementById('trackingErrore').textContent = 'Errore di connessione: ' + err;
-            document.getElementById('trackingErrore').classList.remove('d-none');
-        }
-    });
-}
-
 // Tracking BRT via numero DDT (SOAP)
 function apriTrackingDDT(numeroDDT, btn) {
     var ddtLabel = numeroDDT.replace(/^0+/, '') || numeroDDT;
