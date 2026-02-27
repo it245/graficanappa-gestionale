@@ -127,6 +127,7 @@
         color: #000;
         letter-spacing: 0.2px;
         word-wrap: break-word;
+        text-transform: uppercase;
     }
 
     /* --- Zona bassa: campi sx + QR dx --- */
