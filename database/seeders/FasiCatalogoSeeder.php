@@ -42,8 +42,8 @@ class FasiCatalogoSeeder extends Seeder
             'FOILMGI' => 'digitale',
             'STAMPAINDIGO' => 'digitale',
             'STAMPAINDIGOBN' => 'digitale',
-            'UVSPOT.MGI.30M' => 'digitale',
-            'UVSPOT.MGI.9M' => 'digitale',
+            'UVSPOT.MGI.30M' => 'esterno',
+            'UVSPOT.MGI.9M' => 'esterno',
             'ZUND' => 'digitale',
 
             // FUSTELLA
