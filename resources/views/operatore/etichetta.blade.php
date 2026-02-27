@@ -100,16 +100,15 @@
     }
 
     /* --- Corpo info --- */
-    .etichetta-preview .info-row {
+    .etichetta-preview .info-top {
         font-size: 10.5pt;
         line-height: 1.5;
-        flex: 1;
         color: #222;
     }
-    .etichetta-preview .info-row .field {
+    .etichetta-preview .info-top .field {
         margin-bottom: 0.8mm;
     }
-    .etichetta-preview .info-row .label {
+    .etichetta-preview .info-top .label {
         font-weight: 600;
         color: #333;
         display: inline-block;
@@ -129,35 +128,46 @@
         letter-spacing: 0.2px;
     }
 
-    /* --- Footer: QR sx + codice EAN --- */
-    .etichetta-preview .bottom-row {
+    /* --- Zona bassa: campi sx + QR dx --- */
+    .etichetta-preview .info-bottom {
         display: flex;
+        justify-content: space-between;
         align-items: center;
-        margin-top: auto;
-        padding-top: 2mm;
-        border-top: 0.5pt solid #bbb;
-        gap: 4mm;
+        flex: 1;
+        margin-top: 1mm;
     }
-    .etichetta-preview .bottom-row canvas {
-        width: 22mm;
-        height: 22mm;
-        flex-shrink: 0;
+    .etichetta-preview .info-bottom .fields-left {
+        font-size: 10.5pt;
+        line-height: 1.6;
+        color: #222;
     }
-    .etichetta-preview .bottom-row .ean-info {
+    .etichetta-preview .info-bottom .fields-left .label {
+        font-weight: 600;
+        color: #333;
+        display: inline-block;
+        min-width: 22mm;
+    }
+    .etichetta-preview .info-bottom .qr-right {
         display: flex;
         flex-direction: column;
-        justify-content: center;
+        align-items: center;
+        flex-shrink: 0;
     }
-    .etichetta-preview .bottom-row .ean-label {
-        font-size: 7pt;
+    .etichetta-preview .info-bottom .qr-right canvas {
+        width: 24mm;
+        height: 24mm;
+    }
+    .etichetta-preview .info-bottom .qr-right .ean-label {
+        font-size: 6.5pt;
         color: #888;
         text-transform: uppercase;
         letter-spacing: 0.5px;
+        margin-top: 1mm;
     }
-    .etichetta-preview .bottom-row .ean-text {
-        font-size: 10pt;
+    .etichetta-preview .info-bottom .qr-right .ean-text {
+        font-size: 8.5pt;
         font-weight: 600;
-        letter-spacing: 1px;
+        letter-spacing: 0.8px;
         color: #222;
     }
 
@@ -269,16 +279,18 @@
         </div>
         <img src="{{ asset('images/logo_gn.png') }}" alt="Grafica Nappa">
     </div>
-    <div class="info-row">
+    <div class="info-top">
         <div class="field"><span class="label">Cliente</span> <span id="print-cliente">{{ $cliente }}</span></div>
-        <div class="articolo-row" id="print-articolo"></div>
-        <div class="field"><span class="label">Pz x cassa</span> <span id="print-pzcassa"></span></div>
-        <div class="field"><span class="label">Lotto</span> <span id="print-lotto">{{ $lotto }}</span></div>
-        <div class="field"><span class="label">Data</span> <span id="print-data">{{ $data }}</span></div>
     </div>
-    <div class="bottom-row">
-        <canvas id="qrcode"></canvas>
-        <div class="ean-info">
+    <div class="articolo-row" id="print-articolo"></div>
+    <div class="info-bottom">
+        <div class="fields-left">
+            <div><span class="label">Pz x cassa</span> <span id="print-pzcassa"></span></div>
+            <div><span class="label">Lotto</span> <span id="print-lotto">{{ $lotto }}</span></div>
+            <div><span class="label">Data</span> <span id="print-data">{{ $data }}</span></div>
+        </div>
+        <div class="qr-right">
+            <canvas id="qrcode"></canvas>
             <span class="ean-label">Codice EAN</span>
             <span class="ean-text" id="print-ean"></span>
         </div>
