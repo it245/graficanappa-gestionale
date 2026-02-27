@@ -61,7 +61,7 @@ class OndaSyncService
                 FROM PRDDocRighe r2 WHERE r2.IdDoc = p.IdDoc
             ) materiali
             WHERE t.TipoDocumento = '2'
-              AND t.DataRegistrazione >= CAST('20260218' AS datetime)
+              AND t.DataRegistrazione >= CAST('20260227' AS datetime)
         ");
 
         if (empty($righeOnda)) {
