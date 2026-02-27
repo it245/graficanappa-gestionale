@@ -296,6 +296,11 @@
         <span class="kpi-inline" style="color:#d4380d;">{{ $spedizioniBRT->count() }}</span>
         <span>Spedizioni BRT</span>
     </a>
+    <hr style="margin:4px 18px;">
+    <a href="#" class="sidebar-item" data-bs-toggle="modal" data-bs-target="#modalStorico" onclick="closeSidebar()">
+        <span class="kpi-inline" style="color:#6c757d;">{{ $storicoConsegne->count() }}</span>
+        <span>Storico consegne</span>
+    </a>
 </div>
 
 <!-- Ricerca -->
@@ -609,6 +614,76 @@
                 </table>
                 @else
                 <p class="text-muted text-center py-3">Nessuna consegna effettuata oggi</p>
+                @endif
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Storico Consegne -->
+<div class="modal fade" id="modalStorico" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#6c757d; color:#fff;">
+                <h5 class="modal-title">Storico consegne (ultimi 30 giorni)</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="overflow-x:auto;">
+                @if($storicoConsegne->count() > 0)
+                @foreach($storicoConsegne->groupBy(fn($f) => \Carbon\Carbon::parse($f->data_fine)->format('Y-m-d')) as $data => $fasiGiorno)
+                <h6 class="mt-3 mb-2 fw-bold" style="color:#333;">
+                    {{ \Carbon\Carbon::parse($data)->format('d/m/Y') }}
+                    <span class="badge bg-secondary ms-1">{{ $fasiGiorno->count() }}</span>
+                </h6>
+                <table class="table table-bordered table-sm mb-3" style="white-space:nowrap;">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Commessa</th>
+                            <th>Cliente</th>
+                            <th>Cod. Articolo</th>
+                            <th>Descrizione</th>
+                            <th>Qta</th>
+                            <th>Tipo</th>
+                            <th>Segnacollo BRT</th>
+                            <th>Ora</th>
+                            <th>Operatore</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($fasiGiorno as $fase)
+                        <tr>
+                            <td><strong>{{ $fase->ordine->commessa ?? '-' }}</strong></td>
+                            <td>{{ $fase->ordine->cliente_nome ?? '-' }}</td>
+                            <td>{{ $fase->ordine->cod_art ?? '-' }}</td>
+                            <td>{{ $fase->ordine->descrizione ?? '-' }}</td>
+                            <td>{{ $fase->ordine->qta_richiesta ?? '-' }}</td>
+                            <td>
+                                @if($fase->tipo_consegna === 'parziale')
+                                    <span class="badge bg-warning text-dark">Parziale</span>
+                                @else
+                                    <span class="badge bg-success">Totale</span>
+                                @endif
+                            </td>
+                            <td>
+                                @if($fase->segnacollo_brt)
+                                    <a href="#" class="fw-bold text-primary" style="text-decoration:underline;cursor:pointer;" onclick="apriTracking('{{ $fase->segnacollo_brt }}'); return false;">{{ $fase->segnacollo_brt }}</a>
+                                @else
+                                    -
+                                @endif
+                            </td>
+                            <td>{{ $fase->data_fine ? \Carbon\Carbon::parse($fase->data_fine)->format('H:i') : '-' }}</td>
+                            <td>
+                                @foreach($fase->operatori as $op)
+                                    {{ $op->nome }} {{ $op->cognome }}<br>
+                                @endforeach
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+                @endforeach
+                @else
+                <p class="text-muted text-center py-3">Nessuna consegna negli ultimi 30 giorni</p>
                 @endif
             </div>
         </div>

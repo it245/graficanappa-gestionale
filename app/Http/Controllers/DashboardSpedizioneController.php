@@ -132,6 +132,17 @@ class DashboardSpedizioneController extends Controller
                 ->sortBy(fn($f) => $f->ordine->data_prevista_consegna ?? '9999-12-31');
         }
 
+        // Storico consegne (ultimi 30 giorni, escluso oggi)
+        $storicoConsegne = OrdineFase::where('stato', 4)
+            ->whereDate('data_fine', '<', Carbon::today())
+            ->whereDate('data_fine', '>=', Carbon::today()->subDays(30))
+            ->whereHas('faseCatalogo', function ($q) use ($repartoSpedizione) {
+                $q->where('reparto_id', $repartoSpedizione->id);
+            })
+            ->with(['ordine', 'faseCatalogo', 'operatori'])
+            ->orderByDesc('data_fine')
+            ->get();
+
         // Spedizioni BRT: DDT unici con vettore BRT
         $spedizioniBRT = Ordine::where('vettore_ddt', 'LIKE', '%BRT%')
             ->whereNotNull('numero_ddt_vendita')
@@ -140,7 +151,7 @@ class DashboardSpedizioneController extends Controller
             ->get()
             ->groupBy('numero_ddt_vendita');
 
-        return view('spedizione.dashboard', compact('fasiDaSpedire', 'fasiSpediteOggi', 'fasiInAttesa', 'fasiEsterne', 'fasiDDT', 'fasiParziali', 'spedizioniBRT', 'operatore'));
+        return view('spedizione.dashboard', compact('fasiDaSpedire', 'fasiSpediteOggi', 'fasiInAttesa', 'fasiEsterne', 'fasiDDT', 'fasiParziali', 'spedizioniBRT', 'storicoConsegne', 'operatore'));
     }
 
     public function esterne(Request $request)
