@@ -143,7 +143,7 @@
                         <div class="azioni-cerchi" id="azioni-fase-{{ $fase->id }}">
                             {{-- Tutti e 3 i bottoni sempre visibili --}}
                             <input type="checkbox" id="avvia-{{ $fase->id }}" onchange="aggiornaStato({{ $fase->id }}, 'avvia', this.checked)">
-                            <label for="avvia-{{ $fase->id }}" class="badge-avvia{{ $fase->stato == 2 ? ' lampeggia' : '' }}">Avvia</label>
+                            <label for="avvia-{{ $fase->id }}" class="badge-avvia{{ $fase->stato == 2 ? ' lampeggia' : '' }}">{{ $fase->stato == 2 ? 'Avviato' : 'Avvia' }}</label>
 
                             <input type="checkbox" id="pausa-{{ $fase->id }}" onchange="gestisciPausa({{ $fase->id }}, this.checked)">
                             <label for="pausa-{{ $fase->id }}" class="badge-pausa">Pausa</label>
@@ -339,7 +339,7 @@ function updateButtons(faseId, nuovoStato) {
     var lampeggiaClass = (nuovoStato == 2) ? ' lampeggia' : '';
     let html =
         '<input type="checkbox" id="avvia-'+faseId+'" onchange="aggiornaStato('+faseId+', \'avvia\', this.checked)">' +
-        '<label for="avvia-'+faseId+'" class="badge-avvia'+lampeggiaClass+'">Avvia</label>' +
+        '<label for="avvia-'+faseId+'" class="badge-avvia'+lampeggiaClass+'">'+(nuovoStato == 2 ? 'Avviato' : 'Avvia')+'</label>' +
         '<input type="checkbox" id="pausa-'+faseId+'" onchange="gestisciPausa('+faseId+', this.checked)">' +
         '<label for="pausa-'+faseId+'" class="badge-pausa">Pausa</label>' +
         '<input type="checkbox" id="termina-'+faseId+'" onchange="aggiornaStato('+faseId+', \'termina\', this.checked)">' +
