@@ -12,6 +12,7 @@ use App\Http\Controllers\CostiMarginiController;
 use App\Http\Controllers\AdminLoginController;
 use App\Http\Controllers\DashboardAdminController;
 use App\Http\Controllers\FieryController;
+use App\Http\Controllers\EtichettaController;
 
 // Operatori
 Route::prefix('operatore')->group(function() {
@@ -21,6 +22,10 @@ Route::prefix('operatore')->group(function() {
     Route::middleware(['operatore.auth'])->group(function() {
         Route::get('dashboard', [DashboardOperatoreController::class, 'index'])->name('operatore.dashboard');
         Route::post('/logout', [OperatoreLoginController::class, 'logout'])->name('operatore.logout');
+
+        // Etichette EAN
+        Route::get('/etichetta/search-ean', [EtichettaController::class, 'searchEan'])->name('operatore.etichetta.searchEan');
+        Route::get('/etichetta/{ordine}', [EtichettaController::class, 'show'])->name('operatore.etichetta');
     });
 });
 

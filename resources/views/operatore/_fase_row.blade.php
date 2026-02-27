@@ -27,6 +27,8 @@
            style="font-weight:bold">
            {{ $fase->ordine->commessa }}
         </a>
+        <a href="{{ route('operatore.etichetta', $fase->ordine->id) }}" class="ms-1"
+           title="Stampa etichetta" style="text-decoration:none; font-size:16px;">🏷️</a>
     </td>
 
     <td>{{ $fase->ordine->data_registrazione ? \Carbon\Carbon::parse($fase->ordine->data_registrazione)->format('d/m/Y') : '-' }}</td>
