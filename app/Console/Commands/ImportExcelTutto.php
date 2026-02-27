@@ -9,16 +9,46 @@ use App\Models\FasiCatalogo;
 use App\Models\Reparto;
 use App\Services\OndaSyncService;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Reader\IReadFilter;
 use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
 use Carbon\Carbon;
 
 class ImportExcelTutto extends Command
 {
-    protected $signature = 'import:excel-tutto {file : Percorso del file Excel} {--dry-run : Mostra cosa verrebbe importato senza salvare}';
-    protected $description = 'Importa ordini e fasi dal foglio "tutto" del file Excel del capo';
+    protected $signature = 'import:excel-tutto
+        {file : Percorso del file Excel}
+        {--pulisci : Svuota ordini e fasi prima dell\'import}
+        {--dry-run : Mostra cosa verrebbe importato senza salvare}';
 
-    private $mappaReparti;
+    protected $description = 'Importa ordini e fasi dal foglio "tutto" del file Excel MES';
 
+    // Mappatura stati Excel → MES: 0→0, 1→2, 2→3, 3→4
+    private const MAPPA_STATI = [
+        0 => 0,  // caricato
+        1 => 2,  // avviato (Excel "in lavorazione" → MES "avviato")
+        2 => 3,  // terminato
+        3 => 4,  // consegnato/spedito
+    ];
+
+    // Fasi non presenti in OndaSyncService::getMappaReparti()
+    private const FASI_EXTRA = [
+        'esterno'                  => 'esterno',
+        'ALL.COFANETTO.LEGOKART'   => 'esterno',
+        'BROSSPUR'                 => 'legatoria',
+        'CLICHESTAMPACALDO1'       => 'stampa a caldo',
+        'BROSSFRESATA/A4EST'       => 'esterno',
+        'FASCETTATURA'             => 'legatoria',
+        'ACCOPP.FUST.INCOLL.FOGLI' => 'esterno',
+        'BRT'                      => 'spedizione',
+    ];
+
+    /**
+     * Colonne del foglio "tutto":
+     *  A=operatore, B=dataregistrazione, C=commessa, D=cliente, E=stato,
+     *  F=codart, G=descrizione, H=qta richiesta, I=fase, J=um,
+     *  K=qtaprodotta, L=datapresconsegna, M=codcarta, N=carta,
+     *  O=qtacarta, P=note, Q=ore, R=time out
+     */
     public function handle()
     {
         $file = $this->argument('file');
@@ -32,14 +62,31 @@ class ImportExcelTutto extends Command
             $this->warn('=== MODALITA\' DRY-RUN: nessuna modifica al database ===');
         }
 
-        $this->info("Caricamento foglio 'tutto' da: $file");
+        // --- PULIZIA ---
+        if ($this->option('pulisci') && !$dryRun) {
+            if ($this->confirm('Svuotare TUTTI gli ordini e le fasi dal database?', true)) {
+                OrdineFase::query()->delete();
+                Ordine::query()->delete();
+                $this->info('Database svuotato.');
+            }
+        }
 
+        // --- CARICAMENTO EXCEL ---
+        $this->info("Caricamento foglio 'tutto' da: $file");
         $previousReporting = error_reporting(E_ALL & ~E_DEPRECATED);
+
+        // ReadFilter: solo colonne A-R per risparmiare memoria
+        $colFilter = new class implements IReadFilter {
+            public function readCell($columnAddress, $row, $worksheetName = '') {
+                return $columnAddress <= 'R';
+            }
+        };
 
         try {
             $reader = IOFactory::createReader('Xlsx');
             $reader->setReadDataOnly(true);
             $reader->setLoadSheetsOnly(['tutto']);
+            $reader->setReadFilter($colFilter);
             $spreadsheet = $reader->load($file);
         } catch (\Exception $e) {
             $this->error('Errore apertura file: ' . $e->getMessage());
@@ -49,57 +96,68 @@ class ImportExcelTutto extends Command
         }
 
         $sheet = $spreadsheet->getActiveSheet();
-        $rows = $sheet->toArray(null, false, false, true);
+        $highRow = $sheet->getHighestRow();
+        $this->info("Righe totali nel foglio: " . ($highRow - 1));
 
-        // Carica mappa reparti da OndaSyncService (reflection)
-        $this->mappaReparti = $this->getMappaReparti();
+        // --- MAPPA REPARTI ---
+        $mappaReparti = $this->getMappaReparti();
 
-        $isFirst = true;
+        // --- PARSING RIGHE (riga per riga per risparmiare memoria) ---
+        $righe = [];
+        $skippedNoStato = 0;
+
+        for ($rowNum = 2; $rowNum <= $highRow; $rowNum++) {
+            $commessa = trim((string) ($sheet->getCell("C{$rowNum}")->getValue() ?? ''));
+            if (!$commessa) continue;
+
+            $statoRaw = $sheet->getCell("E{$rowNum}")->getValue();
+            if ($statoRaw === null || $statoRaw === '') {
+                $skippedNoStato++;
+                continue;
+            }
+
+            $statoExcel = (int) $statoRaw;
+            if (!isset(self::MAPPA_STATI[$statoExcel])) {
+                $skippedNoStato++;
+                continue;
+            }
+
+            $righe[] = [
+                'commessa'         => $commessa,
+                'cliente'          => trim((string) ($sheet->getCell("D{$rowNum}")->getValue() ?? '')),
+                'stato_excel'      => $statoExcel,
+                'stato_mes'        => self::MAPPA_STATI[$statoExcel],
+                'cod_art'          => trim((string) ($sheet->getCell("F{$rowNum}")->getValue() ?? '')),
+                'descrizione'      => trim((string) ($sheet->getCell("G{$rowNum}")->getValue() ?? '')),
+                'qta_richiesta'    => $this->parseNumeric($sheet->getCell("H{$rowNum}")->getValue()),
+                'fase'             => trim((string) ($sheet->getCell("I{$rowNum}")->getValue() ?? '')),
+                'um'               => trim((string) ($sheet->getCell("J{$rowNum}")->getValue() ?? '')) ?: 'FG',
+                'qta_prod'         => $this->parseNumeric($sheet->getCell("K{$rowNum}")->getValue()),
+                'data_consegna'    => $this->parseExcelDate($sheet->getCell("L{$rowNum}")->getValue()),
+                'cod_carta'        => trim((string) ($sheet->getCell("M{$rowNum}")->getValue() ?? '')),
+                'carta'            => trim((string) ($sheet->getCell("N{$rowNum}")->getValue() ?? '')),
+                'qta_carta'        => $this->parseNumeric($sheet->getCell("O{$rowNum}")->getValue()),
+                'note'             => trim((string) ($sheet->getCell("P{$rowNum}")->getValue() ?? '')),
+                'ore'              => $this->parseNumeric($sheet->getCell("Q{$rowNum}")->getValue()),
+                'data_registrazione' => $this->parseExcelDate($sheet->getCell("B{$rowNum}")->getValue()),
+            ];
+        }
+
+        // Libera memoria del foglio
+        $spreadsheet->disconnectWorksheets();
+        unset($spreadsheet, $sheet);
+
+        $this->info("Righe con stato 0-3: " . count($righe) . " (scartate senza stato: $skippedNoStato)");
+
+        // --- RAGGRUPPA PER COMMESSA + COD_ART ---
+        $gruppi = collect($righe)->groupBy(fn($r) => $r['commessa'] . '|' . $r['cod_art']);
+        $this->info("Ordini unici (commessa+codart): " . $gruppi->count());
+
+        // --- IMPORT ---
         $ordiniCreati = 0;
         $ordiniAggiornati = 0;
         $fasiCreate = 0;
         $fasiSkippate = 0;
-        $errori = 0;
-
-        // Raggruppa per commessa+codart+descrizione (stessa logica di OndaSync)
-        $righe = [];
-        foreach ($rows as $rowNum => $row) {
-            if ($isFirst) {
-                $isFirst = false;
-                continue;
-            }
-
-            $commessa = trim((string) ($row['D'] ?? ''));
-            if (!$commessa) continue;
-
-            $righe[] = [
-                'row_num' => $rowNum,
-                'commessa' => $commessa,
-                'cliente' => trim((string) ($row['E'] ?? '')),
-                'stato' => $row['F'] ?? 0,
-                'cod_art' => trim((string) ($row['G'] ?? '')),
-                'descrizione' => trim((string) ($row['H'] ?? '')),
-                'qta_richiesta' => $this->parseNumeric($row['I'] ?? null),
-                'fase' => trim((string) ($row['J'] ?? '')),
-                'um' => trim((string) ($row['K'] ?? '')) ?: 'FG',
-                'qta_prod' => $this->parseNumeric($row['L'] ?? null),
-                'data_consegna' => $this->parseExcelDate($row['M'] ?? null),
-                'cod_carta' => trim((string) ($row['O'] ?? '')),
-                'carta' => trim((string) ($row['P'] ?? '')),
-                'qta_carta' => $this->parseNumeric($row['Q'] ?? null),
-                'note' => trim((string) ($row['R'] ?? '')),
-                'data_registrazione' => $this->parseExcelDate($row['C'] ?? null),
-            ];
-        }
-
-        $this->info("Righe lette dal foglio: " . count($righe));
-
-        // Raggruppa per commessa + cod_art + descrizione
-        $gruppi = collect($righe)->groupBy(function ($r) {
-            return $r['commessa'] . '|' . $r['cod_art'] . '|' . $r['descrizione'];
-        });
-
-        $this->info("Commesse uniche (commessa+codart+desc): " . $gruppi->count());
 
         $bar = $this->output->createProgressBar($gruppi->count());
         $bar->start();
@@ -107,44 +165,39 @@ class ImportExcelTutto extends Command
         foreach ($gruppi as $chiave => $righeGruppo) {
             $prima = $righeGruppo->first();
 
-            // Cerca ordine esistente
-            $ordine = Ordine::where('commessa', $prima['commessa'])
-                ->where('cod_art', $prima['cod_art'])
-                ->first();
-
             $datiOrdine = [
-                'cliente_nome' => $prima['cliente'],
-                'descrizione' => $prima['descrizione'],
-                'qta_richiesta' => $prima['qta_richiesta'],
+                'cliente_nome'           => $prima['cliente'],
+                'descrizione'            => $prima['descrizione'],
+                'qta_richiesta'          => $prima['qta_richiesta'],
                 'data_prevista_consegna' => $prima['data_consegna'],
-                'cod_carta' => $prima['cod_carta'],
-                'carta' => $prima['carta'],
-                'qta_carta' => $prima['qta_carta'],
+                'cod_carta'              => $prima['cod_carta'],
+                'carta'                  => $prima['carta'],
+                'qta_carta'              => $prima['qta_carta'],
             ];
 
             if (!$dryRun) {
+                $ordine = Ordine::where('commessa', $prima['commessa'])
+                    ->where('cod_art', $prima['cod_art'])
+                    ->first();
+
                 if ($ordine) {
                     $ordine->update($datiOrdine);
                     $ordiniAggiornati++;
                 } else {
                     $ordine = Ordine::create(array_merge([
-                        'commessa' => $prima['commessa'],
-                        'cod_art' => $prima['cod_art'],
-                        'stato' => 0,
+                        'commessa'           => $prima['commessa'],
+                        'cod_art'            => $prima['cod_art'],
+                        'stato'              => 0,
+                        'um'                 => $prima['um'],
                         'data_registrazione' => $prima['data_registrazione'] ?? now()->toDateString(),
-                        'um' => $prima['um'],
                     ], $datiOrdine));
                     $ordiniCreati++;
                 }
             } else {
-                if ($ordine) {
-                    $ordiniAggiornati++;
-                } else {
-                    $ordiniCreati++;
-                }
+                $ordiniCreati++;
             }
 
-            // Fasi del gruppo
+            // --- FASI ---
             foreach ($righeGruppo as $riga) {
                 $faseNome = $riga['fase'];
                 if (!$faseNome) {
@@ -152,52 +205,42 @@ class ImportExcelTutto extends Command
                     continue;
                 }
 
-                // Controlla se la fase esiste già per questo ordine
-                if ($ordine) {
-                    $faseEsistente = OrdineFase::where('ordine_id', $ordine->id)
-                        ->where('fase', $faseNome)
-                        ->first();
-
-                    if ($faseEsistente) {
-                        $fasiSkippate++;
-                        continue;
-                    }
-                }
-
-                // Risolvi reparto dalla mappa
-                $repartoNome = $this->mappaReparti[$faseNome] ?? null;
                 $faseCatalogoId = null;
-
-                if ($repartoNome && !$dryRun) {
-                    $reparto = Reparto::where('nome', $repartoNome)->first();
-                    if ($reparto) {
-                        $faseCatalogo = FasiCatalogo::firstOrCreate(
-                            ['nome' => $faseNome],
-                            ['reparto_id' => $reparto->id]
-                        );
-                        $faseCatalogoId = $faseCatalogo->id;
-                    }
-                }
-
-                $statoFase = is_numeric($riga['stato']) ? (int) $riga['stato'] : 0;
-                // Non importare fasi già terminate
-                if ($statoFase >= 3) {
-                    $fasiSkippate++;
-                    continue;
-                }
-
                 if (!$dryRun) {
+                    $faseCatalogo = FasiCatalogo::where('nome', $faseNome)->first();
+                    if (!$faseCatalogo) {
+                        $repartoNome = $mappaReparti[$faseNome] ?? null;
+                        if ($repartoNome) {
+                            $reparto = Reparto::where('nome', $repartoNome)->first();
+                            if ($reparto) {
+                                $faseCatalogo = FasiCatalogo::create([
+                                    'nome' => $faseNome,
+                                    'reparto_id' => $reparto->id,
+                                ]);
+                                $this->newLine();
+                                $this->warn("  Creata fase catalogo: {$faseNome} → {$repartoNome}");
+                            }
+                        }
+                        if (!$faseCatalogo) {
+                            $this->newLine();
+                            $this->error("  Fase sconosciuta (no reparto): {$faseNome}");
+                        }
+                    }
+                    $faseCatalogoId = $faseCatalogo?->id;
+
                     OrdineFase::create([
-                        'ordine_id' => $ordine->id,
-                        'fase' => $faseNome,
+                        'ordine_id'       => $ordine->id,
+                        'fase'            => $faseNome,
                         'fase_catalogo_id' => $faseCatalogoId,
-                        'stato' => $statoFase,
-                        'qta_prod' => $riga['qta_prod'],
-                        'um' => $riga['um'],
-                        'note' => $riga['note'],
+                        'stato'           => $riga['stato_mes'],
+                        'qta_prod'        => $riga['qta_prod'],
+                        'qta_fase'        => $riga['qta_richiesta'],
+                        'um'              => $riga['um'],
+                        'note'            => $riga['note'],
+                        'ore'             => $riga['ore'],
+                        'data_fine'       => $riga['stato_mes'] >= 3 ? now() : null,
                     ]);
                 }
-
                 $fasiCreate++;
             }
 
@@ -211,17 +254,13 @@ class ImportExcelTutto extends Command
         $this->info("Ordini creati:     $ordiniCreati");
         $this->info("Ordini aggiornati: $ordiniAggiornati");
         $this->info("Fasi create:       $fasiCreate");
-        $this->info("Fasi skippate:     $fasiSkippate (già esistenti o senza nome)");
+        $this->info("Fasi skippate:     $fasiSkippate");
 
         if ($dryRun) {
             $this->warn('Nessuna modifica salvata (dry-run).');
         } else {
             $this->info('Import completato.');
         }
-
-        // Pulizia file temporaneo
-        $spreadsheet->disconnectWorksheets();
-        unset($spreadsheet);
 
         return 0;
     }
@@ -231,11 +270,14 @@ class ImportExcelTutto extends Command
         try {
             $reflection = new \ReflectionMethod(OndaSyncService::class, 'getMappaReparti');
             $reflection->setAccessible(true);
-            return $reflection->invoke(null);
+            $mappa = $reflection->invoke(null);
         } catch (\Exception $e) {
-            $this->warn('Impossibile caricare mappa reparti da OndaSyncService, uso mappa vuota.');
-            return [];
+            $this->warn('Impossibile caricare mappa reparti da OndaSyncService, uso mappa base.');
+            $mappa = [];
         }
+
+        // Aggiungi fasi extra non presenti nel sync
+        return array_merge($mappa, self::FASI_EXTRA);
     }
 
     private function parseNumeric($value): float

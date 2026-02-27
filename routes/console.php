@@ -27,3 +27,6 @@ Schedule::command('excel:sync')->everyTwoMinutes()->withoutOverlapping();
 
 // Sync automatico Fiery ogni minuto (h24)
 Schedule::command('fiery:sync')->everyMinute()->withoutOverlapping();
+
+// Controllo consegne BRT in ritardo (ogni giorno alle 9:00)
+Schedule::command('brt:check-ritardi')->dailyAt('09:00');
