@@ -96,7 +96,7 @@
         letter-spacing: 0.3px;
     }
     .etichetta-preview .header-row img {
-        height: 18mm;
+        height: 22mm;
     }
 
     /* --- Corpo info --- */
@@ -280,14 +280,14 @@
         <img src="{{ asset('images/logo_graficanappa.jpg') }}" alt="Grafica Nappa">
     </div>
     <div class="info-top">
-        <div class="field"><span class="label">Cliente</span> <span id="print-cliente">{{ $cliente }}</span></div>
+        <div class="field"><span class="label">Cliente:</span> <span id="print-cliente">{{ $cliente }}</span></div>
     </div>
     <div class="articolo-row" id="print-articolo"></div>
     <div class="info-bottom">
         <div class="fields-left">
-            <div><span class="label">Pz x cassa</span> <span id="print-pzcassa"></span></div>
-            <div><span class="label">Lotto</span> <span id="print-lotto">{{ $lotto }}</span></div>
-            <div><span class="label">Data</span> <span id="print-data">{{ $data }}</span></div>
+            <div><span class="label">Pz x cassa:</span> <span id="print-pzcassa"></span></div>
+            <div><span class="label">Lotto:</span> <span id="print-lotto">{{ $lotto }}</span></div>
+            <div><span class="label">Data:</span> <span id="print-data">{{ $data }}</span></div>
         </div>
         <div class="qr-right">
             <canvas id="qrcode"></canvas>
