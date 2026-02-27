@@ -713,7 +713,17 @@ function getFullSchedule() {
 function filterScheduledMacchine(macchine) {
     let result = macchine.map(m => ({...m, fasi: [...m.fasi]}));
     if (filtroReparti.size > 0) {
-        result = result.filter(m => filtroReparti.has(m.nome));
+        result = result.filter(m => {
+            if (filtroReparti.has(m.nome)) return true;
+            // Bobst raggruppa fasi di reparti diversi (fustella piana, cilindrica, ecc.)
+            return m.fasi.some(f => filtroReparti.has(f.reparto));
+        }).map(m => {
+            // Se la macchina è visibile grazie alle fasi interne, filtra solo quelle fasi
+            if (!filtroReparti.has(m.nome)) {
+                return {...m, fasi: m.fasi.filter(f => filtroReparti.has(f.reparto))};
+            }
+            return m;
+        }).filter(m => m.fasi.length > 0);
     }
     if (searchQuery) {
         const q = searchQuery.toLowerCase();
