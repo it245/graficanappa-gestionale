@@ -47,7 +47,7 @@ class FaseStatoService
      */
     public static function controllaCompletamento($faseId)
     {
-        $fase = OrdineFase::find($faseId);
+        $fase = OrdineFase::with('ordine')->find($faseId);
         if (!$fase) return;
 
         if ($fase->qta_prod > 0 && $fase->qta_fase > 0 && $fase->qta_prod >= $fase->qta_fase) {
@@ -55,8 +55,21 @@ class FaseStatoService
                 $fase->stato = 3;
                 $fase->data_fine = now()->format('Y-m-d H:i:s');
                 $fase->save();
-                // Ricalcola stati delle fasi successive
                 self::ricalcolaStati($fase->ordine_id);
+            }
+            return;
+        }
+
+        // Controllo via fogli_buoni + scarti_previsti >= qta_carta
+        if ($fase->fogli_buoni > 0 && $fase->scarti_previsti > 0) {
+            $qtaCarta = $fase->ordine->qta_carta ?? 0;
+            if ($qtaCarta > 0 && ($fase->fogli_buoni + $fase->scarti_previsti) >= $qtaCarta) {
+                if ($fase->stato < 3) {
+                    $fase->stato = 3;
+                    $fase->data_fine = now()->format('Y-m-d H:i:s');
+                    $fase->save();
+                    self::ricalcolaStati($fase->ordine_id);
+                }
             }
         }
     }

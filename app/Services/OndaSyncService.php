@@ -26,6 +26,11 @@ class OndaSyncService
         $mappaPriorita = config('fasi_priorita');
         $oggi = now()->format('Y-m-d');
 
+        // Pre-fetch scarti previsti per macchina da Onda
+        $scartiMacchine = collect(DB::connection('onda')->select(
+            "SELECT CodMacchina, OC_FogliScartoIniz FROM PRDMacchinari WHERE OC_FogliScartoIniz > 0"
+        ))->pluck('OC_FogliScartoIniz', 'CodMacchina')->toArray();
+
         // 1. Query tutti gli ordini aperti (TipoDocumento=2, non chiusi)
         $righeOnda = DB::connection('onda')->select("
             SELECT
@@ -192,6 +197,7 @@ class OndaSyncService
                     'um'               => trim($riga->UMFase ?? 'FG'),
                     'priorita'         => $prioritaFase,
                     'stato'            => 0,
+                    'scarti_previsti'   => $scartiMacchine[trim($riga->CodMacchina ?? '')] ?? null,
                 ];
 
                 // Se la fase è stata rimappata da STAMPA generico, aggiorna la fase esistente
@@ -207,6 +213,7 @@ class OndaSyncService
                             'qta_fase'         => $riga->QtaDaLavorare ?? 0,
                             'um'               => trim($riga->UMFase ?? 'FG'),
                             'priorita'         => $prioritaFase,
+                            'scarti_previsti'   => $scartiMacchine[trim($riga->CodMacchina ?? '')] ?? null,
                         ]);
                         $fasiCreate++;
                         $logFasiCreate[] = $commessa . ' → ' . $faseNome;

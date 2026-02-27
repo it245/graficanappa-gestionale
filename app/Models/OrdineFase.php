@@ -31,7 +31,10 @@ class OrdineFase extends Model
         'tipo_consegna',
         'ddt_fornitore_id',
         'segnacollo_brt',
+        'scarti_previsti',
     ];
+
+    protected $hidden = ['scarti_previsti'];
 
     /* ===================== RELAZIONI ===================== */
 

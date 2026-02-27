@@ -8,6 +8,7 @@ use App\Models\OrdineFase;
 use App\Models\Operatore;
 use App\Models\Reparto;
 use Carbon\Carbon;
+use App\Services\FaseStatoService;
 
 class PrinectSyncService
 {
@@ -413,6 +414,9 @@ class PrinectSyncService
             }
 
             $fase->save();
+
+            // Controlla auto-terminazione via fogli_buoni + scarti_previsti
+            FaseStatoService::controllaCompletamento($fase->id);
 
             // Aggiungi tutti gli operatori alla pivot se non gia presenti
             foreach ($operatoriMatched as $op) {
