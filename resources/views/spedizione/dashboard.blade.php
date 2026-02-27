@@ -1118,7 +1118,7 @@ function caricaStatoBRT(numeroDDT, hash, callback) {
         var colliEl = document.getElementById('brt_colli_' + hash);
 
         if (data.error) {
-            statoEl.innerHTML = '<span class="badge bg-warning text-dark">In attesa (24-48h)</span>';
+            statoEl.innerHTML = '<span class="badge bg-warning text-dark">In attesa</span>';
             callback();
             return;
         }
