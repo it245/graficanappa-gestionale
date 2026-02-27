@@ -35,9 +35,9 @@
         <thead style="background:#17a2b8; color:#fff;">
             <tr>
                 <th>Stato</th>
-                <th>Fornitore</th>
                 <th>Commessa</th>
                 <th>Cliente</th>
+                <th>Fornitore</th>
                 <th>Fasi ({{ $commesseEsterne->sum('num_fasi') }})</th>
                 <th>Cod. Articolo</th>
                 <th>Descrizione</th>
@@ -71,9 +71,9 @@
                             <span class="badge bg-warning text-dark badge-stato">Pausa: {{ $statoFase }}</span>
                         @endif
                     </td>
-                    <td><strong>{{ $riga->fornitore }}</strong></td>
                     <td><a href="{{ route('owner.dettaglioCommessa', $riga->ordine->commessa ?? '-') }}" class="commessa-link">{{ $riga->ordine->commessa ?? '-' }}</a></td>
                     <td>{{ $riga->ordine->cliente_nome ?? '-' }}</td>
+                    <td><strong>{{ $riga->fornitore }}</strong></td>
                     <td class="fasi-col">{{ $riga->fasi }} @if($riga->num_fasi > 1)<span class="badge bg-secondary">{{ $riga->num_fasi }}</span>@endif</td>
                     <td>{{ $riga->ordine->cod_art ?? '-' }}</td>
                     <td class="desc-col">{{ $riga->ordine->descrizione ?? '-' }}</td>
