@@ -18,8 +18,24 @@ class SyncOnda extends Command
             $risultato = OndaSyncService::sincronizza();
 
             $this->info("Ordini creati: {$risultato['ordini_creati']}");
+            if (!empty($risultato['log_ordini_creati'])) {
+                foreach ($risultato['log_ordini_creati'] as $log) {
+                    $this->line("  + {$log}");
+                }
+            }
+
             $this->info("Ordini aggiornati: {$risultato['ordini_aggiornati']}");
+            if (!empty($risultato['log_ordini_aggiornati'])) {
+                $commesse = array_unique($risultato['log_ordini_aggiornati']);
+                $this->line("  " . implode(', ', $commesse));
+            }
+
             $this->info("Fasi create: {$risultato['fasi_create']}");
+            if (!empty($risultato['log_fasi_create'])) {
+                foreach ($risultato['log_fasi_create'] as $log) {
+                    $this->line("  + {$log}");
+                }
+            }
 
             $ddtAvviate = OndaSyncService::sincronizzaDDTFornitore();
             $this->info("Fasi esterne avviate da DDT fornitore: {$ddtAvviate}");

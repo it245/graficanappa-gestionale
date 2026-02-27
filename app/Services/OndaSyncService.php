@@ -17,6 +17,9 @@ class OndaSyncService
         $ordiniCreati = 0;
         $ordiniAggiornati = 0;
         $fasiCreate = 0;
+        $logOrdiniCreati = [];
+        $logOrdiniAggiornati = [];
+        $logFasiCreate = [];
 
         $mappaReparti = self::getMappaReparti();
         $tipiFase = self::getTipoReparto();
@@ -105,6 +108,7 @@ class OndaSyncService
             if ($ordine) {
                 $ordine->update(array_merge($datiOrdine, ['descrizione' => $descrizione]));
                 $ordiniAggiornati++;
+                $logOrdiniAggiornati[] = $commessa;
             } else {
                 $ordine = Ordine::create(array_merge([
                     'commessa'    => $commessa,
@@ -114,6 +118,7 @@ class OndaSyncService
                     'data_registrazione' => $prima->DataRegistrazione ? date('Y-m-d', strtotime($prima->DataRegistrazione)) : $oggi,
                 ], $datiOrdine));
                 $ordiniCreati++;
+                $logOrdiniCreati[] = $commessa . ' - ' . trim($prima->ClienteNome ?? '');
             }
 
             // 4. Fasi: raccogli fasi uniche per questo gruppo
@@ -179,6 +184,7 @@ class OndaSyncService
                             'priorita'         => $prioritaFase,
                         ]);
                         $fasiCreate++;
+                        $logFasiCreate[] = $commessa . ' → ' . $faseNome;
                         continue;
                     }
                 }
@@ -193,6 +199,7 @@ class OndaSyncService
                     if (!$faseEsistente) {
                         OrdineFase::create($dataFase);
                         $fasiCreate++;
+                        $logFasiCreate[] = $commessa . ' → ' . $faseNome;
                     }
 
                 } elseif ($tipo === 'max 2 fasi') {
@@ -204,6 +211,7 @@ class OndaSyncService
                     if ($count < 2) {
                         OrdineFase::create($dataFase);
                         $fasiCreate++;
+                        $logFasiCreate[] = $commessa . ' → ' . $faseNome;
                     }
 
                 } else {
@@ -216,6 +224,7 @@ class OndaSyncService
                     if (!$faseEsistente) {
                         OrdineFase::create($dataFase);
                         $fasiCreate++;
+                        $logFasiCreate[] = $commessa . ' → ' . $faseNome;
                     }
                 }
             }
@@ -241,6 +250,9 @@ class OndaSyncService
             'ordini_creati'     => $ordiniCreati,
             'ordini_aggiornati' => $ordiniAggiornati,
             'fasi_create'       => $fasiCreate,
+            'log_ordini_creati'     => $logOrdiniCreati,
+            'log_ordini_aggiornati' => $logOrdiniAggiornati,
+            'log_fasi_create'       => $logFasiCreate,
         ];
     }
 
