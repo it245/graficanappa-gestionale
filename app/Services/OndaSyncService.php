@@ -89,9 +89,10 @@ class OndaSyncService
 
             if (!$commessa) continue;
 
-            // 3. Upsert ordine (dedup per commessa + cod_art, la descrizione può cambiare)
+            // 3. Upsert ordine (dedup per commessa + cod_art + descrizione)
             $ordine = Ordine::where('commessa', $commessa)
                 ->where('cod_art', $codArt)
+                ->where('descrizione', $descrizione)
                 ->first();
 
             $datiOrdine = [
@@ -111,7 +112,7 @@ class OndaSyncService
             ];
 
             if ($ordine) {
-                $ordine->update(array_merge($datiOrdine, ['descrizione' => $descrizione]));
+                $ordine->update($datiOrdine);
                 $ordiniAggiornati++;
                 $logOrdiniAggiornati[] = $commessa;
             } else {
