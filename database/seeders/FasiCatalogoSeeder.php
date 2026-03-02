@@ -81,9 +81,9 @@ class FasiCatalogoSeeder extends Seeder
             'PIEGAMANUALE' => 'legatoria',
             'PUNTOMETALLICO' => 'legatoria',
             'PUNTOMETAMANUALE' => 'legatoria',
-            'TAGLIACARTE' => 'legatoria',
-            'TAGLIACARTE.IML' => 'legatoria',
-            'TAGLIOINDIGO' => 'legatoria',
+            'TAGLIACARTE' => 'tagliacarte',
+            'TAGLIACARTE.IML' => 'tagliacarte',
+            'TAGLIOINDIGO' => 'tagliacarte',
 
             // PIEGAINCOLLA
             'PI01' => 'piegaincolla',

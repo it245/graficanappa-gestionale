@@ -233,9 +233,9 @@ private function convertiData($valore) {
     'STAMPAXL106.6' => 'stampa offset',
     'STAMPAXL106.7' => 'stampa offset',
 
-    'TAGLIACARTE' => 'legatoria',
-    'TAGLIACARTE.IML' => 'legatoria',
-    'TAGLIOINDIGO' => 'legatoria',
+    'TAGLIACARTE' => 'tagliacarte',
+    'TAGLIACARTE.IML' => 'tagliacarte',
+    'TAGLIOINDIGO' => 'tagliacarte',
 
     'UVSERIGRAFICOEST' => 'esterno',
     'UVSPOT.MGI.30M' => 'digitale',
