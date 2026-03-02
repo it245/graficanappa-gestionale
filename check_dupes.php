@@ -22,23 +22,25 @@ foreach ($grouped as $nome => $group) {
     $byOrdine = $group->groupBy('ordine_id');
     foreach ($byOrdine as $oid => $sub) {
         $desc = mb_substr($sub->first()->ordine->descrizione ?? '?', 0, 60);
-        $ids = $sub->pluck('id')->join(', ');
-        echo "  ordine_id=$oid (x{$sub->count()}) ids=[$ids] desc=$desc\n";
+        echo "  ordine_id=$oid (x{$sub->count()}) desc=$desc\n";
     }
 }
 
-// Cerca duplicati veri: stesso ordine_id + stesso fase_catalogo_id
+// Duplicati veri: stesso ordine_id + stesso fase_catalogo_id
 echo "\n=== DUPLICATI VERI (stesso ordine + stessa fase) ===\n";
 $dupes = $fasi->groupBy(fn($f) => $f->ordine_id . '-' . $f->fase_catalogo_id)
     ->filter(fn($g) => $g->count() > 1);
 
 if ($dupes->isEmpty()) {
     echo "Nessun duplicato vero trovato.\n";
-    echo "Le fasi multiple sono su righe ordine diverse (ordine_id diversi).\n";
 } else {
     foreach ($dupes as $key => $group) {
         $f = $group->first();
         $nome = $f->faseCatalogo->nome ?? '?';
-        echo "ordine_id={$f->ordine_id} fase=$nome x{$group->count()} ids=[{$group->pluck('id')->join(', ')}]\n";
+        echo "\nordine_id={$f->ordine_id} fase=$nome x{$group->count()}\n";
+        echo "Colonna 'fase' nei record:\n";
+        foreach ($group->sortBy('created_at') as $dup) {
+            echo "  id={$dup->id} fase_col='{$dup->fase}' created={$dup->created_at} stato={$dup->stato}\n";
+        }
     }
 }
