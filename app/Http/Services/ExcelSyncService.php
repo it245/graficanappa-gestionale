@@ -126,6 +126,19 @@ class ExcelSyncService
                     ]);
 
                     $excelStato = self::normalizeValue($row['C'] ?? null);
+                    // Campi nuovi ordine (Z-AD)
+                    $ordCliente = self::normalizeValue($row['Z'] ?? null);
+                    if ($ordCliente !== '') $ordine->ordine_cliente = $ordCliente;
+                    $numDdt = self::normalizeValue($row['AA'] ?? null);
+                    if ($numDdt !== '') $ordine->numero_ddt_vendita = $numDdt;
+                    $vettDdt = self::normalizeValue($row['AB'] ?? null);
+                    if ($vettDdt !== '') $ordine->vettore_ddt = $vettDdt;
+                    $qtaDdt = self::parseNumeric($row['AC'] ?? null);
+                    if ($qtaDdt > 0) $ordine->qta_ddt_vendita = $qtaDdt;
+                    $noteFS = self::normalizeValue($row['AD'] ?? null);
+                    if ($noteFS !== '') $ordine->note_fasi_successive = $noteFS;
+                    $ordine->save();
+
                     $nuovaFase = OrdineFase::create([
                         'ordine_id' => $ordine->id,
                         'fase' => self::normalizeValue($row['S'] ?? null) ?: '-',
@@ -277,6 +290,38 @@ class ExcelSyncService
                 $fase->note = self::normalizeValue($row['W'] ?? null);
                 $changed = true;
             }
+
+            // Z - Ordine Cliente
+            if (self::isTextChanged($row['Z'] ?? null, $ordine->ordine_cliente)) {
+                $ordine->ordine_cliente = self::normalizeValue($row['Z'] ?? null);
+                $ordineChanged = true;
+            }
+
+            // AA - N. DDT Vendita
+            if (self::isTextChanged($row['AA'] ?? null, $ordine->numero_ddt_vendita)) {
+                $ordine->numero_ddt_vendita = self::normalizeValue($row['AA'] ?? null);
+                $ordineChanged = true;
+            }
+
+            // AB - Vettore DDT
+            if (self::isTextChanged($row['AB'] ?? null, $ordine->vettore_ddt)) {
+                $ordine->vettore_ddt = self::normalizeValue($row['AB'] ?? null);
+                $ordineChanged = true;
+            }
+
+            // AC - Qta DDT
+            if (self::isNumericChanged($row['AC'] ?? null, $ordine->qta_ddt_vendita)) {
+                $ordine->qta_ddt_vendita = self::parseNumeric($row['AC'] ?? null);
+                $ordineChanged = true;
+            }
+
+            // AD - Note Fasi Successive
+            if (self::isTextChanged($row['AD'] ?? null, $ordine->note_fasi_successive)) {
+                $ordine->note_fasi_successive = self::normalizeValue($row['AD'] ?? null);
+                $ordineChanged = true;
+            }
+
+            // AE, AF, AG (Colori, Fustella, Esterno) → calcolati, skip import
 
             // X - Data Inizio
             $excelDataInizio = self::parseExcelDateTime($row['X'] ?? null);

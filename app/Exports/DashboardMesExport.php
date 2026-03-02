@@ -13,6 +13,7 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Font;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use App\Helpers\DescrizioneParser;
 
 class DashboardMesExport implements FromCollection, WithHeadings, WithMapping, WithStyles, WithColumnWidths
 {
@@ -31,6 +32,8 @@ class DashboardMesExport implements FromCollection, WithHeadings, WithMapping, W
             'Cod Carta', 'Carta', 'Qta Carta', 'UM Carta', 'Note Prestampa', 'Responsabile', 'Commento Produzione',
             'Fase', 'Reparto', 'Operatori',
             'Qta Prod', 'Note', 'Data Inizio', 'Data Fine',
+            'Ordine Cliente', 'N. DDT Vendita', 'Vettore DDT', 'Qta DDT', 'Note Fasi Successive',
+            'Colori', 'Fustella', 'Esterno',
         ];
     }
 
@@ -82,6 +85,21 @@ class DashboardMesExport implements FromCollection, WithHeadings, WithMapping, W
             $fase->note ?? '',
             $dataInizio,
             $dataFine,
+            $ordine->ordine_cliente ?? '',
+            $ordine->numero_ddt_vendita ?? '',
+            $ordine->vettore_ddt ?? '',
+            $ordine->qta_ddt_vendita ?? '',
+            $ordine->note_fasi_successive ?? '',
+            // Colori (calcolato da descrizione)
+            DescrizioneParser::parseColori(
+                $ordine->descrizione ?? '',
+                $ordine->cliente_nome ?? '',
+                $fase->faseCatalogo->reparto->nome ?? ''
+            ),
+            // Fustella (calcolato da descrizione)
+            DescrizioneParser::parseFustella($ordine->descrizione ?? '', $ordine->cliente_nome ?? '') ?? '',
+            // Esterno (calcolato da note "Inviato a:")
+            preg_match('/Inviato a:\s*(.+)/i', $fase->note ?? '', $mEst) ? trim($mEst[1]) : '',
         ];
     }
 
@@ -113,16 +131,24 @@ class DashboardMesExport implements FromCollection, WithHeadings, WithMapping, W
             'W' => 25,  // Note
             'X' => 18,  // Data Inizio
             'Y' => 18,  // Data Fine
+            'Z' => 16,  // Ordine Cliente
+            'AA' => 14, // N. DDT Vendita
+            'AB' => 14, // Vettore DDT
+            'AC' => 10, // Qta DDT
+            'AD' => 30, // Note Fasi Successive
+            'AE' => 18, // Colori
+            'AF' => 14, // Fustella
+            'AG' => 18, // Esterno
         ];
     }
 
     public function styles(Worksheet $sheet)
     {
         $lastRow = $sheet->getHighestRow();
-        $nonEditabili = ['A', 'B', 'S', 'T', 'U'];
+        $nonEditabili = ['A', 'B', 'S', 'T', 'U', 'AE', 'AF', 'AG'];
 
         // Header: sfondo nero, testo bianco, grassetto
-        $sheet->getStyle('A1:Y1')->applyFromArray([
+        $sheet->getStyle('A1:AG1')->applyFromArray([
             'font' => [
                 'bold' => true,
                 'color' => ['rgb' => 'FFFFFF'],
@@ -151,7 +177,7 @@ class DashboardMesExport implements FromCollection, WithHeadings, WithMapping, W
         }
 
         // Auto-filtro sulla riga header
-        $sheet->setAutoFilter('A1:Y1');
+        $sheet->setAutoFilter('A1:AG1');
 
         return [];
     }
