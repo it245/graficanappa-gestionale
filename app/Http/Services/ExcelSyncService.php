@@ -126,7 +126,7 @@ class ExcelSyncService
                     ]);
 
                     $excelStato = self::normalizeValue($row['C'] ?? null);
-                    OrdineFase::create([
+                    $nuovaFase = OrdineFase::create([
                         'ordine_id' => $ordine->id,
                         'fase' => self::normalizeValue($row['S'] ?? null) ?: '-',
                         'stato' => ($excelStato !== '' && is_numeric($excelStato)) ? (int) $excelStato : 0,
@@ -134,6 +134,7 @@ class ExcelSyncService
                         'note' => self::normalizeValue($row['W'] ?? null),
                         'priorita' => self::parseNumeric($row['I'] ?? null),
                     ]);
+                    $idTrovati[] = $nuovaFase->id;
                 }
                 continue;
             }
