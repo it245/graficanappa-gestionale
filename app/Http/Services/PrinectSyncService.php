@@ -125,6 +125,9 @@ class PrinectSyncService
             FaseStatoService::controllaCompletamento($faseId);
         }
 
+        // Auto-terminazione via stato workstep Prinect (COMPLETED)
+        $this->controllaCompletamentoPrinect();
+
         return $importate;
     }
 
@@ -537,6 +540,60 @@ class PrinectSyncService
             return strtolower(trim($m[1]));
         }
         return '';
+    }
+
+    /**
+     * Auto-termina fasi stampa offset usando lo stato workstep Prinect (COMPLETED).
+     * Per ogni commessa con fasi non terminate ma con produzione, chiede all'API Prinect
+     * se i workstep di stampa sono COMPLETED.
+     */
+    protected function controllaCompletamentoPrinect(): void
+    {
+        $fasiNonTerminate = OrdineFase::with('ordine')
+            ->where('fogli_buoni', '>', 0)
+            ->where('stato', '<', 3)
+            ->where(function ($q) {
+                $q->where('fase', 'LIKE', 'STAMPAXL106%')
+                  ->orWhere('fase', 'STAMPA');
+            })
+            ->get()
+            ->groupBy(fn($f) => $f->ordine->commessa ?? '');
+
+        foreach ($fasiNonTerminate as $commessa => $fasi) {
+            $jobId = ltrim(explode('-', $commessa)[0] ?? '', '0');
+            if (!$jobId || !is_numeric($jobId)) continue;
+
+            try {
+                $wsData = $this->prinect->getJobWorksteps($jobId);
+                $worksteps = collect($wsData['worksteps'] ?? [])
+                    ->filter(fn($ws) => in_array('ConventionalPrinting', $ws['types'] ?? []));
+
+                if ($worksteps->isEmpty()) continue;
+
+                $allCompleted = $worksteps->every(fn($ws) => ($ws['status'] ?? '') === 'COMPLETED');
+
+                if ($allCompleted) {
+                    // Prendi data_fine dall'ultimo workstep completato
+                    $lastEnd = $worksteps->map(fn($ws) => $ws['actualEndDate'] ?? null)
+                        ->filter()
+                        ->sort()
+                        ->last();
+
+                    foreach ($fasi as $fase) {
+                        if ($fase->stato < 3) {
+                            $fase->stato = 3;
+                            $fase->data_fine = $lastEnd
+                                ? Carbon::parse($lastEnd)->format('Y-m-d H:i:s')
+                                : now()->format('Y-m-d H:i:s');
+                            $fase->save();
+                        }
+                    }
+                    FaseStatoService::ricalcolaStati($fasi->first()->ordine_id);
+                }
+            } catch (\Exception $e) {
+                // Skip se API Prinect non disponibile
+            }
+        }
     }
 
     /**
