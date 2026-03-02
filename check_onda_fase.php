@@ -11,7 +11,7 @@ try {
     $righe = \Illuminate\Support\Facades\DB::connection('onda')->select("
         SELECT
             t.CodCommessa,
-            t.OC_Descrizione,
+            p.OC_Descrizione,
             carta.CodArt,
             f.CodFase,
             f.CodMacchina,
