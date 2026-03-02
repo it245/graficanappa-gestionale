@@ -76,6 +76,35 @@ class OndaSyncService
             return ['ordini_creati' => 0, 'ordini_aggiornati' => 0, 'fasi_create' => 0];
         }
 
+        // 1b. Pulizia duplicati: se ci sono più di 2 fasi uguali (stesso ordine + fase_catalogo),
+        //     mantieni le prime 2 (per "max 2 fasi") e elimina il resto
+        $duplicati = DB::table('ordine_fasi')
+            ->select('ordine_id', 'fase_catalogo_id', DB::raw('COUNT(*) as cnt'))
+            ->groupBy('ordine_id', 'fase_catalogo_id')
+            ->having('cnt', '>', 2)
+            ->get();
+
+        $fasiEliminate = 0;
+        foreach ($duplicati as $dup) {
+            // Tieni le prime 2 (id più bassi)
+            $keepIds = OrdineFase::where('ordine_id', $dup->ordine_id)
+                ->where('fase_catalogo_id', $dup->fase_catalogo_id)
+                ->orderBy('id')
+                ->limit(2)
+                ->pluck('id');
+
+            $deleted = OrdineFase::where('ordine_id', $dup->ordine_id)
+                ->where('fase_catalogo_id', $dup->fase_catalogo_id)
+                ->whereNotIn('id', $keepIds)
+                ->where('stato', '<=', 1)
+                ->delete();
+            $fasiEliminate += $deleted;
+        }
+
+        if ($fasiEliminate > 0) {
+            Log::info("OndaSync: eliminati $fasiEliminate duplicati");
+        }
+
         // 2. Raggruppa per (CodCommessa, CodArt, OC_Descrizione)
         $gruppi = collect($righeOnda)->groupBy(function ($riga) {
             return $riga->CodCommessa . '|' . $riga->CodArt . '|' . $riga->OC_Descrizione;
@@ -222,14 +251,15 @@ class OndaSyncService
                     }
                 }
 
-                // Logica dedup come OrdiniImport: monofase / max 2 fasi / multifase
+                // Logica dedup: monofase / max 2 fasi / multifase
+                // Usa fase_catalogo_id (FK intera) per check più affidabile
                 if ($tipo === 'monofase') {
-                    // Max 1: aggiorna se esiste, crea se non esiste
-                    $faseEsistente = OrdineFase::where('ordine_id', $ordine->id)
-                        ->where('fase', $faseNome)
-                        ->first();
+                    // Max 1: crea solo se non esiste
+                    $exists = OrdineFase::where('ordine_id', $ordine->id)
+                        ->where('fase_catalogo_id', $faseCatalogo->id)
+                        ->exists();
 
-                    if (!$faseEsistente) {
+                    if (!$exists) {
                         OrdineFase::create($dataFase);
                         $fasiCreate++;
                         $logFasiCreate[] = $commessa . ' → ' . $faseNome;
@@ -238,7 +268,7 @@ class OndaSyncService
                 } elseif ($tipo === 'max 2 fasi') {
                     // Max 2: crea solo se ne esistono meno di 2
                     $count = OrdineFase::where('ordine_id', $ordine->id)
-                        ->where('fase', $faseNome)
+                        ->where('fase_catalogo_id', $faseCatalogo->id)
                         ->count();
 
                     if ($count < 2) {
@@ -248,13 +278,12 @@ class OndaSyncService
                     }
 
                 } else {
-                    // Multifase: crea solo se non esiste gia' con stessa fase per questo ordine
-                    // (idempotente: non duplica a ogni sync)
-                    $faseEsistente = OrdineFase::where('ordine_id', $ordine->id)
-                        ->where('fase', $faseNome)
-                        ->first();
+                    // Multifase: crea solo se non esiste già
+                    $exists = OrdineFase::where('ordine_id', $ordine->id)
+                        ->where('fase_catalogo_id', $faseCatalogo->id)
+                        ->exists();
 
-                    if (!$faseEsistente) {
+                    if (!$exists) {
                         OrdineFase::create($dataFase);
                         $fasiCreate++;
                         $logFasiCreate[] = $commessa . ' → ' . $faseNome;
