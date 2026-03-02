@@ -22,7 +22,11 @@ class PrinectSyncService
     public function sincronizzaAttivita(): int
     {
         $deviceId = env('PRINECT_DEVICE_XL106_ID', '4001');
-        $data = $this->prinect->getDeviceActivity($deviceId);
+
+        // Fetch ultimi 7 giorni di attivita per catturare anche job completati in passato
+        $start = Carbon::now()->subDays(7)->format('Y-m-d\TH:i:sP');
+        $end = Carbon::now()->format('Y-m-d\TH:i:sP');
+        $data = $this->prinect->getDeviceActivity($deviceId, $start, $end);
 
         if (!$data || !isset($data['activities'])) {
             return 0;

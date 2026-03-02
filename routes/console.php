@@ -28,5 +28,8 @@ Schedule::command('excel:sync')->everyTwoMinutes()->withoutOverlapping();
 // Sync automatico Fiery ogni minuto (h24)
 Schedule::command('fiery:sync')->everyMinute()->withoutOverlapping();
 
+// Sync attivita Prinect XL106 ogni 5 minuti (storico 7gg)
+Schedule::command('prinect:sync-attivita')->everyFiveMinutes()->withoutOverlapping();
+
 // Controllo consegne BRT in ritardo (ogni giorno alle 9:00)
 Schedule::command('brt:check-ritardi')->dailyAt('09:00');
