@@ -75,6 +75,11 @@ Route::middleware(['admin'])->prefix('admin')->group(function() {
     // Report operatori-reparti-fasi
     Route::get('/report-operatori', [DashboardAdminController::class, 'reportOperatori'])->name('admin.reportOperatori');
 
+    // EAN Prodotti
+    Route::post('/ean', [DashboardAdminController::class, 'salvaEan'])->name('admin.ean.salva');
+    Route::post('/ean/{id}', [DashboardAdminController::class, 'aggiornaEan'])->name('admin.ean.aggiorna');
+    Route::delete('/ean/{id}', [DashboardAdminController::class, 'eliminaEan'])->name('admin.ean.elimina');
+
     // Costi & Margini
     Route::get('/costi/tariffe', [CostiMarginiController::class, 'configTariffe'])->name('admin.costi.tariffe');
     Route::post('/costi/tariffe', [CostiMarginiController::class, 'salvaTariffa'])->name('admin.costi.salvaTariffa');

@@ -9,6 +9,7 @@ use App\Models\OrdineFase;
 use App\Models\Reparto;
 use App\Models\PausaOperatore;
 use App\Models\PrinectAttivita;
+use App\Models\EanProdotto;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -28,7 +29,9 @@ class DashboardAdminController extends Controller
         $prossimoNumero = $ultimoNumero ? $ultimoNumero + 1 : 1;
         $prossimoCodice = '__' . str_pad($prossimoNumero, 3, '0', STR_PAD_LEFT);
 
-        return view('admin.dashboard', compact('operatori', 'reparti', 'prossimoCodice', 'prossimoNumero'));
+        $eanProdotti = EanProdotto::orderBy('articolo')->get();
+
+        return view('admin.dashboard', compact('operatori', 'reparti', 'prossimoCodice', 'prossimoNumero', 'eanProdotti'));
     }
 
     public function crea()
@@ -1515,5 +1518,37 @@ class DashboardAdminController extends Controller
             ->groupBy('reparto_id');
 
         return view('admin.report_operatori', compact('operatori', 'fasiPerReparto'));
+    }
+
+    public function salvaEan(Request $request)
+    {
+        $request->validate([
+            'articolo' => 'required|string|max:255',
+            'codice_ean' => 'required|string|max:255',
+        ]);
+
+        EanProdotto::create($request->only('articolo', 'codice_ean'));
+
+        return back()->with('success', 'Codice EAN aggiunto.');
+    }
+
+    public function aggiornaEan(Request $request, $id)
+    {
+        $request->validate([
+            'articolo' => 'required|string|max:255',
+            'codice_ean' => 'required|string|max:255',
+        ]);
+
+        $ean = EanProdotto::findOrFail($id);
+        $ean->update($request->only('articolo', 'codice_ean'));
+
+        return back()->with('success', 'Codice EAN aggiornato.');
+    }
+
+    public function eliminaEan($id)
+    {
+        EanProdotto::findOrFail($id)->delete();
+
+        return back()->with('success', 'Codice EAN eliminato.');
     }
 }

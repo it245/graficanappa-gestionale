@@ -83,6 +83,83 @@
             </table>
         </div>
     </div>
+
+    {{-- CARD CODICI EAN PRODOTTI --}}
+    <div class="card mt-4">
+        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+            <strong>Codici EAN Prodotti ({{ $eanProdotti->count() }})</strong>
+            <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#aggiungiEanModal">+ Nuovo EAN</button>
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-bordered table-sm table-striped mb-0" style="font-size:13px;">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Articolo</th>
+                        <th>Codice EAN</th>
+                        <th style="width:180px;">Azioni</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($eanProdotti as $ean)
+                    <tr id="ean-row-{{ $ean->id }}">
+                        <td class="ean-display">{{ $ean->articolo }}</td>
+                        <td class="ean-display">{{ $ean->codice_ean }}</td>
+                        <td class="ean-display">
+                            <button type="button" class="btn btn-sm btn-outline-primary btn-ean-edit" data-id="{{ $ean->id }}">Modifica</button>
+                            <form method="POST" action="{{ route('admin.ean.elimina', $ean->id) }}" style="display:inline;" onsubmit="return confirm('Eliminare questo codice EAN?')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Elimina</button>
+                            </form>
+                        </td>
+                        {{-- Campi editing inline (nascosti) --}}
+                        <td class="ean-edit" style="display:none;" colspan="3">
+                            <form method="POST" action="{{ route('admin.ean.aggiorna', $ean->id) }}" class="d-flex align-items-center gap-2">
+                                @csrf
+                                <input type="text" name="articolo" value="{{ $ean->articolo }}" class="form-control form-control-sm" required style="max-width:200px;">
+                                <input type="text" name="codice_ean" value="{{ $ean->codice_ean }}" class="form-control form-control-sm" required style="max-width:200px;">
+                                <button type="submit" class="btn btn-sm btn-success">Salva</button>
+                                <button type="button" class="btn btn-sm btn-secondary btn-ean-cancel" data-id="{{ $ean->id }}">Annulla</button>
+                            </form>
+                        </td>
+                    </tr>
+                    @endforeach
+                    @if($eanProdotti->isEmpty())
+                    <tr><td colspan="3" class="text-center text-muted">Nessun codice EAN configurato</td></tr>
+                    @endif
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{{-- MODALE AGGIUNGI EAN --}}
+<div class="modal fade" id="aggiungiEanModal" tabindex="-1" aria-labelledby="aggiungiEanModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="POST" action="{{ route('admin.ean.salva') }}">
+            @csrf
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="aggiungiEanModalLabel">Nuovo Codice EAN</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Articolo</label>
+                        <input type="text" name="articolo" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Codice EAN</label>
+                        <input type="text" name="codice_ean" class="form-control" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success">Aggiungi</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+                </div>
+            </div>
+        </form>
+    </div>
 </div>
 
 {{-- MODALE AGGIUNGI OPERATORE --}}
@@ -168,6 +245,25 @@ document.addEventListener('DOMContentLoaded', function() {
         nomeInput.addEventListener('input', aggiornaCodice);
         cognomeInput.addEventListener('input', aggiornaCodice);
     }
+
+    // EAN inline editing
+    document.querySelectorAll('.btn-ean-edit').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var id = this.getAttribute('data-id');
+            var row = document.getElementById('ean-row-' + id);
+            row.querySelectorAll('.ean-display').forEach(function(el) { el.style.display = 'none'; });
+            row.querySelectorAll('.ean-edit').forEach(function(el) { el.style.display = ''; });
+        });
+    });
+
+    document.querySelectorAll('.btn-ean-cancel').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var id = this.getAttribute('data-id');
+            var row = document.getElementById('ean-row-' + id);
+            row.querySelectorAll('.ean-display').forEach(function(el) { el.style.display = ''; });
+            row.querySelectorAll('.ean-edit').forEach(function(el) { el.style.display = 'none'; });
+        });
+    });
 });
 </script>
 @endsection
