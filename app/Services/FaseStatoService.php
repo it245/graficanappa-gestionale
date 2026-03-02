@@ -50,29 +50,35 @@ class FaseStatoService
         $fase = OrdineFase::with('ordine')->find($faseId);
         if (!$fase) return;
 
-        if ($fase->qta_prod > 0 && $fase->qta_fase > 0 && $fase->qta_prod >= $fase->qta_fase) {
-            if ($fase->stato < 3) {
-                $fase->stato = 3;
-                $fase->data_fine = now()->format('Y-m-d H:i:s');
-                $fase->save();
-                self::ricalcolaStati($fase->ordine_id);
-            }
-            return;
+        $qtaProd = $fase->qta_prod ?? 0;
+        $fogliProdotti = max($fase->fogli_buoni ?? 0, $qtaProd);
+        $qtaFase = $fase->qta_fase ?? 0;
+        $qtaCarta = $fase->ordine->qta_carta ?? 0;
+
+        $completata = false;
+
+        // Check 1: qta_prod >= qta_fase
+        if ($qtaProd > 0 && $qtaFase > 0 && $qtaProd >= $qtaFase) {
+            $completata = true;
         }
 
-        // Controllo via fogli prodotti + scarti_previsti >= qta_carta
-        // fogli_buoni (Prinect/offset) o qta_prod (Fiery/digitale)
-        $fogliProdotti = max($fase->fogli_buoni ?? 0, $fase->qta_prod ?? 0);
-        if ($fogliProdotti > 0 && $fase->scarti_previsti > 0) {
-            $qtaCarta = $fase->ordine->qta_carta ?? 0;
+        // Check 2: qta_prod >= qta_carta (quando qta_fase è 0)
+        if (!$completata && $qtaProd > 0 && $qtaFase == 0 && $qtaCarta > 0 && $qtaProd >= $qtaCarta) {
+            $completata = true;
+        }
+
+        // Check 3: fogli prodotti + scarti_previsti >= qta_carta
+        if (!$completata && $fogliProdotti > 0 && ($fase->scarti_previsti ?? 0) > 0) {
             if ($qtaCarta > 0 && ($fogliProdotti + $fase->scarti_previsti) >= $qtaCarta) {
-                if ($fase->stato < 3) {
-                    $fase->stato = 3;
-                    $fase->data_fine = now()->format('Y-m-d H:i:s');
-                    $fase->save();
-                    self::ricalcolaStati($fase->ordine_id);
-                }
+                $completata = true;
             }
+        }
+
+        if ($completata && $fase->stato < 3) {
+            $fase->stato = 3;
+            $fase->data_fine = now()->format('Y-m-d H:i:s');
+            $fase->save();
+            self::ricalcolaStati($fase->ordine_id);
         }
     }
 
