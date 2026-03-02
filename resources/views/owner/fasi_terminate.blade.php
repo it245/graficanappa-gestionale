@@ -57,9 +57,9 @@ h2 {
 .table-wrapper {
     width: 100%;
     max-width: 100%;
-    overflow-x: auto;
-    overflow-y: visible;
+    overflow: auto;
     margin: 0 1px;
+    max-height: calc(100vh - 230px);
 }
 
 table {
@@ -83,6 +83,9 @@ thead th {
     background: #000000;
     color: #ffffff;
     font-size: 11.5px;
+    position: sticky;
+    top: 0;
+    z-index: 2;
 }
 
 tr:hover td {
