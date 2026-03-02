@@ -699,6 +699,7 @@ tr:hover td {
                     <th>Reparto</th>
                     <th>Operatori</th>
                     <th>Qta Prod.</th>
+                    <th>Esterno</th>
                     <th>Note</th>
                     <th>Data Inizio</th>
                     <th>Data Fine</th>
@@ -759,9 +760,13 @@ tr:hover td {
                             $fustellaOwner = \App\Helpers\DescrizioneParser::parseFustella($descOwner);
                             if ($fustellaOwner) $noteExtra .= '[FS: '.$fustellaOwner.'] ';
                         }
+                        $fornitoreEsterno = preg_match('/Inviato a:\s*(.+)/i', $fase->note ?? '', $mEst) ? trim($mEst[1]) : null;
+                        $notePulitaOwner = preg_replace('/,?\s*Inviato a:\s*.+/i', '', $fase->note ?? '');
+                        $notePulitaOwner = trim($notePulitaOwner, ", \t\n\r") ?: null;
                     @endphp
+                    <td>{{ $fornitoreEsterno ?? '-' }}</td>
                     <td>
-                        @if($noteExtra)<small class="fw-bold">{{ $noteExtra }}</small><br>@endif<span contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'note', this.innerText)">{{ $fase->note ?? '-' }}</span>
+                        @if($noteExtra)<small class="fw-bold">{{ $noteExtra }}</small><br>@endif<span contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'note', this.innerText)">{{ $notePulitaOwner ?? '-' }}</span>
                     </td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_inizio', this.innerText)">{{ formatItalianDate($fase->data_inizio, true) }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_fine', this.innerText)">{{ formatItalianDate($fase->data_fine, true) }}</td>

@@ -139,6 +139,35 @@
                             <label for="note-fase-{{ $fase->id }}"><strong>Note Operatore:</strong></label>
                             <textarea id="note-fase-{{ $fase->id }}" class="form-control" rows="2"
                                       onblur="aggiornaCampo({{ $fase->id }}, 'note', this.value)">{{ $fase->note ?? '' }}</textarea>
+
+                            {{-- Info per fasi successive --}}
+                            <div class="mt-3 border-top pt-2">
+                                <label><strong>Info per fasi successive:</strong></label>
+                                @php
+                                    $noteFS = $ordine->note_fasi_successive ?? '';
+                                    $righeFS = $noteFS ? json_decode($noteFS, true) : [];
+                                    if (!is_array($righeFS)) $righeFS = [];
+                                @endphp
+                                @if(!empty($righeFS))
+                                    <div class="mb-2" style="max-height:150px; overflow-y:auto; background:#f8f9fa; border-radius:4px; padding:8px; font-size:13px;">
+                                        @foreach($righeFS as $riga)
+                                            <div class="mb-1">
+                                                <small class="text-muted">{{ $riga['data'] ?? '' }}</small>
+                                                <strong>{{ $riga['reparto'] ?? '' }} - {{ $riga['nome'] ?? '' }}:</strong>
+                                                {{ $riga['testo'] ?? '' }}
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @else
+                                    <div class="mb-2 text-muted" style="font-size:13px;">Nessuna nota</div>
+                                @endif
+                                <div class="d-flex gap-2">
+                                    <textarea id="nuova-nota-fs-{{ $fase->id }}" class="form-control form-control-sm" rows="1"
+                                              placeholder="Scrivi una nota per le fasi successive..."></textarea>
+                                    <button type="button" class="btn btn-sm btn-outline-primary" style="white-space:nowrap"
+                                            onclick="inviaNotaFS({{ $ordine->id }}, {{ $fase->id }})">Invia</button>
+                                </div>
+                            </div>
                         </div>
                         <div class="azioni-cerchi" id="azioni-fase-{{ $fase->id }}">
                             {{-- Tutti e 3 i bottoni sempre visibili --}}
@@ -526,6 +555,41 @@ function aggiornaCampo(faseId, campo, valore){
         if(!data.success) alert('Errore durante il salvataggio: '+data.messaggio);
     })
     .catch(err=>console.error('Errore:', err));
+}
+
+function inviaNotaFS(ordineId, faseId) {
+    var textarea = document.getElementById('nuova-nota-fs-'+faseId);
+    var testo = textarea.value.trim();
+    if (!testo) { alert('Scrivi una nota prima di inviare'); return; }
+
+    @php
+        $opNome = $operatore ? ($operatore->nome . ' ' . ($operatore->cognome ?? '')) : 'Operatore';
+        $opReparto = $operatore?->reparti?->pluck('nome')->first() ?? 'N/D';
+    @endphp
+
+    // Leggi note esistenti, aggiungi la nuova, salva
+    var noteEsistenti = @json($righeFS ?? []);
+    noteEsistenti.push({
+        data: new Date().toLocaleString('it-IT'),
+        reparto: @json($opReparto),
+        nome: @json(trim($opNome)),
+        testo: testo
+    });
+
+    fetch('{{ route("produzione.aggiornaOrdineCampo") }}', {
+        method: 'POST',
+        headers: {'X-CSRF-TOKEN': csrfToken(), 'Content-Type': 'application/json'},
+        body: JSON.stringify({ordine_id: ordineId, campo: 'note_fasi_successive', valore: JSON.stringify(noteEsistenti)})
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Errore: ' + (data.messaggio || JSON.stringify(data.errors)));
+        }
+    })
+    .catch(err => console.error('Errore:', err));
 }
 
 </script>

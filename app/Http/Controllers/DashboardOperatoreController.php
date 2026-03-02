@@ -170,6 +170,13 @@ class DashboardOperatoreController extends Controller
                 $fase->colori = DescrizioneParser::parseColori($desc, $cliente, $repNome);
                 $fase->fustella_codice = DescrizioneParser::parseFustella($desc);
 
+                // Fornitore esterno: estrai "Inviato a: XXX" dalla note
+                $fase->fornitore_esterno = preg_match('/Inviato a:\s*(.+)/i', $fase->note ?? '', $m) ? trim($m[1]) : null;
+
+                // Pulisci "Inviato a: ..." dalla note visualizzata
+                $fase->note_pulita = preg_replace('/,?\s*Inviato a:\s*.+/i', '', $fase->note ?? '');
+                $fase->note_pulita = trim($fase->note_pulita, ", \t\n\r") ?: null;
+
                 return $fase;
             })
             ->sortBy('priorita');
@@ -177,7 +184,8 @@ class DashboardOperatoreController extends Controller
         // Flag per colonne condizionali
         $nomiReparti = $operatore->reparti->pluck('nome')->map(fn($n) => strtolower($n))->toArray();
         $showColori = !empty(array_intersect($nomiReparti, ['stampa offset']));
-        $showFustella = !empty(array_filter($nomiReparti, fn($n) => str_contains($n, 'fustella')));
+        $showFustella = true; // sempre visibile a tutti i reparti
+        $showEsterno = !empty(array_intersect($nomiReparti, ['spedizione']));
 
         // Raggruppa fasi per reparto (per operatori multi-reparto)
         $repartiOperatore = $operatore->reparti->sortBy('nome');
@@ -203,6 +211,6 @@ class DashboardOperatoreController extends Controller
             ->orderByDesc('data_fine')
             ->get();
 
-        return view('operatore.dashboard', compact('fasiVisibili', 'operatore', 'fasiPerReparto', 'showColori', 'showFustella', 'fasiTerminate'));
+        return view('operatore.dashboard', compact('fasiVisibili', 'operatore', 'fasiPerReparto', 'showColori', 'showFustella', 'showEsterno', 'fasiTerminate'));
     }
 }

@@ -38,7 +38,8 @@
     <td>{{ $fase->ordine->cliente_nome ?? '-' }}</td>
     <td>{{ $fase->ordine->cod_art ?? '-' }}</td>
     @if($showColori ?? false)<td>{{ $fase->colori ?? '-' }}</td>@endif
-    @if($showFustella ?? false)<td>{{ $fase->fustella_codice ?? '-' }}</td>@endif
+    <td>{{ $fase->fustella_codice ?? '-' }}</td>
+    @if($showEsterno ?? false)<td>{{ $fase->fornitore_esterno ?? '-' }}</td>@endif
     <td class="descrizione">{{ $fase->ordine->descrizione ?? '-' }}</td>
     <td>{{ $fase->ordine->qta_richiesta ?? '-' }}</td>
     <td>{{ $fase->ordine->um ?? '-' }}</td>
@@ -48,6 +49,6 @@
     <td>{{ $fase->ordine->carta ?? '-' }}</td>
     <td>{{ $fase->ordine->qta_carta ?? '-' }}</td>
     <td>{{ $fase->ordine->UM_carta ?? '-' }}</td>
-    <td>{{ $fase->note ?? '-' }}</td>
+    <td>{{ $fase->note_pulita ?? $fase->note ?? '-' }}</td>
     <td id="timeout-{{ $fase->id }}">{{ $fase->timeout ?? '-' }}</td>
 </tr>

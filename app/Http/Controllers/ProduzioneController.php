@@ -7,6 +7,7 @@ use App\Models\PausaOperatore;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Validator;
+use App\Models\Ordine;
 use App\Services\FaseStatoService;
 
 class ProduzioneController extends Controller
@@ -243,6 +244,27 @@ public function aggiornaCampo(Request $request)
 
     return response()->json(['success' => true]);
 }
+
+    public function aggiornaOrdineCampo(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'ordine_id' => 'required|exists:ordini,id',
+            'campo'     => 'required|string|in:note_fasi_successive',
+            'valore'    => 'nullable'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+        }
+
+        $ordine = Ordine::find($request->ordine_id);
+
+        // Aggiorna su tutti gli ordini della stessa commessa
+        Ordine::where('commessa', $ordine->commessa)
+            ->update([$request->campo => $request->valore]);
+
+        return response()->json(['success' => true]);
+    }
 
     private function statoLabel($stato)
     {
