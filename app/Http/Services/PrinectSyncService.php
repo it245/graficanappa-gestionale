@@ -101,6 +101,21 @@ class PrinectSyncService
             $this->aggiornaFogliCommessa($commessa);
         }
 
+        // Aggiorna anche commesse con attivita già in DB ma fogli non ancora sincronizzati
+        $commesseNonSincronizzate = PrinectAttivita::whereNotNull('commessa_gestionale')
+            ->where('good_cycles', '>', 0)
+            ->distinct()
+            ->pluck('commessa_gestionale');
+
+        foreach ($commesseNonSincronizzate as $commessa) {
+            if (isset($commesseAggiornate[$commessa])) continue;
+
+            $fasi = $this->troveFasiStampa($commessa);
+            if ($fasi->isNotEmpty() && $fasi->contains(fn($f) => ($f->qta_prod ?? 0) == 0)) {
+                $this->aggiornaFogliCommessa($commessa);
+            }
+        }
+
         return $importate;
     }
 
