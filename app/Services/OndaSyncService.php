@@ -431,7 +431,7 @@ class OndaSyncService
         return $aggiornati;
     }
 
-    private static function getMappaReparti(): array
+    public static function getMappaReparti(): array
     {
         return [
             'accopp+fust' => 'esterno',
