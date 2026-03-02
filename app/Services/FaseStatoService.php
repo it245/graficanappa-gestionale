@@ -59,21 +59,27 @@ class FaseStatoService
         $qtaProd = $fase->qta_prod ?? 0;
         $fogliProdotti = max($fase->fogli_buoni ?? 0, $qtaProd);
         $qtaFase = $fase->qta_fase ?? 0;
+        $qtaRichiesta = $fase->ordine->qta_richiesta ?? 0;
         $qtaCarta = $fase->ordine->qta_carta ?? 0;
 
         $completata = false;
 
-        // Check 1: qta_prod >= qta_fase
-        if ($qtaProd > 0 && $qtaFase > 0 && $qtaProd >= $qtaFase) {
+        // Check 1: qta_prod >= qta_richiesta (pezzi prodotti coprono l'ordine)
+        if ($qtaProd > 0 && $qtaRichiesta > 0 && $qtaProd >= $qtaRichiesta) {
             $completata = true;
         }
 
-        // Check 2: qta_prod >= qta_carta (quando qta_fase è 0)
+        // Check 2: qta_prod >= qta_fase (fogli prodotti coprono i fogli richiesti inclusi scarti)
+        if (!$completata && $qtaProd > 0 && $qtaFase > 0 && $qtaProd >= $qtaFase) {
+            $completata = true;
+        }
+
+        // Check 3: qta_prod >= qta_carta (quando qta_fase è 0)
         if (!$completata && $qtaProd > 0 && $qtaFase == 0 && $qtaCarta > 0 && $qtaProd >= $qtaCarta) {
             $completata = true;
         }
 
-        // Check 3: fogli prodotti + scarti_previsti >= qta_carta
+        // Check 4: fogli prodotti + scarti_previsti >= qta_carta
         if (!$completata && $fogliProdotti > 0 && ($fase->scarti_previsti ?? 0) > 0) {
             if ($qtaCarta > 0 && ($fogliProdotti + $fase->scarti_previsti) >= $qtaCarta) {
                 $completata = true;
