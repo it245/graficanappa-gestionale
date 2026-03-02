@@ -140,44 +140,23 @@ class PrinectSyncService
     /**
      * Aggiorna fogli, tempi, stato, data_inizio e operatore sulle fasi di stampa offset
      * della commessa dal totale Prinect (dati dal DB prinect_attivita).
+     * Con fasi multiple, distribuisce le attivita per prefisso workstep.
      */
     protected function aggiornaFogliCommessa(string $commessa): void
     {
-        $totali = PrinectAttivita::where('commessa_gestionale', $commessa)
-            ->selectRaw('
-                SUM(good_cycles) as fogli_buoni,
-                SUM(waste_cycles) as fogli_scarto
-            ')
-            ->first();
+        $fasi = $this->troveFasiStampa($commessa);
+        if ($fasi->isEmpty()) return;
 
-        $tempi = PrinectAttivita::where('commessa_gestionale', $commessa)->get();
-        $secAvviamento = 0;
-        $secProduzione = 0;
-        foreach ($tempi as $att) {
-            if (!$att->start_time || !$att->end_time) continue;
-            $diff = $att->start_time->diffInSeconds($att->end_time);
-            if ($att->activity_name === 'Avviamento') {
-                $secAvviamento += $diff;
-            } else {
-                $secProduzione += $diff;
-            }
-        }
+        $attivita = PrinectAttivita::where('commessa_gestionale', $commessa)->get();
+        if ($attivita->isEmpty()) return;
 
-        // Prima attivita = data_inizio
-        $primaAttivita = PrinectAttivita::where('commessa_gestionale', $commessa)
-            ->whereNotNull('start_time')
-            ->orderBy('start_time')
-            ->first();
-        $dataInizio = $primaAttivita?->start_time;
-
-        // Estrai nome+cognome operatori Prinect unici
-        $operatoriPrinect = PrinectAttivita::where('commessa_gestionale', $commessa)
+        // Operatori Prinect unici
+        $operatoriPrinect = $attivita
             ->whereNotNull('operatore_prinect')
             ->where('operatore_prinect', '!=', '')
-            ->distinct()
             ->pluck('operatore_prinect')
+            ->unique()
             ->flatMap(function ($nomiStr) {
-                // Formato: "Raffaele Barbato" o "Raffaele Barbato, Luigi Marino"
                 return collect(explode(',', $nomiStr))->map(function ($nomeCompleto) {
                     $parts = explode(' ', trim($nomeCompleto));
                     return [
@@ -191,15 +170,36 @@ class PrinectSyncService
 
         $operatoriMatched = $this->matchOperatori($operatoriPrinect->toArray());
 
-        // Trova fasi di stampa offset (STAMPAXL106* o STAMPA)
-        $fasi = $this->troveFasiStampa($commessa);
+        // Distribuisci attivita tra le fasi per prefisso workstep
+        $attivitaPerFase = $this->distribuisciAttivitaTraFasi(
+            $attivita, $fasi, fn($a) => $a->workstep_name ?? ''
+        );
 
-        $this->aggiornaFasi($fasi, [
-            'fogli_buoni' => $totali->fogli_buoni ?? 0,
-            'fogli_scarto' => $totali->fogli_scarto ?? 0,
-            'tempo_avviamento_sec' => $secAvviamento,
-            'tempo_esecuzione_sec' => $secProduzione,
-        ], $dataInizio, $operatoriMatched);
+        foreach ($fasi as $fase) {
+            $att = collect($attivitaPerFase[$fase->id] ?? []);
+            if ($att->isEmpty()) continue;
+
+            $secAvviamento = 0;
+            $secProduzione = 0;
+            foreach ($att as $a) {
+                if (!$a->start_time || !$a->end_time) continue;
+                $diff = $a->start_time->diffInSeconds($a->end_time);
+                if ($a->activity_name === 'Avviamento') {
+                    $secAvviamento += $diff;
+                } else {
+                    $secProduzione += $diff;
+                }
+            }
+
+            $primaAtt = $att->filter(fn($a) => $a->start_time)->sortBy('start_time')->first();
+
+            $this->aggiornaFasi(collect([$fase]), [
+                'fogli_buoni' => $att->sum('good_cycles'),
+                'fogli_scarto' => $att->sum('waste_cycles'),
+                'tempo_avviamento_sec' => $secAvviamento,
+                'tempo_esecuzione_sec' => $secProduzione,
+            ], $primaAtt?->start_time, $operatoriMatched);
+        }
     }
 
     /**
@@ -303,32 +303,6 @@ class PrinectSyncService
         $fasi = $this->troveFasiStampa($commessa);
         if ($fasi->isEmpty()) return;
 
-        // Calcola totali
-        $buoni = 0;
-        $scarto = 0;
-        $secAvv = 0;
-        $secProd = 0;
-
-        foreach ($attivitaApi as $a) {
-            $buoni += $a['goodCycles'] ?? 0;
-            $scarto += $a['wasteCycles'] ?? 0;
-
-            if (isset($a['startTime'], $a['endTime'])) {
-                $diff = Carbon::parse($a['startTime'])->diffInSeconds(Carbon::parse($a['endTime']));
-                if (($a['name'] ?? '') === 'Avviamento') {
-                    $secAvv += $diff;
-                } else {
-                    $secProd += $diff;
-                }
-            }
-        }
-
-        // Prima attivita = data_inizio
-        $sorted = collect($attivitaApi)->filter(fn($a) => isset($a['startTime']))->sortBy('startTime');
-        $dataInizio = $sorted->isNotEmpty()
-            ? Carbon::parse($sorted->first()['startTime'])
-            : null;
-
         // Estrai nome+cognome operatori dalle attivita API
         $operatoriPrinect = [];
         $seen = [];
@@ -351,12 +325,46 @@ class PrinectSyncService
             $dataFine = Carbon::parse($dataFineOverride);
         }
 
-        $this->aggiornaFasi($fasi, [
-            'fogli_buoni' => $buoni,
-            'fogli_scarto' => $scarto,
-            'tempo_avviamento_sec' => $secAvv,
-            'tempo_esecuzione_sec' => $secProd,
-        ], $dataInizio, $operatoriMatched, $terminata, $dataFine);
+        // Distribuisci attivita tra le fasi per prefisso workstep
+        $attivitaPerFase = $this->distribuisciAttivitaTraFasi(
+            $attivitaApi, $fasi, fn($a) => $a['workstep']['name'] ?? ''
+        );
+
+        foreach ($fasi as $fase) {
+            $att = $attivitaPerFase[$fase->id] ?? [];
+            if (empty($att)) continue;
+
+            $buoni = 0;
+            $scarto = 0;
+            $secAvv = 0;
+            $secProd = 0;
+
+            foreach ($att as $a) {
+                $buoni += $a['goodCycles'] ?? 0;
+                $scarto += $a['wasteCycles'] ?? 0;
+
+                if (isset($a['startTime'], $a['endTime'])) {
+                    $diff = Carbon::parse($a['startTime'])->diffInSeconds(Carbon::parse($a['endTime']));
+                    if (($a['name'] ?? '') === 'Avviamento') {
+                        $secAvv += $diff;
+                    } else {
+                        $secProd += $diff;
+                    }
+                }
+            }
+
+            $sorted = collect($att)->filter(fn($a) => isset($a['startTime']))->sortBy('startTime');
+            $dataInizio = $sorted->isNotEmpty()
+                ? Carbon::parse($sorted->first()['startTime'])
+                : null;
+
+            $this->aggiornaFasi(collect([$fase]), [
+                'fogli_buoni' => $buoni,
+                'fogli_scarto' => $scarto,
+                'tempo_avviamento_sec' => $secAvv,
+                'tempo_esecuzione_sec' => $secProd,
+            ], $dataInizio, $operatoriMatched, $terminata, $dataFine);
+        }
     }
 
     /**
@@ -403,9 +411,11 @@ class PrinectSyncService
                 }
             }
 
-            // Imposta data_inizio se mancante
-            if (!$fase->data_inizio && $dataInizio) {
-                $fase->data_inizio = $dataInizio;
+            // Imposta data_inizio: usa la piu vecchia tra DB e Prinect
+            if ($dataInizio) {
+                if (!$fase->data_inizio || Carbon::parse($fase->data_inizio) > Carbon::parse($dataInizio)) {
+                    $fase->data_inizio = $dataInizio;
+                }
             }
 
             // Imposta operatore_id se mancante
@@ -433,6 +443,71 @@ class PrinectSyncService
                 }
             }
         }
+    }
+
+    /**
+     * Distribuisce le attivita Prinect tra le fasi in base al prefisso workstep.
+     * Es. workstep "copertina_FB 001 4/0" → fase con ordine che contiene "copertina".
+     * Se c'e una sola fase, tutte le attivita vanno ad essa.
+     * Supporta N fasi: ogni prefisso viene matchato alla fase il cui ordine->descrizione lo contiene.
+     */
+    protected function distribuisciAttivitaTraFasi($attivita, $fasi, callable $getWorkstepName): array
+    {
+        $result = [];
+
+        if ($fasi->count() === 1) {
+            $result[$fasi->first()->id] = is_array($attivita) ? $attivita : $attivita->all();
+            return $result;
+        }
+
+        // Raggruppa per prefisso workstep
+        $gruppi = [];
+        foreach ($attivita as $att) {
+            $prefix = $this->estraiPrefissoWorkstep($getWorkstepName($att));
+            $gruppi[$prefix][] = $att;
+        }
+
+        // Match prefisso → fase via descrizione ordine
+        $prefissiUsati = [];
+        foreach ($fasi as $fase) {
+            $desc = strtolower($fase->ordine->descrizione ?? '');
+            foreach ($gruppi as $prefix => $attList) {
+                if ($prefix === '' || in_array($prefix, $prefissiUsati)) continue;
+                if (str_contains($desc, $prefix)) {
+                    $result[$fase->id] = array_merge($result[$fase->id] ?? [], $attList);
+                    $prefissiUsati[] = $prefix;
+                }
+            }
+        }
+
+        // Prefissi non matchati → fasi senza match (o prima fase come fallback)
+        $rimasti = [];
+        foreach ($gruppi as $prefix => $attList) {
+            if ($prefix === '' || !in_array($prefix, $prefissiUsati)) {
+                $rimasti = array_merge($rimasti, $attList);
+            }
+        }
+
+        if (!empty($rimasti)) {
+            $fasiSenzaMatch = $fasi->reject(fn($f) => isset($result[$f->id]));
+            $target = $fasiSenzaMatch->isNotEmpty() ? $fasiSenzaMatch->first() : $fasi->first();
+            $result[$target->id] = array_merge($result[$target->id] ?? [], $rimasti);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Estrae il prefisso dal nome workstep Prinect.
+     * "interno_FB 001 4/0" → "interno", "copertina_FB 001 0/4" → "copertina"
+     */
+    protected function estraiPrefissoWorkstep(?string $name): string
+    {
+        if (!$name) return '';
+        if (preg_match('/^(.+?)_FB\b/i', $name, $m)) {
+            return strtolower(trim($m[1]));
+        }
+        return '';
     }
 
     /**
