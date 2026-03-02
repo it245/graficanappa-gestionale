@@ -116,6 +116,15 @@ class PrinectSyncService
             }
         }
 
+        // Controlla auto-terminazione per fasi con produzione ma non ancora terminate
+        $fasiDaControllare = OrdineFase::where('qta_prod', '>', 0)
+            ->where('stato', '<', 3)
+            ->pluck('id');
+
+        foreach ($fasiDaControllare as $faseId) {
+            FaseStatoService::controllaCompletamento($faseId);
+        }
+
         return $importate;
     }
 
