@@ -5,6 +5,7 @@ namespace App\Http\Services;
 use App\Models\Ordine;
 use App\Models\OrdineFase;
 use App\Models\Operatore;
+use App\Services\FaseStatoService;
 use Carbon\Carbon;
 
 class FierySyncService
@@ -125,28 +126,14 @@ class FierySyncService
 
     /**
      * Sync dei job completati dall'API v5.
-     * SOLO per fasi già in stato 2 (avviate): aggiorna qta_prod e auto-termina.
-     * NON avvia fasi nuove da dati storici (lo fa solo il WebTools per il job corrente).
+     * Per fasi in stato 2: aggiorna qta_prod e auto-termina.
+     * Per fasi in stato 0/1: se il job Fiery è completato, avvia e termina direttamente
+     * (recupera i job che si completano tra due polling).
      */
     protected function syncJobCompletati(Operatore $operatore): void
     {
         $jobs = $this->fiery->getJobs();
         if (!$jobs) return;
-
-        // Trova tutte le fasi digitali in stato 2 (avviate) di questo operatore
-        $fasiAvviate = OrdineFase::where('stato', 2)
-            ->where(function ($q) {
-                $q->whereHas('faseCatalogo', function ($sub) {
-                    $sub->where('reparto_id', self::REPARTO_DIGITALE_ID);
-                })->orWhere('fase', 'STAMPA');
-            })
-            ->whereHas('operatori', function ($q) use ($operatore) {
-                $q->where('operatore_id', $operatore->id);
-            })
-            ->with('ordine')
-            ->get();
-
-        if ($fasiAvviate->isEmpty()) return;
 
         // Raggruppa job completati per commessa, prendi max copies_printed
         $completatiPerCommessa = [];
@@ -162,41 +149,108 @@ class FierySyncService
             $completatiPerCommessa[$code] = max($completatiPerCommessa[$code], $job['copies_printed']);
         }
 
-        // Per ogni fase avviata, cerca se la sua commessa ha job completati
-        foreach ($fasiAvviate as $fase) {
+        if (empty($completatiPerCommessa)) return;
+
+        // Trova tutte le fasi digitali in stato 0, 1 o 2 per le commesse con job completati
+        $commesseCodes = array_keys($completatiPerCommessa);
+        $ordiniIds = Ordine::whereIn('commessa', $commesseCodes)->pluck('id', 'commessa');
+
+        if ($ordiniIds->isEmpty()) return;
+
+        $fasiDigitali = OrdineFase::whereIn('stato', [0, 1, 2])
+            ->whereIn('ordine_id', $ordiniIds->values())
+            ->where(function ($q) {
+                $q->whereHas('faseCatalogo', function ($sub) {
+                    $sub->where('reparto_id', self::REPARTO_DIGITALE_ID);
+                })->orWhere('fase', 'STAMPA');
+            })
+            ->with('ordine')
+            ->get();
+
+        if ($fasiDigitali->isEmpty()) return;
+
+        foreach ($fasiDigitali as $fase) {
             $commessaCode = $fase->ordine->commessa ?? null;
             if (!$commessaCode) continue;
             if (!isset($completatiPerCommessa[$commessaCode])) continue;
 
             $maxCopie = $completatiPerCommessa[$commessaCode];
-            $qtaAttuale = (int) ($fase->qta_prod ?: 0);
 
-            // Aggiorna solo se il nuovo valore è maggiore (idempotente)
-            if ($maxCopie > $qtaAttuale) {
+            if ($fase->stato == 2) {
+                // Fase già avviata: aggiorna qta_prod e auto-termina
+                $qtaAttuale = (int) ($fase->qta_prod ?: 0);
+                if ($maxCopie > $qtaAttuale) {
+                    $fase->qta_prod = $maxCopie;
+                    $this->autoTerminaSeCompletata($fase, $operatore);
+                    $fase->save();
+                }
+            } elseif (in_array($fase->stato, [0, 1])) {
+                // Fase non ancora avviata ma job Fiery completato → avvia e termina
+                $fase->stato = 2;
                 $fase->qta_prod = $maxCopie;
+                if (!$fase->data_inizio) {
+                    $fase->data_inizio = now()->format('Y-m-d H:i:s');
+                }
+                if (!$fase->operatore_id) {
+                    $fase->operatore_id = $operatore->id;
+                }
+                if (!$fase->operatori()->where('operatore_id', $operatore->id)->exists()) {
+                    $fase->operatori()->attach($operatore->id, [
+                        'data_inizio' => now(),
+                        'data_fine' => null,
+                    ]);
+                }
                 $this->autoTerminaSeCompletata($fase, $operatore);
                 $fase->save();
+
+                // Ricalcola stati fasi successive
+                if ($fase->stato == 3) {
+                    FaseStatoService::ricalcolaStati($fase->ordine_id);
+                }
             }
         }
     }
 
     /**
-     * Auto-termina la fase se qta_prod >= target (qta_carta o qta_richiesta).
+     * Auto-termina la fase se qta_prod >= target.
+     * Stessa logica di FaseStatoService::controllaCompletamento():
+     * 1. qta_prod >= qta_richiesta (priorità - senza scarti)
+     * 2. qta_prod >= qta_fase
+     * 3. qta_prod >= qta_carta (quando qta_fase = 0)
+     * 4. qta_prod + scarti_previsti >= qta_carta
      * Modifica la fase in-place (il chiamante deve fare save).
      */
     protected function autoTerminaSeCompletata(OrdineFase $fase, Operatore $operatore): void
     {
         if ($fase->stato != 2) return;
 
-        $qtaTarget = $fase->ordine->qta_carta ?: ($fase->ordine->qta_richiesta ?: 0);
         $qtaProd = (int) ($fase->qta_prod ?: 0);
+        if ($qtaProd <= 0) return;
 
-        $completata = ($qtaTarget > 0 && $qtaProd >= $qtaTarget);
+        $qtaRichiesta = (int) ($fase->ordine->qta_richiesta ?? 0);
+        $qtaFase = (int) ($fase->qta_fase ?? 0);
+        $qtaCarta = (int) ($fase->ordine->qta_carta ?? 0);
 
-        // Check scarti_previsti: qta_prod + scarti_previsti >= qta_carta
-        if (!$completata && $fase->scarti_previsti > 0 && $qtaProd > 0) {
-            $qtaCarta = (int) ($fase->ordine->qta_carta ?? 0);
-            if ($qtaCarta > 0 && ($qtaProd + $fase->scarti_previsti) >= $qtaCarta) {
+        $completata = false;
+
+        // Check 1: qta_prod >= qta_richiesta (pezzi prodotti coprono l'ordine)
+        if ($qtaRichiesta > 0 && $qtaProd >= $qtaRichiesta) {
+            $completata = true;
+        }
+
+        // Check 2: qta_prod >= qta_fase
+        if (!$completata && $qtaFase > 0 && $qtaProd >= $qtaFase) {
+            $completata = true;
+        }
+
+        // Check 3: qta_prod >= qta_carta (quando qta_fase è 0)
+        if (!$completata && $qtaFase == 0 && $qtaCarta > 0 && $qtaProd >= $qtaCarta) {
+            $completata = true;
+        }
+
+        // Check 4: qta_prod + scarti_previsti >= qta_carta
+        if (!$completata && ($fase->scarti_previsti ?? 0) > 0 && $qtaCarta > 0) {
+            if (($qtaProd + $fase->scarti_previsti) >= $qtaCarta) {
                 $completata = true;
             }
         }
