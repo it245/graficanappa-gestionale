@@ -24,6 +24,12 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function ($exceptions) {
-        //
+        $exceptions->renderable(function (\Illuminate\Session\TokenMismatchException $e, $request) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Sessione scaduta. Ricarica la pagina.'], 419);
+            }
+            return redirect()->back()->withInput($request->except('_token', 'password'))
+                ->with('warning', 'Sessione scaduta. Riprova.');
+        });
     })
     ->create();

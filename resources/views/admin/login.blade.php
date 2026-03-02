@@ -97,6 +97,9 @@
         <img src="{{ asset('images/logo_gn.png') }}" alt="Logo Azienda">
         <h2>ADMIN</h2>
 
+        @if(session('warning'))
+            <p class="error-message">{{ session('warning') }}</p>
+        @endif
         @if($errors->any())
             <p class="error-message">{{ $errors->first() }}</p>
         @endif
