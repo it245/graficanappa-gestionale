@@ -685,6 +685,8 @@ tr:hover td {
                     <th>Stato</th>
                     <th>Cliente</th>
                     <th>Codice Articolo</th>
+                    <th>Colori</th>
+                    <th>Fustella</th>
                     <th>Descrizione</th>
                     <th>Qta</th>
                     <th>UM</th>
@@ -727,6 +729,15 @@ tr:hover td {
                     <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)" style="background:{{ $statoBg[$fase->stato] ?? '#e9ecef' }} !important;font-weight:bold;text-align:center;">{{ $fase->stato }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'cliente_nome', this.innerText)">{{ $fase->ordine->cliente_nome ?? '-' }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'cod_art', this.innerText)">{{ $fase->ordine->cod_art ?? '-' }}</td>
+                    @php
+                        $descOwner = $fase->ordine->descrizione ?? '';
+                        $clienteOwner = $fase->ordine->cliente_nome ?? '';
+                        $repartoOwner = strtolower($fase->faseCatalogo->reparto->nome ?? '');
+                        $coloriOwner = \App\Helpers\DescrizioneParser::parseColori($descOwner, $clienteOwner, $repartoOwner);
+                        $fustellaOwner = \App\Helpers\DescrizioneParser::parseFustella($descOwner);
+                    @endphp
+                    <td>{{ $coloriOwner ?: '-' }}</td>
+                    <td>{{ $fustellaOwner ?: '-' }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'descrizione', this.innerText)">{{ $fase->ordine->descrizione ?? '-' }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'qta_richiesta', this.innerText)">{{ $fase->ordine->qta_richiesta ?? '-' }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'um', this.innerText)">{{ $fase->ordine->um ?? '-' }}</td>
@@ -748,25 +759,13 @@ tr:hover td {
                     </td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'qta_prod', this.innerText)">{{ $fase->qta_prod ?? '-' }}</td>
                     @php
-                        $descOwner = $fase->ordine->descrizione ?? '';
-                        $clienteOwner = $fase->ordine->cliente_nome ?? '';
-                        $repartoOwner = strtolower($fase->faseCatalogo->reparto->nome ?? '');
-                        $noteExtra = '';
-                        if (in_array($repartoOwner, ['stampa offset', 'digitale'])) {
-                            $coloriOwner = \App\Helpers\DescrizioneParser::parseColori($descOwner, $clienteOwner, $repartoOwner);
-                            if ($coloriOwner) $noteExtra .= '[COL: '.$coloriOwner.'] ';
-                        }
-                        if (str_contains($repartoOwner, 'fustella')) {
-                            $fustellaOwner = \App\Helpers\DescrizioneParser::parseFustella($descOwner);
-                            if ($fustellaOwner) $noteExtra .= '[FS: '.$fustellaOwner.'] ';
-                        }
                         $fornitoreEsterno = preg_match('/Inviato a:\s*(.+)/i', $fase->note ?? '', $mEst) ? trim($mEst[1]) : null;
                         $notePulitaOwner = preg_replace('/,?\s*Inviato a:\s*.+/i', '', $fase->note ?? '');
                         $notePulitaOwner = trim($notePulitaOwner, ", \t\n\r") ?: null;
                     @endphp
                     <td>{{ $fornitoreEsterno ?? '-' }}</td>
                     <td>
-                        @if($noteExtra)<small class="fw-bold">{{ $noteExtra }}</small><br>@endif<span contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'note', this.innerText)">{{ $notePulitaOwner ?? '-' }}</span>
+                        <span contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'note', this.innerText)">{{ $notePulitaOwner ?? '-' }}</span>
                     </td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_inizio', this.innerText)">{{ formatItalianDate($fase->data_inizio, true) }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_fine', this.innerText)">{{ formatItalianDate($fase->data_fine, true) }}</td>
