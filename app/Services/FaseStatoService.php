@@ -34,10 +34,14 @@ class FaseStatoService
                     $fase->save();
                 }
             } else {
-                // Tutte le precedenti devono essere terminate (3)
                 $tuttTerminate = $fasiPrecedenti->every(fn($f) => $f->stato >= 3);
                 if ($tuttTerminate && $fase->stato == 0) {
+                    // Tutte le precedenti terminate → pronto (1)
                     $fase->stato = 1;
+                    $fase->save();
+                } elseif (!$tuttTerminate && $fase->stato == 1) {
+                    // Predecessori non tutte terminate → torna a caricato (0)
+                    $fase->stato = 0;
                     $fase->save();
                 }
             }
