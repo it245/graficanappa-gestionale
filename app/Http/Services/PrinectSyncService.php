@@ -399,6 +399,7 @@ class PrinectSyncService
         foreach ($fasi as $fase) {
             $fase->fogli_buoni = $dati['fogli_buoni'];
             $fase->fogli_scarto = $dati['fogli_scarto'];
+            $fase->qta_prod = $dati['fogli_buoni'];
             $fase->tempo_avviamento_sec = $dati['tempo_avviamento_sec'];
             $fase->tempo_esecuzione_sec = $dati['tempo_esecuzione_sec'];
 
