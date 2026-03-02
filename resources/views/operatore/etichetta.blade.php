@@ -340,12 +340,15 @@ function aggiornaAnteprima() {
         if (etichetta.scrollHeight <= etichetta.clientHeight) break;
     }
 
-    // Genera QR code se c'è un codice EAN
+    // Genera QR code con EAN + Lotto + Qta
     var canvas = document.getElementById('qrcode');
     if (ean && ean.length >= 4) {
+        var qrValue = ean;
+        if (lotto) qrValue += '\nLotto: ' + lotto;
+        if (pzcassa) qrValue += '\nQta: ' + pzcassa;
         new QRious({
             element: canvas,
-            value: ean,
+            value: qrValue,
             size: 120,
             level: 'M'
         });
