@@ -14,7 +14,7 @@ class FaseStatoService
      */
     public static function ricalcolaStati($ordineId)
     {
-        $fasi = OrdineFase::where('ordine_id', $ordineId)->orderBy('id')->get();
+        $fasi = OrdineFase::where('ordine_id', $ordineId)->orderBy('priorita')->orderBy('id')->get();
 
         if ($fasi->isEmpty()) return;
 
@@ -22,8 +22,10 @@ class FaseStatoService
             // Se già avviato (2) o terminato (3), non toccare
             if ($fase->stato >= 2) continue;
 
-            // Cerca tutte le fasi precedenti (id minore) non ancora terminate
-            $fasiPrecedenti = $fasi->filter(fn($f) => $f->id < $fase->id && $f->id !== $fase->id);
+            // Cerca tutte le fasi con priorità inferiore (= prima nel flusso produttivo)
+            $fasiPrecedenti = $fasi->filter(fn($f) =>
+                $f->id !== $fase->id && ($f->priorita ?? 0) < ($fase->priorita ?? 0)
+            );
 
             if ($fasiPrecedenti->isEmpty()) {
                 // Nessuna fase precedente → pronto (1)
