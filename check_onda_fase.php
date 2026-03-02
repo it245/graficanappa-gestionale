@@ -17,7 +17,7 @@ try {
             f.CodMacchina,
             f.QtaDaLavorare,
             f.CodUnMis AS UMFase,
-            t.QtaDaProdurre
+            p.QtaDaProdurre
         FROM ATTDocTeste t
         INNER JOIN PRDDocTeste p ON t.CodCommessa = p.CodCommessa
         LEFT JOIN PRDDocFasi f ON p.IdDoc = f.IdDoc
