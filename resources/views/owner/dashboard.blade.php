@@ -159,6 +159,18 @@ th, td {
     max-height: 3.9em;
 }
 
+/* Cella cliccata: mostra testo intero */
+td:focus, td[contenteditable]:focus {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    max-height: none !important;
+    position: relative;
+    z-index: 10;
+    background: #fffde7 !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
 thead th {
     background: #000000;
     color: #ffffff;
@@ -1198,6 +1210,11 @@ document.getElementById('modalBRT').addEventListener('shown.bs.modal', function(
 
 <script>
 document.addEventListener('DOMContentLoaded', function(){
+    // Rendi tutte le td focusabili (per espandere testo troncato al click)
+    document.querySelectorAll('#tabellaOrdini td:not([contenteditable])').forEach(function(td){
+        td.setAttribute('tabindex', '0');
+    });
+
     // Badge consegnati
     var modal = document.getElementById('modalSpedizioniOggi');
     if(modal){
