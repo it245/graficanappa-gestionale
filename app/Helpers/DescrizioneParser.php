@@ -128,13 +128,25 @@ class DescrizioneParser
     /**
      * Estrae tutti i codici fustella (FSxxxx) dalla descrizione.
      * Restituisce tutti i codici FS unici trovati, separati da " / ".
+     * Fallback per clienti specifici (es. Italiana Confetti) basato su descrizione.
      */
-    public static function parseFustella(string $descrizione): ?string
+    public static function parseFustella(string $descrizione, string $clienteNome = ''): ?string
     {
         if (preg_match_all('/\b(FS\d{3,5})\b/', $descrizione, $m)) {
             $codes = array_unique($m[1]);
             return implode(' / ', $codes);
         }
+
+        // Fallback Italiana Confetti: FS dalla descrizione articolo
+        if (stripos($clienteNome, 'ITALIANA CONFETTI') !== false || stripos($clienteNome, 'ITALIANO CONFETTI') !== false) {
+            if (preg_match('/^AST\.?\s*1\s*KG/i', $descrizione)) {
+                return 'FS0898';
+            }
+            if (preg_match('/^AST\.?\s*500/i', $descrizione)) {
+                return 'FS0044';
+            }
+        }
+
         return null;
     }
 }

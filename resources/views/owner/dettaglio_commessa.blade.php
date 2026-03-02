@@ -122,7 +122,7 @@
 @if($ordine)
 @php
     $coloriDett = \App\Helpers\DescrizioneParser::parseColori($ordine->descrizione ?? '', $ordine->cliente_nome ?? '');
-    $fustellaDett = \App\Helpers\DescrizioneParser::parseFustella($ordine->descrizione ?? '');
+    $fustellaDett = \App\Helpers\DescrizioneParser::parseFustella($ordine->descrizione ?? '', $ordine->cliente_nome ?? '');
 @endphp
 <div class="row g-2 mb-2" style="font-size:13px;">
     <div class="col-auto">
@@ -247,7 +247,7 @@
                         if ($coloriDett2) $noteExtraDett .= '[COL: '.$coloriDett2.'] ';
                     }
                     if (str_contains($repartoDett, 'fustella')) {
-                        $fustellaDett2 = \App\Helpers\DescrizioneParser::parseFustella($descDett);
+                        $fustellaDett2 = \App\Helpers\DescrizioneParser::parseFustella($descDett, $clienteDett);
                         if ($fustellaDett2) $noteExtraDett .= '[FS: '.$fustellaDett2.'] ';
                     }
                 @endphp

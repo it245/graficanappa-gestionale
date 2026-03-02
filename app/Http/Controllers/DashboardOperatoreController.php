@@ -168,7 +168,7 @@ class DashboardOperatoreController extends Controller
                 $cliente = $fase->ordine->cliente_nome ?? '';
                 $repNome = optional($fase->faseCatalogo)->reparto->nome ?? '';
                 $fase->colori = DescrizioneParser::parseColori($desc, $cliente, $repNome);
-                $fase->fustella_codice = DescrizioneParser::parseFustella($desc);
+                $fase->fustella_codice = DescrizioneParser::parseFustella($desc, $cliente);
 
                 // Fornitore esterno: estrai "Inviato a: XXX" dalla note
                 $fase->fornitore_esterno = preg_match('/Inviato a:\s*(.+)/i', $fase->note ?? '', $m) ? trim($m[1]) : null;
