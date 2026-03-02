@@ -99,6 +99,43 @@
         color: #fff !important;
         font-weight: bold;
     }
+
+    /* Barra filtri */
+    .filtri-bar {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        padding: 8px 15px;
+        background: #f0f2f5;
+        margin: 0 4px;
+        border-bottom: 1px solid #dee2e6;
+        flex-wrap: wrap;
+    }
+    .filtri-bar label {
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 0;
+        white-space: nowrap;
+    }
+    .filtri-bar select,
+    .filtri-bar input {
+        font-size: 13px;
+        padding: 3px 8px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        height: 30px;
+    }
+    .filtri-bar input { width: 160px; }
+    .filtri-bar select { width: 80px; }
+    .filtri-bar .btn-reset-filtri {
+        font-size: 12px;
+        padding: 3px 10px;
+        border: 1px solid #adb5bd;
+        background: #fff;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .filtri-bar .btn-reset-filtri:hover { background: #e9ecef; }
 </style>
 
 <div class="top-bar">
@@ -146,6 +183,21 @@
             <h3>
                 <span>{{ $info['nome'] }} <small>({{ $info['fasi']->count() }})</small></span>
             </h3>
+            <div class="filtri-bar filtri-reparto" data-reparto="{{ $repartoId }}">
+                <label>Stato:</label>
+                <select class="filtro-stato" onchange="applicaFiltri(this)">
+                    <option value="">Tutti</option>
+                    <option value="0">0</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                </select>
+                <label>Cliente:</label>
+                <input type="text" class="filtro-cliente" placeholder="Cerca cliente..." oninput="applicaFiltri(this)">
+                <label>Descrizione:</label>
+                <input type="text" class="filtro-descrizione" placeholder="Cerca descrizione..." oninput="applicaFiltri(this)">
+                <button type="button" class="btn-reset-filtri" onclick="resetFiltri(this)">Reset</button>
+            </div>
             <div class="reparto-body">
             <div class="table-wrapper">
                 <table class="table table-bordered table-sm table-striped">
@@ -189,6 +241,21 @@
     @endforeach
 @else
     {{-- SINGOLO REPARTO: tabella unica come prima --}}
+    <div class="filtri-bar filtri-reparto" data-reparto="singolo">
+        <label>Stato:</label>
+        <select class="filtro-stato" onchange="applicaFiltri(this)">
+            <option value="">Tutti</option>
+            <option value="0">0</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+        </select>
+        <label>Cliente:</label>
+        <input type="text" class="filtro-cliente" placeholder="Cerca cliente..." oninput="applicaFiltri(this)">
+        <label>Descrizione:</label>
+        <input type="text" class="filtro-descrizione" placeholder="Cerca descrizione..." oninput="applicaFiltri(this)">
+        <button type="button" class="btn-reset-filtri" onclick="resetFiltri(this)">Reset</button>
+    </div>
     <div class="table-wrapper">
         <table class="table table-bordered table-sm table-striped">
             <thead class="table-dark">
@@ -303,6 +370,46 @@ function cercaCommessa(){
             document.querySelectorAll("tbody tr").forEach(riga=>riga.style.display='');
         }
     };
+}
+
+// ===== Filtri per stato, cliente, descrizione =====
+function applicaFiltri(el) {
+    var bar = el.closest('.filtri-reparto');
+    var filtroStato = bar.querySelector('.filtro-stato').value;
+    var filtroCliente = bar.querySelector('.filtro-cliente').value.toLowerCase().trim();
+    var filtroDescrizione = bar.querySelector('.filtro-descrizione').value.toLowerCase().trim();
+
+    // Trova la tabella associata a questa barra filtri
+    var tableWrapper = bar.nextElementSibling;
+    // Per multi-reparto la struttura è: filtri-bar → reparto-body → table-wrapper → table
+    // Per singolo reparto: filtri-bar → table-wrapper → table
+    if (tableWrapper.classList.contains('reparto-body')) {
+        tableWrapper = tableWrapper.querySelector('table');
+    } else {
+        tableWrapper = tableWrapper.querySelector('table');
+    }
+    if (!tableWrapper) return;
+
+    var righe = tableWrapper.querySelectorAll('tbody tr');
+    righe.forEach(function(riga) {
+        var statoCell = riga.querySelector('.td-stato');
+        var clienteCell = riga.querySelector('.td-cliente');
+        var descCell = riga.querySelector('.td-descrizione');
+
+        var statoOk = !filtroStato || (statoCell && statoCell.textContent.trim() === filtroStato);
+        var clienteOk = !filtroCliente || (clienteCell && clienteCell.textContent.toLowerCase().includes(filtroCliente));
+        var descOk = !filtroDescrizione || (descCell && descCell.textContent.toLowerCase().includes(filtroDescrizione));
+
+        riga.style.display = (statoOk && clienteOk && descOk) ? '' : 'none';
+    });
+}
+
+function resetFiltri(el) {
+    var bar = el.closest('.filtri-reparto');
+    bar.querySelector('.filtro-stato').value = '';
+    bar.querySelector('.filtro-cliente').value = '';
+    bar.querySelector('.filtro-descrizione').value = '';
+    applicaFiltri(el);
 }
 
 </script>

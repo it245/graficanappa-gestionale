@@ -19,7 +19,7 @@
         @endforeach
     </td>
     <td>{{ $fase->faseCatalogo->nome_display ?? '-' }}</td>
-    <td id="stato-{{ $fase->id }}" style="background:{{ $statoBg[$fase->stato] ?? '#e9ecef' }};font-weight:bold;text-align:center;">{{ $fase->stato }}</td>
+    <td class="td-stato" id="stato-{{ $fase->id }}" style="background:{{ $statoBg[$fase->stato] ?? '#e9ecef' }};font-weight:bold;text-align:center;">{{ $fase->stato }}</td>
 
     {{-- COMMESSA CLICCABILE --}}
     <td>
@@ -35,12 +35,12 @@
     </td>
 
     <td>{{ $fase->ordine->data_registrazione ? \Carbon\Carbon::parse($fase->ordine->data_registrazione)->format('d/m/Y') : '-' }}</td>
-    <td>{{ $fase->ordine->cliente_nome ?? '-' }}</td>
+    <td class="td-cliente">{{ $fase->ordine->cliente_nome ?? '-' }}</td>
     <td>{{ $fase->ordine->cod_art ?? '-' }}</td>
     @if($showColori ?? false)<td>{{ $fase->colori ?? '-' }}</td>@endif
     <td>{{ $fase->fustella_codice ?? '-' }}</td>
     @if($showEsterno ?? false)<td>{{ $fase->fornitore_esterno ?? '-' }}</td>@endif
-    <td class="descrizione">{{ $fase->ordine->descrizione ?? '-' }}</td>
+    <td class="descrizione td-descrizione">{{ $fase->ordine->descrizione ?? '-' }}</td>
     <td>{{ $fase->ordine->qta_richiesta ?? '-' }}</td>
     <td>{{ $fase->ordine->um ?? '-' }}</td>
     <td>{{ $fase->ordine->data_prevista_consegna ? \Carbon\Carbon::parse($fase->ordine->data_prevista_consegna)->format('d/m/Y') : '-' }}</td>
