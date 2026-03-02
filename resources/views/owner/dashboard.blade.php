@@ -137,8 +137,8 @@ h2, p {
    ========================= */
 
 table {
-    width: 2555px;              /* OTTIMIZZATO PER 2560x1440 */
-    max-width: 2555px;
+    width: 2800px;              /* OTTIMIZZATO PER 24 COLONNE */
+    max-width: 2800px;
     border-collapse: collapse;
     table-layout: fixed;        /* FONDAMENTALE */
     font-size: 12px;
@@ -166,12 +166,12 @@ thead th {
 }
 
 /* =========================
-   LARGHEZZA COLONNE (21 colonne)
-   1=Commessa 2=Stato 3=Cliente 4=CodArt
-   5=Descrizione 6=Qta 7=UM 8=Priorità
-   9=DataReg 10=DataConsegna 11=CodCarta 12=Carta
-   13=QtaCarta 14=UMCarta 15=Fase 16=Reparto
-   17=Operatori 18=QtaProd 19=Note 20=DataInizio 21=DataFine
+   LARGHEZZA COLONNE (24 colonne)
+   1=Commessa 2=Stato 3=Cliente 4=CodArt 5=Colori 6=Fustella
+   7=Descrizione 8=Qta 9=UM 10=Priorità
+   11=DataReg 12=DataConsegna 13=CodCarta 14=Carta
+   15=QtaCarta 16=UMCarta 17=Fase 18=Reparto
+   19=Operatori 20=QtaProd 21=Esterno 22=Note 23=DataInizio 24=DataFine
    ========================= */
 
 /* 1. Commessa */
@@ -186,63 +186,72 @@ th:nth-child(3), td:nth-child(3) { width: 190px; white-space: normal; }
 /* 4. Codice Articolo */
 th:nth-child(4), td:nth-child(4) { width: 105px; }
 
-/* 5. Descrizione */
-th:nth-child(5), td:nth-child(5) { width: 360px; max-width: 360px; white-space: normal; }
+/* 5. Colori */
+th:nth-child(5), td:nth-child(5) { width: 75px; }
 
-/* 6. Qta */
-th:nth-child(6), td:nth-child(6) { width: 60px; text-align: center; }
+/* 6. Fustella */
+th:nth-child(6), td:nth-child(6) { width: 80px; }
 
-/* 7. UM */
-th:nth-child(7), td:nth-child(7) { width: 55px; text-align: center; }
+/* 7. Descrizione — troncata con ... */
+th:nth-child(7), td:nth-child(7) { width: 300px; max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-/* 8. Priorità */
-th:nth-child(8), td:nth-child(8) { width: 70px; text-align: center; }
+/* 8. Qta */
+th:nth-child(8), td:nth-child(8) { width: 60px; text-align: center; }
 
-/* 9. Data Registrazione / 10. Data Prevista Consegna */
-th:nth-child(9), td:nth-child(9),
-th:nth-child(10), td:nth-child(10) {
+/* 9. UM */
+th:nth-child(9), td:nth-child(9) { width: 55px; text-align: center; }
+
+/* 10. Priorità */
+th:nth-child(10), td:nth-child(10) { width: 70px; text-align: center; }
+
+/* 11. Data Registrazione / 12. Data Prevista Consegna */
+th:nth-child(11), td:nth-child(11),
+th:nth-child(12), td:nth-child(12) {
     width: 115px;
 }
 
-/* 11. Cod Carta */
-th:nth-child(11), td:nth-child(11) { width: 145px; white-space: normal; }
+/* 13. Cod Carta */
+th:nth-child(13), td:nth-child(13) { width: 145px; white-space: normal; }
 
-/* 12. Carta */
-th:nth-child(12), td:nth-child(12) { width: 165px; white-space: normal; }
+/* 14. Carta */
+th:nth-child(14), td:nth-child(14) { width: 165px; white-space: normal; }
 
-/* 13. Qta Carta */
-th:nth-child(13), td:nth-child(13) { width: 65px; text-align: center; }
+/* 15. Qta Carta */
+th:nth-child(15), td:nth-child(15) { width: 65px; text-align: center; }
 
-/* 14. UM Carta */
-th:nth-child(14), td:nth-child(14) { width: 60px; text-align: center; }
+/* 16. UM Carta */
+th:nth-child(16), td:nth-child(16) { width: 60px; text-align: center; }
 
-/* 15. Fase */
-th:nth-child(15), td:nth-child(15) { width: 135px; }
+/* 17. Fase */
+th:nth-child(17), td:nth-child(17) { width: 135px; }
 
-/* 16. Reparto */
-th:nth-child(16), td:nth-child(16) { width: 125px; }
+/* 18. Reparto */
+th:nth-child(18), td:nth-child(18) { width: 125px; }
 
-/* 17. Operatori */
-th:nth-child(17), td:nth-child(17) {
+/* 19. Operatori */
+th:nth-child(19), td:nth-child(19) {
     width: 125px;
     white-space: normal;
 }
 
-/* 18. Qta Prod. */
-th:nth-child(18), td:nth-child(18) {
+/* 20. Qta Prod. */
+th:nth-child(20), td:nth-child(20) {
     width: 70px;
     text-align: center;
 }
 
-/* 19. Note */
-th:nth-child(19), td:nth-child(19) {
+/* 21. Esterno */
+th:nth-child(21), td:nth-child(21) { width: 100px; }
+
+/* 22. Note */
+th:nth-child(22), td:nth-child(22) {
     width: 190px;
     white-space: normal;
 }
 
-/* 20. Data Inizio / 21. Data Fine */
-th:nth-child(20), td:nth-child(20),
-th:nth-child(21), td:nth-child(21) {
+/* 23. Data Inizio / 24. Data Fine */
+th:nth-child(23), td:nth-child(23),
+th:nth-child(24), td:nth-child(24) {
     width: 120px;
 }
 
