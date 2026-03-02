@@ -63,8 +63,8 @@ h2 {
 }
 
 table {
-    width: 2450px;
-    max-width: 2450px;
+    width: 2560px;
+    max-width: 2560px;
     border-collapse: collapse;
     table-layout: fixed;
     font-size: 12px;

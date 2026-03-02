@@ -163,6 +163,9 @@ thead th {
     background: #000000;
     color: #ffffff;
     font-size: 11.5px;
+    position: sticky;
+    top: 0;
+    z-index: 2;
 }
 
 /* =========================
@@ -677,7 +680,7 @@ tr:hover td {
 @endphp
 
     {{-- TABELLA --}}
-    <div>
+    <div class="table-wrapper" style="overflow:auto; max-height:calc(100vh - 200px); margin:0 1px;">
         <table id="tabellaOrdini" class="table table-bordered table-sm table-striped">
             <thead class="table-dark">
                 <tr>
