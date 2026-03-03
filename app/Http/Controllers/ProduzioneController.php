@@ -68,14 +68,14 @@ class ProduzioneController extends Controller
 {
     $validator = Validator::make($request->all(), [
         'fase_id'       => 'required',
-        'qta_prodotta'  => 'required|integer|min:1',
+        'qta_prodotta'  => 'nullable|integer|min:0',
         'scarti'        => 'nullable|integer|min:0',
     ]);
 
     if ($validator->fails()) {
         return response()->json([
             'success' => false,
-            'messaggio' => 'Inserire la quantita prodotta.',
+            'messaggio' => 'Dati non validi.',
             'errors' => $validator->errors()
         ], 422);
     }
@@ -109,7 +109,12 @@ class ProduzioneController extends Controller
         }
     }
 
-    $fase->qta_prod = $request->qta_prodotta;
+    $qtaProdotta = $request->qta_prodotta;
+    if (!$qtaProdotta || $qtaProdotta <= 0) {
+        // Fallback: usa qta_fase o qta_richiesta (per spedizione/esterne)
+        $qtaProdotta = $fase->qta_fase ?: ($fase->ordine->qta_richiesta ?? 0);
+    }
+    $fase->qta_prod = $qtaProdotta;
     $fase->scarti = $request->scarti ?? 0;
     $fase->timeout = null;
 
