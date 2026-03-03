@@ -611,7 +611,7 @@ public function calcolaOreEPriorita($fase)
         $fase->stato = $nuovoStato;
 
         if ($nuovoStato == 3 && !$fase->data_fine) {
-            $fase->data_fine = now()->format('d/m/Y H:i:s');
+            $fase->data_fine = now()->format('Y-m-d H:i:s');
         }
 
         $fase->save();
