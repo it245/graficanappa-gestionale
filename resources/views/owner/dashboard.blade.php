@@ -1352,97 +1352,98 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectedCells = new Set();
 
     let isSelecting = false;
-    let startRowIdx = -1;
-    let endRowIdx = -1;
+    let startX = 0, startY = 0;
+    let mouseClientX = 0, mouseClientY = 0;
+    let selectionBox = null;
     let pollTimer = null;
-    const allRows = Array.from(table.querySelectorAll('tbody tr'));
+    let cachedRects = []; // coordinate pagina (costanti)
 
-    function getRowAtY(clientY) {
-        // Trova la riga sotto il mouse
-        for (let i = 0; i < allRows.length; i++) {
-            const r = allRows[i].getBoundingClientRect();
-            if (clientY >= r.top && clientY <= r.bottom) return i;
-        }
-        // Se il mouse è sotto l'ultima riga visibile, prendi l'ultima
-        if (clientY > 0) return allRows.length - 1;
-        return 0;
+    function cacheRects() {
+        const sx = window.scrollX, sy = window.scrollY;
+        cachedRects = allCells.map(cell => {
+            const r = cell.getBoundingClientRect();
+            return { cell, left: r.left + sx, top: r.top + sy, right: r.right + sx, bottom: r.bottom + sy };
+        });
     }
 
     function updateSelection() {
-        if (!isSelecting) return;
+        if (!selectionBox) return;
 
-        const curIdx = getRowAtY(mouseClientY);
-        if (curIdx === endRowIdx) return; // niente da cambiare
-        endRowIdx = curIdx;
+        // Posizione attuale del mouse in coordinate pagina
+        const curX = mouseClientX + window.scrollX;
+        const curY = mouseClientY + window.scrollY;
 
-        const minIdx = Math.min(startRowIdx, endRowIdx);
-        const maxIdx = Math.max(startRowIdx, endRowIdx);
+        // Box selezione in coordinate pagina
+        const boxL = Math.min(startX, curX), boxT = Math.min(startY, curY);
+        const boxR = Math.max(startX, curX), boxB = Math.max(startY, curY);
 
+        // Disegna il box (position:absolute → coordinate pagina)
+        selectionBox.style.left = boxL + 'px';
+        selectionBox.style.top = boxT + 'px';
+        selectionBox.style.width = (boxR - boxL) + 'px';
+        selectionBox.style.height = (boxB - boxT) + 'px';
+
+        // Confronta rect cachati (coordinate pagina) con il box (coordinate pagina)
         selectedCells.forEach(c => c.classList.remove('selected'));
         selectedCells.clear();
 
-        for (let i = minIdx; i <= maxIdx; i++) {
-            const cells = allRows[i].querySelectorAll('td, th');
-            cells.forEach(c => {
-                c.classList.add('selected');
-                selectedCells.add(c);
-            });
+        for (let i = 0; i < cachedRects.length; i++) {
+            const r = cachedRects[i];
+            if (r.right >= boxL && r.left <= boxR && r.bottom >= boxT && r.top <= boxB) {
+                r.cell.classList.add('selected');
+                selectedCells.add(r.cell);
+            }
         }
     }
 
-    let mouseClientY = 0;
-
-    function startSelection(row, clientY) {
+    function startSelection(pageX, pageY, clientX, clientY) {
         isSelecting = true;
-        startRowIdx = allRows.indexOf(row);
-        endRowIdx = startRowIdx;
+        startX = pageX;
+        startY = pageY;
+        mouseClientX = clientX;
         mouseClientY = clientY;
 
         selectedCells.forEach(c => c.classList.remove('selected'));
         selectedCells.clear();
 
-        // Seleziona la riga iniziale
-        row.querySelectorAll('td, th').forEach(c => {
-            c.classList.add('selected');
-            selectedCells.add(c);
-        });
+        cacheRects();
 
+        selectionBox = document.createElement('div');
+        selectionBox.className = 'selection-box';
+        document.body.appendChild(selectionBox);
+
+        // Polling ogni 50ms per catturare scroll rotellina
         pollTimer = setInterval(updateSelection, 50);
     }
 
     function endSelection() {
         isSelecting = false;
-        if (pollTimer) {
-            clearInterval(pollTimer);
-            pollTimer = null;
-        }
+        if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+        if (selectionBox) { selectionBox.remove(); selectionBox = null; }
     }
 
-    // Mouse: doppio click su una riga avvia selezione
+    // Mouse: doppio click avvia, drag seleziona
     table.addEventListener('dblclick', e => {
-        const row = e.target.closest('tr');
-        if (!row || !row.parentElement.matches('tbody')) return;
-        mouseClientY = e.clientY;
-        startSelection(row, e.clientY);
+        if (!e.target.matches('td, th')) return;
+        startSelection(e.pageX, e.pageY, e.clientX, e.clientY);
         e.preventDefault();
     });
 
     document.addEventListener('mousemove', e => {
+        mouseClientX = e.clientX;
         mouseClientY = e.clientY;
     });
     document.addEventListener('mouseup', () => { if (isSelecting) endSelection(); });
 
-    // Touch: doppio tap avvia selezione
+    // Touch: doppio tap avvia, drag seleziona
     let lastTap = 0;
     table.addEventListener('touchstart', e => {
         const now = Date.now();
         const touch = e.touches[0];
-        const row = document.elementFromPoint(touch.clientX, touch.clientY);
-        const tr = row ? row.closest('tr') : null;
+        const target = document.elementFromPoint(touch.clientX, touch.clientY);
 
-        if (now - lastTap < 350 && tr && tr.parentElement.matches('tbody')) {
-            mouseClientY = touch.clientY;
-            startSelection(tr, touch.clientY);
+        if (now - lastTap < 350 && target && target.matches('td, th')) {
+            startSelection(touch.pageX, touch.pageY, touch.clientX, touch.clientY);
             e.preventDefault();
         }
         lastTap = now;
@@ -1450,7 +1451,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.addEventListener('touchmove', e => {
         if (!isSelecting) return;
-        mouseClientY = e.touches[0].clientY;
+        const touch = e.touches[0];
+        mouseClientX = touch.clientX;
+        mouseClientY = touch.clientY;
         e.preventDefault();
     }, { passive: false });
 
