@@ -54,9 +54,22 @@ $scartiMacchine = collect(DB::connection('onda')->select(
     "SELECT CodMacchina, OC_FogliScartoIniz FROM PRDMacchinari WHERE OC_FogliScartoIniz > 0"
 ))->pluck('OC_FogliScartoIniz', 'CodMacchina')->toArray();
 
-// Controlla se QtaDaLavorare include già scarti: query campo FogliScarto nella fase
-$righeConScarti = DB::connection('onda')->select("
-    SELECT f.CodFase, f.CodMacchina, f.QtaDaLavorare, f.FogliScarto, f.QtaNetta
+// Esplora colonne PRDDocFasi per capire dove sono gli scarti
+$colonne = DB::connection('onda')->select("
+    SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = 'PRDDocFasi'
+    ORDER BY ORDINAL_POSITION
+");
+echo "=== Colonne PRDDocFasi ===\n";
+$colNames = [];
+foreach ($colonne as $col) {
+    $colNames[] = $col->COLUMN_NAME;
+}
+echo implode(', ', $colNames) . "\n\n";
+
+// Mostra TUTTI i campi della fase per questa commessa
+$righeComplete = DB::connection('onda')->select("
+    SELECT f.*
     FROM ATTDocTeste t
     INNER JOIN PRDDocTeste p ON t.CodCommessa = p.CodCommessa
     LEFT JOIN PRDDocFasi f ON p.IdDoc = f.IdDoc
@@ -66,12 +79,17 @@ $righeConScarti = DB::connection('onda')->select("
     ORDER BY f.CodFase
 ", [$commessaArg . '%']);
 
-if (!empty($righeConScarti)) {
-    echo "=== Dettaglio scarti per fase ===\n";
-    foreach ($righeConScarti as $rs) {
-        $fogliScarto = $rs->FogliScarto ?? 'NULL';
-        $qtaNetta = $rs->QtaNetta ?? 'NULL';
-        echo "  {$rs->CodFase} ({$rs->CodMacchina}): QtaDaLavorare={$rs->QtaDaLavorare} | FogliScarto={$fogliScarto} | QtaNetta={$qtaNetta}\n";
+if (!empty($righeComplete)) {
+    echo "=== Dettaglio completo fasi ===\n";
+    foreach ($righeComplete as $rf) {
+        $arr = (array) $rf;
+        $fase = $arr['CodFase'] ?? '?';
+        echo "  --- {$fase} ---\n";
+        foreach ($arr as $k => $v) {
+            if ($v !== null && $v !== '' && $v !== 0 && $v !== 0.0) {
+                echo "    {$k}: {$v}\n";
+            }
+        }
     }
     echo "\n";
 }
