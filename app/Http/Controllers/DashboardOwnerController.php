@@ -188,9 +188,9 @@ public function calcolaOreEPriorita($fase)
         // Priorità = giorni rimasti - ore/24 + ordineFase/100
         $prioritaCalcolata = round($giorni_rimasti - ($fase->ore / 24) + ($fasePriorita / 100), 2);
 
-        // Se priorità manuale (range -1000 a -900), non sovrascrivere
+        // Se priorità manuale (range -1000 a -100), non sovrascrivere
         $currentPriorita = $fase->priorita ?? 0;
-        if ($currentPriorita < -900 && $currentPriorita >= -1000) {
+        if ($currentPriorita <= -100) {
             return $fase;
         }
 
