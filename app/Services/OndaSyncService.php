@@ -605,7 +605,7 @@ class OndaSyncService
         ];
     }
 
-    private static function getTipoReparto(): array
+    public static function getTipoReparto(): array
     {
         return [
             // multifase
