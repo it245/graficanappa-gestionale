@@ -48,12 +48,18 @@
         transition: transform 0.2s;
     }
     .action-icons img:hover { transform: scale(1.2); }
-    .table-wrapper { 
+    .table-wrapper {
         width:100%;
         max-width:100%;
         overflow-x:auto;
-        overflow-y:visible;
-        margin: 0 4px; 
+        overflow-y:auto;
+        max-height: calc(100vh - 220px);
+        margin: 0 4px;
+    }
+    .table-wrapper thead th {
+        position: sticky;
+        top: 0;
+        z-index: 10;
     }
     table th, table td { white-space:nowrap; }
 
