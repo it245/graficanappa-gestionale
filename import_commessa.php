@@ -229,17 +229,37 @@ foreach ($gruppi as $chiave => $righe) {
         $tipo = $tipiFase[$faseNome] ?? 'monofase';
         $prioritaFase = $mappaPriorita[$faseNome] ?? 500;
 
+        // STAMPAXL106: max 2 fasi solo per cod_art multi-passaggio
+        if (str_starts_with($faseNome, 'STAMPAXL106') && in_array($codArt, [
+            'Volumi','Vassoio','Vassoi','SPILLATI.OFFSET','SPILLATI.DIGITALE',
+            'SOVRACOPERTA','RIVISTE.FRECCIA','riviste','RIVISTA.FRECCIA.128PP',
+            'RICETTARI','Raccoglitori','Quaderni','Opuscoli','Libro.di.bordo',
+            'Libricino','LibriBN','Libri','INSERTO.RIVISTA.NOTE.4pp',
+            'I.Volumi','I.riviste','I.Raccoglitori','I.Quaderni','I.Poster',
+            'I.Opuscoli','I.Menu','I.Libricino','I.Libri','I.copertina',
+            'I.cataloghi','I.cartoline','I.Calendari.da.Tavolo',
+            'I.Calendari.da.Muro','I.Calendari','I.Block.Notes',
+            'I.Blocchi.autocopianti','I.Blocchi','I.Bilanci',
+            'Espositori.da.Terra','Espositori.da.banco','Depliant','COPERTINA',
+            'cataloghi','Calendari.da.Tavolo','Calendari.da.Muro','Calendari',
+            'BROSSURATI.OFFSET','BROSSURATI.DIGITALE','brochure','Block.Notes',
+            'Blocchi.Mod.TI','Blocchi.Mod.R1','Blocchi.Mod.K','Blocchi.Mod.CH69',
+            'Blocchi.autocopianti.M40a','Blocchi.autocopianti','Blocchi','Bilanci',
+        ])) {
+            $tipo = 'max 2 fasi';
+        }
+
         $reparto = Reparto::firstOrCreate(['nome' => $repartoNome]);
         $faseCatalogo = FasiCatalogo::firstOrCreate(['nome' => $faseNome], ['reparto_id' => $reparto->id]);
 
-        // Dedup fustella per commessa: 1 sola fase per commessa (la fustella fisica è condivisa)
-        if (in_array($repartoNome, ['fustella piana', 'fustella cilindrica'])) {
-            $chiaveDedup = $commessa . '|' . $faseNome;
+        // Dedup fustella per commessa: 1 sola fase per commessa per reparto (la fustella fisica è condivisa)
+        if (in_array($repartoNome, ['fustella piana', 'fustella cilindrica', 'fustella'])) {
+            $chiaveDedup = $commessa . '|fust|' . $repartoNome;
             if (isset($dedupPerCommessa[$chiaveDedup])) {
                 echo "    -> Fase {$faseNome} fustella già creata per commessa, skip\n";
                 continue;
             }
-            $existsInCommessa = OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
+            $existsInCommessa = OrdineFase::whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', $reparto->id))
                 ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
                 ->exists();
             $dedupPerCommessa[$chiaveDedup] = true;

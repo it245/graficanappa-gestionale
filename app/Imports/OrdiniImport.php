@@ -50,6 +50,26 @@ class OrdiniImport implements ToModel, WithHeadingRow, WithChunkReading
     $repartoNome = $mappaReparti[$faseNome] ?? 'generico';
     $tipo        = $tipiFase[$faseNome] ?? 'monofase';
 
+    // STAMPAXL106: max 2 fasi solo per cod_art multi-passaggio
+    if (str_starts_with($faseNome, 'STAMPAXL106') && in_array($codArt, [
+        'Volumi','Vassoio','Vassoi','SPILLATI.OFFSET','SPILLATI.DIGITALE',
+        'SOVRACOPERTA','RIVISTE.FRECCIA','riviste','RIVISTA.FRECCIA.128PP',
+        'RICETTARI','Raccoglitori','Quaderni','Opuscoli','Libro.di.bordo',
+        'Libricino','LibriBN','Libri','INSERTO.RIVISTA.NOTE.4pp',
+        'I.Volumi','I.riviste','I.Raccoglitori','I.Quaderni','I.Poster',
+        'I.Opuscoli','I.Menu','I.Libricino','I.Libri','I.copertina',
+        'I.cataloghi','I.cartoline','I.Calendari.da.Tavolo',
+        'I.Calendari.da.Muro','I.Calendari','I.Block.Notes',
+        'I.Blocchi.autocopianti','I.Blocchi','I.Bilanci',
+        'Espositori.da.Terra','Espositori.da.banco','Depliant','COPERTINA',
+        'cataloghi','Calendari.da.Tavolo','Calendari.da.Muro','Calendari',
+        'BROSSURATI.OFFSET','BROSSURATI.DIGITALE','brochure','Block.Notes',
+        'Blocchi.Mod.TI','Blocchi.Mod.R1','Blocchi.Mod.K','Blocchi.Mod.CH69',
+        'Blocchi.autocopianti.M40a','Blocchi.autocopianti','Blocchi','Bilanci',
+    ])) {
+        $tipo = 'max 2 fasi';
+    }
+
     // --- 3. PRIORITÀ FASE (da config) ---
     $mappaPriorita = config('fasi_priorita');
     $prioritaFase = $mappaPriorita[$faseNome] ?? 500;
@@ -167,7 +187,7 @@ private function convertiData($valore) {
     'FUSTBOBSTRILIEVI' => 'fustella piana',
     'FUSTSTELG33.44' => 'fustella cilindrica',
     'FUSTSTELP25.35' => 'fustella cilindrica',
-    'FUSTIML75X106' => 'fustella',
+    'FUSTIML75X106' => 'fustella piana',
     'FUSTELLATURA72X51' => 'fustella',
     'FINESTRATURA.INT'=>'finestre',
 
@@ -395,14 +415,14 @@ private function convertiData($valore) {
     // max 2 fasi
     'STAMPAINDIGO' => 'max 2 fasi',
     'STAMPAINDIGOBN' => 'max 2 fasi',
-    'STAMPAXL106' => 'max 2 fasi',
-    'STAMPAXL106.1' => 'max 2 fasi',
-    'STAMPAXL106.2' => 'max 2 fasi',
-    'STAMPAXL106.3' => 'max 2 fasi',
-    'STAMPAXL106.4' => 'max 2 fasi',
-    'STAMPAXL106.5' => 'max 2 fasi',
-    'STAMPAXL106.6' => 'max 2 fasi',
-    'STAMPAXL106.7' => 'max 2 fasi',
+    'STAMPAXL106' => 'monofase',
+    'STAMPAXL106.1' => 'monofase',
+    'STAMPAXL106.2' => 'monofase',
+    'STAMPAXL106.3' => 'monofase',
+    'STAMPAXL106.4' => 'monofase',
+    'STAMPAXL106.5' => 'monofase',
+    'STAMPAXL106.6' => 'monofase',
+    'STAMPAXL106.7' => 'monofase',
     'STAMPAINDIGOBIANCO' => 'max 2 fasi',
 
     // Nuove fasi EXT e altre → monofase

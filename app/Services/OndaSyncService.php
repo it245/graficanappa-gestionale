@@ -101,6 +101,35 @@ class OndaSyncService
             $fasiEliminate += $deleted;
         }
 
+        // Pulizia duplicati fustella per commessa: 1 sola fase per commessa per reparto fustella
+        $repartiFustella = Reparto::whereIn('nome', ['fustella piana', 'fustella cilindrica', 'fustella'])->pluck('id');
+        if ($repartiFustella->isNotEmpty()) {
+            $dupFustella = DB::table('ordine_fasi')
+                ->join('ordini', 'ordini.id', '=', 'ordine_fasi.ordine_id')
+                ->join('fasi_catalogo', 'fasi_catalogo.id', '=', 'ordine_fasi.fase_catalogo_id')
+                ->select('ordini.commessa', 'fasi_catalogo.reparto_id', DB::raw('COUNT(*) as cnt'))
+                ->whereIn('fasi_catalogo.reparto_id', $repartiFustella)
+                ->groupBy('ordini.commessa', 'fasi_catalogo.reparto_id')
+                ->having('cnt', '>', 1)
+                ->get();
+
+            foreach ($dupFustella as $dup) {
+                $faseIds = OrdineFase::whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', $dup->reparto_id))
+                    ->whereHas('ordine', fn($q) => $q->where('commessa', $dup->commessa))
+                    ->orderBy('id')
+                    ->pluck('id');
+
+                $keepId = $faseIds->first();
+                $deleteIds = $faseIds->slice(1)->filter();
+                if ($deleteIds->isNotEmpty()) {
+                    $deleted = OrdineFase::whereIn('id', $deleteIds)
+                        ->where('stato', '<=', 1)
+                        ->delete();
+                    $fasiEliminate += $deleted;
+                }
+            }
+        }
+
         if ($fasiEliminate > 0) {
             Log::info("OndaSync: eliminati $fasiEliminate duplicati");
         }
@@ -216,18 +245,38 @@ class OndaSyncService
                 $tipo = $tipiFase[$faseNome] ?? 'monofase';
                 $prioritaFase = $mappaPriorita[$faseNome] ?? 500;
 
+                // STAMPAXL106: max 2 fasi solo per cod_art multi-passaggio
+                if (str_starts_with($faseNome, 'STAMPAXL106') && in_array($codArt, [
+                    'Volumi','Vassoio','Vassoi','SPILLATI.OFFSET','SPILLATI.DIGITALE',
+                    'SOVRACOPERTA','RIVISTE.FRECCIA','riviste','RIVISTA.FRECCIA.128PP',
+                    'RICETTARI','Raccoglitori','Quaderni','Opuscoli','Libro.di.bordo',
+                    'Libricino','LibriBN','Libri','INSERTO.RIVISTA.NOTE.4pp',
+                    'I.Volumi','I.riviste','I.Raccoglitori','I.Quaderni','I.Poster',
+                    'I.Opuscoli','I.Menu','I.Libricino','I.Libri','I.copertina',
+                    'I.cataloghi','I.cartoline','I.Calendari.da.Tavolo',
+                    'I.Calendari.da.Muro','I.Calendari','I.Block.Notes',
+                    'I.Blocchi.autocopianti','I.Blocchi','I.Bilanci',
+                    'Espositori.da.Terra','Espositori.da.banco','Depliant','COPERTINA',
+                    'cataloghi','Calendari.da.Tavolo','Calendari.da.Muro','Calendari',
+                    'BROSSURATI.OFFSET','BROSSURATI.DIGITALE','brochure','Block.Notes',
+                    'Blocchi.Mod.TI','Blocchi.Mod.R1','Blocchi.Mod.K','Blocchi.Mod.CH69',
+                    'Blocchi.autocopianti.M40a','Blocchi.autocopianti','Blocchi','Bilanci',
+                ])) {
+                    $tipo = 'max 2 fasi';
+                }
+
                 $reparto = Reparto::firstOrCreate(['nome' => $repartoNome]);
                 $faseCatalogo = FasiCatalogo::firstOrCreate(
                     ['nome' => $faseNome],
                     ['reparto_id' => $reparto->id]
                 );
 
-                // Dedup fustella per commessa: 1 sola per commessa (la fustella fisica è condivisa)
-                if (in_array($repartoNome, ['fustella piana', 'fustella cilindrica'])) {
-                    $chiaveDedup = $commessa . '|' . $faseNome;
+                // Dedup fustella per commessa: 1 sola per commessa per reparto (la fustella fisica è condivisa)
+                if (in_array($repartoNome, ['fustella piana', 'fustella cilindrica', 'fustella'])) {
+                    $chiaveDedup = $commessa . '|fust|' . $repartoNome;
                     if (isset($dedupPerCommessa[$chiaveDedup])) continue;
 
-                    $existsInCommessa = OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
+                    $existsInCommessa = OrdineFase::whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', $reparto->id))
                         ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
                         ->exists();
 
@@ -236,7 +285,7 @@ class OndaSyncService
                         // Aggiorna scarti_previsti se mancante su fase esistente
                         $scartiValue = $scartiMacchine[trim($riga->CodMacchina ?? '')] ?? null;
                         if ($scartiValue !== null) {
-                            OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
+                            OrdineFase::whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', $reparto->id))
                                 ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
                                 ->whereNull('scarti_previsti')
                                 ->update(['scarti_previsti' => $scartiValue]);
@@ -557,7 +606,7 @@ class OndaSyncService
             'FUSTBOBSTRILIEVI' => 'fustella piana',
             'FUSTSTELG33.44' => 'fustella cilindrica',
             'FUSTSTELP25.35' => 'fustella cilindrica',
-            'FUSTIML75X106' => 'fustella',
+            'FUSTIML75X106' => 'fustella piana',
             'FUSTELLATURA72X51' => 'fustella',
             'FINESTRATURA.INT' => 'finestre',
             'INCOLLAGGIO.PATTINA' => 'legatoria',
@@ -765,14 +814,14 @@ class OndaSyncService
             // max 2 fasi
             'STAMPAINDIGO' => 'monofase',
             'STAMPAINDIGOBN' => 'monofase',
-            'STAMPAXL106' => 'max 2 fasi',
-            'STAMPAXL106.1' => 'max 2 fasi',
-            'STAMPAXL106.2' => 'max 2 fasi',
-            'STAMPAXL106.3' => 'max 2 fasi',
-            'STAMPAXL106.4' => 'max 2 fasi',
-            'STAMPAXL106.5' => 'max 2 fasi',
-            'STAMPAXL106.6' => 'max 2 fasi',
-            'STAMPAXL106.7' => 'max 2 fasi',
+            'STAMPAXL106' => 'monofase',
+            'STAMPAXL106.1' => 'monofase',
+            'STAMPAXL106.2' => 'monofase',
+            'STAMPAXL106.3' => 'monofase',
+            'STAMPAXL106.4' => 'monofase',
+            'STAMPAXL106.5' => 'monofase',
+            'STAMPAXL106.6' => 'monofase',
+            'STAMPAXL106.7' => 'monofase',
             'STAMPAINDIGOBIANCO' => 'monofase',
 
             // Nuove fasi EXT e altre → monofase
