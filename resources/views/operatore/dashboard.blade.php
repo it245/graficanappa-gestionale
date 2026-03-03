@@ -5,6 +5,7 @@
    <style>
     html, body {
         margin:0; padding:0; width:100%;
+        overflow-x: hidden;
     }
     h2, p { margin-left:8px; margin-right:8px; }
     .top-bar {
@@ -86,8 +87,7 @@
         align-items: center;
     }
     .reparto-body {
-        overflow-x: auto;
-        overflow-y: visible;
+        overflow: hidden;
     }
 
     /* Lampeggio tasto Avvia quando stato = 2 */
