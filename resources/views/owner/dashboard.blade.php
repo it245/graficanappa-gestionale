@@ -1354,9 +1354,11 @@ document.addEventListener('DOMContentLoaded', () => {
     let isSelecting = false;
     let startX = 0, startY = 0;
     let currentX = 0, currentY = 0;
+    let clientY = 0; // viewport Y per auto-scroll
     let selectionBox = null;
     let rafPending = false;
     let cachedRects = [];
+    let autoScrollTimer = null;
 
     function cacheRects() {
         const sx = window.scrollX, sy = window.scrollY;
@@ -1399,6 +1401,33 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function autoScroll() {
+        if (!isSelecting) return;
+        const edge = 50; // px dal bordo per attivare scroll
+        const speed = 8;
+        let scrolled = false;
+
+        if (clientY > window.innerHeight - edge) {
+            window.scrollBy(0, speed);
+            currentY += speed;
+            scrolled = true;
+        } else if (clientY < edge) {
+            window.scrollBy(0, -speed);
+            currentY -= speed;
+            scrolled = true;
+        }
+
+        if (scrolled) {
+            cacheRects();
+            if (!rafPending) {
+                rafPending = true;
+                requestAnimationFrame(updateSelection);
+            }
+        }
+
+        autoScrollTimer = requestAnimationFrame(autoScroll);
+    }
+
     // Doppio click/tap = avvia selezione per stampa
     function startSelection(x, y) {
         isSelecting = true;
@@ -1415,12 +1444,15 @@ document.addEventListener('DOMContentLoaded', () => {
         selectionBox.style.left = '0';
         selectionBox.style.top = '0';
         document.body.appendChild(selectionBox);
+
+        autoScrollTimer = requestAnimationFrame(autoScroll);
     }
 
-    function moveSelection(x, y) {
+    function moveSelection(x, y, cy) {
         if (!isSelecting) return;
         currentX = x;
         currentY = y;
+        clientY = cy;
         if (!rafPending) {
             rafPending = true;
             requestAnimationFrame(updateSelection);
@@ -1430,6 +1462,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function endSelection() {
         isSelecting = false;
         rafPending = false;
+        if (autoScrollTimer) {
+            cancelAnimationFrame(autoScrollTimer);
+            autoScrollTimer = null;
+        }
         if (selectionBox) {
             selectionBox.remove();
             selectionBox = null;
@@ -1443,7 +1479,7 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
     });
 
-    document.addEventListener('mousemove', e => moveSelection(e.pageX, e.pageY));
+    document.addEventListener('mousemove', e => moveSelection(e.pageX, e.pageY, e.clientY));
     document.addEventListener('mouseup', endSelection);
 
     // Touch: doppio tap avvia, drag seleziona
@@ -1464,7 +1500,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('touchmove', e => {
         if (!isSelecting) return;
         const touch = e.touches[0];
-        moveSelection(touch.pageX, touch.pageY);
+        moveSelection(touch.pageX, touch.pageY, touch.clientY);
         e.preventDefault();
     }, { passive: false });
 
