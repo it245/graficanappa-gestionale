@@ -38,13 +38,13 @@ class FasiCatalogoSeeder extends Seeder
             'STAMPAXL106.7' => 'stampa offset',
 
             // DIGITALE
-            'FOIL.MGI.30M' => 'digitale',
-            'FOILMGI' => 'digitale',
+            'FOIL.MGI.30M' => 'finitura digitale',
+            'FOILMGI' => 'finitura digitale',
             'STAMPAINDIGO' => 'digitale',
             'STAMPAINDIGOBN' => 'digitale',
             'UVSPOT.MGI.30M' => 'esterno',
             'UVSPOT.MGI.9M' => 'esterno',
-            'ZUND' => 'digitale',
+            'ZUND' => 'finitura digitale',
 
             // FUSTELLA
             'FUSTBIML75X106' => 'fustella piana',

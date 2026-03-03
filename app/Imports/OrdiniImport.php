@@ -157,8 +157,8 @@ private function convertiData($valore) {
     'FIN03' => 'legatoria',
     'FIN04' => 'legatoria',
 
-    'FOIL.MGI.30M' => 'digitale',
-    'FOILMGI' => 'digitale',
+    'FOIL.MGI.30M' => 'finitura digitale',
+    'FOILMGI' => 'finitura digitale',
 
     'FUST.STARPACK.74X104' => 'esterno',
     'FUSTBIML75X106' => 'fustella piana',
@@ -243,7 +243,7 @@ private function convertiData($valore) {
     'UVSPOTEST' => 'esterno',
     'UVSPOTSPESSEST' => 'esterno',
 
-    'ZUND' => 'digitale',
+    'ZUND' => 'finitura digitale',
     'APPL.CORDONCINO0,035' => 'legatoria',
 
     // Nuove fasi
