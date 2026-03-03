@@ -64,7 +64,7 @@ return new class extends Migration
                 ->pluck('ordine_fasi.id');
 
             if ($idsToDelete->isNotEmpty()) {
-                DB::table('fase_operatore')->whereIn('ordine_fase_id', $idsToDelete)->delete();
+                DB::table('fase_operatore')->whereIn('fase_id', $idsToDelete)->delete();
                 $deleted = DB::table('ordine_fasi')->whereIn('id', $idsToDelete)->delete();
                 $totaleEliminati += $deleted;
             }
