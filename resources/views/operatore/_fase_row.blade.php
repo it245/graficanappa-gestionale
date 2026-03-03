@@ -45,14 +45,10 @@
     <td>{{ $fase->ordine->um ?? '-' }}</td>
     <td>{{ $fase->ordine->data_prevista_consegna ? \Carbon\Carbon::parse($fase->ordine->data_prevista_consegna)->format('d/m/Y') : '-' }}</td>
     <td>
-        @if($fase->stato == 2)
-            <input type="number" min="0" style="width:70px; padding:2px 4px; font-size:13px; border:1px solid #ced4da; border-radius:3px;"
-                   value="{{ $fase->qta_prod ?? '' }}"
-                   onchange="salvaQtaProd({{ $fase->id }}, this.value)"
-                   onkeydown="if(event.key==='Enter'){this.blur();}">
-        @else
-            {{ $fase->qta_prod ?? '-' }}
-        @endif
+        <input type="number" min="0" style="width:70px; padding:2px 4px; font-size:13px; border:1px solid #ced4da; border-radius:3px;"
+               value="{{ $fase->qta_prod ?? '' }}"
+               onchange="salvaQtaProd({{ $fase->id }}, this.value)"
+               onkeydown="if(event.key==='Enter'){this.blur();}">
     </td>
     <td>{{ $fase->ordine->cod_carta ?? '-' }}</td>
     <td>{{ $fase->ordine->carta ?? '-' }}</td>
