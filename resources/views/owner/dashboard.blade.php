@@ -1510,9 +1510,9 @@ document.addEventListener('DOMContentLoaded', () => {
         commessa: row.cells[0].innerText.toLowerCase(),
         stato: row.cells[1].innerText.toLowerCase(),
         cliente: row.cells[2].innerText.toLowerCase(),
-        descrizione: row.cells[4].innerText.toLowerCase(),
-        fase: row.cells[14].innerText.toLowerCase(),
-        reparto: row.cells[15].innerText.toLowerCase()
+        descrizione: row.cells[6].innerText.toLowerCase(),
+        fase: row.cells[16].innerText.toLowerCase(),
+        reparto: row.cells[17].innerText.toLowerCase()
     }));
 
     function parseValues(input) {
