@@ -401,7 +401,10 @@ th:nth-child(23), td:nth-child(23) {
                             -
                         @endif
                     </td>
-                    <td><span class="badge-stato">{{ $fase->stato == 4 ? 'Consegnata' : 'Terminata' }}</span></td>
+                    <td contenteditable data-fase-id="{{ $fase->id }}" onblur="aggiornaStato({{ $fase->id }}, this.innerText)"
+                        style="background:{{ $fase->stato == 4 ? '#c3c3c3' : '#d1e7dd' }};font-weight:bold;cursor:pointer;">
+                        {{ $fase->stato }}
+                    </td>
                 </tr>
             @empty
                 <tr>
@@ -414,6 +417,40 @@ th:nth-child(23), td:nth-child(23) {
 </div>
 
 <script>
+function csrfToken() {
+    return document.querySelector('meta[name="csrf-token"]')?.content || '';
+}
+
+function aggiornaStato(faseId, testo) {
+    const nuovoStato = parseInt(testo.trim());
+    if (isNaN(nuovoStato) || nuovoStato < 0 || nuovoStato > 4) {
+        alert('Stato non valido. Usa: 0, 1, 2, 3, 4');
+        return;
+    }
+    fetch('{{ route("owner.aggiornaStato") }}', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': csrfToken(),
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ fase_id: faseId, stato: nuovoStato })
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (!d.success) {
+            alert('Errore: ' + (d.messaggio || ''));
+        } else {
+            const bgMap = {0:'#e9ecef', 1:'#cfe2ff', 2:'#fff3cd', 3:'#d1e7dd', 4:'#c3c3c3'};
+            const el = document.querySelector('td[data-fase-id="' + faseId + '"]');
+            if (el) {
+                el.style.background = bgMap[nuovoStato] || '#d1e7dd';
+                el.innerText = nuovoStato;
+            }
+        }
+    })
+    .catch(e => alert('Errore di rete'));
+}
+
 document.getElementById('searchInput').addEventListener('keyup', function() {
     const filtro = this.value.toLowerCase();
     document.querySelectorAll('tbody tr').forEach(riga => {
