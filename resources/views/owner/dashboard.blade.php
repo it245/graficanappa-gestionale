@@ -579,12 +579,12 @@ tr:hover td {
             </span>
         </a>
 
-        {{-- Note Spedizione --}}
+        {{-- Note Consegne --}}
         <a href="#" class="sidebar-item" data-bs-toggle="modal" data-bs-target="#modalNoteSpedizione" onclick="closeSidebar(); caricaNoteSpedizione();">
             <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0d6efd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
             </svg>
-            <span>Note Spedizione</span>
+            <span>Note Consegne</span>
         </a>
 
         {{-- Sync Onda --}}
@@ -1621,7 +1621,7 @@ document.addEventListener('click', function(e){
     }
 });
 
-// === Note Spedizione (readonly per owner) ===
+// === Note Consegne (readonly per owner) ===
 function caricaNoteSpedizione() {
     fetch('{{ route("owner.noteSpedizione") }}?data={{ now()->toDateString() }}', {
         headers: {'Accept': 'application/json'}
@@ -1638,12 +1638,12 @@ function caricaNoteSpedizione() {
 }
 </script>
 
-<!-- Modale Note Spedizione -->
+<!-- Modale Note Consegne -->
 <div class="modal fade" id="modalNoteSpedizione" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header" style="background:#0d6efd; color:#fff;">
-                <h5 class="modal-title">Note Spedizione - {{ now()->format('d/m/Y') }}</h5>
+                <h5 class="modal-title">Note Consegne - {{ now()->format('d/m/Y') }}</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">

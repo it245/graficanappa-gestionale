@@ -229,7 +229,7 @@
         <button class="hamburger-btn" id="hamburgerBtn" title="Menu">
             <span></span><span></span><span></span>
         </button>
-        <h2 class="mb-0">Dashboard Spedizione</h2>
+        <h2 class="mb-0">Dashboard Logistica</h2>
     </div>
     <div class="operatore-info" id="operatoreInfo">
         <img src="{{ asset('images/icons8-utente-uomo-cerchiato-50.png') }}" alt="Operatore">
@@ -298,14 +298,20 @@
     <hr style="margin:4px 18px;">
     <a href="#" class="sidebar-item" onclick="toggleNotePanel(); closeSidebar(); return false;">
         <span class="kpi-inline" style="color:#0d6efd;">&#9998;</span>
-        <span>Note giornaliere</span>
+        <span>Note consegne</span>
     </a>
+</div>
+
+<!-- Ricerca + matita note -->
+<div style="display:flex; align-items:center; gap:8px; margin:12px 8px;">
+    <input type="text" id="searchBox" class="form-control search-box" placeholder="Cerca commessa, cliente, descrizione..." style="margin:0; flex:1;">
+    <button onclick="toggleNotePanel()" title="Note consegne" style="background:none; border:none; cursor:pointer; font-size:24px; color:#0d6efd; padding:4px 8px;">&#9998;</button>
 </div>
 
 <!-- Pannello Note AM/PM -->
 <div id="notePanel" style="display:none; margin:8px; padding:12px; background:#fff; border:2px solid #0d6efd; border-radius:10px; box-shadow:0 2px 12px rgba(0,0,0,0.1);">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-        <h5 style="margin:0; color:#0d6efd;">Note Spedizione - {{ now()->format('d/m/Y') }}</h5>
+        <h5 style="margin:0; color:#0d6efd;">Note Consegne - {{ now()->format('d/m/Y') }}</h5>
         <button onclick="toggleNotePanel()" style="background:none; border:none; font-size:20px; cursor:pointer; color:#666;">&times;</button>
     </div>
     <div style="display:flex; gap:12px; flex-wrap:wrap;">
@@ -323,9 +329,6 @@
         <button onclick="salvaNote()" class="btn btn-primary btn-sm">Salva</button>
     </div>
 </div>
-
-<!-- Ricerca -->
-<input type="text" id="searchBox" class="form-control search-box" placeholder="Cerca commessa, cliente, descrizione...">
 
 <!-- Tabella DDT Emesse da Onda -->
 @if($fasiDDT->count() > 0)
