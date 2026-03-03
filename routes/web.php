@@ -46,7 +46,7 @@ Route::get('/owner/scheduling', [DashboardOwnerController::class, 'scheduling'])
 Route::get('/owner/excel-download', [DashboardOwnerController::class, 'downloadExcel'])->name('owner.downloadExcel');
 Route::get('/owner/esterne', [DashboardOwnerController::class, 'esterne'])->name('owner.esterne');
 Route::post('/owner/tracking-ddt', [DashboardSpedizioneController::class, 'trackingByDDT'])->name('owner.trackingByDDT');
-
+Route::get('/owner/note-spedizione', [DashboardSpedizioneController::class, 'noteGiornaliere'])->name('owner.noteSpedizione');
 });
 
 // Admin — login pubblico
@@ -126,6 +126,8 @@ Route::prefix('spedizione')->middleware(['operatore.auth'])->group(function() {
     Route::post('/recupera', [DashboardSpedizioneController::class, 'recuperaConsegna'])->name('spedizione.recupera');
     Route::post('/tracking', [DashboardSpedizioneController::class, 'tracking'])->name('spedizione.tracking');
     Route::post('/tracking-ddt', [DashboardSpedizioneController::class, 'trackingByDDT'])->name('spedizione.trackingByDDT');
+    Route::get('/note-giornaliere', [DashboardSpedizioneController::class, 'noteGiornaliere'])->name('spedizione.noteGiornaliere');
+    Route::post('/note-giornaliere', [DashboardSpedizioneController::class, 'salvaNotaGiornaliera'])->name('spedizione.salvaNotaGiornaliera');
 });
 
 // Tracking BRT test (accesso diretto)

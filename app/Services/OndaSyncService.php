@@ -110,6 +110,9 @@ class OndaSyncService
             return $riga->CodCommessa . '|' . $riga->CodArt . '|' . $riga->OC_Descrizione;
         });
 
+        // Track fasi fustella già create per commessa (1 sola per commessa)
+        $fustellaPerCommessa = [];
+
         foreach ($gruppi as $chiave => $righe) {
             $prima = $righe->first();
             $commessa = trim($prima->CodCommessa ?? '');
@@ -218,6 +221,19 @@ class OndaSyncService
                     ['nome' => $faseNome],
                     ['reparto_id' => $reparto->id]
                 );
+
+                // Dedup fustella per commessa: 1 sola fase per commessa
+                if (in_array($repartoNome, ['fustella piana', 'fustella cilindrica'])) {
+                    $chiaveFustella = $commessa . '|' . $faseNome;
+                    if (isset($fustellaPerCommessa[$chiaveFustella])) continue;
+
+                    $existsInCommessa = OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
+                        ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
+                        ->exists();
+
+                    $fustellaPerCommessa[$chiaveFustella] = true;
+                    if ($existsInCommessa) continue;
+                }
 
                 $dataFase = [
                     'ordine_id'        => $ordine->id,

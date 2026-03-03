@@ -127,6 +127,7 @@ $gruppi = collect($righeOnda)->groupBy(function ($riga) {
 
 $ordiniCreati = 0;
 $fasiCreate = 0;
+$fustellaPerCommessa = []; // 1 sola fase fustella per commessa
 
 foreach ($gruppi as $chiave => $righe) {
     $prima = $righe->first();
@@ -225,6 +226,23 @@ foreach ($gruppi as $chiave => $righe) {
 
         $reparto = Reparto::firstOrCreate(['nome' => $repartoNome]);
         $faseCatalogo = FasiCatalogo::firstOrCreate(['nome' => $faseNome], ['reparto_id' => $reparto->id]);
+
+        // Dedup fustella per commessa: 1 sola fase per commessa
+        if (in_array($repartoNome, ['fustella piana', 'fustella cilindrica'])) {
+            $chiaveFustella = $commessa . '|' . $faseNome;
+            if (isset($fustellaPerCommessa[$chiaveFustella])) {
+                echo "    -> Fase {$faseNome} fustella già creata per commessa, skip\n";
+                continue;
+            }
+            $existsInCommessa = OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
+                ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
+                ->exists();
+            $fustellaPerCommessa[$chiaveFustella] = true;
+            if ($existsInCommessa) {
+                echo "    -> Fase {$faseNome} fustella già esistente per commessa, skip\n";
+                continue;
+            }
+        }
 
         $dataFase = [
             'ordine_id'        => $ordine->id,

@@ -7,6 +7,7 @@ use App\Models\OrdineFase;
 use App\Models\Ordine;
 use App\Models\Reparto;
 use App\Http\Services\BrtService;
+use App\Models\NotaSpedizione;
 use Carbon\Carbon;
 
 class DashboardSpedizioneController extends Controller
@@ -400,5 +401,44 @@ class DashboardSpedizioneController extends Controller
                 'messaggio' => 'Errore server: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    public function noteGiornaliere(Request $request)
+    {
+        $data = $request->input('data', now()->toDateString());
+        $nota = NotaSpedizione::where('data', $data)->first();
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'data' => $data,
+                'contenuto_am' => $nota->contenuto_am ?? '',
+                'contenuto_pm' => $nota->contenuto_pm ?? '',
+            ]);
+        }
+
+        return response()->json([
+            'data' => $data,
+            'contenuto_am' => $nota->contenuto_am ?? '',
+            'contenuto_pm' => $nota->contenuto_pm ?? '',
+        ]);
+    }
+
+    public function salvaNotaGiornaliera(Request $request)
+    {
+        $request->validate([
+            'data' => 'required|date',
+            'contenuto_am' => 'nullable|string',
+            'contenuto_pm' => 'nullable|string',
+        ]);
+
+        NotaSpedizione::updateOrCreate(
+            ['data' => $request->data],
+            [
+                'contenuto_am' => $request->contenuto_am,
+                'contenuto_pm' => $request->contenuto_pm,
+            ]
+        );
+
+        return response()->json(['success' => true]);
     }
 }

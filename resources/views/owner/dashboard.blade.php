@@ -614,7 +614,9 @@ tr:hover td {
 
 <select id="filterReparto" multiple>
     @foreach($reparti as $id => $rep)
+        @if($rep !== 'fustella')
         <option value="{{ $rep }}">{{ $rep }}</option>
+        @endif
     @endforeach
 </select>
 <button type="button" class="btn-reset-filters" id="btnResetFilters">Rimuovi filtri</button>
