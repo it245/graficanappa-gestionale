@@ -214,7 +214,7 @@ class FieryService
      */
     public function estraiCommessaDaTitolo(string $title): ?string
     {
-        if (preg_match('/^(\d{4,6})_/', $title, $m)) {
+        if (preg_match('/^(\d{4,6})[\s_]/', $title, $m)) {
             return '00' . $m[1] . '-26';
         }
         return null;

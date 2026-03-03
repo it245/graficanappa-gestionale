@@ -110,8 +110,8 @@ class OndaSyncService
             return $riga->CodCommessa . '|' . $riga->CodArt . '|' . $riga->OC_Descrizione;
         });
 
-        // Track fasi fustella già create per commessa (1 sola per commessa)
-        $fustellaPerCommessa = [];
+        // Track fasi deduplicate per commessa (1 sola per commessa per fustella, digitale, finitura digitale)
+        $dedupPerCommessa = [];
 
         foreach ($gruppi as $chiave => $righe) {
             $prima = $righe->first();
@@ -222,16 +222,31 @@ class OndaSyncService
                     ['reparto_id' => $reparto->id]
                 );
 
-                // Dedup fustella per commessa: 1 sola fase per commessa
+                // Dedup fustella per commessa: 1 sola per commessa (la fustella fisica è condivisa)
                 if (in_array($repartoNome, ['fustella piana', 'fustella cilindrica'])) {
-                    $chiaveFustella = $commessa . '|' . $faseNome;
-                    if (isset($fustellaPerCommessa[$chiaveFustella])) continue;
+                    $chiaveDedup = $commessa . '|' . $faseNome;
+                    if (isset($dedupPerCommessa[$chiaveDedup])) continue;
 
                     $existsInCommessa = OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
                         ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
                         ->exists();
 
-                    $fustellaPerCommessa[$chiaveFustella] = true;
+                    $dedupPerCommessa[$chiaveDedup] = true;
+                    if ($existsInCommessa) continue;
+                }
+
+                // Dedup digitale/finitura digitale: 1 sola fase per commessa SE stesso articolo (cod_art + descrizione)
+                if (in_array($repartoNome, ['digitale', 'finitura digitale'])) {
+                    $chiaveDedup = $commessa . '|' . $faseNome . '|' . $codArt . '|' . $descrizione;
+                    if (isset($dedupPerCommessa[$chiaveDedup])) continue;
+
+                    $existsInCommessa = OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
+                        ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa)
+                            ->where('cod_art', $codArt)
+                            ->where('descrizione', $descrizione))
+                        ->exists();
+
+                    $dedupPerCommessa[$chiaveDedup] = true;
                     if ($existsInCommessa) continue;
                 }
 

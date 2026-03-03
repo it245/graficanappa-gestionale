@@ -127,7 +127,7 @@ $gruppi = collect($righeOnda)->groupBy(function ($riga) {
 
 $ordiniCreati = 0;
 $fasiCreate = 0;
-$fustellaPerCommessa = []; // 1 sola fase fustella per commessa
+$dedupPerCommessa = []; // 1 sola fase per commessa per fustella/digitale
 
 foreach ($gruppi as $chiave => $righe) {
     $prima = $righe->first();
@@ -227,19 +227,38 @@ foreach ($gruppi as $chiave => $righe) {
         $reparto = Reparto::firstOrCreate(['nome' => $repartoNome]);
         $faseCatalogo = FasiCatalogo::firstOrCreate(['nome' => $faseNome], ['reparto_id' => $reparto->id]);
 
-        // Dedup fustella per commessa: 1 sola fase per commessa
+        // Dedup fustella per commessa: 1 sola fase per commessa (la fustella fisica è condivisa)
         if (in_array($repartoNome, ['fustella piana', 'fustella cilindrica'])) {
-            $chiaveFustella = $commessa . '|' . $faseNome;
-            if (isset($fustellaPerCommessa[$chiaveFustella])) {
+            $chiaveDedup = $commessa . '|' . $faseNome;
+            if (isset($dedupPerCommessa[$chiaveDedup])) {
                 echo "    -> Fase {$faseNome} fustella già creata per commessa, skip\n";
                 continue;
             }
             $existsInCommessa = OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
                 ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
                 ->exists();
-            $fustellaPerCommessa[$chiaveFustella] = true;
+            $dedupPerCommessa[$chiaveDedup] = true;
             if ($existsInCommessa) {
                 echo "    -> Fase {$faseNome} fustella già esistente per commessa, skip\n";
+                continue;
+            }
+        }
+
+        // Dedup digitale/finitura digitale: 1 sola se stesso articolo (cod_art + descrizione)
+        if (in_array($repartoNome, ['digitale', 'finitura digitale'])) {
+            $chiaveDedup = $commessa . '|' . $faseNome . '|' . $codArt . '|' . $descrizione;
+            if (isset($dedupPerCommessa[$chiaveDedup])) {
+                echo "    -> Fase {$faseNome} digitale già creata per stesso articolo, skip\n";
+                continue;
+            }
+            $existsInCommessa = OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
+                ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa)
+                    ->where('cod_art', $codArt)
+                    ->where('descrizione', $descrizione))
+                ->exists();
+            $dedupPerCommessa[$chiaveDedup] = true;
+            if ($existsInCommessa) {
+                echo "    -> Fase {$faseNome} digitale già esistente per stesso articolo, skip\n";
                 continue;
             }
         }

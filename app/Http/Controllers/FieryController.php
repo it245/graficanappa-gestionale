@@ -239,7 +239,7 @@ class FieryController extends Controller
     {
         if (!$jobName) return null;
 
-        if (!preg_match('/^(\d+)_/', $jobName, $matches)) {
+        if (!preg_match('/^(\d+)[\s_]/', $jobName, $matches)) {
             return null;
         }
 
