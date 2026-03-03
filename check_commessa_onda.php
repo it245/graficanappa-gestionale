@@ -49,6 +49,33 @@ if (empty($righe)) {
 
 echo "Trovate " . count($righe) . " righe\n\n";
 
+// Pre-fetch scarti macchine
+$scartiMacchine = collect(DB::connection('onda')->select(
+    "SELECT CodMacchina, OC_FogliScartoIniz FROM PRDMacchinari WHERE OC_FogliScartoIniz > 0"
+))->pluck('OC_FogliScartoIniz', 'CodMacchina')->toArray();
+
+// Controlla se QtaDaLavorare include già scarti: query campo FogliScarto nella fase
+$righeConScarti = DB::connection('onda')->select("
+    SELECT f.CodFase, f.CodMacchina, f.QtaDaLavorare, f.FogliScarto, f.QtaNetta
+    FROM ATTDocTeste t
+    INNER JOIN PRDDocTeste p ON t.CodCommessa = p.CodCommessa
+    LEFT JOIN PRDDocFasi f ON p.IdDoc = f.IdDoc
+    WHERE t.TipoDocumento = '2'
+      AND t.CodCommessa LIKE ?
+      AND f.CodFase IS NOT NULL
+    ORDER BY f.CodFase
+", [$commessaArg . '%']);
+
+if (!empty($righeConScarti)) {
+    echo "=== Dettaglio scarti per fase ===\n";
+    foreach ($righeConScarti as $rs) {
+        $fogliScarto = $rs->FogliScarto ?? 'NULL';
+        $qtaNetta = $rs->QtaNetta ?? 'NULL';
+        echo "  {$rs->CodFase} ({$rs->CodMacchina}): QtaDaLavorare={$rs->QtaDaLavorare} | FogliScarto={$fogliScarto} | QtaNetta={$qtaNetta}\n";
+    }
+    echo "\n";
+}
+
 $currentArt = null;
 foreach ($righe as $r) {
     if ($currentArt !== $r->CodArt) {
@@ -58,7 +85,8 @@ foreach ($righe as $r) {
     }
     if ($r->CodFase) {
         $macchina = $r->CodMacchina ? " (macchina: {$r->CodMacchina})" : '';
-        echo "    Fase: {$r->CodFase}{$macchina} | QtaDaLavorare: {$r->QtaDaLavorare} {$r->UMFase}\n";
+        $scarti = isset($scartiMacchine[trim($r->CodMacchina ?? '')]) ? " | Scarti macchina: " . $scartiMacchine[trim($r->CodMacchina)] : '';
+        echo "    Fase: {$r->CodFase}{$macchina} | QtaDaLavorare: {$r->QtaDaLavorare} {$r->UMFase}{$scarti}\n";
     }
 }
 
@@ -73,6 +101,7 @@ foreach ($ordini as $ordine) {
     $fasi = \App\Models\OrdineFase::where('ordine_id', $ordine->id)->with('faseCatalogo.reparto')->get();
     foreach ($fasi as $fase) {
         $rep = optional(optional($fase->faseCatalogo)->reparto)->nome ?? '?';
-        echo "  Fase: {$fase->fase} | Stato: {$fase->stato} | QtaFase: {$fase->qta_fase} | QtaProd: {$fase->qta_prod} | Reparto: {$rep}\n";
+        $scarti = $fase->scarti_previsti ? " | ScartiPrev: {$fase->scarti_previsti}" : '';
+        echo "  Fase: {$fase->fase} | Stato: {$fase->stato} | QtaFase: {$fase->qta_fase} | QtaProd: {$fase->qta_prod} | Reparto: {$rep}{$scarti}\n";
     }
 }
