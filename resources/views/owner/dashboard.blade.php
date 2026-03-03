@@ -1355,10 +1355,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let startClientX = 0, startClientY = 0, startScrollX = 0, startScrollY = 0;
     let mouseClientX = 0, mouseClientY = 0;
     let selectionBox = null;
-    let rafPending = false;
+    let pollTimer = null;
 
     function updateSelection() {
-        rafPending = false;
         if (!selectionBox) return;
 
         // Punto di partenza in coordinate viewport attuali
@@ -1372,9 +1371,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const vBottom = Math.max(sy, mouseClientY);
 
         // Posiziona il box visuale (in coordinate pagina per position:absolute)
-        const pLeft = vLeft + window.scrollX;
-        const pTop = vTop + window.scrollY;
-        selectionBox.style.transform = 'translate(' + pLeft + 'px,' + pTop + 'px)';
+        selectionBox.style.transform = 'translate(' + (vLeft + window.scrollX) + 'px,' + (vTop + window.scrollY) + 'px)';
         selectionBox.style.width = (vRight - vLeft) + 'px';
         selectionBox.style.height = (vBottom - vTop) + 'px';
 
@@ -1388,13 +1385,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 allCells[i].classList.add('selected');
                 selectedCells.add(allCells[i]);
             }
-        }
-    }
-
-    function scheduleUpdate() {
-        if (!rafPending) {
-            rafPending = true;
-            requestAnimationFrame(updateSelection);
         }
     }
 
@@ -1413,22 +1403,22 @@ document.addEventListener('DOMContentLoaded', () => {
         selectionBox.style.left = '0';
         selectionBox.style.top = '0';
         document.body.appendChild(selectionBox);
+
+        // Polling: aggiorna la selezione ogni 30ms (copre scroll, drag, tutto)
+        pollTimer = setInterval(updateSelection, 30);
     }
 
     function endSelection() {
         isSelecting = false;
-        rafPending = false;
+        if (pollTimer) {
+            clearInterval(pollTimer);
+            pollTimer = null;
+        }
         if (selectionBox) {
             selectionBox.remove();
             selectionBox = null;
         }
     }
-
-    // Scroll: aggiorna selezione
-    window.addEventListener('scroll', () => {
-        if (!isSelecting) return;
-        scheduleUpdate();
-    });
 
     // Mouse: doppio click avvia, drag seleziona
     table.addEventListener('dblclick', e => {
@@ -1440,10 +1430,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('mousemove', e => {
         mouseClientX = e.clientX;
         mouseClientY = e.clientY;
-        if (!isSelecting) return;
-        scheduleUpdate();
     });
-    document.addEventListener('mouseup', endSelection);
+    document.addEventListener('mouseup', () => { if (isSelecting) endSelection(); });
 
     // Touch: doppio tap avvia, drag seleziona
     let lastTap = 0;
@@ -1464,11 +1452,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const touch = e.touches[0];
         mouseClientX = touch.clientX;
         mouseClientY = touch.clientY;
-        scheduleUpdate();
         e.preventDefault();
     }, { passive: false });
 
-    document.addEventListener('touchend', endSelection);
+    document.addEventListener('touchend', () => { if (isSelecting) endSelection(); });
 
     // STAMPA SOLO LE CELLE NEL BOX
     document.getElementById('printButton').addEventListener('click', () => {
