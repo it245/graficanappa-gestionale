@@ -16,6 +16,12 @@ html, body {
     overflow-x: hidden;
 }
 
+#tabellaOrdini thead th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
 /* Rimuovi padding del container Bootstrap */
 .container-fluid {
     padding-left: 1px !important;
@@ -708,8 +714,8 @@ tr:hover td {
 @endphp
 
     {{-- TABELLA --}}
-    <div>
-        <table id="tabellaOrdini" class="table table-bordered table-sm table-striped">
+    <div style="width:100%; max-width:100%; overflow-x:auto; overflow-y:auto; max-height:calc(100vh - 220px);">
+        <table id="tabellaOrdini" class="table table-bordered table-sm table-striped" style="white-space:nowrap;">
             <thead class="table-dark">
                 <tr>
                     <th>Commessa</th>
@@ -722,14 +728,14 @@ tr:hover td {
                     <th>Qta</th>
                     <th>UM</th>
                     <th>Priorità</th>
+                    <th>Fase</th>
+                    <th>Reparto</th>
                     <th>Data Registrazione</th>
                     <th>Data Prevista Consegna</th>
                     <th>Cod Carta</th>
                     <th>Carta</th>
                     <th>Qta Carta</th>
                     <th>UM Carta</th>
-                    <th>Fase</th>
-                    <th>Reparto</th>
                     <th>Operatori</th>
                     <th>Qta Prod.</th>
                     <th>Esterno</th>
@@ -773,14 +779,14 @@ tr:hover td {
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'qta_richiesta', this.innerText)">{{ $fase->ordine->qta_richiesta ?? '-' }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'um', this.innerText)">{{ $fase->ordine->um ?? '-' }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'priorita', this.innerText)">{{ $fase->priorita !== null ? number_format($fase->priorita, 2) : '-' }}</td>
+                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'fase', this.innerText)">{{ $fase->faseCatalogo->nome_display ?? '-' }}</td>
+                    <td>{{ $fase->faseCatalogo->reparto->nome ?? '-' }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_registrazione', this.innerText)">{{ formatItalianDate($fase->ordine->data_registrazione) }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_prevista_consegna', this.innerText)">{{ formatItalianDate($fase->ordine->data_prevista_consegna) }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'cod_carta', this.innerText)">{{ $fase->ordine->cod_carta ?? '-' }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'carta', this.innerText)">{{ $fase->ordine->carta ?? '-' }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'qta_carta', this.innerText)">{{ $fase->ordine->qta_carta ?? '-' }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'UM_carta', this.innerText)">{{ $fase->ordine->UM_carta ?? '-' }}</td>
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'fase', this.innerText)">{{ $fase->faseCatalogo->nome_display ?? '-' }}</td>
-                    <td>{{ $fase->faseCatalogo->reparto->nome ?? '-' }}</td>
                     <td>
                         @forelse($fase->operatori as $op)
                             {{ $op->nome }}<br>
