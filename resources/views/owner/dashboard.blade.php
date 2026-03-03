@@ -708,7 +708,7 @@ tr:hover td {
 @endphp
 
     {{-- TABELLA --}}
-    <div style="width:100%; overflow-x:auto;">
+    <div id="tableScroll" style="width:100%; overflow-x:auto;">
         <table id="tabellaOrdini" class="table table-bordered table-sm table-striped" style="white-space:nowrap;">
             <thead class="table-dark">
                 <tr>
@@ -805,7 +805,52 @@ tr:hover td {
             </tbody>
         </table>
     </div>
+    {{-- Scrollbar fissa in fondo allo schermo --}}
+    <div id="fakeScrollbar" style="position:fixed; bottom:0; left:0; right:0; overflow-x:auto; overflow-y:hidden; z-index:1050; background:transparent;">
+        <div id="fakeScrollInner" style="height:1px;"></div>
+    </div>
 </div>
+<style>
+    #tableScroll {
+        overflow-x: auto;
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none; /* IE/Edge */
+    }
+    #tableScroll::-webkit-scrollbar {
+        display: none; /* Chrome/Safari */
+    }
+</style>
+<script>
+(function(){
+    var tableWrap = document.getElementById('tableScroll');
+    var fakeBar = document.getElementById('fakeScrollbar');
+    var fakeInner = document.getElementById('fakeScrollInner');
+    var syncing = false;
+
+    function syncWidths() {
+        fakeInner.style.width = tableWrap.scrollWidth + 'px';
+        fakeBar.style.display = tableWrap.scrollWidth > tableWrap.clientWidth ? '' : 'none';
+    }
+
+    tableWrap.addEventListener('scroll', function() {
+        if (syncing) return;
+        syncing = true;
+        fakeBar.scrollLeft = tableWrap.scrollLeft;
+        syncing = false;
+    });
+
+    fakeBar.addEventListener('scroll', function() {
+        if (syncing) return;
+        syncing = true;
+        tableWrap.scrollLeft = fakeBar.scrollLeft;
+        syncing = false;
+    });
+
+    syncWidths();
+    window.addEventListener('resize', syncWidths);
+    setTimeout(syncWidths, 500);
+})();
+</script>
 {{-- MODALE SPEDIZIONI OGGI --}}
 <div class="modal fade" id="modalSpedizioniOggi" tabindex="-1">
     <div class="modal-dialog modal-xl">
@@ -1521,8 +1566,8 @@ document.addEventListener('DOMContentLoaded', () => {
         stato: row.cells[1].innerText.toLowerCase(),
         cliente: row.cells[2].innerText.toLowerCase(),
         descrizione: row.cells[6].innerText.toLowerCase(),
-        fase: row.cells[16].innerText.toLowerCase(),
-        reparto: row.cells[17].innerText.toLowerCase()
+        fase: row.cells[10].innerText.toLowerCase(),
+        reparto: row.cells[11].innerText.toLowerCase()
     }));
 
     function parseValues(input) {
