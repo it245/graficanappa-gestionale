@@ -14,7 +14,7 @@ class FieryController extends Controller
     {
         $status = $fiery->getServerStatus();
 
-        if ($status && ($status['stampa']['documento'] ?? null)) {
+        if ($status) {
             try {
                 $syncService->sincronizza();
             } catch (\Exception $e) {
@@ -46,12 +46,10 @@ class FieryController extends Controller
             ]);
         }
 
-        if ($status['stampa']['documento'] ?? null) {
-            try {
-                $syncService->sincronizza();
-            } catch (\Exception $e) {
-                // Non bloccare il polling
-            }
+        try {
+            $syncService->sincronizza();
+        } catch (\Exception $e) {
+            // Non bloccare il polling
         }
 
         $status['commessa'] = $this->cercaCommessa($status['stampa']['documento'] ?? null);

@@ -153,12 +153,12 @@ class FierySyncService
 
         // Trova tutte le fasi digitali in stato 0, 1 o 2 per le commesse con job completati
         $commesseCodes = array_keys($completatiPerCommessa);
-        $ordiniIds = Ordine::whereIn('commessa', $commesseCodes)->pluck('id', 'commessa');
+        $ordiniIds = Ordine::whereIn('commessa', $commesseCodes)->pluck('id');
 
         if ($ordiniIds->isEmpty()) return;
 
         $fasiDigitali = OrdineFase::whereIn('stato', [0, 1, 2])
-            ->whereIn('ordine_id', $ordiniIds->values())
+            ->whereIn('ordine_id', $ordiniIds)
             ->where(function ($q) {
                 $q->whereHas('faseCatalogo', function ($sub) {
                     $sub->where('reparto_id', self::REPARTO_DIGITALE_ID);
