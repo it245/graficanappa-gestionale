@@ -242,6 +242,11 @@ public function aggiornaCampo(Request $request)
     $fase->{$request->campo} = $request->valore;
     $fase->save();
 
+    // Se aggiornato qta_prod, controlla se la fase è completata
+    if ($request->campo === 'qta_prod') {
+        \App\Services\FaseStatoService::controllaCompletamento($fase->id);
+    }
+
     return response()->json(['success' => true]);
 }
 

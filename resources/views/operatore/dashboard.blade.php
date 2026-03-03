@@ -86,7 +86,8 @@
         align-items: center;
     }
     .reparto-body {
-        overflow: hidden;
+        overflow-x: auto;
+        overflow-y: visible;
     }
 
     /* Lampeggio tasto Avvia quando stato = 2 */
@@ -410,6 +411,30 @@ function resetFiltri(el) {
     bar.querySelector('.filtro-cliente').value = '';
     bar.querySelector('.filtro-descrizione').value = '';
     applicaFiltri(el);
+}
+
+function salvaQtaProd(faseId, valore) {
+    fetch('{{ route("produzione.aggiornaCampo") }}', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': window.csrfToken(),
+            'X-Op-Token': window.opToken(),
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({ fase_id: faseId, campo: 'qta_prod', valore: valore })
+    }).then(function(r) {
+        if (r.ok) {
+            // Flash verde breve sull'input
+            var input = document.querySelector('#fase-' + faseId + ' input[type="number"]');
+            if (input) {
+                input.style.borderColor = '#28a745';
+                setTimeout(function() { input.style.borderColor = '#ced4da'; }, 1500);
+            }
+        } else {
+            alert('Errore nel salvataggio');
+        }
+    }).catch(function() { alert('Errore di connessione'); });
 }
 
 </script>
