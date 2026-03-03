@@ -295,6 +295,33 @@
         <span class="kpi-inline" style="color:#6c757d;">{{ $storicoConsegne->count() }}</span>
         <span>Storico consegne</span>
     </a>
+    <hr style="margin:4px 18px;">
+    <a href="#" class="sidebar-item" onclick="toggleNotePanel(); closeSidebar(); return false;">
+        <span class="kpi-inline" style="color:#0d6efd;">&#9998;</span>
+        <span>Note giornaliere</span>
+    </a>
+</div>
+
+<!-- Pannello Note AM/PM -->
+<div id="notePanel" style="display:none; margin:8px; padding:12px; background:#fff; border:2px solid #0d6efd; border-radius:10px; box-shadow:0 2px 12px rgba(0,0,0,0.1);">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <h5 style="margin:0; color:#0d6efd;">Note Spedizione - {{ now()->format('d/m/Y') }}</h5>
+        <button onclick="toggleNotePanel()" style="background:none; border:none; font-size:20px; cursor:pointer; color:#666;">&times;</button>
+    </div>
+    <div style="display:flex; gap:12px; flex-wrap:wrap;">
+        <div style="flex:1; min-width:250px;">
+            <label style="font-weight:bold; color:#198754;">AM (Mattina)</label>
+            <textarea id="notaAM" rows="5" class="form-control" style="border-color:#198754; font-size:14px;" placeholder="Cose da fare la mattina..."></textarea>
+        </div>
+        <div style="flex:1; min-width:250px;">
+            <label style="font-weight:bold; color:#fd7e14;">PM (Pomeriggio)</label>
+            <textarea id="notaPM" rows="5" class="form-control" style="border-color:#fd7e14; font-size:14px;" placeholder="Cose da fare il pomeriggio..."></textarea>
+        </div>
+    </div>
+    <div style="margin-top:8px; display:flex; justify-content:space-between; align-items:center;">
+        <span id="noteSaveStatus" style="font-size:12px; color:#6c757d;"></span>
+        <button onclick="salvaNote()" class="btn btn-primary btn-sm">Salva</button>
+    </div>
 </div>
 
 <!-- Ricerca -->
@@ -1144,5 +1171,59 @@ document.getElementById('modalBRT').addEventListener('shown.bs.modal', function(
         caricaTuttiTrackingBRT();
     }
 });
+
+// === Note giornaliere AM/PM ===
+function toggleNotePanel() {
+    var panel = document.getElementById('notePanel');
+    if (panel.style.display === 'none') {
+        panel.style.display = 'block';
+        caricaNote();
+    } else {
+        panel.style.display = 'none';
+    }
+}
+
+function caricaNote() {
+    fetch('{{ route("spedizione.noteGiornaliere") }}?data={{ now()->toDateString() }}', {
+        headers: {'Accept': 'application/json'}
+    })
+    .then(r => r.json())
+    .then(d => {
+        document.getElementById('notaAM').value = d.contenuto_am || '';
+        document.getElementById('notaPM').value = d.contenuto_pm || '';
+        document.getElementById('noteSaveStatus').textContent = '';
+    })
+    .catch(() => {});
+}
+
+function salvaNote() {
+    var btn = event.target;
+    btn.disabled = true;
+    fetch('{{ route("spedizione.salvaNotaGiornaliera") }}', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': csrfToken(),
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+            data: '{{ now()->toDateString() }}',
+            contenuto_am: document.getElementById('notaAM').value,
+            contenuto_pm: document.getElementById('notaPM').value
+        })
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (d.success) {
+            document.getElementById('noteSaveStatus').textContent = 'Salvato alle ' + new Date().toLocaleTimeString('it-IT');
+            document.getElementById('noteSaveStatus').style.color = '#198754';
+        }
+    })
+    .catch(() => {
+        document.getElementById('noteSaveStatus').textContent = 'Errore salvataggio';
+        document.getElementById('noteSaveStatus').style.color = '#dc3545';
+    })
+    .finally(() => { btn.disabled = false; });
+}
 </script>
 @endsection

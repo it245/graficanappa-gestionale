@@ -579,6 +579,14 @@ tr:hover td {
             </span>
         </a>
 
+        {{-- Note Spedizione --}}
+        <a href="#" class="sidebar-item" data-bs-toggle="modal" data-bs-target="#modalNoteSpedizione" onclick="closeSidebar(); caricaNoteSpedizione();">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0d6efd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+            <span>Note Spedizione</span>
+        </a>
+
         {{-- Sync Onda --}}
         <form method="POST" action="{{ route('owner.syncOnda') }}" style="margin:0;" onsubmit="this.querySelector('button').disabled=true;">
             @csrf
@@ -1612,5 +1620,43 @@ document.addEventListener('click', function(e){
         document.getElementById('operatorePopup').style.display='none';
     }
 });
+
+// === Note Spedizione (readonly per owner) ===
+function caricaNoteSpedizione() {
+    fetch('{{ route("owner.noteSpedizione") }}?data={{ now()->toDateString() }}', {
+        headers: {'Accept': 'application/json'}
+    })
+    .then(r => r.json())
+    .then(d => {
+        document.getElementById('ownerNotaAM').textContent = d.contenuto_am || '(nessuna nota)';
+        document.getElementById('ownerNotaPM').textContent = d.contenuto_pm || '(nessuna nota)';
+    })
+    .catch(() => {
+        document.getElementById('ownerNotaAM').textContent = 'Errore caricamento';
+        document.getElementById('ownerNotaPM').textContent = 'Errore caricamento';
+    });
+}
 </script>
+
+<!-- Modale Note Spedizione -->
+<div class="modal fade" id="modalNoteSpedizione" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#0d6efd; color:#fff;">
+                <h5 class="modal-title">Note Spedizione - {{ now()->format('d/m/Y') }}</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom:12px;">
+                    <label style="font-weight:bold; color:#198754;">AM (Mattina)</label>
+                    <div id="ownerNotaAM" style="background:#f8f9fa; border:1px solid #dee2e6; border-radius:6px; padding:10px; min-height:80px; white-space:pre-wrap;">(caricamento...)</div>
+                </div>
+                <div>
+                    <label style="font-weight:bold; color:#fd7e14;">PM (Pomeriggio)</label>
+                    <div id="ownerNotaPM" style="background:#f8f9fa; border:1px solid #dee2e6; border-radius:6px; padding:10px; min-height:80px; white-space:pre-wrap;">(caricamento...)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
