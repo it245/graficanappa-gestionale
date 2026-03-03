@@ -93,6 +93,7 @@ class ExcelSyncService
         // Salta riga header (riga 1)
         $isFirst = true;
         $idTrovati = [];
+        $commesseDatePropagated = []; // Evita che righe successive revertano la propagazione data
 
         foreach ($rows as $row) {
             if ($isFirst) {
@@ -224,14 +225,19 @@ class ExcelSyncService
             // K - Data Prevista Consegna
             $excelDataConsegna = self::parseExcelDate($row['K'] ?? null);
             $dbDataConsegna = $ordine->data_prevista_consegna ? Carbon::parse($ordine->data_prevista_consegna)->format('Y-m-d') : null;
-            if (self::isDateChanged($excelDataConsegna, $dbDataConsegna)) {
+            // Skip se la data di questa commessa è già stata propagata da un'altra riga
+            if (!isset($commesseDatePropagated[$ordine->commessa]) && self::isDateChanged($excelDataConsegna, $dbDataConsegna)) {
                 $ordine->data_prevista_consegna = $excelDataConsegna;
                 $ordineChanged = true;
 
                 // Propaga a tutti gli ordini della stessa commessa
-                Ordine::where('commessa', $ordine->commessa)
+                $propagati = Ordine::where('commessa', $ordine->commessa)
                     ->where('id', '!=', $ordine->id)
                     ->update(['data_prevista_consegna' => $excelDataConsegna]);
+
+                $commesseDatePropagated[$ordine->commessa] = true;
+
+                Log::info("ExcelSync: data consegna cambiata per commessa {$ordine->commessa}: {$dbDataConsegna} → {$excelDataConsegna} (propagata a {$propagati} ordini)");
 
                 FaseStatoService::ricalcolaStati($fase->ordine_id);
             }
