@@ -13,7 +13,6 @@ html, body {
     padding: 0 !important;
     width: 100%;
     height: 100%;
-    overflow-x: hidden;
 }
 
 /* Rimuovi padding del container Bootstrap */
@@ -137,8 +136,8 @@ h2, p {
    ========================= */
 
 table {
-    width: 2800px;              /* OTTIMIZZATO PER 24 COLONNE */
-    max-width: 2800px;
+    width: 2560px;              /* OTTIMIZZATO PER 2560x1440 */
+    max-width: 2560px;
     border-collapse: collapse;
     table-layout: fixed;        /* FONDAMENTALE */
     font-size: 12px;
@@ -178,93 +177,93 @@ thead th {
 }
 
 /* =========================
-   LARGHEZZA COLONNE (24 colonne)
+   LARGHEZZA COLONNE (24 colonne) — ordine attuale:
    1=Commessa 2=Stato 3=Cliente 4=CodArt 5=Colori 6=Fustella
-   7=Descrizione 8=Qta 9=UM 10=Priorità
-   11=DataReg 12=DataConsegna 13=CodCarta 14=Carta
-   15=QtaCarta 16=UMCarta 17=Fase 18=Reparto
-   19=Operatori 20=QtaProd 21=Esterno 22=Note 23=DataInizio 24=DataFine
+   7=Descrizione 8=Qta 9=UM 10=Priorità 11=Fase 12=Reparto
+   13=DataReg 14=DataConsegna 15=CodCarta 16=Carta
+   17=QtaCarta 18=UMCarta 19=Operatori 20=QtaProd
+   21=Esterno 22=Note 23=DataInizio 24=DataFine
    ========================= */
 
 /* 1. Commessa */
-th:nth-child(1), td:nth-child(1) { width: 105px; }
+th:nth-child(1), td:nth-child(1) { width: 100px; }
 
 /* 2. Stato */
-th:nth-child(2), td:nth-child(2) { width: 60px; text-align: center; }
+th:nth-child(2), td:nth-child(2) { width: 50px; text-align: center; }
 
 /* 3. Cliente */
-th:nth-child(3), td:nth-child(3) { width: 190px; white-space: normal; }
+th:nth-child(3), td:nth-child(3) { width: 170px; white-space: normal; }
 
 /* 4. Codice Articolo */
-th:nth-child(4), td:nth-child(4) { width: 105px; }
+th:nth-child(4), td:nth-child(4) { width: 95px; }
 
 /* 5. Colori */
-th:nth-child(5), td:nth-child(5) { width: 75px; }
+th:nth-child(5), td:nth-child(5) { width: 65px; }
 
 /* 6. Fustella */
-th:nth-child(6), td:nth-child(6) { width: 80px; }
+th:nth-child(6), td:nth-child(6) { width: 75px; }
 
 /* 7. Descrizione — troncata con ... */
-th:nth-child(7), td:nth-child(7) { width: 300px; max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+th:nth-child(7), td:nth-child(7) { width: 250px; max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* 8. Qta */
-th:nth-child(8), td:nth-child(8) { width: 60px; text-align: center; }
+th:nth-child(8), td:nth-child(8) { width: 55px; text-align: center; }
 
 /* 9. UM */
-th:nth-child(9), td:nth-child(9) { width: 55px; text-align: center; }
+th:nth-child(9), td:nth-child(9) { width: 40px; text-align: center; }
 
 /* 10. Priorità */
-th:nth-child(10), td:nth-child(10) { width: 70px; text-align: center; }
+th:nth-child(10), td:nth-child(10) { width: 65px; text-align: center; }
 
-/* 11. Data Registrazione / 12. Data Prevista Consegna */
-th:nth-child(11), td:nth-child(11),
-th:nth-child(12), td:nth-child(12) {
-    width: 115px;
+/* 11. Fase */
+th:nth-child(11), td:nth-child(11) { width: 125px; }
+
+/* 12. Reparto */
+th:nth-child(12), td:nth-child(12) { width: 110px; }
+
+/* 13. Data Registrazione / 14. Data Prevista Consegna */
+th:nth-child(13), td:nth-child(13),
+th:nth-child(14), td:nth-child(14) {
+    width: 100px;
 }
 
-/* 13. Cod Carta */
-th:nth-child(13), td:nth-child(13) { width: 145px; white-space: normal; }
+/* 15. Cod Carta */
+th:nth-child(15), td:nth-child(15) { width: 170px; white-space: normal; }
 
-/* 14. Carta */
-th:nth-child(14), td:nth-child(14) { width: 165px; white-space: normal; }
+/* 16. Carta */
+th:nth-child(16), td:nth-child(16) { width: 190px; white-space: normal; }
 
-/* 15. Qta Carta */
-th:nth-child(15), td:nth-child(15) { width: 65px; text-align: center; }
+/* 17. Qta Carta */
+th:nth-child(17), td:nth-child(17) { width: 50px; text-align: center; }
 
-/* 16. UM Carta */
-th:nth-child(16), td:nth-child(16) { width: 60px; text-align: center; }
-
-/* 17. Fase */
-th:nth-child(17), td:nth-child(17) { width: 135px; }
-
-/* 18. Reparto */
-th:nth-child(18), td:nth-child(18) { width: 125px; }
+/* 18. UM Carta */
+th:nth-child(18), td:nth-child(18) { width: 40px; text-align: center; }
 
 /* 19. Operatori */
 th:nth-child(19), td:nth-child(19) {
-    width: 125px;
+    width: 110px;
     white-space: normal;
 }
 
 /* 20. Qta Prod. */
 th:nth-child(20), td:nth-child(20) {
-    width: 70px;
+    width: 60px;
     text-align: center;
 }
 
 /* 21. Esterno */
-th:nth-child(21), td:nth-child(21) { width: 100px; }
+th:nth-child(21), td:nth-child(21) { width: 90px; }
 
 /* 22. Note */
 th:nth-child(22), td:nth-child(22) {
-    width: 190px;
+    width: 170px;
     white-space: normal;
 }
 
 /* 23. Data Inizio / 24. Data Fine */
 th:nth-child(23), td:nth-child(23),
 th:nth-child(24), td:nth-child(24) {
-    width: 120px;
+    width: 110px;
 }
 
 /* =========================
@@ -708,7 +707,7 @@ tr:hover td {
 @endphp
 
     {{-- TABELLA --}}
-    <div id="tableScroll" style="width:100%; overflow-x:auto;">
+    <div id="tableScroll" style="width:100%;">
         <table id="tabellaOrdini" class="table table-bordered table-sm table-striped" style="white-space:nowrap;">
             <thead class="table-dark">
                 <tr>
@@ -805,52 +804,8 @@ tr:hover td {
             </tbody>
         </table>
     </div>
-    {{-- Scrollbar fissa in fondo allo schermo --}}
-    <div id="fakeScrollbar" style="position:fixed; bottom:0; left:0; right:0; overflow-x:auto; overflow-y:hidden; z-index:1050; background:transparent;">
-        <div id="fakeScrollInner" style="height:1px;"></div>
-    </div>
+
 </div>
-<style>
-    #tableScroll {
-        overflow-x: auto;
-        scrollbar-width: none; /* Firefox */
-        -ms-overflow-style: none; /* IE/Edge */
-    }
-    #tableScroll::-webkit-scrollbar {
-        display: none; /* Chrome/Safari */
-    }
-</style>
-<script>
-(function(){
-    var tableWrap = document.getElementById('tableScroll');
-    var fakeBar = document.getElementById('fakeScrollbar');
-    var fakeInner = document.getElementById('fakeScrollInner');
-    var syncing = false;
-
-    function syncWidths() {
-        fakeInner.style.width = tableWrap.scrollWidth + 'px';
-        fakeBar.style.display = tableWrap.scrollWidth > tableWrap.clientWidth ? '' : 'none';
-    }
-
-    tableWrap.addEventListener('scroll', function() {
-        if (syncing) return;
-        syncing = true;
-        fakeBar.scrollLeft = tableWrap.scrollLeft;
-        syncing = false;
-    });
-
-    fakeBar.addEventListener('scroll', function() {
-        if (syncing) return;
-        syncing = true;
-        tableWrap.scrollLeft = fakeBar.scrollLeft;
-        syncing = false;
-    });
-
-    syncWidths();
-    window.addEventListener('resize', syncWidths);
-    setTimeout(syncWidths, 500);
-})();
-</script>
 {{-- MODALE SPEDIZIONI OGGI --}}
 <div class="modal fade" id="modalSpedizioniOggi" tabindex="-1">
     <div class="modal-dialog modal-xl">
