@@ -529,7 +529,7 @@ class OndaSyncService
             'PUNTOMETALLICOEST' => 'legatoria',
             'PUNTOMETALLICOESTCOPERT.' => 'legatoria',
             'PUNTOMETAMANUALE' => 'legatoria',
-            'RILIEVOASECCOJOH' => 'fustella',
+            'RILIEVOASECCOJOH' => 'fustella piana',
             'SFUST' => 'legatoria',
             'SFUST.IML.FUSTELLATO' => 'legatoria',
             'SPIRBLOCCOLIBROA3' => 'legatoria',

@@ -206,7 +206,7 @@ private function convertiData($valore) {
     'PUNTOMETALLICOESTCOPERT.' => 'legatoria',
     'PUNTOMETAMANUALE' => 'legatoria',
 
-    'RILIEVOASECCOJOH' => 'fustella',
+    'RILIEVOASECCOJOH' => 'fustella piana',
 
     'SFUST' => 'legatoria',
     'SFUST.IML.FUSTELLATO' => 'legatoria',
