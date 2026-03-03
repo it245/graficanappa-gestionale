@@ -1628,13 +1628,44 @@ function caricaNoteSpedizione() {
     })
     .then(r => r.json())
     .then(d => {
-        document.getElementById('ownerNotaAM').textContent = d.contenuto_am || '(nessuna nota)';
-        document.getElementById('ownerNotaPM').textContent = d.contenuto_pm || '(nessuna nota)';
+        document.getElementById('ownerNotaAM').value = d.contenuto_am || '';
+        document.getElementById('ownerNotaPM').value = d.contenuto_pm || '';
+        document.getElementById('ownerNoteSaveStatus').textContent = '';
     })
     .catch(() => {
-        document.getElementById('ownerNotaAM').textContent = 'Errore caricamento';
-        document.getElementById('ownerNotaPM').textContent = 'Errore caricamento';
+        document.getElementById('ownerNoteSaveStatus').textContent = 'Errore caricamento';
+        document.getElementById('ownerNoteSaveStatus').style.color = '#dc3545';
     });
+}
+
+function salvaNoteSped() {
+    var btn = event.target;
+    btn.disabled = true;
+    fetch('{{ route("owner.salvaNotaSpedizione") }}', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': csrfToken(),
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+            data: '{{ now()->toDateString() }}',
+            contenuto_am: document.getElementById('ownerNotaAM').value,
+            contenuto_pm: document.getElementById('ownerNotaPM').value
+        })
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (d.success) {
+            document.getElementById('ownerNoteSaveStatus').textContent = 'Salvato alle ' + new Date().toLocaleTimeString('it-IT');
+            document.getElementById('ownerNoteSaveStatus').style.color = '#198754';
+        }
+    })
+    .catch(() => {
+        document.getElementById('ownerNoteSaveStatus').textContent = 'Errore salvataggio';
+        document.getElementById('ownerNoteSaveStatus').style.color = '#dc3545';
+    })
+    .finally(() => { btn.disabled = false; });
 }
 </script>
 
@@ -1649,12 +1680,16 @@ function caricaNoteSpedizione() {
             <div class="modal-body">
                 <div style="margin-bottom:12px;">
                     <label style="font-weight:bold; color:#198754;">AM (Mattina)</label>
-                    <div id="ownerNotaAM" style="background:#f8f9fa; border:1px solid #dee2e6; border-radius:6px; padding:10px; min-height:80px; white-space:pre-wrap;">(caricamento...)</div>
+                    <textarea id="ownerNotaAM" rows="4" class="form-control" style="border-color:#198754; font-size:14px;" placeholder="Mattina..."></textarea>
                 </div>
                 <div>
                     <label style="font-weight:bold; color:#fd7e14;">PM (Pomeriggio)</label>
-                    <div id="ownerNotaPM" style="background:#f8f9fa; border:1px solid #dee2e6; border-radius:6px; padding:10px; min-height:80px; white-space:pre-wrap;">(caricamento...)</div>
+                    <textarea id="ownerNotaPM" rows="4" class="form-control" style="border-color:#fd7e14; font-size:14px;" placeholder="Pomeriggio..."></textarea>
                 </div>
+            </div>
+            <div class="modal-footer" style="justify-content:space-between;">
+                <span id="ownerNoteSaveStatus" style="font-size:12px; color:#6c757d;"></span>
+                <button onclick="salvaNoteSped()" class="btn btn-primary btn-sm">Salva</button>
             </div>
         </div>
     </div>
