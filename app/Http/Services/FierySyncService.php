@@ -132,29 +132,41 @@ class FierySyncService
      */
     protected function syncJobCompletati(Operatore $operatore): void
     {
-        $jobs = $this->fiery->getJobs();
-        if (!$jobs) return;
+        // Usa Accounting API per fogli totali storici (tutti i run aggregati)
+        $accounting = $this->fiery->getAccountingPerCommessa();
 
-        // Raggruppa job completati per commessa, prendi max copies_printed
-        $completatiPerCommessa = [];
-        foreach ($jobs as $job) {
-            if ($job['state'] !== 'completed') continue;
-            if (!$job['commessa']) continue;
-            if ($job['copies_printed'] <= 0) continue;
+        // Fallback: se accounting non disponibile, usa job list
+        if (!$accounting) {
+            $jobs = $this->fiery->getJobs();
+            if (!$jobs) return;
 
-            $code = $job['commessa'];
-            if (!isset($completatiPerCommessa[$code])) {
-                $completatiPerCommessa[$code] = 0;
+            $accounting = [];
+            foreach ($jobs as $job) {
+                if ($job['state'] !== 'completed') continue;
+                if (!$job['commessa']) continue;
+                if ($job['copies_printed'] <= 0 && $job['total_sheets'] <= 0) continue;
+
+                $code = $job['commessa'];
+                if (!isset($accounting[$code])) {
+                    $accounting[$code] = ['fogli' => 0, 'copie' => 0];
+                }
+                $accounting[$code]['fogli'] += $job['total_sheets'];
+                $accounting[$code]['copie'] += $job['copies_printed'];
             }
-            $completatiPerCommessa[$code] = max($completatiPerCommessa[$code], $job['copies_printed']);
         }
 
-        if (empty($completatiPerCommessa)) return;
+        if (empty($accounting)) return;
 
-        // Trova tutte le fasi digitali in stato 0, 1 o 2 per le commesse con job completati
-        $commesseCodes = array_keys($completatiPerCommessa);
+        // Filtra solo commesse con fogli > 0
+        $commesseCodes = [];
+        foreach ($accounting as $code => $data) {
+            if (($data['fogli'] ?? 0) > 0 || ($data['copie'] ?? 0) > 0) {
+                $commesseCodes[] = $code;
+            }
+        }
+        if (empty($commesseCodes)) return;
+
         $ordiniIds = Ordine::whereIn('commessa', $commesseCodes)->pluck('id');
-
         if ($ordiniIds->isEmpty()) return;
 
         $fasiDigitali = OrdineFase::whereIn('stato', [0, 1, 2])
@@ -172,22 +184,26 @@ class FierySyncService
         foreach ($fasiDigitali as $fase) {
             $commessaCode = $fase->ordine->commessa ?? null;
             if (!$commessaCode) continue;
-            if (!isset($completatiPerCommessa[$commessaCode])) continue;
+            if (!isset($accounting[$commessaCode])) continue;
 
-            $maxCopie = $completatiPerCommessa[$commessaCode];
+            $acc = $accounting[$commessaCode];
+            $fogliTotali = (int) ($acc['fogli'] ?? 0);
+            $copieTotali = (int) ($acc['copie'] ?? 0);
+            // Usa il valore più alto tra fogli e copie per qta_prod
+            $qtaProdotta = max($fogliTotali, $copieTotali);
 
             if ($fase->stato == 2) {
                 // Fase già avviata: aggiorna qta_prod e auto-termina
                 $qtaAttuale = (int) ($fase->qta_prod ?: 0);
-                if ($maxCopie > $qtaAttuale) {
-                    $fase->qta_prod = $maxCopie;
+                if ($qtaProdotta > $qtaAttuale) {
+                    $fase->qta_prod = $qtaProdotta;
                     $this->autoTerminaSeCompletata($fase, $operatore);
                     $fase->save();
                 }
             } elseif (in_array($fase->stato, [0, 1])) {
                 // Fase non ancora avviata ma job Fiery completato → avvia e termina
                 $fase->stato = 2;
-                $fase->qta_prod = $maxCopie;
+                $fase->qta_prod = $qtaProdotta;
                 if (!$fase->data_inizio) {
                     $fase->data_inizio = now()->format('Y-m-d H:i:s');
                 }
