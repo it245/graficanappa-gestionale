@@ -1352,55 +1352,41 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectedCells = new Set();
 
     let isSelecting = false;
-    let startX = 0, startY = 0;
+    let startClientX = 0, startClientY = 0, startScrollX = 0, startScrollY = 0;
     let mouseClientX = 0, mouseClientY = 0;
     let selectionBox = null;
     let rafPending = false;
-    let cachedRects = [];
-
-    function cacheRects() {
-        const sx = window.scrollX, sy = window.scrollY;
-        cachedRects = allCells.map(cell => {
-            const r = cell.getBoundingClientRect();
-            return {
-                cell,
-                left: r.left + sx,
-                top: r.top + sy,
-                right: r.right + sx,
-                bottom: r.bottom + sy
-            };
-        });
-    }
-
-    function getCurrentPageX() { return mouseClientX + window.scrollX; }
-    function getCurrentPageY() { return mouseClientY + window.scrollY; }
 
     function updateSelection() {
         rafPending = false;
         if (!selectionBox) return;
 
-        const curX = getCurrentPageX();
-        const curY = getCurrentPageY();
+        // Punto di partenza in coordinate viewport attuali
+        const sx = startClientX - (window.scrollX - startScrollX);
+        const sy = startClientY - (window.scrollY - startScrollY);
 
-        const x = Math.min(startX, curX);
-        const y = Math.min(startY, curY);
-        const w = Math.abs(curX - startX);
-        const h = Math.abs(curY - startY);
+        // Box in coordinate viewport
+        const vLeft = Math.min(sx, mouseClientX);
+        const vTop = Math.min(sy, mouseClientY);
+        const vRight = Math.max(sx, mouseClientX);
+        const vBottom = Math.max(sy, mouseClientY);
 
-        selectionBox.style.transform = 'translate(' + x + 'px,' + y + 'px)';
-        selectionBox.style.width = w + 'px';
-        selectionBox.style.height = h + 'px';
+        // Posiziona il box visuale (in coordinate pagina per position:absolute)
+        const pLeft = vLeft + window.scrollX;
+        const pTop = vTop + window.scrollY;
+        selectionBox.style.transform = 'translate(' + pLeft + 'px,' + pTop + 'px)';
+        selectionBox.style.width = (vRight - vLeft) + 'px';
+        selectionBox.style.height = (vBottom - vTop) + 'px';
 
-        const bRight = x + w, bBottom = y + h;
-
+        // Seleziona celle che intersecano il box (confronto in coordinate viewport)
         selectedCells.forEach(c => c.classList.remove('selected'));
         selectedCells.clear();
 
-        for (let i = 0; i < cachedRects.length; i++) {
-            const r = cachedRects[i];
-            if (!(r.right < x || r.left > bRight || r.bottom < y || r.top > bBottom)) {
-                r.cell.classList.add('selected');
-                selectedCells.add(r.cell);
+        for (let i = 0; i < allCells.length; i++) {
+            const r = allCells[i].getBoundingClientRect();
+            if (r.right >= vLeft && r.left <= vRight && r.bottom >= vTop && r.top <= vBottom) {
+                allCells[i].classList.add('selected');
+                selectedCells.add(allCells[i]);
             }
         }
     }
@@ -1412,16 +1398,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Doppio click/tap = avvia selezione per stampa
-    function startSelection(x, y) {
+    function startSelection(cX, cY) {
         isSelecting = true;
-        startX = x;
-        startY = y;
+        startClientX = mouseClientX = cX;
+        startClientY = mouseClientY = cY;
+        startScrollX = window.scrollX;
+        startScrollY = window.scrollY;
 
         selectedCells.forEach(c => c.classList.remove('selected'));
         selectedCells.clear();
-
-        cacheRects();
 
         selectionBox = document.createElement('div');
         selectionBox.className = 'selection-box';
@@ -1439,7 +1424,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Scroll con rotellina: aggiorna selezione (pageY cambia perché scrollY cambia)
+    // Scroll: aggiorna selezione
     window.addEventListener('scroll', () => {
         if (!isSelecting) return;
         scheduleUpdate();
@@ -1448,9 +1433,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Mouse: doppio click avvia, drag seleziona
     table.addEventListener('dblclick', e => {
         if (!e.target.matches('td, th')) return;
-        mouseClientX = e.clientX;
-        mouseClientY = e.clientY;
-        startSelection(e.pageX, e.pageY);
+        startSelection(e.clientX, e.clientY);
         e.preventDefault();
     });
 
@@ -1470,9 +1453,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const target = document.elementFromPoint(touch.clientX, touch.clientY);
 
         if (now - lastTap < 350 && target && target.matches('td, th')) {
-            mouseClientX = touch.clientX;
-            mouseClientY = touch.clientY;
-            startSelection(touch.pageX, touch.pageY);
+            startSelection(touch.clientX, touch.clientY);
             e.preventDefault();
         }
         lastTap = now;
