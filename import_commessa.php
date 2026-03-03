@@ -120,6 +120,11 @@ $tipiFase = \App\Services\OndaSyncService::getTipoReparto();
 $mappaPriorita = config('fasi_priorita');
 $oggi = now()->format('Y-m-d');
 
+// Pre-fetch scarti previsti per macchina da Onda
+$scartiMacchine = collect(DB::connection('onda')->select(
+    "SELECT CodMacchina, OC_FogliScartoIniz FROM PRDMacchinari WHERE OC_FogliScartoIniz > 0"
+))->pluck('OC_FogliScartoIniz', 'CodMacchina')->toArray();
+
 // Raggruppa per (CodCommessa, CodArt, OC_Descrizione)
 $gruppi = collect($righeOnda)->groupBy(function ($riga) {
     return $riga->CodCommessa . '|' . $riga->CodArt . '|' . $riga->OC_Descrizione;
@@ -270,6 +275,7 @@ foreach ($gruppi as $chiave => $righe) {
             'um'               => trim($riga->UMFase ?? 'FG'),
             'priorita'         => $prioritaFase,
             'stato'            => 0,
+            'scarti_previsti'   => $scartiMacchine[trim($riga->CodMacchina ?? '')] ?? null,
         ];
 
         $exists = OrdineFase::where('ordine_id', $ordine->id)

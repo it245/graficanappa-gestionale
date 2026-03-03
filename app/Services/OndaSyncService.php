@@ -232,7 +232,17 @@ class OndaSyncService
                         ->exists();
 
                     $dedupPerCommessa[$chiaveDedup] = true;
-                    if ($existsInCommessa) continue;
+                    if ($existsInCommessa) {
+                        // Aggiorna scarti_previsti se mancante su fase esistente
+                        $scartiValue = $scartiMacchine[trim($riga->CodMacchina ?? '')] ?? null;
+                        if ($scartiValue !== null) {
+                            OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
+                                ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
+                                ->whereNull('scarti_previsti')
+                                ->update(['scarti_previsti' => $scartiValue]);
+                        }
+                        continue;
+                    }
                 }
 
                 // Dedup digitale/finitura digitale: 1 sola fase per commessa SE stesso articolo (cod_art)
@@ -246,7 +256,18 @@ class OndaSyncService
                         ->exists();
 
                     $dedupPerCommessa[$chiaveDedup] = true;
-                    if ($existsInCommessa) continue;
+                    if ($existsInCommessa) {
+                        // Aggiorna scarti_previsti se mancante su fase esistente
+                        $scartiValue = $scartiMacchine[trim($riga->CodMacchina ?? '')] ?? null;
+                        if ($scartiValue !== null) {
+                            OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
+                                ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa)
+                                    ->where('cod_art', $codArt))
+                                ->whereNull('scarti_previsti')
+                                ->update(['scarti_previsti' => $scartiValue]);
+                        }
+                        continue;
+                    }
                 }
 
                 $dataFase = [
@@ -318,6 +339,15 @@ class OndaSyncService
                         $fasiCreate++;
                         $logFasiCreate[] = $commessa . ' → ' . $faseNome;
                     }
+                }
+
+                // Aggiorna scarti_previsti su fasi esistenti se mancante
+                $scartiValue = $scartiMacchine[trim($riga->CodMacchina ?? '')] ?? null;
+                if ($scartiValue !== null) {
+                    OrdineFase::where('ordine_id', $ordine->id)
+                        ->where('fase_catalogo_id', $faseCatalogo->id)
+                        ->whereNull('scarti_previsti')
+                        ->update(['scarti_previsti' => $scartiValue]);
                 }
             }
         }
