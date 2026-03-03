@@ -1352,60 +1352,62 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectedCells = new Set();
 
     let isSelecting = false;
-    let startClientX = 0, startClientY = 0, startScrollX = 0, startScrollY = 0;
-    let mouseClientX = 0, mouseClientY = 0;
-    let selectionBox = null;
+    let startRowIdx = -1;
+    let endRowIdx = -1;
     let pollTimer = null;
+    const allRows = Array.from(table.querySelectorAll('tbody tr'));
+
+    function getRowAtY(clientY) {
+        // Trova la riga sotto il mouse
+        for (let i = 0; i < allRows.length; i++) {
+            const r = allRows[i].getBoundingClientRect();
+            if (clientY >= r.top && clientY <= r.bottom) return i;
+        }
+        // Se il mouse è sotto l'ultima riga visibile, prendi l'ultima
+        if (clientY > 0) return allRows.length - 1;
+        return 0;
+    }
 
     function updateSelection() {
-        if (!selectionBox) return;
+        if (!isSelecting) return;
 
-        // Punto di partenza in coordinate viewport attuali
-        const sx = startClientX - (window.scrollX - startScrollX);
-        const sy = startClientY - (window.scrollY - startScrollY);
+        const curIdx = getRowAtY(mouseClientY);
+        if (curIdx === endRowIdx) return; // niente da cambiare
+        endRowIdx = curIdx;
 
-        // Box in coordinate viewport
-        const vLeft = Math.min(sx, mouseClientX);
-        const vTop = Math.min(sy, mouseClientY);
-        const vRight = Math.max(sx, mouseClientX);
-        const vBottom = Math.max(sy, mouseClientY);
+        const minIdx = Math.min(startRowIdx, endRowIdx);
+        const maxIdx = Math.max(startRowIdx, endRowIdx);
 
-        // Posiziona il box visuale (in coordinate pagina per position:absolute)
-        selectionBox.style.transform = 'translate(' + (vLeft + window.scrollX) + 'px,' + (vTop + window.scrollY) + 'px)';
-        selectionBox.style.width = (vRight - vLeft) + 'px';
-        selectionBox.style.height = (vBottom - vTop) + 'px';
-
-        // Seleziona celle che intersecano il box (confronto in coordinate viewport)
         selectedCells.forEach(c => c.classList.remove('selected'));
         selectedCells.clear();
 
-        for (let i = 0; i < allCells.length; i++) {
-            const r = allCells[i].getBoundingClientRect();
-            if (r.right >= vLeft && r.left <= vRight && r.bottom >= vTop && r.top <= vBottom) {
-                allCells[i].classList.add('selected');
-                selectedCells.add(allCells[i]);
-            }
+        for (let i = minIdx; i <= maxIdx; i++) {
+            const cells = allRows[i].querySelectorAll('td, th');
+            cells.forEach(c => {
+                c.classList.add('selected');
+                selectedCells.add(c);
+            });
         }
     }
 
-    function startSelection(cX, cY) {
+    let mouseClientY = 0;
+
+    function startSelection(row, clientY) {
         isSelecting = true;
-        startClientX = mouseClientX = cX;
-        startClientY = mouseClientY = cY;
-        startScrollX = window.scrollX;
-        startScrollY = window.scrollY;
+        startRowIdx = allRows.indexOf(row);
+        endRowIdx = startRowIdx;
+        mouseClientY = clientY;
 
         selectedCells.forEach(c => c.classList.remove('selected'));
         selectedCells.clear();
 
-        selectionBox = document.createElement('div');
-        selectionBox.className = 'selection-box';
-        selectionBox.style.left = '0';
-        selectionBox.style.top = '0';
-        document.body.appendChild(selectionBox);
+        // Seleziona la riga iniziale
+        row.querySelectorAll('td, th').forEach(c => {
+            c.classList.add('selected');
+            selectedCells.add(c);
+        });
 
-        // Polling: aggiorna la selezione ogni 30ms (copre scroll, drag, tutto)
-        pollTimer = setInterval(updateSelection, 30);
+        pollTimer = setInterval(updateSelection, 50);
     }
 
     function endSelection() {
@@ -1414,34 +1416,33 @@ document.addEventListener('DOMContentLoaded', () => {
             clearInterval(pollTimer);
             pollTimer = null;
         }
-        if (selectionBox) {
-            selectionBox.remove();
-            selectionBox = null;
-        }
     }
 
-    // Mouse: doppio click avvia, drag seleziona
+    // Mouse: doppio click su una riga avvia selezione
     table.addEventListener('dblclick', e => {
-        if (!e.target.matches('td, th')) return;
-        startSelection(e.clientX, e.clientY);
+        const row = e.target.closest('tr');
+        if (!row || !row.parentElement.matches('tbody')) return;
+        mouseClientY = e.clientY;
+        startSelection(row, e.clientY);
         e.preventDefault();
     });
 
     document.addEventListener('mousemove', e => {
-        mouseClientX = e.clientX;
         mouseClientY = e.clientY;
     });
     document.addEventListener('mouseup', () => { if (isSelecting) endSelection(); });
 
-    // Touch: doppio tap avvia, drag seleziona
+    // Touch: doppio tap avvia selezione
     let lastTap = 0;
     table.addEventListener('touchstart', e => {
         const now = Date.now();
         const touch = e.touches[0];
-        const target = document.elementFromPoint(touch.clientX, touch.clientY);
+        const row = document.elementFromPoint(touch.clientX, touch.clientY);
+        const tr = row ? row.closest('tr') : null;
 
-        if (now - lastTap < 350 && target && target.matches('td, th')) {
-            startSelection(touch.clientX, touch.clientY);
+        if (now - lastTap < 350 && tr && tr.parentElement.matches('tbody')) {
+            mouseClientY = touch.clientY;
+            startSelection(tr, touch.clientY);
             e.preventDefault();
         }
         lastTap = now;
@@ -1449,9 +1450,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.addEventListener('touchmove', e => {
         if (!isSelecting) return;
-        const touch = e.touches[0];
-        mouseClientX = touch.clientX;
-        mouseClientY = touch.clientY;
+        mouseClientY = e.touches[0].clientY;
         e.preventDefault();
     }, { passive: false });
 
