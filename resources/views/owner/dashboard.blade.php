@@ -1353,12 +1353,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let isSelecting = false;
     let startX = 0, startY = 0;
-    let currentX = 0, currentY = 0;
-    let clientY = 0; // viewport Y per auto-scroll
+    let mouseClientX = 0, mouseClientY = 0;
     let selectionBox = null;
     let rafPending = false;
     let cachedRects = [];
-    let autoScrollTimer = null;
 
     function cacheRects() {
         const sx = window.scrollX, sy = window.scrollY;
@@ -1374,14 +1372,20 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    function getCurrentPageX() { return mouseClientX + window.scrollX; }
+    function getCurrentPageY() { return mouseClientY + window.scrollY; }
+
     function updateSelection() {
         rafPending = false;
         if (!selectionBox) return;
 
-        const x = Math.min(startX, currentX);
-        const y = Math.min(startY, currentY);
-        const w = Math.abs(currentX - startX);
-        const h = Math.abs(currentY - startY);
+        const curX = getCurrentPageX();
+        const curY = getCurrentPageY();
+
+        const x = Math.min(startX, curX);
+        const y = Math.min(startY, curY);
+        const w = Math.abs(curX - startX);
+        const h = Math.abs(curY - startY);
 
         selectionBox.style.transform = 'translate(' + x + 'px,' + y + 'px)';
         selectionBox.style.width = w + 'px';
@@ -1401,38 +1405,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function autoScroll() {
-        if (!isSelecting) return;
-        const edge = 50; // px dal bordo per attivare scroll
-        const speed = 8;
-        let scrolled = false;
-
-        if (clientY > window.innerHeight - edge) {
-            window.scrollBy(0, speed);
-            currentY += speed;
-            scrolled = true;
-        } else if (clientY < edge) {
-            window.scrollBy(0, -speed);
-            currentY -= speed;
-            scrolled = true;
+    function scheduleUpdate() {
+        if (!rafPending) {
+            rafPending = true;
+            requestAnimationFrame(updateSelection);
         }
-
-        if (scrolled) {
-            cacheRects();
-            if (!rafPending) {
-                rafPending = true;
-                requestAnimationFrame(updateSelection);
-            }
-        }
-
-        autoScrollTimer = requestAnimationFrame(autoScroll);
     }
 
     // Doppio click/tap = avvia selezione per stampa
     function startSelection(x, y) {
         isSelecting = true;
-        startX = currentX = x;
-        startY = currentY = y;
+        startX = x;
+        startY = y;
 
         selectedCells.forEach(c => c.classList.remove('selected'));
         selectedCells.clear();
@@ -1444,57 +1428,37 @@ document.addEventListener('DOMContentLoaded', () => {
         selectionBox.style.left = '0';
         selectionBox.style.top = '0';
         document.body.appendChild(selectionBox);
-
-        autoScrollTimer = requestAnimationFrame(autoScroll);
-    }
-
-    function moveSelection(x, y, cy) {
-        if (!isSelecting) return;
-        currentX = x;
-        currentY = y;
-        clientY = cy;
-        if (!rafPending) {
-            rafPending = true;
-            requestAnimationFrame(updateSelection);
-        }
     }
 
     function endSelection() {
         isSelecting = false;
         rafPending = false;
-        if (autoScrollTimer) {
-            cancelAnimationFrame(autoScrollTimer);
-            autoScrollTimer = null;
-        }
         if (selectionBox) {
             selectionBox.remove();
             selectionBox = null;
         }
     }
 
-    // Aggiorna selezione durante scroll con rotellina
-    let lastClientX = 0;
+    // Scroll con rotellina: aggiorna selezione (pageY cambia perché scrollY cambia)
     window.addEventListener('scroll', () => {
         if (!isSelecting) return;
-        currentY = clientY + window.scrollY;
-        currentX = lastClientX + window.scrollX;
-        cacheRects();
-        if (!rafPending) {
-            rafPending = true;
-            requestAnimationFrame(updateSelection);
-        }
+        scheduleUpdate();
     });
 
     // Mouse: doppio click avvia, drag seleziona
     table.addEventListener('dblclick', e => {
         if (!e.target.matches('td, th')) return;
+        mouseClientX = e.clientX;
+        mouseClientY = e.clientY;
         startSelection(e.pageX, e.pageY);
         e.preventDefault();
     });
 
     document.addEventListener('mousemove', e => {
-        lastClientX = e.clientX;
-        moveSelection(e.pageX, e.pageY, e.clientY);
+        mouseClientX = e.clientX;
+        mouseClientY = e.clientY;
+        if (!isSelecting) return;
+        scheduleUpdate();
     });
     document.addEventListener('mouseup', endSelection);
 
@@ -1506,7 +1470,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const target = document.elementFromPoint(touch.clientX, touch.clientY);
 
         if (now - lastTap < 350 && target && target.matches('td, th')) {
-            // Doppio tap
+            mouseClientX = touch.clientX;
+            mouseClientY = touch.clientY;
             startSelection(touch.pageX, touch.pageY);
             e.preventDefault();
         }
@@ -1516,7 +1481,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('touchmove', e => {
         if (!isSelecting) return;
         const touch = e.touches[0];
-        moveSelection(touch.pageX, touch.pageY, touch.clientY);
+        mouseClientX = touch.clientX;
+        mouseClientY = touch.clientY;
+        scheduleUpdate();
         e.preventDefault();
     }, { passive: false });
 
