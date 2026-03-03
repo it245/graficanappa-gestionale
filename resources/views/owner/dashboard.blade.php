@@ -16,12 +16,6 @@ html, body {
     overflow-x: hidden;
 }
 
-#tabellaOrdini thead th {
-    position: sticky;
-    top: 0;
-    z-index: 10;
-}
-
 /* Rimuovi padding del container Bootstrap */
 .container-fluid {
     padding-left: 1px !important;
@@ -714,7 +708,7 @@ tr:hover td {
 @endphp
 
     {{-- TABELLA --}}
-    <div style="width:100%; max-width:100%; overflow-x:auto; overflow-y:auto; max-height:calc(100vh - 220px);">
+    <div style="width:100%; overflow-x:auto;">
         <table id="tabellaOrdini" class="table table-bordered table-sm table-striped" style="white-space:nowrap;">
             <thead class="table-dark">
                 <tr>
