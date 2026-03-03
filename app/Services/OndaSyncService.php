@@ -235,15 +235,14 @@ class OndaSyncService
                     if ($existsInCommessa) continue;
                 }
 
-                // Dedup digitale/finitura digitale: 1 sola fase per commessa SE stesso articolo (cod_art + descrizione)
+                // Dedup digitale/finitura digitale: 1 sola fase per commessa SE stesso articolo (cod_art)
                 if (in_array($repartoNome, ['digitale', 'finitura digitale'])) {
-                    $chiaveDedup = $commessa . '|' . $faseNome . '|' . $codArt . '|' . $descrizione;
+                    $chiaveDedup = $commessa . '|' . $faseNome . '|' . $codArt;
                     if (isset($dedupPerCommessa[$chiaveDedup])) continue;
 
                     $existsInCommessa = OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
                         ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa)
-                            ->where('cod_art', $codArt)
-                            ->where('descrizione', $descrizione))
+                            ->where('cod_art', $codArt))
                         ->exists();
 
                     $dedupPerCommessa[$chiaveDedup] = true;
