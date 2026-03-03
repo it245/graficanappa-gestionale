@@ -309,24 +309,24 @@
 </div>
 
 <!-- Pannello Note AM/PM -->
-<div id="notePanel" style="display:none; margin:8px; padding:12px; background:#fff; border:2px solid #0d6efd; border-radius:10px; box-shadow:0 2px 12px rgba(0,0,0,0.1);">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-        <h5 style="margin:0; color:#0d6efd;">Note Consegne - {{ now()->format('d/m/Y') }}</h5>
-        <button onclick="toggleNotePanel()" style="background:none; border:none; font-size:20px; cursor:pointer; color:#666;">&times;</button>
+<div id="notePanel" style="display:none; margin:4px 8px; padding:8px 10px; background:#fff; border:2px solid #0d6efd; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+        <strong style="color:#0d6efd; font-size:13px;">Note Consegne - {{ now()->format('d/m/Y') }}</strong>
+        <button onclick="toggleNotePanel()" style="background:none; border:none; font-size:18px; cursor:pointer; color:#666; line-height:1;">&times;</button>
     </div>
-    <div style="display:flex; gap:12px; flex-wrap:wrap;">
-        <div style="flex:1; min-width:250px;">
-            <label style="font-weight:bold; color:#198754;">AM (Mattina)</label>
-            <textarea id="notaAM" rows="5" class="form-control" style="border-color:#198754; font-size:14px;" placeholder="Cose da fare la mattina..."></textarea>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <div style="flex:1; min-width:200px;">
+            <label style="font-weight:bold; color:#198754; font-size:12px;">AM (Mattina)</label>
+            <textarea id="notaAM" rows="3" class="form-control form-control-sm" style="border-color:#198754; font-size:13px;" placeholder="Mattina..."></textarea>
         </div>
-        <div style="flex:1; min-width:250px;">
-            <label style="font-weight:bold; color:#fd7e14;">PM (Pomeriggio)</label>
-            <textarea id="notaPM" rows="5" class="form-control" style="border-color:#fd7e14; font-size:14px;" placeholder="Cose da fare il pomeriggio..."></textarea>
+        <div style="flex:1; min-width:200px;">
+            <label style="font-weight:bold; color:#fd7e14; font-size:12px;">PM (Pomeriggio)</label>
+            <textarea id="notaPM" rows="3" class="form-control form-control-sm" style="border-color:#fd7e14; font-size:13px;" placeholder="Pomeriggio..."></textarea>
         </div>
     </div>
-    <div style="margin-top:8px; display:flex; justify-content:space-between; align-items:center;">
-        <span id="noteSaveStatus" style="font-size:12px; color:#6c757d;"></span>
-        <button onclick="salvaNote()" class="btn btn-primary btn-sm">Salva</button>
+    <div style="margin-top:4px; display:flex; justify-content:space-between; align-items:center;">
+        <span id="noteSaveStatus" style="font-size:11px; color:#6c757d;"></span>
+        <button onclick="salvaNote()" class="btn btn-primary btn-sm" style="font-size:12px; padding:2px 12px;">Salva</button>
     </div>
 </div>
 
