@@ -42,7 +42,8 @@ function norm($val) {
 function normNum($val) {
     $v = norm($val);
     if ($v === '') return '';
-    return (string)(float)str_replace(',', '.', $v);
+    $n = (float)str_replace(',', '.', $v);
+    return $n == 0 ? '' : (string)$n;
 }
 function normDate($val) {
     $v = norm($val);
