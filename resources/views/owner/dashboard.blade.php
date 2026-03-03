@@ -1472,6 +1472,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Aggiorna selezione durante scroll con rotellina
+    let lastClientX = 0;
+    window.addEventListener('scroll', () => {
+        if (!isSelecting) return;
+        currentY = clientY + window.scrollY;
+        currentX = lastClientX + window.scrollX;
+        cacheRects();
+        if (!rafPending) {
+            rafPending = true;
+            requestAnimationFrame(updateSelection);
+        }
+    });
+
     // Mouse: doppio click avvia, drag seleziona
     table.addEventListener('dblclick', e => {
         if (!e.target.matches('td, th')) return;
@@ -1479,7 +1492,10 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
     });
 
-    document.addEventListener('mousemove', e => moveSelection(e.pageX, e.pageY, e.clientY));
+    document.addEventListener('mousemove', e => {
+        lastClientX = e.clientX;
+        moveSelection(e.pageX, e.pageY, e.clientY);
+    });
     document.addEventListener('mouseup', endSelection);
 
     // Touch: doppio tap avvia, drag seleziona
