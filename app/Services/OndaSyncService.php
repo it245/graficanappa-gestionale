@@ -114,7 +114,8 @@ class OndaSyncService
                 ->get();
 
             foreach ($dupFustella as $dup) {
-                $faseIds = OrdineFase::whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', $dup->reparto_id))
+                $faseIds = OrdineFase::withTrashed()
+                    ->whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', $dup->reparto_id))
                     ->whereHas('ordine', fn($q) => $q->where('commessa', $dup->commessa))
                     ->orderBy('id')
                     ->pluck('id');
@@ -189,7 +190,8 @@ class OndaSyncService
             }
 
             // 4. Assicura che esista sempre la fase BRT1 (spedizione)
-            $hasBrt = OrdineFase::where('ordine_id', $ordine->id)
+            $hasBrt = OrdineFase::withTrashed()
+                ->where('ordine_id', $ordine->id)
                 ->where(function ($q) {
                     $q->where('fase', 'BRT1')->orWhere('fase', 'brt1');
                 })->exists();
@@ -276,7 +278,8 @@ class OndaSyncService
                     $chiaveDedup = $commessa . '|fust|' . $repartoNome;
                     if (isset($dedupPerCommessa[$chiaveDedup])) continue;
 
-                    $existsInCommessa = OrdineFase::whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', $reparto->id))
+                    $existsInCommessa = OrdineFase::withTrashed()
+                        ->whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', $reparto->id))
                         ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
                         ->exists();
 
@@ -285,7 +288,8 @@ class OndaSyncService
                         // Aggiorna scarti_previsti se mancante su fase esistente
                         $scartiValue = $scartiMacchine[trim($riga->CodMacchina ?? '')] ?? null;
                         if ($scartiValue !== null) {
-                            OrdineFase::whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', $reparto->id))
+                            OrdineFase::withTrashed()
+                                ->whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', $reparto->id))
                                 ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
                                 ->whereNull('scarti_previsti')
                                 ->update(['scarti_previsti' => $scartiValue]);
@@ -299,7 +303,8 @@ class OndaSyncService
                     $chiaveDedup = $commessa . '|' . $faseNome . '|' . $codArt;
                     if (isset($dedupPerCommessa[$chiaveDedup])) continue;
 
-                    $existsInCommessa = OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
+                    $existsInCommessa = OrdineFase::withTrashed()
+                        ->where('fase_catalogo_id', $faseCatalogo->id)
                         ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa)
                             ->where('cod_art', $codArt))
                         ->exists();
@@ -309,7 +314,8 @@ class OndaSyncService
                         // Aggiorna scarti_previsti se mancante su fase esistente
                         $scartiValue = $scartiMacchine[trim($riga->CodMacchina ?? '')] ?? null;
                         if ($scartiValue !== null) {
-                            OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
+                            OrdineFase::withTrashed()
+                                ->where('fase_catalogo_id', $faseCatalogo->id)
                                 ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa)
                                     ->where('cod_art', $codArt))
                                 ->whereNull('scarti_previsti')
@@ -333,7 +339,8 @@ class OndaSyncService
                 // Se la fase è stata rimappata da STAMPA generico, aggiorna la fase esistente
                 $faseOriginaleOnda = trim($riga->CodFase ?? '');
                 if ($faseOriginaleOnda === 'STAMPA' && $faseNome !== 'STAMPA') {
-                    $faseStampaGenerica = OrdineFase::where('ordine_id', $ordine->id)
+                    $faseStampaGenerica = OrdineFase::withTrashed()
+                        ->where('ordine_id', $ordine->id)
                         ->where('fase', 'STAMPA')
                         ->first();
                     if ($faseStampaGenerica) {
@@ -354,8 +361,9 @@ class OndaSyncService
                 // Logica dedup: monofase / max 2 fasi / multifase
                 // Usa fase_catalogo_id (FK intera) per check più affidabile
                 if ($tipo === 'monofase') {
-                    // Max 1: crea solo se non esiste
-                    $exists = OrdineFase::where('ordine_id', $ordine->id)
+                    // Max 1: crea solo se non esiste (include soft-deleted per non ricreare fasi eliminate)
+                    $exists = OrdineFase::withTrashed()
+                        ->where('ordine_id', $ordine->id)
                         ->where('fase_catalogo_id', $faseCatalogo->id)
                         ->exists();
 
@@ -366,8 +374,9 @@ class OndaSyncService
                     }
 
                 } elseif ($tipo === 'max 2 fasi') {
-                    // Max 2: crea solo se ne esistono meno di 2
-                    $count = OrdineFase::where('ordine_id', $ordine->id)
+                    // Max 2: crea solo se ne esistono meno di 2 (include soft-deleted)
+                    $count = OrdineFase::withTrashed()
+                        ->where('ordine_id', $ordine->id)
                         ->where('fase_catalogo_id', $faseCatalogo->id)
                         ->count();
 
@@ -378,8 +387,9 @@ class OndaSyncService
                     }
 
                 } else {
-                    // Multifase: crea solo se non esiste già
-                    $exists = OrdineFase::where('ordine_id', $ordine->id)
+                    // Multifase: crea solo se non esiste già (include soft-deleted)
+                    $exists = OrdineFase::withTrashed()
+                        ->where('ordine_id', $ordine->id)
                         ->where('fase_catalogo_id', $faseCatalogo->id)
                         ->exists();
 
@@ -393,7 +403,8 @@ class OndaSyncService
                 // Aggiorna scarti_previsti su fasi esistenti se mancante
                 $scartiValue = $scartiMacchine[trim($riga->CodMacchina ?? '')] ?? null;
                 if ($scartiValue !== null) {
-                    OrdineFase::where('ordine_id', $ordine->id)
+                    OrdineFase::withTrashed()
+                        ->where('ordine_id', $ordine->id)
                         ->where('fase_catalogo_id', $faseCatalogo->id)
                         ->whereNull('scarti_previsti')
                         ->update(['scarti_previsti' => $scartiValue]);

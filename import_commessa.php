@@ -183,7 +183,8 @@ foreach ($gruppi as $chiave => $righe) {
     }
 
     // Fase BRT1 (spedizione)
-    $hasBrt = OrdineFase::where('ordine_id', $ordine->id)
+    $hasBrt = OrdineFase::withTrashed()
+        ->where('ordine_id', $ordine->id)
         ->where(function ($q) { $q->where('fase', 'BRT1')->orWhere('fase', 'brt1'); })
         ->exists();
 
@@ -259,7 +260,8 @@ foreach ($gruppi as $chiave => $righe) {
                 echo "    -> Fase {$faseNome} fustella già creata per commessa, skip\n";
                 continue;
             }
-            $existsInCommessa = OrdineFase::whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', $reparto->id))
+            $existsInCommessa = OrdineFase::withTrashed()
+                ->whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', $reparto->id))
                 ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
                 ->exists();
             $dedupPerCommessa[$chiaveDedup] = true;
@@ -276,7 +278,8 @@ foreach ($gruppi as $chiave => $righe) {
                 echo "    -> Fase {$faseNome} digitale già creata per stesso articolo, skip\n";
                 continue;
             }
-            $existsInCommessa = OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
+            $existsInCommessa = OrdineFase::withTrashed()
+                ->where('fase_catalogo_id', $faseCatalogo->id)
                 ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa)
                     ->where('cod_art', $codArt))
                 ->exists();
@@ -298,7 +301,8 @@ foreach ($gruppi as $chiave => $righe) {
             'scarti_previsti'   => $scartiMacchine[trim($riga->CodMacchina ?? '')] ?? null,
         ];
 
-        $exists = OrdineFase::where('ordine_id', $ordine->id)
+        $exists = OrdineFase::withTrashed()
+            ->where('ordine_id', $ordine->id)
             ->where('fase_catalogo_id', $faseCatalogo->id)
             ->exists();
 
