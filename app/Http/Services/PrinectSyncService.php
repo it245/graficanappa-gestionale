@@ -201,35 +201,41 @@ class PrinectSyncService
 
         $operatoriMatched = $this->matchOperatori($operatoriPrinect->toArray());
 
-        // Distribuisci attivita tra le fasi per prefisso workstep
-        $attivitaPerFase = $this->distribuisciAttivitaTraFasi(
-            $attivita, $fasi, fn($a) => $a->workstep_name ?? ''
-        );
+        // Se ci sono fasi duplicate (es. max 2 fasi), split attività per tempo
+        // usando il data_fine della fase terminata come cutoff
+        $fasiTerminate = $fasi->filter(fn($f) => $f->stato >= 3 && $f->data_fine);
+        $fasiAttive = $fasi->filter(fn($f) => $f->stato < 3);
 
-        foreach ($fasi as $fase) {
-            $att = collect($attivitaPerFase[$fase->id] ?? []);
-            if ($att->isEmpty()) continue;
+        if ($fasiTerminate->isNotEmpty() && $fasiAttive->isNotEmpty() && $fasi->count() > 1) {
+            // Trova il cutoff: data_fine più recente tra le fasi terminate
+            $cutoff = $fasiTerminate->max(fn($f) => Carbon::parse($f->data_fine));
+            $cutoff = Carbon::parse($cutoff);
 
-            $secAvviamento = 0;
-            $secProduzione = 0;
-            foreach ($att as $a) {
-                if (!$a->start_time || !$a->end_time) continue;
-                $diff = $a->start_time->diffInSeconds($a->end_time);
-                if ($a->activity_name === 'Avviamento') {
-                    $secAvviamento += $diff;
-                } else {
-                    $secProduzione += $diff;
-                }
+            // Attività prima del cutoff → fasi terminate (ordinate per id)
+            $attPrima = $attivita->filter(fn($a) => $a->end_time && Carbon::parse($a->end_time)->lte($cutoff));
+            // Attività dopo il cutoff (o in corso) → fasi attive
+            $attDopo = $attivita->filter(fn($a) => !$a->end_time || Carbon::parse($a->end_time)->gt($cutoff));
+
+            // Aggiorna fasi terminate con le loro attività
+            foreach ($fasiTerminate as $fase) {
+                $this->aggiornaFaseConAttivita($fase, $attPrima, $operatoriMatched);
             }
 
-            $primaAtt = $att->filter(fn($a) => $a->start_time)->sortBy('start_time')->first();
+            // Aggiorna fasi attive con le attività successive
+            foreach ($fasiAttive as $fase) {
+                $this->aggiornaFaseConAttivita($fase, $attDopo, $operatoriMatched);
+            }
+        } else {
+            // Distribuzione standard per prefisso workstep
+            $attivitaPerFase = $this->distribuisciAttivitaTraFasi(
+                $attivita, $fasi, fn($a) => $a->workstep_name ?? ''
+            );
 
-            $this->aggiornaFasi(collect([$fase]), [
-                'fogli_buoni' => $att->sum('good_cycles'),
-                'fogli_scarto' => $att->sum('waste_cycles'),
-                'tempo_avviamento_sec' => $secAvviamento,
-                'tempo_esecuzione_sec' => $secProduzione,
-            ], $primaAtt?->start_time, $operatoriMatched);
+            foreach ($fasi as $fase) {
+                $att = collect($attivitaPerFase[$fase->id] ?? []);
+                if ($att->isEmpty()) continue;
+                $this->aggiornaFaseConAttivita($fase, $att, $operatoriMatched);
+            }
         }
     }
 
@@ -396,6 +402,36 @@ class PrinectSyncService
                 'tempo_esecuzione_sec' => $secProd,
             ], $dataInizio, $operatoriMatched, $terminata, $dataFine);
         }
+    }
+
+    /**
+     * Helper: calcola dati da attività Prinect e aggiorna una fase.
+     */
+    protected function aggiornaFaseConAttivita($fase, $att, array $operatoriMatched): void
+    {
+        $att = collect($att);
+        if ($att->isEmpty()) return;
+
+        $secAvviamento = 0;
+        $secProduzione = 0;
+        foreach ($att as $a) {
+            if (!$a->start_time || !$a->end_time) continue;
+            $diff = $a->start_time->diffInSeconds($a->end_time);
+            if ($a->activity_name === 'Avviamento') {
+                $secAvviamento += $diff;
+            } else {
+                $secProduzione += $diff;
+            }
+        }
+
+        $primaAtt = $att->filter(fn($a) => $a->start_time)->sortBy('start_time')->first();
+
+        $this->aggiornaFasi(collect([$fase]), [
+            'fogli_buoni' => $att->sum('good_cycles'),
+            'fogli_scarto' => $att->sum('waste_cycles'),
+            'tempo_avviamento_sec' => $secAvviamento,
+            'tempo_esecuzione_sec' => $secProduzione,
+        ], $primaAtt?->start_time, $operatoriMatched);
     }
 
     /**
