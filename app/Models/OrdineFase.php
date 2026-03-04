@@ -27,6 +27,7 @@ class OrdineFase extends Model
         'um',
         'note',
         'priorita',
+        'priorita_manuale',
         'ore',
         'tipo_consegna',
         'ddt_fornitore_id',

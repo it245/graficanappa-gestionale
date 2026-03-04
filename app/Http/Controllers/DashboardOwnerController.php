@@ -174,6 +174,17 @@ public function calcolaOreEPriorita($fase)
         // ore = avviamento + qtaCarta / copieh (pezzi da fare / pezzi all'ora)
         $fase->ore = $infoFase['avviamento'] + ($qta_carta / $copieh);
 
+        // Se priorità manuale (impostata da Excel o utente), non ricalcolare
+        if ($fase->priorita_manuale) {
+            return $fase;
+        }
+
+        // Se priorità manuale (range -901 a -999), non sovrascrivere
+        $currentPriorita = $fase->priorita ?? 0;
+        if ($currentPriorita <= -901 && $currentPriorita >= -999) {
+            return $fase;
+        }
+
         // giorni rimasti = dataPrevConsegna - OGGI (negativo se scaduta)
         $giorni_rimasti = 0;
         if ($fase->ordine->data_prevista_consegna) {
@@ -187,12 +198,6 @@ public function calcolaOreEPriorita($fase)
 
         // Priorità = giorni rimasti - ore/24 + ordineFase/100
         $prioritaCalcolata = round($giorni_rimasti - ($fase->ore / 24) + ($fasePriorita / 100), 2);
-
-        // Se priorità manuale (range -901 a -999), non sovrascrivere
-        $currentPriorita = $fase->priorita ?? 0;
-        if ($currentPriorita <= -901 && $currentPriorita >= -999) {
-            return $fase;
-        }
 
         $fase->priorita = $prioritaCalcolata;
         return $fase;

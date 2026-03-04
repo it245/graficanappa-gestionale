@@ -33,6 +33,16 @@ class ExcelSyncService
         return self::getExcelDir() . DIRECTORY_SEPARATOR . '.last_sync_timestamp';
     }
 
+    private static function getHashPath(): string
+    {
+        return self::getExcelDir() . DIRECTORY_SEPARATOR . '.last_sync_hash';
+    }
+
+    private static function getExportedIdsPath(): string
+    {
+        return self::getExcelDir() . DIRECTORY_SEPARATOR . '.last_exported_ids';
+    }
+
     /**
      * Esporta i dati della dashboard in un file Excel.
      */
@@ -53,10 +63,16 @@ class ExcelSyncService
         $previousReporting = error_reporting(E_ALL & ~E_DEPRECATED);
 
         try {
+            // Salva gli ID esportati PRIMA di scrivere il file (per deletion sicura)
+            $exportedIds = OrdineFase::where('stato', '<', 3)->pluck('id')->toArray();
+            file_put_contents(self::getExportedIdsPath(), json_encode($exportedIds));
+
             $content = Excel::raw(new DashboardMesExport, \Maatwebsite\Excel\Excel::XLSX);
             file_put_contents($path, $content);
 
-            // Salva timestamp dell'ultima scrittura
+            // Salva hash del file esportato (per rilevare modifiche esterne)
+            file_put_contents(self::getHashPath(), md5($content));
+            // Salva anche timestamp per backward compatibility
             file_put_contents(self::getTimestampPath(), time());
         } catch (\Throwable $e) {
             // File aperto in Excel da un utente (lock Windows) → skip silenzioso
@@ -69,22 +85,22 @@ class ExcelSyncService
     /**
      * Importa le modifiche dal file Excel nel database.
      */
-    public static function importFromExcel(): void
+    public static function importFromExcel(): bool
     {
         if (!env('EXCEL_SYNC_ENABLED', false)) {
-            return;
+            return false;
         }
 
         $path = self::getExcelPath();
         if (!file_exists($path)) {
-            return;
+            return false;
         }
 
         try {
             $spreadsheet = IOFactory::load($path);
         } catch (\Exception $e) {
-            Log::debug('ExcelSync import skip: ' . $e->getMessage());
-            return;
+            Log::warning('ExcelSync import fallito: ' . $e->getMessage());
+            return false;
         }
 
         $sheet = $spreadsheet->getActiveSheet();
@@ -210,7 +226,10 @@ class ExcelSyncService
 
             // I - Priorita
             if (self::isNumericChanged($row['I'] ?? null, $fase->priorita)) {
-                $fase->priorita = self::parseNumeric($row['I'] ?? null);
+                $nuovaPriorita = self::parseNumeric($row['I'] ?? null);
+                Log::info("ExcelSync: priorità fase #{$id} cambiata: {$fase->priorita} → {$nuovaPriorita}");
+                $fase->priorita = $nuovaPriorita;
+                $fase->priorita_manuale = true;
                 $changed = true;
             }
 
@@ -366,23 +385,32 @@ class ExcelSyncService
             }
         }
 
-        // --- Eliminazione righe mancanti dall'Excel ---
-        if (!empty($idTrovati)) {
-            $fasiDaEliminare = OrdineFase::where('stato', '<', 3)
-                ->whereNotIn('id', $idTrovati)
-                ->get();
+        // --- Eliminazione righe rimosse dall'Excel ---
+        // Solo gli ID che erano nell'ultimo export ma non sono più nel file
+        $exportedIdsPath = self::getExportedIdsPath();
+        if (!empty($idTrovati) && file_exists($exportedIdsPath)) {
+            $lastExportedIds = json_decode(file_get_contents($exportedIdsPath), true) ?: [];
+            // ID rimossi = erano nell'export ma non trovati nell'import
+            $removedIds = array_diff($lastExportedIds, $idTrovati);
 
-            foreach ($fasiDaEliminare as $faseDaEliminare) {
-                $ordineId = $faseDaEliminare->ordine_id;
-                $faseDaEliminare->operatori()->detach();
-                $faseDaEliminare->delete();
+            foreach ($removedIds as $removedId) {
+                $faseDaEliminare = OrdineFase::find($removedId);
+                if ($faseDaEliminare && $faseDaEliminare->stato < 3) {
+                    $ordineId = $faseDaEliminare->ordine_id;
+                    Log::info("ExcelSync: eliminata fase #{$removedId} (rimossa dall'Excel)");
+                    $faseDaEliminare->operatori()->detach();
+                    $faseDaEliminare->delete();
 
-                // Se l'ordine resta senza fasi, elimina anche l'ordine
-                if (OrdineFase::where('ordine_id', $ordineId)->count() === 0) {
-                    Ordine::where('id', $ordineId)->delete();
+                    // Se l'ordine resta senza fasi, elimina anche l'ordine
+                    if (OrdineFase::where('ordine_id', $ordineId)->count() === 0) {
+                        Ordine::where('id', $ordineId)->delete();
+                        Log::info("ExcelSync: eliminato ordine #{$ordineId} (senza fasi)");
+                    }
                 }
             }
         }
+
+        return true;
     }
 
     /**
@@ -401,14 +429,16 @@ class ExcelSyncService
             return;
         }
 
-        $timestampPath = self::getTimestampPath();
-        $lastSync = file_exists($timestampPath) ? (int) file_get_contents($timestampPath) : 0;
-        $fileModified = filemtime($path);
+        // Confronto basato su hash del contenuto (più affidabile di filemtime su rete/Windows)
+        $hashPath = self::getHashPath();
+        $lastHash = file_exists($hashPath) ? file_get_contents($hashPath) : '';
+        $currentHash = md5_file($path);
 
-        if ($fileModified > $lastSync) {
+        if ($currentHash !== $lastHash) {
+            Log::info('ExcelSync: rilevata modifica file Excel, avvio import...');
             self::importFromExcel();
-            // Aggiorna timestamp dopo import
-            file_put_contents($timestampPath, time());
+            // NON aggiornare l'hash qui: sarà aggiornato dall'export successivo
+            // Così se l'import fallisce, verrà ritentato al prossimo ciclo
         }
     }
 

@@ -16,6 +16,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function ($middleware) {
+        // Trust tunnel/proxy headers (tnnl.in e simili)
+        $middleware->trustProxies(at: '*');
+
         $middleware->alias([
             'operatore.auth' => OperatoreAuth::class,
             'owner' => \App\Http\Middleware\OwnerMiddleware::class,
