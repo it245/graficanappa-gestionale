@@ -828,6 +828,7 @@ tr:hover td {
                             <th>Commessa</th>
                             <th>Cliente</th>
                             <th>Descrizione</th>
+                            <th>DDT</th>
                             <th>Fase</th>
                             <th>Operatore</th>
                             <th>Data Consegna</th>
@@ -839,6 +840,7 @@ tr:hover td {
                             <td><strong>{{ $sp->ordine->commessa ?? '-' }}</strong></td>
                             <td>{{ $sp->ordine->cliente_nome ?? '-' }}</td>
                             <td style="white-space:normal; max-width:350px;">{{ $sp->ordine->descrizione ?? '-' }}</td>
+                            <td>{{ $sp->ordine->numero_ddt_vendita ? ltrim($sp->ordine->numero_ddt_vendita, '0') : '-' }}</td>
                             <td>{{ $sp->faseCatalogo->nome_display ?? $sp->fase ?? '-' }}</td>
                             <td>
                                 @foreach($sp->operatori as $op)
