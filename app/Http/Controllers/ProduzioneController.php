@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\OrdineFase;
 use App\Models\PausaOperatore;
+use App\Models\FasiCatalogo;
+use App\Models\Reparto;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Validator;
@@ -250,6 +252,26 @@ public function aggiornaCampo(Request $request)
     // Se aggiornato qta_prod, controlla se la fase è completata
     if ($request->campo === 'qta_prod') {
         \App\Services\FaseStatoService::controllaCompletamento($fase->id);
+    }
+
+    // Se note contengono "esterno" o "lavorato esternamente", sposta fase a reparto esterno
+    if ($request->campo === 'note') {
+        $nota = strtolower(trim($request->valore ?? ''));
+        if (preg_match('/\b(lavorato esternamente|esterno)\b/i', $nota)) {
+            $repartoEsterno = Reparto::where('nome', 'esterno')->first();
+            if ($repartoEsterno && $fase->fase_catalogo_id) {
+                $faseCat = FasiCatalogo::find($fase->fase_catalogo_id);
+                if ($faseCat && $faseCat->reparto_id !== $repartoEsterno->id) {
+                    // Crea nuovo FasiCatalogo con reparto esterno (non modificare l'originale)
+                    $faseCatEsterno = FasiCatalogo::firstOrCreate(
+                        ['nome' => $faseCat->nome, 'reparto_id' => $repartoEsterno->id],
+                        ['nome_display' => $faseCat->nome_display ?? $faseCat->nome]
+                    );
+                    $fase->fase_catalogo_id = $faseCatEsterno->id;
+                    $fase->save();
+                }
+            }
+        }
     }
 
     return response()->json(['success' => true]);
