@@ -177,8 +177,9 @@ class OndaSyncService
             }
         }
 
-        // Pulizia duplicati stampa offset per commessa: max 2 STAMPAXL106 per commessa
-        // (cod_art multi-passaggio permettono 2 fasi, gli altri 1)
+        // Pulizia duplicati stampa offset per commessa: raggruppa per commessa (non per fase_catalogo)
+        // perché STAMPAXL106.1 e STAMPAXL106.2 sono fase_catalogo diverse ma stessa stampa fisica
+        // cod_art multi-passaggio permettono max 2, gli altri max 1
         $codArtMax2 = [
             'Volumi','Vassoio','Vassoi','SPILLATI.OFFSET','SPILLATI.DIGITALE',
             'SOVRACOPERTA','RIVISTE.FRECCIA','riviste','RIVISTA.FRECCIA.128PP',
@@ -200,13 +201,13 @@ class OndaSyncService
             $dupStampa = DB::table('ordine_fasi')
                 ->join('ordini', 'ordini.id', '=', 'ordine_fasi.ordine_id')
                 ->join('fasi_catalogo', 'fasi_catalogo.id', '=', 'ordine_fasi.fase_catalogo_id')
-                ->select('ordini.commessa', 'ordine_fasi.fase_catalogo_id', DB::raw('COUNT(*) as cnt'),
+                ->select('ordini.commessa', DB::raw('COUNT(*) as cnt'),
                     DB::raw('MAX(ordini.cod_art) as cod_art'))
                 ->whereIn('fasi_catalogo.reparto_id', $repartiStampaOffset)
                 ->where('fasi_catalogo.nome', 'like', 'STAMPAXL106%')
                 ->whereNull('ordine_fasi.deleted_at')
                 ->where('ordine_fasi.manuale', false)
-                ->groupBy('ordini.commessa', 'ordine_fasi.fase_catalogo_id')
+                ->groupBy('ordini.commessa')
                 ->having('cnt', '>', 1)
                 ->get();
 
@@ -214,7 +215,9 @@ class OndaSyncService
                 $maxFasi = in_array($dup->cod_art, $codArtMax2) ? 2 : 1;
                 if ($dup->cnt <= $maxFasi) continue;
 
-                $faseIds = OrdineFase::where('fase_catalogo_id', $dup->fase_catalogo_id)
+                $faseIds = OrdineFase::whereHas('faseCatalogo', fn($q) =>
+                        $q->whereIn('reparto_id', $repartiStampaOffset)
+                          ->where('nome', 'like', 'STAMPAXL106%'))
                     ->whereHas('ordine', fn($q) => $q->where('commessa', $dup->commessa))
                     ->orderBy('id')
                     ->pluck('id');
