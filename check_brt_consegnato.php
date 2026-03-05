@@ -1,7 +1,7 @@
 <?php
 /**
- * Trova commesse con BRT a stato 4 (consegnato) ma altre fasi ancora aperte.
- * Uso: php check_brt_consegnato.php [--fix]
+ * Trova commesse con BRT a stato 3+ (terminato/consegnato) ma altre fasi ancora aperte.
+ * Uso: php check_brt_consegnato.php [--fix] [--stato=3|4]
  */
 require __DIR__ . '/vendor/autoload.php';
 $app = require_once __DIR__ . '/bootstrap/app.php';
@@ -11,6 +11,13 @@ use App\Models\Ordine;
 use App\Models\OrdineFase;
 
 $fix = in_array('--fix', $argv);
+$statoMin = 4; // default: solo stato 4
+foreach ($argv as $a) {
+    if (preg_match('/^--stato=(\d+)$/', $a, $m)) {
+        $statoMin = (int) $m[1];
+    }
+}
+echo "Cerco BRT con stato >= {$statoMin} e fasi aperte...\n\n";
 
 // Tutte le commesse attive (con almeno 1 fase non consegnata)
 $commesse = DB::table('ordini')
@@ -30,7 +37,7 @@ foreach ($commesse as $commessa) {
     $brtConsegnato = OrdineFase::whereIn('ordine_id', $ordineIds)
         ->whereIn('fase', ['BRT1', 'brt1', 'BRT'])
         ->whereNull('deleted_at')
-        ->where('stato', 4)
+        ->where('stato', '>=', $statoMin)
         ->exists();
 
     if (!$brtConsegnato) continue;
@@ -43,7 +50,12 @@ foreach ($commesse as $commessa) {
     if ($fasiAperte->isEmpty()) continue;
 
     $found++;
-    echo "COMMESSA: {$commessa} — BRT a stato 4, ma {$fasiAperte->count()} fasi aperte:\n";
+    $brtStato = OrdineFase::whereIn('ordine_id', $ordineIds)
+        ->whereIn('fase', ['BRT1', 'brt1', 'BRT'])
+        ->whereNull('deleted_at')
+        ->where('stato', '>=', $statoMin)
+        ->value('stato');
+    echo "COMMESSA: {$commessa} — BRT a stato {$brtStato}, ma {$fasiAperte->count()} fasi aperte:\n";
     foreach ($fasiAperte as $f) {
         echo "  fase #{$f->id} {$f->fase} stato={$f->stato}\n";
     }
@@ -59,7 +71,7 @@ foreach ($commesse as $commessa) {
 }
 
 echo str_repeat('=', 60) . "\n";
-echo "Commesse con BRT=4 e fasi aperte: {$found}\n";
+echo "Commesse con BRT>={$statoMin} e fasi aperte: {$found}\n";
 if (!$fix && $found > 0) {
     echo "Usa --fix per portare tutte le fasi a stato 4\n";
 }
