@@ -408,18 +408,9 @@ class DashboardSpedizioneController extends Controller
         $data = $request->input('data', now()->toDateString());
         $nota = NotaSpedizione::where('data', $data)->first();
 
-        if ($request->expectsJson()) {
-            return response()->json([
-                'data' => $data,
-                'contenuto_am' => $nota->contenuto_am ?? '',
-                'contenuto_pm' => $nota->contenuto_pm ?? '',
-            ]);
-        }
-
         return response()->json([
             'data' => $data,
-            'contenuto_am' => $nota->contenuto_am ?? '',
-            'contenuto_pm' => $nota->contenuto_pm ?? '',
+            'contenuto' => $nota->contenuto ?? '',
         ]);
     }
 
@@ -427,16 +418,12 @@ class DashboardSpedizioneController extends Controller
     {
         $request->validate([
             'data' => 'required|date',
-            'contenuto_am' => 'nullable|string',
-            'contenuto_pm' => 'nullable|string',
+            'contenuto' => 'nullable|string',
         ]);
 
         NotaSpedizione::updateOrCreate(
             ['data' => $request->data],
-            [
-                'contenuto_am' => $request->contenuto_am,
-                'contenuto_pm' => $request->contenuto_pm,
-            ]
+            ['contenuto' => $request->contenuto]
         );
 
         return response()->json(['success' => true]);

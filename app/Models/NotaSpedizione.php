@@ -8,7 +8,7 @@ class NotaSpedizione extends Model
 {
     protected $table = 'note_spedizione';
 
-    protected $fillable = ['data', 'contenuto_am', 'contenuto_pm'];
+    protected $fillable = ['data', 'contenuto'];
 
     protected $casts = ['data' => 'date'];
 }

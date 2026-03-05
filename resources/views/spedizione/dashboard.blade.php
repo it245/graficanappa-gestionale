@@ -315,12 +315,7 @@
         <button onclick="toggleNotePanel()" style="background:none; border:none; font-size:18px; cursor:pointer; color:#666; line-height:1;">&times;</button>
     </div>
     <div>
-        <label style="font-weight:bold; color:#198754; font-size:12px;">AM (Mattina)</label>
-        <textarea id="notaAM" rows="2" class="form-control form-control-sm" style="border-color:#198754; font-size:13px;" placeholder="Mattina..."></textarea>
-    </div>
-    <div style="margin-top:4px;">
-        <label style="font-weight:bold; color:#fd7e14; font-size:12px;">PM (Pomeriggio)</label>
-        <textarea id="notaPM" rows="2" class="form-control form-control-sm" style="border-color:#fd7e14; font-size:13px;" placeholder="Pomeriggio..."></textarea>
+        <textarea id="notaContenuto" rows="5" class="form-control form-control-sm" style="border-color:#0d6efd; font-size:13px;" placeholder="Note consegne del giorno..."></textarea>
     </div>
     <div style="margin-top:4px; display:flex; justify-content:space-between; align-items:center;">
         <span id="noteSaveStatus" style="font-size:11px; color:#6c757d;"></span>
@@ -1067,14 +1062,25 @@ function caricaStatoBRT(numeroDDT, hash, callback) {
     });
 }
 
-// Ricerca
-document.getElementById('searchBox').addEventListener('input', function() {
-    const query = this.value.toLowerCase().trim();
-    document.querySelectorAll('tr.searchable').forEach(function(row) {
-        const text = row.innerText.toLowerCase();
-        row.style.display = (!query || text.includes(query)) ? '' : 'none';
-    });
+// Ricerca con persistenza
+var searchBox = document.getElementById('searchBox');
+var savedSearch = localStorage.getItem('spedizione_search') || '';
+if (savedSearch) {
+    searchBox.value = savedSearch;
+    filtraRicerca(savedSearch);
+}
+searchBox.addEventListener('input', function() {
+    var query = this.value.trim();
+    localStorage.setItem('spedizione_search', query);
+    filtraRicerca(query);
 });
+function filtraRicerca(query) {
+    var q = query.toLowerCase();
+    document.querySelectorAll('tr.searchable').forEach(function(row) {
+        var text = row.innerText.toLowerCase();
+        row.style.display = (!q || text.includes(q)) ? '' : 'none';
+    });
+}
 
 // Sidebar
 function openSidebar() {
@@ -1173,7 +1179,7 @@ document.getElementById('modalBRT').addEventListener('shown.bs.modal', function(
     }
 });
 
-// === Note giornaliere AM/PM ===
+// === Note giornaliere ===
 function toggleNotePanel() {
     var panel = document.getElementById('notePanel');
     if (panel.style.display === 'none') {
@@ -1190,8 +1196,7 @@ function caricaNote() {
     })
     .then(r => r.json())
     .then(d => {
-        document.getElementById('notaAM').value = d.contenuto_am || '';
-        document.getElementById('notaPM').value = d.contenuto_pm || '';
+        document.getElementById('notaContenuto').value = d.contenuto || '';
         document.getElementById('noteSaveStatus').textContent = '';
     })
     .catch(() => {});
@@ -1209,8 +1214,7 @@ function salvaNote() {
         },
         body: JSON.stringify({
             data: '{{ now()->toDateString() }}',
-            contenuto_am: document.getElementById('notaAM').value,
-            contenuto_pm: document.getElementById('notaPM').value
+            contenuto: document.getElementById('notaContenuto').value
         })
     })
     .then(r => r.json())
