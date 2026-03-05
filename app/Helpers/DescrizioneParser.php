@@ -66,6 +66,7 @@ class DescrizioneParser
             '/\bFUSTELLATURA\b/i',
             '/\bSENZA\b/i',
             '/\(RISERVA\b/i',
+            '/\bcon\s+riserve\b/i',
             '/\(\s*(?:USARE|CON\s+LASTRINA)\b/i',  // istruzioni tecniche tra parentesi
             '/\bBrossura\b/i',
             '/\bPunto\s+Metallico\b/i',
