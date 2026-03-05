@@ -572,6 +572,7 @@
                             <th>Cod. Articolo</th>
                             <th>Descrizione</th>
                             <th>Qta Ordinata</th>
+                            <th>DDT</th>
                             <th>Tipo</th>
                             <th>Ora Consegna</th>
                             <th>Operatore</th>
@@ -588,6 +589,7 @@
                             <td>{{ $fase->ordine->cod_art ?? '-' }}</td>
                             <td>{{ $fase->ordine->descrizione ?? '-' }}</td>
                             <td>{{ $fase->ordine->qta_richiesta ?? '-' }}</td>
+                            <td>{{ $fase->ordine->numero_ddt_vendita ? ltrim($fase->ordine->numero_ddt_vendita, '0') : '-' }}</td>
                             <td>
                                 @if($fase->tipo_consegna === 'parziale')
                                     <span class="badge bg-warning text-dark">Parziale</span>
