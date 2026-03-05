@@ -401,6 +401,12 @@ public function calcolaOreEPriorita($fase)
             $fase->save();
         } elseif (in_array($campo, $campiFase)) {
             $fase->{$campo} = $valore;
+
+            // Se priorità cambiata manualmente, segnala come manuale
+            if ($campo === 'priorita') {
+                $fase->priorita_manuale = true;
+            }
+
             $fase->save();
 
             // Se aggiornata qta_prod, controlla completamento automatico

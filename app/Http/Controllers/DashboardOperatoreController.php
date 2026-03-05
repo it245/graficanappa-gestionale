@@ -157,11 +157,17 @@ class DashboardOperatoreController extends Controller
                     $giorni_rimasti = ($consegna->timestamp - $oggi->timestamp) / 86400;
                 }
 
-                // Ordine fase dalla config
-                $fasePriorita = config('fasi_priorita')[$fase->fase] ?? 500;
+                // Se priorità manuale (impostata da owner/Excel), non ricalcolare
+                $currentPriorita = $fase->priorita ?? 0;
+                if ($fase->priorita_manuale || ($currentPriorita <= -901 && $currentPriorita >= -999)) {
+                    // Mantieni la priorità dal DB
+                } else {
+                    // Ordine fase dalla config
+                    $fasePriorita = config('fasi_priorita')[$fase->fase] ?? 500;
 
-                // Priorità = giorni rimasti - ore/24 + ordineFase/10000
-                $fase->priorita = round($giorni_rimasti - ($fase->ore / 24) + ($fasePriorita / 10000), 2);
+                    // Priorità = giorni rimasti - ore/24 + ordineFase/10000
+                    $fase->priorita = round($giorni_rimasti - ($fase->ore / 24) + ($fasePriorita / 10000), 2);
+                }
 
                 // Colori e Fustella dalla descrizione
                 $desc = $fase->ordine->descrizione ?? '';
