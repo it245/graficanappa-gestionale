@@ -615,8 +615,7 @@ tr:hover td {
 
 <select id="filterFase" multiple>
     @php
-        $fasiNomi = $fasiCatalogo->pluck('nome')->map(function($n) {
-            if (str_starts_with($n, 'STAMPAXL106')) return 'STAMPAXL';
+        $fasiNomi = $fasiCatalogo->pluck('nome_display')->map(function($n) {
             if ($n === 'STAMPA') return null;
             return $n;
         })->filter()->unique()->sort()->values();
