@@ -91,7 +91,7 @@ class FaseStatoService
             $fase->stato = 3;
             $fase->data_fine = now()->format('Y-m-d H:i:s');
             $fase->save();
-            self::ricalcolaStati($fase->ordine_id);
+            self::ricalcolaCommessa($fase->ordine->commessa ?? null);
         }
     }
 
@@ -116,18 +116,52 @@ class FaseStatoService
     }
 
     /**
+     * Ricalcola gli stati di tutte le fasi di una commessa (tutti gli ordini).
+     */
+    public static function ricalcolaCommessa($commessa)
+    {
+        if (!$commessa) return;
+
+        $ordineIds = Ordine::where('commessa', $commessa)->pluck('id');
+        if ($ordineIds->isEmpty()) return;
+
+        // Prendi TUTTE le fasi della commessa, ordinate per priorità
+        $fasi = OrdineFase::whereIn('ordine_id', $ordineIds)->orderBy('priorita')->orderBy('id')->get();
+        if ($fasi->isEmpty()) return;
+
+        foreach ($fasi as $fase) {
+            if ($fase->stato >= 2) continue;
+
+            $fasiPrecedenti = $fasi->filter(fn($f) =>
+                $f->id !== $fase->id && ($f->priorita ?? 0) < ($fase->priorita ?? 0)
+            );
+
+            if ($fasiPrecedenti->isEmpty()) {
+                if ($fase->stato == 1) {
+                    $fase->stato = 0;
+                    $fase->save();
+                }
+            } else {
+                $tuttTerminate = $fasiPrecedenti->every(fn($f) => $f->stato >= 3);
+                if ($tuttTerminate && $fase->stato == 0) {
+                    $fase->stato = 1;
+                    $fase->save();
+                } elseif (!$tuttTerminate && $fase->stato == 1) {
+                    $fase->stato = 0;
+                    $fase->save();
+                }
+            }
+        }
+    }
+
+    /**
      * Dopo import: ricalcola tutti gli stati di tutte le commesse
      */
     public static function ricalcolaTutti()
     {
-        $ordineIds = OrdineFase::distinct()->pluck('ordine_id');
-        foreach ($ordineIds as $ordineId) {
-            self::ricalcolaStati($ordineId);
-        }
-
-        // Propaga stato 4 per commesse con BRT consegnato
-        $commesse = Ordine::whereIn('id', $ordineIds)->distinct()->pluck('commessa');
+        $commesse = Ordine::distinct()->pluck('commessa');
         foreach ($commesse as $commessa) {
+            self::ricalcolaCommessa($commessa);
             self::propagaConsegnato($commessa);
         }
     }

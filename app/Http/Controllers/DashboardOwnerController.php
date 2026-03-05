@@ -414,6 +414,11 @@ public function calcolaOreEPriorita($fase)
                 FaseStatoService::controllaCompletamento($fase->id);
             }
 
+            // Se stato cambiato, ricalcola stati di tutta la commessa
+            if ($campo === 'stato') {
+                FaseStatoService::ricalcolaCommessa($fase->ordine->commessa);
+            }
+
             // Se note contengono "esterno" o "lavorato esternamente", segna come esterno
             if ($campo === 'note' && preg_match('/\b(lavorato esternamente|esterno)\b/i', $valore ?? '')) {
                 if (!$fase->esterno) {
