@@ -133,6 +133,7 @@ $gruppi = collect($righeOnda)->groupBy(function ($riga) {
 $ordiniCreati = 0;
 $fasiCreate = 0;
 $dedupPerCommessa = []; // 1 sola fase per commessa per fustella/digitale
+$dedupQta = []; // Track qta distinte per dedup
 
 foreach ($gruppi as $chiave => $righe) {
     $prima = $righe->first();
@@ -254,10 +255,23 @@ foreach ($gruppi as $chiave => $righe) {
         $faseCatalogo = FasiCatalogo::firstOrCreate(['nome' => $faseNome], ['reparto_id' => $reparto->id]);
 
         // Dedup fustella per commessa: 1 sola fase per commessa per reparto (la fustella fisica è condivisa)
+        // qta_fase = somma delle qta distinte di tutti gli articoli
         if (in_array($repartoNome, ['fustella piana', 'fustella cilindrica', 'fustella'])) {
             $chiaveDedup = $commessa . '|fust|' . $repartoNome;
+            $qtaRiga = (int)($riga->QtaDaLavorare ?? 0);
+
             if (isset($dedupPerCommessa[$chiaveDedup])) {
-                echo "    -> Fase {$faseNome} fustella già creata per commessa, skip\n";
+                if ($qtaRiga > 0 && !in_array($qtaRiga, $dedupQta[$chiaveDedup] ?? [])) {
+                    $dedupQta[$chiaveDedup][] = $qtaRiga;
+                    $nuovaQta = array_sum($dedupQta[$chiaveDedup]);
+                    OrdineFase::withTrashed()
+                        ->whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', $reparto->id))
+                        ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
+                        ->update(['qta_fase' => $nuovaQta]);
+                    echo "    -> Fase {$faseNome} fustella qta aggiornata a {$nuovaQta}\n";
+                } else {
+                    echo "    -> Fase {$faseNome} fustella già creata per commessa, skip\n";
+                }
                 continue;
             }
             $existsInCommessa = OrdineFase::withTrashed()
@@ -265,6 +279,7 @@ foreach ($gruppi as $chiave => $righe) {
                 ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
                 ->exists();
             $dedupPerCommessa[$chiaveDedup] = true;
+            $dedupQta[$chiaveDedup] = $qtaRiga > 0 ? [$qtaRiga] : [];
             if ($existsInCommessa) {
                 echo "    -> Fase {$faseNome} fustella già esistente per commessa, skip\n";
                 continue;
@@ -291,10 +306,23 @@ foreach ($gruppi as $chiave => $righe) {
         }
 
         // Dedup stampa offset per commessa: 1 sola STAMPAXL106 per commessa
+        // qta_fase = somma delle qta distinte
         if ($repartoNome === 'stampa offset' && str_starts_with($faseNome, 'STAMPAXL106')) {
             $chiaveDedup = $commessa . '|stampa_offset|' . $faseNome;
+            $qtaRiga = (int)($riga->QtaDaLavorare ?? 0);
+
             if (isset($dedupPerCommessa[$chiaveDedup])) {
-                echo "    -> Fase {$faseNome} stampa offset già creata per commessa, skip\n";
+                if ($qtaRiga > 0 && !in_array($qtaRiga, $dedupQta[$chiaveDedup] ?? [])) {
+                    $dedupQta[$chiaveDedup][] = $qtaRiga;
+                    $nuovaQta = array_sum($dedupQta[$chiaveDedup]);
+                    OrdineFase::withTrashed()
+                        ->where('fase_catalogo_id', $faseCatalogo->id)
+                        ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
+                        ->update(['qta_fase' => $nuovaQta]);
+                    echo "    -> Fase {$faseNome} stampa offset qta aggiornata a {$nuovaQta}\n";
+                } else {
+                    echo "    -> Fase {$faseNome} stampa offset già creata per commessa, skip\n";
+                }
                 continue;
             }
             $existsInCommessa = OrdineFase::withTrashed()
@@ -302,6 +330,7 @@ foreach ($gruppi as $chiave => $righe) {
                 ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
                 ->exists();
             $dedupPerCommessa[$chiaveDedup] = true;
+            $dedupQta[$chiaveDedup] = $qtaRiga > 0 ? [$qtaRiga] : [];
             if ($existsInCommessa) {
                 echo "    -> Fase {$faseNome} stampa offset già esistente per commessa, skip\n";
                 continue;

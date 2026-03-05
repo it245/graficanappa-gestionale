@@ -178,6 +178,8 @@ class OndaSyncService
 
         // Track fasi deduplicate per commessa (1 sola per commessa per fustella, digitale, finitura digitale)
         $dedupPerCommessa = [];
+        // Track qta distinte per dedup (chiave => [qta1, qta2, ...])
+        $dedupQta = [];
 
         foreach ($gruppi as $chiave => $righe) {
             $prima = $righe->first();
@@ -310,9 +312,23 @@ class OndaSyncService
                 );
 
                 // Dedup fustella per commessa: 1 sola per commessa per reparto (la fustella fisica è condivisa)
+                // qta_fase = somma delle qta distinte di tutti gli articoli
                 if (in_array($repartoNome, ['fustella piana', 'fustella cilindrica', 'fustella'])) {
                     $chiaveDedup = $commessa . '|fust|' . $repartoNome;
-                    if (isset($dedupPerCommessa[$chiaveDedup])) continue;
+                    $qtaRiga = (int)($riga->QtaDaLavorare ?? 0);
+
+                    if (isset($dedupPerCommessa[$chiaveDedup])) {
+                        // Riga successiva: somma qta se distinta
+                        if ($qtaRiga > 0 && !in_array($qtaRiga, $dedupQta[$chiaveDedup] ?? [])) {
+                            $dedupQta[$chiaveDedup][] = $qtaRiga;
+                            $nuovaQta = array_sum($dedupQta[$chiaveDedup]);
+                            OrdineFase::withTrashed()
+                                ->whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', $reparto->id))
+                                ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
+                                ->update(['qta_fase' => $nuovaQta]);
+                        }
+                        continue;
+                    }
 
                     $existsInCommessa = OrdineFase::withTrashed()
                         ->whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', $reparto->id))
@@ -320,8 +336,9 @@ class OndaSyncService
                         ->exists();
 
                     $dedupPerCommessa[$chiaveDedup] = true;
+                    $dedupQta[$chiaveDedup] = $qtaRiga > 0 ? [$qtaRiga] : [];
                     if ($existsInCommessa) {
-                        // Aggiorna scarti_previsti se mancante su fase esistente
+                        // Aggiorna scarti_previsti se mancante + qta_fase
                         $scartiValue = $scartiMacchine[trim($riga->CodMacchina ?? '')] ?? null;
                         if ($scartiValue !== null) {
                             OrdineFase::withTrashed()
@@ -363,9 +380,23 @@ class OndaSyncService
 
                 // Dedup stampa offset per commessa: 1 sola STAMPAXL106 per commessa
                 // (la stampa offset è per foglio, condivisa tra tutti gli articoli della commessa)
+                // qta_fase = somma delle qta distinte
                 if ($repartoNome === 'stampa offset' && str_starts_with($faseNome, 'STAMPAXL106')) {
                     $chiaveDedup = $commessa . '|stampa_offset|' . $faseNome;
-                    if (isset($dedupPerCommessa[$chiaveDedup])) continue;
+                    $qtaRiga = (int)($riga->QtaDaLavorare ?? 0);
+
+                    if (isset($dedupPerCommessa[$chiaveDedup])) {
+                        // Riga successiva: somma qta se distinta
+                        if ($qtaRiga > 0 && !in_array($qtaRiga, $dedupQta[$chiaveDedup] ?? [])) {
+                            $dedupQta[$chiaveDedup][] = $qtaRiga;
+                            $nuovaQta = array_sum($dedupQta[$chiaveDedup]);
+                            OrdineFase::withTrashed()
+                                ->where('fase_catalogo_id', $faseCatalogo->id)
+                                ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
+                                ->update(['qta_fase' => $nuovaQta]);
+                        }
+                        continue;
+                    }
 
                     $existsInCommessa = OrdineFase::withTrashed()
                         ->where('fase_catalogo_id', $faseCatalogo->id)
@@ -373,6 +404,7 @@ class OndaSyncService
                         ->exists();
 
                     $dedupPerCommessa[$chiaveDedup] = true;
+                    $dedupQta[$chiaveDedup] = $qtaRiga > 0 ? [$qtaRiga] : [];
                     if ($existsInCommessa) {
                         $scartiValue = $scartiMacchine[trim($riga->CodMacchina ?? '')] ?? null;
                         if ($scartiValue !== null) {
