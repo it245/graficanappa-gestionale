@@ -80,6 +80,7 @@ class OndaSyncService
         //     mantieni le prime 2 (per "max 2 fasi") e elimina il resto
         $duplicati = DB::table('ordine_fasi')
             ->select('ordine_id', 'fase_catalogo_id', DB::raw('COUNT(*) as cnt'))
+            ->whereNull('deleted_at')
             ->groupBy('ordine_id', 'fase_catalogo_id')
             ->having('cnt', '>', 2)
             ->get();
@@ -109,6 +110,7 @@ class OndaSyncService
                 ->join('fasi_catalogo', 'fasi_catalogo.id', '=', 'ordine_fasi.fase_catalogo_id')
                 ->select('ordini.commessa', 'fasi_catalogo.reparto_id', DB::raw('COUNT(*) as cnt'))
                 ->whereIn('fasi_catalogo.reparto_id', $repartiFustella)
+                ->whereNull('ordine_fasi.deleted_at')
                 ->groupBy('ordini.commessa', 'fasi_catalogo.reparto_id')
                 ->having('cnt', '>', 1)
                 ->get();
@@ -117,6 +119,40 @@ class OndaSyncService
                 $faseIds = OrdineFase::withTrashed()
                     ->whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', $dup->reparto_id))
                     ->whereHas('ordine', fn($q) => $q->where('commessa', $dup->commessa))
+                    ->whereNull('deleted_at')
+                    ->orderBy('id')
+                    ->pluck('id');
+
+                $keepId = $faseIds->first();
+                $deleteIds = $faseIds->slice(1)->filter();
+                if ($deleteIds->isNotEmpty()) {
+                    $deleted = OrdineFase::whereIn('id', $deleteIds)
+                        ->where('stato', '<=', 1)
+                        ->delete();
+                    $fasiEliminate += $deleted;
+                }
+            }
+        }
+
+        // Pulizia duplicati stampa offset per commessa: 1 sola STAMPAXL106 per commessa
+        $repartiStampaOffset = Reparto::where('nome', 'stampa offset')->pluck('id');
+        if ($repartiStampaOffset->isNotEmpty()) {
+            $dupStampa = DB::table('ordine_fasi')
+                ->join('ordini', 'ordini.id', '=', 'ordine_fasi.ordine_id')
+                ->join('fasi_catalogo', 'fasi_catalogo.id', '=', 'ordine_fasi.fase_catalogo_id')
+                ->select('ordini.commessa', 'ordine_fasi.fase_catalogo_id', DB::raw('COUNT(*) as cnt'))
+                ->whereIn('fasi_catalogo.reparto_id', $repartiStampaOffset)
+                ->where('fasi_catalogo.nome', 'like', 'STAMPAXL106%')
+                ->whereNull('ordine_fasi.deleted_at')
+                ->groupBy('ordini.commessa', 'ordine_fasi.fase_catalogo_id')
+                ->having('cnt', '>', 1)
+                ->get();
+
+            foreach ($dupStampa as $dup) {
+                $faseIds = OrdineFase::withTrashed()
+                    ->where('fase_catalogo_id', $dup->fase_catalogo_id)
+                    ->whereHas('ordine', fn($q) => $q->where('commessa', $dup->commessa))
+                    ->whereNull('deleted_at')
                     ->orderBy('id')
                     ->pluck('id');
 
@@ -318,6 +354,31 @@ class OndaSyncService
                                 ->where('fase_catalogo_id', $faseCatalogo->id)
                                 ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa)
                                     ->where('cod_art', $codArt))
+                                ->whereNull('scarti_previsti')
+                                ->update(['scarti_previsti' => $scartiValue]);
+                        }
+                        continue;
+                    }
+                }
+
+                // Dedup stampa offset per commessa: 1 sola STAMPAXL106 per commessa
+                // (la stampa offset è per foglio, condivisa tra tutti gli articoli della commessa)
+                if ($repartoNome === 'stampa offset' && str_starts_with($faseNome, 'STAMPAXL106')) {
+                    $chiaveDedup = $commessa . '|stampa_offset|' . $faseNome;
+                    if (isset($dedupPerCommessa[$chiaveDedup])) continue;
+
+                    $existsInCommessa = OrdineFase::withTrashed()
+                        ->where('fase_catalogo_id', $faseCatalogo->id)
+                        ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
+                        ->exists();
+
+                    $dedupPerCommessa[$chiaveDedup] = true;
+                    if ($existsInCommessa) {
+                        $scartiValue = $scartiMacchine[trim($riga->CodMacchina ?? '')] ?? null;
+                        if ($scartiValue !== null) {
+                            OrdineFase::withTrashed()
+                                ->where('fase_catalogo_id', $faseCatalogo->id)
+                                ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
                                 ->whereNull('scarti_previsti')
                                 ->update(['scarti_previsti' => $scartiValue]);
                         }

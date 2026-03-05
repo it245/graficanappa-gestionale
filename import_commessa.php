@@ -290,6 +290,24 @@ foreach ($gruppi as $chiave => $righe) {
             }
         }
 
+        // Dedup stampa offset per commessa: 1 sola STAMPAXL106 per commessa
+        if ($repartoNome === 'stampa offset' && str_starts_with($faseNome, 'STAMPAXL106')) {
+            $chiaveDedup = $commessa . '|stampa_offset|' . $faseNome;
+            if (isset($dedupPerCommessa[$chiaveDedup])) {
+                echo "    -> Fase {$faseNome} stampa offset già creata per commessa, skip\n";
+                continue;
+            }
+            $existsInCommessa = OrdineFase::withTrashed()
+                ->where('fase_catalogo_id', $faseCatalogo->id)
+                ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
+                ->exists();
+            $dedupPerCommessa[$chiaveDedup] = true;
+            if ($existsInCommessa) {
+                echo "    -> Fase {$faseNome} stampa offset già esistente per commessa, skip\n";
+                continue;
+            }
+        }
+
         $dataFase = [
             'ordine_id'        => $ordine->id,
             'fase'             => $faseNome,
