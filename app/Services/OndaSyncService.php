@@ -76,8 +76,43 @@ class OndaSyncService
             return ['ordini_creati' => 0, 'ordini_aggiornati' => 0, 'fasi_create' => 0];
         }
 
-        // 1b. Pulizia duplicati: se ci sono più di 2 fasi uguali (stesso ordine + fase_catalogo),
-        //     mantieni le prime 2 (per "max 2 fasi") e elimina il resto
+        // 1a. Pulizia ordini duplicati per whitespace nella descrizione
+        //     Unisce ordini con stessa commessa+cod_art ma descrizione diversa solo per \r\n vs spazio
+        $ordiniDuplicati = DB::table('ordini')
+            ->select('commessa', 'cod_art', DB::raw('COUNT(*) as cnt'))
+            ->groupBy('commessa', 'cod_art')
+            ->having('cnt', '>', 1)
+            ->get();
+
+        foreach ($ordiniDuplicati as $dup) {
+            $ordiniGruppo = Ordine::where('commessa', $dup->commessa)
+                ->where('cod_art', $dup->cod_art)
+                ->orderBy('id')
+                ->get();
+
+            $perDesc = $ordiniGruppo->groupBy(function ($o) {
+                return preg_replace('/\s+/', ' ', trim($o->descrizione));
+            });
+
+            foreach ($perDesc as $descNorm => $ordini) {
+                if ($ordini->count() <= 1) continue;
+
+                $keeper = $ordini->first();
+                $duplicates = $ordini->slice(1);
+
+                foreach ($duplicates as $dupOrdine) {
+                    OrdineFase::where('ordine_id', $dupOrdine->id)
+                        ->update(['ordine_id' => $keeper->id]);
+                    $dupOrdine->delete();
+                    Log::info("OndaSync: unito ordine #{$dupOrdine->id} in #{$keeper->id} (commessa {$dup->commessa}, desc normalizzata)");
+                }
+
+                $keeper->update(['descrizione' => $descNorm]);
+            }
+        }
+
+        // 1b. Pulizia duplicati fasi: se ci sono più di 1 fasi uguali (stesso ordine + fase_catalogo),
+        //     mantieni solo la prima e elimina il resto
         $duplicati = DB::table('ordine_fasi')
             ->select('ordine_id', 'fase_catalogo_id', DB::raw('COUNT(*) as cnt'))
             ->whereNull('deleted_at')
@@ -244,45 +279,6 @@ class OndaSyncService
 
         if ($fasiEliminate > 0) {
             Log::info("OndaSync: eliminati $fasiEliminate duplicati");
-        }
-
-        // 1b. Pulizia ordini duplicati per whitespace nella descrizione
-        //     Unisce ordini con stessa commessa+cod_art ma descrizione diversa solo per \r\n vs spazio
-        $ordiniDuplicati = DB::table('ordini')
-            ->select('commessa', 'cod_art', DB::raw('COUNT(*) as cnt'))
-            ->groupBy('commessa', 'cod_art')
-            ->having('cnt', '>', 1)
-            ->get();
-
-        foreach ($ordiniDuplicati as $dup) {
-            $ordiniGruppo = Ordine::where('commessa', $dup->commessa)
-                ->where('cod_art', $dup->cod_art)
-                ->orderBy('id')
-                ->get();
-
-            // Raggruppa per descrizione normalizzata
-            $perDesc = $ordiniGruppo->groupBy(function ($o) {
-                return preg_replace('/\s+/', ' ', trim($o->descrizione));
-            });
-
-            foreach ($perDesc as $descNorm => $ordini) {
-                if ($ordini->count() <= 1) continue;
-
-                $keeper = $ordini->first();
-                $duplicates = $ordini->slice(1);
-
-                foreach ($duplicates as $dupOrdine) {
-                    // Sposta le fasi dall'ordine duplicato al keeper
-                    OrdineFase::where('ordine_id', $dupOrdine->id)
-                        ->update(['ordine_id' => $keeper->id]);
-                    // Elimina l'ordine duplicato
-                    $dupOrdine->delete();
-                    Log::info("OndaSync: unito ordine #{$dupOrdine->id} in #{$keeper->id} (commessa {$dup->commessa}, desc normalizzata)");
-                }
-
-                // Normalizza la descrizione del keeper
-                $keeper->update(['descrizione' => $descNorm]);
-            }
         }
 
         // 2. Raggruppa per (CodCommessa, CodArt, OC_Descrizione) — normalizzato
