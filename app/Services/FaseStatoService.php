@@ -29,6 +29,11 @@ class FaseStatoService
 
             if ($fasiPrecedenti->isEmpty()) {
                 // Nessuna fase precedente → resta a 0 (non promuovere automaticamente)
+                // Se era già a 1 (promossa prima del fix), riportala a 0
+                if ($fase->stato == 1) {
+                    $fase->stato = 0;
+                    $fase->save();
+                }
             } else {
                 $tuttTerminate = $fasiPrecedenti->every(fn($f) => $f->stato >= 3);
                 if ($tuttTerminate && $fase->stato == 0) {
