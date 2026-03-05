@@ -184,16 +184,9 @@ foreach ($gruppi as $chiave => $righe) {
     }
 
     // Fase BRT1 (spedizione) — 1 sola per commessa
-    $hasBrt = OrdineFase::withTrashed()
-        ->where(function ($q) { $q->where('fase', 'BRT1')->orWhere('fase', 'brt1'); })
+    $hasBrt = OrdineFase::where(function ($q) { $q->where('fase', 'BRT1')->orWhere('fase', 'brt1'); })
         ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
         ->exists();
-
-    // Restore BRT1 soft-deleted
-    OrdineFase::onlyTrashed()
-        ->where(function ($q) { $q->where('fase', 'BRT1')->orWhere('fase', 'brt1'); })
-        ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
-        ->restore();
 
     if (!$hasBrt) {
         $repartoBrt = Reparto::firstOrCreate(['nome' => 'spedizione']);
@@ -270,8 +263,7 @@ foreach ($gruppi as $chiave => $righe) {
                 if ($qtaRiga > 0 && !in_array($qtaRiga, $dedupQta[$chiaveDedup] ?? [])) {
                     $dedupQta[$chiaveDedup][] = $qtaRiga;
                     $nuovaQta = array_sum($dedupQta[$chiaveDedup]);
-                    OrdineFase::withTrashed()
-                        ->whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', $reparto->id))
+                    OrdineFase::whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', $reparto->id))
                         ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
                         ->update(['qta_fase' => $nuovaQta]);
                     echo "    -> Fase {$faseNome} fustella qta aggiornata a {$nuovaQta}\n";
@@ -280,18 +272,12 @@ foreach ($gruppi as $chiave => $righe) {
                 }
                 continue;
             }
-            $existsInCommessa = OrdineFase::withTrashed()
-                ->whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', $reparto->id))
+            $existsInCommessa = OrdineFase::whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', $reparto->id))
                 ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
                 ->exists();
             $dedupPerCommessa[$chiaveDedup] = true;
             $dedupQta[$chiaveDedup] = $qtaRiga > 0 ? [$qtaRiga] : [];
             if ($existsInCommessa) {
-                // Restore soft-deleted
-                OrdineFase::onlyTrashed()
-                    ->whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', $reparto->id))
-                    ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
-                    ->restore();
                 echo "    -> Fase {$faseNome} fustella già esistente per commessa, skip\n";
                 continue;
             }
@@ -304,18 +290,12 @@ foreach ($gruppi as $chiave => $righe) {
                 echo "    -> Fase {$faseNome} digitale già creata per stesso articolo, skip\n";
                 continue;
             }
-            $existsInCommessa = OrdineFase::withTrashed()
-                ->where('fase_catalogo_id', $faseCatalogo->id)
+            $existsInCommessa = OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
                 ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa)
                     ->where('cod_art', $codArt))
                 ->exists();
             $dedupPerCommessa[$chiaveDedup] = true;
             if ($existsInCommessa) {
-                // Restore soft-deleted
-                OrdineFase::onlyTrashed()
-                    ->where('fase_catalogo_id', $faseCatalogo->id)
-                    ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa)->where('cod_art', $codArt))
-                    ->restore();
                 echo "    -> Fase {$faseNome} digitale già esistente per stesso articolo, skip\n";
                 continue;
             }
@@ -331,8 +311,7 @@ foreach ($gruppi as $chiave => $righe) {
                 if ($qtaRiga > 0 && !in_array($qtaRiga, $dedupQta[$chiaveDedup] ?? [])) {
                     $dedupQta[$chiaveDedup][] = $qtaRiga;
                     $nuovaQta = array_sum($dedupQta[$chiaveDedup]);
-                    OrdineFase::withTrashed()
-                        ->where('fase_catalogo_id', $faseCatalogo->id)
+                    OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
                         ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
                         ->update(['qta_fase' => $nuovaQta]);
                     echo "    -> Fase {$faseNome} stampa offset qta aggiornata a {$nuovaQta}\n";
@@ -341,18 +320,12 @@ foreach ($gruppi as $chiave => $righe) {
                 }
                 continue;
             }
-            $existsInCommessa = OrdineFase::withTrashed()
-                ->where('fase_catalogo_id', $faseCatalogo->id)
+            $existsInCommessa = OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
                 ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
                 ->exists();
             $dedupPerCommessa[$chiaveDedup] = true;
             $dedupQta[$chiaveDedup] = $qtaRiga > 0 ? [$qtaRiga] : [];
             if ($existsInCommessa) {
-                // Restore soft-deleted
-                OrdineFase::onlyTrashed()
-                    ->where('fase_catalogo_id', $faseCatalogo->id)
-                    ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
-                    ->restore();
                 echo "    -> Fase {$faseNome} stampa offset già esistente per commessa, skip\n";
                 continue;
             }
@@ -367,8 +340,7 @@ foreach ($gruppi as $chiave => $righe) {
                 if ($qtaRiga > 0 && !in_array($qtaRiga, $dedupQta[$chiaveDedup] ?? [])) {
                     $dedupQta[$chiaveDedup][] = $qtaRiga;
                     $nuovaQta = array_sum($dedupQta[$chiaveDedup]);
-                    OrdineFase::withTrashed()
-                        ->where('fase_catalogo_id', $faseCatalogo->id)
+                    OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
                         ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
                         ->update(['qta_fase' => $nuovaQta]);
                     echo "    -> Fase {$faseNome} stampa a caldo qta aggiornata a {$nuovaQta}\n";
@@ -377,18 +349,12 @@ foreach ($gruppi as $chiave => $righe) {
                 }
                 continue;
             }
-            $existsInCommessa = OrdineFase::withTrashed()
-                ->where('fase_catalogo_id', $faseCatalogo->id)
+            $existsInCommessa = OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
                 ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
                 ->exists();
             $dedupPerCommessa[$chiaveDedup] = true;
             $dedupQta[$chiaveDedup] = $qtaRiga > 0 ? [$qtaRiga] : [];
             if ($existsInCommessa) {
-                // Restore soft-deleted
-                OrdineFase::onlyTrashed()
-                    ->where('fase_catalogo_id', $faseCatalogo->id)
-                    ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
-                    ->restore();
                 echo "    -> Fase {$faseNome} stampa a caldo già esistente per commessa, skip\n";
                 continue;
             }
@@ -403,8 +369,7 @@ foreach ($gruppi as $chiave => $righe) {
                 if ($qtaRiga > 0 && !in_array($qtaRiga, $dedupQta[$chiaveDedup] ?? [])) {
                     $dedupQta[$chiaveDedup][] = $qtaRiga;
                     $nuovaQta = array_sum($dedupQta[$chiaveDedup]);
-                    OrdineFase::withTrashed()
-                        ->where('fase_catalogo_id', $faseCatalogo->id)
+                    OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
                         ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
                         ->update(['qta_fase' => $nuovaQta]);
                     echo "    -> Fase {$faseNome} BRT1 qta aggiornata a {$nuovaQta}\n";
@@ -413,18 +378,12 @@ foreach ($gruppi as $chiave => $righe) {
                 }
                 continue;
             }
-            $existsInCommessa = OrdineFase::withTrashed()
-                ->where('fase_catalogo_id', $faseCatalogo->id)
+            $existsInCommessa = OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
                 ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
                 ->exists();
             $dedupPerCommessa[$chiaveDedup] = true;
             $dedupQta[$chiaveDedup] = $qtaRiga > 0 ? [$qtaRiga] : [];
             if ($existsInCommessa) {
-                // Restore soft-deleted
-                OrdineFase::onlyTrashed()
-                    ->where('fase_catalogo_id', $faseCatalogo->id)
-                    ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
-                    ->restore();
                 echo "    -> Fase {$faseNome} BRT1 già esistente per commessa, skip\n";
                 continue;
             }
@@ -441,8 +400,7 @@ foreach ($gruppi as $chiave => $righe) {
             'scarti_previsti'   => $scartiMacchine[trim($riga->CodMacchina ?? '')] ?? null,
         ];
 
-        $exists = OrdineFase::withTrashed()
-            ->where('ordine_id', $ordine->id)
+        $exists = OrdineFase::where('ordine_id', $ordine->id)
             ->where('fase_catalogo_id', $faseCatalogo->id)
             ->exists();
 
@@ -451,11 +409,6 @@ foreach ($gruppi as $chiave => $righe) {
             $fasiCreate++;
             echo "    -> Fase {$faseNome} creata (reparto: {$repartoNome})\n";
         } else {
-            // Restore soft-deleted
-            OrdineFase::onlyTrashed()
-                ->where('ordine_id', $ordine->id)
-                ->where('fase_catalogo_id', $faseCatalogo->id)
-                ->restore();
             echo "    -> Fase {$faseNome} già esistente, skip\n";
         }
     }
