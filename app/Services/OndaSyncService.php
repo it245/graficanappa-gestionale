@@ -81,6 +81,7 @@ class OndaSyncService
         $duplicati = DB::table('ordine_fasi')
             ->select('ordine_id', 'fase_catalogo_id', DB::raw('COUNT(*) as cnt'))
             ->whereNull('deleted_at')
+            ->where('manuale', false)
             ->groupBy('ordine_id', 'fase_catalogo_id')
             ->having('cnt', '>', 2)
             ->get();
@@ -90,6 +91,7 @@ class OndaSyncService
             // Tieni le prime 2 (id più bassi)
             $keepIds = OrdineFase::where('ordine_id', $dup->ordine_id)
                 ->where('fase_catalogo_id', $dup->fase_catalogo_id)
+                ->where('manuale', false)
                 ->orderBy('id')
                 ->limit(2)
                 ->pluck('id');
@@ -98,6 +100,7 @@ class OndaSyncService
                 ->where('fase_catalogo_id', $dup->fase_catalogo_id)
                 ->whereNotIn('id', $keepIds)
                 ->where('stato', '<=', 1)
+                ->where('manuale', false)
                 ->delete();
             $fasiEliminate += $deleted;
         }
@@ -111,6 +114,7 @@ class OndaSyncService
                 ->select('ordini.commessa', 'fasi_catalogo.reparto_id', DB::raw('COUNT(*) as cnt'))
                 ->whereIn('fasi_catalogo.reparto_id', $repartiFustella)
                 ->whereNull('ordine_fasi.deleted_at')
+                ->where('ordine_fasi.manuale', false)
                 ->groupBy('ordini.commessa', 'fasi_catalogo.reparto_id')
                 ->having('cnt', '>', 1)
                 ->get();
@@ -128,6 +132,7 @@ class OndaSyncService
                 if ($deleteIds->isNotEmpty()) {
                     $deleted = OrdineFase::whereIn('id', $deleteIds)
                         ->where('stato', '<=', 1)
+                        ->where('manuale', false)
                         ->delete();
                     $fasiEliminate += $deleted;
                 }
@@ -144,6 +149,7 @@ class OndaSyncService
                 ->whereIn('fasi_catalogo.reparto_id', $repartiStampaOffset)
                 ->where('fasi_catalogo.nome', 'like', 'STAMPAXL106%')
                 ->whereNull('ordine_fasi.deleted_at')
+                ->where('ordine_fasi.manuale', false)
                 ->groupBy('ordini.commessa', 'ordine_fasi.fase_catalogo_id')
                 ->having('cnt', '>', 1)
                 ->get();
@@ -161,6 +167,7 @@ class OndaSyncService
                 if ($deleteIds->isNotEmpty()) {
                     $deleted = OrdineFase::whereIn('id', $deleteIds)
                         ->where('stato', '<=', 1)
+                        ->where('manuale', false)
                         ->delete();
                     $fasiEliminate += $deleted;
                 }
@@ -176,6 +183,7 @@ class OndaSyncService
                 ->select('ordini.commessa', 'ordine_fasi.fase_catalogo_id', DB::raw('COUNT(*) as cnt'))
                 ->whereIn('fasi_catalogo.reparto_id', $repartiStampaCaldo)
                 ->whereNull('ordine_fasi.deleted_at')
+                ->where('ordine_fasi.manuale', false)
                 ->groupBy('ordini.commessa', 'ordine_fasi.fase_catalogo_id')
                 ->having('cnt', '>', 1)
                 ->get();
@@ -193,6 +201,7 @@ class OndaSyncService
                 if ($deleteIds->isNotEmpty()) {
                     $deleted = OrdineFase::whereIn('id', $deleteIds)
                         ->where('stato', '<=', 1)
+                        ->where('manuale', false)
                         ->delete();
                     $fasiEliminate += $deleted;
                 }
@@ -208,6 +217,7 @@ class OndaSyncService
                 ->select('ordini.commessa', 'ordine_fasi.fase_catalogo_id', DB::raw('COUNT(*) as cnt'))
                 ->whereIn('fasi_catalogo.reparto_id', $repartiSpedizione)
                 ->whereNull('ordine_fasi.deleted_at')
+                ->where('ordine_fasi.manuale', false)
                 ->groupBy('ordini.commessa', 'ordine_fasi.fase_catalogo_id')
                 ->having('cnt', '>', 1)
                 ->get();
@@ -225,6 +235,7 @@ class OndaSyncService
                 if ($deleteIds->isNotEmpty()) {
                     $deleted = OrdineFase::whereIn('id', $deleteIds)
                         ->where('stato', '<=', 1)
+                        ->where('manuale', false)
                         ->delete();
                     $fasiEliminate += $deleted;
                 }

@@ -432,6 +432,7 @@ public function calcolaOreEPriorita($fase)
             'fase' => $faseCatalogo ? $faseCatalogo->nome : '-',
             'fase_catalogo_id' => $faseCatalogo?->id,
             'stato' => 0,
+            'manuale' => true,
         ]);
 
         return redirect()->back()->with('success', 'Riga aggiunta correttamente.');
