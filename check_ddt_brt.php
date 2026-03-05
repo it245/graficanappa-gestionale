@@ -74,25 +74,31 @@ echo str_repeat('-', 80) . "\n";
 
 try {
     $righeOnda = DB::connection('onda')->select("
-        SELECT DISTINCT t.NumeroDocumento, t.DataDocumento, t.IdDoc,
-               v.RagioneSociale AS Vettore
+        SELECT t.NumeroDocumento, t.DataDocumento, t.IdDoc,
+               v.RagioneSociale AS Vettore,
+               r.CodCommessa
         FROM ATTDocTeste t
+        JOIN ATTDocRighe r ON t.IdDoc = r.IdDoc
         LEFT JOIN ATTDocCoda c ON t.IdDoc = c.IdDoc
         LEFT JOIN STDAnagrafiche v ON c.IdVettore1 = v.IdAnagrafica
         WHERE t.TipoDocumento = 3
           AND CAST(t.NumeroDocumento AS INT) BETWEEN ? AND ?
-        ORDER BY CAST(t.NumeroDocumento AS INT)
+          AND r.CodCommessa IS NOT NULL AND r.CodCommessa != ''
+          AND r.TipoRiga = 1
+        ORDER BY t.NumeroDocumento, r.CodCommessa
     ", [$da, $a]);
 
     if (empty($righeOnda)) {
         echo "  Nessun DDT trovato su Onda nel range {$da}-{$a}\n";
     } else {
         $ddtOnda = [];
-        foreach ($righeOnda as $r) {
-            $num = (int) $r->NumeroDocumento;
-            $vettore = trim($r->Vettore ?? '-');
-            $data = $r->DataDocumento ?? '-';
-            echo sprintf("  DDT %d → data: %s, vettore: %s (IdDoc: %d)\n", $num, $data, $vettore, $r->IdDoc);
+        $perDDT = collect($righeOnda)->groupBy(fn($r) => (int) $r->NumeroDocumento);
+        foreach ($perDDT as $num => $righe) {
+            $vettore = trim($righe->first()->Vettore ?? '-');
+            $data = $righe->first()->DataDocumento ?? '-';
+            $commesse = $righe->pluck('CodCommessa')->unique()->implode(', ');
+            $brt = stripos($vettore, 'BRT') !== false ? ' [BRT]' : '';
+            echo sprintf("  DDT %d → data: %s, commesse: %s%s\n", $num, $data, $commesse, $brt);
             $ddtOnda[] = $num;
         }
 
