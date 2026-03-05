@@ -341,10 +341,17 @@ class OndaSyncService
             if (!$commessa) continue;
 
             // 3. Upsert ordine (dedup per commessa + cod_art + descrizione)
+            //    Se la descrizione Onda è vuota, usa l'ordine esistente con stessa commessa+cod_art
             $ordine = Ordine::where('commessa', $commessa)
                 ->where('cod_art', $codArt)
                 ->where('descrizione', $descrizione)
                 ->first();
+
+            if (!$ordine && $descrizione === '') {
+                $ordine = Ordine::where('commessa', $commessa)
+                    ->where('cod_art', $codArt)
+                    ->first();
+            }
 
             $datiOrdine = [
                 'cliente_nome'           => trim($prima->ClienteNome ?? ''),
