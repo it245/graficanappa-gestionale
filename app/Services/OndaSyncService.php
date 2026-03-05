@@ -143,25 +143,24 @@ class OndaSyncService
             $fasiEliminate += $deleted;
         }
 
-        // Pulizia duplicati fustella per commessa: 1 sola fase per commessa per reparto fustella
+        // Pulizia duplicati fustella per commessa: 1 sola fase per commessa per fase_catalogo
+        // (FUSTBOBST75X106 e FUSTBOBSTRILIEVI sono fase_catalogo diverse → possono coesistere)
         $repartiFustella = Reparto::whereIn('nome', ['fustella piana', 'fustella cilindrica', 'fustella'])->pluck('id');
         if ($repartiFustella->isNotEmpty()) {
             $dupFustella = DB::table('ordine_fasi')
                 ->join('ordini', 'ordini.id', '=', 'ordine_fasi.ordine_id')
                 ->join('fasi_catalogo', 'fasi_catalogo.id', '=', 'ordine_fasi.fase_catalogo_id')
-                ->select('ordini.commessa', 'fasi_catalogo.reparto_id', DB::raw('COUNT(*) as cnt'))
+                ->select('ordini.commessa', 'ordine_fasi.fase_catalogo_id', DB::raw('COUNT(*) as cnt'))
                 ->whereIn('fasi_catalogo.reparto_id', $repartiFustella)
                 ->whereNull('ordine_fasi.deleted_at')
                 ->where('ordine_fasi.manuale', false)
-                ->groupBy('ordini.commessa', 'fasi_catalogo.reparto_id')
+                ->groupBy('ordini.commessa', 'ordine_fasi.fase_catalogo_id')
                 ->having('cnt', '>', 1)
                 ->get();
 
             foreach ($dupFustella as $dup) {
-                $faseIds = OrdineFase::withTrashed()
-                    ->whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', $dup->reparto_id))
+                $faseIds = OrdineFase::where('fase_catalogo_id', $dup->fase_catalogo_id)
                     ->whereHas('ordine', fn($q) => $q->where('commessa', $dup->commessa))
-                    ->whereNull('deleted_at')
                     ->orderBy('id')
                     ->pluck('id');
 
@@ -448,24 +447,25 @@ class OndaSyncService
                     ['reparto_id' => $reparto->id]
                 );
 
-                // Dedup fustella per commessa: 1 sola per commessa per reparto (la fustella fisica è condivisa)
+                // Dedup fustella per commessa: 1 sola per commessa per fase_catalogo
+                // (FUSTBOBST75X106 e FUSTBOBSTRILIEVI sono fasi diverse → possono coesistere)
                 // qta_fase = somma delle qta distinte di tutti gli articoli
                 if (in_array($repartoNome, ['fustella piana', 'fustella cilindrica', 'fustella'])) {
-                    $chiaveDedup = $commessa . '|fust|' . $repartoNome;
+                    $chiaveDedup = $commessa . '|fust|' . $faseNome;
                     $qtaRiga = (int)($riga->QtaDaLavorare ?? 0);
 
                     if (isset($dedupPerCommessa[$chiaveDedup])) {
                         if ($qtaRiga > 0 && !in_array($qtaRiga, $dedupQta[$chiaveDedup] ?? [])) {
                             $dedupQta[$chiaveDedup][] = $qtaRiga;
                             $nuovaQta = array_sum($dedupQta[$chiaveDedup]);
-                            OrdineFase::whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', $reparto->id))
+                            OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
                                 ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
                                 ->update(['qta_fase' => $nuovaQta]);
                         }
                         continue;
                     }
 
-                    $existsInCommessa = OrdineFase::whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', $reparto->id))
+                    $existsInCommessa = OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
                         ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
                         ->exists();
 
@@ -474,7 +474,7 @@ class OndaSyncService
                     if ($existsInCommessa) {
                         $scartiValue = $scartiMacchine[trim($riga->CodMacchina ?? '')] ?? null;
                         if ($scartiValue !== null) {
-                            OrdineFase::whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', $reparto->id))
+                            OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
                                 ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
                                 ->whereNull('scarti_previsti')
                                 ->update(['scarti_previsti' => $scartiValue]);

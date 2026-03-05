@@ -254,17 +254,18 @@ foreach ($gruppi as $chiave => $righe) {
         $reparto = Reparto::firstOrCreate(['nome' => $repartoNome]);
         $faseCatalogo = FasiCatalogo::firstOrCreate(['nome' => $faseNome], ['reparto_id' => $reparto->id]);
 
-        // Dedup fustella per commessa: 1 sola fase per commessa per reparto (la fustella fisica è condivisa)
+        // Dedup fustella per commessa: 1 sola per commessa per fase_catalogo
+        // (FUSTBOBST75X106 e FUSTBOBSTRILIEVI sono fasi diverse → possono coesistere)
         // qta_fase = somma delle qta distinte di tutti gli articoli
         if (in_array($repartoNome, ['fustella piana', 'fustella cilindrica', 'fustella'])) {
-            $chiaveDedup = $commessa . '|fust|' . $repartoNome;
+            $chiaveDedup = $commessa . '|fust|' . $faseNome;
             $qtaRiga = (int)($riga->QtaDaLavorare ?? 0);
 
             if (isset($dedupPerCommessa[$chiaveDedup])) {
                 if ($qtaRiga > 0 && !in_array($qtaRiga, $dedupQta[$chiaveDedup] ?? [])) {
                     $dedupQta[$chiaveDedup][] = $qtaRiga;
                     $nuovaQta = array_sum($dedupQta[$chiaveDedup]);
-                    OrdineFase::whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', $reparto->id))
+                    OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
                         ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
                         ->update(['qta_fase' => $nuovaQta]);
                     echo "    -> Fase {$faseNome} fustella qta aggiornata a {$nuovaQta}\n";
@@ -273,7 +274,7 @@ foreach ($gruppi as $chiave => $righe) {
                 }
                 continue;
             }
-            $existsInCommessa = OrdineFase::whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', $reparto->id))
+            $existsInCommessa = OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
                 ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
                 ->exists();
             $dedupPerCommessa[$chiaveDedup] = true;
