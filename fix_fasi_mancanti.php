@@ -225,7 +225,7 @@ foreach ($commesse as $commessa) {
                 'fase' => $faseNome,
                 'stato' => 0,
                 'priorita' => $priorita,
-                'qta_fase' => $qta > 0 ? $qta : null,
+                'qta_fase' => $qta > 0 ? $qta : 0,
                 'manuale' => false,
             ]);
         }
