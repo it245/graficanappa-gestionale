@@ -109,6 +109,21 @@ class OndaSyncService
 
                 $keeper->update(['descrizione' => $descNorm]);
             }
+
+            // Merge ordini con descrizione vuota in quelli con descrizione reale
+            if ($perDesc->count() > 1 && $perDesc->has('')) {
+                $ordiniVuoti = $perDesc->get('');
+                $ordiniConDesc = $perDesc->reject(fn($v, $k) => $k === '')->flatten();
+                $keeper = $ordiniConDesc->first();
+                if ($keeper) {
+                    foreach ($ordiniVuoti as $vuoto) {
+                        OrdineFase::where('ordine_id', $vuoto->id)
+                            ->update(['ordine_id' => $keeper->id]);
+                        $vuoto->delete();
+                        Log::info("OndaSync: unito ordine vuoto #{$vuoto->id} in #{$keeper->id} (commessa {$dup->commessa}, desc vuota)");
+                    }
+                }
+            }
         }
 
         // 1b. Pulizia duplicati fasi: se ci sono più di 1 fasi uguali (stesso ordine + fase_catalogo),
@@ -194,6 +209,7 @@ class OndaSyncService
             'BROSSURATI.OFFSET','BROSSURATI.DIGITALE','brochure','Block.Notes',
             'Blocchi.Mod.TI','Blocchi.Mod.R1','Blocchi.Mod.K','Blocchi.Mod.CH69',
             'Blocchi.autocopianti.M40a','Blocchi.autocopianti','Blocchi','Bilanci',
+            'SEMILAVSTAMPA_FUSTELLA',
         ];
         $repartiStampaOffset = Reparto::where('nome', 'stampa offset')->pluck('id');
         if ($repartiStampaOffset->isNotEmpty()) {
@@ -437,6 +453,7 @@ class OndaSyncService
                     'BROSSURATI.OFFSET','BROSSURATI.DIGITALE','brochure','Block.Notes',
                     'Blocchi.Mod.TI','Blocchi.Mod.R1','Blocchi.Mod.K','Blocchi.Mod.CH69',
                     'Blocchi.autocopianti.M40a','Blocchi.autocopianti','Blocchi','Bilanci',
+                    'SEMILAVSTAMPA_FUSTELLA',
                 ])) {
                     $tipo = 'max 2 fasi';
                 }
