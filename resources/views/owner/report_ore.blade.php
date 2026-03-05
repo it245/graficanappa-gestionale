@@ -118,6 +118,7 @@
                                     <th>Qta Carta</th>
                                     <th class="text-end">Ore Previste</th>
                                     <th class="text-end">Ore Lavorate</th>
+                                    <th>Fonte</th>
                                     <th class="text-end">Diff</th>
                                     <th>Operatori</th>
                                     <th>Descrizione</th>
@@ -143,6 +144,7 @@
                                     <td>{{ number_format($fase->ordine->qta_carta ?? 0, 0, ',', '.') }}</td>
                                     <td class="text-end">{{ number_format($fase->ore_previste, 2) }}h</td>
                                     <td class="text-end">{{ number_format($fase->ore_lavorate, 2) }}h</td>
+                                    <td><span class="badge {{ $fase->fonte_ore === 'Prinect' ? 'bg-primary' : ($fase->fonte_ore === 'MES' ? 'bg-secondary' : 'bg-light text-muted') }}" style="font-size:10px;">{{ $fase->fonte_ore ?: '-' }}</span></td>
                                     <td class="text-end" style="color:{{ $df > 0 ? '#dc3545' : '#198754' }};">
                                         @if($fase->ore_lavorate > 0)
                                             {{ $df > 0 ? '+' : '' }}{{ number_format($df, 2) }}h

@@ -768,9 +768,12 @@ public function calcolaOreEPriorita($fase)
             $query->whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', $filtroReparto));
         }
 
-        // Solo fasi con stato >= 2 (almeno avviate) o con operatori assegnati
+        // Solo fasi con stato >= 2 o con operatori o con dati Prinect
         $fasi = $query->where(function ($q) {
-                $q->where('stato', '>=', 2)->orWhereHas('operatori');
+                $q->where('stato', '>=', 2)
+                  ->orWhereHas('operatori')
+                  ->orWhere('tempo_avviamento_sec', '>', 0)
+                  ->orWhere('tempo_esecuzione_sec', '>', 0);
             })
             ->get()
             ->map(function ($fase) {
@@ -780,19 +783,26 @@ public function calcolaOreEPriorita($fase)
                 $copieh = $infoFase['copieh'] ?: 1000;
                 $fase->ore_previste = round($infoFase['avviamento'] + ($qta_carta / $copieh), 2);
 
-                // Ore lavorate (dalla pivot fase_operatore)
-                $oreTotali = 0;
-                foreach ($fase->operatori as $op) {
-                    $inizio = $op->pivot->data_inizio;
-                    $fine = $op->pivot->data_fine;
-                    $pausa = $op->pivot->secondi_pausa ?? 0;
-                    if ($inizio && $fine) {
-                        $secondi = Carbon::parse($inizio)->diffInSeconds(Carbon::parse($fine));
-                        $secondi = max(0, $secondi - $pausa);
-                        $oreTotali += $secondi / 3600;
+                // Ore lavorate: prima da Prinect (tempo_avviamento + tempo_esecuzione), poi da pivot operatore
+                $secPrinect = ($fase->tempo_avviamento_sec ?? 0) + ($fase->tempo_esecuzione_sec ?? 0);
+                if ($secPrinect > 0) {
+                    $fase->ore_lavorate = round($secPrinect / 3600, 2);
+                    $fase->fonte_ore = 'Prinect';
+                } else {
+                    $oreTotali = 0;
+                    foreach ($fase->operatori as $op) {
+                        $inizio = $op->pivot->data_inizio;
+                        $fine = $op->pivot->data_fine;
+                        $pausa = $op->pivot->secondi_pausa ?? 0;
+                        if ($inizio && $fine) {
+                            $secondi = Carbon::parse($inizio)->diffInSeconds(Carbon::parse($fine));
+                            $secondi = max(0, $secondi - $pausa);
+                            $oreTotali += $secondi / 3600;
+                        }
                     }
+                    $fase->ore_lavorate = round($oreTotali, 2);
+                    $fase->fonte_ore = $oreTotali > 0 ? 'MES' : '';
                 }
-                $fase->ore_lavorate = round($oreTotali, 2);
 
                 return $fase;
             });
