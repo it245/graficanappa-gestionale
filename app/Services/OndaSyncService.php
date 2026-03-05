@@ -507,29 +507,44 @@ class OndaSyncService
                     }
                 }
 
-                // Dedup stampa offset per commessa: 1 sola STAMPAXL106 per commessa
+                // Dedup stampa offset per commessa: max 1 STAMPAXL106 per commessa (max 2 per cod_art multi-passaggio)
+                // Chiave unica per commessa (senza suffisso .1/.2) per contare TUTTE le varianti
                 if ($repartoNome === 'stampa offset' && str_starts_with($faseNome, 'STAMPAXL106')) {
-                    $chiaveDedup = $commessa . '|stampa_offset|' . $faseNome;
+                    $chiaveDedup = $commessa . '|stampa_offset';
+                    $maxStampa = in_array($codArt, $codArtMax2) ? 2 : 1;
                     $qtaRiga = (int)($riga->QtaDaLavorare ?? 0);
 
-                    if (isset($dedupPerCommessa[$chiaveDedup])) {
+                    if (!isset($dedupPerCommessa[$chiaveDedup])) {
+                        // Prima volta per questa commessa: conta quante STAMPAXL106* esistono già
+                        $existCount = OrdineFase::whereHas('faseCatalogo', fn($q) =>
+                                $q->whereIn('reparto_id', $repartiStampaOffset)
+                                  ->where('nome', 'like', 'STAMPAXL106%'))
+                            ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
+                            ->count();
+                        $dedupPerCommessa[$chiaveDedup] = $existCount;
+                        $dedupQta[$chiaveDedup] = $qtaRiga > 0 ? [$qtaRiga] : [];
+                    }
+
+                    if ($dedupPerCommessa[$chiaveDedup] >= $maxStampa) {
+                        // Già al massimo: aggiorna solo qta se diversa
                         if ($qtaRiga > 0 && !in_array($qtaRiga, $dedupQta[$chiaveDedup] ?? [])) {
                             $dedupQta[$chiaveDedup][] = $qtaRiga;
                             $nuovaQta = array_sum($dedupQta[$chiaveDedup]);
-                            OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
+                            OrdineFase::whereHas('faseCatalogo', fn($q) =>
+                                    $q->whereIn('reparto_id', $repartiStampaOffset)
+                                      ->where('nome', 'like', 'STAMPAXL106%'))
                                 ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
                                 ->update(['qta_fase' => $nuovaQta]);
                         }
                         continue;
                     }
 
-                    $existsInCommessa = OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
+                    // Controlla se questa specifica variante esiste già
+                    $existsThisVariant = OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
                         ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
                         ->exists();
 
-                    $dedupPerCommessa[$chiaveDedup] = true;
-                    $dedupQta[$chiaveDedup] = $qtaRiga > 0 ? [$qtaRiga] : [];
-                    if ($existsInCommessa) {
+                    if ($existsThisVariant) {
                         $scartiValue = $scartiMacchine[trim($riga->CodMacchina ?? '')] ?? null;
                         if ($scartiValue !== null) {
                             OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
@@ -539,6 +554,10 @@ class OndaSyncService
                         }
                         continue;
                     }
+
+                    // Crea: incrementa contatore
+                    $dedupPerCommessa[$chiaveDedup]++;
+                    if ($qtaRiga > 0) $dedupQta[$chiaveDedup][] = $qtaRiga;
                 }
 
                 // Dedup stampa a caldo per commessa: 1 sola per commessa per fase_catalogo
