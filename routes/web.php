@@ -43,6 +43,7 @@ Route::post('/owner/aggiorna-stato', [DashboardOwnerController::class, 'aggiorna
 Route::post('/owner/ricalcola-stati', [DashboardOwnerController::class, 'ricalcolaStati'])->name('owner.ricalcolaStati');
 Route::post('/owner/elimina-fase', [DashboardOwnerController::class, 'eliminaFase'])->name('owner.eliminaFase');
 Route::get('/owner/scheduling', [DashboardOwnerController::class, 'scheduling'])->name('owner.scheduling');
+Route::get('/owner/report-ore', [DashboardOwnerController::class, 'reportOre'])->name('owner.reportOre');
 Route::get('/owner/excel-download', [DashboardOwnerController::class, 'downloadExcel'])->name('owner.downloadExcel');
 Route::get('/owner/esterne', [DashboardOwnerController::class, 'esterne'])->name('owner.esterne');
 Route::post('/owner/tracking-ddt', [DashboardSpedizioneController::class, 'trackingByDDT'])->name('owner.trackingByDDT');

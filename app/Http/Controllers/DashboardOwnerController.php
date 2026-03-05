@@ -741,6 +741,56 @@ public function calcolaOreEPriorita($fase)
         return $rimossi;
     }
 
+    public function reportOre(Request $request)
+    {
+        $filtroCommessa = $request->query('commessa');
+        $filtroReparto = $request->query('reparto');
+
+        $query = OrdineFase::with(['ordine', 'faseCatalogo.reparto', 'operatori'])
+            ->whereHas('ordine');
+
+        if ($filtroCommessa) {
+            $query->whereHas('ordine', fn($q) => $q->where('commessa', 'like', "%{$filtroCommessa}%"));
+        }
+        if ($filtroReparto) {
+            $query->whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', $filtroReparto));
+        }
+
+        // Solo fasi con stato >= 2 (almeno avviate) o con operatori assegnati
+        $fasi = $query->where(function ($q) {
+                $q->where('stato', '>=', 2)->orWhereHas('operatori');
+            })
+            ->get()
+            ->map(function ($fase) {
+                // Ore previste
+                $qta_carta = $fase->ordine->qta_carta ?? 0;
+                $infoFase = $this->fasiInfo[$fase->fase] ?? ['avviamento' => 0.5, 'copieh' => 1000];
+                $copieh = $infoFase['copieh'] ?: 1000;
+                $fase->ore_previste = round($infoFase['avviamento'] + ($qta_carta / $copieh), 2);
+
+                // Ore lavorate (dalla pivot fase_operatore)
+                $oreTotali = 0;
+                foreach ($fase->operatori as $op) {
+                    $inizio = $op->pivot->data_inizio;
+                    $fine = $op->pivot->data_fine;
+                    $pausa = $op->pivot->secondi_pausa ?? 0;
+                    if ($inizio && $fine) {
+                        $secondi = Carbon::parse($inizio)->diffInSeconds(Carbon::parse($fine));
+                        $secondi = max(0, $secondi - $pausa);
+                        $oreTotali += $secondi / 3600;
+                    }
+                }
+                $fase->ore_lavorate = round($oreTotali, 2);
+
+                return $fase;
+            })
+            ->sortBy(fn($f) => $f->ordine->commessa ?? '');
+
+        $reparti = Reparto::orderBy('nome')->pluck('nome', 'id');
+
+        return view('owner.report_ore', compact('fasi', 'reparti', 'filtroCommessa', 'filtroReparto'));
+    }
+
     public function scheduling(PrinectService $prinect, PrinectSyncService $syncService)
     {
         // Sync live Prinect
