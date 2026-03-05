@@ -310,6 +310,14 @@ class OndaSyncService
                 ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
                 ->exists();
 
+            // Restore BRT1 soft-deleted
+            OrdineFase::onlyTrashed()
+                ->where(function ($q) {
+                    $q->where('fase', 'BRT1')->orWhere('fase', 'brt1');
+                })
+                ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
+                ->restore();
+
             if (!$hasBrt) {
                 $repartoBrt = Reparto::firstOrCreate(['nome' => 'spedizione']);
                 $faseCatalogoBrt = FasiCatalogo::firstOrCreate(
@@ -415,6 +423,11 @@ class OndaSyncService
                     $dedupPerCommessa[$chiaveDedup] = true;
                     $dedupQta[$chiaveDedup] = $qtaRiga > 0 ? [$qtaRiga] : [];
                     if ($existsInCommessa) {
+                        // Restore soft-deleted
+                        OrdineFase::onlyTrashed()
+                            ->whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', $reparto->id))
+                            ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
+                            ->restore();
                         // Aggiorna scarti_previsti se mancante + qta_fase
                         $scartiValue = $scartiMacchine[trim($riga->CodMacchina ?? '')] ?? null;
                         if ($scartiValue !== null) {
@@ -441,6 +454,12 @@ class OndaSyncService
 
                     $dedupPerCommessa[$chiaveDedup] = true;
                     if ($existsInCommessa) {
+                        // Restore soft-deleted
+                        OrdineFase::onlyTrashed()
+                            ->where('fase_catalogo_id', $faseCatalogo->id)
+                            ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa)
+                                ->where('cod_art', $codArt))
+                            ->restore();
                         // Aggiorna scarti_previsti se mancante su fase esistente
                         $scartiValue = $scartiMacchine[trim($riga->CodMacchina ?? '')] ?? null;
                         if ($scartiValue !== null) {
@@ -483,6 +502,11 @@ class OndaSyncService
                     $dedupPerCommessa[$chiaveDedup] = true;
                     $dedupQta[$chiaveDedup] = $qtaRiga > 0 ? [$qtaRiga] : [];
                     if ($existsInCommessa) {
+                        // Restore soft-deleted
+                        OrdineFase::onlyTrashed()
+                            ->where('fase_catalogo_id', $faseCatalogo->id)
+                            ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
+                            ->restore();
                         $scartiValue = $scartiMacchine[trim($riga->CodMacchina ?? '')] ?? null;
                         if ($scartiValue !== null) {
                             OrdineFase::withTrashed()
@@ -521,6 +545,11 @@ class OndaSyncService
                     $dedupPerCommessa[$chiaveDedup] = true;
                     $dedupQta[$chiaveDedup] = $qtaRiga > 0 ? [$qtaRiga] : [];
                     if ($existsInCommessa) {
+                        // Restore soft-deleted
+                        OrdineFase::onlyTrashed()
+                            ->where('fase_catalogo_id', $faseCatalogo->id)
+                            ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
+                            ->restore();
                         continue;
                     }
                 }
@@ -551,6 +580,11 @@ class OndaSyncService
                     $dedupPerCommessa[$chiaveDedup] = true;
                     $dedupQta[$chiaveDedup] = $qtaRiga > 0 ? [$qtaRiga] : [];
                     if ($existsInCommessa) {
+                        // Restore soft-deleted
+                        OrdineFase::onlyTrashed()
+                            ->where('fase_catalogo_id', $faseCatalogo->id)
+                            ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
+                            ->restore();
                         continue;
                     }
                 }
@@ -601,6 +635,12 @@ class OndaSyncService
                         OrdineFase::create($dataFase);
                         $fasiCreate++;
                         $logFasiCreate[] = $commessa . ' → ' . $faseNome;
+                    } else {
+                        // Restore soft-deleted
+                        OrdineFase::onlyTrashed()
+                            ->where('ordine_id', $ordine->id)
+                            ->where('fase_catalogo_id', $faseCatalogo->id)
+                            ->restore();
                     }
 
                 } elseif ($tipo === 'max 2 fasi') {
@@ -627,6 +667,12 @@ class OndaSyncService
                         OrdineFase::create($dataFase);
                         $fasiCreate++;
                         $logFasiCreate[] = $commessa . ' → ' . $faseNome;
+                    } else {
+                        // Restore soft-deleted
+                        OrdineFase::onlyTrashed()
+                            ->where('ordine_id', $ordine->id)
+                            ->where('fase_catalogo_id', $faseCatalogo->id)
+                            ->restore();
                     }
                 }
 
