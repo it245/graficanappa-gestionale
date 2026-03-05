@@ -125,9 +125,10 @@ $scartiMacchine = collect(DB::connection('onda')->select(
     "SELECT CodMacchina, OC_FogliScartoIniz FROM PRDMacchinari WHERE OC_FogliScartoIniz > 0"
 ))->pluck('OC_FogliScartoIniz', 'CodMacchina')->toArray();
 
-// Raggruppa per (CodCommessa, CodArt, OC_Descrizione)
+// Raggruppa per (CodCommessa, CodArt, OC_Descrizione) — normalizzato
 $gruppi = collect($righeOnda)->groupBy(function ($riga) {
-    return $riga->CodCommessa . '|' . $riga->CodArt . '|' . $riga->OC_Descrizione;
+    $desc = preg_replace('/\s+/', ' ', trim($riga->OC_Descrizione ?? ''));
+    return $riga->CodCommessa . '|' . $riga->CodArt . '|' . $desc;
 });
 
 $ordiniCreati = 0;
@@ -139,7 +140,7 @@ foreach ($gruppi as $chiave => $righe) {
     $prima = $righe->first();
     $commessa = trim($prima->CodCommessa ?? '');
     $codArt = trim($prima->CodArt ?? '');
-    $descrizione = trim($prima->OC_Descrizione ?? '');
+    $descrizione = preg_replace('/\s+/', ' ', trim($prima->OC_Descrizione ?? ''));
 
     if (!$commessa) continue;
 

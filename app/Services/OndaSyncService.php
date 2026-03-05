@@ -246,9 +246,49 @@ class OndaSyncService
             Log::info("OndaSync: eliminati $fasiEliminate duplicati");
         }
 
-        // 2. Raggruppa per (CodCommessa, CodArt, OC_Descrizione)
+        // 1b. Pulizia ordini duplicati per whitespace nella descrizione
+        //     Unisce ordini con stessa commessa+cod_art ma descrizione diversa solo per \r\n vs spazio
+        $ordiniDuplicati = DB::table('ordini')
+            ->select('commessa', 'cod_art', DB::raw('COUNT(*) as cnt'))
+            ->groupBy('commessa', 'cod_art')
+            ->having('cnt', '>', 1)
+            ->get();
+
+        foreach ($ordiniDuplicati as $dup) {
+            $ordiniGruppo = Ordine::where('commessa', $dup->commessa)
+                ->where('cod_art', $dup->cod_art)
+                ->orderBy('id')
+                ->get();
+
+            // Raggruppa per descrizione normalizzata
+            $perDesc = $ordiniGruppo->groupBy(function ($o) {
+                return preg_replace('/\s+/', ' ', trim($o->descrizione));
+            });
+
+            foreach ($perDesc as $descNorm => $ordini) {
+                if ($ordini->count() <= 1) continue;
+
+                $keeper = $ordini->first();
+                $duplicates = $ordini->slice(1);
+
+                foreach ($duplicates as $dupOrdine) {
+                    // Sposta le fasi dall'ordine duplicato al keeper
+                    OrdineFase::where('ordine_id', $dupOrdine->id)
+                        ->update(['ordine_id' => $keeper->id]);
+                    // Elimina l'ordine duplicato
+                    $dupOrdine->delete();
+                    Log::info("OndaSync: unito ordine #{$dupOrdine->id} in #{$keeper->id} (commessa {$dup->commessa}, desc normalizzata)");
+                }
+
+                // Normalizza la descrizione del keeper
+                $keeper->update(['descrizione' => $descNorm]);
+            }
+        }
+
+        // 2. Raggruppa per (CodCommessa, CodArt, OC_Descrizione) — normalizzato
         $gruppi = collect($righeOnda)->groupBy(function ($riga) {
-            return $riga->CodCommessa . '|' . $riga->CodArt . '|' . $riga->OC_Descrizione;
+            $desc = preg_replace('/\s+/', ' ', trim($riga->OC_Descrizione ?? ''));
+            return $riga->CodCommessa . '|' . $riga->CodArt . '|' . $desc;
         });
 
         // Track fasi deduplicate per commessa (1 sola per commessa per fustella, digitale, finitura digitale)
@@ -260,7 +300,7 @@ class OndaSyncService
             $prima = $righe->first();
             $commessa = trim($prima->CodCommessa ?? '');
             $codArt = trim($prima->CodArt ?? '');
-            $descrizione = trim($prima->OC_Descrizione ?? '');
+            $descrizione = preg_replace('/\s+/', ' ', trim($prima->OC_Descrizione ?? ''));
 
             if (!$commessa) continue;
 
