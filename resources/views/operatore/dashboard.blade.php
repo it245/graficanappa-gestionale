@@ -219,7 +219,7 @@
                             <th>Cliente</th>
                             <th>Codice Articolo</th>
                             @if($showColori)<th>Colori</th>@endif
-                            <th>Fustella</th>
+                            @if($showFustella)<th>Fustella</th>@endif
                             @if($showEsterno ?? false)<th>Esterno</th>@endif
                             <th>Descrizione Articolo</th>
                             <th>Quantità Richiesta</th>
@@ -238,7 +238,7 @@
                         @forelse($info['fasi'] as $fase)
                             @include('operatore._fase_row', ['fase' => $fase])
                         @empty
-                            <tr><td colspan="{{ 20 + ($showColori ? 1 : 0) + ($showEsterno ? 1 : 0) }}" class="text-center text-muted">Nessuna fase attiva</td></tr>
+                            <tr><td colspan="{{ 19 + ($showFustella ? 1 : 0) + ($showColori ? 1 : 0) + ($showEsterno ? 1 : 0) }}" class="text-center text-muted">Nessuna fase attiva</td></tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -276,7 +276,7 @@
                     <th>Cliente</th>
                     <th>Codice Articolo</th>
                     @if($showColori)<th>Colori</th>@endif
-                    <th>Fustella</th>
+                    @if($showFustella)<th>Fustella</th>@endif
                     @if($showEsterno ?? false)<th>Esterno</th>@endif
                     <th>Descrizione Articolo</th>
                     <th>Quantità Richiesta</th>

@@ -38,7 +38,7 @@
     <td class="td-cliente">{{ $fase->ordine->cliente_nome ?? '-' }}</td>
     <td>{{ $fase->ordine->cod_art ?? '-' }}</td>
     @if($showColori ?? false)<td>{{ $fase->colori ?? '-' }}</td>@endif
-    <td>{{ $fase->fustella_codice ?? '-' }}</td>
+    @if($showFustella ?? false)<td>{{ $fase->fustella_codice ?? '-' }}</td>@endif
     @if($showEsterno ?? false)<td>{{ $fase->fornitore_esterno ?? '-' }}</td>@endif
     <td class="descrizione td-descrizione">{{ $fase->ordine->descrizione ?? '-' }}</td>
     <td>{{ $fase->ordine->qta_richiesta ?? '-' }}</td>
