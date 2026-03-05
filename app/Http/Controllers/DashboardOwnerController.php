@@ -414,19 +414,11 @@ public function calcolaOreEPriorita($fase)
                 FaseStatoService::controllaCompletamento($fase->id);
             }
 
-            // Se note contengono "esterno" o "lavorato esternamente", sposta fase a reparto esterno
+            // Se note contengono "esterno" o "lavorato esternamente", segna come esterno
             if ($campo === 'note' && preg_match('/\b(lavorato esternamente|esterno)\b/i', $valore ?? '')) {
-                $repartoEsterno = Reparto::where('nome', 'esterno')->first();
-                if ($repartoEsterno && $fase->fase_catalogo_id) {
-                    $faseCat = FasiCatalogo::find($fase->fase_catalogo_id);
-                    if ($faseCat && $faseCat->reparto_id !== $repartoEsterno->id) {
-                        $faseCatEsterno = FasiCatalogo::firstOrCreate(
-                            ['nome' => $faseCat->nome, 'reparto_id' => $repartoEsterno->id],
-                            ['nome_display' => $faseCat->nome_display ?? $faseCat->nome]
-                        );
-                        $fase->fase_catalogo_id = $faseCatEsterno->id;
-                        $fase->save();
-                    }
+                if (!$fase->esterno) {
+                    $fase->esterno = true;
+                    $fase->save();
                 }
             }
         } elseif (in_array($campo, $campiOrdine)) {

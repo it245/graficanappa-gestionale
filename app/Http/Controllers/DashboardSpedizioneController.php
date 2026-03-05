@@ -122,16 +122,18 @@ class DashboardSpedizioneController extends Controller
 
         $fasiInAttesa = $fasiInAttesa->sortByDesc('percentuale');
 
-        // Fasi esterne (reparto "esterno") non terminate
+        // Fasi esterne (reparto "esterno" + flag esterno) non terminate
         $repartoEsterno = Reparto::where('nome', 'esterno')->first();
-        $fasiEsterne = collect();
-        if ($repartoEsterno) {
-            $fasiEsterne = OrdineFase::where('stato', '<', 3)
-                ->whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', $repartoEsterno->id))
-                ->with(['ordine', 'faseCatalogo', 'operatori'])
-                ->get()
-                ->sortBy(fn($f) => $f->ordine->data_prevista_consegna ?? '9999-12-31');
-        }
+        $fasiEsterne = OrdineFase::where('stato', '<', 3)
+            ->where(function ($q) use ($repartoEsterno) {
+                if ($repartoEsterno) {
+                    $q->whereHas('faseCatalogo', fn($q2) => $q2->where('reparto_id', $repartoEsterno->id));
+                }
+                $q->orWhere('esterno', true);
+            })
+            ->with(['ordine', 'faseCatalogo', 'operatori'])
+            ->get()
+            ->sortBy(fn($f) => $f->ordine->data_prevista_consegna ?? '9999-12-31');
 
         // Storico consegne (ultimi 30 giorni, escluso oggi)
         $storicoConsegne = OrdineFase::where('stato', 4)
@@ -161,14 +163,16 @@ class DashboardSpedizioneController extends Controller
         if (!$operatore) abort(403, 'Accesso negato');
 
         $repartoEsterno = Reparto::where('nome', 'esterno')->first();
-        $fasiEsterne = collect();
-        if ($repartoEsterno) {
-            $fasiEsterne = OrdineFase::where('stato', '<', 3)
-                ->whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', $repartoEsterno->id))
-                ->with(['ordine', 'faseCatalogo', 'operatori'])
-                ->get()
-                ->sortBy(fn($f) => $f->ordine->data_prevista_consegna ?? '9999-12-31');
-        }
+        $fasiEsterne = OrdineFase::where('stato', '<', 3)
+            ->where(function ($q) use ($repartoEsterno) {
+                if ($repartoEsterno) {
+                    $q->whereHas('faseCatalogo', fn($q2) => $q2->where('reparto_id', $repartoEsterno->id));
+                }
+                $q->orWhere('esterno', true);
+            })
+            ->with(['ordine', 'faseCatalogo', 'operatori'])
+            ->get()
+            ->sortBy(fn($f) => $f->ordine->data_prevista_consegna ?? '9999-12-31');
 
         return view('spedizione.esterne', compact('fasiEsterne', 'operatore'));
     }
