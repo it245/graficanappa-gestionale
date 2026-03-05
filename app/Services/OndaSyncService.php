@@ -83,17 +83,17 @@ class OndaSyncService
             ->whereNull('deleted_at')
             ->where('manuale', false)
             ->groupBy('ordine_id', 'fase_catalogo_id')
-            ->having('cnt', '>', 2)
+            ->having('cnt', '>', 1)
             ->get();
 
         $fasiEliminate = 0;
         foreach ($duplicati as $dup) {
-            // Tieni le prime 2 (id più bassi)
+            // Tieni solo la prima (id più basso)
             $keepIds = OrdineFase::where('ordine_id', $dup->ordine_id)
                 ->where('fase_catalogo_id', $dup->fase_catalogo_id)
                 ->where('manuale', false)
                 ->orderBy('id')
-                ->limit(2)
+                ->limit(1)
                 ->pluck('id');
 
             $deleted = OrdineFase::where('ordine_id', $dup->ordine_id)
