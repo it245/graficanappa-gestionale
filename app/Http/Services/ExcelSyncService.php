@@ -163,6 +163,7 @@ class ExcelSyncService
                         'qta_prod' => self::parseNumeric($row['V'] ?? null),
                         'note' => self::normalizeValue($row['W'] ?? null),
                         'priorita' => self::parseNumeric($row['I'] ?? null),
+                        'manuale' => true,
                     ]);
                     $idTrovati[] = $nuovaFase->id;
                 }
