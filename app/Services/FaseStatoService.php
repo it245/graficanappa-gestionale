@@ -23,8 +23,11 @@ class FaseStatoService
             if ($fase->stato >= 2) continue;
 
             // Cerca tutte le fasi con priorità inferiore (= prima nel flusso produttivo)
+            // Escludi fasi con priorità manuale (ordine visualizzazione, non flusso)
             $fasiPrecedenti = $fasi->filter(fn($f) =>
-                $f->id !== $fase->id && ($f->priorita ?? 0) < ($fase->priorita ?? 0)
+                $f->id !== $fase->id
+                && !$f->priorita_manuale
+                && ($f->priorita ?? 0) < ($fase->priorita ?? 0)
             );
 
             if ($fasiPrecedenti->isEmpty()) {
@@ -132,8 +135,12 @@ class FaseStatoService
         foreach ($fasi as $fase) {
             if ($fase->stato >= 2) continue;
 
+            // Predecessori: priorità inferiore, ma escludi fasi con priorità manuale
+            // (la priorità manuale è solo per l'ordine di visualizzazione, non per il flusso)
             $fasiPrecedenti = $fasi->filter(fn($f) =>
-                $f->id !== $fase->id && ($f->priorita ?? 0) < ($fase->priorita ?? 0)
+                $f->id !== $fase->id
+                && !$f->priorita_manuale
+                && ($f->priorita ?? 0) < ($fase->priorita ?? 0)
             );
 
             if ($fasiPrecedenti->isEmpty()) {
