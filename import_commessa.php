@@ -218,7 +218,7 @@ foreach ($gruppi as $chiave => $righe) {
                 $faseNome = (stripos($macchina, 'BN') !== false || stripos($macchina, 'MONO') !== false) ? 'STAMPAINDIGOBN' : 'STAMPAINDIGO';
             } elseif (preg_match('/XL106[.-]?(\d+)/i', $macchina, $m)) {
                 $faseNome = 'STAMPAXL106.' . $m[1];
-            } elseif (stripos($macchina, 'XL106') !== false) {
+            } else {
                 $faseNome = 'STAMPAXL106';
             }
         }

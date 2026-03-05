@@ -1537,7 +1537,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if(clienti.length) match = match && clienti.some(v => data.cliente.includes(v));
                 if(descrizioni.length) match = match && descrizioni.some(v => data.descrizione.includes(v));
                 if(stati.length) match = match && stati.includes(data.stato);
-                if(fasi.length) match = match && fasi.includes(data.fase);
+                if(fasi.length) match = match && fasi.some(f => data.fase.includes(f));
                 if(reparti.length) match = match && reparti.includes(data.reparto);
                 data.row.style.display = match ? '' : 'none';
             });

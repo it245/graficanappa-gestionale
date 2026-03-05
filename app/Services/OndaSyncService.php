@@ -348,7 +348,8 @@ class OndaSyncService
                     } elseif (preg_match('/XL106[.-]?(\d+)/i', $macchina, $m)) {
                         // XL106-1 → STAMPAXL106.1
                         $faseNome = 'STAMPAXL106.' . $m[1];
-                    } elseif (stripos($macchina, 'XL106') !== false) {
+                    } else {
+                        // STAMPA generico (qualsiasi macchina o nessuna) → offset
                         $faseNome = 'STAMPAXL106';
                     }
                 }
@@ -817,7 +818,7 @@ class OndaSyncService
             'appl.laccetto' => 'esterno',
             'ARROT2ANGOLI' => 'esterno',
             'ARROT4ANGOLI' => 'esterno',
-            'AVVIAMENTISTAMPA.EST1.1' => 'stampa offset',
+            'AVVIAMENTISTAMPA.EST1.1' => 'esterno',
             'blocchi.manuale' => 'esterno',
             'BROSSCOPBANDELLAEST' => 'esterno',
             'BROSSCOPEST' => 'esterno',
