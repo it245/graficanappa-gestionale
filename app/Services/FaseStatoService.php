@@ -96,6 +96,26 @@ class FaseStatoService
     }
 
     /**
+     * Se BRT della commessa è a stato 4 (consegnato), tutte le fasi della commessa vanno a 4.
+     */
+    public static function propagaConsegnato($commessa)
+    {
+        $ordineIds = Ordine::where('commessa', $commessa)->pluck('id');
+        if ($ordineIds->isEmpty()) return;
+
+        $brtConsegnato = OrdineFase::whereIn('ordine_id', $ordineIds)
+            ->whereIn('fase', ['BRT1', 'brt1', 'BRT'])
+            ->where('stato', 4)
+            ->exists();
+
+        if ($brtConsegnato) {
+            OrdineFase::whereIn('ordine_id', $ordineIds)
+                ->where('stato', '<', 4)
+                ->update(['stato' => 4, 'data_fine' => now()->format('Y-m-d H:i:s')]);
+        }
+    }
+
+    /**
      * Dopo import: ricalcola tutti gli stati di tutte le commesse
      */
     public static function ricalcolaTutti()
@@ -103,6 +123,12 @@ class FaseStatoService
         $ordineIds = OrdineFase::distinct()->pluck('ordine_id');
         foreach ($ordineIds as $ordineId) {
             self::ricalcolaStati($ordineId);
+        }
+
+        // Propaga stato 4 per commesse con BRT consegnato
+        $commesse = Ordine::whereIn('id', $ordineIds)->distinct()->pluck('commessa');
+        foreach ($commesse as $commessa) {
+            self::propagaConsegnato($commessa);
         }
     }
 }
