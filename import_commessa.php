@@ -183,10 +183,10 @@ foreach ($gruppi as $chiave => $righe) {
         echo "    -> Ordine CREATO (id: {$ordine->id})\n";
     }
 
-    // Fase BRT1 (spedizione)
+    // Fase BRT1 (spedizione) — 1 sola per commessa
     $hasBrt = OrdineFase::withTrashed()
-        ->where('ordine_id', $ordine->id)
         ->where(function ($q) { $q->where('fase', 'BRT1')->orWhere('fase', 'brt1'); })
+        ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
         ->exists();
 
     if (!$hasBrt) {
@@ -333,6 +333,68 @@ foreach ($gruppi as $chiave => $righe) {
             $dedupQta[$chiaveDedup] = $qtaRiga > 0 ? [$qtaRiga] : [];
             if ($existsInCommessa) {
                 echo "    -> Fase {$faseNome} stampa offset già esistente per commessa, skip\n";
+                continue;
+            }
+        }
+
+        // Dedup stampa a caldo per commessa: 1 sola per commessa per fase_catalogo
+        if ($repartoNome === 'stampa a caldo') {
+            $chiaveDedup = $commessa . '|stampa_caldo|' . $faseNome;
+            $qtaRiga = (int)($riga->QtaDaLavorare ?? 0);
+
+            if (isset($dedupPerCommessa[$chiaveDedup])) {
+                if ($qtaRiga > 0 && !in_array($qtaRiga, $dedupQta[$chiaveDedup] ?? [])) {
+                    $dedupQta[$chiaveDedup][] = $qtaRiga;
+                    $nuovaQta = array_sum($dedupQta[$chiaveDedup]);
+                    OrdineFase::withTrashed()
+                        ->where('fase_catalogo_id', $faseCatalogo->id)
+                        ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
+                        ->update(['qta_fase' => $nuovaQta]);
+                    echo "    -> Fase {$faseNome} stampa a caldo qta aggiornata a {$nuovaQta}\n";
+                } else {
+                    echo "    -> Fase {$faseNome} stampa a caldo già creata per commessa, skip\n";
+                }
+                continue;
+            }
+            $existsInCommessa = OrdineFase::withTrashed()
+                ->where('fase_catalogo_id', $faseCatalogo->id)
+                ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
+                ->exists();
+            $dedupPerCommessa[$chiaveDedup] = true;
+            $dedupQta[$chiaveDedup] = $qtaRiga > 0 ? [$qtaRiga] : [];
+            if ($existsInCommessa) {
+                echo "    -> Fase {$faseNome} stampa a caldo già esistente per commessa, skip\n";
+                continue;
+            }
+        }
+
+        // Dedup BRT1 per commessa: 1 sola per commessa
+        if ($repartoNome === 'spedizione') {
+            $chiaveDedup = $commessa . '|spedizione|' . $faseNome;
+            $qtaRiga = (int)($riga->QtaDaLavorare ?? 0);
+
+            if (isset($dedupPerCommessa[$chiaveDedup])) {
+                if ($qtaRiga > 0 && !in_array($qtaRiga, $dedupQta[$chiaveDedup] ?? [])) {
+                    $dedupQta[$chiaveDedup][] = $qtaRiga;
+                    $nuovaQta = array_sum($dedupQta[$chiaveDedup]);
+                    OrdineFase::withTrashed()
+                        ->where('fase_catalogo_id', $faseCatalogo->id)
+                        ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
+                        ->update(['qta_fase' => $nuovaQta]);
+                    echo "    -> Fase {$faseNome} BRT1 qta aggiornata a {$nuovaQta}\n";
+                } else {
+                    echo "    -> Fase {$faseNome} BRT1 già creata per commessa, skip\n";
+                }
+                continue;
+            }
+            $existsInCommessa = OrdineFase::withTrashed()
+                ->where('fase_catalogo_id', $faseCatalogo->id)
+                ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
+                ->exists();
+            $dedupPerCommessa[$chiaveDedup] = true;
+            $dedupQta[$chiaveDedup] = $qtaRiga > 0 ? [$qtaRiga] : [];
+            if ($existsInCommessa) {
+                echo "    -> Fase {$faseNome} BRT1 già esistente per commessa, skip\n";
                 continue;
             }
         }

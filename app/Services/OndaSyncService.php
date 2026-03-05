@@ -167,6 +167,70 @@ class OndaSyncService
             }
         }
 
+        // Pulizia duplicati stampa a caldo per commessa: 1 sola per commessa per fase_catalogo
+        $repartiStampaCaldo = Reparto::where('nome', 'stampa a caldo')->pluck('id');
+        if ($repartiStampaCaldo->isNotEmpty()) {
+            $dupCaldo = DB::table('ordine_fasi')
+                ->join('ordini', 'ordini.id', '=', 'ordine_fasi.ordine_id')
+                ->join('fasi_catalogo', 'fasi_catalogo.id', '=', 'ordine_fasi.fase_catalogo_id')
+                ->select('ordini.commessa', 'ordine_fasi.fase_catalogo_id', DB::raw('COUNT(*) as cnt'))
+                ->whereIn('fasi_catalogo.reparto_id', $repartiStampaCaldo)
+                ->whereNull('ordine_fasi.deleted_at')
+                ->groupBy('ordini.commessa', 'ordine_fasi.fase_catalogo_id')
+                ->having('cnt', '>', 1)
+                ->get();
+
+            foreach ($dupCaldo as $dup) {
+                $faseIds = OrdineFase::withTrashed()
+                    ->where('fase_catalogo_id', $dup->fase_catalogo_id)
+                    ->whereHas('ordine', fn($q) => $q->where('commessa', $dup->commessa))
+                    ->whereNull('deleted_at')
+                    ->orderBy('id')
+                    ->pluck('id');
+
+                $keepId = $faseIds->first();
+                $deleteIds = $faseIds->slice(1)->filter();
+                if ($deleteIds->isNotEmpty()) {
+                    $deleted = OrdineFase::whereIn('id', $deleteIds)
+                        ->where('stato', '<=', 1)
+                        ->delete();
+                    $fasiEliminate += $deleted;
+                }
+            }
+        }
+
+        // Pulizia duplicati BRT1 per commessa: 1 sola per commessa
+        $repartiSpedizione = Reparto::where('nome', 'spedizione')->pluck('id');
+        if ($repartiSpedizione->isNotEmpty()) {
+            $dupBrt = DB::table('ordine_fasi')
+                ->join('ordini', 'ordini.id', '=', 'ordine_fasi.ordine_id')
+                ->join('fasi_catalogo', 'fasi_catalogo.id', '=', 'ordine_fasi.fase_catalogo_id')
+                ->select('ordini.commessa', 'ordine_fasi.fase_catalogo_id', DB::raw('COUNT(*) as cnt'))
+                ->whereIn('fasi_catalogo.reparto_id', $repartiSpedizione)
+                ->whereNull('ordine_fasi.deleted_at')
+                ->groupBy('ordini.commessa', 'ordine_fasi.fase_catalogo_id')
+                ->having('cnt', '>', 1)
+                ->get();
+
+            foreach ($dupBrt as $dup) {
+                $faseIds = OrdineFase::withTrashed()
+                    ->where('fase_catalogo_id', $dup->fase_catalogo_id)
+                    ->whereHas('ordine', fn($q) => $q->where('commessa', $dup->commessa))
+                    ->whereNull('deleted_at')
+                    ->orderBy('id')
+                    ->pluck('id');
+
+                $keepId = $faseIds->first();
+                $deleteIds = $faseIds->slice(1)->filter();
+                if ($deleteIds->isNotEmpty()) {
+                    $deleted = OrdineFase::whereIn('id', $deleteIds)
+                        ->where('stato', '<=', 1)
+                        ->delete();
+                    $fasiEliminate += $deleted;
+                }
+            }
+        }
+
         if ($fasiEliminate > 0) {
             Log::info("OndaSync: eliminati $fasiEliminate duplicati");
         }
@@ -227,12 +291,13 @@ class OndaSyncService
                 $logOrdiniCreati[] = $commessa . ' - ' . trim($prima->ClienteNome ?? '');
             }
 
-            // 4. Assicura che esista sempre la fase BRT1 (spedizione)
+            // 4. Assicura che esista sempre la fase BRT1 (spedizione) — 1 sola per commessa
             $hasBrt = OrdineFase::withTrashed()
-                ->where('ordine_id', $ordine->id)
                 ->where(function ($q) {
                     $q->where('fase', 'BRT1')->orWhere('fase', 'brt1');
-                })->exists();
+                })
+                ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
+                ->exists();
 
             if (!$hasBrt) {
                 $repartoBrt = Reparto::firstOrCreate(['nome' => 'spedizione']);
@@ -414,6 +479,66 @@ class OndaSyncService
                                 ->whereNull('scarti_previsti')
                                 ->update(['scarti_previsti' => $scartiValue]);
                         }
+                        continue;
+                    }
+                }
+
+                // Dedup stampa a caldo per commessa: 1 sola per commessa per fase_catalogo
+                // qta_fase = somma delle qta distinte
+                if ($repartoNome === 'stampa a caldo') {
+                    $chiaveDedup = $commessa . '|stampa_caldo|' . $faseNome;
+                    $qtaRiga = (int)($riga->QtaDaLavorare ?? 0);
+
+                    if (isset($dedupPerCommessa[$chiaveDedup])) {
+                        if ($qtaRiga > 0 && !in_array($qtaRiga, $dedupQta[$chiaveDedup] ?? [])) {
+                            $dedupQta[$chiaveDedup][] = $qtaRiga;
+                            $nuovaQta = array_sum($dedupQta[$chiaveDedup]);
+                            OrdineFase::withTrashed()
+                                ->where('fase_catalogo_id', $faseCatalogo->id)
+                                ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
+                                ->update(['qta_fase' => $nuovaQta]);
+                        }
+                        continue;
+                    }
+
+                    $existsInCommessa = OrdineFase::withTrashed()
+                        ->where('fase_catalogo_id', $faseCatalogo->id)
+                        ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
+                        ->exists();
+
+                    $dedupPerCommessa[$chiaveDedup] = true;
+                    $dedupQta[$chiaveDedup] = $qtaRiga > 0 ? [$qtaRiga] : [];
+                    if ($existsInCommessa) {
+                        continue;
+                    }
+                }
+
+                // Dedup BRT1 per commessa: 1 sola per commessa
+                // qta_fase = somma delle qta distinte
+                if ($repartoNome === 'spedizione') {
+                    $chiaveDedup = $commessa . '|spedizione|' . $faseNome;
+                    $qtaRiga = (int)($riga->QtaDaLavorare ?? 0);
+
+                    if (isset($dedupPerCommessa[$chiaveDedup])) {
+                        if ($qtaRiga > 0 && !in_array($qtaRiga, $dedupQta[$chiaveDedup] ?? [])) {
+                            $dedupQta[$chiaveDedup][] = $qtaRiga;
+                            $nuovaQta = array_sum($dedupQta[$chiaveDedup]);
+                            OrdineFase::withTrashed()
+                                ->where('fase_catalogo_id', $faseCatalogo->id)
+                                ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
+                                ->update(['qta_fase' => $nuovaQta]);
+                        }
+                        continue;
+                    }
+
+                    $existsInCommessa = OrdineFase::withTrashed()
+                        ->where('fase_catalogo_id', $faseCatalogo->id)
+                        ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
+                        ->exists();
+
+                    $dedupPerCommessa[$chiaveDedup] = true;
+                    $dedupQta[$chiaveDedup] = $qtaRiga > 0 ? [$qtaRiga] : [];
+                    if ($existsInCommessa) {
                         continue;
                     }
                 }
