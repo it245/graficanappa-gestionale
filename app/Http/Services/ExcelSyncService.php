@@ -64,7 +64,7 @@ class ExcelSyncService
 
         try {
             // Salva gli ID esportati PRIMA di scrivere il file (per deletion sicura)
-            $exportedIds = OrdineFase::where('stato', '<', 3)->pluck('id')->toArray();
+            $exportedIds = OrdineFase::where('stato', '<', 4)->pluck('id')->toArray();
             file_put_contents(self::getExportedIdsPath(), json_encode($exportedIds));
 
             $content = Excel::raw(new DashboardMesExport, \Maatwebsite\Excel\Excel::XLSX);

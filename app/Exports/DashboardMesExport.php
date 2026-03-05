@@ -20,7 +20,7 @@ class DashboardMesExport implements FromCollection, WithHeadings, WithMapping, W
     public function collection()
     {
         return OrdineFase::with(['ordine', 'faseCatalogo.reparto', 'operatori' => fn($q) => $q->select('operatori.id', 'nome')])
-            ->where('stato', '<', 3)
+            ->where('stato', '<', 4)
             ->get();
     }
 
