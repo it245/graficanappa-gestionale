@@ -120,6 +120,31 @@ foreach ($commesse as $commessa) {
         ->first();
 
     $fasiCreate = [];
+    $stampaXlQta = []; // Track qta STAMPAXL106 per somma
+
+    // Cod_art multi-passaggio (max 2 STAMPAXL106)
+    $codArtMax2 = [
+        'Volumi','Vassoio','Vassoi','SPILLATI.OFFSET','SPILLATI.DIGITALE',
+        'SOVRACOPERTA','RIVISTE.FRECCIA','riviste','RIVISTA.FRECCIA.128PP',
+        'RICETTARI','Raccoglitori','Quaderni','Opuscoli','Libro.di.bordo',
+        'Libricino','LibriBN','Libri','INSERTO.RIVISTA.NOTE.4pp',
+        'I.Volumi','I.riviste','I.Raccoglitori','I.Quaderni','I.Poster',
+        'I.Opuscoli','I.Menu','I.Libricino','I.Libri','I.copertina',
+        'I.cataloghi','I.cartoline','I.Calendari.da.Tavolo',
+        'I.Calendari.da.Muro','I.Calendari','I.Block.Notes',
+        'I.Blocchi.autocopianti','I.Blocchi','I.Bilanci',
+        'Espositori.da.Terra','Espositori.da.banco','Depliant','COPERTINA',
+        'cataloghi','Calendari.da.Tavolo','Calendari.da.Muro','Calendari',
+        'BROSSURATI.OFFSET','BROSSURATI.DIGITALE','brochure','Block.Notes',
+        'Blocchi.Mod.TI','Blocchi.Mod.R1','Blocchi.Mod.K','Blocchi.Mod.CH69',
+        'Blocchi.autocopianti.M40a','Blocchi.autocopianti','Blocchi','Bilanci',
+    ];
+
+    // Conta STAMPAXL106 già nel MES per questa commessa
+    $stampaXlExist = $fasiMes->filter(fn($f) => str_starts_with($f, 'STAMPAXL106'))->count();
+    $codArtCommessa = Ordine::where('commessa', $commessa)->pluck('cod_art')->toArray();
+    $maxStampa = collect($codArtCommessa)->contains(fn($c) => in_array($c, $codArtMax2)) ? 2 : 1;
+    $stampaXlCount = $stampaXlExist;
 
     foreach ($righeOnda as $riga) {
         $faseNome = trim($riga->CodFase);
@@ -135,6 +160,19 @@ foreach ($commesse as $commessa) {
 
         // Già aggiunta in questo ciclo?
         if (in_array($faseNome, $fasiCreate)) continue;
+
+        // STAMPAXL106 dedup: max 1 (o 2 per max2), somma qta sulle varianti
+        if (str_starts_with($faseNome, 'STAMPAXL106')) {
+            $qtaRiga = (int)($riga->QtaDaLavorare ?? 0);
+            if ($qtaRiga > 0) $stampaXlQta[] = $qtaRiga;
+
+            if ($stampaXlCount >= $maxStampa) {
+                // Già al massimo: somma qta sulla fase esistente
+                echo "  SUM: {$commessa} → {$faseNome} qta {$qtaRiga} sommata a STAMPAXL106 esistente\n";
+                continue;
+            }
+            $stampaXlCount++;
+        }
 
         // Determina reparto
         $repartoNome = $mappaReparti[$faseNome] ?? null;

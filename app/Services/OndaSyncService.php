@@ -209,7 +209,6 @@ class OndaSyncService
             'BROSSURATI.OFFSET','BROSSURATI.DIGITALE','brochure','Block.Notes',
             'Blocchi.Mod.TI','Blocchi.Mod.R1','Blocchi.Mod.K','Blocchi.Mod.CH69',
             'Blocchi.autocopianti.M40a','Blocchi.autocopianti','Blocchi','Bilanci',
-            'SEMILAVSTAMPA_FUSTELLA',
         ];
         $repartiStampaOffset = Reparto::where('nome', 'stampa offset')->pluck('id');
         if ($repartiStampaOffset->isNotEmpty()) {
@@ -460,7 +459,6 @@ class OndaSyncService
                     'BROSSURATI.OFFSET','BROSSURATI.DIGITALE','brochure','Block.Notes',
                     'Blocchi.Mod.TI','Blocchi.Mod.R1','Blocchi.Mod.K','Blocchi.Mod.CH69',
                     'Blocchi.autocopianti.M40a','Blocchi.autocopianti','Blocchi','Bilanci',
-                    'SEMILAVSTAMPA_FUSTELLA',
                 ])) {
                     $tipo = 'max 2 fasi';
                 }
