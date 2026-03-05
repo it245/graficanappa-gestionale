@@ -173,9 +173,9 @@ private function convertiData($valore) {
     'CORDONATURAPETRATTO' => 'legatoria',
     'DEKIA-Difficile' => 'legatoria',
 
-    'FIN01' => 'legatoria',
-    'FIN03' => 'legatoria',
-    'FIN04' => 'legatoria',
+    'FIN01' => 'finestratura',
+    'FIN03' => 'finestratura',
+    'FIN04' => 'finestratura',
 
     'FOIL.MGI.30M' => 'finitura digitale',
     'FOILMGI' => 'finitura digitale',
@@ -189,7 +189,7 @@ private function convertiData($valore) {
     'FUSTSTELP25.35' => 'fustella cilindrica',
     'FUSTIML75X106' => 'fustella piana',
     'FUSTELLATURA72X51' => 'fustella',
-    'FINESTRATURA.INT'=>'finestre',
+    'FINESTRATURA.INT'=>'finestratura',
 
     'INCOLLAGGIO.PATTINA' => 'legatoria',
     'INCOLLAGGIOBLOCCHI' => 'legatoria',
@@ -272,7 +272,7 @@ private function convertiData($valore) {
     'STAMPALAMINAORO' => 'stampa a caldo',
     'ALL.COFANETTO.ISMAsrl' => 'esterno',
     'PMDUPLO36COP' => 'esterno',
-    'FINESTRATURA.MANUALE' => 'finestre',
+    'FINESTRATURA.MANUALE' => 'finestratura',
     'STAMPACALDOJOHEST' => 'esterno',
     'BROSSFRESATA/A5EST' => 'esterno',
     'PIEGA6ANTESINGOLO' => 'legatoria',

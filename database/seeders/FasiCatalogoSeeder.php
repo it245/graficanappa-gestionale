@@ -55,12 +55,12 @@ class FasiCatalogoSeeder extends Seeder
             'FUSTSTELP25.35' => 'fustella cilindrica',
             'RILIEVOASECCOJOH' => 'fustella piana',
 
-            // FINESTRE
-            'FIN01' => 'finestre',
-            'FIN03' => 'finestre',
-            'FIN04' => 'finestre',
-            'FINESTRATURA.MANUALE' => 'finestre',
-            'FINESTRATURA.INT' => 'finestre',
+            // FINESTRATURA
+            'FIN01' => 'finestratura',
+            'FIN03' => 'finestratura',
+            'FIN04' => 'finestratura',
+            'FINESTRATURA.MANUALE' => 'finestratura',
+            'FINESTRATURA.INT' => 'finestratura',
 
             // FINITURA DIGITALE
             'CORDONATURAPETRATTO' => 'finitura digitale',
