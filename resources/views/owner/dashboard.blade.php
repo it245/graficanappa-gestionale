@@ -614,8 +614,15 @@ tr:hover td {
 </select>
 
 <select id="filterFase" multiple>
-    @foreach($fasiCatalogo as $faseCat)
-        <option value="{{ $faseCat->nome }}">{{ $faseCat->nome }}</option>
+    @php
+        $fasiNomi = $fasiCatalogo->pluck('nome')->map(function($n) {
+            if (str_starts_with($n, 'STAMPAXL106')) return 'STAMPAXL';
+            if ($n === 'STAMPA') return null;
+            return $n;
+        })->filter()->unique()->sort()->values();
+    @endphp
+    @foreach($fasiNomi as $nome)
+        <option value="{{ strtolower($nome) }}">{{ $nome }}</option>
     @endforeach
 </select>
 
