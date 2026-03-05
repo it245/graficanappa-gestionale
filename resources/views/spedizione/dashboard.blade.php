@@ -302,24 +302,18 @@
     </a>
 </div>
 
-<!-- Ricerca + matita note -->
-<div style="display:flex; align-items:center; gap:8px; margin:12px 8px;">
-    <input type="text" id="searchBox" class="form-control search-box" placeholder="Cerca commessa, cliente, descrizione..." style="margin:0; flex:1;">
+<!-- Ricerca + matita note + pannello inline -->
+<div style="display:flex; align-items:center; gap:8px; margin:12px 8px; flex-wrap:nowrap;">
+    <input type="text" id="searchBox" class="form-control search-box" placeholder="Cerca commessa, cliente, descrizione..." style="margin:0; flex:1; min-width:200px;">
     <button onclick="toggleNotePanel()" title="Note consegne" style="background:none; border:none; cursor:pointer; font-size:24px; color:#0d6efd; padding:4px 8px;">&#9998;</button>
-</div>
-
-<!-- Pannello Note AM/PM -->
-<div id="notePanel" style="display:none; margin:4px 8px; padding:8px 10px; background:#fff; border:2px solid #0d6efd; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.1); max-width:500px;">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-        <strong style="color:#0d6efd; font-size:13px;">Note Consegne - {{ now()->format('d/m/Y') }}</strong>
-        <button onclick="toggleNotePanel()" style="background:none; border:none; font-size:18px; cursor:pointer; color:#666; line-height:1;">&times;</button>
-    </div>
-    <div>
-        <textarea id="notaContenuto" rows="5" class="form-control form-control-sm" style="border-color:#0d6efd; font-size:13px;" placeholder="Note consegne del giorno..."></textarea>
-    </div>
-    <div style="margin-top:4px; display:flex; justify-content:space-between; align-items:center;">
-        <span id="noteSaveStatus" style="font-size:11px; color:#6c757d;"></span>
-        <button onclick="salvaNote()" class="btn btn-primary btn-sm" style="font-size:12px; padding:2px 12px;">Salva</button>
+    <div id="notePanel" style="display:none; padding:6px 10px; background:#fff; border:2px solid #0d6efd; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.1); flex:0 0 auto; white-space:nowrap;">
+        <div style="display:flex; align-items:center; gap:6px;">
+            <strong style="color:#0d6efd; font-size:12px; white-space:nowrap;">Note {{ now()->format('d/m') }}</strong>
+            <textarea id="notaContenuto" rows="1" class="form-control form-control-sm" style="border-color:#0d6efd; font-size:12px; width:300px; resize:vertical;" placeholder="Note consegne..."></textarea>
+            <button onclick="salvaNote()" class="btn btn-primary btn-sm" style="font-size:11px; padding:2px 10px; white-space:nowrap;">Salva</button>
+            <span id="noteSaveStatus" style="font-size:10px; color:#6c757d; white-space:nowrap;"></span>
+            <button onclick="toggleNotePanel()" style="background:none; border:none; font-size:16px; cursor:pointer; color:#666; line-height:1; padding:0 4px;">&times;</button>
+        </div>
     </div>
 </div>
 
