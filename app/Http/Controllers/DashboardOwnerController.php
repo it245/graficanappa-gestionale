@@ -224,7 +224,7 @@ public function calcolaOreEPriorita($fase)
         }
 
         $fasi = OrdineFase::with(['ordine', 'faseCatalogo.reparto', 'operatori' => fn($q) => $q->select('operatori.id', 'nome')])
-            ->where('stato', '<', 3)
+            ->where('stato', '<', 4)
             ->get()
             ->map(function ($fase) {
                 $fase = $this->calcolaOreEPriorita($fase);
