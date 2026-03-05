@@ -18,13 +18,16 @@ class FaseStatoService
 
         if ($fasi->isEmpty()) return;
 
+        $flusso = config('fasi_priorita', []);
+
         foreach ($fasi as $fase) {
             // Se già avviato (2) o terminato (3), non toccare
             if ($fase->stato >= 2) continue;
 
-            // Cerca tutte le fasi con priorità inferiore (= prima nel flusso produttivo)
+            // Predecessori basati sul flusso produttivo reale (config)
+            $mioOrdine = $flusso[$fase->fase] ?? 500;
             $fasiPrecedenti = $fasi->filter(fn($f) =>
-                $f->id !== $fase->id && ($f->priorita ?? 0) < ($fase->priorita ?? 0)
+                $f->id !== $fase->id && ($flusso[$f->fase] ?? 500) < $mioOrdine
             );
 
             if ($fasiPrecedenti->isEmpty()) {
@@ -125,20 +128,21 @@ class FaseStatoService
         $ordineIds = Ordine::where('commessa', $commessa)->pluck('id');
         if ($ordineIds->isEmpty()) return;
 
-        // Prendi TUTTE le fasi della commessa, ordinate per priorità
         $fasi = OrdineFase::whereIn('ordine_id', $ordineIds)->orderBy('priorita')->orderBy('id')->get();
         if ($fasi->isEmpty()) return;
+
+        // Usa la config fasi_priorita per determinare il flusso produttivo reale
+        $flusso = config('fasi_priorita', []);
 
         foreach ($fasi as $fase) {
             if ($fase->stato >= 2) continue;
 
-            // Se la fase ha priorità manuale, non ricalcolare il suo stato
-            // (l'owner l'ha posizionata manualmente, resta com'è)
-            if ($fase->priorita_manuale) continue;
+            // Ordine nel flusso produttivo reale (dalla config)
+            $mioOrdine = $flusso[$fase->fase] ?? 500;
 
-            // Predecessori: tutte le fasi con priorità inferiore (incluse quelle manuali)
+            // Predecessori: fasi con ordine di flusso inferiore (vengono prima nel ciclo)
             $fasiPrecedenti = $fasi->filter(fn($f) =>
-                $f->id !== $fase->id && ($f->priorita ?? 0) < ($fase->priorita ?? 0)
+                $f->id !== $fase->id && ($flusso[$f->fase] ?? 500) < $mioOrdine
             );
 
             if ($fasiPrecedenti->isEmpty()) {
