@@ -377,7 +377,29 @@ public function calcolaOreEPriorita($fase)
             $valore = $valore !== null ? (float)str_replace(',', '.', $valore) : 0;
         }
 
-        if (in_array($campo, $campiFase)) {
+        if ($campo === 'fase') {
+            // Aggiorna nome fase + fase_catalogo_id
+            $nomeNuovo = trim($valore) ?: '-';
+            $fase->fase = $nomeNuovo;
+            if ($nomeNuovo !== '-') {
+                $faseCat = FasiCatalogo::where('nome', $nomeNuovo)->first();
+                if ($faseCat) {
+                    $fase->fase_catalogo_id = $faseCat->id;
+                }
+            }
+            $fase->save();
+        } elseif ($campo === 'reparto') {
+            // Aggiorna reparto del FasiCatalogo o crea nuovo FasiCatalogo
+            $nomeReparto = trim($valore) ?: 'generico';
+            $reparto = Reparto::firstOrCreate(['nome' => $nomeReparto]);
+            $faseNome = $fase->fase ?: '-';
+            $faseCat = FasiCatalogo::updateOrCreate(
+                ['nome' => $faseNome],
+                ['reparto_id' => $reparto->id]
+            );
+            $fase->fase_catalogo_id = $faseCat->id;
+            $fase->save();
+        } elseif (in_array($campo, $campiFase)) {
             $fase->{$campo} = $valore;
             $fase->save();
 
