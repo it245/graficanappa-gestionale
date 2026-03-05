@@ -481,12 +481,6 @@ class OndaSyncService
             $fase->save();
         }
 
-        // Ricalcola stati per ogni ordine
-        $ordineIds = OrdineFase::distinct()->pluck('ordine_id');
-        foreach ($ordineIds as $ordineId) {
-            FaseStatoService::ricalcolaStati($ordineId);
-        }
-
         Log::info("Sync Onda completato: $ordiniCreati creati, $ordiniAggiornati aggiornati, $fasiCreate fasi");
 
         return [
