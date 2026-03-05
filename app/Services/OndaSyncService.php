@@ -112,11 +112,14 @@ class OndaSyncService
         }
 
         // 1b. Pulizia duplicati fasi: se ci sono più di 1 fasi uguali (stesso ordine + fase_catalogo),
-        //     mantieni solo la prima e elimina il resto
+        //     mantieni solo la prima e elimina il resto.
+        //     Escludi STAMPAXL106 (gestito dal cleanup per commessa con logica max 2 fasi)
+        $idStampaXL = FasiCatalogo::where('nome', 'like', 'STAMPAXL106%')->pluck('id');
         $duplicati = DB::table('ordine_fasi')
             ->select('ordine_id', 'fase_catalogo_id', DB::raw('COUNT(*) as cnt'))
             ->whereNull('deleted_at')
             ->where('manuale', false)
+            ->whereNotIn('fase_catalogo_id', $idStampaXL)
             ->groupBy('ordine_id', 'fase_catalogo_id')
             ->having('cnt', '>', 1)
             ->get();
@@ -174,13 +177,31 @@ class OndaSyncService
             }
         }
 
-        // Pulizia duplicati stampa offset per commessa: 1 sola STAMPAXL106 per commessa
+        // Pulizia duplicati stampa offset per commessa: max 2 STAMPAXL106 per commessa
+        // (cod_art multi-passaggio permettono 2 fasi, gli altri 1)
+        $codArtMax2 = [
+            'Volumi','Vassoio','Vassoi','SPILLATI.OFFSET','SPILLATI.DIGITALE',
+            'SOVRACOPERTA','RIVISTE.FRECCIA','riviste','RIVISTA.FRECCIA.128PP',
+            'RICETTARI','Raccoglitori','Quaderni','Opuscoli','Libro.di.bordo',
+            'Libricino','LibriBN','Libri','INSERTO.RIVISTA.NOTE.4pp',
+            'I.Volumi','I.riviste','I.Raccoglitori','I.Quaderni','I.Poster',
+            'I.Opuscoli','I.Menu','I.Libricino','I.Libri','I.copertina',
+            'I.cataloghi','I.cartoline','I.Calendari.da.Tavolo',
+            'I.Calendari.da.Muro','I.Calendari','I.Block.Notes',
+            'I.Blocchi.autocopianti','I.Blocchi','I.Bilanci',
+            'Espositori.da.Terra','Espositori.da.banco','Depliant','COPERTINA',
+            'cataloghi','Calendari.da.Tavolo','Calendari.da.Muro','Calendari',
+            'BROSSURATI.OFFSET','BROSSURATI.DIGITALE','brochure','Block.Notes',
+            'Blocchi.Mod.TI','Blocchi.Mod.R1','Blocchi.Mod.K','Blocchi.Mod.CH69',
+            'Blocchi.autocopianti.M40a','Blocchi.autocopianti','Blocchi','Bilanci',
+        ];
         $repartiStampaOffset = Reparto::where('nome', 'stampa offset')->pluck('id');
         if ($repartiStampaOffset->isNotEmpty()) {
             $dupStampa = DB::table('ordine_fasi')
                 ->join('ordini', 'ordini.id', '=', 'ordine_fasi.ordine_id')
                 ->join('fasi_catalogo', 'fasi_catalogo.id', '=', 'ordine_fasi.fase_catalogo_id')
-                ->select('ordini.commessa', 'ordine_fasi.fase_catalogo_id', DB::raw('COUNT(*) as cnt'))
+                ->select('ordini.commessa', 'ordine_fasi.fase_catalogo_id', DB::raw('COUNT(*) as cnt'),
+                    DB::raw('MAX(ordini.cod_art) as cod_art'))
                 ->whereIn('fasi_catalogo.reparto_id', $repartiStampaOffset)
                 ->where('fasi_catalogo.nome', 'like', 'STAMPAXL106%')
                 ->whereNull('ordine_fasi.deleted_at')
@@ -190,15 +211,16 @@ class OndaSyncService
                 ->get();
 
             foreach ($dupStampa as $dup) {
-                $faseIds = OrdineFase::withTrashed()
-                    ->where('fase_catalogo_id', $dup->fase_catalogo_id)
+                $maxFasi = in_array($dup->cod_art, $codArtMax2) ? 2 : 1;
+                if ($dup->cnt <= $maxFasi) continue;
+
+                $faseIds = OrdineFase::where('fase_catalogo_id', $dup->fase_catalogo_id)
                     ->whereHas('ordine', fn($q) => $q->where('commessa', $dup->commessa))
-                    ->whereNull('deleted_at')
                     ->orderBy('id')
                     ->pluck('id');
 
-                $keepId = $faseIds->first();
-                $deleteIds = $faseIds->slice(1)->filter();
+                $keepIds = $faseIds->take($maxFasi);
+                $deleteIds = $faseIds->slice($maxFasi)->filter();
                 if ($deleteIds->isNotEmpty()) {
                     $deleted = OrdineFase::whereIn('id', $deleteIds)
                         ->where('stato', '<=', 1)
