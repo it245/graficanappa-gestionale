@@ -746,8 +746,20 @@ public function calcolaOreEPriorita($fase)
         $filtroCommessa = $request->query('commessa');
         $filtroReparto = $request->query('reparto');
 
+        // Escludi reparto spedizione
+        $repartoSpedizione = Reparto::where('nome', 'spedizione')->first();
+
         $query = OrdineFase::with(['ordine', 'faseCatalogo.reparto', 'operatori'])
             ->whereHas('ordine');
+
+        // Escludi BRT e reparto spedizione
+        $query->whereNotIn('fase', ['BRT1', 'brt1', 'BRT']);
+        if ($repartoSpedizione) {
+            $query->where(function ($q) use ($repartoSpedizione) {
+                $q->whereDoesntHave('faseCatalogo')
+                  ->orWhereHas('faseCatalogo', fn($q2) => $q2->where('reparto_id', '!=', $repartoSpedizione->id));
+            });
+        }
 
         if ($filtroCommessa) {
             $query->whereHas('ordine', fn($q) => $q->where('commessa', 'like', "%{$filtroCommessa}%"));
@@ -783,12 +795,24 @@ public function calcolaOreEPriorita($fase)
                 $fase->ore_lavorate = round($oreTotali, 2);
 
                 return $fase;
-            })
-            ->sortBy(fn($f) => $f->ordine->commessa ?? '');
+            });
 
-        $reparti = Reparto::orderBy('nome')->pluck('nome', 'id');
+        // Raggruppa per commessa
+        $commesse = $fasi->groupBy(fn($f) => $f->ordine->commessa ?? '-')->map(function ($fasiCommessa, $commessa) {
+            return (object) [
+                'commessa' => $commessa,
+                'cliente' => $fasiCommessa->first()->ordine->cliente_nome ?? '-',
+                'ore_previste' => round($fasiCommessa->sum('ore_previste'), 2),
+                'ore_lavorate' => round($fasiCommessa->sum('ore_lavorate'), 2),
+                'fasi' => $fasiCommessa->sortBy(fn($f) => config('fasi_priorita')[$f->fase] ?? 500),
+                'num_fasi' => $fasiCommessa->count(),
+                'num_terminate' => $fasiCommessa->where('stato', '>=', 3)->count(),
+            ];
+        })->sortBy('commessa');
 
-        return view('owner.report_ore', compact('fasi', 'reparti', 'filtroCommessa', 'filtroReparto'));
+        $reparti = Reparto::where('nome', '!=', 'spedizione')->orderBy('nome')->pluck('nome', 'id');
+
+        return view('owner.report_ore', compact('commesse', 'reparti', 'filtroCommessa', 'filtroReparto'));
     }
 
     public function scheduling(PrinectService $prinect, PrinectSyncService $syncService)
