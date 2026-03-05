@@ -53,7 +53,6 @@ $stats = [
     'ordine_desc_vuota' => 0,
     'fase_no_catalogo' => 0,
     'fase_no_reparto' => 0,
-    'priorita_negativa' => 0,
     'stato_incoerente' => 0,
 ];
 
@@ -164,13 +163,8 @@ foreach ($commesse as $commessa) {
     }
 
     // ========================================
-    // 8. Priorità negativa
+    // 8. Priorità negativa — non è un errore, skip
     // ========================================
-    $negPri = $fasi->where('priorita', '<', 0)->count();
-    if ($negPri > 0) {
-        $errori[] = "PRIORITA NEGATIVA: {$negPri} fasi";
-        $stats['priorita_negativa']++;
-    }
 
     // ========================================
     // 9. Stato incoerente: fase a stato 1 (pronto) ma predecessore non terminato
@@ -224,5 +218,4 @@ echo "Fase duplicata su ordine:     {$stats['fase_duplicata_ordine']}\n";
 echo "Ordine desc vuota con fasi:   {$stats['ordine_desc_vuota']}\n";
 echo "Fasi senza catalogo:          {$stats['fase_no_catalogo']}\n";
 echo "Fasi senza reparto:           {$stats['fase_no_reparto']}\n";
-echo "Priorita negativa:            {$stats['priorita_negativa']}\n";
 echo "Stato incoerente:             {$stats['stato_incoerente']}\n";
