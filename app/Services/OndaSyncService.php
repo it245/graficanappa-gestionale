@@ -306,7 +306,7 @@ class OndaSyncService
                 }
 
                 $reparto = Reparto::firstOrCreate(['nome' => $repartoNome]);
-                $faseCatalogo = FasiCatalogo::firstOrCreate(
+                $faseCatalogo = FasiCatalogo::updateOrCreate(
                     ['nome' => $faseNome],
                     ['reparto_id' => $reparto->id]
                 );
