@@ -26,7 +26,7 @@ class FasiCatalogoSeeder extends Seeder
             'ARROT4ANGOLI' => 'esterno',
 
             // STAMPA OFFSET
-            'AVVIAMENTISTAMPA.EST1.1' => 'stampa offset',
+            'AVVIAMENTISTAMPA.EST1.1' => 'esterno',
             'STAMPA' => 'stampa offset',
             'STAMPAXL106' => 'stampa offset',
             'STAMPAXL106.1' => 'stampa offset',

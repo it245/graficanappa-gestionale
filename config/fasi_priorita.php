@@ -5,7 +5,7 @@
 
 return [
     // === STAMPA ===
-    'AVVIAMENTISTAMPA.EST1.1' => 1,
+    'AVVIAMENTISTAMPA.EST1.1' => 92,  // esterno
     'STAMPA' => 2,
     'STAMPA.OFFSET11.EST' => 3,
     'STAMPA.ESTERNA' => 3,
