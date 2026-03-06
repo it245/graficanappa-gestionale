@@ -60,10 +60,18 @@
                     <div class="kpi-value text-primary" id="liveSpeed">{{ number_format($device['deviceStatus']['speed'] ?? 0) }}</div>
                     <div class="kpi-sub">fogli/h</div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <div class="kpi-label mb-1">Job Corrente</div>
                     <div class="fw-bold" id="liveJob" style="font-size:0.95rem;">{{ $device['deviceStatus']['workstep']['job']['name'] ?? '-' }}</div>
                     <div class="text-muted small" id="liveWorkstep">{{ $device['deviceStatus']['workstep']['name'] ?? '-' }}</div>
+                </div>
+                @php
+                    $liveJobId = $device['deviceStatus']['workstep']['job']['id'] ?? null;
+                    $liveCommessa = ($liveJobId && is_numeric($liveJobId)) ? str_pad($liveJobId, 7, '0', STR_PAD_LEFT) . '-' . date('y') : null;
+                @endphp
+                <div class="col-md-1 text-center">
+                    <div class="kpi-label mb-1">Commessa</div>
+                    <div class="fw-bold" id="liveCommessa" style="font-size:0.9rem;">@if($liveCommessa)<a href="{{ route('commesse.show', $liveCommessa) }}">{{ $liveCommessa }}</a>@else - @endif</div>
                 </div>
                 <div class="col-md-2 text-center">
                     <div class="kpi-label mb-1">Prodotti / Scarto</div>
@@ -479,6 +487,13 @@ setInterval(() => {
         document.getElementById('liveSpeed').textContent = fmt(d.speed);
         document.getElementById('liveJob').textContent = d.job_name;
         document.getElementById('liveWorkstep').textContent = d.workstep + ' (' + d.ws_status + ')';
+        var commEl = document.getElementById('liveCommessa');
+        if (d.job_id && !isNaN(d.job_id)) {
+            var comm = String(d.job_id).padStart(7, '0') + '-' + new Date().getFullYear().toString().slice(-2);
+            commEl.innerHTML = '<a href="/commesse/' + comm + '">' + comm + '</a>';
+        } else {
+            commEl.textContent = '-';
+        }
         document.getElementById('liveProduced').textContent = fmt(d.produced);
         document.getElementById('liveWaste').textContent = fmt(d.waste);
         document.getElementById('liveTotalizer').textContent = fmt(d.totalizer);
