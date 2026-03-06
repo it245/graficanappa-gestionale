@@ -33,18 +33,54 @@ class CommessaController extends Controller
         // Sostituisci la relazione fasi con tutte le fasi combinate
         $ordine->setRelation('fasi', $tutteLeFasi);
 
-        // Prossime commesse: con conteggio fasi totali e terminate
-        // withCount aggiunge attributi "fasi_count" e "fasi_terminate_count" al modello
-        // senza caricare tutte le righe delle fasi (più efficiente di with + count manuale)
-        // whereHas con stato < 3: esclude commesse già completate/consegnate
-        $baseQuery = Ordine::withCount(['fasi', 'fasi as fasi_terminate_count' => function ($q) {
-                $q->where('stato', '>=', 3);
-            }])
-            ->whereHas('fasi', fn($q) => $q->where('stato', '<', 3));
+        // Carica l'operatore corrente (serve per sapere il reparto)
+        $operatore = \App\Models\Operatore::with('reparti')->find(
+            request()->attributes->get('operatore_id') ?? session('operatore_id')
+        );
 
-        $prossime = $ordine->priorita !== null
-            ? $baseQuery->clone()->where('priorita', '>', $ordine->priorita)->orderBy('priorita', 'asc')->limit(5)->get()
-            : $baseQuery->clone()->where('commessa', '!=', $commessa)->orderBy('data_prevista_consegna', 'asc')->limit(5)->get();
+        // Prossime commesse: seguono l'ordine della coda operatore (per reparto)
+        // 1. Prende i reparti dell'operatore
+        // 2. Cerca le fasi attive (stato 0/1/2) in quei reparti, ordinate per priorità
+        // 3. Raggruppa per commessa (distinct) per evitare duplicati
+        $repartoIds = $operatore ? $operatore->reparti->pluck('id')->toArray() : [];
+
+        if (!empty($repartoIds)) {
+            // Query sulla tabella ordine_fasi JOIN ordini:
+            // - filtra per reparto dell'operatore
+            // - solo fasi con stato 0, 1, 2 (nella coda, non completate)
+            // - escludi fasi esterne
+            // - raggruppa per commessa → MIN(priorita) = priorità più alta della commessa
+            // - ordina per quella priorità
+            $commesseOrdinate = OrdineFase::query()
+                ->join('ordini', 'ordini.id', '=', 'ordine_fasi.ordine_id')
+                ->join('fase_catalogo', 'ordine_fasi.fase_catalogo_id', '=', 'fase_catalogo.id')
+                ->whereIn('fase_catalogo.reparto_id', $repartoIds)
+                ->whereIn('ordine_fasi.stato', [0, 1, 2])
+                ->where(fn($q) => $q->where('ordine_fasi.esterno', false)->orWhereNull('ordine_fasi.esterno'))
+                ->where('ordini.commessa', '!=', $commessa)
+                ->select('ordini.commessa')
+                ->selectRaw('MIN(ordine_fasi.priorita) as min_priorita')
+                ->groupBy('ordini.commessa')
+                ->orderBy('min_priorita')
+                ->limit(10)
+                ->pluck('commessa');
+        } else {
+            // Fallback (owner o senza reparto): ordina per data consegna
+            $commesseOrdinate = Ordine::where('commessa', '!=', $commessa)
+                ->whereHas('fasi', fn($q) => $q->where('stato', '<', 3))
+                ->orderBy('data_prevista_consegna')
+                ->limit(10)
+                ->pluck('commessa');
+        }
+
+        // Carica i modelli Ordine con conteggio fasi, poi ordina come la coda
+        // unique('commessa'): una commessa può avere più ordini, ne mostriamo uno solo
+        $prossime = Ordine::whereIn('commessa', $commesseOrdinate)
+            ->withCount(['fasi', 'fasi as fasi_terminate_count' => fn($q) => $q->where('stato', '>=', 3)])
+            ->get()
+            ->unique('commessa')
+            ->sortBy(fn($o) => $commesseOrdinate->search($o->commessa))
+            ->values();
 
 
         // Anteprima foglio di stampa da Prinect API
@@ -67,10 +103,6 @@ class CommessaController extends Controller
                 // Prinect non disponibile, nessuna anteprima
             }
         }
-
-        $operatore = \App\Models\Operatore::with('reparti')->find(
-            request()->attributes->get('operatore_id') ?? session('operatore_id')
-        );
 
         return view('commesse.show', compact('ordine', 'prossime', 'operatore', 'preview'));
     }
