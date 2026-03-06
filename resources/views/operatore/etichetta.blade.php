@@ -367,23 +367,21 @@ function aggiornaAnteprima() {
     var canvas = document.getElementById('datamatrix');
     var dmImg = document.getElementById('datamatrix-img');
     if (ean && ean.length >= 4) {
-        var gtin = ean.replace(/\D/g, '');
+        // GTIN: tenere EAN così com'è (può contenere lettere es. A8022470871951)
+        // Pad a 14 caratteri con 0 davanti se serve
+        var gtin = ean.trim();
         while (gtin.length < 14) gtin = '0' + gtin;
         if (gtin.length > 14) gtin = gtin.substring(0, 14);
 
-        // Costruisci stringa GS1 con FNC1 separatori per AI variabili
-        // FNC1 iniziale (GS1 mode) + AI(01) fixed 14 + AI(37) var + FNC1 + AI(10) var
-        var fnc1 = String.fromCharCode(29); // GS char come separatore
-        var rawData = '01' + gtin;
+        // AI(30) = quantità, zero-padded a 8 cifre
+        var qty = pzcassa ? ('00000000' + pzcassa).slice(-8) : '';
+        // Lotto senza trattino
+        var lottoClean = lotto ? lotto.replace(/-/g, '') : '';
+
+        // Costruisci stringa GS1: (01)GTIN (30)QTY (10)LOTTO
         var displayData = '(01)' + gtin;
-        if (pzcassa) {
-            rawData += '37' + pzcassa + fnc1;
-            displayData += '(37)' + pzcassa;
-        }
-        if (lotto) {
-            rawData += '10' + lotto;
-            displayData += '(10)' + lotto;
-        }
+        if (qty) displayData += '(30)' + qty;
+        if (lottoClean) displayData += '(10)' + lottoClean;
 
         try {
             bwipjs.toCanvas(canvas, {
@@ -399,8 +397,10 @@ function aggiornaAnteprima() {
             console.warn('gs1datamatrix failed, trying datamatrix:', e.message || e);
             // Fallback: datamatrix standard con FNC1 manuale
             try {
-                var fnc1Raw = '\xF1'; // FNC1 per bwip-js parsefnc
-                var bwipData = fnc1Raw + rawData.replace(fnc1, fnc1Raw);
+                var fnc1 = '\xF1';
+                var bwipData = fnc1 + '01' + gtin;
+                if (qty) bwipData += '30' + qty;
+                if (lottoClean) bwipData += '10' + lottoClean;
                 bwipjs.toCanvas(canvas, {
                     bcid: 'datamatrix',
                     text: bwipData,
