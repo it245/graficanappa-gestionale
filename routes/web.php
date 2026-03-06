@@ -21,7 +21,7 @@ Route::prefix('operatore')->group(function() {
 
     Route::middleware(['operatore.auth'])->group(function() {
         Route::get('dashboard', [DashboardOperatoreController::class, 'index'])->name('operatore.dashboard');
-        Route::post('/logout', [OperatoreLoginController::class, 'logout'])->name('operatore.logout');
+        Route::match(['get', 'post'], '/logout', [OperatoreLoginController::class, 'logout'])->name('operatore.logout');
 
         // Etichette EAN
         Route::get('/etichetta/search-ean', [EtichettaController::class, 'searchEan'])->name('operatore.etichetta.searchEan');
@@ -57,7 +57,7 @@ Route::post('/admin/login', [AdminLoginController::class, 'login'])->name('admin
 
 // Admin — area protetta
 Route::middleware(['admin'])->prefix('admin')->group(function() {
-    Route::post('/logout', [AdminLoginController::class, 'logout'])->name('admin.logout');
+    Route::match(['get', 'post'], '/logout', [AdminLoginController::class, 'logout'])->name('admin.logout');
     Route::get('/dashboard', [DashboardAdminController::class, 'index'])->name('admin.dashboard');
     Route::get('/operatore/nuovo', [DashboardAdminController::class, 'crea'])->name('admin.operatore.crea');
     Route::post('/operatore', [DashboardAdminController::class, 'salva'])->name('admin.operatore.salva');
