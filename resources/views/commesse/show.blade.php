@@ -279,15 +279,49 @@
 
     <!-- Prossime commesse -->
     <h4 class="mt-4">Prossime commesse</h4>
-    <ul class="list-group">
-        @foreach($prossime as $c)
-            <li class="list-group-item">
-                <a href="{{ route('commesse.show', $c->commessa) }}">
-                    {{ $c->commessa }} – {{ $c->cliente_nome }}
-                </a>
-            </li>
-        @endforeach
-    </ul>
+    <div style="overflow-x:auto;">
+        <table class="table table-bordered table-sm" style="font-size:13px; white-space:nowrap;">
+            <thead class="table-dark">
+                <tr>
+                    <th>Commessa</th>
+                    <th>Cliente</th>
+                    <th>Cod. Articolo</th>
+                    <th>Descrizione</th>
+                    <th>Qta</th>
+                    <th>Consegna</th>
+                    <th>Stato</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($prossime as $c)
+                <tr>
+                    <td>
+                        <a href="{{ route('commesse.show', $c->commessa) }}" class="fw-bold">{{ $c->commessa }}</a>
+                    </td>
+                    <td>{{ $c->cliente_nome ?? '-' }}</td>
+                    <td>{{ $c->cod_art ?? '-' }}</td>
+                    <td style="white-space:normal; max-width:200px; overflow:hidden; text-overflow:ellipsis;">{{ Str::limit($c->descrizione ?? '-', 50) }}</td>
+                    <td>{{ number_format($c->qta_richiesta ?? 0, 0, ',', '.') }}</td>
+                    <td>{{ $c->data_prevista_consegna ? \Carbon\Carbon::parse($c->data_prevista_consegna)->format('d/m/Y') : '-' }}</td>
+                    <td>
+                        @php
+                            $tot = $c->fasi_count ?? 0;
+                            $term = $c->fasi_terminate_count ?? 0;
+                            $pct = $tot > 0 ? round($term / $tot * 100) : 0;
+                            $color = $pct >= 100 ? '#198754' : ($pct >= 50 ? '#ffc107' : '#dc3545');
+                        @endphp
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <div style="flex:1; background:#e9ecef; border-radius:4px; height:16px; min-width:60px;">
+                                <div style="width:{{ $pct }}%; background:{{ $color }}; height:100%; border-radius:4px;"></div>
+                            </div>
+                            <span style="font-size:11px;">{{ $term }}/{{ $tot }}</span>
+                        </div>
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <!-- Modal Termina Fase -->

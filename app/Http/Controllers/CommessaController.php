@@ -33,9 +33,16 @@ class CommessaController extends Controller
         // Sostituisci la relazione fasi con tutte le fasi combinate
         $ordine->setRelation('fasi', $tutteLeFasi);
 
+        // Prossime commesse: con conteggio fasi totali e terminate
+        // withCount aggiunge attributi "fasi_count" e "fasi_terminate_count" al modello
+        // senza caricare tutte le righe delle fasi (più efficiente di with + count manuale)
+        $baseQuery = Ordine::withCount(['fasi', 'fasi as fasi_terminate_count' => function ($q) {
+                $q->where('stato', '>=', 3);
+            }]);
+
         $prossime = $ordine->priorita !== null
-            ? Ordine::where('priorita', '>', $ordine->priorita)->orderBy('priorita', 'asc')->limit(5)->get()
-            : Ordine::where('commessa', '!=', $commessa)->orderBy('data_prevista_consegna', 'asc')->limit(5)->get();
+            ? $baseQuery->clone()->where('priorita', '>', $ordine->priorita)->orderBy('priorita', 'asc')->limit(5)->get()
+            : $baseQuery->clone()->where('commessa', '!=', $commessa)->orderBy('data_prevista_consegna', 'asc')->limit(5)->get();
 
 
         // Anteprima foglio di stampa da Prinect API
