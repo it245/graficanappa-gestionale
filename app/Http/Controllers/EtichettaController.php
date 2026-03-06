@@ -26,7 +26,8 @@ class EtichettaController extends Controller
         $clientiSemplici = [
             'comprof', 'horecapp', 'promocart', 'bpack communication',
             'ariagrafica', 'studio w', 'studioesse', 'studio esse',
-            'mundo', 'booster',
+            'mundo', 'booster', 'openmind', 'russart', 'grafiche mercurio',
+            'medspa', 'full pack', 'iltex', 'fashion color', 'advertage',
         ];
         $clienteLower = strtolower($cliente);
         $isSimpleLabel = false;

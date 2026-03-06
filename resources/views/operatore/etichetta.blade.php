@@ -215,9 +215,13 @@
     @endif
 
     @if($isSimpleLabel)
-        {{-- CLIENTI SEMPLICI: niente articolo/EAN --}}
+        {{-- CLIENTI SEMPLICI: descrizione + campi base --}}
         <div class="alert alert-info py-2 px-3 mb-3" style="font-size:13px;">
-            Etichetta semplificata: solo Pz x cassa, Lotto, Data
+            Etichetta semplificata: Descrizione, Pz x cassa, Lotto, Data
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Descrizione articolo</label>
+            <input type="text" id="campo-descrizione-simple" class="form-control" value="{{ $ordine->descrizione ?? '' }}">
         </div>
     @elseif($isItalianaConfetti)
         {{-- ITALIANA CONFETTI: dropdown ricerca EAN --}}
@@ -296,6 +300,9 @@
     </div>
     <div class="articolo-row" id="print-articolo"></div>
     @endif
+    @if($isSimpleLabel)
+    <div class="articolo-row" id="print-descrizione-simple" style="font-size: 14pt;">{{ $ordine->descrizione ?? '' }}</div>
+    @endif
     <div class="info-bottom" @if($isSimpleLabel) style="flex-direction: column; align-items: flex-start; font-size: 16pt;" @endif>
         <div class="fields-left" @if($isSimpleLabel) style="font-size: 16pt;" @endif>
             <div><span class="label">Pz x cassa:</span> <span id="print-pzcassa"></span></div>
@@ -324,6 +331,17 @@ function aggiornaAnteprima() {
         cliente = '';
         articolo = '';
         ean = '';
+        var desc = document.getElementById('campo-descrizione-simple').value;
+        var descEl = document.getElementById('print-descrizione-simple');
+        descEl.textContent = desc;
+        // Auto-ridimensiona descrizione
+        descEl.style.fontSize = '14pt';
+        var etichetta = document.getElementById('etichetta');
+        var sizes = [14, 12, 11, 10, 9, 8];
+        for (var i = 0; i < sizes.length; i++) {
+            descEl.style.fontSize = sizes[i] + 'pt';
+            if (etichetta.scrollHeight <= etichetta.clientHeight) break;
+        }
     @elseif($isItalianaConfetti)
         cliente = document.getElementById('campo-cliente').value;
         articolo = document.getElementById('campo-articolo').value;
