@@ -412,6 +412,22 @@ class DashboardSpedizioneController extends Controller
         $data = $request->input('data', now()->toDateString());
         $nota = NotaSpedizione::where('data', $data)->first();
 
+        // Se oggi non ha nota, carica la più recente
+        if (!$nota || empty($nota->contenuto)) {
+            $notaRecente = NotaSpedizione::where('data', '<', $data)
+                ->whereNotNull('contenuto')
+                ->where('contenuto', '!=', '')
+                ->orderByDesc('data')
+                ->first();
+            if ($notaRecente) {
+                return response()->json([
+                    'data' => $data,
+                    'contenuto' => $notaRecente->contenuto,
+                    'da_data' => $notaRecente->data,
+                ]);
+            }
+        }
+
         return response()->json([
             'data' => $data,
             'contenuto' => $nota->contenuto ?? '',

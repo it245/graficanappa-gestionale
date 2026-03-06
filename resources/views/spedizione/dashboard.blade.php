@@ -48,7 +48,7 @@
         margin: 0 4px;
     }
     table th, table td { white-space:nowrap; }
-    td:nth-child(7){ white-space:normal; min-width:300px; }
+    td:nth-child(7){ white-space:normal; min-width:150px; max-width:220px; overflow:hidden; text-overflow:ellipsis; }
 
     .btn-consegna {
         color: #fff;
@@ -306,12 +306,12 @@
 <div style="display:flex; align-items:center; gap:8px; margin:12px 8px; flex-wrap:nowrap;">
     <input type="text" id="searchBox" class="form-control search-box" placeholder="Cerca commessa, cliente, descrizione..." style="margin:0; flex:1; min-width:200px;">
     <button onclick="toggleNotePanel()" title="Note consegne" style="background:none; border:none; cursor:pointer; font-size:24px; color:#0d6efd; padding:4px 8px;">&#9998;</button>
-    <div id="notePanel" style="display:none; padding:6px 10px; background:#fff; border:2px solid #0d6efd; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.1); flex:0 0 auto; white-space:nowrap;">
-        <div style="display:flex; align-items:center; gap:6px;">
-            <strong style="color:#0d6efd; font-size:12px; white-space:nowrap;">Note {{ now()->format('d/m') }}</strong>
-            <textarea id="notaContenuto" rows="1" class="form-control form-control-sm" style="border-color:#0d6efd; font-size:12px; width:300px; resize:vertical;" placeholder="Note consegne..."></textarea>
-            <button onclick="salvaNote()" class="btn btn-primary btn-sm" style="font-size:11px; padding:2px 10px; white-space:nowrap;">Salva</button>
-            <span id="noteSaveStatus" style="font-size:10px; color:#6c757d; white-space:nowrap;"></span>
+    <div id="notePanel" style="display:none; padding:8px 14px; background:#fff; border:2px solid #0d6efd; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.1); flex:0 0 auto; white-space:nowrap;">
+        <div style="display:flex; align-items:center; gap:8px;">
+            <strong style="color:#0d6efd; font-size:13px; white-space:nowrap;">Note consegne</strong>
+            <textarea id="notaContenuto" rows="4" class="form-control form-control-sm" style="border-color:#0d6efd; font-size:13px; width:600px; resize:vertical;" placeholder="Note consegne..."></textarea>
+            <button onclick="salvaNote()" class="btn btn-primary btn-sm" style="font-size:12px; padding:4px 14px; white-space:nowrap;">Salva</button>
+            <span id="noteSaveStatus" style="font-size:11px; color:#6c757d; white-space:nowrap;"></span>
             <button onclick="toggleNotePanel()" style="background:none; border:none; font-size:16px; cursor:pointer; color:#666; line-height:1; padding:0 4px;">&times;</button>
         </div>
     </div>
@@ -1193,7 +1193,12 @@ function caricaNote() {
     .then(r => r.json())
     .then(d => {
         document.getElementById('notaContenuto').value = d.contenuto || '';
-        document.getElementById('noteSaveStatus').textContent = '';
+        if (d.da_data) {
+            var parts = d.da_data.split('-');
+            document.getElementById('noteSaveStatus').textContent = '(dal ' + parts[2] + '/' + parts[1] + ')';
+        } else {
+            document.getElementById('noteSaveStatus').textContent = '';
+        }
     })
     .catch(() => {});
 }
