@@ -202,6 +202,7 @@
         <h4 class="mb-0">Stampa Etichetta</h4>
     </div>
 
+    @if(!$isSimpleLabel)
     <div class="mb-3">
         <label class="form-label">Cliente</label>
         <input type="text" id="campo-cliente" class="form-control" value="{{ $cliente }}">
@@ -211,8 +212,14 @@
         <strong>Descrizione ordine:</strong> {{ $ordine->descrizione }}
     </div>
     @endif
+    @endif
 
-    @if($isItalianaConfetti)
+    @if($isSimpleLabel)
+        {{-- CLIENTI SEMPLICI: niente articolo/EAN --}}
+        <div class="alert alert-info py-2 px-3 mb-3" style="font-size:13px;">
+            Etichetta semplificata: solo Pz x cassa, Lotto, Data
+        </div>
+    @elseif($isItalianaConfetti)
         {{-- ITALIANA CONFETTI: dropdown ricerca EAN --}}
         <div class="mb-3">
             <label class="form-label">Articolo <small class="text-muted">(cerca per nome o codice EAN)</small></label>
@@ -274,7 +281,8 @@
 </div>
 
 {{-- ===== ANTEPRIMA ETICHETTA (stampabile) ===== --}}
-<div class="etichetta-preview" id="etichetta">
+<div class="etichetta-preview" id="etichetta" @if($isSimpleLabel) style="justify-content: center;" @endif>
+    @if(!$isSimpleLabel)
     <div class="header-row">
         <div class="azienda-info">
             <strong>Grafica Nappa S.r.l.</strong><br>
@@ -287,17 +295,20 @@
         <div class="field"><span class="label">Cliente:</span> <span id="print-cliente">{{ $cliente }}</span></div>
     </div>
     <div class="articolo-row" id="print-articolo"></div>
-    <div class="info-bottom">
-        <div class="fields-left">
+    @endif
+    <div class="info-bottom" @if($isSimpleLabel) style="flex-direction: column; align-items: flex-start; font-size: 16pt;" @endif>
+        <div class="fields-left" @if($isSimpleLabel) style="font-size: 16pt;" @endif>
             <div><span class="label">Pz x cassa:</span> <span id="print-pzcassa"></span></div>
             <div><span class="label">Lotto:</span> <span id="print-lotto">{{ $lotto }}</span></div>
             <div><span class="label">Data:</span> <span id="print-data">{{ $data }}</span></div>
         </div>
+        @if(!$isSimpleLabel)
         <div class="qr-right">
             <canvas id="qrcode"></canvas>
             <span class="ean-label">Codice EAN</span>
             <span class="ean-text" id="print-ean"></span>
         </div>
+        @endif
     </div>
 </div>
 
@@ -309,7 +320,11 @@
 function aggiornaAnteprima() {
     var cliente, articolo, ean;
 
-    @if($isItalianaConfetti)
+    @if($isSimpleLabel)
+        cliente = '';
+        articolo = '';
+        ean = '';
+    @elseif($isItalianaConfetti)
         cliente = document.getElementById('campo-cliente').value;
         articolo = document.getElementById('campo-articolo').value;
         ean = document.getElementById('campo-ean').value;
@@ -323,11 +338,9 @@ function aggiornaAnteprima() {
     var lotto = document.getElementById('campo-lotto').value;
     var data = document.getElementById('campo-data').value;
 
+    @if(!$isSimpleLabel)
     document.getElementById('print-cliente').textContent = cliente;
     document.getElementById('print-articolo').textContent = articolo;
-    document.getElementById('print-pzcassa').textContent = pzcassa;
-    document.getElementById('print-lotto').textContent = lotto;
-    document.getElementById('print-data').textContent = data;
     document.getElementById('print-ean').textContent = ean;
 
     // Auto-ridimensiona articolo se troppo lungo
@@ -356,6 +369,11 @@ function aggiornaAnteprima() {
     } else {
         canvas.style.display = 'none';
     }
+    @endif
+
+    document.getElementById('print-pzcassa').textContent = pzcassa;
+    document.getElementById('print-lotto').textContent = lotto;
+    document.getElementById('print-data').textContent = data;
 }
 
 // ===== Bind eventi input =====
@@ -512,6 +530,14 @@ function stopScanner() {
 function stampa() {
     aggiornaAnteprima();
 
+    var pzcassa = document.getElementById('campo-pzcassa').value;
+
+    @if($isSimpleLabel)
+    if (!pzcassa) {
+        alert('Inserisci i pezzi per cassa.');
+        return;
+    }
+    @else
     @if($isItalianaConfetti)
     var ean = document.getElementById('campo-ean').value;
     var articolo = document.getElementById('campo-articolo').value;
@@ -519,8 +545,6 @@ function stampa() {
     var ean = document.getElementById('campo-ean-manuale').value;
     var articolo = document.getElementById('campo-articolo-manuale').value;
     @endif
-
-    var pzcassa = document.getElementById('campo-pzcassa').value;
 
     if (!ean) {
         alert('Inserisci o scansiona il codice EAN.');
@@ -544,6 +568,7 @@ function stampa() {
             body: JSON.stringify({ articolo: articolo, codice_ean: ean })
         });
     }
+    @endif
     @endif
 
     window.print();

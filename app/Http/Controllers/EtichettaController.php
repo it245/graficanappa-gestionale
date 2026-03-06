@@ -22,6 +22,21 @@ class EtichettaController extends Controller
         // Verifica se è Italiana Confetti (confronto case-insensitive)
         $isItalianaConfetti = str_contains(strtolower($cliente), 'italiana confetti');
 
+        // Clienti con etichetta semplificata (solo Pz x cassa, Lotto, Data)
+        $clientiSemplici = [
+            'comprof', 'horecapp', 'promocart', 'bpack communication',
+            'ariagrafica', 'studio w', 'studioesse', 'studio esse',
+            'mundo', 'booster',
+        ];
+        $clienteLower = strtolower($cliente);
+        $isSimpleLabel = false;
+        foreach ($clientiSemplici as $cs) {
+            if (str_contains($clienteLower, $cs)) {
+                $isSimpleLabel = true;
+                break;
+            }
+        }
+
         // Per Italiana Confetti: carica tutti gli EAN per il dropdown
         $eanProdotti = $isItalianaConfetti ? EanProdotto::orderBy('articolo')->get() : collect();
 
@@ -36,7 +51,7 @@ class EtichettaController extends Controller
 
         return view('operatore.etichetta', compact(
             'ordine', 'lotto', 'cliente', 'data',
-            'isItalianaConfetti', 'eanProdotti', 'articoloDefault', 'eanSalvato'
+            'isItalianaConfetti', 'isSimpleLabel', 'eanProdotti', 'articoloDefault', 'eanSalvato'
         ));
     }
 
