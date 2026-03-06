@@ -67,8 +67,8 @@ $righeOnda = DB::connection('onda')->select("
         FROM PRDDocRighe r2 WHERE r2.IdDoc = p.IdDoc
     ) materiali
     WHERE t.TipoDocumento = '2'
-      AND t.CodCommessa = ?
-", [$codCommessa]);
+      AND t.CodCommessa LIKE ?
+", ["%{$codCommessa}%"]);
 
 if (empty($righeOnda)) {
     echo "Commessa {$codCommessa} non trovata su Onda!\n";
