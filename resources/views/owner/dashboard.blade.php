@@ -532,18 +532,22 @@ tr:hover td {
         </a>
 
         {{-- Apri Excel --}}
+        @if(!($isReadonly ?? false))
         <a href="#" class="sidebar-item" onclick="alert('Apri da Esplora Risorse:\n\n\\\\gestionale\\mes\\dashboard_mes.xlsx'); closeSidebar(); return false;">
             <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#198754" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><polyline points="10 9 9 9 8 9"/>
             </svg>
             <span>Apri Excel Dashboard</span>
         </a>
+        @endif
 
         {{-- Aggiungi riga --}}
+        @if(!($isReadonly ?? false))
         <a href="#" class="sidebar-item" data-bs-toggle="modal" data-bs-target="#aggiungiRigaModal" onclick="closeSidebar()">
             <img src="{{ asset('images/icons8-ddt-64 (1).png') }}" alt="">
             <span>Aggiungi riga</span>
         </a>
+        @endif
 
         {{-- Consegnati oggi --}}
         <a href="#" class="sidebar-item" data-bs-toggle="modal" data-bs-target="#modalSpedizioniOggi" onclick="closeSidebar()" id="btnConsegnati">
@@ -588,6 +592,7 @@ tr:hover td {
         </a>
 
         {{-- Sync Onda --}}
+        @if(!($isReadonly ?? false))
         <form method="POST" action="{{ route('owner.syncOnda') }}" style="margin:0;" onsubmit="this.querySelector('button').disabled=true;">
             @csrf
             <button type="submit" class="sidebar-item" style="width:100%; background:none; border:none; border-bottom:1px solid #f0f0f0; text-align:left; font-size:14px; font-weight:500; color:#333;">
@@ -597,6 +602,7 @@ tr:hover td {
                 <span>Sincronizza Onda</span>
             </button>
         </form>
+        @endif
     </div>
     
         {{-- FILTRI --}}
