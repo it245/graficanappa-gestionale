@@ -155,15 +155,9 @@
         flex-shrink: 0;
     }
     .etichetta-preview .info-bottom .qr-right canvas {
-        width: 24mm;
-        height: 24mm;
-    }
-    .etichetta-preview .info-bottom .qr-right .ean-label {
-        font-size: 6.5pt;
-        color: #888;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-top: 1mm;
+        width: 22mm;
+        height: 22mm;
+        image-rendering: pixelated;
     }
     .etichetta-preview .info-bottom .qr-right .ean-text {
         font-size: 8.5pt;
@@ -311,16 +305,15 @@
         </div>
         @if(!$isSimpleLabel)
         <div class="qr-right">
-            <canvas id="qrcode"></canvas>
-            <span class="ean-label">Codice EAN</span>
-            <span class="ean-text" id="print-ean"></span>
+            <canvas id="datamatrix"></canvas>
+            <span class="ean-text" id="print-ean" style="font-size:7pt; max-width:30mm; word-break:break-all; text-align:center;"></span>
         </div>
         @endif
     </div>
 </div>
 
-{{-- QRious CDN (QR code generator) --}}
-<script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
+{{-- bwip-js CDN (barcode/DataMatrix generator) --}}
+<script src="https://cdn.jsdelivr.net/npm/bwip-js@4.5.1/dist/bwip-js-min.js"></script>
 
 <script>
 // ===== Aggiornamento anteprima in tempo reale =====
@@ -359,8 +352,6 @@ function aggiornaAnteprima() {
     @if(!$isSimpleLabel)
     document.getElementById('print-cliente').textContent = cliente;
     document.getElementById('print-articolo').textContent = articolo;
-    document.getElementById('print-ean').textContent = ean;
-
     // Auto-ridimensiona articolo se troppo lungo
     var articoloEl = document.getElementById('print-articolo');
     var etichetta = document.getElementById('etichetta');
@@ -371,21 +362,38 @@ function aggiornaAnteprima() {
         if (etichetta.scrollHeight <= etichetta.clientHeight) break;
     }
 
-    // Genera QR code con EAN + Lotto + Qta
-    var canvas = document.getElementById('qrcode');
+    // Genera DataMatrix GS1 con EAN + Qta + Lotto (un solo codice scansionabile)
+    var canvas = document.getElementById('datamatrix');
     if (ean && ean.length >= 4) {
-        var qrValue = ean;
-        if (lotto) qrValue += '\nLotto: ' + lotto;
-        if (pzcassa) qrValue += '\nQta: ' + pzcassa;
-        new QRious({
-            element: canvas,
-            value: qrValue,
-            size: 120,
-            level: 'M'
-        });
-        canvas.style.display = '';
+        // Formato GS1: (01)GTIN-14 (37)QTA (10)LOTTO
+        // Pad EAN a 14 cifre (GTIN-14)
+        var gtin = ean.replace(/\D/g, '');
+        while (gtin.length < 14) gtin = '0' + gtin;
+        if (gtin.length > 14) gtin = gtin.substring(0, 14);
+
+        // Costruisci stringa GS1: FNC1 è implicito nel gs1-datamatrix
+        // AI (01) = GTIN, AI (37) = Count, AI (10) = Batch/Lot
+        var gs1Data = '(01)' + gtin;
+        if (pzcassa) gs1Data += '(37)' + pzcassa;
+        if (lotto) gs1Data += '(10)' + lotto;
+
+        try {
+            bwipjs.toCanvas(canvas, {
+                bcid: 'gs1datamatrix',
+                text: gs1Data,
+                scale: 3,
+                padding: 2,
+            });
+            canvas.style.display = '';
+            // Mostra stringa codificata sotto il DataMatrix
+            document.getElementById('print-ean').textContent = gs1Data.replace(/[()]/g, '');
+        } catch(e) {
+            console.error('DataMatrix error:', e);
+            canvas.style.display = 'none';
+        }
     } else {
         canvas.style.display = 'none';
+        document.getElementById('print-ean').textContent = '';
     }
     @endif
 
