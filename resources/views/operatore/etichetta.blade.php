@@ -305,7 +305,8 @@
         </div>
         @if(!$isSimpleLabel)
         <div class="qr-right">
-            <canvas id="datamatrix"></canvas>
+            <canvas id="datamatrix" style="display:none;"></canvas>
+            <img id="datamatrix-img" style="width:22mm; height:22mm; image-rendering:pixelated;" />
             <span class="ean-text" id="print-ean" style="font-size:7pt; max-width:30mm; word-break:break-all; text-align:center;"></span>
         </div>
         @endif
@@ -364,15 +365,13 @@ function aggiornaAnteprima() {
 
     // Genera DataMatrix GS1 con EAN + Qta + Lotto (un solo codice scansionabile)
     var canvas = document.getElementById('datamatrix');
+    var dmImg = document.getElementById('datamatrix-img');
     if (ean && ean.length >= 4) {
         // Formato GS1: (01)GTIN-14 (37)QTA (10)LOTTO
-        // Pad EAN a 14 cifre (GTIN-14)
         var gtin = ean.replace(/\D/g, '');
         while (gtin.length < 14) gtin = '0' + gtin;
         if (gtin.length > 14) gtin = gtin.substring(0, 14);
 
-        // Costruisci stringa GS1: FNC1 è implicito nel gs1-datamatrix
-        // AI (01) = GTIN, AI (37) = Count, AI (10) = Batch/Lot
         var gs1Data = '(01)' + gtin;
         if (pzcassa) gs1Data += '(37)' + pzcassa;
         if (lotto) gs1Data += '(10)' + lotto;
@@ -381,18 +380,19 @@ function aggiornaAnteprima() {
             bwipjs.toCanvas(canvas, {
                 bcid: 'gs1datamatrix',
                 text: gs1Data,
-                scale: 3,
+                scale: 5,
                 padding: 2,
             });
-            canvas.style.display = '';
-            // Mostra stringa codificata sotto il DataMatrix
+            // Converti canvas in img (i browser stampano img meglio di canvas)
+            dmImg.src = canvas.toDataURL('image/png');
+            dmImg.style.display = '';
             document.getElementById('print-ean').textContent = gs1Data.replace(/[()]/g, '');
         } catch(e) {
             console.error('DataMatrix error:', e);
-            canvas.style.display = 'none';
+            dmImg.style.display = 'none';
         }
     } else {
-        canvas.style.display = 'none';
+        dmImg.style.display = 'none';
         document.getElementById('print-ean').textContent = '';
     }
     @endif
