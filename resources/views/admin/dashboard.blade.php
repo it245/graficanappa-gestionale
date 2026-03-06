@@ -186,6 +186,7 @@
                         <select name="ruolo" class="form-select" required>
                             <option value="operatore">Operatore</option>
                             <option value="owner">Owner</option>
+                            <option value="owner_readonly">Owner (sola lettura)</option>
                             <option value="admin">Admin</option>
                         </select>
                     </div>
