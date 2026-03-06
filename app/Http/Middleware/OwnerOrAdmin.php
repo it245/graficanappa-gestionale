@@ -16,7 +16,7 @@ class OwnerOrAdmin
 
         if ($token) {
             $record = OperatoreToken::valido()->where('token', $token)->with('operatore')->first();
-            if ($record && $record->operatore && in_array($record->operatore->ruolo, ['owner', 'admin'])) {
+            if ($record && $record->operatore && in_array($record->operatore->ruolo, ['owner', 'owner_readonly', 'admin'])) {
                 $op = $record->operatore;
                 $request->attributes->set('operatore', $op);
                 $request->attributes->set('operatore_id', $op->id);
@@ -29,7 +29,7 @@ class OwnerOrAdmin
 
         // 2. Fallback sessione
         $ruolo = session('operatore_ruolo');
-        if ($ruolo === 'owner' || $ruolo === 'admin') {
+        if (in_array($ruolo, ['owner', 'owner_readonly', 'admin'])) {
             return $next($request);
         }
 

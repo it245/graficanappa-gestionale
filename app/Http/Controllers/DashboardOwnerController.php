@@ -20,6 +20,23 @@ use App\Http\Services\ExcelSyncService;
 
 class DashboardOwnerController extends Controller
 {
+    private function isReadonly(): bool
+    {
+        return session('operatore_ruolo') === 'owner_readonly'
+            || (request()->attributes->get('operatore_ruolo') === 'owner_readonly');
+    }
+
+    private function denyIfReadonly()
+    {
+        if ($this->isReadonly()) {
+            if (request()->expectsJson()) {
+                abort(403, 'Accesso in sola lettura');
+            }
+            return back()->with('error', 'Accesso in sola lettura — non puoi modificare i dati.');
+        }
+        return null;
+    }
+
     private $fasiInfo = [
         'accopp+fust' => ['avviamento' => 72, 'copieh' => 100],
         'ACCOPPIATURA.FOG.33.48INT' => ['avviamento' => 1, 'copieh' => 100],
@@ -332,15 +349,17 @@ public function calcolaOreEPriorita($fase)
         ExcelSyncService::exportToExcel();
 
         $operatore = $request->attributes->get('operatore') ?? auth()->guard('operatore')->user();
+        $isReadonly = $this->isReadonly();
 
         return view('owner.dashboard', compact(
             'fasi', 'reparti', 'fasiCatalogo', 'spedizioniOggi', 'storicoConsegne',
-            'fasiCompletateOggi', 'oreLavorateOggi', 'commesseSpediteOggi', 'fasiAttive', 'spedizioniBRT', 'operatore'
+            'fasiCompletateOggi', 'oreLavorateOggi', 'commesseSpediteOggi', 'fasiAttive', 'spedizioniBRT', 'operatore', 'isReadonly'
         ));
     }
 
     public function aggiornaCampo(Request $request)
     {
+        if ($deny = $this->denyIfReadonly()) return $deny;
         $campiFase = ['qta_prod', 'note', 'stato', 'data_inizio', 'data_fine', 'ore', 'priorita', 'fase'];
         $campiOrdine = ['cliente_nome', 'cod_art', 'descrizione', 'qta_richiesta', 'um',
                         'data_registrazione', 'data_prevista_consegna',
@@ -451,6 +470,7 @@ public function calcolaOreEPriorita($fase)
 
     public function aggiungiRiga(Request $request)
     {
+        if ($deny = $this->denyIfReadonly()) return $deny;
         $faseCatalogo = $request->fase_catalogo_id
             ? FasiCatalogo::with('reparto')->find($request->fase_catalogo_id)
             : null;
@@ -481,6 +501,7 @@ public function calcolaOreEPriorita($fase)
 
     public function importOrdini(Request $request)
     {
+        if ($deny = $this->denyIfReadonly()) return $deny;
         $request->validate(['file' => 'required|file|mimes:xlsx,xls']);
         $file = $request->file('file');
         if (!$file->isValid()) return redirect()->back()->with('error', 'File non valido.');
@@ -646,6 +667,7 @@ public function calcolaOreEPriorita($fase)
 
     public function eliminaFase(Request $request)
     {
+        if ($deny = $this->denyIfReadonly()) return $deny;
         $fase = OrdineFase::find($request->fase_id);
         if (!$fase) return response()->json(['success' => false, 'messaggio' => 'Fase non trovata']);
 
@@ -657,6 +679,7 @@ public function calcolaOreEPriorita($fase)
 
     public function aggiornaStato(Request $request)
     {
+        if ($deny = $this->denyIfReadonly()) return $deny;
         $fase = OrdineFase::find($request->fase_id);
         if (!$fase) return response()->json(['success' => false, 'messaggio' => 'Fase non trovata']);
 
@@ -678,12 +701,14 @@ public function calcolaOreEPriorita($fase)
 
     public function ricalcolaStati()
     {
+        if ($deny = $this->denyIfReadonly()) return $deny;
         FaseStatoService::ricalcolaTutti();
         return response()->json(['success' => true, 'messaggio' => 'Stati ricalcolati']);
     }
 
     public function syncOnda()
     {
+        if ($deny = $this->denyIfReadonly()) return $deny;
         try {
             // Prima pulisci eventuali duplicati
             $duplicatiRimossi = $this->pulisciDuplicati();

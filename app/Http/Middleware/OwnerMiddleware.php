@@ -16,7 +16,7 @@ class OwnerMiddleware
 
         if ($token) {
             $record = OperatoreToken::valido()->where('token', $token)->with('operatore')->first();
-            if ($record && $record->operatore && $record->operatore->ruolo === 'owner') {
+            if ($record && $record->operatore && in_array($record->operatore->ruolo, ['owner', 'owner_readonly'])) {
                 $op = $record->operatore;
                 $request->attributes->set('operatore', $op);
                 $request->attributes->set('operatore_id', $op->id);
@@ -28,7 +28,7 @@ class OwnerMiddleware
         }
 
         // 2. Fallback sessione
-        if (session('operatore_ruolo') === 'owner') {
+        if (in_array(session('operatore_ruolo'), ['owner', 'owner_readonly'])) {
             return $next($request);
         }
 

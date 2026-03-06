@@ -30,6 +30,7 @@
             <select name="ruolo" class="form-select" required>
                 <option value="operatore" {{ old('ruolo', $operatore->ruolo ?? '') === 'operatore' ? 'selected' : '' }}>Operatore</option>
                 <option value="owner" {{ old('ruolo', $operatore->ruolo ?? '') === 'owner' ? 'selected' : '' }}>Owner</option>
+                <option value="owner_readonly" {{ old('ruolo', $operatore->ruolo ?? '') === 'owner_readonly' ? 'selected' : '' }}>Owner (sola lettura)</option>
                 <option value="admin" {{ old('ruolo', $operatore->ruolo ?? '') === 'admin' ? 'selected' : '' }}>Admin</option>
             </select>
         </div>

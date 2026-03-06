@@ -1717,4 +1717,25 @@ function salvaNoteSped() {
         </div>
     </div>
 </div>
+@if($isReadonly ?? false)
+<script>
+// Owner readonly: rimuovi contenteditable e nascondi azioni
+document.addEventListener('DOMContentLoaded', function() {
+    // Rimuovi contenteditable da tutte le celle
+    document.querySelectorAll('[contenteditable]').forEach(function(el) {
+        el.removeAttribute('contenteditable');
+        el.removeAttribute('onblur');
+        el.style.cursor = 'default';
+    });
+    // Nascondi bottoni di azione nel sidebar
+    document.querySelectorAll('form[action*="sync"], form[action*="import"], [data-bs-target="#aggiungiRigaModal"]').forEach(function(el) {
+        el.style.display = 'none';
+    });
+    // Nascondi bottoni elimina fase
+    document.querySelectorAll('.btn-elimina-fase, [onclick*="eliminaFase"]').forEach(function(el) {
+        el.style.display = 'none';
+    });
+});
+</script>
+@endif
 @endsection
