@@ -367,29 +367,54 @@ function aggiornaAnteprima() {
     var canvas = document.getElementById('datamatrix');
     var dmImg = document.getElementById('datamatrix-img');
     if (ean && ean.length >= 4) {
-        // Formato GS1: (01)GTIN-14 (37)QTA (10)LOTTO
         var gtin = ean.replace(/\D/g, '');
         while (gtin.length < 14) gtin = '0' + gtin;
         if (gtin.length > 14) gtin = gtin.substring(0, 14);
 
-        var gs1Data = '(01)' + gtin;
-        if (pzcassa) gs1Data += '(37)' + pzcassa;
-        if (lotto) gs1Data += '(10)' + lotto;
+        // Costruisci stringa GS1 con FNC1 separatori per AI variabili
+        // FNC1 iniziale (GS1 mode) + AI(01) fixed 14 + AI(37) var + FNC1 + AI(10) var
+        var fnc1 = String.fromCharCode(29); // GS char come separatore
+        var rawData = '01' + gtin;
+        var displayData = '(01)' + gtin;
+        if (pzcassa) {
+            rawData += '37' + pzcassa + fnc1;
+            displayData += '(37)' + pzcassa;
+        }
+        if (lotto) {
+            rawData += '10' + lotto;
+            displayData += '(10)' + lotto;
+        }
 
         try {
             bwipjs.toCanvas(canvas, {
                 bcid: 'gs1datamatrix',
-                text: gs1Data,
+                text: displayData,
                 scale: 5,
                 padding: 2,
             });
-            // Converti canvas in img (i browser stampano img meglio di canvas)
             dmImg.src = canvas.toDataURL('image/png');
             dmImg.style.display = '';
-            document.getElementById('print-ean').textContent = gs1Data.replace(/[()]/g, '');
+            document.getElementById('print-ean').textContent = displayData.replace(/[()]/g, '');
         } catch(e) {
-            console.error('DataMatrix error:', e);
-            dmImg.style.display = 'none';
+            console.warn('gs1datamatrix failed, trying datamatrix:', e.message || e);
+            // Fallback: datamatrix standard con FNC1 manuale
+            try {
+                var fnc1Raw = '\xF1'; // FNC1 per bwip-js parsefnc
+                var bwipData = fnc1Raw + rawData.replace(fnc1, fnc1Raw);
+                bwipjs.toCanvas(canvas, {
+                    bcid: 'datamatrix',
+                    text: bwipData,
+                    scale: 5,
+                    padding: 2,
+                    parsefnc: true,
+                });
+                dmImg.src = canvas.toDataURL('image/png');
+                dmImg.style.display = '';
+                document.getElementById('print-ean').textContent = displayData.replace(/[()]/g, '');
+            } catch(e2) {
+                console.error('DataMatrix fallback error:', e2);
+                dmImg.style.display = 'none';
+            }
         }
     } else {
         dmImg.style.display = 'none';
