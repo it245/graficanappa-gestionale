@@ -309,7 +309,7 @@
     <div id="notePanel" style="display:none; padding:8px 14px; background:#fff; border:2px solid #0d6efd; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.1); flex:0 0 auto; white-space:nowrap;">
         <div style="display:flex; align-items:center; gap:8px;">
             <strong style="color:#0d6efd; font-size:13px; white-space:nowrap;">Note consegne</strong>
-            <textarea id="notaContenuto" rows="4" class="form-control form-control-sm" style="border-color:#0d6efd; font-size:13px; width:600px; resize:vertical;" placeholder="Note consegne..."></textarea>
+            <textarea id="notaContenuto" rows="6" class="form-control form-control-sm" style="border-color:#0d6efd; font-size:13px; width:400px; resize:vertical;" placeholder="Note consegne..."></textarea>
             <button onclick="salvaNote()" class="btn btn-primary btn-sm" style="font-size:12px; padding:4px 14px; white-space:nowrap;">Salva</button>
             <span id="noteSaveStatus" style="font-size:11px; color:#6c757d; white-space:nowrap;"></span>
             <button onclick="toggleNotePanel()" style="background:none; border:none; font-size:16px; cursor:pointer; color:#666; line-height:1; padding:0 4px;">&times;</button>
