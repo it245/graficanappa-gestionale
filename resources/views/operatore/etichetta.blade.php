@@ -306,7 +306,7 @@
         @if(!$isSimpleLabel)
         <div class="qr-right">
             <canvas id="datamatrix" style="display:none;"></canvas>
-            <img id="datamatrix-img" style="width:22mm; height:22mm; image-rendering:pixelated;" />
+            <img id="datamatrix-img" style="width:30mm; height:30mm; image-rendering:pixelated;" />
             <span class="ean-text" id="print-ean" style="font-size:7pt; max-width:30mm; word-break:break-all; text-align:center;"></span>
         </div>
         @endif
@@ -387,8 +387,8 @@ function aggiornaAnteprima() {
             bwipjs.toCanvas(canvas, {
                 bcid: 'gs1datamatrix',
                 text: displayData,
-                scale: 5,
-                padding: 2,
+                scale: 10,
+                padding: 4,
             });
             dmImg.src = canvas.toDataURL('image/png');
             dmImg.style.display = '';
