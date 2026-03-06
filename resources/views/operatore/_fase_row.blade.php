@@ -13,7 +13,7 @@
 
 <tr id="fase-{{ $fase->id }}" class="{{ $rowClass }}">
     <td>{{ $fase->priorita !== null ? number_format($fase->priorita, 2) : '-' }}</td>
-    <td id="operatore-{{ $fase->id }}">
+    <td id="operatore-{{ $fase->id }}" style="max-width:140px; font-size:11px; white-space:normal;">
         @foreach($fase->operatori as $op)
             {{ $op->nome }} ({{ $op->pivot->data_inizio ? \Carbon\Carbon::parse($op->pivot->data_inizio)->format('d/m/Y H:i:s') : '-' }})<br>
         @endforeach
@@ -37,7 +37,7 @@
     <td>{{ $fase->ordine->data_registrazione ? \Carbon\Carbon::parse($fase->ordine->data_registrazione)->format('d/m/Y') : '-' }}</td>
     <td class="td-cliente">{{ $fase->ordine->cliente_nome ?? '-' }}</td>
     <td>{{ $fase->ordine->cod_art ?? '-' }}</td>
-    @if($showColori ?? false)<td>{{ $fase->colori ?? '-' }}</td>@endif
+    @if($showColori ?? false)<td style="min-width:120px; white-space:normal;">{{ $fase->colori ?? '-' }}</td>@endif
     @if($showFustella ?? false)<td>{{ $fase->fustella_codice ?? '-' }}</td>@endif
     @if($showEsterno ?? false)<td>{{ $fase->fornitore_esterno ?? '-' }}</td>@endif
     <td class="descrizione td-descrizione">{{ $fase->ordine->descrizione ?? '-' }}</td>
