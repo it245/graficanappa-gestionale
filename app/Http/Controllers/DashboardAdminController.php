@@ -48,8 +48,8 @@ class DashboardAdminController extends Controller
         $request->validate([
             'nome' => 'required|string',
             'cognome' => 'required|string',
-            'ruolo' => 'required|in:operatore,owner,admin',
-            'reparto_principale' => 'required|exists:reparti,id',
+            'ruolo' => 'required|in:operatore,owner,owner_readonly,admin',
+            'reparto_principale' => 'nullable|exists:reparti,id',
             'reparto_secondario' => 'nullable|exists:reparti,id',
             'password' => 'nullable|string|min:4',
         ]);
@@ -93,8 +93,8 @@ class DashboardAdminController extends Controller
         $request->validate([
             'nome' => 'required|string',
             'cognome' => 'required|string',
-            'ruolo' => 'required|in:operatore,owner,admin',
-            'reparto_principale' => 'required|exists:reparti,id',
+            'ruolo' => 'required|in:operatore,owner,owner_readonly,admin',
+            'reparto_principale' => 'nullable|exists:reparti,id',
             'reparto_secondario' => 'nullable|exists:reparti,id',
             'password' => 'nullable|string|min:4',
             'codice_operatore' => 'required|string|max:20|unique:operatori,codice_operatore,' . $id,

@@ -197,7 +197,8 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Reparto Principale</label>
-                        <select name="reparto_principale" class="form-select" required>
+                        <select name="reparto_principale" class="form-select">
+                            <option value="">-- Nessuno --</option>
                             @foreach($reparti as $id => $rep)
                                 <option value="{{ $id }}">{{ $rep }}</option>
                             @endforeach
