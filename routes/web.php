@@ -13,6 +13,7 @@ use App\Http\Controllers\AdminLoginController;
 use App\Http\Controllers\DashboardAdminController;
 use App\Http\Controllers\FieryController;
 use App\Http\Controllers\EtichettaController;
+use App\Http\Controllers\ChatController;
 
 // Operatori
 Route::prefix('operatore')->group(function() {
@@ -135,6 +136,13 @@ Route::prefix('spedizione')->middleware(['operatore.auth'])->group(function() {
 // Tracking BRT test (accesso diretto)
 Route::get('/spedizione/tracking-test', [DashboardSpedizioneController::class, 'trackingTest'])->name('spedizione.trackingTest');
 Route::get('/spedizione/tracking-json/{segnacollo}', [DashboardSpedizioneController::class, 'trackingJson'])->name('spedizione.trackingJson');
+
+// Chat
+Route::middleware('operatore.auth')->prefix('chat')->group(function () {
+    Route::get('/', [ChatController::class, 'index'])->name('chat.index');
+    Route::post('/invia', [ChatController::class, 'invia'])->name('chat.invia');
+    Route::get('/messaggi', [ChatController::class, 'messaggi'])->name('chat.messaggi');
+});
 
 // Health check
 Route::get('/health', fn() => 'MES OK');
