@@ -36,9 +36,11 @@ class CommessaController extends Controller
         // Prossime commesse: con conteggio fasi totali e terminate
         // withCount aggiunge attributi "fasi_count" e "fasi_terminate_count" al modello
         // senza caricare tutte le righe delle fasi (più efficiente di with + count manuale)
+        // whereHas con stato < 3: esclude commesse già completate/consegnate
         $baseQuery = Ordine::withCount(['fasi', 'fasi as fasi_terminate_count' => function ($q) {
                 $q->where('stato', '>=', 3);
-            }]);
+            }])
+            ->whereHas('fasi', fn($q) => $q->where('stato', '<', 3));
 
         $prossime = $ordine->priorita !== null
             ? $baseQuery->clone()->where('priorita', '>', $ordine->priorita)->orderBy('priorita', 'asc')->limit(5)->get()
