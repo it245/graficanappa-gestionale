@@ -423,7 +423,7 @@ class DashboardSpedizioneController extends Controller
                 return response()->json([
                     'data' => $data,
                     'contenuto' => $notaRecente->contenuto,
-                    'da_data' => $notaRecente->data,
+                    'da_data' => $notaRecente->data->format('Y-m-d'),
                 ]);
             }
         }
