@@ -48,7 +48,7 @@
         margin: 0 4px;
     }
     table th, table td { white-space:nowrap; }
-    td:nth-child(7){ white-space:normal; min-width:150px; max-width:220px; overflow:hidden; text-overflow:ellipsis; }
+    td.desc-col, td:nth-child(7){ white-space:normal; min-width:150px; max-width:220px; overflow:hidden; text-overflow:ellipsis; }
 
     .btn-consegna {
         color: #fff;
@@ -353,7 +353,7 @@
                     <td><a href="{{ route('commesse.show', $fase->ordine->commessa ?? '-') }}" class="commessa-link">{{ $fase->ordine->commessa ?? '-' }}</a></td>
                     <td>{{ $fase->ordine->cliente_nome ?? '-' }}</td>
                     <td>{{ $fase->ordine->cod_art ?? '-' }}</td>
-                    <td>{{ $fase->ordine->descrizione ?? '-' }}</td>
+                    <td class="desc-col">{{ $fase->ordine->descrizione ?? '-' }}</td>
                     <td>{{ $qtaOrdine }}</td>
                     <td>{{ $qtaDDT }}</td>
                     <td>
@@ -426,7 +426,7 @@
                     <td>{{ $fase->ordine->cliente_nome ?? '-' }}</td>
                     <td>{{ $fase->ordine->cod_art ?? '-' }}</td>
                     <td>{{ $fase->ordine->qta_richiesta ?? '-' }}</td>
-                    <td>{{ $fase->ordine->descrizione ?? '-' }}</td>
+                    <td class="desc-col">{{ $fase->ordine->descrizione ?? '-' }}</td>
                     <td>{{ $fase->ordine->data_prevista_consegna ? \Carbon\Carbon::parse($fase->ordine->data_prevista_consegna)->format('d/m/Y') : '-' }}</td>
                     <td>
                         <div class="progress-bar-custom">
@@ -467,7 +467,7 @@
                     <td><a href="{{ route('commesse.show', $fase->ordine->commessa ?? '-') }}" class="commessa-link">{{ $fase->ordine->commessa ?? '-' }}</a></td>
                     <td>{{ $fase->ordine->cliente_nome ?? '-' }}</td>
                     <td>{{ $fase->ordine->cod_art ?? '-' }}</td>
-                    <td>{{ $fase->ordine->descrizione ?? '-' }}</td>
+                    <td class="desc-col">{{ $fase->ordine->descrizione ?? '-' }}</td>
                     <td>{{ $fase->data_fine ? \Carbon\Carbon::parse($fase->data_fine)->format('d/m/Y H:i') : '-' }}</td>
                 </tr>
             @endforeach
@@ -508,7 +508,7 @@
                     <td>{{ $fase->ordine->cliente_nome ?? '-' }}</td>
                     <td>{{ $fase->ordine->cod_art ?? '-' }}</td>
                     <td>{{ $fase->ordine->qta_richiesta ?? '-' }}</td>
-                    <td>{{ $fase->ordine->descrizione ?? '-' }}</td>
+                    <td class="desc-col">{{ $fase->ordine->descrizione ?? '-' }}</td>
                     <td>{{ $fase->ordine->data_prevista_consegna ? \Carbon\Carbon::parse($fase->ordine->data_prevista_consegna)->format('d/m/Y') : '-' }}</td>
                     <td>
                         <div class="progress-bar-custom">
@@ -581,7 +581,7 @@
                             <td><strong>{{ $fase->ordine->commessa ?? '-' }}</strong></td>
                             <td>{{ $fase->ordine->cliente_nome ?? '-' }}</td>
                             <td>{{ $fase->ordine->cod_art ?? '-' }}</td>
-                            <td>{{ $fase->ordine->descrizione ?? '-' }}</td>
+                            <td class="desc-col">{{ $fase->ordine->descrizione ?? '-' }}</td>
                             <td>{{ $fase->ordine->qta_richiesta ?? '-' }}</td>
                             <td>{{ $fase->ordine->numero_ddt_vendita ? ltrim($fase->ordine->numero_ddt_vendita, '0') : '-' }}</td>
                             <td>
@@ -643,7 +643,7 @@
                             <td><strong>{{ $fase->ordine->commessa ?? '-' }}</strong></td>
                             <td>{{ $fase->ordine->cliente_nome ?? '-' }}</td>
                             <td>{{ $fase->ordine->cod_art ?? '-' }}</td>
-                            <td>{{ $fase->ordine->descrizione ?? '-' }}</td>
+                            <td class="desc-col">{{ $fase->ordine->descrizione ?? '-' }}</td>
                             <td>{{ $fase->ordine->qta_richiesta ?? '-' }}</td>
                             <td>
                                 @if($fase->tipo_consegna === 'parziale')
