@@ -107,7 +107,7 @@
     <h1>ROADMAP SVILUPPO</h1>
     <h2>Sistema Gestionale MES &mdash; Grafica Nappa srl</h2>
     <div class="piano">Piano biennale (AI-Assisted): Febbraio 2026 &mdash; Febbraio 2028</div>
-    <div class="date">Aggiornata al 23 Febbraio 2026</div>
+    <div class="date">Aggiornata al 6 Marzo 2026</div>
     <div class="author">Giovanni Pietropaolo &mdash; Tirocinante Sistemi Informativi</div>
 </div>
 
@@ -153,6 +153,11 @@
     <tbody>
         <tr>
             <td class="version-col">v1.0 MES Completo</td>
+            <td><div class="bar bar-done">&nbsp;</div></td>
+            <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+        </tr>
+        <tr>
+            <td class="version-col">v1.1 Miglioramenti Operativi</td>
             <td><div class="bar bar-done">&nbsp;</div></td>
             <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
         </tr>
@@ -305,6 +310,57 @@
     <li class="done">Export report in PDF (window.print con CSS @media print ottimizzato A4)</li>
     <li class="done">Dashboard KPI giornaliero owner: fasi completate oggi, ore lavorate, spedizioni</li>
     <li class="done">Dashboard Owner: menu hamburger laterale per azioni rapide (filtro e stampa sempre visibili)</li>
+</ul>
+
+<!-- ========== v1.1 ========== -->
+<h3><span class="version-badge badge-done">v1.1</span> Miglioramenti Produzione &amp; Operativit&agrave; <span class="timeline-badge">Mar 2026</span></h3>
+<p>Ottimizzazioni operative richieste dal reparto: gestione priorit&agrave; manuali, lavorazioni esterne, report ore, note persistenti e navigazione migliorata.</p>
+
+<h4>Gestione Priorit&agrave; &amp; Stati</h4>
+<ul class="checklist">
+    <li class="done">Priorit&agrave; manuale: flag <code>priorita_manuale</code> rispettato nella dashboard operatore</li>
+    <li class="done">Ricalcolo stati cross-commessa: <code>ricalcolaCommessa()</code> opera su tutti gli ordini della stessa commessa</li>
+    <li class="done">Flusso produttivo basato su <code>config/fasi_priorita.php</code> (96 fasi mappate) anzich&eacute; priorit&agrave; numerica</li>
+    <li class="done">Propagazione stato &ldquo;consegnato&rdquo; (BRT stato 4) a tutte le fasi della commessa</li>
+</ul>
+
+<h4>Lavorazioni Esterne</h4>
+<ul class="checklist">
+    <li class="done">Flag <code>esterno</code> su ordine_fasi: marcatura automatica da note operatore (&ldquo;esterno&rdquo; / &ldquo;lavorato esternamente&rdquo;)</li>
+    <li class="done">Fasi esterne escluse dalla dashboard operatore</li>
+    <li class="done">Fasi esterne visibili nella sezione dedicata della dashboard spedizione</li>
+</ul>
+
+<h4>Report &amp; Analisi</h4>
+<ul class="checklist">
+    <li class="done">Report Ore Lavorate vs Previste: raggruppato per commessa con dettaglio fasi collassabile</li>
+    <li class="done">Integrazione dati Prinect (tempo_avviamento + esecuzione) per ore lavorate STAMPA XL</li>
+    <li class="done">Fonte ore indicata per fase (badge Prinect / MES)</li>
+    <li class="done">KPI riepilogativo: ore previste totali, lavorate, differenza, numero commesse</li>
+    <li class="done">Filtri per commessa e reparto</li>
+</ul>
+
+<h4>Dashboard Spedizione</h4>
+<ul class="checklist">
+    <li class="done">Note consegne persistenti: se oggi non ha nota, carica l&rsquo;ultima disponibile con indicazione data</li>
+    <li class="done">Pannello note inline accanto alla matita (textarea 600px &times; 4 righe)</li>
+    <li class="done">Colonna DDT in &ldquo;Consegnate oggi&rdquo; (spedizione + owner)</li>
+    <li class="done">Colonna descrizione compatta (max-width 220px con ellipsis) in tutte le tabelle</li>
+</ul>
+
+<h4>Pagina Commessa</h4>
+<ul class="checklist">
+    <li class="done">Prossime commesse con dettagli: descrizione troncata, data consegna, quantit&agrave;, cod. articolo, barra stato fasi</li>
+    <li class="done">Prossime commesse ordinate per priorit&agrave; fasi nel reparto dell&rsquo;operatore (JOIN ordine_fasi + fasi_catalogo)</li>
+    <li class="done">Escluse commesse gi&agrave; completate (tutte le fasi &ge; stato 3)</li>
+    <li class="done">Solo fasi con stato 0/1/2 nel reparto dell&rsquo;operatore</li>
+</ul>
+
+<h4>Miglioramenti Generali</h4>
+<ul class="checklist">
+    <li class="done">Logout accetta GET + POST: elimina errore 419 CSRF con token scaduto</li>
+    <li class="done">Backfill DDT vendita da Onda per commesse storiche (script <code>backfill_ddt.php</code>)</li>
+    <li class="done">Script diagnostici: <code>check_brt_consegnato.php</code>, <code>check_ddt_brt.php</code>, <code>check_onda_ddt.php</code></li>
 </ul>
 
 <!-- ========== v2.0 ========== -->
@@ -485,6 +541,13 @@
             <td>81/81</td>
         </tr>
         <tr>
+            <td><strong>v1.1</strong></td>
+            <td>Miglioramenti Operativi</td>
+            <td>Mar 2026</td>
+            <td><span class="version-badge badge-done">Completata</span></td>
+            <td>21/21</td>
+        </tr>
+        <tr>
             <td><strong>v2.0</strong></td>
             <td>Notifiche &amp; Mobilit&agrave;</td>
             <td>Apr-Giu 2026</td>
@@ -551,9 +614,10 @@
 </table>
 
 <div class="section-box">
-    <strong>Totale funzionalit&agrave; pianificate:</strong> 146 &mdash; di cui 81 completate (v1.0), 65 da sviluppare (v2.0&ndash;v10.0)<br>
-    <strong>Avanzamento complessivo piano biennale:</strong> 55% (1 versione su 10 completata)<br>
-    <strong>Velocit&agrave; sviluppo v1.0:</strong> 81 funzionalit&agrave; in ~7 settimane (AI-Assisted)
+    <strong>Totale funzionalit&agrave; pianificate:</strong> 167 &mdash; di cui 102 completate (v1.0 + v1.1), 65 da sviluppare (v2.0&ndash;v10.0)<br>
+    <strong>Avanzamento complessivo piano biennale:</strong> 61% (v1.0 + v1.1 completate)<br>
+    <strong>Velocit&agrave; sviluppo v1.0:</strong> 81 funzionalit&agrave; in ~7 settimane (AI-Assisted)<br>
+    <strong>Velocit&agrave; sviluppo v1.1:</strong> 21 funzionalit&agrave; in ~1 settimana (AI-Assisted)
 </div>
 
 <div class="section-box">
@@ -567,7 +631,7 @@
 <div class="footer">
     <p>Sistema Gestionale MES &mdash; Grafica Nappa srl &mdash; Aversa (CE)</p>
     <p>Sviluppo: Giovanni Pietropaolo (Tirocinante) con supporto Claude Code (Anthropic AI)</p>
-    <p style="margin-top:8px; font-size:11px; color:#aaa;">Piano biennale AI-Assisted &middot; Feb 2026 &ndash; Feb 2028 &middot; 10 versioni &middot; Aggiornamento: 23/02/2026</p>
+    <p style="margin-top:8px; font-size:11px; color:#aaa;">Piano biennale AI-Assisted &middot; Feb 2026 &ndash; Feb 2028 &middot; 10 versioni &middot; Aggiornamento: 06/03/2026</p>
 </div>
 
 </body>
