@@ -936,6 +936,9 @@ tr:hover td {
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body" style="overflow-x:auto;">
+                <div class="mb-3">
+                    <input type="text" id="filtro-storico" class="form-control" placeholder="Cerca per commessa, cliente, descrizione..." autocomplete="off">
+                </div>
                 @if($storicoConsegne->count() > 0)
                 @foreach($storicoConsegne->groupBy(fn($f) => \Carbon\Carbon::parse($f->data_fine)->format('Y-m-d')) as $dataStorico => $fasiGiorno)
                 <h6 class="mt-3 mb-2 fw-bold" style="color:#333;">
@@ -1063,6 +1066,28 @@ function closeSidebar() {
     document.getElementById('sidebarMenu').classList.remove('open');
     document.getElementById('sidebarOverlay').classList.remove('open');
 }
+
+// Filtro storico consegne
+document.getElementById('filtro-storico')?.addEventListener('input', function() {
+    var q = this.value.toLowerCase().trim();
+    var modal = document.getElementById('modalStorico');
+    var sezioni = modal.querySelectorAll('h6.mt-3');
+    sezioni.forEach(function(h6) {
+        var table = h6.nextElementSibling;
+        while (table && table.tagName !== 'TABLE') table = table.nextElementSibling;
+        if (!table) return;
+        var righe = table.querySelectorAll('tbody tr');
+        var visibili = 0;
+        righe.forEach(function(tr) {
+            var testo = tr.textContent.toLowerCase();
+            var match = !q || testo.includes(q);
+            tr.style.display = match ? '' : 'none';
+            if (match) visibili++;
+        });
+        h6.style.display = visibili > 0 ? '' : 'none';
+        table.style.display = visibili > 0 ? '' : 'none';
+    });
+});
 document.getElementById('hamburgerBtn').addEventListener('click', openSidebar);
 document.getElementById('sidebarOverlay').addEventListener('click', closeSidebar);
 document.getElementById('sidebarClose').addEventListener('click', closeSidebar);
