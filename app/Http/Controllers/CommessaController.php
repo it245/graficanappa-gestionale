@@ -42,7 +42,7 @@ class CommessaController extends Controller
         // 1. Prende i reparti dell'operatore
         // 2. Cerca le fasi attive (stato 0/1/2) in quei reparti, ordinate per priorità
         // 3. Raggruppa per commessa (distinct) per evitare duplicati
-        $repartoIds = $operatore ? $operatore->reparti->pluck('id')->toArray() : [];
+        $repartoIds = ($operatore && $operatore->reparti) ? $operatore->reparti->pluck('id')->toArray() : [];
 
         if (!empty($repartoIds)) {
             // Query sulla tabella ordine_fasi JOIN ordini:
@@ -53,8 +53,8 @@ class CommessaController extends Controller
             // - ordina per quella priorità
             $commesseOrdinate = OrdineFase::query()
                 ->join('ordini', 'ordini.id', '=', 'ordine_fasi.ordine_id')
-                ->join('fase_catalogo', 'ordine_fasi.fase_catalogo_id', '=', 'fase_catalogo.id')
-                ->whereIn('fase_catalogo.reparto_id', $repartoIds)
+                ->join('fasi_catalogo', 'ordine_fasi.fase_catalogo_id', '=', 'fasi_catalogo.id')
+                ->whereIn('fasi_catalogo.reparto_id', $repartoIds)
                 ->whereIn('ordine_fasi.stato', [0, 1, 2])
                 ->where(fn($q) => $q->where('ordine_fasi.esterno', false)->orWhereNull('ordine_fasi.esterno'))
                 ->where('ordini.commessa', '!=', $commessa)
