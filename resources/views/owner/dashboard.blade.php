@@ -748,6 +748,7 @@ tr:hover td {
                     <th>Note</th>
                     <th>Data Inizio</th>
                     <th>Data Fine</th>
+                    <th>Ore Lav.</th>
                 </tr>
             </thead>
             <tbody>
@@ -812,6 +813,30 @@ tr:hover td {
                     </td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_inizio', this.innerText)">{{ formatItalianDate($fase->data_inizio, true) }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_fine', this.innerText)">{{ formatItalianDate($fase->data_fine, true) }}</td>
+                    @php
+                        $totSecPausa = $fase->operatori->sum(fn($op) => $op->pivot->secondi_pausa ?? 0);
+                        $secLordoOw = 0;
+                        $diOw = $fase->operatori->whereNotNull('pivot.data_inizio')->sortBy('pivot.data_inizio')->first()?->pivot->data_inizio;
+                        $dfOw = $fase->operatori->whereNotNull('pivot.data_fine')->sortByDesc('pivot.data_fine')->first()?->pivot->data_fine;
+                        if ($diOw && $dfOw) {
+                            $secLordoOw = abs(\Carbon\Carbon::parse($dfOw)->getTimestamp() - \Carbon\Carbon::parse($diOw)->getTimestamp());
+                        }
+                        $secNettoOw = max($secLordoOw - $totSecPausa, 0);
+                        $oreNetteOw = $secNettoOw / 3600;
+                    @endphp
+                    <td>
+                        @if($secLordoOw > 0)
+                            @if($oreNetteOw >= 1)
+                                {{ number_format($oreNetteOw, 1) }}h
+                            @elseif($secNettoOw >= 60)
+                                {{ floor($secNettoOw / 60) }}m
+                            @else
+                                {{ $secNettoOw }}s
+                            @endif
+                        @else
+                            -
+                        @endif
+                    </td>
                 </tr>
             @endforeach
             </tbody>
