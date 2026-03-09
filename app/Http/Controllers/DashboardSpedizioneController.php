@@ -332,7 +332,38 @@ class DashboardSpedizioneController extends Controller
             ]);
         }
 
+        // Salva nella cache ddt_spedizioni
+        $this->cacheBrtTracking($numeroDDT, $data);
+
         return response()->json($data);
+    }
+
+    /**
+     * Salva lo stato BRT nella tabella ddt_spedizioni come cache.
+     */
+    protected function cacheBrtTracking(string $numeroDDT, array $data): void
+    {
+        try {
+            $stato = $data['stato'] ?? null;
+            $bolla = $data['bolla'] ?? [];
+            $dataConsegna = $bolla['data_consegna'] ?? null;
+            $ora = $bolla['ora_consegna'] ?? null;
+            if ($dataConsegna && $ora) $dataConsegna .= ' ' . $ora;
+            $destinatario = collect([$bolla['destinatario_ragione_sociale'] ?? null, $bolla['destinatario_localita'] ?? null])
+                ->filter()->implode(' - ');
+            $colli = $bolla['colli'] ?? null;
+
+            DdtSpedizione::where('numero_ddt', $numeroDDT)
+                ->update([
+                    'brt_stato' => $stato,
+                    'brt_data_consegna' => $dataConsegna ?: null,
+                    'brt_destinatario' => $destinatario ?: null,
+                    'brt_colli' => $colli,
+                    'brt_cache_at' => now(),
+                ]);
+        } catch (\Exception $e) {
+            // Cache fail non è critico
+        }
     }
 
     public function recuperaConsegna(Request $request)

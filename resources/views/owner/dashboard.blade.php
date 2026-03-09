@@ -1008,17 +1008,29 @@ tr:hover td {
                         @php
                             $primo = $ordiniGruppo->first();
                             $commesse = $ordiniGruppo->pluck('commessa')->unique()->implode(', ');
+                            $cached = $primo->brt_cache_at ? true : false;
+                            $statoCache = $primo->brt_stato ?? null;
+                            $badgeClass = 'bg-light text-muted';
+                            $badgeText = 'Da verificare';
+                            if ($cached && $statoCache) {
+                                $badgeText = $statoCache;
+                                if (str_contains($statoCache, 'CONSEGNATA')) $badgeClass = 'bg-success';
+                                elseif (str_contains($statoCache, 'IN TRANSITO') || str_contains($statoCache, 'PARTITA')) $badgeClass = 'bg-primary';
+                                elseif (str_contains($statoCache, 'CONSEGNA')) $badgeClass = 'bg-warning text-dark';
+                                elseif (str_contains($statoCache, 'RITIRATA')) $badgeClass = 'bg-info';
+                                else $badgeClass = 'bg-secondary';
+                            }
                         @endphp
                         <tr id="brt_row_{{ md5($numDDT) }}">
                             <td class="fw-bold" style="padding:10px 14px; font-size:16px;">{{ ltrim($numDDT, '0') }}</td>
                             <td style="padding:10px 14px;">{{ $commesse }}</td>
                             <td style="padding:10px 14px;">{{ $primo->cliente_nome ?? '-' }}</td>
                             <td id="brt_stato_{{ md5($numDDT) }}" style="padding:10px 14px;">
-                                <span class="badge bg-light text-muted" style="font-size:13px; padding:6px 10px;">Da verificare</span>
+                                <span class="badge {{ $badgeClass }}" style="font-size:13px; padding:6px 10px;">{{ $badgeText }}</span>
                             </td>
-                            <td id="brt_data_{{ md5($numDDT) }}" style="padding:10px 14px;">-</td>
-                            <td id="brt_dest_{{ md5($numDDT) }}" style="padding:10px 14px;">-</td>
-                            <td id="brt_colli_{{ md5($numDDT) }}" style="padding:10px 14px;">-</td>
+                            <td id="brt_data_{{ md5($numDDT) }}" style="padding:10px 14px;">{{ $cached ? ($primo->brt_data_consegna ?? '-') : '-' }}</td>
+                            <td id="brt_dest_{{ md5($numDDT) }}" style="padding:10px 14px;">{{ $cached ? ($primo->brt_destinatario ?? '-') : '-' }}</td>
+                            <td id="brt_colli_{{ md5($numDDT) }}" style="padding:10px 14px;">{{ $cached ? ($primo->brt_colli ?? '-') : '-' }}</td>
                             <td style="padding:10px 14px;">
                                 <button class="btn btn-outline-danger fw-bold" style="font-size:14px; padding:6px 16px;" onclick="apriTrackingDDT('{{ $numDDT }}', this)">
                                     Dettagli
