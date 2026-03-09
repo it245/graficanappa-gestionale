@@ -440,17 +440,27 @@ tr:hover td {
             </div>
         </div>
         {{-- LEGENDA --}}
-        <div class="d-flex gap-3 flex-wrap align-items-center" style="font-size:11px;">
-            <div class="d-flex align-items-center gap-1"><strong>Stati:</strong></div>
-            <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:14px;height:14px;background:#e9ecef;border:1px solid #ccc;border-radius:3px;"></span> 0 Caricato</div>
-            <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:14px;height:14px;background:#cfe2ff;border:1px solid #9ec5fe;border-radius:3px;"></span> 1 Pronto</div>
-            <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:14px;height:14px;background:#fff3cd;border:1px solid #ffc107;border-radius:3px;"></span> 2 Avviato</div>
-            <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:14px;height:14px;background:#d1e7dd;border:1px solid #198754;border-radius:3px;"></span> 3 Terminato</div>
-            <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:14px;height:14px;background:#c3c3c3;border:1px solid #999;border-radius:3px;"></span> 4 Consegnato</div>
-            <div style="border-left:1px solid #ccc; padding-left:8px;" class="d-flex align-items-center gap-1"><strong>Progresso:</strong></div>
-            <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:14px;height:14px;background:#0d6efd;border-radius:3px;"></span> Completate</div>
-            <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:14px;height:14px;background:#fd7e14;border-radius:3px;"></span> In corso</div>
-            <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:14px;height:14px;background:#198754;border-radius:3px;"></span> 100%</div>
+        <div style="background:#fff; border:1px solid #dee2e6; border-radius:8px; padding:8px 14px; box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+            <div class="d-flex gap-4" style="font-size:11px;">
+                <div>
+                    <div style="font-weight:700; font-size:10px; color:#666; text-transform:uppercase; margin-bottom:4px;">Stati Fase</div>
+                    <div class="d-flex flex-column gap-1">
+                        <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#e9ecef;border:1px solid #ccc;border-radius:2px;"></span> 0 Caricato</div>
+                        <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#cfe2ff;border:1px solid #9ec5fe;border-radius:2px;"></span> 1 Pronto</div>
+                        <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#fff3cd;border:1px solid #ffc107;border-radius:2px;"></span> 2 Avviato</div>
+                        <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#d1e7dd;border:1px solid #198754;border-radius:2px;"></span> 3 Terminato</div>
+                        <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#c3c3c3;border:1px solid #999;border-radius:2px;"></span> 4 Consegnato</div>
+                    </div>
+                </div>
+                <div style="border-left:1px solid #dee2e6; padding-left:12px;">
+                    <div style="font-weight:700; font-size:10px; color:#666; text-transform:uppercase; margin-bottom:4px;">Barra Progresso</div>
+                    <div class="d-flex flex-column gap-1">
+                        <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#0d6efd;border-radius:2px;"></span> Completate</div>
+                        <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#fd7e14;border-radius:2px;"></span> In corso</div>
+                        <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#198754;border-radius:2px;"></span> Tutte completate</div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
