@@ -136,8 +136,8 @@ h2, p {
    ========================= */
 
 table {
-    width: 2560px;              /* OTTIMIZZATO PER 2560x1440 */
-    max-width: 2560px;
+    width: 2800px;
+    max-width: 2800px;
     border-collapse: collapse;
     table-layout: fixed;        /* FONDAMENTALE */
     font-size: 12px;
@@ -266,6 +266,9 @@ th:nth-child(23), td:nth-child(23),
 th:nth-child(24), td:nth-child(24) {
     width: 110px;
 }
+
+/* Ore Lav. */
+th:nth-child(25), td:nth-child(25) { width: 70px; text-align: center; }
 
 /* =========================
    SELEZIONE EXCEL
