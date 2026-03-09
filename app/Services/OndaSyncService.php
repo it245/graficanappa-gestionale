@@ -723,7 +723,7 @@ class OndaSyncService
             $fase->save();
         }
 
-        // Ricalcola stati (demote prime fasi senza predecessori da 1→0)
+        // Ricalcola stati (promuove fasi con predecessori terminati, rispetta modifiche manuali)
         FaseStatoService::ricalcolaTutti();
 
         Log::info("Sync Onda completato: $ordiniCreati creati, $ordiniAggiornati aggiornati, $fasiCreate fasi");

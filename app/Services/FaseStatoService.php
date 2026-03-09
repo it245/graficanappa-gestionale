@@ -31,20 +31,13 @@ class FaseStatoService
             );
 
             if ($fasiPrecedenti->isEmpty()) {
-                // Nessuna fase precedente → resta a 0 (non promuovere automaticamente)
-                // Se era già a 1 (promossa prima del fix), riportala a 0
-                if ($fase->stato == 1) {
-                    $fase->stato = 0;
-                    $fase->save();
-                }
+                // Nessuna fase precedente: non toccare lo stato (rispetta modifiche manuali)
             } else {
                 $tuttTerminate = $fasiPrecedenti->every(fn($f) => $f->stato >= 3);
                 if ($tuttTerminate && $fase->stato == 0) {
-                    // Tutte le precedenti terminate → pronto (1)
                     $fase->stato = 1;
                     $fase->save();
                 } elseif (!$tuttTerminate && $fase->stato == 1) {
-                    // Predecessori non tutte terminate → torna a caricato (0)
                     $fase->stato = 0;
                     $fase->save();
                 }
