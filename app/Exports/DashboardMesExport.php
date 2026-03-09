@@ -33,7 +33,7 @@ class DashboardMesExport implements FromCollection, WithHeadings, WithMapping, W
             'Fase', 'Reparto', 'Operatori',
             'Qta Prod', 'Note', 'Data Inizio', 'Data Fine',
             'Ordine Cliente', 'N. DDT Vendita', 'Vettore DDT', 'Qta DDT', 'Note Fasi Successive',
-            'Colori', 'Fustella', 'Esterno',
+            'Colori', 'Fustella', 'Esterno', 'Ore Prev.',
         ];
     }
 
@@ -100,6 +100,14 @@ class DashboardMesExport implements FromCollection, WithHeadings, WithMapping, W
             DescrizioneParser::parseFustella($ordine->descrizione ?? '', $ordine->cliente_nome ?? '') ?? '',
             // Esterno (calcolato da note "Inviato a:")
             preg_match('/Inviato a:\s*(.+)/i', $fase->note ?? '', $mEst) ? trim($mEst[1]) : '',
+            // Ore Previste (calcolato da config fasi_ore)
+            (function() use ($fase, $ordine) {
+                $info = config('fasi_ore')[$fase->fase] ?? null;
+                if (!$info) return '';
+                $qtaCarta = $ordine->qta_carta ?? 0;
+                $copieh = $info['copieh'] ?: 1;
+                return round($info['avviamento'] + ($qtaCarta / $copieh), 1);
+            })(),
         ];
     }
 
@@ -139,16 +147,17 @@ class DashboardMesExport implements FromCollection, WithHeadings, WithMapping, W
             'AE' => 18, // Colori
             'AF' => 14, // Fustella
             'AG' => 18, // Esterno
+            'AH' => 10, // Ore Prev.
         ];
     }
 
     public function styles(Worksheet $sheet)
     {
         $lastRow = $sheet->getHighestRow();
-        $nonEditabili = ['A', 'B', 'S', 'T', 'U', 'AE', 'AF', 'AG'];
+        $nonEditabili = ['A', 'B', 'S', 'T', 'U', 'AE', 'AF', 'AG', 'AH'];
 
         // Header: sfondo nero, testo bianco, grassetto
-        $sheet->getStyle('A1:AG1')->applyFromArray([
+        $sheet->getStyle('A1:AH1')->applyFromArray([
             'font' => [
                 'bold' => true,
                 'color' => ['rgb' => 'FFFFFF'],
@@ -177,7 +186,7 @@ class DashboardMesExport implements FromCollection, WithHeadings, WithMapping, W
         }
 
         // Auto-filtro sulla riga header
-        $sheet->setAutoFilter('A1:AG1');
+        $sheet->setAutoFilter('A1:AH1');
 
         return [];
     }

@@ -136,8 +136,8 @@ h2, p {
    ========================= */
 
 table {
-    width: 2900px;
-    max-width: 2900px;
+    width: 2970px;
+    max-width: 2970px;
     border-collapse: collapse;
     table-layout: fixed;        /* FONDAMENTALE */
     font-size: 12px;
@@ -177,12 +177,12 @@ thead th {
 }
 
 /* =========================
-   LARGHEZZA COLONNE (26 colonne) — ordine attuale:
+   LARGHEZZA COLONNE (27 colonne) — ordine attuale:
    1=Commessa 2=Stato 3=Cliente 4=CodArt 5=Colori 6=Fustella
    7=Descrizione 8=Qta 9=UM 10=Priorità 11=Fase 12=Reparto
    13=DataReg 14=DataConsegna 15=CodCarta 16=Carta
    17=QtaCarta 18=UMCarta 19=Operatori 20=QtaProd
-   21=Esterno 22=Note 23=DataInizio 24=DataFine 25=OreLav 26=Progresso
+   21=Esterno 22=Note 23=DataInizio 24=DataFine 25=OrePrev 26=OreLav 27=Progresso
    ========================= */
 
 /* 1. Commessa */
@@ -267,11 +267,14 @@ th:nth-child(24), td:nth-child(24) {
     width: 110px;
 }
 
-/* 25. Ore Lav. */
+/* 25. Ore Prev. */
 th:nth-child(25), td:nth-child(25) { width: 70px; text-align: center; }
 
-/* 26. Progresso */
-th:nth-child(26), td:nth-child(26) { width: 100px; }
+/* 26. Ore Lav. */
+th:nth-child(26), td:nth-child(26) { width: 70px; text-align: center; }
+
+/* 27. Progresso */
+th:nth-child(27), td:nth-child(27) { width: 100px; }
 
 /* =========================
    SELEZIONE EXCEL
@@ -777,6 +780,7 @@ tr:hover td {
                     <th>Note</th>
                     <th>Data Inizio</th>
                     <th>Data Fine</th>
+                    <th>Ore Prev.</th>
                     <th>Ore Lav.</th>
                     <th>Progresso</th>
                 </tr>
@@ -843,6 +847,28 @@ tr:hover td {
                     </td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_inizio', this.innerText)">{{ formatItalianDate($fase->data_inizio, true) }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_fine', this.innerText)">{{ formatItalianDate($fase->data_fine, true) }}</td>
+                    @php
+                        // Ore previste: avviamento + qta_carta / copieh
+                        $fasiInfoOw = config('fasi_ore');
+                        $infoFaseOw = $fasiInfoOw[$fase->fase] ?? null;
+                        $orePreviste = null;
+                        if ($infoFaseOw) {
+                            $qtaCartaOw = $fase->ordine->qta_carta ?? 0;
+                            $copiehOw = $infoFaseOw['copieh'] ?: 1;
+                            $orePreviste = round($infoFaseOw['avviamento'] + ($qtaCartaOw / $copiehOw), 1);
+                        }
+                    @endphp
+                    <td>
+                        @if($orePreviste !== null)
+                            @if($orePreviste >= 1)
+                                {{ floor($orePreviste) }}h {{ round(($orePreviste - floor($orePreviste)) * 60) }}m
+                            @else
+                                {{ round($orePreviste * 60) }}m
+                            @endif
+                        @else
+                            -
+                        @endif
+                    </td>
                     @php
                         // Prinect (stampa XL): tempo_avviamento_sec + tempo_esecuzione_sec
                         $secPrinect = ($fase->tempo_avviamento_sec ?? 0) + ($fase->tempo_esecuzione_sec ?? 0);
