@@ -146,10 +146,7 @@ class FaseStatoService
             );
 
             if ($fasiPrecedenti->isEmpty()) {
-                if ($fase->stato == 1) {
-                    $fase->stato = 0;
-                    $fase->save();
-                }
+                // Nessuna fase precedente: non toccare lo stato (rispetta modifiche manuali)
             } else {
                 $tuttTerminate = $fasiPrecedenti->every(fn($f) => $f->stato >= 3);
                 if ($tuttTerminate && $fase->stato == 0) {
