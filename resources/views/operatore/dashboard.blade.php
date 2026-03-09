@@ -191,6 +191,7 @@
             <h3>
                 <span>{{ $info['nome'] }} <small>({{ $info['fasi']->count() }})</small></span>
             </h3>
+            @php $fasiDistinte = $info['fasi']->map(fn($f) => $f->faseCatalogo->nome_display ?? $f->fase)->unique()->sort()->values(); @endphp
             <div class="filtri-bar filtri-reparto" data-reparto="{{ $repartoId }}">
                 <label>Stato:</label>
                 <select class="filtro-stato" onchange="applicaFiltri(this)">
@@ -201,7 +202,12 @@
                     <option value="3">3</option>
                 </select>
                 <label>Fase:</label>
-                <input type="text" class="filtro-fase" placeholder="Cerca fase..." oninput="applicaFiltri(this)">
+                <select class="filtro-fase" onchange="applicaFiltri(this)">
+                    <option value="">Tutte</option>
+                    @foreach($fasiDistinte as $nomeFase)
+                        <option value="{{ $nomeFase }}">{{ $nomeFase }}</option>
+                    @endforeach
+                </select>
                 <label>Cliente:</label>
                 <input type="text" class="filtro-cliente" placeholder="Cerca cliente..." oninput="applicaFiltri(this)">
                 <label>Descrizione:</label>
@@ -251,6 +257,7 @@
     @endforeach
 @else
     {{-- SINGOLO REPARTO: tabella unica come prima --}}
+    @php $fasiDistinte = $fasiVisibili->map(fn($f) => $f->faseCatalogo->nome_display ?? $f->fase)->unique()->sort()->values(); @endphp
     <div class="filtri-bar filtri-reparto" data-reparto="singolo">
         <label>Stato:</label>
         <select class="filtro-stato" onchange="applicaFiltri(this)">
@@ -259,6 +266,13 @@
             <option value="1">1</option>
             <option value="2">2</option>
             <option value="3">3</option>
+        </select>
+        <label>Fase:</label>
+        <select class="filtro-fase" onchange="applicaFiltri(this)">
+            <option value="">Tutte</option>
+            @foreach($fasiDistinte as $nomeFase)
+                <option value="{{ $nomeFase }}">{{ $nomeFase }}</option>
+            @endforeach
         </select>
         <label>Cliente:</label>
         <input type="text" class="filtro-cliente" placeholder="Cerca cliente..." oninput="applicaFiltri(this)">
@@ -386,7 +400,7 @@ function cercaCommessa(){
 function applicaFiltri(el) {
     var bar = el.closest('.filtri-reparto');
     var filtroStato = bar.querySelector('.filtro-stato').value;
-    var filtroFase = bar.querySelector('.filtro-fase').value.toLowerCase().trim();
+    var filtroFase = bar.querySelector('.filtro-fase').value.trim();
     var filtroCliente = bar.querySelector('.filtro-cliente').value.toLowerCase().trim();
     var filtroDescrizione = bar.querySelector('.filtro-descrizione').value.toLowerCase().trim();
 
@@ -407,7 +421,7 @@ function applicaFiltri(el) {
         var descCell = riga.querySelector('.td-descrizione');
 
         var statoOk = !filtroStato || (statoCell && statoCell.textContent.trim() === filtroStato);
-        var faseOk = !filtroFase || (faseCell && faseCell.textContent.toLowerCase().includes(filtroFase));
+        var faseOk = !filtroFase || (faseCell && faseCell.textContent.trim() === filtroFase);
         var clienteOk = !filtroCliente || (clienteCell && clienteCell.textContent.toLowerCase().includes(filtroCliente));
         var descOk = !filtroDescrizione || (descCell && descCell.textContent.toLowerCase().includes(filtroDescrizione));
 
