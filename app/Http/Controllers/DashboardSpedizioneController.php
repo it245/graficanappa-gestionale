@@ -49,21 +49,24 @@ class DashboardSpedizioneController extends Controller
             ->with(['ordine', 'faseCatalogo', 'operatori'])
             ->get();
 
-        // "Da consegnare" = tutte le fasi non-BRT dell'intera commessa (tutti gli ordini) sono a stato >= 3
-        $fasiDaSpedire = $fasiSpedizione->filter(function ($fase) use ($repartoSpedizione) {
+        // Pre-fetch: tutte le commesse coinvolte e le loro fasi non-spedizione (evita N+1)
+        $commesseSpedizione = $fasiSpedizione->map(fn($f) => $f->ordine->commessa)->filter()->unique()->values();
+        $tutteFasiPerCommessa = collect();
+        if ($commesseSpedizione->isNotEmpty()) {
+            $tutteFasiPerCommessa = OrdineFase::whereHas('ordine', fn($q) => $q->whereIn('commessa', $commesseSpedizione))
+                ->whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', '!=', $repartoSpedizione->id))
+                ->with('faseCatalogo')
+                ->get()
+                ->groupBy(fn($f) => $f->ordine->commessa);
+        }
+
+        // "Da consegnare" = tutte le fasi non-BRT dell'intera commessa sono a stato >= 3
+        $fasiDaSpedire = $fasiSpedizione->filter(function ($fase) use ($tutteFasiPerCommessa) {
             $commessa = $fase->ordine->commessa ?? null;
             if (!$commessa) return false;
-
-            $fasiNonBrtCommessa = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
-                ->whereHas('faseCatalogo', function ($q) use ($repartoSpedizione) {
-                    $q->where('reparto_id', '!=', $repartoSpedizione->id);
-                })
-                ->get();
-
-            return $fasiNonBrtCommessa->isNotEmpty() && $fasiNonBrtCommessa->every(fn($f) => $f->stato >= 3);
-        })->sortBy(function ($fase) {
-            return $fase->ordine->data_prevista_consegna ?? '9999-12-31';
-        });
+            $fasiNonBrt = $tutteFasiPerCommessa->get($commessa, collect());
+            return $fasiNonBrt->isNotEmpty() && $fasiNonBrt->every(fn($f) => $f->stato >= 3);
+        })->sortBy(fn($fase) => $fase->ordine->data_prevista_consegna ?? '9999-12-31');
 
         // Auto-promuovi fasi stato 0→1 che sono pronte per la spedizione
         foreach ($fasiDaSpedire as $fase) {
@@ -73,16 +76,12 @@ class DashboardSpedizioneController extends Controller
             }
         }
 
-        // Calcola percentuale completamento per commessa
-        foreach ($fasiDaSpedire as $fase) {
+        // Calcola percentuale completamento per tutte le fasi spedizione
+        foreach ($fasiSpedizione as $fase) {
             $commessa = $fase->ordine->commessa ?? null;
-            $totaleFasi = $commessa ? OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
-                ->whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', '!=', $repartoSpedizione->id))
-                ->count() : 0;
-            $fasiTerminate = $commessa ? OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
-                ->whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', '!=', $repartoSpedizione->id))
-                ->where('stato', '>=', 3)
-                ->count() : 0;
+            $fasiNonBrt = $tutteFasiPerCommessa->get($commessa, collect());
+            $totaleFasi = $fasiNonBrt->count();
+            $fasiTerminate = $fasiNonBrt->where('stato', '>=', 3)->count();
             $fase->percentuale = $totaleFasi > 0 ? round(($fasiTerminate / $totaleFasi) * 100) : 0;
         }
 
@@ -96,29 +95,15 @@ class DashboardSpedizioneController extends Controller
             ->get()
             ->sortByDesc('data_fine');
 
-        // Fasi in attesa: fasi spedizione stato 0 le cui altre fasi NON sono tutte terminate
+        // Fasi in attesa: fasi spedizione le cui altre fasi NON sono tutte terminate
         $fasiDaSpedireIds = $fasiDaSpedire->pluck('id')->toArray();
         $fasiInAttesa = $fasiSpedizione->filter(fn($f) => !in_array($f->id, $fasiDaSpedireIds));
 
+        // Fasi non terminate per il bottone Forza Consegna (usa dati pre-caricati)
         foreach ($fasiInAttesa as $fase) {
             $commessa = $fase->ordine->commessa ?? null;
-
-            // Percentuale calcolata su tutte le fasi non-BRT dell'intera commessa
-            $totaleFasi = $commessa ? OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
-                ->whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', '!=', $repartoSpedizione->id))
-                ->count() : 0;
-            $fasiTerminate = $commessa ? OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
-                ->whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', '!=', $repartoSpedizione->id))
-                ->where('stato', '>=', 3)
-                ->count() : 0;
-            $fase->percentuale = $totaleFasi > 0 ? round(($fasiTerminate / $totaleFasi) * 100) : 0;
-
-            // Fasi non terminate dell'intera commessa (per il bottone Forza Consegna)
-            $fase->fasiNonTerminate = $commessa ? OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
-                ->whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', '!=', $repartoSpedizione->id))
-                ->where('stato', '<', 3)
-                ->with('faseCatalogo')
-                ->get() : collect();
+            $fasiNonBrt = $tutteFasiPerCommessa->get($commessa, collect());
+            $fase->fasiNonTerminate = $fasiNonBrt->where('stato', '<', 3)->values();
         }
 
         $fasiInAttesa = $fasiInAttesa->sortByDesc('percentuale');
