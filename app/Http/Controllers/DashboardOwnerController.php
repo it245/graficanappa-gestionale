@@ -8,6 +8,7 @@ use App\Models\OrdineFase;
 use App\Models\Operatore;
 use App\Models\Reparto;
 use App\Models\FasiCatalogo;
+use App\Models\DdtSpedizione;
 use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;
 use Carbon\Carbon;
@@ -337,13 +338,11 @@ public function calcolaOreEPriorita($fase)
                 ->get();
         }
 
-        // Spedizioni BRT: DDT unici con vettore BRT
-        $spedizioniBRT = Ordine::where('vettore_ddt', 'LIKE', '%BRT%')
-            ->whereNotNull('numero_ddt_vendita')
-            ->where('numero_ddt_vendita', '!=', '')
-            ->orderByDesc('ddt_vendita_id')
+        // Spedizioni BRT: dalla tabella ddt_spedizioni (supporta più DDT per commessa)
+        $spedizioniBRT = DdtSpedizione::where('vettore', 'LIKE', '%BRT%')
+            ->orderByDesc('onda_id_doc')
             ->get()
-            ->groupBy('numero_ddt_vendita');
+            ->groupBy('numero_ddt');
 
         // Progresso fasi per commessa (tutte le fasi, incluse stato >= 4)
         $tutteFasiCommesse = OrdineFase::with('ordine')

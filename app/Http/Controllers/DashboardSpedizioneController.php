@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\OrdineFase;
 use App\Models\Ordine;
 use App\Models\Reparto;
+use App\Models\DdtSpedizione;
 use App\Http\Services\BrtService;
 use App\Models\NotaSpedizione;
 use Carbon\Carbon;
@@ -146,13 +147,11 @@ class DashboardSpedizioneController extends Controller
             ->orderByDesc('data_fine')
             ->get();
 
-        // Spedizioni BRT: DDT unici con vettore BRT
-        $spedizioniBRT = Ordine::where('vettore_ddt', 'LIKE', '%BRT%')
-            ->whereNotNull('numero_ddt_vendita')
-            ->where('numero_ddt_vendita', '!=', '')
-            ->orderByDesc('ddt_vendita_id')
+        // Spedizioni BRT: dalla tabella ddt_spedizioni (supporta più DDT per commessa)
+        $spedizioniBRT = DdtSpedizione::where('vettore', 'LIKE', '%BRT%')
+            ->orderByDesc('onda_id_doc')
             ->get()
-            ->groupBy('numero_ddt_vendita');
+            ->groupBy('numero_ddt');
 
         return view('spedizione.dashboard', compact('fasiDaSpedire', 'fasiSpediteOggi', 'fasiInAttesa', 'fasiEsterne', 'fasiDDT', 'fasiParziali', 'spedizioniBRT', 'storicoConsegne', 'operatore'));
     }

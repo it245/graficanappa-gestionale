@@ -6,6 +6,7 @@ use App\Models\Ordine;
 use App\Models\OrdineFase;
 use App\Models\FasiCatalogo;
 use App\Models\Reparto;
+use App\Models\DdtSpedizione;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Services\FaseStatoService;
@@ -1163,29 +1164,40 @@ class OndaSyncService
 
             $idDoc = $riga->IdDoc;
             $qtaDDT = (float) ($riga->QtaDDT ?? 0);
+            $numeroDDT = trim($riga->NumeroDocumento ?? '');
+            $vettore = trim($riga->Vettore ?? '');
+            $cliente = trim($riga->Cliente ?? '');
 
-            // CodCommessa nelle righe è già nel formato completo (es. 0066398-26)
             // Cerca ordine con match diretto
             $ordine = Ordine::where('commessa', $codCommessa)->first();
 
-            if (!$ordine) {
-                continue;
+            // Salva nella tabella ddt_spedizioni (supporta più DDT per commessa)
+            if ($ordine) {
+                DdtSpedizione::updateOrCreate(
+                    ['onda_id_doc' => $idDoc, 'commessa' => $codCommessa],
+                    [
+                        'numero_ddt'   => $numeroDDT,
+                        'data_ddt'     => $riga->DataDocumento ? substr($riga->DataDocumento, 0, 10) : null,
+                        'vettore'      => $vettore,
+                        'cliente_nome' => $cliente,
+                        'ordine_id'    => $ordine->id,
+                        'qta'          => $qtaDDT,
+                    ]
+                );
             }
 
-            // Idempotenza: skip se ordine ha già un ddt_vendita_id
-            if ($ordine->ddt_vendita_id) {
-                continue;
+            // Aggiorna anche il campo legacy sull'ordine (primo DDT trovato)
+            if ($ordine && !$ordine->ddt_vendita_id) {
+                $ordine->update([
+                    'ddt_vendita_id'      => $idDoc,
+                    'numero_ddt_vendita'  => $numeroDDT,
+                    'vettore_ddt'         => $vettore,
+                    'qta_ddt_vendita'     => $qtaDDT,
+                ]);
             }
-
-            $ordine->update([
-                'ddt_vendita_id'      => $idDoc,
-                'numero_ddt_vendita'  => trim($riga->NumeroDocumento ?? ''),
-                'vettore_ddt'         => trim($riga->Vettore ?? ''),
-                'qta_ddt_vendita'     => $qtaDDT,
-            ]);
 
             $aggiornati++;
-            Log::info("DDT Vendita: aggiornato ordine #{$ordine->id} commessa {$ordine->commessa} con DDT {$idDoc} (qta DDT: {$qtaDDT})");
+            Log::info("DDT Vendita: commessa {$codCommessa} DDT {$numeroDDT} (IdDoc {$idDoc}, qta: {$qtaDDT})");
         }
 
         return $aggiornati;
