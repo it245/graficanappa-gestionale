@@ -728,6 +728,113 @@ che possiamo importare nel MES. In particolare:
 - Proponi nuove importazioni utili per il MES
 </div>
 
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 id="esplorazione-onda-risultati">Risultati Esplorazione Database Onda (09/03/2026)</h2>
+<!-- ═══════════════════════════════════════════════════════════════ -->
+
+<div class="card">
+<h3>Panoramica Database</h3>
+<ul>
+    <li><strong>951 tabelle</strong> nello schema <code>dbo</code></li>
+    <li>Prefissi principali: ATT (commesse), PRD (produzione), STD (anagrafiche), MAG (magazzino), VEN (vendita), ACQ (acquisti), PAS (passivo/fatture), COG (contabilit&agrave;)</li>
+    <li>Tabelle personalizzate Grafica Nappa: prefisso <code>OC_</code> (es. OC_ATTDocAgglomerato, OC_ATTDocCartotecnica, OC_MAGFustellaRighe)</li>
+</ul>
+
+<h4>Tabelle principali &mdash; conteggio righe</h4>
+<table style="width:100%; border-collapse:collapse; font-size:13px; margin:10px 0;">
+<tr style="background:#2d2d2d;"><th style="padding:6px; text-align:left;">Tabella</th><th style="padding:6px; text-align:right;">Righe</th><th style="padding:6px; text-align:left;">Descrizione</th></tr>
+<tr><td style="padding:4px 6px;"><code>ATTDocTeste</code></td><td style="padding:4px 6px; text-align:right;">123.496</td><td style="padding:4px 6px;">Commesse (teste documento)</td></tr>
+<tr><td style="padding:4px 6px;"><code>ATTDocRighe</code></td><td style="padding:4px 6px; text-align:right;">1.114.719</td><td style="padding:4px 6px;">Righe commessa (articoli, materiali)</td></tr>
+<tr><td style="padding:4px 6px;"><code>PRDDocTeste</code></td><td style="padding:4px 6px; text-align:right;">76.335</td><td style="padding:4px 6px;">Ordini di produzione</td></tr>
+<tr><td style="padding:4px 6px;"><code>PRDDocFasi</code></td><td style="padding:4px 6px; text-align:right;">237.592</td><td style="padding:4px 6px;">Fasi lavorazione</td></tr>
+<tr><td style="padding:4px 6px;"><code>PRDDocRighe</code></td><td style="padding:4px 6px; text-align:right;">311.932</td><td style="padding:4px 6px;">Materiali per ordine produzione</td></tr>
+<tr><td style="padding:4px 6px;"><code>MAGAnagraficaArticoli</code></td><td style="padding:4px 6px; text-align:right;">~140 colonne</td><td style="padding:4px 6px;">Anagrafica articoli (dimensioni, pesi, costi, fustella)</td></tr>
+<tr><td style="padding:4px 6px;"><code>PRDMacchinari</code></td><td style="padding:4px 6px; text-align:right;">38</td><td style="padding:4px 6px;">Macchine di produzione</td></tr>
+<tr><td style="padding:4px 6px;"><code>STDAnagrafiche</code></td><td style="padding:4px 6px; text-align:right;">~5.000</td><td style="padding:4px 6px;">Clienti, fornitori, vettori</td></tr>
+<tr><td style="padding:4px 6px;"><code>PASDocTeste</code></td><td style="padding:4px 6px; text-align:right;">63.365</td><td style="padding:4px 6px;">Fatture passive</td></tr>
+<tr><td style="padding:4px 6px;"><code>OC_ATTDocCartotecnica</code></td><td style="padding:4px 6px; text-align:right;">14.400</td><td style="padding:4px 6px;">Dati cartotecnica commessa</td></tr>
+<tr><td style="padding:4px 6px;"><code>OC_ATTDocAgglomerato</code></td><td style="padding:4px 6px; text-align:right;">12.646</td><td style="padding:4px 6px;">Agglomerati/tirature</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h3>Fustella &mdash; Dati trovati</h3>
+<ul>
+    <li><code>MAGAnagraficaArticoli.OC_CodFustella</code> &mdash; codice fustella associato all'articolo</li>
+    <li><code>OC_MAGFustellaRighe</code> &mdash; tabella dedicata fustelle</li>
+    <li><code>PRDDocFasi.OC_CodFustella</code> &mdash; fustella usata nella fase di produzione</li>
+    <li><code>OC_ATTDocCartotecnica</code> &mdash; dati cartotecnica con formato, resa, dimensioni</li>
+</ul>
+</div>
+
+<div class="card">
+<h3>Colonne ATTDocTeste non ancora importate (potenzialmente utili)</h3>
+<ul>
+    <li><code>NCPInConsegna</code>, <code>NCPConsegnato</code> &mdash; flag stato consegna</li>
+    <li><code>DataEvasione</code> &mdash; data evasione commessa</li>
+    <li><code>TotMerce</code>, <code>TotDocumento</code> &mdash; valori economici commessa</li>
+    <li><code>CodAgente</code> &mdash; agente commerciale</li>
+    <li><code>OC_CommentoLogistica</code> &mdash; note logistica</li>
+    <li><code>ncprespocommessa</code> &mdash; responsabile commessa (gi&agrave; importata)</li>
+</ul>
+</div>
+
+<div class="card">
+<h3>Proposte nuove importazioni</h3>
+<ol>
+    <li><strong>Fustella da articolo</strong> &mdash; importare <code>OC_CodFustella</code> da MAGAnagraficaArticoli per arricchire la dashboard</li>
+    <li><strong>Giacenze carta</strong> &mdash; tabelle MAGInventario* per monitorare stock materiali</li>
+    <li><strong>Flag consegna</strong> &mdash; <code>NCPInConsegna</code>/<code>NCPConsegnato</code> da ATTDocTeste per stato spedizione</li>
+    <li><strong>Valore commessa</strong> &mdash; <code>TotMerce</code>/<code>TotDocumento</code> per report economici</li>
+    <li><strong>Dati cartotecnica</strong> &mdash; OC_ATTDocCartotecnica per formato, resa, dimensioni foglio</li>
+</ol>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 id="brt-multi-spedizione">BRT &mdash; Analisi DDT Multi-Spedizione (09/03/2026)</h2>
+<!-- ═══════════════════════════════════════════════════════════════ -->
+
+<div class="card">
+<h3>Problema</h3>
+<p>Alcuni DDT (es. 507, 508, 509 di Ferrovie dello Stato) risultavano &ldquo;In attesa&rdquo; nella dashboard BRT, ma erano in realt&agrave; consegnati. Causa: l'API SOAP BRT <code>GetIdSpedizioneByRMA</code> restituisce <strong>esito -22</strong> (risultati multipli) quando un DDT ha pi&ugrave; spedizioni/segnacolli con lo stesso riferimento mittente.</p>
+
+<h3>Soluzioni implementate</h3>
+<ul>
+    <li><strong>Tabella <code>ddt_spedizioni</code></strong> &mdash; supporta pi&ugrave; DDT per commessa (prima era 1:1 su ordini)</li>
+    <li><strong>Cache tracking</strong> &mdash; stati BRT salvati nel DB, visibili subito senza chiamate SOAP</li>
+    <li><strong>Ricerca con <code>SPEDIZIONE_ANNO</code></strong> &mdash; risolve ambiguit&agrave; per DDT con storico multi-anno</li>
+    <li><strong>Badge &ldquo;Multi-spedizione&rdquo;</strong> &mdash; viola, distingue DDT con pi&ugrave; segnacolli da quelli davvero in attesa</li>
+    <li><strong>Ottimizzazione N+1</strong> &mdash; dashboard spedizione da ~250 query a ~5</li>
+</ul>
+
+<h3>Limitazione nota</h3>
+<p>DDT con pi&ugrave; spedizioni BRT (esito -22) non sono tracciabili via API senza il segnacollo. L'API <code>GetIdSpedizioneByRMA</code> non supporta risultati multipli. Soluzione futura: campo segnacollo manuale o integrazione con file Excel BRT.</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 id="tablet-batteria">Tablet &mdash; Risparmio Batteria</h2>
+<!-- ═══════════════════════════════════════════════════════════════ -->
+
+<div class="card">
+<h3>Cause scaricamento rapido</h3>
+<ul>
+    <li>Schermo sempre acceso con dashboard in continuo</li>
+    <li>Luminosit&agrave; alta</li>
+    <li>Browser (Chrome/Edge) aperto H24 &mdash; consuma CPU e RAM</li>
+    <li>WiFi debole &mdash; il tablet aumenta la potenza radio</li>
+    <li>Batteria degradata (dopo 2-3 anni perdono 30-50% capacit&agrave;)</li>
+</ul>
+
+<h3>Raccomandazioni</h3>
+<ul>
+    <li>Attivare modalit&agrave; risparmio energetico</li>
+    <li>Abbassare luminosit&agrave; al minimo leggibile</li>
+    <li>Disattivare Bluetooth e GPS</li>
+    <li>Spegnimento schermo dopo 1-2 minuti di inattivit&agrave;</li>
+    <li>Postazioni fisse con cavo di ricarica permanente</li>
+</ul>
+</div>
+
 <div class="footer">
     <p>Sistema Gestionale MES &mdash; Grafica Nappa srl &mdash; Aversa (CE)</p>
     <p>Sviluppo: Giovanni Pietropaolo (Tirocinante) con supporto Claude Code (Anthropic AI)</p>
