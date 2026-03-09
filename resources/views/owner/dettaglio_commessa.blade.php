@@ -95,7 +95,6 @@
     <div>
         <a href="{{ route('owner.dashboard') }}" class="btn-back">&larr; Torna alla dashboard</a>
         <h2 class="d-inline ms-3">Commessa: <strong>{{ $commessa }}</strong></h2>
-        <span class="text-muted ms-2" style="font-size:15px;">{{ $ordine->descrizione ?? '' }}</span>
         <span class="badge bg-primary ms-2" style="font-size:14px; vertical-align:middle;">OC: {{ $ordine->ordine_cliente ?? '-' }}</span>
     </div>
     <div class="d-flex gap-2">
