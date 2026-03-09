@@ -36,6 +36,21 @@ class OrdineFase extends Model
         'ddt_fornitore_id',
         'segnacollo_brt',
         'scarti_previsti',
+        // Mossa 37
+        'sequenza',
+        'disponibile',
+        'urgenza_reale',
+        'fascia_urgenza',
+        'giorni_lavoro_residuo',
+        'batch_key',
+    ];
+
+    protected $casts = [
+        'disponibile' => 'boolean',
+        'urgenza_reale' => 'decimal:2',
+        'giorni_lavoro_residuo' => 'decimal:2',
+        'sequenza' => 'integer',
+        'fascia_urgenza' => 'integer',
     ];
 
     protected $hidden = ['scarti_previsti'];

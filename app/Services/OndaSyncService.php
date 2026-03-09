@@ -645,6 +645,7 @@ class OndaSyncService
                     'priorita'         => $prioritaFase,
                     'stato'            => 0,
                     'scarti_previsti'   => $scartiMacchine[trim($riga->CodMacchina ?? '')] ?? null,
+                    'sequenza'         => config('sequenza_fasi')[$faseNome] ?? 500,
                 ];
 
                 // Se la fase è stata rimappata da STAMPA generico, aggiorna la fase esistente
