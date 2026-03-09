@@ -814,18 +814,28 @@ tr:hover td {
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_inizio', this.innerText)">{{ formatItalianDate($fase->data_inizio, true) }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_fine', this.innerText)">{{ formatItalianDate($fase->data_fine, true) }}</td>
                     @php
-                        $totSecPausa = $fase->operatori->sum(fn($op) => $op->pivot->secondi_pausa ?? 0);
-                        $secLordoOw = 0;
-                        $diOw = $fase->operatori->whereNotNull('pivot.data_inizio')->sortBy('pivot.data_inizio')->first()?->pivot->data_inizio;
-                        $dfOw = $fase->operatori->whereNotNull('pivot.data_fine')->sortByDesc('pivot.data_fine')->first()?->pivot->data_fine;
-                        if ($diOw && $dfOw) {
-                            $secLordoOw = abs(\Carbon\Carbon::parse($dfOw)->getTimestamp() - \Carbon\Carbon::parse($diOw)->getTimestamp());
+                        // Prinect (stampa XL): tempo_avviamento_sec + tempo_esecuzione_sec
+                        $secPrinect = ($fase->tempo_avviamento_sec ?? 0) + ($fase->tempo_esecuzione_sec ?? 0);
+                        if ($secPrinect > 0) {
+                            $oreNetteOw = $secPrinect / 3600;
+                            $secNettoOw = $secPrinect;
+                            $fonteTempo = 'P';
+                        } else {
+                            // Fallback: pivot operatore (data_fine - data_inizio - pause)
+                            $totSecPausa = $fase->operatori->sum(fn($op) => $op->pivot->secondi_pausa ?? 0);
+                            $secLordoOw = 0;
+                            $diOw = $fase->operatori->whereNotNull('pivot.data_inizio')->sortBy('pivot.data_inizio')->first()?->pivot->data_inizio;
+                            $dfOw = $fase->operatori->whereNotNull('pivot.data_fine')->sortByDesc('pivot.data_fine')->first()?->pivot->data_fine;
+                            if ($diOw && $dfOw) {
+                                $secLordoOw = abs(\Carbon\Carbon::parse($dfOw)->getTimestamp() - \Carbon\Carbon::parse($diOw)->getTimestamp());
+                            }
+                            $secNettoOw = max($secLordoOw - $totSecPausa, 0);
+                            $oreNetteOw = $secNettoOw / 3600;
+                            $fonteTempo = '';
                         }
-                        $secNettoOw = max($secLordoOw - $totSecPausa, 0);
-                        $oreNetteOw = $secNettoOw / 3600;
                     @endphp
                     <td>
-                        @if($secLordoOw > 0)
+                        @if($secNettoOw > 0)
                             @if($oreNetteOw >= 1)
                                 {{ number_format($oreNetteOw, 1) }}h
                             @elseif($secNettoOw >= 60)
@@ -833,6 +843,7 @@ tr:hover td {
                             @else
                                 {{ $secNettoOw }}s
                             @endif
+                            @if($fonteTempo)<small class="text-muted">{{ $fonteTempo }}</small>@endif
                         @else
                             -
                         @endif
