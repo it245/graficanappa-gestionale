@@ -33,7 +33,7 @@ class DashboardMesExport implements FromCollection, WithHeadings, WithMapping, W
             'Fase', 'Reparto', 'Operatori',
             'Qta Prod', 'Note', 'Data Inizio', 'Data Fine',
             'Ordine Cliente', 'N. DDT Vendita', 'Vettore DDT', 'Qta DDT', 'Note Fasi Successive',
-            'Colori', 'Fustella', 'Esterno', 'Ore Prev.',
+            'Colori', 'Fustella', 'Esterno', 'Ore Prev.', 'Ore Lav.',
         ];
     }
 
@@ -108,6 +108,19 @@ class DashboardMesExport implements FromCollection, WithHeadings, WithMapping, W
                 $copieh = $info['copieh'] ?: 1;
                 return round($info['avviamento'] + ($qtaCarta / $copieh), 1);
             })(),
+            // Ore Lavorate (Prinect o pivot operatore)
+            (function() use ($fase) {
+                $secPrinect = ($fase->tempo_avviamento_sec ?? 0) + ($fase->tempo_esecuzione_sec ?? 0);
+                if ($secPrinect > 0) return round($secPrinect / 3600, 2);
+                $totSecPausa = $fase->operatori->sum(fn($op) => $op->pivot->secondi_pausa ?? 0);
+                $di = $fase->operatori->whereNotNull('pivot.data_inizio')->sortBy('pivot.data_inizio')->first()?->pivot->data_inizio;
+                $df = $fase->operatori->whereNotNull('pivot.data_fine')->sortByDesc('pivot.data_fine')->first()?->pivot->data_fine;
+                if ($di && $df) {
+                    $sec = max(abs(Carbon::parse($df)->getTimestamp() - Carbon::parse($di)->getTimestamp()) - $totSecPausa, 0);
+                    return $sec > 0 ? round($sec / 3600, 2) : '';
+                }
+                return '';
+            })(),
         ];
     }
 
@@ -148,16 +161,17 @@ class DashboardMesExport implements FromCollection, WithHeadings, WithMapping, W
             'AF' => 14, // Fustella
             'AG' => 18, // Esterno
             'AH' => 10, // Ore Prev.
+            'AI' => 10, // Ore Lav.
         ];
     }
 
     public function styles(Worksheet $sheet)
     {
         $lastRow = $sheet->getHighestRow();
-        $nonEditabili = ['A', 'B', 'S', 'T', 'U', 'AE', 'AF', 'AG', 'AH'];
+        $nonEditabili = ['A', 'B', 'S', 'T', 'U', 'AE', 'AF', 'AG', 'AH', 'AI'];
 
         // Header: sfondo nero, testo bianco, grassetto
-        $sheet->getStyle('A1:AH1')->applyFromArray([
+        $sheet->getStyle('A1:AI1')->applyFromArray([
             'font' => [
                 'bold' => true,
                 'color' => ['rgb' => 'FFFFFF'],
@@ -186,7 +200,7 @@ class DashboardMesExport implements FromCollection, WithHeadings, WithMapping, W
         }
 
         // Auto-filtro sulla riga header
-        $sheet->setAutoFilter('A1:AH1');
+        $sheet->setAutoFilter('A1:AI1');
 
         return [];
     }
