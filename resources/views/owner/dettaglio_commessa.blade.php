@@ -137,8 +137,42 @@
 </div>
 @endif
 
-{{-- Info Onda --}}
+{{-- Info Commessa --}}
 @if($ordine)
+<div class="row g-2 mb-2" style="font-size:13px;">
+    <div class="col-md-4">
+        <div class="border rounded p-2 h-100" style="background:#e8f4fd">
+            <strong class="d-block mb-1">Descrizione</strong>
+            <span>{{ $ordine->descrizione ?: '-' }}</span>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="border rounded p-2 h-100" style="background:#e8f4fd">
+            <strong class="d-block mb-1">Cliente</strong>
+            <span>{{ $ordine->cliente_nome ?: '-' }}</span>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="border rounded p-2 h-100" style="background:#e8f4fd">
+            <strong class="d-block mb-1">Cod. Articolo</strong>
+            <span>{{ $ordine->cod_art ?: '-' }}</span>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="border rounded p-2 h-100" style="background:#e8f4fd">
+            <strong class="d-block mb-1">Quantit&agrave;</strong>
+            <span>{{ $ordine->qta_richiesta ? number_format($ordine->qta_richiesta, 0, ',', '.') : '-' }}</span>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="border rounded p-2 h-100" style="background:#e8f4fd">
+            <strong class="d-block mb-1">Data Consegna</strong>
+            <span>{{ $ordine->data_prevista_consegna ? \Carbon\Carbon::parse($ordine->data_prevista_consegna)->format('d/m/Y') : '-' }}</span>
+        </div>
+    </div>
+</div>
+
+{{-- Info Onda --}}
 <div class="row g-2 mb-3" style="font-size:13px;">
     <div class="col-md-4">
         <div class="border rounded p-2 h-100" style="background:#f8f9fa">
