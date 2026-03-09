@@ -345,6 +345,24 @@ public function calcolaOreEPriorita($fase)
             ->get()
             ->groupBy('numero_ddt_vendita');
 
+        // Progresso fasi per commessa (tutte le fasi, incluse stato >= 4)
+        $tutteFasiCommesse = OrdineFase::with('ordine')
+            ->whereHas('ordine')
+            ->get()
+            ->groupBy(fn($f) => $f->ordine->commessa ?? '');
+        $progressoCommesse = [];
+        foreach ($tutteFasiCommesse as $comm => $fasiComm) {
+            $totale = $fasiComm->count();
+            $terminate = $fasiComm->where('stato', '>=', 3)->count();
+            $avviate = $fasiComm->where('stato', 2)->count();
+            $progressoCommesse[$comm] = [
+                'totale' => $totale,
+                'terminate' => $terminate,
+                'avviate' => $avviate,
+                'percentuale' => $totale > 0 ? round(($terminate / $totale) * 100) : 0,
+            ];
+        }
+
         // Sync Excel: aggiorna il file con i dati freschi
         ExcelSyncService::exportToExcel();
 
@@ -353,7 +371,8 @@ public function calcolaOreEPriorita($fase)
 
         return view('owner.dashboard', compact(
             'fasi', 'reparti', 'fasiCatalogo', 'spedizioniOggi', 'storicoConsegne',
-            'fasiCompletateOggi', 'oreLavorateOggi', 'commesseSpediteOggi', 'fasiAttive', 'spedizioniBRT', 'operatore', 'isReadonly'
+            'fasiCompletateOggi', 'oreLavorateOggi', 'commesseSpediteOggi', 'fasiAttive', 'spedizioniBRT', 'operatore', 'isReadonly',
+            'progressoCommesse'
         ));
     }
 

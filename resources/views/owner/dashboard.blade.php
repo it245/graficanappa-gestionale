@@ -136,8 +136,8 @@ h2, p {
    ========================= */
 
 table {
-    width: 2800px;
-    max-width: 2800px;
+    width: 2900px;
+    max-width: 2900px;
     border-collapse: collapse;
     table-layout: fixed;        /* FONDAMENTALE */
     font-size: 12px;
@@ -177,12 +177,12 @@ thead th {
 }
 
 /* =========================
-   LARGHEZZA COLONNE (24 colonne) — ordine attuale:
-   1=Commessa 2=Stato 3=Cliente 4=CodArt 5=Colori 6=Fustella
-   7=Descrizione 8=Qta 9=UM 10=Priorità 11=Fase 12=Reparto
-   13=DataReg 14=DataConsegna 15=CodCarta 16=Carta
-   17=QtaCarta 18=UMCarta 19=Operatori 20=QtaProd
-   21=Esterno 22=Note 23=DataInizio 24=DataFine
+   LARGHEZZA COLONNE (26 colonne) — ordine attuale:
+   1=Commessa 2=Stato 3=Progresso 4=Cliente 5=CodArt 6=Colori 7=Fustella
+   8=Descrizione 9=Qta 10=UM 11=Priorità 12=Fase 13=Reparto
+   14=DataReg 15=DataConsegna 16=CodCarta 17=Carta
+   18=QtaCarta 19=UMCarta 20=Operatori 21=QtaProd
+   22=Esterno 23=Note 24=DataInizio 25=DataFine 26=OreLav
    ========================= */
 
 /* 1. Commessa */
@@ -191,84 +191,87 @@ th:nth-child(1), td:nth-child(1) { width: 100px; }
 /* 2. Stato */
 th:nth-child(2), td:nth-child(2) { width: 50px; text-align: center; }
 
-/* 3. Cliente */
-th:nth-child(3), td:nth-child(3) { width: 170px; white-space: normal; }
+/* 3. Progresso */
+th:nth-child(3), td:nth-child(3) { width: 90px; }
 
-/* 4. Codice Articolo */
-th:nth-child(4), td:nth-child(4) { width: 95px; }
+/* 4. Cliente */
+th:nth-child(4), td:nth-child(4) { width: 170px; white-space: normal; }
 
-/* 5. Colori */
-th:nth-child(5), td:nth-child(5) { width: 110px; white-space: normal; }
+/* 5. Codice Articolo */
+th:nth-child(5), td:nth-child(5) { width: 95px; }
 
-/* 6. Fustella */
-th:nth-child(6), td:nth-child(6) { width: 75px; }
+/* 6. Colori */
+th:nth-child(6), td:nth-child(6) { width: 110px; white-space: normal; }
 
-/* 7. Descrizione — troncata con ... */
-th:nth-child(7), td:nth-child(7) { width: 250px; max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* 7. Fustella */
+th:nth-child(7), td:nth-child(7) { width: 75px; }
 
-/* 8. Qta */
-th:nth-child(8), td:nth-child(8) { width: 55px; text-align: center; }
+/* 8. Descrizione — troncata con ... */
+th:nth-child(8), td:nth-child(8) { width: 250px; max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-/* 9. UM */
-th:nth-child(9), td:nth-child(9) { width: 40px; text-align: center; }
+/* 9. Qta */
+th:nth-child(9), td:nth-child(9) { width: 55px; text-align: center; }
 
-/* 10. Priorità */
-th:nth-child(10), td:nth-child(10) { width: 65px; text-align: center; }
+/* 10. UM */
+th:nth-child(10), td:nth-child(10) { width: 40px; text-align: center; }
 
-/* 11. Fase */
-th:nth-child(11), td:nth-child(11) { width: 125px; }
+/* 11. Priorità */
+th:nth-child(11), td:nth-child(11) { width: 65px; text-align: center; }
 
-/* 12. Reparto */
-th:nth-child(12), td:nth-child(12) { width: 110px; }
+/* 12. Fase */
+th:nth-child(12), td:nth-child(12) { width: 125px; }
 
-/* 13. Data Registrazione / 14. Data Prevista Consegna */
-th:nth-child(13), td:nth-child(13),
-th:nth-child(14), td:nth-child(14) {
+/* 13. Reparto */
+th:nth-child(13), td:nth-child(13) { width: 110px; }
+
+/* 14. Data Registrazione / 15. Data Prevista Consegna */
+th:nth-child(14), td:nth-child(14),
+th:nth-child(15), td:nth-child(15) {
     width: 100px;
 }
 
-/* 15. Cod Carta */
-th:nth-child(15), td:nth-child(15) { width: 170px; white-space: normal; }
+/* 16. Cod Carta */
+th:nth-child(16), td:nth-child(16) { width: 170px; white-space: normal; }
 
-/* 16. Carta */
-th:nth-child(16), td:nth-child(16) { width: 190px; white-space: normal; }
+/* 17. Carta */
+th:nth-child(17), td:nth-child(17) { width: 190px; white-space: normal; }
 
-/* 17. Qta Carta */
-th:nth-child(17), td:nth-child(17) { width: 50px; text-align: center; }
+/* 18. Qta Carta */
+th:nth-child(18), td:nth-child(18) { width: 50px; text-align: center; }
 
-/* 18. UM Carta */
-th:nth-child(18), td:nth-child(18) { width: 40px; text-align: center; }
+/* 19. UM Carta */
+th:nth-child(19), td:nth-child(19) { width: 40px; text-align: center; }
 
-/* 19. Operatori */
-th:nth-child(19), td:nth-child(19) {
+/* 20. Operatori */
+th:nth-child(20), td:nth-child(20) {
     width: 80px;
     white-space: normal;
     font-size: 11px;
 }
 
-/* 20. Qta Prod. */
-th:nth-child(20), td:nth-child(20) {
+/* 21. Qta Prod. */
+th:nth-child(21), td:nth-child(21) {
     width: 60px;
     text-align: center;
 }
 
-/* 21. Esterno */
-th:nth-child(21), td:nth-child(21) { width: 90px; }
+/* 22. Esterno */
+th:nth-child(22), td:nth-child(22) { width: 90px; }
 
-/* 22. Note */
-th:nth-child(22), td:nth-child(22) {
+/* 23. Note */
+th:nth-child(23), td:nth-child(23) {
     width: 170px;
     white-space: normal;
 }
 
-/* 23. Data Inizio / 24. Data Fine */
-th:nth-child(23), td:nth-child(23),
-th:nth-child(24), td:nth-child(24) {
+/* 24. Data Inizio / 25. Data Fine */
+th:nth-child(24), td:nth-child(24),
+th:nth-child(25), td:nth-child(25) {
     width: 110px;
 }
 
-/* Ore Lav. */
-th:nth-child(25), td:nth-child(25) { width: 70px; text-align: center; }
+/* 26. Ore Lav. */
+th:nth-child(26), td:nth-child(26) { width: 70px; text-align: center; }
 
 /* =========================
    SELEZIONE EXCEL
@@ -730,6 +733,7 @@ tr:hover td {
                 <tr>
                     <th>Commessa</th>
                     <th>Stato</th>
+                    <th>Progresso</th>
                     <th>Cliente</th>
                     <th>Codice Articolo</th>
                     <th>Colori</th>
@@ -775,6 +779,21 @@ tr:hover td {
                 <tr class="{{ $rowClass }}" data-id="{{ $fase->id }}">
                     <td><a href="{{ route('owner.dettaglioCommessa', $fase->ordine->commessa ?? '-') }}" style="color:#000;font-weight:bold;text-decoration:underline;">{{ $fase->ordine->commessa ?? '-' }}</a></td>
                     <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)" style="background:{{ $statoBg[$fase->stato] ?? '#e9ecef' }} !important;font-weight:bold;text-align:center;">{{ $fase->stato }}</td>
+                    @php
+                        $prog = $progressoCommesse[$fase->ordine->commessa ?? ''] ?? ['totale'=>0,'terminate'=>0,'avviate'=>0,'percentuale'=>0];
+                        $progPerc = $prog['percentuale'];
+                        $progAvv = $prog['totale'] > 0 ? round(($prog['avviate'] / $prog['totale']) * 100) : 0;
+                        $progColor = $progPerc >= 100 ? '#198754' : ($progPerc >= 50 ? '#0d6efd' : '#ffc107');
+                    @endphp
+                    <td style="padding:2px 4px; vertical-align:middle;">
+                        <div style="position:relative; background:#e9ecef; border-radius:4px; height:16px; min-width:60px;" title="{{ $prog['terminate'] }}/{{ $prog['totale'] }} fasi completate{{ $prog['avviate'] > 0 ? ', '.$prog['avviate'].' in corso' : '' }}">
+                            @if($progAvv > 0 && $progPerc < 100)
+                            <div style="position:absolute; top:0; left:0; height:100%; width:{{ min($progPerc + $progAvv, 100) }}%; background:{{ $progColor }}; opacity:0.3; border-radius:4px;"></div>
+                            @endif
+                            <div style="position:absolute; top:0; left:0; height:100%; width:{{ $progPerc }}%; background:{{ $progColor }}; border-radius:4px;"></div>
+                            <span style="position:relative; z-index:1; font-size:10px; font-weight:bold; color:{{ $progPerc >= 50 ? '#fff' : '#333' }}; line-height:16px; padding-left:4px;">{{ $prog['terminate'] }}/{{ $prog['totale'] }}</span>
+                        </div>
+                    </td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'cliente_nome', this.innerText)">{{ $fase->ordine->cliente_nome ?? '-' }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'cod_art', this.innerText)">{{ $fase->ordine->cod_art ?? '-' }}</td>
                     @php
