@@ -102,8 +102,9 @@ try {
 }
 
 // Prova 503 e 504 (che da Onda risultano BRT)
-echo "\n=== DDT 503, 504, 505, 507 (marcati BRT in Onda) ===\n";
-foreach ([503, 504, 505, 507] as $ddt) {
+echo "\n=== DDT 503, 504, 505, 507, 508, 509 con ANNO 2026 ===\n";
+foreach ([503, 504, 505, 507, 508, 509] as $ddt) {
+    // Senza anno
     try {
         $result = $soap->getidspedizionebyrma(['arg0' => [
             'CLIENTE_ID' => $clienteId,
@@ -111,9 +112,28 @@ foreach ([503, 504, 505, 507] as $ddt) {
         ]]);
         $esito = $result->return->ESITO ?? -1;
         $spedId = $result->return->SPEDIZIONE_ID ?? 'N/A';
-        echo "  DDT {$ddt} ALFA: esito={$esito}, spedizione_id={$spedId}\n";
+        echo "  DDT {$ddt} senza anno: esito={$esito}, spedizione_id={$spedId}\n";
     } catch (\Exception $e) {
-        echo "  DDT {$ddt}: ERRORE\n";
+        echo "  DDT {$ddt} senza anno: ERRORE\n";
+    }
+
+    // Con anno 2026
+    try {
+        $result = $soap->getidspedizionebyrma(['arg0' => [
+            'CLIENTE_ID' => $clienteId,
+            'RIFERIMENTO_MITTENTE_ALFABETICO' => (string)$ddt,
+            'SPEDIZIONE_ANNO' => 2026,
+        ]]);
+        $esito = $result->return->ESITO ?? -1;
+        $spedId = $result->return->SPEDIZIONE_ID ?? 'N/A';
+        echo "  DDT {$ddt} anno 2026: esito={$esito}, spedizione_id={$spedId}";
+        if ($esito == 0 && $spedId) {
+            $tracking = $brt->getTrackingBySpedizioneId($spedId);
+            echo " → " . ($tracking['stato'] ?? '?');
+        }
+        echo "\n";
+    } catch (\Exception $e) {
+        echo "  DDT {$ddt} anno 2026: ERRORE\n";
     }
 }
 

@@ -89,18 +89,34 @@ class BrtService
                 'https://wsr.brt.it:10052/web/GetIdSpedizioneByRMAService/GetIdSpedizioneByRMA?wsdl'
             );
 
+            $anno = (int) date('Y');
+
             // Strategia 1: cerca per RIFERIMENTO_MITTENTE_ALFABETICO
             $id = $this->cercaSpedizione($soap, ['RIFERIMENTO_MITTENTE_ALFABETICO' => $rma]);
             if ($id) return $id;
 
-            // Strategia 2: cerca per RIFERIMENTO_MITTENTE_NUMERICO
+            // Strategia 2: come sopra ma con anno corrente (risolve ambiguità -22)
+            $id = $this->cercaSpedizione($soap, [
+                'RIFERIMENTO_MITTENTE_ALFABETICO' => $rma,
+                'SPEDIZIONE_ANNO' => $anno,
+            ]);
+            if ($id) return $id;
+
+            // Strategia 3: anno precedente (DDT a cavallo d'anno)
+            $id = $this->cercaSpedizione($soap, [
+                'RIFERIMENTO_MITTENTE_ALFABETICO' => $rma,
+                'SPEDIZIONE_ANNO' => $anno - 1,
+            ]);
+            if ($id) return $id;
+
+            // Strategia 4: cerca per RIFERIMENTO_MITTENTE_NUMERICO
             $id = $this->cercaSpedizione($soap, ['RIFERIMENTO_MITTENTE_NUMERICO' => $rma]);
             if ($id) return $id;
 
-            // Strategia 3: cerca con entrambi
+            // Strategia 5: numerico + anno corrente
             $id = $this->cercaSpedizione($soap, [
-                'RIFERIMENTO_MITTENTE_ALFABETICO' => $rma,
                 'RIFERIMENTO_MITTENTE_NUMERICO' => $rma,
+                'SPEDIZIONE_ANNO' => $anno,
             ]);
 
             return $id;
