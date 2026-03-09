@@ -58,8 +58,8 @@ class PrinectController extends Controller
             ->filter(fn($a) => !empty($a['id']));
 
         $attivita7gg = $raw7gg->map(function ($a) {
-            $jobId = $a['workstep']['job']['id'] ?? null;
-            $commessa = ($jobId && is_numeric($jobId))
+            $jobId = PrinectSyncService::estraiJobIdNumerico($a['workstep']['job']['id'] ?? null);
+            $commessa = $jobId
                 ? str_pad($jobId, 7, '0', STR_PAD_LEFT) . '-' . date('y', strtotime($a['startTime'] ?? 'now'))
                 : null;
             return (object) [
@@ -203,8 +203,8 @@ class PrinectController extends Controller
 
         // Attivita oggi raggruppate per commessa (solo ultima per commessa)
         $attivitaOggiPerCommessa = $attivitaOggi->groupBy(function ($a) {
-            $jId = $a->prinect_job_id ?? null;
-            return ($jId && is_numeric($jId)) ? str_pad($jId, 7, '0', STR_PAD_LEFT) . '-' . date('y') : 'no-comm-' . spl_object_id($a);
+            $jId = PrinectSyncService::estraiJobIdNumerico($a->prinect_job_id ?? null);
+            return $jId ? str_pad($jId, 7, '0', STR_PAD_LEFT) . '-' . date('y') : 'no-comm-' . spl_object_id($a);
         })->map(function ($gruppo) {
             $prima = $gruppo->first(); // gia ordinata per start_time desc, quindi la prima e la piu recente
             return (object) [
@@ -350,9 +350,10 @@ class PrinectController extends Controller
         $tempoProduzioneSec = 0;
         $usaWorkstep = false;
 
-        if (is_numeric($jobId)) {
+        $jobIdNum = PrinectSyncService::estraiJobIdNumerico($jobId);
+        if ($jobIdNum) {
             try {
-                $wsData = $service->getJobWorksteps($jobId);
+                $wsData = $service->getJobWorksteps($jobIdNum);
                 $worksteps = collect($wsData['worksteps'] ?? [])
                     ->filter(fn($ws) => in_array('ConventionalPrinting', $ws['types'] ?? []))
                     ->filter(fn($ws) => in_array($ws['status'] ?? '', ['COMPLETED', 'RUNNING']));
