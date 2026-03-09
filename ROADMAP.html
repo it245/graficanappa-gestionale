@@ -107,7 +107,7 @@
     <h1>ROADMAP SVILUPPO</h1>
     <h2>Sistema Gestionale MES &mdash; Grafica Nappa srl</h2>
     <div class="piano">Piano biennale (AI-Assisted): Febbraio 2026 &mdash; Febbraio 2028</div>
-    <div class="date">Aggiornata al 6 Marzo 2026</div>
+    <div class="date">Aggiornata al 9 Marzo 2026</div>
     <div class="author">Giovanni Pietropaolo &mdash; Tirocinante Sistemi Informativi</div>
 </div>
 
@@ -338,6 +338,8 @@
     <li class="done">Fonte ore indicata per fase (badge Prinect / MES)</li>
     <li class="done">KPI riepilogativo: ore previste totali, lavorate, differenza, numero commesse</li>
     <li class="done">Filtri per commessa e reparto</li>
+    <li class="done">Colonna &ldquo;Ore Lavorate&rdquo; nella dashboard owner con formato leggibile (1h 48m)</li>
+    <li class="done">Priorit&agrave; dati Prinect per fasi stampa XL, fallback su pivot operatore</li>
 </ul>
 
 <h4>Dashboard Spedizione</h4>
@@ -354,6 +356,23 @@
     <li class="done">Prossime commesse ordinate per priorit&agrave; fasi nel reparto dell&rsquo;operatore (JOIN ordine_fasi + fasi_catalogo)</li>
     <li class="done">Escluse commesse gi&agrave; completate (tutte le fasi &ge; stato 3)</li>
     <li class="done">Solo fasi con stato 0/1/2 nel reparto dell&rsquo;operatore</li>
+</ul>
+
+<h4>Integrazione Onda &amp; Prinect</h4>
+<ul class="checklist">
+    <li class="done">Sync singola commessa Onda: <code>php artisan onda:sync 66575</code> senza filtro data</li>
+    <li class="done">Script <code>cerca_commessa.php</code>: ricerca in Onda (SQL Server) e MES (MySQL)</li>
+    <li class="done">Prinect sync estesa a 30 giorni (da 7) per catturare storico pi&ugrave; ampio</li>
+    <li class="done">Supporto job ID Prinect non numerici (es. &ldquo;66698 int&rdquo;): helper <code>estraiJobIdNumerico()</code></li>
+</ul>
+
+<h4>Dashboard Owner</h4>
+<ul class="checklist">
+    <li class="done">Barra di avanzamento progresso fasi per commessa (completate/totali)</li>
+    <li class="done">Legenda stati fase (0-4) e colori barra progresso in card in alto a destra</li>
+    <li class="done">Scrollbar orizzontale sticky in fondo alla viewport</li>
+    <li class="done">Tabella allargata a 2900px per includere tutte le colonne</li>
+    <li class="done">Rimossa scritta &ldquo;Dashboard Owner&rdquo;, logo e logout spostati a sinistra</li>
 </ul>
 
 <h4>Miglioramenti Generali</h4>
@@ -545,7 +564,7 @@
             <td>Miglioramenti Operativi</td>
             <td>Mar 2026</td>
             <td><span class="version-badge badge-done">Completata</span></td>
-            <td>21/21</td>
+            <td>33/33</td>
         </tr>
         <tr>
             <td><strong>v2.0</strong></td>
@@ -614,10 +633,10 @@
 </table>
 
 <div class="section-box">
-    <strong>Totale funzionalit&agrave; pianificate:</strong> 167 &mdash; di cui 102 completate (v1.0 + v1.1), 65 da sviluppare (v2.0&ndash;v10.0)<br>
-    <strong>Avanzamento complessivo piano biennale:</strong> 61% (v1.0 + v1.1 completate)<br>
+    <strong>Totale funzionalit&agrave; pianificate:</strong> 179 &mdash; di cui 114 completate (v1.0 + v1.1), 65 da sviluppare (v2.0&ndash;v10.0)<br>
+    <strong>Avanzamento complessivo piano biennale:</strong> 64% (v1.0 + v1.1 completate)<br>
     <strong>Velocit&agrave; sviluppo v1.0:</strong> 81 funzionalit&agrave; in ~7 settimane (AI-Assisted)<br>
-    <strong>Velocit&agrave; sviluppo v1.1:</strong> 21 funzionalit&agrave; in ~1 settimana (AI-Assisted)
+    <strong>Velocit&agrave; sviluppo v1.1:</strong> 33 funzionalit&agrave; in ~2 settimane (AI-Assisted)
 </div>
 
 <div class="section-box">
@@ -628,10 +647,91 @@
     <strong>Stack tecnologico previsto (v2.0&ndash;v10.0):</strong> AI Open Source (LLaMA / Mistral / Gemma via Ollama) &middot; Laravel Reverb (WebSocket) &middot; PWA / Service Workers &middot; Redis (cache AI) &middot; MQTT (IoT) &middot; REST API pubblica (OpenAPI) &middot; Telegram Bot API &middot; Three.js (Digital Twin 3D) &middot; App nativa (React Native/Flutter)
 </div>
 
+<!-- ========== BRANCH ========== -->
+<h3>Branch di sviluppo</h3>
+
+<table>
+    <thead>
+        <tr>
+            <th>Branch</th>
+            <th>Descrizione</th>
+            <th>Stato</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>master</strong></td>
+            <td>Produzione &mdash; codice deployato sul server</td>
+            <td><span class="version-badge badge-done">Attivo</span></td>
+        </tr>
+        <tr style="background: linear-gradient(135deg, #fff8e1, #fff3cd);">
+            <td><strong>mossa37</strong></td>
+            <td>Sistema priorit&agrave; 4 livelli (disponibilit&agrave;, urgenza reale, batch affinity, sequenza ciclo). Include: PriorityService, 2 migration, event PhaseCompleted, config fasi_ore e sequenza_fasi. <strong>Pronto per merge</strong>, in attesa di approvazione.</td>
+            <td><span class="version-badge badge-next">In attesa</span></td>
+        </tr>
+        <tr>
+            <td><strong>v2.0</strong></td>
+            <td>Sync Prinect basato su status/activity, timeout API, auto-refresh ottimizzato</td>
+            <td><span class="version-badge badge-next">Sviluppo</span></td>
+        </tr>
+        <tr>
+            <td><strong>v2.0-dev</strong></td>
+            <td>Chat live MES con Laravel Reverb, storico consegne con ricerca, etichette semplificate, script verifica commesse mancanti</td>
+            <td><span class="version-badge badge-next">Sviluppo</span></td>
+        </tr>
+    </tbody>
+</table>
+
+<!-- ========== PROMPT ESPLORAZIONE ONDA ========== -->
+<h3>Prompt &mdash; Esplorazione Database Onda</h3>
+<p>Template di prompt ottimizzato per sessioni di analisi del database Onda IQ. Copiare e incollare in una nuova conversazione Claude Code.</p>
+
+<div style="background:#1e1e1e; color:#d4d4d4; border-radius:8px; padding:20px; font-family:'Cascadia Code','Fira Code',monospace; font-size:12px; line-height:1.6; overflow-x:auto; white-space:pre-wrap; margin:15px 0;">
+<span style="color:#6a9955;">## Contesto progetto</span>
+Progetto: MES Grafica Nappa (Laravel 11, MySQL, Onda SOAP, Prinect REST API, Fiery)
+Repo: C:\Users\Giovanni\graficanappa-gestionale
+Server: C:\progetti\graficanappa-gestionale (192.168.1.60)
+
+<span style="color:#6a9955;">## Regole</span>
+- Lingua italiana per UI e comunicazione
+- Non modificare codice &mdash; questa &egrave; una sessione di SOLA ANALISI/ESPLORAZIONE
+- Crea script PHP standalone per ogni esplorazione (no artisan, no migration)
+- Ogni script deve essere eseguibile sul server con: php nome_script.php
+- Mostra i risultati in formato leggibile (tabelle, elenchi)
+- Spiega cosa significano i dati trovati e come potremmo usarli nel MES
+- Salva i risultati interessanti in un file di report
+
+<span style="color:#6a9955;">## Connessione Onda</span>
+SQL Server via ODBC (config database.php, connection &lsquo;onda&rsquo;)
+Onda IQ &egrave; l&rsquo;ERP aziendale &mdash; contiene TUTTO: ordini, clienti, materiali,
+macchine, fasi, costi, listini, magazzino, DDT, fatture, anagrafiche, articoli...
+
+<span style="color:#6a9955;">## Obiettivo sessione</span>
+Esplorare il database Onda in profondit&agrave; per scoprire TUTTI i dati utili
+che possiamo importare nel MES. In particolare:
+
+1. <span style="color:#dcdcaa;">Tabelle e struttura</span> &mdash; Elenco completo tabelle, relazioni, chiavi
+2. <span style="color:#dcdcaa;">Articoli</span> &mdash; Anagrafica articoli, fustelle associate, codici, dimensioni
+3. <span style="color:#dcdcaa;">Clienti</span> &mdash; Dati clienti collegati alle commesse
+4. <span style="color:#dcdcaa;">Materiali</span> &mdash; Carte, inchiostri, lastre, stock disponibile
+5. <span style="color:#dcdcaa;">Fasi di lavorazione</span> &mdash; Cicli produttivi definiti in Onda vs nostro catalogo
+6. <span style="color:#dcdcaa;">Costi e tempi</span> &mdash; Preventivi, consuntivi, tempi standard
+7. <span style="color:#dcdcaa;">Magazzino</span> &mdash; Giacenze, movimenti, lotti
+8. <span style="color:#dcdcaa;">DDT e spedizioni</span> &mdash; Documenti di trasporto, destinazioni, pesi
+9. <span style="color:#dcdcaa;">Storico</span> &mdash; Commesse passate, ristampe, ordini ricorrenti
+
+<span style="color:#6a9955;">## Metodo</span>
+- Inizia da INFORMATION_SCHEMA.TABLES per mappare il DB
+- Per ogni tabella interessante: SELECT TOP 5 * per capire i dati
+- Cerca colonne con pattern: fust*, FS*, art*, cli*, mat*, peso*, dim*
+- Incrocia con i dati che gi&agrave; importiamo (vedi OndaSyncService.php)
+- Proponi nuove importazioni utili per il MES
+</div>
+
 <div class="footer">
     <p>Sistema Gestionale MES &mdash; Grafica Nappa srl &mdash; Aversa (CE)</p>
     <p>Sviluppo: Giovanni Pietropaolo (Tirocinante) con supporto Claude Code (Anthropic AI)</p>
-    <p style="margin-top:8px; font-size:11px; color:#aaa;">Piano biennale AI-Assisted &middot; Feb 2026 &ndash; Feb 2028 &middot; 10 versioni &middot; Aggiornamento: 06/03/2026</p>
+    <p style="margin-top:8px; font-size:11px; color:#aaa;">Piano biennale AI-Assisted &middot; Feb 2026 &ndash; Feb 2028 &middot; 10 versioni &middot; Aggiornamento: 09/03/2026</p>
 </div>
 
 </body>

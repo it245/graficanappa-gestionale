@@ -18,7 +18,7 @@
             {{ $op->nome }} ({{ $op->pivot->data_inizio ? \Carbon\Carbon::parse($op->pivot->data_inizio)->format('d/m/Y H:i:s') : '-' }})<br>
         @endforeach
     </td>
-    <td>{{ $fase->faseCatalogo->nome_display ?? '-' }}</td>
+    <td class="td-fase">{{ $fase->faseCatalogo->nome_display ?? '-' }}</td>
     <td class="td-stato" id="stato-{{ $fase->id }}" style="background:{{ $statoBg[$fase->stato] ?? '#e9ecef' }};font-weight:bold;text-align:center;">{{ $fase->stato }}</td>
 
     {{-- COMMESSA CLICCABILE --}}

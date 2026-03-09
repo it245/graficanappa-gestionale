@@ -186,6 +186,7 @@
 @if(!empty($fasiPerReparto))
     {{-- MULTI-REPARTO: sezioni separate per ogni reparto --}}
     @foreach($fasiPerReparto as $repartoId => $info)
+        @if($info['fasi']->isEmpty()) @continue @endif
         <div class="reparto-section">
             <h3>
                 <span>{{ $info['nome'] }} <small>({{ $info['fasi']->count() }})</small></span>
@@ -199,6 +200,8 @@
                     <option value="2">2</option>
                     <option value="3">3</option>
                 </select>
+                <label>Fase:</label>
+                <input type="text" class="filtro-fase" placeholder="Cerca fase..." oninput="applicaFiltri(this)">
                 <label>Cliente:</label>
                 <input type="text" class="filtro-cliente" placeholder="Cerca cliente..." oninput="applicaFiltri(this)">
                 <label>Descrizione:</label>
@@ -383,13 +386,12 @@ function cercaCommessa(){
 function applicaFiltri(el) {
     var bar = el.closest('.filtri-reparto');
     var filtroStato = bar.querySelector('.filtro-stato').value;
+    var filtroFase = bar.querySelector('.filtro-fase').value.toLowerCase().trim();
     var filtroCliente = bar.querySelector('.filtro-cliente').value.toLowerCase().trim();
     var filtroDescrizione = bar.querySelector('.filtro-descrizione').value.toLowerCase().trim();
 
     // Trova la tabella associata a questa barra filtri
     var tableWrapper = bar.nextElementSibling;
-    // Per multi-reparto la struttura è: filtri-bar → reparto-body → table-wrapper → table
-    // Per singolo reparto: filtri-bar → table-wrapper → table
     if (tableWrapper.classList.contains('reparto-body')) {
         tableWrapper = tableWrapper.querySelector('table');
     } else {
@@ -400,20 +402,23 @@ function applicaFiltri(el) {
     var righe = tableWrapper.querySelectorAll('tbody tr');
     righe.forEach(function(riga) {
         var statoCell = riga.querySelector('.td-stato');
+        var faseCell = riga.querySelector('.td-fase');
         var clienteCell = riga.querySelector('.td-cliente');
         var descCell = riga.querySelector('.td-descrizione');
 
         var statoOk = !filtroStato || (statoCell && statoCell.textContent.trim() === filtroStato);
+        var faseOk = !filtroFase || (faseCell && faseCell.textContent.toLowerCase().includes(filtroFase));
         var clienteOk = !filtroCliente || (clienteCell && clienteCell.textContent.toLowerCase().includes(filtroCliente));
         var descOk = !filtroDescrizione || (descCell && descCell.textContent.toLowerCase().includes(filtroDescrizione));
 
-        riga.style.display = (statoOk && clienteOk && descOk) ? '' : 'none';
+        riga.style.display = (statoOk && faseOk && clienteOk && descOk) ? '' : 'none';
     });
 }
 
 function resetFiltri(el) {
     var bar = el.closest('.filtri-reparto');
     bar.querySelector('.filtro-stato').value = '';
+    bar.querySelector('.filtro-fase').value = '';
     bar.querySelector('.filtro-cliente').value = '';
     bar.querySelector('.filtro-descrizione').value = '';
     applicaFiltri(el);
