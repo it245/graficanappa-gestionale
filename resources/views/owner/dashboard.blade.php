@@ -1018,6 +1018,7 @@ tr:hover td {
                                 elseif (str_contains($statoCache, 'IN TRANSITO') || str_contains($statoCache, 'PARTITA')) $badgeClass = 'bg-primary';
                                 elseif (str_contains($statoCache, 'CONSEGNA')) $badgeClass = 'bg-warning text-dark';
                                 elseif (str_contains($statoCache, 'RITIRATA')) $badgeClass = 'bg-info';
+                                elseif (str_contains($statoCache, 'MULTI')) $badgeClass = 'bg-purple" style="background:#7c3aed!important;color:#fff';
                                 else $badgeClass = 'bg-secondary';
                             }
                         @endphp
@@ -1273,6 +1274,10 @@ function caricaStatoBRT(numeroDDT, hash, callback) {
         var destEl = document.getElementById('brt_dest_' + hash);
         var colliEl = document.getElementById('brt_colli_' + hash);
 
+        if (data.multi_spedizione) {
+            statoEl.innerHTML = '<span class="badge" style="background:#7c3aed!important;color:#fff;">Multi-spedizione</span>';
+            callback(); return;
+        }
         if (data.error) {
             statoEl.innerHTML = '<span class="badge bg-warning text-dark">In attesa</span>';
             callback(); return;

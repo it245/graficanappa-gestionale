@@ -79,6 +79,10 @@ class BrtService
      * 2. RIFERIMENTO_MITTENTE_NUMERICO = DDT
      * 3. Entrambi i campi
      */
+    /**
+     * Trova l'ID spedizione BRT dal numero DDT.
+     * Ritorna: ID spedizione, 'MULTI' (più spedizioni, ambiguo), o null (non trovato).
+     */
     public function getSpedizioneIdByDDT(string $numeroDDT): ?string
     {
         try {
@@ -90,36 +94,39 @@ class BrtService
             );
 
             $anno = (int) date('Y');
+            $hadMulti = false;
 
             // Strategia 1: cerca per RIFERIMENTO_MITTENTE_ALFABETICO
-            $id = $this->cercaSpedizione($soap, ['RIFERIMENTO_MITTENTE_ALFABETICO' => $rma]);
+            $id = $this->cercaSpedizione($soap, ['RIFERIMENTO_MITTENTE_ALFABETICO' => $rma], $hadMulti);
             if ($id) return $id;
 
             // Strategia 2: come sopra ma con anno corrente (risolve ambiguità -22)
             $id = $this->cercaSpedizione($soap, [
                 'RIFERIMENTO_MITTENTE_ALFABETICO' => $rma,
                 'SPEDIZIONE_ANNO' => $anno,
-            ]);
+            ], $hadMulti);
             if ($id) return $id;
 
             // Strategia 3: anno precedente (DDT a cavallo d'anno)
             $id = $this->cercaSpedizione($soap, [
                 'RIFERIMENTO_MITTENTE_ALFABETICO' => $rma,
                 'SPEDIZIONE_ANNO' => $anno - 1,
-            ]);
+            ], $hadMulti);
             if ($id) return $id;
 
             // Strategia 4: cerca per RIFERIMENTO_MITTENTE_NUMERICO
-            $id = $this->cercaSpedizione($soap, ['RIFERIMENTO_MITTENTE_NUMERICO' => $rma]);
+            $id = $this->cercaSpedizione($soap, ['RIFERIMENTO_MITTENTE_NUMERICO' => $rma], $hadMulti);
             if ($id) return $id;
 
             // Strategia 5: numerico + anno corrente
             $id = $this->cercaSpedizione($soap, [
                 'RIFERIMENTO_MITTENTE_NUMERICO' => $rma,
                 'SPEDIZIONE_ANNO' => $anno,
-            ]);
+            ], $hadMulti);
+            if ($id) return $id;
 
-            return $id;
+            // Se almeno una strategia ha trovato multipli risultati, segnalalo
+            return $hadMulti ? 'MULTI' : null;
         } catch (\Exception $e) {
             Log::warning('BRT SOAP GetIdSpedizioneByRMA errore', [
                 'ddt' => $numeroDDT,
@@ -132,7 +139,7 @@ class BrtService
     /**
      * Esegue la ricerca SOAP con i parametri dati.
      */
-    protected function cercaSpedizione(SoapClient $soap, array $params): ?string
+    protected function cercaSpedizione(SoapClient $soap, array $params, bool &$hadMulti = false): ?string
     {
         try {
             $args = array_merge(['CLIENTE_ID' => $this->userID], $params);
@@ -144,6 +151,11 @@ class BrtService
 
             if ($esito == 0 && $spedizioneId) {
                 return (string) $spedizioneId;
+            }
+
+            // Esito -22 = più risultati trovati (DDT multi-spedizione)
+            if ($esito == -22) {
+                $hadMulti = true;
             }
 
             return null;
@@ -262,6 +274,14 @@ class BrtService
         $spedizioneId = $this->getSpedizioneIdByDDT($numeroDDT);
         if (!$spedizioneId) {
             return null;
+        }
+
+        // DDT con più spedizioni BRT: non possiamo tracciare singolarmente
+        if ($spedizioneId === 'MULTI') {
+            return [
+                'multi_spedizione' => true,
+                'stato' => 'MULTI-SPEDIZIONE',
+            ];
         }
 
         return $this->getTrackingBySpedizioneId($spedizioneId);
