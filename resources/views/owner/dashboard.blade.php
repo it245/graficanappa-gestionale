@@ -416,6 +416,7 @@ tr:hover td {
     transition: transform 0.2s ease;
 }
 
+
 </style>
     <div class="d-flex align-items-center justify-content-between mb-2 mx-2">
         <div style="display:flex; align-items:center; gap:10px;">
@@ -720,7 +721,7 @@ tr:hover td {
 @endphp
 
     {{-- TABELLA --}}
-    <div id="tableScroll" style="width:100%;">
+    <div id="tableScroll" style="width:100%; overflow-x:auto;">
         <table id="tabellaOrdini" class="table table-bordered table-sm table-striped" style="white-space:nowrap;">
             <thead class="table-dark">
                 <tr>

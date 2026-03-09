@@ -23,8 +23,8 @@ class PrinectSyncService
     {
         $deviceId = env('PRINECT_DEVICE_XL106_ID', '4001');
 
-        // Fetch ultimi 7 giorni di attivita per catturare anche job completati in passato
-        $start = Carbon::now()->subDays(7)->format('Y-m-d\TH:i:sP');
+        // Fetch ultimi 30 giorni di attivita per catturare anche job completati in passato
+        $start = Carbon::now()->subDays(30)->format('Y-m-d\TH:i:sP');
         $end = Carbon::now()->format('Y-m-d\TH:i:sP');
         $data = $this->prinect->getDeviceActivity($deviceId, $start, $end);
 
