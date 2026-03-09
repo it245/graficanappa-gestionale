@@ -840,8 +840,8 @@ tr:hover td {
                     @endphp
                     <td>
                         @if($secNettoOw > 0)
-                            @if($oreNetteOw >= 1)
-                                {{ number_format($oreNetteOw, 1) }}h
+                            @if($secNettoOw >= 3600)
+                                {{ floor($secNettoOw / 3600) }}h {{ floor(($secNettoOw % 3600) / 60) }}m
                             @elseif($secNettoOw >= 60)
                                 {{ floor($secNettoOw / 60) }}m
                             @else
