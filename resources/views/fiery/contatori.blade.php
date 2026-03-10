@@ -133,7 +133,7 @@
 
 {{-- Contatori Live --}}
 <div class="fc">
-    <div class="fc-label">Contatori Click (SNMP)</div>
+    <div class="fc-label">Contatori Impressioni (SNMP) <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:11px;color:#9ca3af;">— ogni lato stampato = 1 impressione (duplex = 2 per foglio)</span></div>
 
     @if(isset($live['errore']))
         <div style="color:#dc2626; font-size:14px;">{{ $live['errore'] }}</div>
@@ -245,7 +245,7 @@
             + <strong>{{ number_format(collect($clickPerCommessa)->sum('fogli_piccolo'), 0, ',', '.') }}</strong> piccoli)
             &middot; <strong>{{ number_format($totColore, 0, ',', '.') }}</strong> colore
             &middot; <strong>{{ number_format($totBN, 0, ',', '.') }}</strong> B/N
-            &middot; {{ count($clickPerCommessa) }} commesse
+            &middot; {{ collect($clickPerCommessa)->where('commessa', '!=', '(Senza commessa)')->count() }} commesse
         </div>
         @endif
     </form>
@@ -272,7 +272,7 @@
             </thead>
             <tbody>
                 @foreach($clickPerCommessa as $c)
-                <tr>
+                <tr style="{{ $c['commessa'] === '(Senza commessa)' ? 'background:#fff8f0; font-style:italic;' : '' }}">
                     <td>{{ $c['commessa'] }}</td>
                     <td>{{ $c['cliente'] }}</td>
                     <td>{{ $c['descrizione'] }}</td>
@@ -314,6 +314,35 @@
             </tfoot>
         </table>
         </div>
+
+        {{-- Confronto SNMP vs Accounting --}}
+        @if(!isset($live['errore']))
+        @php
+            $totImprAccounting = $totColore + $totBN;
+            $totImprSNMP = ($live['colore_grande'] ?? 0) + ($live['nero_grande'] ?? 0) + ($live['colore_piccolo'] ?? 0) + ($live['nero_piccolo'] ?? 0);
+            $delta = $totImprSNMP - $totImprAccounting;
+        @endphp
+        <div style="margin-top:16px; padding:14px 18px; background:#f8f9fa; border:1px solid #e9ecef; border-radius:8px; font-size:12px; color:#495057;">
+            <strong style="color:#1a1a2e;">Confronto SNMP vs Accounting</strong>
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin-top:10px;">
+                <div>
+                    <div style="font-size:10px;font-weight:600;text-transform:uppercase;color:#6c757d;letter-spacing:0.5px;">Impressioni SNMP (totale macchina)</div>
+                    <div style="font-size:18px;font-weight:800;color:#1a1a2e;">{{ number_format($totImprSNMP, 0, ',', '.') }}</div>
+                    <div style="font-size:10px;color:#9ca3af;">Col/G {{ number_format($live['colore_grande'] ?? 0, 0, ',', '.') }} + Nero/G {{ number_format($live['nero_grande'] ?? 0, 0, ',', '.') }} + Col/P {{ number_format($live['colore_piccolo'] ?? 0, 0, ',', '.') }} + Nero/P {{ number_format($live['nero_piccolo'] ?? 0, 0, ',', '.') }}</div>
+                </div>
+                <div>
+                    <div style="font-size:10px;font-weight:600;text-transform:uppercase;color:#6c757d;letter-spacing:0.5px;">Impressioni Accounting (periodo)</div>
+                    <div style="font-size:18px;font-weight:800;color:#1d4ed8;">{{ number_format($totImprAccounting, 0, ',', '.') }}</div>
+                    <div style="font-size:10px;color:#9ca3af;">Colore {{ number_format($totColore, 0, ',', '.') }} + B/N {{ number_format($totBN, 0, ',', '.') }}</div>
+                </div>
+                <div>
+                    <div style="font-size:10px;font-weight:600;text-transform:uppercase;color:#6c757d;letter-spacing:0.5px;">Differenza (non tracciato)</div>
+                    <div style="font-size:18px;font-weight:800;color:{{ $delta > 0 ? '#d97706' : '#059669' }};">{{ $delta > 0 ? '+' : '' }}{{ number_format($delta, 0, ',', '.') }}</div>
+                    <div style="font-size:10px;color:#9ca3af;">{{ $delta > 0 ? 'Calibrazioni, prove, job senza titolo' : 'Allineato' }}</div>
+                </div>
+            </div>
+        </div>
+        @endif
     @endif
 </div>
 </div>

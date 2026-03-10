@@ -449,8 +449,7 @@ class FieryController extends Controller
                 if (!$ts || $ts < $daTs || $ts > $aTs) continue;
 
                 $title = $entry['title'] ?? '';
-                $commessa = $fiery->estraiCommessaDaTitolo($title);
-                if (!$commessa) continue;
+                $commessa = $fiery->estraiCommessaDaTitolo($title) ?: '__senza_commessa__';
 
                 $fogli = (int) ($entry['total sheets printed'] ?? 0);
                 $colore = (int) ($entry['total color pages printed'] ?? 0);
@@ -475,11 +474,11 @@ class FieryController extends Controller
 
                 if (!isset($perCommessa[$commessa])) {
                     // Cerca nel MES
-                    $ordine = Ordine::where('commessa', $commessa)->first();
+                    $ordine = $commessa !== '__senza_commessa__' ? Ordine::where('commessa', $commessa)->first() : null;
                     $perCommessa[$commessa] = [
-                        'commessa' => $commessa,
+                        'commessa' => $commessa === '__senza_commessa__' ? '(Senza commessa)' : $commessa,
                         'cliente' => $ordine->cliente_nome ?? '',
-                        'descrizione' => $ordine ? \Illuminate\Support\Str::limit($ordine->descrizione ?? '', 60) : '',
+                        'descrizione' => $ordine ? \Illuminate\Support\Str::limit($ordine->descrizione ?? '', 60) : ($commessa === '__senza_commessa__' ? 'Test, calibrazione, prove colore' : ''),
                         'fogli' => 0,
                         'colore' => 0,
                         'bn' => 0,
