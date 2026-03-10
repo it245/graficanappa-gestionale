@@ -32,7 +32,9 @@ class FieryController extends Controller
         $accounting = $fiery->getAccountingPerCommessa();
         $jobData = $this->organizzaJobs($jobs, $accounting);
 
-        return view('fiery.dashboard', compact('status', 'jobData'));
+        $snmp = $this->leggiContatoriSnmp();
+
+        return view('fiery.dashboard', compact('status', 'jobData', 'snmp'));
     }
 
     public function statusJson(FieryService $fiery, FierySyncService $syncService)
@@ -60,6 +62,7 @@ class FieryController extends Controller
         $jobs = $fieryService->getJobs();
         $accounting = $fieryService->getAccountingPerCommessa();
         $status['jobs'] = $this->organizzaJobs($jobs, $accounting);
+        $status['snmp'] = $this->leggiContatoriSnmp();
 
         return response()->json($status);
     }
