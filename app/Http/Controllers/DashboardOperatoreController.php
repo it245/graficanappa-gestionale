@@ -84,7 +84,7 @@ class DashboardOperatoreController extends Controller
         // Flag per colonne condizionali
         $nomiReparti = $operatore->reparti->pluck('nome')->map(fn($n) => strtolower($n))->toArray();
         $showColori = !empty(array_intersect($nomiReparti, ['stampa offset']));
-        $showFustella = empty(array_intersect($nomiReparti, ['piegaincolla']));
+        $showFustella = true;
         $showEsterno = !empty(array_intersect($nomiReparti, ['spedizione']));
         $isFustellaOperatore = !empty(array_intersect($nomiReparti, ['fustella piana', 'fustella cilindrica']));
 
