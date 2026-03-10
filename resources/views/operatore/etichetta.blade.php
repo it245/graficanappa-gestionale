@@ -390,6 +390,7 @@ function aggiornaAnteprima() {
                 text: displayData,
                 scale: 10,
                 padding: 4,
+                dontlint: true,
             });
             dmImg.src = canvas.toDataURL('image/png');
             dmImg.style.display = '';
