@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Services\FieryService;
 use App\Http\Services\FierySyncService;
+use App\Models\ContatoreStampante;
 use App\Models\Ordine;
 use App\Models\OrdineFase;
 use Illuminate\Http\Request;
@@ -228,6 +229,65 @@ class FieryController extends Controller
         }
 
         return response()->json($debug, 200, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    }
+
+    /**
+     * Pagina contatori Canon iPR V900 — SNMP live + storico da DB
+     */
+    public function contatori(FieryService $fiery)
+    {
+        // Lettura live SNMP
+        $live = $this->leggiContatoriSnmp();
+
+        // Storico dal DB
+        $storico = ContatoreStampante::where('stampante', 'Canon iPR V900')
+            ->orderByDesc('rilevato_at')
+            ->limit(52) // ultimo anno di snapshot settimanali
+            ->get();
+
+        // Accounting per periodo (da Fiery API)
+        $accountingDisponibile = $fiery->isOnline();
+
+        return view('fiery.contatori', compact('live', 'storico', 'accountingDisponibile'));
+    }
+
+    /**
+     * JSON contatori live per refresh AJAX
+     */
+    public function contatoriJson()
+    {
+        return response()->json($this->leggiContatoriSnmp());
+    }
+
+    /**
+     * Legge contatori via SNMP
+     */
+    private function leggiContatoriSnmp(): array
+    {
+        if (!function_exists('snmpget')) {
+            return ['errore' => 'Estensione SNMP non abilitata'];
+        }
+
+        $ip = config('fiery.host', '192.168.1.206');
+        $base = '.1.3.6.1.4.1.1602.1.11.1.3.1.4.';
+        $oids = [
+            101 => 'totale_1',
+            112 => 'nero_grande',
+            113 => 'nero_piccolo',
+            122 => 'colore_grande',
+            123 => 'colore_piccolo',
+            501 => 'scansioni',
+            471 => 'foglio_lungo',
+        ];
+
+        $result = ['ip' => $ip, 'timestamp' => now()->format('d/m/Y H:i:s')];
+
+        foreach ($oids as $oid => $field) {
+            $val = @snmpget($ip, 'public', $base . $oid);
+            $result[$field] = $val !== false ? (int) preg_replace('/^.*:\s*/', '', $val) : null;
+        }
+
+        return $result;
     }
 
     /**
