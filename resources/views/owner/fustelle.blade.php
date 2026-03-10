@@ -196,7 +196,7 @@
                             <th>Cliente</th>
                             <th>Descrizione</th>
                             <th>Consegna</th>
-                            <th>Stato</th>
+                            <th class="hide-print">Stato</th>
                             <th class="hide-print">Reparto</th>
                         </tr>
                     </thead>
@@ -229,7 +229,7 @@
                                         -
                                     @endif
                                 </td>
-                                <td><span class="badge-stato badge-stato-{{ $c['stato'] }}">{{ $c['stato'] }}</span></td>
+                                <td class="hide-print"><span class="badge-stato badge-stato-{{ $c['stato'] }}">{{ $c['stato'] }}</span></td>
                                 <td class="hide-print">{{ ucfirst($c['fase']) }}</td>
                             </tr>
                         @endforeach
