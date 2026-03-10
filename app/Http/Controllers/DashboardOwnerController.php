@@ -47,12 +47,12 @@ class DashboardOwnerController extends Controller
 
         $data = [];
         foreach ($reparti as $reparto) {
-            // Fasi in lavorazione (stato 1,2) in questo reparto, non esterne
+            // Fasi in corso (stato 2) in questo reparto, non esterne
             $fasi = OrdineFase::query()
                 ->join('ordini', 'ordini.id', '=', 'ordine_fasi.ordine_id')
                 ->join('fasi_catalogo', 'ordine_fasi.fase_catalogo_id', '=', 'fasi_catalogo.id')
                 ->where('fasi_catalogo.reparto_id', $reparto->id)
-                ->whereIn('ordine_fasi.stato', [1, 2])
+                ->where('ordine_fasi.stato', 2)
                 ->where(fn($q) => $q->where('ordine_fasi.esterno', false)->orWhereNull('ordine_fasi.esterno'))
                 ->whereNull('ordine_fasi.deleted_at')
                 ->select([
