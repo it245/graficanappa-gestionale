@@ -396,10 +396,8 @@ function aggiornaAnteprima() {
             console.warn('gs1datamatrix failed, trying datamatrix:', e.message || e);
             // Fallback: datamatrix standard con FNC1 + separatori GS corretti
             try {
-                var fnc1 = '\xF1';
-                var gs = '\x1D'; // Group Separator tra AI variabili
-                var bwipData = fnc1 + '01' + gtin;
-                if (qty) bwipData += '30' + qty + gs; // GS dopo AI(30) variabile
+                var bwipData = '^FNC101' + gtin;
+                if (qty) bwipData += '30' + qty + '^FNC1'; // FNC1 come separatore tra AI variabili
                 if (lottoClean) bwipData += '10' + lottoClean;
                 bwipjs.toCanvas(canvas, {
                     bcid: 'datamatrix',
