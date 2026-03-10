@@ -367,10 +367,8 @@ function aggiornaAnteprima() {
     var canvas = document.getElementById('datamatrix');
     var dmImg = document.getElementById('datamatrix-img');
     if (ean && ean.length >= 4) {
-        // GTIN per barcode: sostituisci A con 0 per GS1 compliance (14 cifre numeriche)
-        // Testo visibile: mostra EAN originale con A
-        var eanOriginal = ean.trim();
-        var gtin = eanOriginal.replace(/^[Aa]/, '0').replace(/[^0-9]/g, '');
+        // GTIN: mantieni la A nel codice EAN, padding a 14 caratteri
+        var gtin = ean.trim();
         while (gtin.length < 14) gtin = '0' + gtin;
         if (gtin.length > 14) gtin = gtin.substring(0, 14);
 
