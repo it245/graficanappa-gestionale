@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('viewport')
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=1400, initial-scale=0.3">
 @endsection
 
 @section('content')
