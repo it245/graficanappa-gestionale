@@ -16,7 +16,31 @@
         box-shadow: 0 4px 12px rgba(0,0,0,.15); z-index: 100;
     }
 
-    .fustelle-container { padding: 16px; max-width: 1200px; margin: 0 auto; }
+    .fustelle-layout { display: flex; gap: 0; min-height: calc(100vh - 56px); }
+
+    .fustelle-sidebar {
+        width: 240px; min-width: 240px; background: #f8f9fa; border-right: 1px solid #dee2e6;
+        padding: 16px 0; overflow-y: auto; max-height: calc(100vh - 56px); position: sticky; top: 0;
+    }
+    .sidebar-title {
+        font-size: 0.8rem; font-weight: 700; color: #6c757d; text-transform: uppercase;
+        letter-spacing: .5px; padding: 0 16px 8px; border-bottom: 1px solid #dee2e6; margin-bottom: 4px;
+    }
+    .sidebar-item {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 8px 16px; cursor: pointer; font-size: 0.85rem; border-left: 3px solid transparent;
+        transition: background .15s;
+    }
+    .sidebar-item:hover { background: #e9ecef; }
+    .sidebar-item.active { background: #e2e6ea; border-left-color: #0d6efd; font-weight: 700; }
+    .sidebar-item .fs-name { font-family: 'Courier New', monospace; font-weight: 600; color: #1a1a2e; }
+    .sidebar-item .fs-count {
+        background: #0d6efd; color: #fff; font-size: 0.75rem; font-weight: 700;
+        padding: 1px 7px; border-radius: 10px; min-width: 22px; text-align: center;
+    }
+    .sidebar-item.scaduta-item .fs-count { background: #dc3545; }
+
+    .fustelle-container { padding: 16px; flex: 1; min-width: 0; }
 
     .fs-card {
         background: #fff; border: 1px solid #dee2e6; border-radius: 8px;
@@ -98,6 +122,28 @@
     </div>
 </div>
 
+<div class="fustelle-layout">
+
+{{-- SIDEBAR: elenco fustelle --}}
+<div class="fustelle-sidebar">
+    <div class="sidebar-title">Fustelle ({{ count($fustelleMap) }})</div>
+    <div class="sidebar-item {{ '' }}" onclick="filtroSidebar('')" data-sidebar-codice="" id="sidebarAll">
+        <span style="font-weight:600; color:#333;">Tutte</span>
+        <span class="fs-count" style="background:#6c757d;">{{ count($fustelleMap) }}</span>
+    </div>
+    @foreach($fustelleMap as $codice => $commesse)
+        @php
+            $haScadute = collect($commesse)->contains(fn($c) => $c['data_consegna'] && \Carbon\Carbon::parse($c['data_consegna'])->lt(\Carbon\Carbon::today()));
+        @endphp
+        <div class="sidebar-item {{ $haScadute ? 'scaduta-item' : '' }}"
+             onclick="filtroSidebar('{{ $codice }}')" data-sidebar-codice="{{ $codice }}">
+            <span class="fs-name">{{ $codice }}</span>
+            <span class="fs-count">{{ count($commesse) }}</span>
+        </div>
+    @endforeach
+</div>
+
+{{-- CONTENUTO PRINCIPALE --}}
 <div class="fustelle-container">
     <h2 style="margin-bottom: 4px;">Fustelle</h2>
     <p style="color: #6c757d; margin-bottom: 16px;">Fustelle da utilizzare nei prossimi 30 giorni</p>
@@ -200,6 +246,7 @@
         </div>
     @endforelse
 </div>
+</div> {{-- fine fustelle-layout --}}
 
 <script>
 document.getElementById('operatoreInfo').addEventListener('click', function(){
@@ -212,8 +259,27 @@ document.addEventListener('click', function(e){
     }
 });
 
+function filtroSidebar(codice) {
+    // Aggiorna sidebar active
+    document.querySelectorAll('.sidebar-item').forEach(function(item) {
+        item.classList.toggle('active', item.dataset.sidebarCodice === codice);
+    });
+    // Sync dropdown
+    document.getElementById('filtroFustella').value = codice;
+    filtraFustelle(codice);
+    // Scroll alla card se selezionata
+    if (codice) {
+        var card = document.querySelector('.fs-card[data-fustella="' + codice + '"]');
+        if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
 function filtraFustelle(codice) {
     var clienteFiltro = (document.getElementById('filtroCliente').value || '').toLowerCase();
+    // Sync sidebar
+    document.querySelectorAll('.sidebar-item').forEach(function(item) {
+        item.classList.toggle('active', item.dataset.sidebarCodice === codice);
+    });
     document.querySelectorAll('.fs-card').forEach(function(card) {
         var matchCodice = !codice || card.dataset.fustella === codice;
         var matchCliente = true;
