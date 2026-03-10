@@ -463,4 +463,17 @@ class DashboardSpedizioneController extends Controller
 
         return response()->json(['success' => true]);
     }
+
+    /**
+     * Restituisce l'ultimo updated_at delle note spedizione di oggi.
+     * Usato per polling notifiche owner.
+     */
+    public function noteUltimoAggiornamento()
+    {
+        $nota = NotaSpedizione::where('data', now()->toDateString())->first();
+        return response()->json([
+            'updated_at' => $nota ? $nota->updated_at->toIso8601String() : null,
+            'contenuto'  => $nota->contenuto ?? '',
+        ]);
+    }
 }

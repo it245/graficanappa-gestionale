@@ -637,6 +637,7 @@ tr:hover td {
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
             </svg>
             <span>Note Consegne</span>
+            <span id="noteConsegneBadge" style="display:none; background:#dc3545; color:#fff; border-radius:50%; width:20px; height:20px; font-size:11px; font-weight:bold; text-align:center; line-height:20px; margin-left:6px;">!</span>
         </a>
 
         {{-- Sync Onda --}}
@@ -1789,6 +1790,84 @@ document.addEventListener('click', function(e){
         document.getElementById('operatorePopup').style.display='none';
     }
 });
+
+// === Notifiche Note Consegne ===
+var _noteLastUpdate = localStorage.getItem('noteConsegne_lastUpdate') || '';
+var _noteCheckInterval = 30000; // 30 secondi
+
+// Chiedi permesso notifiche browser
+if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+}
+
+function checkNoteConsegne() {
+    fetch('{{ route("owner.noteSpedizioneCheck") }}', {
+        headers: {'Accept': 'application/json'}
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (d.updated_at && d.updated_at !== _noteLastUpdate) {
+            if (_noteLastUpdate !== '') {
+                // Nuova modifica: mostra tutte le notifiche
+                // 1. Badge rosso
+                document.getElementById('noteConsegneBadge').style.display = 'inline-block';
+
+                // 2. Suono
+                try {
+                    var ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    var osc = ctx.createOscillator();
+                    var gain = ctx.createGain();
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.frequency.value = 800;
+                    gain.gain.value = 0.3;
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.3);
+                } catch(e) {}
+
+                // 3. Notifica browser
+                if ('Notification' in window && Notification.permission === 'granted') {
+                    var preview = (d.contenuto || '').substring(0, 100);
+                    new Notification('Note Consegne aggiornate', {
+                        body: preview || 'La logistica ha aggiornato le note consegne',
+                        icon: '/favicon.ico'
+                    });
+                }
+
+                // 4. Toast popup
+                showNoteToast('La logistica ha aggiornato le note consegne');
+            }
+            _noteLastUpdate = d.updated_at;
+            localStorage.setItem('noteConsegne_lastUpdate', d.updated_at);
+        }
+    })
+    .catch(() => {});
+}
+
+function showNoteToast(msg) {
+    var toast = document.createElement('div');
+    toast.innerHTML = '<strong>Note Consegne</strong><br>' + msg;
+    toast.style.cssText = 'position:fixed; top:20px; right:20px; z-index:9999; background:#0d6efd; color:#fff; padding:15px 20px; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.3); font-size:14px; cursor:pointer; max-width:350px; animation:slideIn 0.3s ease;';
+    toast.onclick = function() {
+        toast.remove();
+        document.getElementById('noteConsegneBadge').style.display = 'none';
+        // Apri modale note
+        var modal = new bootstrap.Modal(document.getElementById('modalNoteSpedizione'));
+        modal.show();
+        caricaNoteSpedizione();
+    };
+    document.body.appendChild(toast);
+    setTimeout(function() { if (toast.parentNode) toast.remove(); }, 8000);
+}
+
+// Nascondi badge quando apre le note
+document.getElementById('modalNoteSpedizione').addEventListener('show.bs.modal', function() {
+    document.getElementById('noteConsegneBadge').style.display = 'none';
+});
+
+// Avvia polling
+checkNoteConsegne();
+setInterval(checkNoteConsegne, _noteCheckInterval);
 
 // === Note Consegne (readonly per owner) ===
 function caricaNoteSpedizione() {
