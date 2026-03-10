@@ -367,18 +367,19 @@ function aggiornaAnteprima() {
     var canvas = document.getElementById('datamatrix');
     var dmImg = document.getElementById('datamatrix-img');
     if (ean && ean.length >= 4) {
-        // GTIN: tenere EAN così com'è (può contenere lettere es. A8022470871951)
-        // Pad a 14 caratteri con 0 davanti se serve
-        var gtin = ean.trim();
+        // GTIN: solo numerico, pad a 14 cifre
+        var gtin = ean.trim().replace(/[^0-9]/g, '');
         while (gtin.length < 14) gtin = '0' + gtin;
         if (gtin.length > 14) gtin = gtin.substring(0, 14);
 
-        // AI(30) = quantità, zero-padded a 8 cifre
-        var qty = pzcassa ? ('00000000' + pzcassa).slice(-8) : '';
+        // AI(30) = quantità variabile (NO zero-padding, max 8 cifre)
+        var qty = pzcassa ? String(parseInt(pzcassa, 10)) : '';
         // Lotto senza trattino
         var lottoClean = lotto ? lotto.replace(/-/g, '') : '';
 
-        // Costruisci stringa GS1: (01)GTIN (30)QTY (10)LOTTO
+        // Costruisci stringa GS1 con parentesi per bwip-js gs1datamatrix
+        // AI(01) = GTIN fisso 14 cifre, AI(30) = qta variabile, AI(10) = lotto variabile
+        // Tra AI variabili serve separatore GS (\x1D) — bwip-js lo gestisce con le parentesi
         var displayData = '(01)' + gtin;
         if (qty) displayData += '(30)' + qty;
         if (lottoClean) displayData += '(10)' + lottoClean;
@@ -395,17 +396,18 @@ function aggiornaAnteprima() {
             document.getElementById('print-ean').textContent = displayData.replace(/[()]/g, '');
         } catch(e) {
             console.warn('gs1datamatrix failed, trying datamatrix:', e.message || e);
-            // Fallback: datamatrix standard con FNC1 manuale
+            // Fallback: datamatrix standard con FNC1 + separatori GS corretti
             try {
                 var fnc1 = '\xF1';
+                var gs = '\x1D'; // Group Separator tra AI variabili
                 var bwipData = fnc1 + '01' + gtin;
-                if (qty) bwipData += '30' + qty;
+                if (qty) bwipData += '30' + qty + gs; // GS dopo AI(30) variabile
                 if (lottoClean) bwipData += '10' + lottoClean;
                 bwipjs.toCanvas(canvas, {
                     bcid: 'datamatrix',
                     text: bwipData,
-                    scale: 5,
-                    padding: 2,
+                    scale: 10,
+                    padding: 4,
                     parsefnc: true,
                 });
                 dmImg.src = canvas.toDataURL('image/png');
