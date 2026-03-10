@@ -19,24 +19,24 @@
     .fustelle-layout { display: flex; gap: 0; min-height: calc(100vh - 56px); }
 
     .fustelle-sidebar {
-        width: 240px; min-width: 240px; background: #f8f9fa; border-right: 1px solid #dee2e6;
+        width: 280px; min-width: 280px; background: #f8f9fa; border-right: 1px solid #dee2e6;
         padding: 16px 0; overflow-y: auto; max-height: calc(100vh - 56px); position: sticky; top: 0;
     }
     .sidebar-title {
-        font-size: 0.8rem; font-weight: 700; color: #6c757d; text-transform: uppercase;
-        letter-spacing: .5px; padding: 0 16px 8px; border-bottom: 1px solid #dee2e6; margin-bottom: 4px;
+        font-size: 1rem; font-weight: 700; color: #6c757d; text-transform: uppercase;
+        letter-spacing: .5px; padding: 0 16px 10px; border-bottom: 1px solid #dee2e6; margin-bottom: 4px;
     }
     .sidebar-item {
         display: flex; justify-content: space-between; align-items: center;
-        padding: 8px 16px; cursor: pointer; font-size: 0.85rem; border-left: 3px solid transparent;
+        padding: 12px 16px; cursor: pointer; font-size: 1.05rem; border-left: 4px solid transparent;
         transition: background .15s;
     }
     .sidebar-item:hover { background: #e9ecef; }
     .sidebar-item.active { background: #e2e6ea; border-left-color: #0d6efd; font-weight: 700; }
-    .sidebar-item .fs-name { font-family: 'Courier New', monospace; font-weight: 600; color: #1a1a2e; }
+    .sidebar-item .fs-name { font-family: 'Courier New', monospace; font-weight: 600; color: #1a1a2e; font-size: 1.1rem; }
     .sidebar-item .fs-count {
-        background: #0d6efd; color: #fff; font-size: 0.75rem; font-weight: 700;
-        padding: 1px 7px; border-radius: 10px; min-width: 22px; text-align: center;
+        background: #0d6efd; color: #fff; font-size: 0.9rem; font-weight: 700;
+        padding: 2px 9px; border-radius: 10px; min-width: 26px; text-align: center;
     }
     .sidebar-item.scaduta-item .fs-count { background: #dc3545; }
 
