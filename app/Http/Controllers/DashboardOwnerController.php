@@ -45,8 +45,8 @@ class DashboardOwnerController extends Controller
     {
         // Ordine ciclo produttivo
         $ordineReparti = [
-            'prestampa', 'stampa offset', 'digitale', 'plastificazione',
-            'stampa a caldo', 'fustella', 'piegaincolla', 'legatoria',
+            'prestampa', 'stampa offset', 'digitale', 'stampa a caldo',
+            'fustella', 'plastificazione', 'piegaincolla', 'legatoria',
             'finitura digitale', 'produzione', 'magazzino', 'spedizione', 'esterno',
         ];
         $reparti = Reparto::all()->sortBy(function ($r) use ($ordineReparti) {
