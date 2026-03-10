@@ -178,11 +178,7 @@
                     <td style="text-align:center" class="{{ $consClass }}">
                         {{ $c->consegna ? \Carbon\Carbon::parse($c->consegna)->format('d/m') : '-' }}
                     </td>
-                    <td style="text-align:center">
-                        @for($i = 0; $i < $c->n_attesa; $i++)<span class="stato-dot attesa" title="In attesa"></span>@endfor
-                        @for($i = 0; $i < $c->n_inizio; $i++)<span class="stato-dot inizio" title="In lavorazione"></span>@endfor
-                        @for($i = 0; $i < $c->n_terminato; $i++)<span class="stato-dot terminato" title="Terminato"></span>@endfor
-                    </td>
+                    <td style="text-align:center;font-weight:600;">2</td>
                     <td style="text-align:right;font-family:monospace;font-size:12px;">{{ number_format($c->priorita, 1) }}</td>
                     <td>
                         <div class="fasi-tags">
