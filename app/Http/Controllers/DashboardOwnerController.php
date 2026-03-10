@@ -43,7 +43,16 @@ class DashboardOwnerController extends Controller
      */
     public function repartiOverview(Request $request)
     {
-        $reparti = Reparto::orderBy('nome')->get();
+        // Ordine ciclo produttivo
+        $ordineReparti = [
+            'prestampa', 'stampa offset', 'digitale', 'plastificazione',
+            'stampa a caldo', 'fustella', 'piegaincolla', 'legatoria',
+            'finitura digitale', 'produzione', 'magazzino', 'spedizione', 'esterno',
+        ];
+        $reparti = Reparto::all()->sortBy(function ($r) use ($ordineReparti) {
+            $pos = array_search(strtolower($r->nome), $ordineReparti);
+            return $pos !== false ? $pos : 999;
+        });
 
         $data = [];
         foreach ($reparti as $reparto) {
