@@ -54,6 +54,19 @@
     <td>{{ $fase->ordine->carta ?? '-' }}</td>
     <td>{{ $fase->ordine->qta_carta ?? '-' }}</td>
     <td>{{ $fase->ordine->UM_carta ?? '-' }}</td>
-    <td>{{ $fase->note_pulita ?? $fase->note ?? '-' }}</td>
+    <td>
+        {{ $fase->note_pulita ?? $fase->note ?? '-' }}
+        @php
+            $nfs = $fase->ordine->note_fasi_successive ?? '';
+            $righeNfs = $nfs ? json_decode($nfs, true) : [];
+        @endphp
+        @if(!empty($righeNfs) && is_array($righeNfs))
+            <br><small class="text-primary" title="Info generali">
+                @foreach($righeNfs as $r)
+                    <em>{{ $r['reparto'] ?? '' }}: {{ $r['testo'] ?? '' }}</em>@if(!$loop->last) | @endif
+                @endforeach
+            </small>
+        @endif
+    </td>
     <td id="timeout-{{ $fase->id }}">{{ $fase->timeout ?? '-' }}</td>
 </tr>

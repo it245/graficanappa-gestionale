@@ -136,13 +136,9 @@
                     </div>
                     <div class="card-body d-flex align-items-start gap-3">
                         <div class="flex-grow-1">
-                            <label for="note-fase-{{ $fase->id }}"><strong>Note Operatore:</strong></label>
-                            <textarea id="note-fase-{{ $fase->id }}" class="form-control" rows="2"
-                                      onblur="aggiornaCampo({{ $fase->id }}, 'note', this.value)">{{ $fase->note ?? '' }}</textarea>
-
-                            {{-- Info per fasi successive --}}
-                            <div class="mt-3 border-top pt-2">
-                                <label><strong>Info per fasi successive:</strong></label>
+                            {{-- Informazioni generali / per fasi successive --}}
+                            <div>
+                                <label><strong>Informazioni generali / per fasi successive:</strong></label>
                                 @php
                                     $noteFS = $ordine->note_fasi_successive ?? '';
                                     $righeFS = $noteFS ? json_decode($noteFS, true) : [];
@@ -163,7 +159,7 @@
                                 @endif
                                 <div class="d-flex gap-2">
                                     <textarea id="nuova-nota-fs-{{ $fase->id }}" class="form-control form-control-sm" rows="1"
-                                              placeholder="Scrivi una nota per le fasi successive..."></textarea>
+                                              placeholder="Scrivi una nota..."></textarea>
                                     <button type="button" class="btn btn-sm btn-outline-primary" style="white-space:nowrap"
                                             onclick="inviaNotaFS({{ $ordine->id }}, {{ $fase->id }})">Invia</button>
                                 </div>
