@@ -307,7 +307,7 @@
         <div class="qr-right">
             <canvas id="datamatrix" style="display:none;"></canvas>
             <img id="datamatrix-img" style="width:30mm; height:30mm; image-rendering:pixelated;" />
-            <span class="ean-text" id="print-ean" style="font-size:7pt; max-width:30mm; word-break:break-all; text-align:center;"></span>
+            <span class="ean-text" id="print-ean" style="font-size:5pt; white-space:nowrap; text-align:center;"></span>
         </div>
         @endif
     </div>
