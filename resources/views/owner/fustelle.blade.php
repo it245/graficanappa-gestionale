@@ -103,9 +103,7 @@
         .fs-header { background: #eee !important; }
         .fs-body { display: block !important; }
         body { font-size: 12px; }
-        h2.print-title { display: block !important; }
     }
-    h2.print-title { display: none; }
 </style>
 
 <div class="top-bar">
@@ -118,8 +116,6 @@
         <button class="btn-stampa" onclick="window.print()">Stampa</button>
     </div>
 </div>
-
-<h2 class="print-title" style="padding:16px 0 0 16px;">Fustelle — prossimi 30 giorni</h2>
 
 <div class="fustelle-layout">
 
