@@ -3,7 +3,11 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    @hasSection('viewport')
+        @yield('viewport')
+    @else
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    @endif
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="op-token" content="{{ $opToken ?? '' }}">
     <title>MES GRAFICA NAPPA</title>

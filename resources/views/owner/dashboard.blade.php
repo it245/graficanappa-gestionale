@@ -1,5 +1,9 @@
 @extends('layouts.app')
 
+@section('viewport')
+<meta name="viewport" content="width=1400, initial-scale=0.3">
+@endsection
+
 @section('content')
 <div class="container-fluid px-0">
 <style>
