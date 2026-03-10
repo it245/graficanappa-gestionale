@@ -48,6 +48,10 @@ h2, p {
     height: 35px;
     cursor: pointer;
     transition: transform 0.15s ease;
+    touch-action: manipulation;
+}
+.action-icons a, .action-icons button, .sidebar-menu a {
+    touch-action: manipulation;
 }
 .action-icons img:hover {
     transform: scale(1.15);
@@ -69,6 +73,7 @@ h2, p {
     min-height: 44px;
     align-items: center;
     justify-content: center;
+    touch-action: manipulation;
 }
 .hamburger-btn:hover { transform: scale(1.1); }
 .hamburger-btn span {
