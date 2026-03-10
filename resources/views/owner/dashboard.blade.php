@@ -860,6 +860,16 @@ tr:hover td {
                     @endphp
                     <td>{{ $fornitoreEsterno ?? '-' }}</td>
                     <td>
+                        @php
+                            $nfsOwner = $fase->ordine->note_fasi_successive ?? '';
+                            $righeNfsOwner = $nfsOwner ? json_decode($nfsOwner, true) : [];
+                        @endphp
+                        @if(!empty($righeNfsOwner) && is_array($righeNfsOwner))
+                            @foreach($righeNfsOwner as $r)
+                                {{ $r['testo'] ?? '' }}@if(!$loop->last) — @endif
+                            @endforeach
+                            @if($notePulitaOwner)<br>@endif
+                        @endif
                         <span contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'note', this.innerText)">{{ $notePulitaOwner ?? '-' }}</span>
                     </td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_inizio', this.innerText)">{{ formatItalianDate($fase->data_inizio, true) }}</td>
