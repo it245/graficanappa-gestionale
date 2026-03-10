@@ -395,7 +395,7 @@ function aggiornaAnteprima() {
             });
             dmImg.src = canvas.toDataURL('image/png');
             dmImg.style.display = '';
-            document.getElementById('print-ean').textContent = displayData.replace(/[()]/g, '');
+            document.getElementById('print-ean').textContent = ean.trim();
         } catch(e) {
             console.warn('gs1datamatrix failed, trying datamatrix:', e.message || e);
             // Fallback: datamatrix standard con FNC1 + separatori GS corretti
@@ -414,7 +414,7 @@ function aggiornaAnteprima() {
                 });
                 dmImg.src = canvas.toDataURL('image/png');
                 dmImg.style.display = '';
-                document.getElementById('print-ean').textContent = displayData.replace(/[()]/g, '');
+                document.getElementById('print-ean').textContent = ean.trim();
             } catch(e2) {
                 console.error('DataMatrix fallback error:', e2);
                 dmImg.style.display = 'none';
