@@ -1604,8 +1604,9 @@ document.addEventListener('DOMContentLoaded', () => {
             <head>
                 <title>Stampa</title>
                 <style>
-                    table { border-collapse: collapse; }
-                    td, th { border:1px solid #ccc; padding:4px; }
+                    table { border-collapse: collapse; width: 100%; table-layout: auto; }
+                    td, th { border:1px solid #ccc; padding:6px 8px; font-size:11px; white-space: normal; word-wrap: break-word; }
+                    @page { size: landscape; margin: 10mm; }
                 </style>
             </head>
             <body><table>
