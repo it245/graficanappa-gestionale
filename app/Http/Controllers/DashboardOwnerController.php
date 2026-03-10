@@ -113,9 +113,10 @@ class DashboardOwnerController extends Controller
         // Rimuovi reparti senza commesse attive
         $data = collect($data)->filter(fn($r) => $r->totale > 0)->values();
 
+        $totReparti = $reparti->count();
         $opToken = request()->query('op_token') ?? request()->attributes->get('op_token');
 
-        return view('owner.reparti_overview', compact('data', 'opToken'));
+        return view('owner.reparti_overview', compact('data', 'opToken', 'totReparti'));
     }
 
     private $fasiInfo = [

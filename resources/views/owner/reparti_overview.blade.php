@@ -264,7 +264,7 @@
             <div>
                 <div class="kpi-label">Reparti attivi</div>
                 <div class="kpi-value">{{ $nReparti }}</div>
-                <div class="kpi-sub">su 12 totali</div>
+                <div class="kpi-sub">su {{ $totReparti }} totali</div>
             </div>
             <div class="kpi-icon" style="background:#eff6ff;">
                 <svg viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
