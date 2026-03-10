@@ -367,8 +367,12 @@ function aggiornaAnteprima() {
     var canvas = document.getElementById('datamatrix');
     var dmImg = document.getElementById('datamatrix-img');
     if (ean && ean.length >= 4) {
-        // EAN/GTIN: usa il codice originale (la A fa parte dell'EAN)
-        var gtin = ean.trim();
+        // GTIN per barcode: sostituisci A con 0 per GS1 compliance (14 cifre numeriche)
+        // Testo visibile: mostra EAN originale con A
+        var eanOriginal = ean.trim();
+        var gtin = eanOriginal.replace(/^[Aa]/, '0').replace(/[^0-9]/g, '');
+        while (gtin.length < 14) gtin = '0' + gtin;
+        if (gtin.length > 14) gtin = gtin.substring(0, 14);
 
         // AI(30) = quantità variabile (NO zero-padding, max 8 cifre)
         var qty = pzcassa ? String(parseInt(pzcassa, 10)) : '';
@@ -376,8 +380,6 @@ function aggiornaAnteprima() {
         var lottoClean = lotto ? lotto.replace(/-/g, '') : '';
 
         // Costruisci stringa GS1 con parentesi per bwip-js gs1datamatrix
-        // AI(01) = GTIN fisso 14 cifre, AI(30) = qta variabile, AI(10) = lotto variabile
-        // Tra AI variabili serve separatore GS (\x1D) — bwip-js lo gestisce con le parentesi
         var displayData = '(01)' + gtin;
         if (qty) displayData += '(30)' + qty;
         if (lottoClean) displayData += '(10)' + lottoClean;
@@ -391,13 +393,13 @@ function aggiornaAnteprima() {
             });
             dmImg.src = canvas.toDataURL('image/png');
             dmImg.style.display = '';
-            document.getElementById('print-ean').textContent = displayData.replace(/[()]/g, '');
+            document.getElementById('print-ean').textContent = eanOriginal;
         } catch(e) {
             console.warn('gs1datamatrix failed, trying datamatrix:', e.message || e);
-            // Fallback: datamatrix standard con FNC1 + separatori GS corretti
+            // Fallback: datamatrix con FNC1
             try {
                 var bwipData = '^FNC101' + gtin;
-                if (qty) bwipData += '30' + qty + '^FNC1'; // FNC1 come separatore tra AI variabili
+                if (qty) bwipData += '30' + qty + '^FNC1';
                 if (lottoClean) bwipData += '10' + lottoClean;
                 bwipjs.toCanvas(canvas, {
                     bcid: 'datamatrix',
@@ -408,24 +410,10 @@ function aggiornaAnteprima() {
                 });
                 dmImg.src = canvas.toDataURL('image/png');
                 dmImg.style.display = '';
-                document.getElementById('print-ean').textContent = displayData.replace(/[()]/g, '');
+                document.getElementById('print-ean').textContent = eanOriginal;
             } catch(e2) {
-                console.warn('datamatrix FNC1 failed, trying plain:', e2.message || e2);
-                // Fallback finale: datamatrix semplice con solo EAN
-                try {
-                    bwipjs.toCanvas(canvas, {
-                        bcid: 'datamatrix',
-                        text: ean.trim(),
-                        scale: 10,
-                        padding: 4,
-                    });
-                    dmImg.src = canvas.toDataURL('image/png');
-                    dmImg.style.display = '';
-                    document.getElementById('print-ean').textContent = displayData.replace(/[()]/g, '');
-                } catch(e3) {
-                    console.error('DataMatrix plain error:', e3);
-                    dmImg.style.display = 'none';
-                }
+                console.error('DataMatrix fallback error:', e2);
+                dmImg.style.display = 'none';
             }
         }
     } else {
