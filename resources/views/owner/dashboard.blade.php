@@ -1793,7 +1793,7 @@ document.addEventListener('click', function(e){
 
 // === Notifiche Note Consegne ===
 var _noteLastUpdate = localStorage.getItem('noteConsegne_lastUpdate') || '';
-var _noteCheckInterval = 30000; // 30 secondi
+var _noteCheckInterval = 10000; // 10 secondi
 
 // Chiedi permesso notifiche browser
 if ('Notification' in window && Notification.permission === 'default') {
