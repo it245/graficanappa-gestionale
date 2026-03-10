@@ -173,11 +173,12 @@
         @if($isFustellaOperatore ?? false)
             <a href="{{ route('operatore.fustelle', ['op_token' => request('op_token')]) }}"
                title="Fustelle"
-               style="font-size:22px; text-decoration:none; margin-right:8px;">&#9881;</a>
+               style="font-size:28px; text-decoration:none; margin-right:15px;">&#9881;</a>
+        @else
+            <span title="Storico fasi terminate"
+                  style="font-size:28px; cursor:pointer; user-select:none; margin-right:15px;"
+                  data-bs-toggle="offcanvas" data-bs-target="#offcanvasStorico">&#9776;</span>
         @endif
-        <span title="Storico fasi terminate"
-              style="font-size:28px; cursor:pointer; user-select:none; margin-right:15px;"
-              data-bs-toggle="offcanvas" data-bs-target="#offcanvasStorico">&#9776;</span>
     </div>
 </div>
 
