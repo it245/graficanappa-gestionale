@@ -125,8 +125,20 @@
         @endif
     </div>
 
+    <div style="margin-bottom: 16px; display:flex; align-items:center; gap:10px;">
+        <label for="filtroFustella" style="font-weight:600; font-size:0.9rem;">Filtra fustella:</label>
+        <select id="filtroFustella" onchange="filtraFustelle(this.value)" style="padding:6px 12px; border:1px solid #ced4da; border-radius:6px; font-size:0.9rem; min-width:180px;">
+            <option value="">Tutte ({{ $totFustelle }})</option>
+            @foreach($fustelleMap as $cod => $comm)
+                <option value="{{ $cod }}">{{ $cod }} ({{ count($comm) }})</option>
+            @endforeach
+        </select>
+        <input type="text" id="filtroCliente" oninput="filtraFustelle(document.getElementById('filtroFustella').value)" placeholder="Cerca cliente..." style="padding:6px 12px; border:1px solid #ced4da; border-radius:6px; font-size:0.9rem; width:200px;">
+        <button onclick="document.getElementById('filtroFustella').value=''; document.getElementById('filtroCliente').value=''; filtraFustelle('');" style="padding:6px 12px; border:1px solid #adb5bd; background:#fff; border-radius:6px; cursor:pointer; font-size:0.9rem;">Reset</button>
+    </div>
+
     @forelse($fustelleMap as $codice => $commesse)
-        <div class="fs-card">
+        <div class="fs-card" data-fustella="{{ $codice }}">
             <div class="fs-header" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? '' : 'none'">
                 <span class="fs-code">{{ $codice }}</span>
                 <span class="fs-badge">{{ count($commesse) }} commess{{ count($commesse) === 1 ? 'a' : 'e' }}</span>
@@ -199,5 +211,22 @@ document.addEventListener('click', function(e){
         document.getElementById('operatorePopup').style.display='none';
     }
 });
+
+function filtraFustelle(codice) {
+    var clienteFiltro = (document.getElementById('filtroCliente').value || '').toLowerCase();
+    document.querySelectorAll('.fs-card').forEach(function(card) {
+        var matchCodice = !codice || card.dataset.fustella === codice;
+        var matchCliente = true;
+        if (clienteFiltro) {
+            matchCliente = false;
+            card.querySelectorAll('tbody tr').forEach(function(row) {
+                if (row.cells[1] && row.cells[1].textContent.toLowerCase().indexOf(clienteFiltro) !== -1) {
+                    matchCliente = true;
+                }
+            });
+        }
+        card.style.display = (matchCodice && matchCliente) ? '' : 'none';
+    });
+}
 </script>
 @endsection
