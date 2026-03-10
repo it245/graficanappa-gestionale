@@ -391,7 +391,7 @@ function aggiornaAnteprima() {
             });
             dmImg.src = canvas.toDataURL('image/png');
             dmImg.style.display = '';
-            document.getElementById('print-ean').textContent = displayData;
+            document.getElementById('print-ean').textContent = displayData.replace(/[()]/g, '');
         } catch(e) {
             console.warn('gs1datamatrix failed, trying datamatrix:', e.message || e);
             // Fallback: datamatrix standard con FNC1 + separatori GS corretti
@@ -410,7 +410,7 @@ function aggiornaAnteprima() {
                 });
                 dmImg.src = canvas.toDataURL('image/png');
                 dmImg.style.display = '';
-                document.getElementById('print-ean').textContent = displayData;
+                document.getElementById('print-ean').textContent = displayData.replace(/[()]/g, '');
             } catch(e2) {
                 console.warn('datamatrix FNC1 failed, trying plain:', e2.message || e2);
                 // Fallback finale: datamatrix semplice con solo EAN
@@ -423,7 +423,7 @@ function aggiornaAnteprima() {
                     });
                     dmImg.src = canvas.toDataURL('image/png');
                     dmImg.style.display = '';
-                    document.getElementById('print-ean').textContent = displayData;
+                    document.getElementById('print-ean').textContent = displayData.replace(/[()]/g, '');
                 } catch(e3) {
                     console.error('DataMatrix plain error:', e3);
                     dmImg.style.display = 'none';
