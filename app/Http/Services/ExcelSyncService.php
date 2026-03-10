@@ -551,6 +551,11 @@ class ExcelSyncService
             return sprintf('%04d-%02d-%02d %02d:%02d:%02d', $m[3], $m[2], $m[1], $m[4], $m[5], $m[6]);
         }
 
+        // Formato dd/mm/yyyy HH:ii (senza secondi)
+        if (preg_match('#^(\d{1,2})/(\d{1,2})/(\d{4})\s+(\d{1,2}):(\d{2})$#', $str, $m)) {
+            return sprintf('%04d-%02d-%02d %02d:%02d:00', $m[3], $m[2], $m[1], $m[4], $m[5]);
+        }
+
         // Formato dd/mm/yyyy (senza ora)
         if (preg_match('#^(\d{1,2})/(\d{1,2})/(\d{4})$#', $str, $m)) {
             return sprintf('%04d-%02d-%02d 00:00:00', $m[3], $m[2], $m[1]);
