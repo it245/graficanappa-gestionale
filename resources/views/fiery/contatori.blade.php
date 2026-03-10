@@ -240,7 +240,9 @@
             $totBN = collect($clickPerCommessa)->sum('bn');
         @endphp
         <div class="totals">
-            Totale: <strong>{{ number_format($totFogli, 0, ',', '.') }}</strong> fogli
+            <strong>{{ number_format($totFogli, 0, ',', '.') }}</strong> fogli
+            (<strong>{{ number_format(collect($clickPerCommessa)->sum('fogli_grande'), 0, ',', '.') }}</strong> grandi
+            + <strong>{{ number_format(collect($clickPerCommessa)->sum('fogli_piccolo'), 0, ',', '.') }}</strong> piccoli)
             &middot; <strong>{{ number_format($totColore, 0, ',', '.') }}</strong> colore
             &middot; <strong>{{ number_format($totBN, 0, ',', '.') }}</strong> B/N
             &middot; {{ count($clickPerCommessa) }} commesse
@@ -259,6 +261,8 @@
                     <th>Cliente</th>
                     <th>Descrizione</th>
                     <th>Fogli</th>
+                    <th>Grande</th>
+                    <th>Piccolo</th>
                     <th>Pag. Colore</th>
                     <th>Pag. B/N</th>
                     <th>Copie</th>
@@ -273,6 +277,8 @@
                     <td>{{ $c['cliente'] }}</td>
                     <td>{{ $c['descrizione'] }}</td>
                     <td>{{ number_format($c['fogli'], 0, ',', '.') }}</td>
+                    <td>{{ number_format($c['fogli_grande'] ?? 0, 0, ',', '.') }}</td>
+                    <td>{{ number_format($c['fogli_piccolo'] ?? 0, 0, ',', '.') }}</td>
                     <td>{{ number_format($c['colore'], 0, ',', '.') }}</td>
                     <td>{{ number_format($c['bn'], 0, ',', '.') }}</td>
                     <td>{{ number_format($c['copie'], 0, ',', '.') }}</td>
@@ -297,6 +303,8 @@
                 <tr>
                     <td colspan="3">TOTALE</td>
                     <td>{{ number_format($totFogli, 0, ',', '.') }}</td>
+                    <td>{{ number_format(collect($clickPerCommessa)->sum('fogli_grande'), 0, ',', '.') }}</td>
+                    <td>{{ number_format(collect($clickPerCommessa)->sum('fogli_piccolo'), 0, ',', '.') }}</td>
                     <td>{{ number_format($totColore, 0, ',', '.') }}</td>
                     <td>{{ number_format($totBN, 0, ',', '.') }}</td>
                     <td>{{ number_format(collect($clickPerCommessa)->sum('copie'), 0, ',', '.') }}</td>

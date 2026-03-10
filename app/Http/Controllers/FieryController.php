@@ -458,6 +458,21 @@ class FieryController extends Controller
                 $copie = (int) ($entry['copies printed'] ?? 0);
                 $mediaSize = $entry['media size'] ?? '';
 
+                // Classifica Grande/Piccolo dal formato
+                // Grande = lato maggiore > 297mm (oltre A3)
+                $tipo = 'piccolo';
+                if (preg_match('/\((\d+)[\.,]\d+\s*x\s*(\d+)[\.,]\d+/', $mediaSize, $dimM)) {
+                    $maxDim = max((int) $dimM[1], (int) $dimM[2]);
+                    $tipo = $maxDim > 297 ? 'grande' : 'piccolo';
+                } elseif (preg_match('/^(\d+)\s*x\s*(\d+)/', $mediaSize, $dimM)) {
+                    $maxDim = max((int) $dimM[1], (int) $dimM[2]);
+                    $tipo = $maxDim > 297 ? 'grande' : 'piccolo';
+                } elseif (preg_match('/SRA3|A3/i', $mediaSize)) {
+                    $tipo = 'grande';
+                } elseif (preg_match('/A4|A5/i', $mediaSize)) {
+                    $tipo = 'piccolo';
+                }
+
                 if (!isset($perCommessa[$commessa])) {
                     // Cerca nel MES
                     $ordine = Ordine::where('commessa', $commessa)->first();
@@ -470,6 +485,8 @@ class FieryController extends Controller
                         'bn' => 0,
                         'copie' => 0,
                         'run' => 0,
+                        'fogli_grande' => 0,
+                        'fogli_piccolo' => 0,
                         'formati' => [],
                     ];
                 }
@@ -479,6 +496,7 @@ class FieryController extends Controller
                 $perCommessa[$commessa]['bn'] += $bn;
                 $perCommessa[$commessa]['copie'] += $copie;
                 $perCommessa[$commessa]['run']++;
+                $perCommessa[$commessa]['fogli_' . $tipo] += $fogli;
                 if ($mediaSize && !in_array($mediaSize, $perCommessa[$commessa]['formati'])) {
                     $perCommessa[$commessa]['formati'][] = $mediaSize;
                 }
