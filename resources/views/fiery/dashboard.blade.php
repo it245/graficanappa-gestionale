@@ -770,8 +770,35 @@ setInterval(function() {
                 if (qb) {
                     var qh = '';
                     data.jobs.queue.forEach(function(j) {
-                        var mesHtml = j.mes ? '<span class="commessa-tag">' + j.mes.commessa + '</span><div class="client-name">' + j.mes.cliente + '</div>' : '';
-                        qh += '<tr><td class="job-title">' + j.title + '</td><td>' + mesHtml + '</td><td>' + j.num_pages + '</td><td>' + (j.num_copies || '-') + '</td><td><span class="state-pill state-queue">In coda</span></td></tr>';
+                        var mesHtml = '';
+                        var cartaHtml = '';
+                        var qtaHtml = '';
+                        var consegnaHtml = '-';
+                        if (j.mes) {
+                            mesHtml = '<span class="commessa-tag">' + j.mes.commessa + '</span>' +
+                                '<span class="client-name" style="margin-left:6px;">' + j.mes.cliente + '</span>' +
+                                '<div class="mes-detail"><div class="mes-row"><div><span class="mes-lbl">Descrizione</span><br><span class="mes-val">' + (j.mes.descrizione || '-').substring(0, 80) + '</span></div></div>';
+                            if (j.mes.note_prestampa) {
+                                mesHtml += '<div class="mes-row"><div><span class="mes-lbl">Note prestampa</span><br><span class="mes-val">' + j.mes.note_prestampa + '</span></div></div>';
+                            }
+                            if (j.mes.note_fasi) {
+                                mesHtml += '<div class="mes-row"><div><span class="mes-lbl">Note fasi</span><br><span class="mes-val">' + (j.mes.note_fasi || '').substring(0, 120) + '</span></div></div>';
+                            }
+                            if (j.mes.fasi && j.mes.fasi.length) {
+                                mesHtml += '<div class="mes-fasi">';
+                                j.mes.fasi.forEach(function(f) {
+                                    var cls = f.esterno ? 'fase-ext' : 'fase-s' + f.stato;
+                                    mesHtml += '<span class="fase-pill ' + cls + '">' + f.fase + '</span>';
+                                });
+                                mesHtml += '</div>';
+                            }
+                            mesHtml += '</div>';
+                            cartaHtml = '<div class="mes-val">' + (j.mes.carta || '-') + '</div><div style="color:#6c757d;font-size:11px;">' + (j.mes.cod_carta || '') + '</div>';
+                            qtaHtml = Number(j.mes.qta_richiesta || 0).toLocaleString('it-IT');
+                            if (j.mes.qta_carta) qtaHtml += '<div style="color:#6c757d;font-size:11px;">' + Number(j.mes.qta_carta).toLocaleString('it-IT') + ' fg</div>';
+                            consegnaHtml = j.mes.data_prevista || '-';
+                        }
+                        qh += '<tr><td class="job-title">' + j.title + '</td><td>' + mesHtml + '</td><td style="font-size:12px;">' + cartaHtml + '</td><td style="font-size:13px;">' + qtaHtml + '</td><td style="font-size:12px;">' + consegnaHtml + '</td><td>' + (j.num_copies || '-') + '</td><td><span class="state-pill state-queue">In coda</span></td></tr>';
                     });
                     qb.innerHTML = qh;
                 }
@@ -782,8 +809,23 @@ setInterval(function() {
                     var ch = '';
                     data.jobs.completed.forEach(function(j) {
                         var pct = j.num_copies > 0 ? Math.round((j.copies_printed / j.num_copies) * 100) : 100;
-                        var mesHtml = j.mes ? '<span class="commessa-tag">' + j.mes.commessa + '</span><div class="client-name">' + j.mes.cliente + '</div>' : '';
-                        ch += '<tr><td class="job-title">' + j.title + '</td><td>' + mesHtml + '</td><td><div class="mini-progress"><div class="fill" style="width:' + pct + '%"></div></div><span class="copies-text">' + j.copies_printed + '/' + j.num_copies + '</span></td><td>' + j.total_sheets + '</td><td>' + (j.duplex ? 'B/V' : 'Solo F') + '</td><td style="font-size:12px;color:#6c757d;">' + j.date + '</td></tr>';
+                        var mesHtml = '';
+                        var cartaHtml = '';
+                        if (j.mes) {
+                            mesHtml = '<span class="commessa-tag">' + j.mes.commessa + '</span>' +
+                                '<span class="client-name" style="margin-left:6px;">' + j.mes.cliente + '</span>' +
+                                '<div style="font-size:11px;color:#6c757d;margin-top:2px;">' + (j.mes.descrizione || '').substring(0, 60) + '</div>';
+                            if (j.mes.fasi && j.mes.fasi.length) {
+                                mesHtml += '<div class="mes-fasi" style="margin-top:4px;">';
+                                j.mes.fasi.forEach(function(f) {
+                                    var cls = f.esterno ? 'fase-ext' : 'fase-s' + f.stato;
+                                    mesHtml += '<span class="fase-pill ' + cls + '">' + f.fase + '</span>';
+                                });
+                                mesHtml += '</div>';
+                            }
+                            cartaHtml = j.mes.carta || '-';
+                        }
+                        ch += '<tr><td class="job-title">' + j.title + '</td><td>' + mesHtml + '</td><td style="font-size:12px;">' + cartaHtml + '</td><td><div class="mini-progress"><div class="fill" style="width:' + pct + '%"></div></div><span class="copies-text">' + j.copies_printed + '/' + j.num_copies + '</span></td><td>' + j.total_sheets + '</td><td>' + (j.duplex ? 'B/V' : 'Solo F') + '</td><td style="font-size:12px;color:#6c757d;">' + j.date + '</td></tr>';
                     });
                     cb.innerHTML = ch;
                 }
