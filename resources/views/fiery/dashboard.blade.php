@@ -244,6 +244,25 @@
     .state-waiting { background: #dbeafe; color: #1d4ed8; }
     .state-canceled { background: #fee2e2; color: #dc2626; }
 
+    /* Dettaglio commessa espanso */
+    .mes-detail {
+        background: #f8f9fa; border-radius: 8px; padding: 10px 14px;
+        margin-top: 6px; font-size: 12px; color: #495057;
+    }
+    .mes-detail .mes-row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 4px; }
+    .mes-detail .mes-lbl { font-weight: 600; color: #6c757d; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .mes-detail .mes-val { font-weight: 500; color: #212529; }
+    .mes-fasi { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
+    .fase-pill {
+        display: inline-block; font-size: 10px; font-weight: 600;
+        padding: 2px 8px; border-radius: 10px; white-space: nowrap;
+    }
+    .fase-s0 { background: #f3f4f6; color: #6b7280; }
+    .fase-s1 { background: #dbeafe; color: #1d4ed8; }
+    .fase-s2 { background: #fef3c7; color: #92400e; }
+    .fase-s3 { background: #d1fae5; color: #059669; }
+    .fase-ext { background: #f3e8ff; color: #7c3aed; }
+
     /* Mini progress in table */
     .mini-progress {
         width: 80px;
@@ -335,6 +354,7 @@
     </div>
     <div class="nav-links">
         <a href="{{ route('owner.dashboard') }}">Dashboard</a>
+        <a href="{{ route('mes.fiery.contatori') }}">Contatori</a>
         <a href="{{ route('mes.prinect') }}">Prinect XL106</a>
     </div>
 </div>
@@ -423,12 +443,60 @@
                     <div class="info-label">Cliente</div>
                     <div class="info-value-sm">{{ $status['commessa']['cliente'] }}</div>
                 </div>
-                <div>
+                <div class="mb-2">
                     <div class="info-label">Descrizione</div>
                     <div class="info-value-sm" style="font-size:12px;color:#6c757d;">{{ \Illuminate\Support\Str::limit($status['commessa']['descrizione'] ?? '', 80) }}</div>
                 </div>
                 @endif
             </div>
+            @php
+                $printMes = $jobData['printing']['mes'] ?? null;
+            @endphp
+            @if($printMes)
+            <div class="mt-3" style="border-top:1px solid #e9ecef; padding-top:12px;">
+                @if($printMes['carta'])
+                <div class="mb-2">
+                    <div class="info-label">Carta</div>
+                    <div class="info-value-sm">{{ $printMes['carta'] }}</div>
+                    @if($printMes['cod_carta'])<div style="font-size:11px;color:#6c757d;">{{ $printMes['cod_carta'] }}</div>@endif
+                </div>
+                @endif
+                <div class="mb-2">
+                    <div class="info-label">Quantita</div>
+                    <div class="info-value-sm">{{ number_format($printMes['qta_richiesta'] ?? 0, 0, ',', '.') }} pz
+                        @if($printMes['qta_carta']) <span style="color:#6c757d;font-size:12px;"> / {{ number_format($printMes['qta_carta'], 0, ',', '.') }} fg</span>@endif
+                    </div>
+                </div>
+                @if($printMes['data_prevista'])
+                <div class="mb-2">
+                    <div class="info-label">Consegna prevista</div>
+                    <div class="info-value-sm">{{ $printMes['data_prevista'] }}</div>
+                </div>
+                @endif
+                @if($printMes['responsabile'])
+                <div class="mb-2">
+                    <div class="info-label">Responsabile</div>
+                    <div class="info-value-sm">{{ $printMes['responsabile'] }}</div>
+                </div>
+                @endif
+                @if($printMes['note_prestampa'])
+                <div class="mb-2">
+                    <div class="info-label">Note prestampa</div>
+                    <div style="font-size:12px;color:#495057;">{{ $printMes['note_prestampa'] }}</div>
+                </div>
+                @endif
+                @if(!empty($printMes['fasi']))
+                <div class="mb-2">
+                    <div class="info-label">Fasi</div>
+                    <div class="mes-fasi">
+                        @foreach($printMes['fasi'] as $f)
+                        <span class="fase-pill {{ $f['esterno'] ? 'fase-ext' : 'fase-s'.$f['stato'] }}">{{ $f['fase'] }}</span>
+                        @endforeach
+                    </div>
+                </div>
+                @endif
+            </div>
+            @endif
         </div>
 
         {{-- Stats --}}
@@ -465,8 +533,10 @@
         <thead>
             <tr>
                 <th>Job</th>
-                <th>Commessa</th>
-                <th>Pagine</th>
+                <th>Commessa / Dettagli</th>
+                <th>Carta</th>
+                <th>Qta</th>
+                <th>Consegna</th>
                 <th>Copie</th>
                 <th>Stato</th>
             </tr>
@@ -478,10 +548,42 @@
                 <td>
                     @if($job['mes'])
                         <span class="commessa-tag">{{ $job['mes']['commessa'] }}</span>
-                        <div class="client-name">{{ $job['mes']['cliente'] }}</div>
+                        <span class="client-name" style="margin-left:6px;">{{ $job['mes']['cliente'] }}</span>
+                        <div class="mes-detail">
+                            <div class="mes-row">
+                                <div><span class="mes-lbl">Descrizione</span><br><span class="mes-val">{{ \Illuminate\Support\Str::limit($job['mes']['descrizione'] ?? '-', 80) }}</span></div>
+                            </div>
+                            @if(!empty($job['mes']['note_prestampa']))
+                            <div class="mes-row"><div><span class="mes-lbl">Note prestampa</span><br><span class="mes-val">{{ $job['mes']['note_prestampa'] }}</span></div></div>
+                            @endif
+                            @if(!empty($job['mes']['note_fasi']))
+                            <div class="mes-row"><div><span class="mes-lbl">Note fasi</span><br><span class="mes-val">{{ \Illuminate\Support\Str::limit($job['mes']['note_fasi'], 120) }}</span></div></div>
+                            @endif
+                            @if(!empty($job['mes']['fasi']))
+                            <div class="mes-fasi">
+                                @foreach($job['mes']['fasi'] as $f)
+                                <span class="fase-pill {{ $f['esterno'] ? 'fase-ext' : 'fase-s'.$f['stato'] }}">{{ $f['fase'] }}</span>
+                                @endforeach
+                            </div>
+                            @endif
+                        </div>
                     @endif
                 </td>
-                <td>{{ $job['num_pages'] }}</td>
+                <td style="font-size:12px;">
+                    @if($job['mes'])
+                        <div class="mes-val">{{ $job['mes']['carta'] ?? '-' }}</div>
+                        <div style="color:#6c757d;font-size:11px;">{{ $job['mes']['cod_carta'] ?? '' }}</div>
+                    @endif
+                </td>
+                <td style="font-size:13px;">
+                    @if($job['mes'])
+                        {{ number_format($job['mes']['qta_richiesta'] ?? 0, 0, ',', '.') }}
+                        @if($job['mes']['qta_carta'])
+                        <div style="color:#6c757d;font-size:11px;">{{ number_format($job['mes']['qta_carta'], 0, ',', '.') }} fg</div>
+                        @endif
+                    @endif
+                </td>
+                <td style="font-size:12px;">{{ $job['mes']['data_prevista'] ?? '-' }}</td>
                 <td>{{ $job['num_copies'] ?: '-' }}</td>
                 <td><span class="state-pill state-queue">In coda</span></td>
             </tr>
@@ -502,7 +604,8 @@
         <thead>
             <tr>
                 <th>Job</th>
-                <th>Commessa</th>
+                <th>Commessa / Dettagli</th>
+                <th>Carta</th>
                 <th>Copie</th>
                 <th>Fogli</th>
                 <th>Duplex</th>
@@ -519,7 +622,20 @@
                 <td>
                     @if($job['mes'])
                         <span class="commessa-tag">{{ $job['mes']['commessa'] }}</span>
-                        <div class="client-name">{{ $job['mes']['cliente'] }}</div>
+                        <span class="client-name" style="margin-left:6px;">{{ $job['mes']['cliente'] }}</span>
+                        <div style="font-size:11px;color:#6c757d;margin-top:2px;">{{ \Illuminate\Support\Str::limit($job['mes']['descrizione'] ?? '', 60) }}</div>
+                        @if(!empty($job['mes']['fasi']))
+                        <div class="mes-fasi" style="margin-top:4px;">
+                            @foreach($job['mes']['fasi'] as $f)
+                            <span class="fase-pill {{ $f['esterno'] ? 'fase-ext' : 'fase-s'.$f['stato'] }}">{{ $f['fase'] }}</span>
+                            @endforeach
+                        </div>
+                        @endif
+                    @endif
+                </td>
+                <td style="font-size:12px;">
+                    @if($job['mes'])
+                        {{ $job['mes']['carta'] ?? '-' }}
                     @endif
                 </td>
                 <td>

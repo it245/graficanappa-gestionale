@@ -83,10 +83,32 @@ class FieryController extends Controller
             if ($job['commessa']) {
                 $ordine = Ordine::where('commessa', $job['commessa'])->first();
                 if ($ordine) {
+                    // Fasi della commessa
+                    $fasi = OrdineFase::where('ordine_id', $ordine->id)
+                        ->orderBy('priorita')
+                        ->get()
+                        ->map(fn($f) => [
+                            'fase' => $f->fase,
+                            'stato' => $f->stato,
+                            'qta_fase' => $f->qta_fase,
+                            'qta_prod' => $f->qta_prod,
+                            'esterno' => $f->esterno,
+                        ])->toArray();
+
                     $job['mes'] = [
                         'commessa' => $ordine->commessa,
                         'cliente' => $ordine->cliente_nome,
                         'cod_art' => $ordine->cod_art,
+                        'descrizione' => $ordine->descrizione,
+                        'qta_richiesta' => $ordine->qta_richiesta,
+                        'qta_carta' => $ordine->qta_carta,
+                        'cod_carta' => $ordine->cod_carta,
+                        'carta' => $ordine->carta,
+                        'data_prevista' => $ordine->data_prevista_consegna?->format('d/m/Y'),
+                        'note_prestampa' => $ordine->note_prestampa,
+                        'note_fasi' => $ordine->note_fasi_successive,
+                        'responsabile' => $ordine->responsabile,
+                        'fasi' => $fasi,
                     ];
                 }
             }
