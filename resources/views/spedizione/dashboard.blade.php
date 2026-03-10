@@ -314,8 +314,9 @@
 </div>
 
 <!-- Tabella DDT Emesse da Onda -->
+<div id="sezDDT"></div>
 @if($fasiDDT->count() > 0)
-<h4 class="mx-2 mt-2" id="sezDDT" style="color:#6f42c1;">DDT Emesse da Onda</h4>
+<h4 class="mx-2 mt-2" style="color:#6f42c1;">DDT Emesse da Onda</h4>
 <div class="table-wrapper">
     <table class="table table-bordered table-sm" id="tabDDT">
         <thead style="background:#6f42c1; color:#fff;">
@@ -440,8 +441,9 @@
 </div>
 
 <!-- Tabella Consegne Parziali -->
+<div id="sezParziali"></div>
 @if($fasiParziali->count() > 0)
-<h4 class="mx-2 mt-4" id="sezParziali" style="color:#fd7e14;">Consegne Parziali</h4>
+<h4 class="mx-2 mt-4" style="color:#fd7e14;">Consegne Parziali</h4>
 <div class="table-wrapper">
     <table class="table table-bordered table-sm" id="tabParziali">
         <thead style="background:#fd7e14; color:#fff;">
@@ -473,8 +475,9 @@
 @endif
 
 <!-- Tabella fasi in attesa -->
+<div id="sezInAttesa"></div>
 @if($fasiInAttesa->count() > 0)
-<h4 class="mx-2 mt-4" id="sezInAttesa" style="color:#ffc107;">In attesa (lavorazione in corso)</h4>
+<h4 class="mx-2 mt-4" style="color:#ffc107;">In attesa (lavorazione in corso)</h4>
 <div class="table-wrapper">
     <table class="table table-bordered table-sm" id="tabInAttesa">
         <thead style="background:#ffc107; color:#000;">
