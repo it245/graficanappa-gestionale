@@ -125,9 +125,13 @@
         <span class="machine-name">Canon imagePRESS V900 <small>Contatori</small></span>
     </div>
     <div class="nav-links">
+        @if(request()->attributes->get('operatore_ruolo') !== 'fiery_contatori')
         <a href="{{ route('mes.fiery') }}">Dashboard</a>
+        @endif
         <a href="{{ route('mes.fiery.contatori') }}" class="active">Contatori</a>
+        @if(request()->attributes->get('operatore_ruolo') !== 'fiery_contatori')
         <a href="{{ route('owner.dashboard') }}">Owner</a>
+        @endif
     </div>
 </div>
 
