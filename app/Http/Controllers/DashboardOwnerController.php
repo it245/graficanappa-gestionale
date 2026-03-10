@@ -38,6 +38,75 @@ class DashboardOwnerController extends Controller
         return null;
     }
 
+    /**
+     * Panoramica commesse attive raggruppate per reparto
+     */
+    public function repartiOverview(Request $request)
+    {
+        $reparti = Reparto::orderBy('nome')->get();
+
+        $data = [];
+        foreach ($reparti as $reparto) {
+            // Fasi attive (stato 0,1,2) in questo reparto, non esterne
+            $fasi = OrdineFase::query()
+                ->join('ordini', 'ordini.id', '=', 'ordine_fasi.ordine_id')
+                ->join('fasi_catalogo', 'ordine_fasi.fase_catalogo_id', '=', 'fasi_catalogo.id')
+                ->where('fasi_catalogo.reparto_id', $reparto->id)
+                ->whereIn('ordine_fasi.stato', [0, 1, 2])
+                ->where(fn($q) => $q->where('ordine_fasi.esterno', false)->orWhereNull('ordine_fasi.esterno'))
+                ->whereNull('ordine_fasi.deleted_at')
+                ->select([
+                    'ordini.commessa',
+                    'ordini.cliente_nome',
+                    'ordini.descrizione',
+                    'ordini.data_prevista_consegna',
+                    'ordini.qta_richiesta',
+                    'ordine_fasi.id as fase_id',
+                    'ordine_fasi.fase',
+                    'ordine_fasi.stato as fase_stato',
+                    'ordine_fasi.priorita',
+                    'ordine_fasi.priorita_manuale',
+                    'ordine_fasi.qta_prod',
+                    'ordine_fasi.operatore_id',
+                    'fasi_catalogo.nome as fase_catalogo_nome',
+                ])
+                ->orderBy('ordine_fasi.priorita')
+                ->get();
+
+            // Raggruppa per commessa
+            $commesse = $fasi->groupBy('commessa')->map(function ($group) {
+                $first = $group->first();
+                $stati = $group->pluck('fase_stato');
+                return (object)[
+                    'commessa'    => $first->commessa,
+                    'cliente'     => $first->cliente_nome ?: '-',
+                    'descrizione' => $first->descrizione ?: '-',
+                    'consegna'    => $first->data_prevista_consegna,
+                    'qta'         => $first->qta_richiesta,
+                    'priorita'    => $group->min('priorita'),
+                    'n_fasi'      => $group->count(),
+                    'n_inizio'    => $stati->filter(fn($s) => $s == 1)->count(),
+                    'n_terminato' => $stati->filter(fn($s) => $s == 2)->count(),
+                    'n_attesa'    => $stati->filter(fn($s) => $s == 0)->count(),
+                    'fasi'        => $group->pluck('fase_catalogo_nome')->unique()->values()->all(),
+                ];
+            })->sortBy('priorita')->values();
+
+            $data[] = (object)[
+                'reparto'  => $reparto,
+                'commesse' => $commesse,
+                'totale'   => $commesse->count(),
+            ];
+        }
+
+        // Rimuovi reparti senza commesse attive
+        $data = collect($data)->filter(fn($r) => $r->totale > 0)->values();
+
+        $opToken = request()->query('op_token') ?? request()->attributes->get('op_token');
+
+        return view('owner.reparti_overview', compact('data', 'opToken'));
+    }
+
     private $fasiInfo = [
         'accopp+fust' => ['avviamento' => 72, 'copieh' => 100],
         'ACCOPPIATURA.FOG.33.48INT' => ['avviamento' => 1, 'copieh' => 100],
