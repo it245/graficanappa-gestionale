@@ -527,6 +527,14 @@ tr:hover td {
             <button class="sidebar-close" id="sidebarClose">&times;</button>
         </div>
 
+        {{-- Fustelle --}}
+        <a href="{{ route('owner.fustelle', ['op_token' => $opToken ?? request()->query('op_token')]) }}" class="sidebar-item">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#6f42c1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 3v18"/>
+            </svg>
+            <span>Fustelle</span>
+        </a>
+
         {{-- Panoramica Reparti --}}
         <a href="{{ route('owner.repartiOverview', ['op_token' => $opToken ?? request()->query('op_token')]) }}" class="sidebar-item">
             <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

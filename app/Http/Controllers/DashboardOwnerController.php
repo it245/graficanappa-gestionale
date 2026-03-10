@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\Helpers\DescrizioneParser;
 use App\Services\FaseStatoService;
 use App\Services\OndaSyncService;
 use App\Http\Services\PrinectService;
@@ -1089,4 +1090,54 @@ public function calcolaOreEPriorita($fase)
         return view('owner.esterne', compact('commesseEsterne'));
     }
 
+    /**
+     * Pagina Fustelle owner: tutte le fustelle da utilizzare nei prossimi 30 giorni.
+     */
+    public function fustelleOverview()
+    {
+        $repartiFustella = [5, 15, 16]; // fustella, fustella piana, fustella cilindrica
+
+        $fasi = OrdineFase::where('stato', '<', 3)
+            ->where(fn($q) => $q->where('esterno', false)->orWhereNull('esterno'))
+            ->whereHas('faseCatalogo', function ($q) use ($repartiFustella) {
+                $q->whereIn('reparto_id', $repartiFustella);
+            })
+            ->whereHas('ordine', function ($q) {
+                $q->where('data_prevista_consegna', '<=', Carbon::today()->addDays(30));
+            })
+            ->with(['ordine', 'faseCatalogo.reparto'])
+            ->get();
+
+        $fustelleMap = [];
+        foreach ($fasi as $fase) {
+            $desc = $fase->ordine->descrizione ?? '';
+            $cliente = $fase->ordine->cliente_nome ?? '';
+            $notePre = $fase->ordine->note_prestampa ?? '';
+            $fsCodice = DescrizioneParser::parseFustella($desc, $cliente, $notePre);
+
+            if (!$fsCodice) continue;
+
+            $codici = array_map('trim', explode('/', $fsCodice));
+            foreach ($codici as $codice) {
+                if (!isset($fustelleMap[$codice])) {
+                    $fustelleMap[$codice] = [];
+                }
+                $commessa = $fase->ordine->commessa;
+                if (!isset($fustelleMap[$codice][$commessa])) {
+                    $fustelleMap[$codice][$commessa] = [
+                        'commessa' => $commessa,
+                        'cliente' => $fase->ordine->cliente_nome ?? '-',
+                        'descrizione' => $fase->ordine->descrizione ?? '-',
+                        'data_consegna' => $fase->ordine->data_prevista_consegna,
+                        'stato' => $fase->stato,
+                        'fase' => $fase->faseCatalogo->reparto->nome ?? $fase->fase,
+                    ];
+                }
+            }
+        }
+
+        ksort($fustelleMap);
+
+        return view('owner.fustelle', compact('fustelleMap'));
+    }
 }

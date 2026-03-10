@@ -8,13 +8,12 @@
     }
     .top-bar a { color: #fff; text-decoration: none; font-size: 14px; font-weight: 600; background: rgba(255,255,255,.15); padding: 6px 14px; border-radius: 6px; }
     .top-bar a:hover { background: rgba(255,255,255,.25); }
-    .operatore-info { position: relative; cursor: pointer; }
-    .operatore-popup {
-        display: none; position: absolute; top: 40px; left: 0;
-        background: #fff; color: #333; border: 1px solid #ccc;
-        border-radius: 6px; padding: 12px; min-width: 200px;
-        box-shadow: 0 4px 12px rgba(0,0,0,.15); z-index: 100;
+
+    .btn-stampa {
+        background: rgba(255,255,255,.15); color: #fff; border: none; padding: 6px 14px;
+        border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600;
     }
+    .btn-stampa:hover { background: rgba(255,255,255,.25); }
 
     .fustelle-layout { display: flex; gap: 0; min-height: calc(100vh - 56px); }
 
@@ -95,57 +94,39 @@
     }
     .empty-state .icon { font-size: 3rem; margin-bottom: 12px; }
 
-    .btn-stampa {
-        background: rgba(255,255,255,.15); color: #fff; border: none; padding: 6px 14px;
-        border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600;
-    }
-    .btn-stampa:hover { background: rgba(255,255,255,.25); }
-
     @media print {
         .top-bar, .fustelle-sidebar, .kpi-row, .btn-stampa,
-        #filtroFustella, #filtroCliente, label[for="filtroFustella"],
-        button[onclick*="Reset"] { display: none !important; }
+        .filtri-bar-fustelle { display: none !important; }
         .fustelle-layout { display: block !important; }
         .fustelle-container { padding: 0 !important; }
         .fs-card { break-inside: avoid; margin-bottom: 12px; box-shadow: none; border: 1px solid #aaa; }
         .fs-header { background: #eee !important; }
         .fs-body { display: block !important; }
         body { font-size: 12px; }
+        h2.print-title { display: block !important; }
     }
+    h2.print-title { display: none; }
 </style>
 
 <div class="top-bar">
     <div style="display:flex; align-items:center; gap:10px;">
         <img src="{{ asset('images/logo_gn.png') }}" alt="Logo" style="height:40px;">
-        <div class="operatore-info" id="operatoreInfo">
-            <img src="{{ asset('images/icons8-utente-uomo-cerchiato-50.png') }}" alt="Operatore">
-            <div class="operatore-popup" id="operatorePopup">
-                <div><strong>{{ $operatore->nome }} {{ $operatore->cognome }}</strong></div>
-                <div>
-                    @if($operatore->reparti->isEmpty())
-                        Nessun reparto assegnato
-                    @else
-                        <p>Reparto: <strong>{{ $operatore->reparti->pluck('nome')->join(', ') }}</strong></p>
-                    @endif
-                </div>
-                <form action="{{ route('operatore.logout') }}" method="POST">
-                    @csrf
-                    <button type="submit" class="btn btn-secondary btn-sm mt-2">Logout</button>
-                </form>
-            </div>
-        </div>
+        <span style="font-size:16px; font-weight:700;">Fustelle</span>
     </div>
     <div style="display:flex; align-items:center; gap:15px;">
-        <a href="{{ route('operatore.dashboard', ['op_token' => request('op_token')]) }}">Dashboard</a>
+        <a href="{{ route('owner.dashboard', ['op_token' => request('op_token')]) }}">Dashboard</a>
+        <button class="btn-stampa" onclick="window.print()">Stampa</button>
     </div>
 </div>
 
+<h2 class="print-title" style="padding:16px 0 0 16px;">Fustelle — prossimi 30 giorni</h2>
+
 <div class="fustelle-layout">
 
-{{-- SIDEBAR: elenco fustelle --}}
+{{-- SIDEBAR --}}
 <div class="fustelle-sidebar">
     <div class="sidebar-title">Fustelle ({{ count($fustelleMap) }})</div>
-    <div class="sidebar-item {{ '' }}" onclick="filtroSidebar('')" data-sidebar-codice="" id="sidebarAll">
+    <div class="sidebar-item" onclick="filtroSidebar('')" data-sidebar-codice="">
         <span style="font-weight:600; color:#333;">Tutte</span>
         <span class="fs-count" style="background:#6c757d;">{{ count($fustelleMap) }}</span>
     </div>
@@ -161,7 +142,7 @@
     @endforeach
 </div>
 
-{{-- CONTENUTO PRINCIPALE --}}
+{{-- CONTENUTO --}}
 <div class="fustelle-container">
     <h2 style="margin-bottom: 4px;">Fustelle</h2>
     <p style="color: #6c757d; margin-bottom: 16px;">Fustelle da utilizzare nei prossimi 30 giorni</p>
@@ -189,7 +170,7 @@
         @endif
     </div>
 
-    <div style="margin-bottom: 16px; display:flex; align-items:center; gap:10px;">
+    <div class="filtri-bar-fustelle" style="margin-bottom: 16px; display:flex; align-items:center; gap:10px;">
         <label for="filtroFustella" style="font-weight:600; font-size:0.9rem;">Filtra fustella:</label>
         <select id="filtroFustella" onchange="filtraFustelle(this.value)" style="padding:6px 12px; border:1px solid #ced4da; border-radius:6px; font-size:0.9rem; min-width:180px;">
             <option value="">Tutte ({{ $totFustelle }})</option>
@@ -229,7 +210,7 @@
                             @endphp
                             <tr>
                                 <td>
-                                    <a href="{{ url('/commesse/' . $c['commessa']) }}" target="_blank" style="font-weight:600;">
+                                    <a href="{{ route('owner.dettaglioCommessa', $c['commessa']) }}" target="_blank" style="font-weight:600;">
                                         {{ $c['commessa'] }}
                                     </a>
                                 </td>
@@ -264,28 +245,15 @@
         </div>
     @endforelse
 </div>
-</div> {{-- fine fustelle-layout --}}
+</div>
 
 <script>
-document.getElementById('operatoreInfo').addEventListener('click', function(){
-    const popup = document.getElementById('operatorePopup');
-    popup.style.display = popup.style.display === 'block' ? 'none' : 'block';
-});
-document.addEventListener('click', function(e){
-    if(!document.getElementById('operatoreInfo').contains(e.target)){
-        document.getElementById('operatorePopup').style.display='none';
-    }
-});
-
 function filtroSidebar(codice) {
-    // Aggiorna sidebar active
     document.querySelectorAll('.sidebar-item').forEach(function(item) {
         item.classList.toggle('active', item.dataset.sidebarCodice === codice);
     });
-    // Sync dropdown
     document.getElementById('filtroFustella').value = codice;
     filtraFustelle(codice);
-    // Scroll alla card se selezionata
     if (codice) {
         var card = document.querySelector('.fs-card[data-fustella="' + codice + '"]');
         if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -294,7 +262,6 @@ function filtroSidebar(codice) {
 
 function filtraFustelle(codice) {
     var clienteFiltro = (document.getElementById('filtroCliente').value || '').toLowerCase();
-    // Sync sidebar
     document.querySelectorAll('.sidebar-item').forEach(function(item) {
         item.classList.toggle('active', item.dataset.sidebarCodice === codice);
     });
