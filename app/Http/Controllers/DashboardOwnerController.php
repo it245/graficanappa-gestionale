@@ -86,9 +86,16 @@ class DashboardOwnerController extends Controller
                 ->get();
 
             // Raggruppa per commessa
-            $commesse = $fasi->groupBy('commessa')->map(function ($group) {
+            $fasiInfo = $this->fasiInfo;
+            $commesse = $fasi->groupBy('commessa')->map(function ($group) use ($fasiInfo) {
                 $first = $group->first();
                 $stati = $group->pluck('fase_stato');
+                // Calcola ore previste per commessa in questo reparto
+                $orePreviste = $group->sum(function ($f) use ($fasiInfo) {
+                    $info = $fasiInfo[$f->fase] ?? ['avviamento' => 0.5, 'copieh' => 1000];
+                    $copieh = $info['copieh'] ?: 1000;
+                    return $info['avviamento'] + (($f->qta_richiesta ?: 0) / $copieh);
+                });
                 return (object)[
                     'commessa'    => $first->commessa,
                     'cliente'     => $first->cliente_nome ?: '-',
@@ -101,6 +108,7 @@ class DashboardOwnerController extends Controller
                     'n_terminato' => $stati->filter(fn($s) => $s == 2)->count(),
                     'n_attesa'    => $stati->filter(fn($s) => $s == 0)->count(),
                     'fasi'        => $group->pluck('fase_catalogo_nome')->unique()->values()->all(),
+                    'ore_previste' => round($orePreviste, 1),
                 ];
             })->sortBy('priorita')->values();
 

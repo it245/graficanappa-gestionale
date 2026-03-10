@@ -371,6 +371,11 @@
                 <div class="rep-stat-value">{{ number_format($totQta, 0, ',', '.') }}</div>
                 <div class="rep-stat-label">Pezzi tot.</div>
             </div>
+            @php $oreTotReparto = $item->commesse->sum('ore_previste'); @endphp
+            <div class="rep-stat">
+                <div class="rep-stat-value">{{ number_format($oreTotReparto, 1, ',', '.') }}</div>
+                <div class="rep-stat-label">Ore tot.</div>
+            </div>
             <svg class="chevron-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="6 9 12 15 18 9"/>
             </svg>
