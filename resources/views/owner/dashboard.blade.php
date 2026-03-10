@@ -198,7 +198,7 @@ th:nth-child(3), td:nth-child(3) { width: 170px; white-space: normal; }
 th:nth-child(4), td:nth-child(4) { width: 95px; }
 
 /* 5. Colori */
-th:nth-child(5), td:nth-child(5) { width: 110px; white-space: normal; }
+th:nth-child(5), td:nth-child(5) { width: 180px; white-space: normal; }
 
 /* 6. Fustella */
 th:nth-child(6), td:nth-child(6) { width: 75px; }
