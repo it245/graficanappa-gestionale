@@ -374,8 +374,8 @@ function aggiornaAnteprima() {
         while (gtin.length < 14) gtin = '0' + gtin;
         if (gtin.length > 14) gtin = gtin.substring(0, 14);
 
-        // AI(30) = quantità variabile (NO zero-padding, max 8 cifre)
-        var qty = pzcassa ? String(parseInt(pzcassa, 10)) : '';
+        // AI(30) = quantità zero-paddata a 8 cifre (come BarTender)
+        var qty = pzcassa ? String(parseInt(pzcassa, 10)).padStart(8, '0') : '';
         // Lotto senza trattino
         var lottoClean = lotto ? lotto.replace(/-/g, '') : '';
 
