@@ -104,7 +104,11 @@ class FieryController extends Controller
                         'qta_carta' => $ordine->qta_carta,
                         'cod_carta' => $ordine->cod_carta,
                         'carta' => $ordine->carta,
-                        'data_prevista' => $ordine->data_prevista_consegna?->format('d/m/Y'),
+                        'data_prevista' => $ordine->data_prevista_consegna
+                            ? (is_string($ordine->data_prevista_consegna)
+                                ? date('d/m/Y', strtotime($ordine->data_prevista_consegna))
+                                : $ordine->data_prevista_consegna->format('d/m/Y'))
+                            : null,
                         'note_prestampa' => $ordine->note_prestampa,
                         'note_fasi' => $ordine->note_fasi_successive,
                         'responsabile' => $ordine->responsabile,
