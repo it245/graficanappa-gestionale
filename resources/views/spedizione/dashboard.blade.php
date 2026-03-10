@@ -253,38 +253,34 @@
         <h5>Riepilogo</h5>
         <button class="sidebar-close" id="sidebarClose">&times;</button>
     </div>
-    <div class="sidebar-item">
+    <a href="#sezDaConsegnare" class="sidebar-item" onclick="closeSidebar()">
         <span class="kpi-inline" style="color:#28a745;">{{ $fasiDaSpedire->count() }}</span>
         <span>Da consegnare</span>
-    </div>
-    <div class="sidebar-item">
+    </a>
+    <a href="#sezInAttesa" class="sidebar-item" onclick="closeSidebar()">
         <span class="kpi-inline" style="color:#ffc107;">{{ $fasiInAttesa->count() }}</span>
         <span>In attesa</span>
-    </div>
-    <div class="sidebar-item">
+    </a>
+    <a href="#sezDDT" class="sidebar-item" onclick="closeSidebar()">
         <span class="kpi-inline" style="color:#6f42c1;">{{ $fasiDDT->count() }}</span>
         <span>DDT Emesse</span>
-    </div>
-    <div class="sidebar-item">
+    </a>
+    <a href="#sezParziali" class="sidebar-item" onclick="closeSidebar()">
         <span class="kpi-inline" style="color:#fd7e14;">{{ $fasiParziali->count() }}</span>
         <span>Parziali in attesa</span>
-    </div>
-    <div class="sidebar-item">
-        <span class="kpi-inline" style="color:#198754;">{{ $consegneTotali }}</span>
-        <span>Consegne totali oggi</span>
-    </div>
-    <div class="sidebar-item">
-        <span class="kpi-inline" style="color:#fd7e14;">{{ $consegneParziali }}</span>
-        <span>Consegne parziali oggi</span>
-    </div>
-    <hr style="margin:4px 18px;">
-    <a href="{{ route('spedizione.esterne') }}" class="sidebar-item">
-        <span class="kpi-inline" style="color:#17a2b8;">{{ $fasiEsterne->count() }}</span>
-        <span>Lav. esterne</span>
     </a>
     <a href="#" class="sidebar-item" data-bs-toggle="modal" data-bs-target="#modalSpediteOggi" onclick="closeSidebar()">
-        <span class="kpi-inline" style="color:#0d6efd;">{{ $fasiSpediteOggi->count() }}</span>
-        <span>Consegnate oggi</span>
+        <span class="kpi-inline" style="color:#198754;">{{ $consegneTotali }}</span>
+        <span>Consegne totali oggi</span>
+    </a>
+    <a href="#" class="sidebar-item" data-bs-toggle="modal" data-bs-target="#modalSpediteOggi" onclick="closeSidebar()">
+        <span class="kpi-inline" style="color:#fd7e14;">{{ $consegneParziali }}</span>
+        <span>Consegne parziali oggi</span>
+    </a>
+    <hr style="margin:4px 18px;">
+    <a href="{{ route('spedizione.esterne') }}" class="sidebar-item" onclick="closeSidebar()">
+        <span class="kpi-inline" style="color:#17a2b8;">{{ $fasiEsterne->count() }}</span>
+        <span>Lav. esterne</span>
     </a>
     <a href="#" class="sidebar-item" data-bs-toggle="modal" data-bs-target="#modalBRT" onclick="closeSidebar()">
         <span class="kpi-inline" style="color:#d4380d;">{{ $spedizioniBRT->count() }}</span>
@@ -319,7 +315,7 @@
 
 <!-- Tabella DDT Emesse da Onda -->
 @if($fasiDDT->count() > 0)
-<h4 class="mx-2 mt-2" style="color:#6f42c1;">DDT Emesse da Onda</h4>
+<h4 class="mx-2 mt-2" id="sezDDT" style="color:#6f42c1;">DDT Emesse da Onda</h4>
 <div class="table-wrapper">
     <table class="table table-bordered table-sm" id="tabDDT">
         <thead style="background:#6f42c1; color:#fff;">
@@ -383,7 +379,7 @@
 @endif
 
 <!-- Tabella fasi da spedire -->
-<h4 class="mx-2 mt-2" style="color:#28a745;">Da consegnare</h4>
+<h4 class="mx-2 mt-2" id="sezDaConsegnare" style="color:#28a745;">Da consegnare</h4>
 <div class="table-wrapper">
     <table class="table table-bordered table-sm table-striped" id="tabDaSpedire">
         <thead class="table-dark">
@@ -445,7 +441,7 @@
 
 <!-- Tabella Consegne Parziali -->
 @if($fasiParziali->count() > 0)
-<h4 class="mx-2 mt-4" style="color:#fd7e14;">Consegne Parziali</h4>
+<h4 class="mx-2 mt-4" id="sezParziali" style="color:#fd7e14;">Consegne Parziali</h4>
 <div class="table-wrapper">
     <table class="table table-bordered table-sm" id="tabParziali">
         <thead style="background:#fd7e14; color:#fff;">
@@ -478,7 +474,7 @@
 
 <!-- Tabella fasi in attesa -->
 @if($fasiInAttesa->count() > 0)
-<h4 class="mx-2 mt-4" style="color:#ffc107;">In attesa (lavorazione in corso)</h4>
+<h4 class="mx-2 mt-4" id="sezInAttesa" style="color:#ffc107;">In attesa (lavorazione in corso)</h4>
 <div class="table-wrapper">
     <table class="table table-bordered table-sm" id="tabInAttesa">
         <thead style="background:#ffc107; color:#000;">
