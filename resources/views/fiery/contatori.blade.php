@@ -123,6 +123,36 @@
         display: inline-block; font-size: 10px; background: #e9ecef; color: #495057;
         padding: 1px 6px; border-radius: 4px; margin: 1px 2px;
     }
+
+    /* Toner bars */
+    .toner-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+    .toner-item { background: #f8f9fa; border-radius: 10px; padding: 12px 16px; border: 1px solid #e9ecef; }
+    .toner-item .toner-name { font-size: 11px; font-weight: 600; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px; }
+    .toner-item .toner-bar { height: 10px; background: #e9ecef; border-radius: 5px; margin-top: 8px; overflow: hidden; }
+    .toner-item .toner-fill { height: 100%; border-radius: 5px; transition: width 0.5s ease; }
+    .toner-item .toner-pct { font-size: 20px; font-weight: 800; margin-top: 6px; font-variant-numeric: tabular-nums; }
+
+    /* Vassoi / Trays */
+    .tray-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+    .tray-item { background: #f8f9fa; border-radius: 10px; padding: 12px 16px; border: 1px solid #e9ecef; text-align: center; }
+    .tray-item .tray-name { font-size: 11px; font-weight: 600; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px; }
+    .tray-item .tray-bar { height: 8px; background: #e9ecef; border-radius: 4px; margin-top: 8px; overflow: hidden; }
+    .tray-item .tray-fill { height: 100%; border-radius: 4px; background: #3b82f6; transition: width 0.5s ease; }
+    .tray-item .tray-info { font-size: 13px; font-weight: 600; color: #1a1a2e; margin-top: 6px; }
+    .tray-item .tray-type { font-size: 10px; color: #9ca3af; margin-top: 2px; }
+
+    /* Finisher */
+    .finisher-grid { display: flex; gap: 16px; flex-wrap: wrap; }
+    .finisher-item { background: #f8f9fa; border-radius: 10px; padding: 12px 20px; border: 1px solid #e9ecef; min-width: 160px; text-align: center; }
+    .finisher-item .fin-name { font-size: 11px; font-weight: 600; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px; }
+    .finisher-item .fin-pct { font-size: 22px; font-weight: 800; color: #1a1a2e; margin-top: 4px; }
+
+    /* Alert */
+    .alert-box { background: #fef3c7; border: 1px solid #fbbf24; border-radius: 8px; padding: 10px 16px; font-size: 13px; color: #92400e; font-weight: 500; margin-top: 12px; }
+    .alert-box.ok { background: #d1fae5; border-color: #6ee7b7; color: #065f46; }
+
+    .status-section { margin-top: 16px; }
+    .status-section-label { font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
 </style>
 
 <div class="fiery-header">
@@ -173,6 +203,96 @@
                 <div class="counter-value" id="cnt-scansioni">{{ number_format($live['scansioni'] ?? 0, 0, ',', '.') }}</div>
             </div>
         </div>
+        {{-- Toner Levels --}}
+        @if(!empty($live['toner']))
+        <div class="status-section" id="toner-section">
+            <div class="status-section-label">Livelli Toner</div>
+            <div class="toner-grid">
+                @foreach($live['toner'] as $t)
+                @php
+                    $color = match($t['nome']) {
+                        'Nero' => '#1a1a2e',
+                        'Cyan' => '#06b6d4',
+                        'Magenta' => '#ec4899',
+                        'Yellow' => '#eab308',
+                        'Waste Toner' => '#78716c',
+                        default => '#6b7280',
+                    };
+                    $pct = $t['livello'];
+                    $warn = $pct >= 0 && $pct <= 15;
+                @endphp
+                <div class="toner-item" style="{{ $warn ? 'border-color:#fbbf24; background:#fffbeb;' : '' }}">
+                    <div class="toner-name">{{ $t['nome'] }}</div>
+                    <div class="toner-bar">
+                        <div class="toner-fill" style="width:{{ max($pct, 0) }}%; background:{{ $color }};"></div>
+                    </div>
+                    <div class="toner-pct" style="color:{{ $color }}">{{ $pct >= 0 ? $pct . '%' : '?' }}</div>
+                </div>
+                @endforeach
+            </div>
+        </div>
+        @endif
+
+        {{-- Vassoi Carta --}}
+        @if(!empty($live['vassoi']))
+        <div class="status-section" id="vassoi-section">
+            <div class="status-section-label">Vassoi Carta</div>
+            <div class="tray-grid">
+                @foreach($live['vassoi'] as $v)
+                @php
+                    $pct = $v['percentuale'];
+                    $barColor = $pct !== null && $pct >= 0 && $pct <= 20 ? '#ef4444' : '#3b82f6';
+                @endphp
+                <div class="tray-item" style="{{ $pct !== null && $pct >= 0 && $pct <= 20 ? 'border-color:#fca5a5; background:#fef2f2;' : '' }}">
+                    <div class="tray-name">{{ $v['nome'] ?: 'Vassoio ' . ($loop->index + 1) }}</div>
+                    <div class="tray-bar">
+                        <div class="tray-fill" style="width:{{ $pct !== null && $pct >= 0 ? $pct : 0 }}%; background:{{ $barColor }};"></div>
+                    </div>
+                    <div class="tray-info">
+                        @if($pct === -1)
+                            Presente
+                        @elseif($pct !== null)
+                            {{ $pct }}% &middot; {{ number_format($v['livello'], 0, ',', '.') }}/{{ number_format($v['capacita'], 0, ',', '.') }}
+                        @else
+                            -
+                        @endif
+                    </div>
+                    @if($v['tipo'])
+                    <div class="tray-type">{{ $v['tipo'] }}</div>
+                    @endif
+                </div>
+                @endforeach
+            </div>
+        </div>
+        @endif
+
+        {{-- Finisher Punti --}}
+        @if(!empty($live['punti']))
+        <div class="status-section" id="punti-section">
+            <div class="status-section-label">Finisher &mdash; Punti Metallici</div>
+            <div class="finisher-grid">
+                @foreach($live['punti'] as $p)
+                @php $warn = $p['livello'] >= 0 && $p['livello'] <= 20; @endphp
+                <div class="finisher-item" style="{{ $warn ? 'border-color:#fbbf24; background:#fffbeb;' : '' }}">
+                    <div class="fin-name">{{ $p['nome'] }}</div>
+                    <div class="fin-pct" style="{{ $warn ? 'color:#dc2626;' : '' }}">{{ $p['livello'] >= 0 ? $p['livello'] . '%' : '?' }}</div>
+                </div>
+                @endforeach
+            </div>
+        </div>
+        @endif
+
+        {{-- Alert --}}
+        @if(!empty($live['alert']))
+        <div id="alert-box" class="alert-box" style="margin-top:12px;">
+            ⚠ {{ $live['alert'] }}
+        </div>
+        @else
+        <div id="alert-box" class="alert-box ok" style="margin-top:12px;">
+            Nessun avviso attivo
+        </div>
+        @endif
+
         <div class="timestamp-live" id="live-timestamp">Ultimo aggiornamento: {{ $live['timestamp'] ?? '-' }}</div>
     @endif
 </div>
@@ -317,23 +437,88 @@
 </div>
 
 <script>
-// Refresh contatori ogni 60 secondi
-setInterval(function() {
+var tonerColors = {'Nero':'#1a1a2e','Cyan':'#06b6d4','Magenta':'#ec4899','Yellow':'#eab308','Waste Toner':'#78716c'};
+
+function fmtNum(n) { return Number(n).toLocaleString('it-IT'); }
+
+function refreshContatori() {
     fetch('{{ route("mes.fiery.contatori.json") }}')
         .then(r => r.json())
         .then(data => {
             if (data.errore) return;
-            var fields = ['totale_1','colore_grande','nero_grande','colore_piccolo','nero_piccolo','foglio_lungo','scansioni'];
-            fields.forEach(function(f) {
+
+            // Contatori numerici
+            ['totale_1','colore_grande','nero_grande','colore_piccolo','nero_piccolo','foglio_lungo','scansioni'].forEach(function(f) {
                 var el = document.getElementById('cnt-' + f);
-                if (el && data[f] !== null) {
-                    el.textContent = Number(data[f]).toLocaleString('it-IT');
-                }
+                if (el && data[f] !== null) el.textContent = fmtNum(data[f]);
             });
+
+            // Toner
+            if (data.toner && data.toner.length) {
+                var html = '';
+                data.toner.forEach(function(t) {
+                    var color = tonerColors[t.nome] || '#6b7280';
+                    var warn = t.livello >= 0 && t.livello <= 15;
+                    html += '<div class="toner-item" style="' + (warn ? 'border-color:#fbbf24;background:#fffbeb;' : '') + '">' +
+                        '<div class="toner-name">' + t.nome + '</div>' +
+                        '<div class="toner-bar"><div class="toner-fill" style="width:' + Math.max(t.livello, 0) + '%;background:' + color + ';"></div></div>' +
+                        '<div class="toner-pct" style="color:' + color + '">' + (t.livello >= 0 ? t.livello + '%' : '?') + '</div></div>';
+                });
+                var sec = document.getElementById('toner-section');
+                if (sec) sec.querySelector('.toner-grid').innerHTML = html;
+            }
+
+            // Vassoi
+            if (data.vassoi && data.vassoi.length) {
+                var html = '';
+                data.vassoi.forEach(function(v, i) {
+                    var pct = v.percentuale;
+                    var low = pct !== null && pct >= 0 && pct <= 20;
+                    var barColor = low ? '#ef4444' : '#3b82f6';
+                    var info = '-';
+                    if (pct === -1) info = 'Presente';
+                    else if (pct !== null) info = pct + '% &middot; ' + fmtNum(v.livello) + '/' + fmtNum(v.capacita);
+                    html += '<div class="tray-item" style="' + (low ? 'border-color:#fca5a5;background:#fef2f2;' : '') + '">' +
+                        '<div class="tray-name">' + (v.nome || 'Vassoio ' + (i+1)) + '</div>' +
+                        '<div class="tray-bar"><div class="tray-fill" style="width:' + (pct !== null && pct >= 0 ? pct : 0) + '%;background:' + barColor + ';"></div></div>' +
+                        '<div class="tray-info">' + info + '</div>' +
+                        (v.tipo ? '<div class="tray-type">' + v.tipo + '</div>' : '') + '</div>';
+                });
+                var sec = document.getElementById('vassoi-section');
+                if (sec) sec.querySelector('.tray-grid').innerHTML = html;
+            }
+
+            // Punti finisher
+            if (data.punti && data.punti.length) {
+                var html = '';
+                data.punti.forEach(function(p) {
+                    var warn = p.livello >= 0 && p.livello <= 20;
+                    html += '<div class="finisher-item" style="' + (warn ? 'border-color:#fbbf24;background:#fffbeb;' : '') + '">' +
+                        '<div class="fin-name">' + p.nome + '</div>' +
+                        '<div class="fin-pct" style="' + (warn ? 'color:#dc2626;' : '') + '">' + (p.livello >= 0 ? p.livello + '%' : '?') + '</div></div>';
+                });
+                var sec = document.getElementById('punti-section');
+                if (sec) sec.querySelector('.finisher-grid').innerHTML = html;
+            }
+
+            // Alert
+            var alertBox = document.getElementById('alert-box');
+            if (alertBox) {
+                if (data.alert) {
+                    alertBox.className = 'alert-box';
+                    alertBox.innerHTML = '⚠ ' + data.alert;
+                } else {
+                    alertBox.className = 'alert-box ok';
+                    alertBox.innerHTML = 'Nessun avviso attivo';
+                }
+            }
+
             var ts = document.getElementById('live-timestamp');
             if (ts) ts.textContent = 'Ultimo aggiornamento: ' + data.timestamp;
         })
         .catch(function() {});
-}, 60000);
+}
+
+setInterval(refreshContatori, 60000);
 </script>
 @endsection

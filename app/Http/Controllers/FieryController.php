@@ -297,6 +297,7 @@ class FieryController extends Controller
         }
 
         $ip = config('fiery.host', '192.168.1.206');
+        $community = 'public';
         $base = '.1.3.6.1.4.1.1602.1.11.1.3.1.4.';
         $oids = [
             101 => 'totale_1',
@@ -311,9 +312,84 @@ class FieryController extends Controller
         $result = ['ip' => $ip, 'timestamp' => now()->format('d/m/Y H:i:s')];
 
         foreach ($oids as $oid => $field) {
-            $val = @snmpget($ip, 'public', $base . $oid);
+            $val = @snmpget($ip, $community, $base . $oid);
             $result[$field] = $val !== false ? (int) preg_replace('/^.*:\s*/', '', $val) : null;
         }
+
+        // Livelli toner (Printer MIB .43.11.1.1)
+        // .6 = nome, .8 = max, .9 = livello attuale (percentuale su max)
+        $tonerBase = '.1.3.6.1.2.1.43.11.1.1.';
+        $tonerNomi = [1 => 'Nero', 2 => 'Cyan', 3 => 'Magenta', 4 => 'Yellow', 5 => 'Waste Toner', 6 => 'ADF Kit'];
+        $toner = [];
+        foreach ($tonerNomi as $idx => $nome) {
+            $livello = @snmpget($ip, $community, $tonerBase . '9.1.' . $idx);
+            $max = @snmpget($ip, $community, $tonerBase . '8.1.' . $idx);
+            if ($livello !== false && $max !== false) {
+                $lv = (int) preg_replace('/^.*:\s*/', '', $livello);
+                $mx = (int) preg_replace('/^.*:\s*/', '', $max);
+                $toner[] = [
+                    'nome' => $nome,
+                    'livello' => $mx > 0 ? round(($lv / $mx) * 100) : $lv,
+                    'raw' => $lv,
+                    'max' => $mx,
+                ];
+            }
+        }
+        $result['toner'] = $toner;
+
+        // Vassoi carta (Printer MIB .43.8.2.1)
+        // .13 = nome, .9 = capacità max, .10 = livello attuale, .21 = tipo media
+        $vassoi = [];
+        for ($i = 1; $i <= 5; $i++) {
+            $nomeV = @snmpget($ip, $community, '.1.3.6.1.2.1.43.8.2.1.13.1.' . $i);
+            $capV = @snmpget($ip, $community, '.1.3.6.1.2.1.43.8.2.1.9.1.' . $i);
+            $livV = @snmpget($ip, $community, '.1.3.6.1.2.1.43.8.2.1.10.1.' . $i);
+            $tipoV = @snmpget($ip, $community, '.1.3.6.1.2.1.43.8.2.1.21.1.' . $i);
+            if ($nomeV !== false) {
+                $cap = (int) preg_replace('/^.*:\s*/', '', $capV ?: '0');
+                $liv = (int) preg_replace('/^.*:\s*/', '', $livV ?: '0');
+                $nome = trim(preg_replace('/^.*:\s*"?|"$/s', '', $nomeV));
+                $tipo = trim(preg_replace('/^.*:\s*"?|"$/s', '', $tipoV ?: ''));
+                // -3 = livello sconosciuto ma presente, -2 = sconosciuto
+                $pct = null;
+                if ($liv >= 0 && $cap > 0) {
+                    $pct = round(($liv / $cap) * 100);
+                } elseif ($liv == -3) {
+                    $pct = -1; // presente ma livello sconosciuto
+                }
+                $vassoi[] = [
+                    'nome' => $nome,
+                    'capacita' => $cap,
+                    'livello' => $liv,
+                    'percentuale' => $pct,
+                    'tipo' => $tipo,
+                ];
+            }
+        }
+        $result['vassoi'] = $vassoi;
+
+        // Finisher - punti (Printer MIB .43.31.1.1)
+        // .5 = nome, .7 = max, .8 = livello
+        $punti = [];
+        for ($i = 1; $i <= 2; $i++) {
+            $nomeP = @snmpget($ip, $community, '.1.3.6.1.2.1.43.31.1.1.5.1.' . $i);
+            $maxP = @snmpget($ip, $community, '.1.3.6.1.2.1.43.31.1.1.7.1.' . $i);
+            $livP = @snmpget($ip, $community, '.1.3.6.1.2.1.43.31.1.1.8.1.' . $i);
+            if ($nomeP !== false) {
+                $nome = trim(preg_replace('/^.*:\s*"?|"$/s', '', $nomeP));
+                $mx = (int) preg_replace('/^.*:\s*/', '', $maxP ?: '0');
+                $lv = (int) preg_replace('/^.*:\s*/', '', $livP ?: '0');
+                $punti[] = [
+                    'nome' => $nome,
+                    'livello' => $mx > 0 ? round(($lv / $mx) * 100) : $lv,
+                ];
+            }
+        }
+        $result['punti'] = $punti;
+
+        // Alert attivo
+        $alert = @snmpget($ip, $community, '.1.3.6.1.2.1.43.16.5.1.2.1.1');
+        $result['alert'] = $alert !== false ? trim(preg_replace('/^.*:\s*"?|"$/s', '', $alert)) : null;
 
         return $result;
     }
