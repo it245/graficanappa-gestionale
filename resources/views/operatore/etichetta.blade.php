@@ -367,10 +367,8 @@ function aggiornaAnteprima() {
     var canvas = document.getElementById('datamatrix');
     var dmImg = document.getElementById('datamatrix-img');
     if (ean && ean.length >= 4) {
-        // GTIN: solo numerico, pad a 14 cifre
-        var gtin = ean.trim().replace(/[^0-9]/g, '');
-        while (gtin.length < 14) gtin = '0' + gtin;
-        if (gtin.length > 14) gtin = gtin.substring(0, 14);
+        // EAN/GTIN: usa così com'è (può contenere lettere es. A8022470254327)
+        var gtin = ean.trim();
 
         // AI(30) = quantità variabile (NO zero-padding, max 8 cifre)
         var qty = pzcassa ? String(parseInt(pzcassa, 10)) : '';
