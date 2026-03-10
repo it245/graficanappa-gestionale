@@ -4,14 +4,15 @@
 <div class="container-fluid px-3">
 <style>
     :root {
-        --bg: #0f1117; --bg-card: #1a1d27; --bg-card-hover: #222633;
-        --border: #2a2e3b; --border-light: #363b4d;
-        --text: #e4e7ec; --text-muted: #8b92a5; --text-dim: #5c6378;
-        --accent: #3b82f6; --accent-light: #60a5fa;
-        --green: #10b981; --green-bg: rgba(16,185,129,0.12);
-        --yellow: #f59e0b; --yellow-bg: rgba(245,158,11,0.12);
-        --red: #ef4444; --red-bg: rgba(239,68,68,0.12);
-        --purple: #8b5cf6;
+        --bg: #f0f2f5; --bg-card: #ffffff; --bg-card-hover: #f8f9fb;
+        --border: #e2e5ea; --border-light: #d1d5db;
+        --text: #1a1a2e; --text-muted: #6c757d; --text-dim: #9ca3af;
+        --accent: #2563eb; --accent-light: #3b82f6;
+        --green: #059669; --green-bg: #ecfdf5;
+        --yellow: #d97706; --yellow-bg: #fffbeb;
+        --red: #dc2626; --red-bg: #fef2f2;
+        --purple: #7c3aed;
+        --inner-bg: #f4f5f7;
     }
     body { background: var(--bg) !important; color: var(--text); }
 
@@ -39,7 +40,7 @@
     /* Cards */
     .card-d {
         background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
-        padding: 20px; margin-bottom: 16px; transition: border-color 0.2s;
+        padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); transition: border-color 0.2s;
     }
     .card-d:hover { border-color: var(--border-light); }
     .card-label {
@@ -71,7 +72,7 @@
 
     /* Progress */
     .prog-bar-wrap { margin-top: 16px; }
-    .prog-bar { height: 28px; background: #252836; border-radius: 14px; overflow: hidden; position: relative; }
+    .prog-bar { height: 28px; background: #e5e7eb; border-radius: 14px; overflow: hidden; position: relative; }
     .prog-fill {
         height: 100%; border-radius: 14px;
         background: linear-gradient(90deg, var(--accent), var(--green));
@@ -92,19 +93,19 @@
     .prog-stats strong { color: var(--text); }
 
     /* KPI row */
-    .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 16px; }
+    .kpi-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
     .kpi {
-        background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px;
-        padding: 16px; text-align: center;
+        background: var(--inner-bg); border: 1px solid var(--border); border-radius: 10px;
+        padding: 12px 10px; text-align: center;
     }
-    .kpi-val { font-size: 24px; font-weight: 800; color: var(--text); font-variant-numeric: tabular-nums; }
-    .kpi-label { font-size: 10px; font-weight: 600; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.8px; margin-top: 4px; }
+    .kpi-val { font-size: 20px; font-weight: 800; color: var(--text); font-variant-numeric: tabular-nums; }
+    .kpi-label { font-size: 9px; font-weight: 600; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.8px; margin-top: 4px; }
 
     /* Toner bars */
     .toner-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; }
     .toner-item { text-align: center; }
     .toner-label { font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
-    .toner-bar-v { width: 32px; height: 80px; background: #252836; border-radius: 16px; margin: 0 auto; position: relative; overflow: hidden; }
+    .toner-bar-v { width: 32px; height: 80px; background: #e5e7eb; border-radius: 16px; margin: 0 auto; position: relative; overflow: hidden; }
     .toner-fill-v {
         position: absolute; bottom: 0; left: 0; right: 0; border-radius: 16px;
         transition: height 0.6s ease;
@@ -116,12 +117,12 @@
     /* Trays */
     .tray-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
     .tray-item {
-        background: #252836; border-radius: 8px; padding: 10px 12px; text-align: center;
+        background: var(--inner-bg); border-radius: 8px; padding: 10px 12px; text-align: center;
         border: 1px solid transparent;
     }
     .tray-item.low { border-color: rgba(239,68,68,0.4); background: rgba(239,68,68,0.06); }
     .tray-name { font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
-    .tray-bar-h { height: 6px; background: #1a1d27; border-radius: 3px; margin: 8px 0; overflow: hidden; }
+    .tray-bar-h { height: 6px; background: #e5e7eb; border-radius: 3px; margin: 8px 0; overflow: hidden; }
     .tray-fill-h { height: 100%; border-radius: 3px; background: var(--accent); transition: width 0.5s; }
     .tray-info { font-size: 12px; font-weight: 600; color: var(--text); }
     .tray-type { font-size: 9px; color: var(--text-dim); margin-top: 2px; }
@@ -129,7 +130,7 @@
     /* Finisher */
     .fin-row { display: flex; gap: 12px; }
     .fin-item {
-        background: #252836; border-radius: 8px; padding: 12px 20px; text-align: center;
+        background: var(--inner-bg); border-radius: 8px; padding: 12px 20px; text-align: center;
         flex: 1; border: 1px solid transparent;
     }
     .fin-item.low { border-color: rgba(245,158,11,0.4); }
@@ -155,12 +156,12 @@
         font-size: 11px; font-weight: 600; padding: 4px 12px; border-radius: 20px;
     }
     .rip-active { background: rgba(59,130,246,0.12); color: var(--accent-light); border: 1px solid rgba(59,130,246,0.25); }
-    .rip-idle { background: #252836; color: var(--text-dim); }
+    .rip-idle { background: var(--inner-bg); color: var(--text-muted); }
 
     /* Print doc */
     .print-doc { font-size: 16px; font-weight: 700; color: var(--text); word-break: break-all; line-height: 1.4; }
     .commessa-chip {
-        display: inline-block; background: rgba(59,130,246,0.12); color: var(--accent-light);
+        display: inline-block; background: #dbeafe; color: var(--accent);
         font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 4px;
     }
     .no-job { color: var(--text-dim); font-size: 14px; padding: 20px 0; }
@@ -168,8 +169,8 @@
     /* Fase pills */
     .fasi-wrap { display: flex; gap: 4px; flex-wrap: wrap; }
     .fpill { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 10px; white-space: nowrap; }
-    .fp-s0 { background: #252836; color: var(--text-dim); }
-    .fp-s1 { background: rgba(59,130,246,0.12); color: var(--accent-light); }
+    .fp-s0 { background: #f3f4f6; color: #6b7280; }
+    .fp-s1 { background: #dbeafe; color: #1d4ed8; }
     .fp-s2 { background: var(--yellow-bg); color: var(--yellow); }
     .fp-s3 { background: var(--green-bg); color: var(--green); }
     .fp-ext { background: rgba(139,92,246,0.12); color: var(--purple); }
@@ -177,7 +178,7 @@
     /* Queue cards */
     .q-cards { display: flex; flex-direction: column; gap: 10px; }
     .q-card {
-        background: #252836; border: 1px solid var(--border); border-radius: 10px;
+        background: var(--inner-bg); border: 1px solid var(--border); border-radius: 10px;
         padding: 14px 18px; display: grid;
         grid-template-columns: 1fr 180px 100px 90px;
         gap: 10px 16px; align-items: start; transition: border-color 0.2s;
@@ -209,7 +210,7 @@
     }
     .c-table tbody tr:hover { background: rgba(59,130,246,0.04); }
     .c-title { font-weight: 500; color: var(--text); max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .mini-bar { width: 50px; height: 4px; background: #252836; border-radius: 2px; overflow: hidden; display: inline-block; vertical-align: middle; }
+    .mini-bar { width: 50px; height: 4px; background: var(--inner-bg); border-radius: 2px; overflow: hidden; display: inline-block; vertical-align: middle; }
     .mini-bar .fill { height: 100%; background: var(--green); border-radius: 2px; }
     .copies-sm { font-size: 10px; color: var(--text-dim); margin-left: 4px; }
 
@@ -218,7 +219,7 @@
         font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 14px;
         display: flex; align-items: center; gap: 8px;
     }
-    .sec-badge { background: #252836; color: var(--text-muted); font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 10px; }
+    .sec-badge { background: var(--inner-bg); color: var(--text-muted); font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 10px; }
 
     .offline-box { text-align: center; padding: 60px 20px; }
     .offline-box h3 { color: var(--red); font-weight: 700; }
@@ -257,20 +258,94 @@
 
 @if($status)
 
-{{-- KPI Row --}}
-<div class="kpi-row" id="kpi-row">
-    <div class="kpi"><div class="kpi-val" style="color:var(--green);" id="stat-completed">{{ count($jobData['completed']) }}</div><div class="kpi-label">Completati</div></div>
-    <div class="kpi"><div class="kpi-val" style="color:var(--yellow);" id="stat-queue">{{ count($jobData['queue']) }}</div><div class="kpi-label">In coda</div></div>
-    <div class="kpi"><div class="kpi-val" id="stat-total">{{ $jobData['total'] }}</div><div class="kpi-label">Totale job</div></div>
-    @if(!empty($snmp) && !isset($snmp['errore']))
-    <div class="kpi"><div class="kpi-val" id="kpi-totale">{{ number_format($snmp['totale_1'] ?? 0, 0, ',', '.') }}</div><div class="kpi-label">Click totali</div></div>
-    <div class="kpi"><div class="kpi-val" style="color:var(--accent);" id="kpi-colore">{{ number_format(($snmp['colore_grande'] ?? 0) + ($snmp['colore_piccolo'] ?? 0), 0, ',', '.') }}</div><div class="kpi-label">Colore</div></div>
-    <div class="kpi"><div class="kpi-val" id="kpi-bn">{{ number_format(($snmp['nero_grande'] ?? 0) + ($snmp['nero_piccolo'] ?? 0), 0, ',', '.') }}</div><div class="kpi-label">B/N</div></div>
-    @endif
+{{-- === ROW 1: KPI + Toner + Vassoi affiancati === --}}
+<div class="row" style="margin-bottom:16px;">
+    {{-- KPI --}}
+    <div class="col-lg-4">
+        <div class="card-d" style="height:100%;">
+            <div class="card-label">Statistiche</div>
+            <div class="kpi-row" id="kpi-row" style="margin-bottom:0;">
+                <div class="kpi"><div class="kpi-val" style="color:var(--green);" id="stat-completed">{{ count($jobData['completed']) }}</div><div class="kpi-label">Completati</div></div>
+                <div class="kpi"><div class="kpi-val" style="color:var(--yellow);" id="stat-queue">{{ count($jobData['queue']) }}</div><div class="kpi-label">In coda</div></div>
+                <div class="kpi"><div class="kpi-val" id="stat-total">{{ $jobData['total'] }}</div><div class="kpi-label">Totale</div></div>
+                @if(!empty($snmp) && !isset($snmp['errore']))
+                <div class="kpi"><div class="kpi-val" id="kpi-totale">{{ number_format($snmp['totale_1'] ?? 0, 0, ',', '.') }}</div><div class="kpi-label">Click totali</div></div>
+                <div class="kpi"><div class="kpi-val" style="color:var(--accent);" id="kpi-colore">{{ number_format(($snmp['colore_grande'] ?? 0) + ($snmp['colore_piccolo'] ?? 0), 0, ',', '.') }}</div><div class="kpi-label">Colore</div></div>
+                <div class="kpi"><div class="kpi-val" id="kpi-bn">{{ number_format(($snmp['nero_grande'] ?? 0) + ($snmp['nero_piccolo'] ?? 0), 0, ',', '.') }}</div><div class="kpi-label">B/N</div></div>
+                @endif
+            </div>
+        </div>
+    </div>
+    {{-- Toner --}}
+    <div class="col-lg-4">
+        <div class="card-d" id="toner-card" style="height:100%;">
+            <div class="card-label">Livelli Toner</div>
+            @if(!empty($snmp['toner']))
+            <div class="toner-row" id="toner-container">
+                @foreach($snmp['toner'] as $t)
+                @php
+                    $tc = match($t['nome']) { 'Nero'=>'#374151','Cyan'=>'#06b6d4','Magenta'=>'#ec4899','Yellow'=>'#eab308','Waste Toner'=>'#78716c', default=>'#6b7280' };
+                    $pct = $t['livello'];
+                    $warn = $pct >= 0 && $pct <= 15;
+                @endphp
+                <div class="toner-item">
+                    <div class="toner-label">{{ $t['nome'] }}</div>
+                    <div class="toner-bar-v">
+                        <div class="toner-fill-v {{ $warn ? 'toner-warn' : '' }}" style="height:{{ max($pct, 0) }}%; background:{{ $tc }};"></div>
+                    </div>
+                    <div class="toner-pct {{ $warn ? 'toner-warn' : '' }}" style="color:{{ $tc }}">{{ $pct >= 0 ? $pct.'%' : '?' }}</div>
+                </div>
+                @endforeach
+            </div>
+            @else
+            <div style="color:var(--text-dim);font-size:13px;">SNMP non disponibile</div>
+            @endif
+        </div>
+    </div>
+    {{-- Vassoi + Finisher --}}
+    <div class="col-lg-4">
+        <div class="card-d" id="supplies-card" style="height:100%;">
+            @if(!empty($snmp['vassoi']))
+            <div class="card-label">Vassoi Carta</div>
+            <div class="tray-row" id="tray-container">
+                @foreach($snmp['vassoi'] as $v)
+                @php
+                    $pct = $v['percentuale'];
+                    $low = $pct !== null && $pct >= 0 && $pct <= 20;
+                @endphp
+                <div class="tray-item {{ $low ? 'low' : '' }}">
+                    <div class="tray-name">{{ $v['nome'] ?: 'Vassoio '.($loop->index+1) }}</div>
+                    <div class="tray-bar-h"><div class="tray-fill-h" style="width:{{ $pct !== null && $pct >= 0 ? $pct : 0 }}%; {{ $low ? 'background:var(--red);' : '' }}"></div></div>
+                    <div class="tray-info">
+                        @if($pct === -1) Presente
+                        @elseif($pct !== null) {{ $pct }}%
+                        @else -
+                        @endif
+                    </div>
+                    @if($v['tipo'])<div class="tray-type">{{ $v['tipo'] }}</div>@endif
+                </div>
+                @endforeach
+            </div>
+            @endif
+
+            @if(!empty($snmp['punti']))
+            <div class="card-label" style="margin-top:14px;">Finisher</div>
+            <div class="fin-row" id="fin-container">
+                @foreach($snmp['punti'] as $p)
+                @php $low = $p['livello'] >= 0 && $p['livello'] <= 20; @endphp
+                <div class="fin-item {{ $low ? 'low' : '' }}">
+                    <div class="fin-name">{{ $p['nome'] }}</div>
+                    <div class="fin-pct" style="{{ $low ? 'color:var(--red);' : '' }}">{{ $p['livello'] >= 0 ? $p['livello'].'%' : '?' }}</div>
+                </div>
+                @endforeach
+            </div>
+            @endif
+        </div>
+    </div>
 </div>
 
+{{-- === ROW 2: Stato + Job in stampa | Operatore === --}}
 <div class="row">
-    {{-- Col sinistra --}}
     <div class="col-lg-8">
         {{-- Stato macchina --}}
         <div class="card-d">
@@ -322,8 +397,8 @@
                     </div>
                 </div>
                 @if(!empty($jobData['commessa_sheets']) && $jobData['commessa_sheets']['fogli_totali'] > 0)
-                <div id="commessa-sheets-info" style="margin-top:10px; padding:8px 14px; background:rgba(59,130,246,0.08); border:1px solid rgba(59,130,246,0.2); border-radius:8px; font-size:12px; color:var(--text-muted);">
-                    Fogli totali commessa: <strong style="color:var(--accent-light);">{{ $jobData['commessa_sheets']['fogli_totali'] }}</strong>
+                <div id="commessa-sheets-info" style="margin-top:10px; padding:8px 14px; background:#dbeafe; border:1px solid #93c5fd; border-radius:8px; font-size:12px; color:var(--text-muted);">
+                    Fogli totali commessa: <strong style="color:var(--accent);">{{ $jobData['commessa_sheets']['fogli_totali'] }}</strong>
                     <span style="margin-left:8px;">{{ $jobData['commessa_sheets']['copie_totali'] }} copie</span>
                     <span style="margin-left:8px; color:var(--text-dim);">{{ $jobData['commessa_sheets']['run_count'] }} run</span>
                 </div>
@@ -335,9 +410,8 @@
         </div>
     </div>
 
-    {{-- Col destra: Operatore + Consumabili --}}
+    {{-- Operatore --}}
     <div class="col-lg-4">
-        {{-- Operatore --}}
         <div class="card-d">
             <div class="card-label">Operatore assegnato</div>
             <div style="font-size:18px;font-weight:800;color:var(--text);" id="operatore-nome">{{ config('fiery.operatore') }}</div>
@@ -367,68 +441,6 @@
                     @foreach($printMes['fasi'] as $f)<span class="fpill {{ $f['esterno'] ? 'fp-ext' : 'fp-s'.$f['stato'] }}">{{ $f['fase'] }}</span>@endforeach
                 </div></div>
                 @endif
-            </div>
-            @endif
-        </div>
-
-        {{-- Toner --}}
-        @if(!empty($snmp['toner']))
-        <div class="card-d" id="toner-card">
-            <div class="card-label">Livelli Toner</div>
-            <div class="toner-row" id="toner-container">
-                @foreach($snmp['toner'] as $t)
-                @php
-                    $tc = match($t['nome']) { 'Nero'=>'#e4e7ec','Cyan'=>'#06b6d4','Magenta'=>'#ec4899','Yellow'=>'#eab308','Waste Toner'=>'#78716c', default=>'#6b7280' };
-                    $pct = $t['livello'];
-                    $warn = $pct >= 0 && $pct <= 15;
-                @endphp
-                <div class="toner-item">
-                    <div class="toner-label">{{ $t['nome'] }}</div>
-                    <div class="toner-bar-v">
-                        <div class="toner-fill-v {{ $warn ? 'toner-warn' : '' }}" style="height:{{ max($pct, 0) }}%; background:{{ $tc }};"></div>
-                    </div>
-                    <div class="toner-pct {{ $warn ? 'toner-warn' : '' }}" style="color:{{ $tc }}">{{ $pct >= 0 ? $pct.'%' : '?' }}</div>
-                </div>
-                @endforeach
-            </div>
-        </div>
-        @endif
-
-        {{-- Vassoi + Finisher --}}
-        <div class="card-d" id="supplies-card">
-            @if(!empty($snmp['vassoi']))
-            <div class="card-label">Vassoi Carta</div>
-            <div class="tray-row" id="tray-container">
-                @foreach($snmp['vassoi'] as $v)
-                @php
-                    $pct = $v['percentuale'];
-                    $low = $pct !== null && $pct >= 0 && $pct <= 20;
-                @endphp
-                <div class="tray-item {{ $low ? 'low' : '' }}">
-                    <div class="tray-name">{{ $v['nome'] ?: 'Vassoio '.($loop->index+1) }}</div>
-                    <div class="tray-bar-h"><div class="tray-fill-h" style="width:{{ $pct !== null && $pct >= 0 ? $pct : 0 }}%; {{ $low ? 'background:var(--red);' : '' }}"></div></div>
-                    <div class="tray-info">
-                        @if($pct === -1) Presente
-                        @elseif($pct !== null) {{ $pct }}%
-                        @else -
-                        @endif
-                    </div>
-                    @if($v['tipo'])<div class="tray-type">{{ $v['tipo'] }}</div>@endif
-                </div>
-                @endforeach
-            </div>
-            @endif
-
-            @if(!empty($snmp['punti']))
-            <div class="card-label" style="margin-top:16px;">Finisher</div>
-            <div class="fin-row" id="fin-container">
-                @foreach($snmp['punti'] as $p)
-                @php $low = $p['livello'] >= 0 && $p['livello'] <= 20; @endphp
-                <div class="fin-item {{ $low ? 'low' : '' }}">
-                    <div class="fin-name">{{ $p['nome'] }}</div>
-                    <div class="fin-pct" style="{{ $low ? 'color:var(--red);' : '' }}">{{ $p['livello'] >= 0 ? $p['livello'].'%' : '?' }}</div>
-                </div>
-                @endforeach
             </div>
             @endif
         </div>
@@ -542,7 +554,7 @@
 </div>
 
 <script>
-var tonerColors = {'Nero':'#e4e7ec','Cyan':'#06b6d4','Magenta':'#ec4899','Yellow':'#eab308','Waste Toner':'#78716c'};
+var tonerColors = {'Nero':'#374151','Cyan':'#06b6d4','Magenta':'#ec4899','Yellow':'#eab308','Waste Toner':'#78716c'};
 
 function fasiHtml(fasi) {
     if (!fasi || !fasi.length) return '';
@@ -593,7 +605,7 @@ setInterval(function() {
                     '<div class="prog-stats"><span>Copie: <strong>' + data.stampa.copie_fatte + '</strong> / ' + data.stampa.copie_totali + '</span><span>Pagine: ' + data.stampa.pagine + '</span><span>Utente: ' + (data.stampa.utente || '') + '</span></div></div>';
                 if (data.jobs && data.jobs.commessa_sheets && data.jobs.commessa_sheets.fogli_totali > 0) {
                     var cs = data.jobs.commessa_sheets;
-                    sc.innerHTML += '<div style="margin-top:10px;padding:8px 14px;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:8px;font-size:12px;color:var(--text-muted);">Fogli totali: <strong style="color:var(--accent-light);">' + cs.fogli_totali + '</strong> <span style="margin-left:8px;">' + cs.copie_totali + ' copie</span> <span style="margin-left:8px;color:var(--text-dim);">' + cs.run_count + ' run</span></div>';
+                    sc.innerHTML += '<div style="margin-top:10px;padding:8px 14px;background:#dbeafe;border:1px solid #93c5fd;border-radius:8px;font-size:12px;color:var(--text-muted);">Fogli totali: <strong style="color:var(--accent);">' + cs.fogli_totali + '</strong> <span style="margin-left:8px;">' + cs.copie_totali + ' copie</span> <span style="margin-left:8px;color:var(--text-dim);">' + cs.run_count + ' run</span></div>';
                 }
             } else {
                 sc.innerHTML = '<div class="no-job">Nessun job in stampa</div>';
