@@ -377,43 +377,24 @@ function aggiornaAnteprima() {
         // Lotto senza trattino
         var lottoClean = lotto ? lotto.replace(/-/g, '') : '';
 
-        // Costruisci stringa GS1 con parentesi per bwip-js gs1datamatrix
-        var displayData = '(01)' + gtin;
-        if (qty) displayData += '(30)' + qty;
-        if (lottoClean) displayData += '(10)' + lottoClean;
+        // Costruisci stringa dati come testo puro (come BarTender)
+        var plainData = '01' + gtin;
+        if (qty) plainData += '30' + qty;
+        if (lottoClean) plainData += '10' + lottoClean;
 
         try {
             bwipjs.toCanvas(canvas, {
-                bcid: 'gs1datamatrix',
-                text: displayData,
+                bcid: 'datamatrix',
+                text: plainData,
                 scale: 10,
                 padding: 4,
-                dontlint: true,
             });
             dmImg.src = canvas.toDataURL('image/png');
             dmImg.style.display = '';
-            document.getElementById('print-ean').textContent = displayData.replace(/[()]/g, '');
+            document.getElementById('print-ean').textContent = plainData;
         } catch(e) {
-            console.warn('gs1datamatrix failed, trying datamatrix:', e.message || e);
-            // Fallback: datamatrix con FNC1
-            try {
-                var bwipData = '^FNC101' + gtin;
-                if (qty) bwipData += '30' + qty + '^FNC1';
-                if (lottoClean) bwipData += '10' + lottoClean;
-                bwipjs.toCanvas(canvas, {
-                    bcid: 'datamatrix',
-                    text: bwipData,
-                    scale: 10,
-                    padding: 4,
-                    parsefnc: true,
-                });
-                dmImg.src = canvas.toDataURL('image/png');
-                dmImg.style.display = '';
-                document.getElementById('print-ean').textContent = displayData.replace(/[()]/g, '');
-            } catch(e2) {
-                console.error('DataMatrix fallback error:', e2);
-                dmImg.style.display = 'none';
-            }
+            console.error('DataMatrix error:', e);
+            dmImg.style.display = 'none';
         }
     } else {
         dmImg.style.display = 'none';
