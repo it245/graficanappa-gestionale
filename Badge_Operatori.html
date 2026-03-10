@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Badge Operatori &mdash; Grafica Nappa srl</title>
+<style>
+    @page {
+        margin: 8mm;
+        size: A4 portrait;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        color: #222;
+        padding: 8mm;
+    }
+    .grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0px;
+    }
+    .card {
+        border: 1px dashed #999;
+        padding: 8px 14px;
+        height: 70mm;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        position: relative;
+        page-break-inside: avoid;
+    }
+    .card-left {
+        flex: 1;
+        text-align: left;
+    }
+    .card-right {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-left: 8px;
+    }
+    .card .logo {
+        font-size: 8px;
+        font-weight: 700;
+        color: #d11317;
+        letter-spacing: 1px;
+        margin-bottom: 3px;
+    }
+    .card .nome {
+        font-size: 14px;
+        font-weight: 700;
+        color: #222;
+        margin-bottom: 4px;
+        line-height: 1.2;
+    }
+    .card .codice {
+        font-size: 24px;
+        font-weight: 900;
+        color: #d11317;
+        letter-spacing: 2px;
+        font-family: 'Consolas', 'Courier New', monospace;
+        margin-bottom: 4px;
+        padding: 3px 12px;
+        border: 2.5px solid #d11317;
+        border-radius: 6px;
+        background: #fff5f5;
+        display: inline-block;
+    }
+    .card .reparto {
+        font-size: 9px;
+        color: #666;
+        font-style: italic;
+        max-width: 100%;
+        line-height: 1.2;
+    }
+    .card .qr {
+        width: 70px;
+        height: 70px;
+        margin-bottom: 4px;
+    }
+    .card .urls {
+        font-size: 6.5px;
+        color: #444;
+        line-height: 1.5;
+        text-align: left;
+    }
+    .card .urls b {
+        color: #d11317;
+    }
+    @media print {
+        body { padding: 0; }
+        .card { border: 1px dashed #bbb; }
+    }
+</style>
+</head>
+<body>
+
+<div class="grid">
+
+    <div class="card">
+        <div class="card-left">
+            <div class="logo">GRAFICA NAPPA</div>
+            <div class="nome">Raffaele Barbato</div>
+            <div class="codice">RB023</div>
+            <div class="reparto">Stampa Offset</div>
+        </div>
+        <div class="card-right">
+            <img class="qr" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://192.168.1.60/operatore/login" alt="QR">
+            <div class="urls"><b>PC:</b> 192.168.1.60/operatore/login<br><b>Android:</b> gestionale/operatore/login<br><b>Apple:</b> gestionale.local/operatore/login</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-left">
+            <div class="logo">GRAFICA NAPPA</div>
+            <div class="nome">Paolo Bortone</div>
+            <div class="codice">PB006</div>
+            <div class="reparto">Fustella, Fustella Piana</div>
+        </div>
+        <div class="card-right">
+            <img class="qr" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://192.168.1.60/operatore/login" alt="QR">
+            <div class="urls"><b>PC:</b> 192.168.1.60/operatore/login<br><b>Android:</b> gestionale/operatore/login<br><b>Apple:</b> gestionale.local/operatore/login</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-left">
+            <div class="logo">GRAFICA NAPPA</div>
+            <div class="nome">Antonio Castellano</div>
+            <div class="codice">AC012</div>
+            <div class="reparto">Prestampa</div>
+        </div>
+        <div class="card-right">
+            <img class="qr" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://192.168.1.60/operatore/login" alt="QR">
+            <div class="urls"><b>PC:</b> 192.168.1.60/operatore/login<br><b>Android:</b> gestionale/operatore/login<br><b>Apple:</b> gestionale.local/operatore/login</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-left">
+            <div class="logo">GRAFICA NAPPA</div>
+            <div class="nome">Alessandro Coscione</div>
+            <div class="codice">AC034</div>
+            <div class="reparto">Fustella Cilindrica</div>
+        </div>
+        <div class="card-right">
+            <img class="qr" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://192.168.1.60/operatore/login" alt="QR">
+            <div class="urls"><b>PC:</b> 192.168.1.60/operatore/login<br><b>Android:</b> gestionale/operatore/login<br><b>Apple:</b> gestionale.local/operatore/login</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-left">
+            <div class="logo">GRAFICA NAPPA</div>
+            <div class="nome">Lorenzo Crisanti</div>
+            <div class="codice">LC002</div>
+            <div class="reparto">Spedizione</div>
+        </div>
+        <div class="card-right">
+            <img class="qr" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://192.168.1.60/operatore/login" alt="QR">
+            <div class="urls"><b>PC:</b> 192.168.1.60/operatore/login<br><b>Android:</b> gestionale/operatore/login<br><b>Apple:</b> gestionale.local/operatore/login</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-left">
+            <div class="logo">GRAFICA NAPPA</div>
+            <div class="nome">Mirko D'Orazio</div>
+            <div class="codice">MD013</div>
+            <div class="reparto">Prestampa</div>
+        </div>
+        <div class="card-right">
+            <img class="qr" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://192.168.1.60/operatore/login" alt="QR">
+            <div class="urls"><b>PC:</b> 192.168.1.60/operatore/login<br><b>Android:</b> gestionale/operatore/login<br><b>Apple:</b> gestionale.local/operatore/login</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-left">
+            <div class="logo">GRAFICA NAPPA</div>
+            <div class="nome">Francesco Francese</div>
+            <div class="codice">FF014</div>
+            <div class="reparto">Prestampa</div>
+        </div>
+        <div class="card-right">
+            <img class="qr" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://192.168.1.60/operatore/login" alt="QR">
+            <div class="urls"><b>PC:</b> 192.168.1.60/operatore/login<br><b>Android:</b> gestionale/operatore/login<br><b>Apple:</b> gestionale.local/operatore/login</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-left">
+            <div class="logo">GRAFICA NAPPA</div>
+            <div class="nome">Vincenzo Gargiulo</div>
+            <div class="codice">VG016</div>
+            <div class="reparto">Stampa a Caldo</div>
+        </div>
+        <div class="card-right">
+            <img class="qr" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://192.168.1.60/operatore/login" alt="QR">
+            <div class="urls"><b>PC:</b> 192.168.1.60/operatore/login<br><b>Android:</b> gestionale/operatore/login<br><b>Apple:</b> gestionale.local/operatore/login</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-left">
+            <div class="logo">GRAFICA NAPPA</div>
+            <div class="nome">Pasquale Iuliano</div>
+            <div class="codice">PI009</div>
+            <div class="reparto">Piegaincolla</div>
+        </div>
+        <div class="card-right">
+            <img class="qr" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://192.168.1.60/operatore/login" alt="QR">
+            <div class="urls"><b>PC:</b> 192.168.1.60/operatore/login<br><b>Android:</b> gestionale/operatore/login<br><b>Apple:</b> gestionale.local/operatore/login</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-left">
+            <div class="logo">GRAFICA NAPPA</div>
+            <div class="nome">Gennaro La Scala</div>
+            <div class="codice">GL031</div>
+            <div class="reparto">Fustella, Fustella Cilindrica</div>
+        </div>
+        <div class="card-right">
+            <img class="qr" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://192.168.1.60/operatore/login" alt="QR">
+            <div class="urls"><b>PC:</b> 192.168.1.60/operatore/login<br><b>Android:</b> gestionale/operatore/login<br><b>Apple:</b> gestionale.local/operatore/login</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-left">
+            <div class="logo">GRAFICA NAPPA</div>
+            <div class="nome">Emanuele Marcone</div>
+            <div class="codice">EM027</div>
+            <div class="reparto">Spedizione</div>
+        </div>
+        <div class="card-right">
+            <img class="qr" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://192.168.1.60/operatore/login" alt="QR">
+            <div class="urls"><b>PC:</b> 192.168.1.60/operatore/login<br><b>Android:</b> gestionale/operatore/login<br><b>Apple:</b> gestionale.local/operatore/login</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-left">
+            <div class="logo">GRAFICA NAPPA</div>
+            <div class="nome">Domenico Marfella</div>
+            <div class="codice">DM005</div>
+            <div class="reparto">Fustella, Fustella Piana</div>
+        </div>
+        <div class="card-right">
+            <img class="qr" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://192.168.1.60/operatore/login" alt="QR">
+            <div class="urls"><b>PC:</b> 192.168.1.60/operatore/login<br><b>Android:</b> gestionale/operatore/login<br><b>Apple:</b> gestionale.local/operatore/login</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-left">
+            <div class="logo">GRAFICA NAPPA</div>
+            <div class="nome">Luigi Marino</div>
+            <div class="codice">LM019</div>
+            <div class="reparto">Stampa Offset</div>
+        </div>
+        <div class="card-right">
+            <img class="qr" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://192.168.1.60/operatore/login" alt="QR">
+            <div class="urls"><b>PC:</b> 192.168.1.60/operatore/login<br><b>Android:</b> gestionale/operatore/login<br><b>Apple:</b> gestionale.local/operatore/login</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-left">
+            <div class="logo">GRAFICA NAPPA</div>
+            <div class="nome">Vincenzo Marrone</div>
+            <div class="codice">VM022</div>
+            <div class="reparto">Stampa Offset</div>
+        </div>
+        <div class="card-right">
+            <img class="qr" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://192.168.1.60/operatore/login" alt="QR">
+            <div class="urls"><b>PC:</b> 192.168.1.60/operatore/login<br><b>Android:</b> gestionale/operatore/login<br><b>Apple:</b> gestionale.local/operatore/login</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-left">
+            <div class="logo">GRAFICA NAPPA</div>
+            <div class="nome">Benito Menale</div>
+            <div class="codice">BM018</div>
+            <div class="reparto">Stampa Offset</div>
+        </div>
+        <div class="card-right">
+            <img class="qr" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://192.168.1.60/operatore/login" alt="QR">
+            <div class="urls"><b>PC:</b> 192.168.1.60/operatore/login<br><b>Android:</b> gestionale/operatore/login<br><b>Apple:</b> gestionale.local/operatore/login</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-left">
+            <div class="logo">GRAFICA NAPPA</div>
+            <div class="nome">Francesco Menale</div>
+            <div class="codice">FM029</div>
+            <div class="reparto">Finestre, Legatoria</div>
+        </div>
+        <div class="card-right">
+            <img class="qr" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://192.168.1.60/operatore/login" alt="QR">
+            <div class="urls"><b>PC:</b> 192.168.1.60/operatore/login<br><b>Android:</b> gestionale/operatore/login<br><b>Apple:</b> gestionale.local/operatore/login</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-left">
+            <div class="logo">GRAFICA NAPPA</div>
+            <div class="nome">Luigi Menale</div>
+            <div class="codice">LM007</div>
+            <div class="reparto">Legatoria, Finestre</div>
+        </div>
+        <div class="card-right">
+            <img class="qr" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://192.168.1.60/operatore/login" alt="QR">
+            <div class="urls"><b>PC:</b> 192.168.1.60/operatore/login<br><b>Android:</b> gestionale/operatore/login<br><b>Apple:</b> gestionale.local/operatore/login</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-left">
+            <div class="logo">GRAFICA NAPPA</div>
+            <div class="nome">Cosimo Mormile</div>
+            <div class="codice">CM020</div>
+            <div class="reparto">Stampa Offset</div>
+        </div>
+        <div class="card-right">
+            <img class="qr" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://192.168.1.60/operatore/login" alt="QR">
+            <div class="urls"><b>PC:</b> 192.168.1.60/operatore/login<br><b>Android:</b> gestionale/operatore/login<br><b>Apple:</b> gestionale.local/operatore/login</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-left">
+            <div class="logo">GRAFICA NAPPA</div>
+            <div class="nome">Diego Pagano</div>
+            <div class="codice">DP017</div>
+            <div class="reparto">Stampa a Caldo</div>
+        </div>
+        <div class="card-right">
+            <img class="qr" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://192.168.1.60/operatore/login" alt="QR">
+            <div class="urls"><b>PC:</b> 192.168.1.60/operatore/login<br><b>Android:</b> gestionale/operatore/login<br><b>Apple:</b> gestionale.local/operatore/login</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-left">
+            <div class="logo">GRAFICA NAPPA</div>
+            <div class="nome">Ciro Rao</div>
+            <div class="codice">CR010</div>
+            <div class="reparto">Piegaincolla</div>
+        </div>
+        <div class="card-right">
+            <img class="qr" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://192.168.1.60/operatore/login" alt="QR">
+            <div class="urls"><b>PC:</b> 192.168.1.60/operatore/login<br><b>Android:</b> gestionale/operatore/login<br><b>Apple:</b> gestionale.local/operatore/login</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-left">
+            <div class="logo">GRAFICA NAPPA</div>
+            <div class="nome">Michele Russo</div>
+            <div class="codice">MR015</div>
+            <div class="reparto">Prestampa</div>
+        </div>
+        <div class="card-right">
+            <img class="qr" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://192.168.1.60/operatore/login" alt="QR">
+            <div class="urls"><b>PC:</b> 192.168.1.60/operatore/login<br><b>Android:</b> gestionale/operatore/login<br><b>Apple:</b> gestionale.local/operatore/login</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-left">
+            <div class="logo">GRAFICA NAPPA</div>
+            <div class="nome">Mario Santoro</div>
+            <div class="codice">MS026</div>
+            <div class="reparto">Tagliacarte</div>
+        </div>
+        <div class="card-right">
+            <img class="qr" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://192.168.1.60/operatore/login" alt="QR">
+            <div class="urls"><b>PC:</b> 192.168.1.60/operatore/login<br><b>Android:</b> gestionale/operatore/login<br><b>Apple:</b> gestionale.local/operatore/login</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-left">
+            <div class="logo">GRAFICA NAPPA</div>
+            <div class="nome">Giangiuseppe Scarano</div>
+            <div class="codice">GS003</div>
+            <div class="reparto">Spedizione</div>
+        </div>
+        <div class="card-right">
+            <img class="qr" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://192.168.1.60/operatore/login" alt="QR">
+            <div class="urls"><b>PC:</b> 192.168.1.60/operatore/login<br><b>Android:</b> gestionale/operatore/login<br><b>Apple:</b> gestionale.local/operatore/login</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-left">
+            <div class="logo">GRAFICA NAPPA</div>
+            <div class="nome">Francesco Scotti</div>
+            <div class="codice">FS001</div>
+            <div class="reparto">Spedizione</div>
+        </div>
+        <div class="card-right">
+            <img class="qr" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://192.168.1.60/operatore/login" alt="QR">
+            <div class="urls"><b>PC:</b> 192.168.1.60/operatore/login<br><b>Android:</b> gestionale/operatore/login<br><b>Apple:</b> gestionale.local/operatore/login</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-left">
+            <div class="logo">GRAFICA NAPPA</div>
+            <div class="nome">Christian Simonetti</div>
+            <div class="codice">CS025</div>
+            <div class="reparto">Stampa Offset</div>
+        </div>
+        <div class="card-right">
+            <img class="qr" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://192.168.1.60/operatore/login" alt="QR">
+            <div class="urls"><b>PC:</b> 192.168.1.60/operatore/login<br><b>Android:</b> gestionale/operatore/login<br><b>Apple:</b> gestionale.local/operatore/login</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-left">
+            <div class="logo">GRAFICA NAPPA</div>
+            <div class="nome">Luca Sorbo</div>
+            <div class="codice">LS011</div>
+            <div class="reparto">Plastificazione</div>
+        </div>
+        <div class="card-right">
+            <img class="qr" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://192.168.1.60/operatore/login" alt="QR">
+            <div class="urls"><b>PC:</b> 192.168.1.60/operatore/login<br><b>Android:</b> gestionale/operatore/login<br><b>Apple:</b> gestionale.local/operatore/login</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-left">
+            <div class="logo">GRAFICA NAPPA</div>
+            <div class="nome">Giannantonio Torromacco</div>
+            <div class="codice">GT008</div>
+            <div class="reparto">Piegaincolla</div>
+        </div>
+        <div class="card-right">
+            <img class="qr" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://192.168.1.60/operatore/login" alt="QR">
+            <div class="urls"><b>PC:</b> 192.168.1.60/operatore/login<br><b>Android:</b> gestionale/operatore/login<br><b>Apple:</b> gestionale.local/operatore/login</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-left">
+            <div class="logo">GRAFICA NAPPA</div>
+            <div class="nome">Francesco Verde</div>
+            <div class="codice">FV004</div>
+            <div class="reparto">Digitale, Finitura Digitale</div>
+        </div>
+        <div class="card-right">
+            <img class="qr" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://192.168.1.60/operatore/login" alt="QR">
+            <div class="urls"><b>PC:</b> 192.168.1.60/operatore/login<br><b>Android:</b> gestionale/operatore/login<br><b>Apple:</b> gestionale.local/operatore/login</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-left">
+            <div class="logo">GRAFICA NAPPA</div>
+            <div class="nome">Alessandro Zampella</div>
+            <div class="codice">AZ024</div>
+            <div class="reparto">Stampa Offset</div>
+        </div>
+        <div class="card-right">
+            <img class="qr" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://192.168.1.60/operatore/login" alt="QR">
+            <div class="urls"><b>PC:</b> 192.168.1.60/operatore/login<br><b>Android:</b> gestionale/operatore/login<br><b>Apple:</b> gestionale.local/operatore/login</div>
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>

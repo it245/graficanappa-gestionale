@@ -820,7 +820,7 @@ tr:hover td {
                         $clienteOwner = $fase->ordine->cliente_nome ?? '';
                         $repartoOwner = strtolower($fase->faseCatalogo->reparto->nome ?? '');
                         $coloriOwner = \App\Helpers\DescrizioneParser::parseColori($descOwner, $clienteOwner, $repartoOwner);
-                        $fustellaOwner = \App\Helpers\DescrizioneParser::parseFustella($descOwner, $clienteOwner);
+                        $fustellaOwner = \App\Helpers\DescrizioneParser::parseFustella($descOwner, $clienteOwner, $fase->ordine->note_prestampa ?? '');
                     @endphp
                     <td>{{ $coloriOwner ?: '-' }}</td>
                     <td>{{ $fustellaOwner ?: '-' }}</td>

@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell -Command \"Get-Command php | Select-Object -ExpandProperty Source\")",
+      "Bash(powershell -Command:*)",
+      "Bash(php -r:*)",
+      "Bash(php -m:*)",
+      "Bash(php:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(grep:*)",
+      "Bash(curl:*)",
+      "Bash(python3:*)",
+      "Bash(python:*)",
+      "Bash(git push:*)",
+      "WebSearch",
+      "WebFetch(domain:www.fiery.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:efi-developer-dev.azurewebsites.net)",
+      "WebFetch(domain:developer.fiery.com)",
+      "WebFetch(domain:communities.efi.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:efi.my.site.com)"
+    ]
+  }
+}

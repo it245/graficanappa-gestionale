@@ -23,6 +23,9 @@ Route::prefix('operatore')->group(function() {
         Route::get('dashboard', [DashboardOperatoreController::class, 'index'])->name('operatore.dashboard');
         Route::match(['get', 'post'], '/logout', [OperatoreLoginController::class, 'logout'])->name('operatore.logout');
 
+        // Fustelle (per operatori fustella piana/cilindrica)
+        Route::get('/fustelle', [DashboardOperatoreController::class, 'fustelle'])->name('operatore.fustelle');
+
         // Etichette EAN
         Route::get('/etichetta/search-ean', [EtichettaController::class, 'searchEan'])->name('operatore.etichetta.searchEan');
         Route::post('/etichetta/salva-ean', [EtichettaController::class, 'salvaEan'])->name('operatore.etichetta.salvaEan');

@@ -97,7 +97,7 @@ class DashboardMesExport implements FromCollection, WithHeadings, WithMapping, W
                 $fase->faseCatalogo->reparto->nome ?? ''
             ),
             // Fustella (calcolato da descrizione)
-            DescrizioneParser::parseFustella($ordine->descrizione ?? '', $ordine->cliente_nome ?? '') ?? '',
+            DescrizioneParser::parseFustella($ordine->descrizione ?? '', $ordine->cliente_nome ?? '', $ordine->note_prestampa ?? '') ?? '',
             // Esterno (calcolato da note "Inviato a:")
             preg_match('/Inviato a:\s*(.+)/i', $fase->note ?? '', $mEst) ? trim($mEst[1]) : '',
             // Ore Previste (calcolato da config fasi_ore)

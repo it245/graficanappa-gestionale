@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Accesso MES &mdash; Grafica Nappa srl</title>
+<style>
+    @page {
+        margin: 12mm;
+        size: A4 portrait;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        color: #222;
+        padding: 12mm;
+        text-align: center;
+    }
+    .header {
+        margin-bottom: 22px;
+        padding-bottom: 14px;
+        border-bottom: 3px solid #d11317;
+    }
+    .header h1 {
+        font-size: 36px;
+        color: #d11317;
+        font-weight: 900;
+        letter-spacing: 3px;
+        margin-bottom: 4px;
+    }
+    .header h2 {
+        font-size: 22px;
+        color: #444;
+        font-weight: 400;
+    }
+    .header .subtitle {
+        font-size: 13px;
+        color: #888;
+        margin-top: 3px;
+    }
+    .section {
+        margin-bottom: 20px;
+    }
+    .section h3 {
+        font-size: 15px;
+        font-weight: 700;
+        color: #d11317;
+        margin-bottom: 12px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    .qr-row {
+        display: flex;
+        justify-content: center;
+        gap: 35px;
+        margin-top: 14px;
+    }
+    .qr-block {
+        text-align: center;
+        width: 190px;
+    }
+    .qr-block img {
+        width: 140px;
+        height: 140px;
+        image-rendering: pixelated;
+        border: 3px solid #d11317;
+        border-radius: 10px;
+        padding: 5px;
+        background: #fff;
+    }
+    .qr-block .label {
+        font-size: 15px;
+        font-weight: 700;
+        color: #d11317;
+        margin-top: 7px;
+    }
+    .qr-block .url {
+        font-size: 12px;
+        color: #444;
+        font-family: 'Consolas', 'Courier New', monospace;
+        margin-top: 3px;
+        word-break: break-all;
+    }
+    .qr-block .desc {
+        font-size: 10px;
+        color: #888;
+        margin-top: 3px;
+    }
+    .instructions {
+        text-align: left;
+        max-width: 540px;
+        margin: 0 auto;
+        background: #f9f9f9;
+        border-radius: 12px;
+        padding: 18px 24px;
+        border: 1px solid #ddd;
+    }
+    .instructions h3 {
+        text-align: center;
+        margin-bottom: 12px;
+    }
+    .step-number {
+        display: inline-block;
+        width: 28px;
+        height: 28px;
+        min-width: 28px;
+        background: #d11317;
+        color: #fff;
+        border-radius: 50%;
+        text-align: center;
+        line-height: 28px;
+        font-weight: 700;
+        font-size: 14px;
+        margin-right: 10px;
+    }
+    .steps {
+        list-style: none;
+        padding: 0;
+        text-align: left;
+        font-size: 15px;
+        color: #333;
+    }
+    .steps li {
+        display: flex;
+        align-items: center;
+        white-space: nowrap;
+        margin-bottom: 6px;
+    }
+    .steps li span.txt {
+        white-space: normal;
+    }
+    .code-example {
+        display: inline;
+        font-family: 'Consolas', 'Courier New', monospace;
+        background: #fff5f5;
+        border: 2px solid #d11317;
+        border-radius: 6px;
+        padding: 1px 6px;
+        font-size: 15px;
+        font-weight: 900;
+        color: #d11317;
+        letter-spacing: 1px;
+        white-space: nowrap;
+    }
+    .footer {
+        margin-top: 18px;
+        padding-top: 12px;
+        border-top: 2px solid #eee;
+        font-size: 12px;
+        color: #999;
+    }
+    @media print {
+        body { padding: 10mm; }
+    }
+</style>
+</head>
+<body>
+
+<div class="header">
+    <h1>GRAFICA NAPPA</h1>
+    <h2>Accesso al Sistema MES</h2>
+    <div class="subtitle">Manufacturing Execution System &mdash; Gestionale di Produzione</div>
+</div>
+
+<div class="section">
+    <h3>Scansiona il QR Code o digita l'indirizzo nel browser</h3>
+    <div class="qr-row">
+        <div class="qr-block">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=http://192.168.1.60/operatore/login" alt="QR PC">
+            <div class="label">PC / Windows</div>
+            <div class="url">192.168.1.60/operatore/login</div>
+            <div class="desc">Da qualsiasi browser nella rete aziendale</div>
+        </div>
+        <div class="qr-block">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=http://gestionale/operatore/login" alt="QR Android">
+            <div class="label">Android</div>
+            <div class="url">gestionale/operatore/login</div>
+            <div class="desc">Da smartphone e tablet Android</div>
+        </div>
+        <div class="qr-block">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=http://gestionale.local/operatore/login" alt="QR Apple">
+            <div class="label">Apple (iPhone / iPad)</div>
+            <div class="url">gestionale.local/operatore/login</div>
+            <div class="desc">Da dispositivi Apple (iOS / macOS)</div>
+        </div>
+    </div>
+</div>
+
+<div class="section">
+    <div class="instructions">
+        <h3>Come accedere</h3>
+        <ul class="steps">
+            <li><span class="step-number">1</span><span class="txt">Collegati alla <strong>rete Wi-Fi aziendale</strong></span></li>
+            <li><span class="step-number">2</span><span class="txt">Apri il <strong>browser</strong> (Chrome, Safari, Edge...)</span></li>
+            <li><span class="step-number">3</span><span class="txt">Scansiona il <strong>QR code</strong> oppure digita l'indirizzo nella barra</span></li>
+            <li><span class="step-number">4</span><span class="txt">Inserisci il tuo <strong>codice operatore</strong> (es. <span class="code-example">RB023</span>)</span></li>
+            <li><span class="step-number">5</span><span class="txt">Premi <strong>Accedi</strong></span></li>
+        </ul>
+    </div>
+</div>
+
+<div class="footer">
+    Assistenza: <strong>it@graficanappa.com</strong> &mdash; Reparto Informatico Grafica Nappa srl
+</div>
+
+</body>
+</html>

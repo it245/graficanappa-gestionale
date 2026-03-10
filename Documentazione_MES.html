@@ -1,0 +1,1725 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Documentazione MES &mdash; Grafica Nappa srl</title>
+<style>
+    @page { margin: 2cm; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #222; line-height: 1.6; padding: 40px; max-width: 800px; margin: 0 auto; }
+
+    .header { text-align: center; border-bottom: 3px solid #d11317; padding-bottom: 20px; margin-bottom: 30px; }
+    .header h1 { color: #d11317; font-size: 24px; margin-bottom: 4px; }
+    .header h2 { color: #333; font-size: 16px; font-weight: 400; }
+    .header .date { color: #888; font-size: 13px; margin-top: 8px; }
+
+    h3 { color: #d11317; font-size: 17px; margin-top: 30px; margin-bottom: 10px; border-left: 4px solid #d11317; padding-left: 10px; }
+    h4 { color: #d11317; font-size: 15px; margin-top: 20px; margin-bottom: 8px; }
+
+    p { margin-bottom: 10px; font-size: 14px; text-align: justify; }
+
+    .feature-box { background: #f9f9f9; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px 18px; margin: 12px 0; }
+    .feature-box strong { color: #d11317; }
+
+    ul, ol { margin: 8px 0 8px 20px; font-size: 14px; }
+    li { margin-bottom: 4px; }
+
+    table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 13px; }
+    th { background: #d11317; color: #fff; padding: 8px 12px; text-align: left; }
+    td { padding: 8px 12px; border-bottom: 1px solid #e0e0e0; }
+    tr:nth-child(even) { background: #f9f9f9; }
+
+    .stato-box { display: inline-block; padding: 2px 10px; border-radius: 4px; font-weight: bold; font-size: 12px; color: #fff; margin-right: 6px; }
+    .stato-verde { background: #28a745; }
+    .stato-arancione { background: #e67e22; }
+    .stato-rosso { background: #dc3545; }
+    .stato-blu { background: #0d6efd; }
+    .stato-grigio { background: #6c757d; }
+
+    .footer { margin-top: 40px; padding-top: 15px; border-top: 2px solid #e0e0e0; text-align: center; font-size: 12px; color: #888; }
+
+    .panoramica { font-size: 15px; color: #444; font-style: italic; margin-bottom: 20px; }
+
+    .screenshot { background: #fff; border: 1px solid #dee2e6; border-radius: 8px; padding: 15px; margin: 12px 0; text-align: center; }
+    .screenshot .caption { font-size: 12px; color: #888; margin-top: 8px; }
+
+    .tag { display: inline-block; padding: 1px 8px; border-radius: 3px; font-size: 11px; font-weight: bold; margin-right: 4px; }
+    .tag-new { background: #d4edda; color: #155724; }
+    .tag-fix { background: #fff3cd; color: #856404; }
+    .tag-data { background: #cce5ff; color: #004085; }
+    .tag-risk { background: #f8d7da; color: #721c24; }
+
+    .toc { background: #f9f9f9; border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px 25px; margin: 20px 0 30px 0; }
+    .toc h3 { border-left: none; margin-top: 0; text-align: center; }
+    .toc ol { margin-left: 25px; }
+    .toc li { margin-bottom: 3px; font-size: 14px; }
+    .toc a { color: #d11317; text-decoration: none; }
+    .toc a:hover { text-decoration: underline; }
+    .toc .sub { margin-left: 20px; list-style-type: disc; }
+
+    .info-grid { display: grid; grid-template-columns: 160px 1fr; gap: 4px 12px; font-size: 14px; margin: 10px 0; }
+    .info-grid .label { font-weight: bold; color: #555; }
+    .info-grid .value { color: #222; }
+
+    code { background: #f0f0f0; padding: 1px 5px; border-radius: 3px; font-size: 13px; font-family: 'Consolas', 'Courier New', monospace; }
+
+    .formula-box { background: #fff8e1; border: 1px solid #ffe082; border-radius: 8px; padding: 15px 18px; margin: 12px 0; font-family: 'Consolas', 'Courier New', monospace; font-size: 13px; }
+
+    .alert-box { background: #fff3cd; border-left: 4px solid #e67e22; border-radius: 0 8px 8px 0; padding: 12px 18px; margin: 12px 0; }
+    .alert-box strong { color: #e67e22; }
+
+    .risk-box { background: #f8d7da; border-left: 4px solid #dc3545; border-radius: 0 8px 8px 0; padding: 12px 18px; margin: 12px 0; }
+    .risk-box strong { color: #dc3545; }
+
+    .step-list { counter-reset: step-counter; list-style: none; margin-left: 0; }
+    .step-list li { counter-increment: step-counter; padding: 8px 0 8px 40px; position: relative; border-bottom: 1px solid #f0f0f0; }
+    .step-list li::before { content: counter(step-counter); position: absolute; left: 0; top: 8px; background: #d11317; color: white; width: 26px; height: 26px; border-radius: 50%; text-align: center; line-height: 26px; font-size: 13px; font-weight: bold; }
+
+    @media print {
+        body { padding: 0; }
+        h3 { page-break-after: avoid; }
+        .feature-box, .formula-box, .alert-box, .risk-box { page-break-inside: avoid; }
+        table { page-break-inside: avoid; }
+        .toc { page-break-after: always; }
+    }
+</style>
+</head>
+<body>
+
+<!-- ================================================================ -->
+<!-- COPERTINA -->
+<!-- ================================================================ -->
+<div class="header">
+    <h1>DOCUMENTAZIONE TECNICA COMPLETA</h1>
+    <h2>Sistema MES Produzione &mdash; Grafica Nappa srl</h2>
+    <div class="date">Versione 1.2 &mdash; 24 Febbraio 2026</div>
+</div>
+
+<p class="panoramica">
+Questo documento costituisce la documentazione ufficiale e completa del sistema MES (Manufacturing Execution System)
+in uso presso Grafica Nappa srl. Copre l'architettura tecnica, le funzionalit&agrave; operative, le integrazioni
+con i sistemi esterni, le procedure di sicurezza e manutenzione, e le informazioni necessarie per la gestione e
+l'evoluzione del sistema. Il documento &egrave; destinato alla direzione aziendale, al responsabile di produzione
+e al personale IT.
+</p>
+
+<!-- ================================================================ -->
+<!-- INDICE -->
+<!-- ================================================================ -->
+<div class="toc">
+    <h3>Indice</h3>
+    <ol>
+        <li><a href="#s1">Informazioni Generali</a></li>
+        <li><a href="#s2">Descrizione del Sistema</a></li>
+        <li><a href="#s3">Architettura Tecnica</a>
+            <ul class="sub">
+                <li><a href="#s3-stack">Stack tecnologico</a></li>
+                <li><a href="#s3-componenti">Componenti applicativi</a></li>
+                <li><a href="#s3-struttura">Struttura del progetto</a></li>
+            </ul>
+        </li>
+        <li><a href="#s4">Database</a>
+            <ul class="sub">
+                <li><a href="#s4-tabelle">Tabelle principali</a></li>
+                <li><a href="#s4-migration">Migrazioni</a></li>
+                <li><a href="#s4-onda">Connessione Onda</a></li>
+            </ul>
+        </li>
+        <li><a href="#s5">Integrazioni</a>
+            <ul class="sub">
+                <li><a href="#s5-onda">Onda ERP</a></li>
+                <li><a href="#s5-prinect">Prinect (Heidelberg XL106)</a></li>
+                <li><a href="#s5-fiery">Fiery (Stampa digitale)</a></li>
+                <li><a href="#s5-excel">Sincronizzazione Excel</a></li>
+                <li><a href="#s5-email">Notifiche Email</a></li>
+            </ul>
+        </li>
+        <li><a href="#s6">Sicurezza e Accessi</a>
+            <ul class="sub">
+                <li><a href="#s6-ruoli">Ruoli e permessi</a></li>
+                <li><a href="#s6-middleware">Middleware di autenticazione</a></li>
+                <li><a href="#s6-rete">Sicurezza di rete</a></li>
+            </ul>
+        </li>
+        <li><a href="#s7">Funzionalit&agrave; Principali</a>
+            <ul class="sub">
+                <li><a href="#s7-import">Import ordini</a></li>
+                <li><a href="#s7-dash-op">Dashboard Operatore</a></li>
+                <li><a href="#s7-dettaglio">Dettaglio Commessa</a></li>
+                <li><a href="#s7-ciclo">Ciclo di vita della fase</a></li>
+                <li><a href="#s7-dash-owner">Dashboard Owner</a></li>
+                <li><a href="#s7-dash-sped">Dashboard Spedizione</a></li>
+                <li><a href="#s7-prinect">Dashboard Prinect</a></li>
+                <li><a href="#s7-costi">Costi e Margini</a></li>
+                <li><a href="#s7-report">Report e Analytics</a></li>
+                <li><a href="#s7-priorita">Priorit&agrave; automatiche</a></li>
+                <li><a href="#s7-artisan">Comandi Artisan</a></li>
+            </ul>
+        </li>
+        <li><a href="#s8">Procedura di Deploy</a></li>
+        <li><a href="#s9">Gestione Versioni</a></li>
+        <li><a href="#s10">Roadmap e Piano di Miglioramento</a></li>
+        <li><a href="#s11">Rischi Identificati</a></li>
+        <li><a href="#s12">Procedura di Ripristino di Emergenza</a></li>
+    </ol>
+</div>
+
+<!-- ================================================================ -->
+<!-- 1. INFORMAZIONI GENERALI -->
+<!-- ================================================================ -->
+<h3 id="s1">1. Informazioni Generali</h3>
+
+<div class="feature-box">
+    <div class="info-grid">
+        <span class="label">Nome sistema:</span>
+        <span class="value">Sistema MES Produzione</span>
+
+        <span class="label">Versione:</span>
+        <span class="value">1.2</span>
+
+        <span class="label">Data documento:</span>
+        <span class="value">24 Febbraio 2026</span>
+
+        <span class="label">Redatto da:</span>
+        <span class="value">Giovanni Pietropaolo &mdash; IT</span>
+
+        <span class="label">Ambiente:</span>
+        <span class="value">Produzione (server locale Windows Server)</span>
+
+        <span class="label">Azienda:</span>
+        <span class="value">Grafica Nappa srl &mdash; Tipografia</span>
+
+        <span class="label">Settore:</span>
+        <span class="value">Stampa offset, digitale, legatoria, cartotecnica</span>
+    </div>
+</div>
+
+<p>I reparti produttivi coinvolti nel sistema sono i seguenti:</p>
+
+<table>
+    <tr>
+        <th>Reparto</th>
+        <th>Descrizione</th>
+    </tr>
+    <tr><td><strong>Stampa Offset</strong></td><td>Stampa su macchina Heidelberg XL106 (foglio grande)</td></tr>
+    <tr><td><strong>Digitale</strong></td><td>Stampa digitale (motore Fiery)</td></tr>
+    <tr><td><strong>Legatoria</strong></td><td>Brossura, punto metallico, cucito filo refe, raccolta segnature</td></tr>
+    <tr><td><strong>Fustella (piana)</strong></td><td>Fustellatura piana per scatole e astucci</td></tr>
+    <tr><td><strong>Fustella (cilindrica)</strong></td><td>Fustellatura cilindrica rotativa</td></tr>
+    <tr><td><strong>Plastificazione</strong></td><td>Plastificazione lucida/opaca, soft-touch</td></tr>
+    <tr><td><strong>Piegaincolla</strong></td><td>Piega e incollaggio scatole e astucci</td></tr>
+    <tr><td><strong>Stampa a caldo</strong></td><td>Hot foil stamping, lamine metalliche</td></tr>
+    <tr><td><strong>Spedizione</strong></td><td>Confezionamento e spedizione ordini completati</td></tr>
+    <tr><td><strong>Esterno</strong></td><td>Lavorazioni esternalizzate a fornitori terzi</td></tr>
+    <tr><td><strong>Prestampa</strong></td><td>Preparazione file, imposizione, CTP</td></tr>
+    <tr><td><strong>Tagliacarte</strong></td><td>Taglio fogli a misura con ghigliottina</td></tr>
+    <tr><td><strong>Finitura digitale</strong></td><td>Cordonatura, piega, DEKIA per stampa digitale</td></tr>
+    <tr><td><strong>Finestre</strong></td><td>Applicazione finestre trasparenti su buste/scatole</td></tr>
+    <tr><td><strong>Generico</strong></td><td>Fasi non attribuibili a un reparto specifico</td></tr>
+</table>
+
+<!-- ================================================================ -->
+<!-- 2. DESCRIZIONE DEL SISTEMA -->
+<!-- ================================================================ -->
+<h3 id="s2">2. Descrizione del Sistema</h3>
+
+<p>
+Il sistema MES di Grafica Nappa srl &egrave; un'applicazione web sviluppata su misura per gestire l'intero ciclo
+produttivo dello stabilimento tipografico, dalla ricezione degli ordini fino alla spedizione del prodotto finito.
+Il sistema sostituisce la precedente gestione manuale (fogli Excel, comunicazioni verbali) con un flusso digitalizzato,
+tracciabile e misurabile.
+</p>
+
+<h4>Scopo del sistema</h4>
+
+<div class="feature-box">
+    <strong>Obiettivi principali:</strong>
+    <ul>
+        <li>Centralizzare la gestione degli ordini di produzione provenienti dall'ERP Onda</li>
+        <li>Fornire a ogni operatore una dashboard dedicata con le fasi di propria competenza</li>
+        <li>Tracciare tempi di lavorazione, pause, quantit&agrave; prodotte e scarti per ogni fase</li>
+        <li>Calcolare automaticamente le priorit&agrave; di produzione in base a scadenze e tempi stimati</li>
+        <li>Monitorare in tempo reale lo stato delle macchine da stampa (OEE tramite Prinect)</li>
+        <li>Gestire le lavorazioni esterne affidate a fornitori terzi</li>
+        <li>Verificare il completamento di tutte le fasi prima della spedizione</li>
+        <li>Analizzare costi di produzione, margini e performance per la direzione</li>
+        <li>Generare report direzionali multi-foglio per il controllo di gestione</li>
+    </ul>
+</div>
+
+<h4>Processi gestiti</h4>
+
+<p>Il sistema copre i seguenti processi operativi, descritti in ordine cronologico di flusso produttivo:</p>
+
+<table>
+    <tr>
+        <th>#</th>
+        <th>Processo</th>
+        <th>Descrizione</th>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td><strong>Import ordini</strong></td>
+        <td>Ricezione automatica o manuale degli ordini dall'ERP Onda o da file Excel. Creazione delle fasi di lavorazione con mapping automatico ai reparti.</td>
+    </tr>
+    <tr>
+        <td>2</td>
+        <td><strong>Scheduling produzione</strong></td>
+        <td>Calcolo automatico delle priorit&agrave; basato su data di consegna, tempi stimati e sequenza delle fasi. Il responsabile pu&ograve; intervenire manualmente.</td>
+    </tr>
+    <tr>
+        <td>3</td>
+        <td><strong>Avanzamento fasi</strong></td>
+        <td>Ogni operatore avvia, mette in pausa (con motivo) e termina le fasi di propria competenza. Il sistema traccia tempi, operatori e quantit&agrave;.</td>
+    </tr>
+    <tr>
+        <td>4</td>
+        <td><strong>Lavorazioni esterne</strong></td>
+        <td>Gestione delle fasi affidate a fornitori esterni, con selezione fornitore, tracciamento stato e tempistiche.</td>
+    </tr>
+    <tr>
+        <td>5</td>
+        <td><strong>Spedizione</strong></td>
+        <td>Verifica completamento di tutte le fasi dell'intera commessa, conferma spedizione con aggiornamento automatico di tutti gli stati.</td>
+    </tr>
+    <tr>
+        <td>6</td>
+        <td><strong>Monitoraggio macchine</strong></td>
+        <td>Integrazione real-time con Prinect per l'XL106: cicli buoni/scarto, tempi, operatori, calcolo OEE.</td>
+    </tr>
+    <tr>
+        <td>7</td>
+        <td><strong>Analisi costi e margini</strong></td>
+        <td>Calcolo automatico del costo di produzione per reparto, confronto con valore ordine e costo materiali per determinare il margine.</td>
+    </tr>
+    <tr>
+        <td>8</td>
+        <td><strong>Reportistica</strong></td>
+        <td>Report operatori, commesse, produzione, direzione con export Excel multi-foglio.</td>
+    </tr>
+</table>
+
+<h4>Utenti del sistema</h4>
+
+<div class="feature-box">
+    <strong>Tipologie di utenti:</strong>
+    <ul>
+        <li><strong>Operatori di produzione (~30 persone):</strong> accedono alla dashboard del proprio reparto, avviano/pausano/terminano fasi, inseriscono quantit&agrave; e note</li>
+        <li><strong>Responsabile produzione (owner):</strong> visione completa dello scheduling, import ordini, gestione priorit&agrave;, dettaglio commesse, export Excel, report spedizione</li>
+        <li><strong>Amministratore sistema (admin):</strong> gestione anagrafica operatori (CRUD), configurazione tariffe per reparto, accesso a tutti i report (produzione, direzione, costi), dashboard Prinect e Fiery</li>
+    </ul>
+</div>
+
+<!-- ================================================================ -->
+<!-- 3. ARCHITETTURA TECNICA -->
+<!-- ================================================================ -->
+<h3 id="s3">3. Architettura Tecnica</h3>
+
+<p>
+Il sistema &egrave; un'applicazione web monolitica basata sul framework Laravel, accessibile via browser da qualsiasi
+dispositivo connesso alla rete locale aziendale. L'architettura &egrave; stata scelta per semplicit&agrave; di deploy
+e manutenzione, adatta al contesto di una PMI manifatturiera con un singolo stabilimento.
+</p>
+
+<h4 id="s3-stack">3.1 Stack tecnologico</h4>
+
+<table>
+    <tr>
+        <th>Componente</th>
+        <th>Tecnologia</th>
+        <th>Versione</th>
+    </tr>
+    <tr>
+        <td><strong>Linguaggio backend</strong></td>
+        <td>PHP</td>
+        <td>8.x</td>
+    </tr>
+    <tr>
+        <td><strong>Framework</strong></td>
+        <td>Laravel</td>
+        <td>12</td>
+    </tr>
+    <tr>
+        <td><strong>Database principale</strong></td>
+        <td>SQLite</td>
+        <td>File-based</td>
+    </tr>
+    <tr>
+        <td><strong>Database esterno</strong></td>
+        <td>SQL Server (Onda ERP)</td>
+        <td>Connessione sqlsrv read-only</td>
+    </tr>
+    <tr>
+        <td><strong>Frontend CSS</strong></td>
+        <td>Bootstrap</td>
+        <td>5.x (CDN)</td>
+    </tr>
+    <tr>
+        <td><strong>Frontend JS</strong></td>
+        <td>Vanilla JavaScript</td>
+        <td>&mdash;</td>
+    </tr>
+    <tr>
+        <td><strong>Template engine</strong></td>
+        <td>Laravel Blade</td>
+        <td>&mdash;</td>
+    </tr>
+    <tr>
+        <td><strong>Web server</strong></td>
+        <td>PHP built-in / Apache / Nginx</td>
+        <td>&mdash;</td>
+    </tr>
+    <tr>
+        <td><strong>Sistema operativo</strong></td>
+        <td>Windows Server</td>
+        <td>Locale</td>
+    </tr>
+    <tr>
+        <td><strong>Versioning</strong></td>
+        <td>Git</td>
+        <td>Branch master</td>
+    </tr>
+</table>
+
+<h4 id="s3-componenti">3.2 Componenti applicativi</h4>
+
+<div class="feature-box">
+    <strong>Backend Laravel:</strong>
+    <ul>
+        <li><strong>Controllers:</strong> gestiscono le richieste HTTP per ogni area funzionale (produzione, commesse, spedizione, Prinect, report, admin, costi)</li>
+        <li><strong>Services:</strong> logica di business incapsulata in classi servizio (OndaSyncService, PrinectSyncService, ExcelSyncService, PrioritaService)</li>
+        <li><strong>Models (Eloquent):</strong> mapping ORM delle tabelle SQLite con relazioni, accessor e scope</li>
+        <li><strong>Middleware:</strong> controllo accessi basato su ruolo per ogni route</li>
+        <li><strong>Artisan Commands:</strong> comandi schedulabili per sincronizzazioni e ricalcoli</li>
+    </ul>
+</div>
+
+<div class="feature-box">
+    <strong>Frontend Blade + Bootstrap:</strong>
+    <ul>
+        <li><strong>Blade templates:</strong> pagine HTML con layout condiviso, componenti riutilizzabili</li>
+        <li><strong>Bootstrap 5:</strong> caricato via CDN, nessun build frontend necessario</li>
+        <li><strong>JavaScript vanilla:</strong> interattivit&agrave; lato client (modal, filtri, chiamate AJAX per azioni operatore)</li>
+        <li><strong>Responsive:</strong> le dashboard sono utilizzabili anche da tablet in produzione</li>
+    </ul>
+</div>
+
+<h4 id="s3-struttura">3.3 Struttura del progetto</h4>
+
+<table>
+    <tr>
+        <th>Directory</th>
+        <th>Contenuto</th>
+    </tr>
+    <tr><td><code>app/Http/Controllers/</code></td><td>Controller per ogni area funzionale</td></tr>
+    <tr><td><code>app/Http/Middleware/</code></td><td>Middleware di autenticazione e autorizzazione</td></tr>
+    <tr><td><code>app/Models/</code></td><td>Modelli Eloquent (Ordine, OrdineFase, Operatore, Reparto, ecc.)</td></tr>
+    <tr><td><code>app/Services/</code></td><td>Servizi di business logic (Onda, Prinect, Excel, Priorit&agrave;)</td></tr>
+    <tr><td><code>app/Console/Commands/</code></td><td>Comandi Artisan personalizzati</td></tr>
+    <tr><td><code>app/Mail/</code></td><td>Classi Mailable per notifiche email</td></tr>
+    <tr><td><code>resources/views/</code></td><td>Template Blade organizzati per area (operatore, owner, spedizione, admin, prinect, report)</td></tr>
+    <tr><td><code>database/migrations/</code></td><td>43+ file di migrazione per schema e dati</td></tr>
+    <tr><td><code>database/database.sqlite</code></td><td>File database SQLite di produzione</td></tr>
+    <tr><td><code>routes/web.php</code></td><td>Definizione di tutte le route HTTP</td></tr>
+    <tr><td><code>config/</code></td><td>Configurazione Laravel, database, integrazioni</td></tr>
+    <tr><td><code>.env</code></td><td>Variabili d'ambiente (chiavi API, connessioni DB, path)</td></tr>
+</table>
+
+<!-- ================================================================ -->
+<!-- 4. DATABASE -->
+<!-- ================================================================ -->
+<h3 id="s4">4. Database</h3>
+
+<p>
+Il database principale del sistema &egrave; un file SQLite situato in <code>database/database.sqlite</code>.
+La scelta di SQLite &egrave; motivata dalla semplicit&agrave; di deploy (nessun server database da configurare),
+dalla natura single-server dell'applicazione e dai volumi di dati gestiti (migliaia di ordini/anno, non milioni).
+Il sistema accede anche in sola lettura al database SQL Server dell'ERP Onda per l'import degli ordini.
+</p>
+
+<h4 id="s4-tabelle">4.1 Tabelle principali</h4>
+
+<table>
+    <tr>
+        <th>Tabella</th>
+        <th>Descrizione</th>
+        <th>Record tipici</th>
+    </tr>
+    <tr>
+        <td><code>ordini</code></td>
+        <td>Ordini di produzione importati da Onda o Excel. Contiene: numero commessa, cliente, descrizione, quantit&agrave;, date, valore, costo materiali, stato.</td>
+        <td>Migliaia/anno</td>
+    </tr>
+    <tr>
+        <td><code>ordine_fasi</code></td>
+        <td>Fasi di lavorazione per ogni ordine. Contiene: fase, reparto, stato (0-4), operatore assegnato, data inizio/fine, qta prodotta, scarti, note, priorit&agrave;.</td>
+        <td>5-15 per ordine</td>
+    </tr>
+    <tr>
+        <td><code>operatori</code></td>
+        <td>Anagrafica operatori: nome, cognome, codice badge, ruolo (operatore/owner/admin), stato attivo/disattivo, hash password.</td>
+        <td>~30</td>
+    </tr>
+    <tr>
+        <td><code>reparti</code></td>
+        <td>Elenco dei reparti produttivi con nome e descrizione.</td>
+        <td>~15</td>
+    </tr>
+    <tr>
+        <td><code>fasi_catalogo</code></td>
+        <td>Catalogo di tutte le fasi conosciute con mapping al reparto di appartenenza. Oltre 100 fasi censite.</td>
+        <td>100+</td>
+    </tr>
+    <tr>
+        <td><code>fase_operatore</code></td>
+        <td>Tabella pivot: associa ogni fase a uno o pi&ugrave; operatori autorizzati.</td>
+        <td>Variabile</td>
+    </tr>
+    <tr>
+        <td><code>operatore_reparto</code></td>
+        <td>Tabella pivot: associa ogni operatore a uno o pi&ugrave; reparti di competenza.</td>
+        <td>~50</td>
+    </tr>
+    <tr>
+        <td><code>costi_reparto</code></td>
+        <td>Tariffe orarie per reparto con data di validit&agrave; (inizio/fine). Usate per il calcolo costi.</td>
+        <td>~15</td>
+    </tr>
+    <tr>
+        <td><code>pausa_operatores</code></td>
+        <td>Registro delle pause degli operatori: fase, operatore, motivo pausa, timestamp inizio/fine.</td>
+        <td>Centinaia/mese</td>
+    </tr>
+    <tr>
+        <td><code>prinect_attivita</code></td>
+        <td>Attivit&agrave; macchina XL106 sincronizzate da Prinect: commessa, cicli buoni/scarto, tempi, operatore.</td>
+        <td>Decine/giorno</td>
+    </tr>
+    <tr>
+        <td><code>articoli</code></td>
+        <td>Anagrafica articoli importata da Onda per arricchire i dati degli ordini.</td>
+        <td>Migliaia</td>
+    </tr>
+    <tr>
+        <td><code>assegnazioni</code></td>
+        <td>Assegnazioni manuali di fasi a operatori specifici da parte del responsabile produzione.</td>
+        <td>Variabile</td>
+    </tr>
+</table>
+
+<h4 id="s4-migration">4.2 Migrazioni</h4>
+
+<p>
+Il sistema utilizza il meccanismo di migration di Laravel per gestire lo schema del database in modo versionato.
+Attualmente sono presenti <strong>43+ file di migrazione</strong> nella directory <code>database/migrations/</code>,
+che coprono la creazione delle tabelle, l'aggiunta di colonne, le modifiche ai dati e le correzioni.
+Ogni migrazione &egrave; eseguibile con il comando <code>php artisan migrate</code> e garantisce
+l'aggiornamento incrementale dello schema senza perdita di dati.
+</p>
+
+<div class="alert-box">
+    <strong>Importante:</strong> prima di eseguire le migrazioni in produzione, effettuare sempre un backup
+    del file <code>database/database.sqlite</code>. Essendo un file unico, il backup consiste nella semplice
+    copia del file.
+</div>
+
+<h4 id="s4-onda">4.3 Connessione Onda (SQL Server)</h4>
+
+<div class="feature-box">
+    <strong>Configurazione connessione esterna:</strong>
+    <ul>
+        <li><strong>Driver:</strong> sqlsrv (Microsoft SQL Server)</li>
+        <li><strong>Accesso:</strong> sola lettura (SELECT)</li>
+        <li><strong>Tabelle lette:</strong>
+            <ul>
+                <li><code>ATTDocTeste</code> &mdash; Testate ordini attivi</li>
+                <li><code>PRDDocTeste</code> &mdash; Testate documenti di produzione</li>
+                <li><code>PRDDocFasi</code> &mdash; Fasi di lavorazione dei documenti di produzione</li>
+                <li><code>PRDDocRighe</code> &mdash; Righe dettaglio dei documenti di produzione</li>
+                <li><code>STDAnagrafiche</code> &mdash; Anagrafiche clienti e fornitori</li>
+            </ul>
+        </li>
+        <li><strong>Configurazione:</strong> credenziali in file <code>.env</code> (variabili ONDA_DB_*)</li>
+    </ul>
+</div>
+
+<!-- ================================================================ -->
+<!-- 5. INTEGRAZIONI -->
+<!-- ================================================================ -->
+<h3 id="s5">5. Integrazioni</h3>
+
+<p>
+Il sistema MES si integra con cinque sistemi esterni per scambiare dati in modo automatico o semi-automatico.
+Le integrazioni sono progettate con un principio di resilienza: il MES deve continuare a funzionare anche
+quando uno o pi&ugrave; sistemi esterni non sono disponibili.
+</p>
+
+<!-- 5A - ONDA -->
+<h4 id="s5-onda">5.1 Onda ERP (SQL Server)</h4>
+
+<table>
+    <tr>
+        <th>Parametro</th>
+        <th>Valore</th>
+    </tr>
+    <tr><td><strong>Tipo integrazione</strong></td><td>Lettura diretta database via connessione sqlsrv</td></tr>
+    <tr><td><strong>Direzione</strong></td><td>Onda &rarr; MES (sola lettura)</td></tr>
+    <tr><td><strong>Frequenza</strong></td><td>Manuale (bottone nella dashboard owner) o comando Artisan <code>onda:sync</code></td></tr>
+    <tr><td><strong>Servizio</strong></td><td><code>App\Services\OndaSyncService</code></td></tr>
+    <tr><td><strong>Livello di rischio</strong></td><td><span class="stato-box stato-arancione">Medio</span></td></tr>
+    <tr><td><strong>Fallback</strong></td><td>Import manuale da file Excel</td></tr>
+</table>
+
+<div class="feature-box">
+    <strong>Dati importati da Onda:</strong>
+    <ul>
+        <li><strong>Ordini:</strong> numero commessa, cliente, descrizione articolo, quantit&agrave; ordinata, data consegna, valore ordine, costo materiali</li>
+        <li><strong>Fasi:</strong> elenco fasi di lavorazione per ogni ordine, con sequenza, tempi stimati (avviamento + produzione), quantit&agrave; carta</li>
+        <li><strong>Clienti:</strong> ragione sociale, codice cliente</li>
+    </ul>
+</div>
+
+<div class="feature-box">
+    <strong>Logica di sincronizzazione (OndaSyncService):</strong>
+    <ul>
+        <li>Legge tutti gli ordini aperti (non completati) da Onda</li>
+        <li>Per ogni ordine, crea o aggiorna il record nella tabella <code>ordini</code></li>
+        <li>Per ogni fase dell'ordine, crea o aggiorna il record nella tabella <code>ordine_fasi</code></li>
+        <li>Mappa automaticamente ogni nome fase al reparto corrispondente tramite il catalogo fasi</li>
+        <li>Gestisce la deduplicazione per ordini monofase, con massimo 2 fasi e multifase</li>
+        <li>Al termine, ricalcola automaticamente le priorit&agrave; di tutti gli ordini attivi</li>
+    </ul>
+</div>
+
+<!-- 5B - PRINECT -->
+<h4 id="s5-prinect">5.2 Prinect (Heidelberg XL106)</h4>
+
+<table>
+    <tr>
+        <th>Parametro</th>
+        <th>Valore</th>
+    </tr>
+    <tr><td><strong>Tipo integrazione</strong></td><td>REST API con autenticazione Basic Auth</td></tr>
+    <tr><td><strong>Endpoint</strong></td><td>Configurabile via variabile d'ambiente <code>PRINECT_API_URL</code></td></tr>
+    <tr><td><strong>Device monitorato</strong></td><td>Heidelberg XL106 &mdash; ID dispositivo &ldquo;4001&rdquo;</td></tr>
+    <tr><td><strong>Direzione</strong></td><td>Prinect &rarr; MES (sola lettura)</td></tr>
+    <tr><td><strong>Frequenza</strong></td><td>Real-time su dashboard, sync schedulabile via comando Artisan</td></tr>
+    <tr><td><strong>Servizio</strong></td><td><code>App\Services\PrinectSyncService</code></td></tr>
+    <tr><td><strong>Livello di rischio</strong></td><td><span class="stato-box stato-verde">Basso</span></td></tr>
+</table>
+
+<div class="feature-box">
+    <strong>Dati acquisiti da Prinect:</strong>
+    <ul>
+        <li><strong>Attivit&agrave; macchina:</strong> commessa in lavorazione, tipo attivit&agrave; (avviamento, produzione, fermo)</li>
+        <li><strong>Cicli:</strong> fogli buoni e fogli scarto per ogni commessa</li>
+        <li><strong>Tempi:</strong> tempo di avviamento e tempo di produzione per ogni lavoro</li>
+        <li><strong>Operatori:</strong> nome dell'operatore macchina per ogni attivit&agrave;</li>
+        <li><strong>Cambi lastre:</strong> numero e durata dei cambi lastre per ogni lavoro</li>
+        <li><strong>Anteprima foglio:</strong> immagine del foglio di stampa imposto (visibile in dashboard operatore e owner)</li>
+    </ul>
+</div>
+
+<div class="feature-box">
+    <strong>Calcolo OEE (Overall Equipment Effectiveness):</strong>
+    <ul>
+        <li><strong>Disponibilit&agrave;</strong> = Tempo operativo / Tempo pianificato (turno pianificato: 23 ore/giorno)</li>
+        <li><strong>Performance</strong> = Cicli effettivi / Cicli teorici (velocit&agrave; nominale: 18.000 cicli/ora)</li>
+        <li><strong>Qualit&agrave;</strong> = Fogli buoni / (Fogli buoni + Fogli scarto)</li>
+        <li><strong>OEE</strong> = Disponibilit&agrave; &times; Performance &times; Qualit&agrave;</li>
+    </ul>
+</div>
+
+<p>
+Il MES funziona regolarmente anche senza connessione a Prinect. I dati Prinect sono complementari
+e arricchiscono le informazioni di produzione, ma non sono necessari per il flusso operativo base.
+Quando Prinect &egrave; disponibile, i dati vengono utilizzati per il pre-fill automatico dei campi
+quantit&agrave; prodotta e scarti al termine delle fasi di stampa offset.
+</p>
+
+<!-- 5C - FIERY -->
+<h4 id="s5-fiery">5.3 Fiery (Stampa digitale)</h4>
+
+<table>
+    <tr>
+        <th>Parametro</th>
+        <th>Valore</th>
+    </tr>
+    <tr><td><strong>Tipo integrazione</strong></td><td>REST API</td></tr>
+    <tr><td><strong>Dati</strong></td><td>Stato dispositivo, coda lavori</td></tr>
+    <tr><td><strong>Stato</strong></td><td><span class="stato-box stato-arancione">Implementato, meno attivo</span></td></tr>
+    <tr><td><strong>Comando sync</strong></td><td><code>php artisan sync:fiery</code></td></tr>
+</table>
+
+<p>
+L'integrazione con Fiery &egrave; stata implementata per monitorare lo stato della stampante digitale
+e la coda dei lavori. Attualmente &egrave; meno attiva rispetto all'integrazione Prinect, ma la struttura
+&egrave; predisposta per un utilizzo pi&ugrave; intensivo nelle prossime versioni (vedi Roadmap).
+</p>
+
+<!-- 5D - EXCEL -->
+<h4 id="s5-excel">5.4 Sincronizzazione Excel bidirezionale</h4>
+
+<table>
+    <tr>
+        <th>Parametro</th>
+        <th>Valore</th>
+    </tr>
+    <tr><td><strong>Tipo integrazione</strong></td><td>Lettura/scrittura file Excel (.xlsx)</td></tr>
+    <tr><td><strong>File</strong></td><td><code>dashboard_mes.xlsx</code> nella cartella configurata</td></tr>
+    <tr><td><strong>Direzione</strong></td><td>Bidirezionale (MES &harr; Excel)</td></tr>
+    <tr><td><strong>Comando sync</strong></td><td><code>php artisan excel:sync</code></td></tr>
+</table>
+
+<div class="feature-box">
+    <strong>Campi sincronizzati:</strong>
+    <ul>
+        <li><strong>Stato:</strong> stato della fase (codice numerico 0-4)</li>
+        <li><strong>Quantit&agrave; prodotta:</strong> qta_prod inserita dagli operatori</li>
+        <li><strong>Note:</strong> note operatore e note generali</li>
+        <li><strong>Priorit&agrave;:</strong> valore numerico calcolato</li>
+    </ul>
+</div>
+
+<p>
+La sincronizzazione Excel funge anche da <strong>fallback</strong> per l'import degli ordini quando
+la connessione Onda non &egrave; disponibile. Tramite il comando <code>php artisan import:excel-tutto {file}</code>
+&egrave; possibile importare un intero foglio &ldquo;tutto&rdquo; con gli ordini e le relative fasi.
+</p>
+
+<!-- 5E - EMAIL -->
+<h4 id="s5-email">5.5 Notifiche Email</h4>
+
+<table>
+    <tr>
+        <th>Parametro</th>
+        <th>Valore</th>
+    </tr>
+    <tr><td><strong>Tipo</strong></td><td>Invio email SMTP</td></tr>
+    <tr><td><strong>Template</strong></td><td><code>mail/spedizione_completata.blade.php</code></td></tr>
+    <tr><td><strong>Trigger</strong></td><td>Completamento spedizione di un ordine</td></tr>
+</table>
+
+<p>
+Quando un ordine viene marcato come spedito, il sistema invia automaticamente una notifica email
+utilizzando il template Blade dedicato. L'email contiene i dettagli della commessa, il cliente
+e la data di spedizione.
+</p>
+
+<!-- ================================================================ -->
+<!-- 6. SICUREZZA E ACCESSI -->
+<!-- ================================================================ -->
+<h3 id="s6">6. Sicurezza e Accessi</h3>
+
+<p>
+Il sistema implementa un modello di sicurezza basato su ruoli (RBAC) con tre livelli di accesso.
+L'autenticazione avviene tramite sessione PHP e le password sono memorizzate con hash bcrypt.
+L'applicazione &egrave; accessibile esclusivamente dalla rete locale interna aziendale.
+</p>
+
+<h4 id="s6-ruoli">6.1 Ruoli e permessi</h4>
+
+<table>
+    <tr>
+        <th>Ruolo</th>
+        <th>Accesso</th>
+        <th>Operazioni consentite</th>
+    </tr>
+    <tr>
+        <td><span class="stato-box stato-verde">operatore</span></td>
+        <td>Dashboard reparto proprio</td>
+        <td>
+            <ul>
+                <li>Visualizzare le fasi dei reparti assegnati</li>
+                <li>Avviare una fase di lavorazione</li>
+                <li>Mettere in pausa con selezione motivo</li>
+                <li>Terminare con inserimento quantit&agrave; e scarti</li>
+                <li>Riprendere una fase in pausa</li>
+                <li>Modificare le note operatore</li>
+                <li>Visualizzare dettaglio commessa e anteprima Prinect</li>
+                <li>Ricercare commesse</li>
+            </ul>
+        </td>
+    </tr>
+    <tr>
+        <td><span class="stato-box stato-blu">owner</span></td>
+        <td>Dashboard responsabile produzione</td>
+        <td>
+            <ul>
+                <li>Tutte le operazioni dell'operatore su tutti i reparti</li>
+                <li>Import ordini da Excel</li>
+                <li>Sincronizzazione Onda</li>
+                <li>Scheduling produzione e gestione priorit&agrave;</li>
+                <li>Dettaglio commesse con anteprima Prinect</li>
+                <li>Report spedizione giornaliero</li>
+                <li>Export Excel delle fasi</li>
+                <li>Visualizzazione fasi terminate</li>
+            </ul>
+        </td>
+    </tr>
+    <tr>
+        <td><span class="stato-box stato-rosso">admin</span></td>
+        <td>Accesso completo a tutte le aree</td>
+        <td>
+            <ul>
+                <li>Tutte le operazioni dell'owner</li>
+                <li>Gestione operatori CRUD (crea, modifica, disattiva)</li>
+                <li>Assegnazione operatori a reparti</li>
+                <li>Configurazione tariffe orarie per reparto</li>
+                <li>Report produzione, direzione, costi</li>
+                <li>Dashboard Prinect con analisi OEE</li>
+                <li>Dashboard Fiery</li>
+                <li>Report operatori stampabile</li>
+            </ul>
+        </td>
+    </tr>
+</table>
+
+<h4 id="s6-middleware">6.2 Middleware di autenticazione</h4>
+
+<p>L'applicazione utilizza quattro middleware personalizzati per proteggere le route in base al ruolo:</p>
+
+<table>
+    <tr>
+        <th>Middleware</th>
+        <th>Classe</th>
+        <th>Funzione</th>
+    </tr>
+    <tr>
+        <td><code>OperatoreAuth</code></td>
+        <td><code>App\Http\Middleware\OperatoreAuth</code></td>
+        <td>Verifica che l'utente sia autenticato come operatore (o ruolo superiore)</td>
+    </tr>
+    <tr>
+        <td><code>OwnerMiddleware</code></td>
+        <td><code>App\Http\Middleware\OwnerMiddleware</code></td>
+        <td>Verifica che l'utente abbia ruolo &ldquo;owner&rdquo; o superiore</td>
+    </tr>
+    <tr>
+        <td><code>AdminAuth</code></td>
+        <td><code>App\Http\Middleware\AdminAuth</code></td>
+        <td>Verifica che l'utente abbia ruolo &ldquo;admin&rdquo;</td>
+    </tr>
+    <tr>
+        <td><code>OwnerOrAdminMiddleware</code></td>
+        <td><code>App\Http\Middleware\OwnerOrAdminMiddleware</code></td>
+        <td>Accesso consentito a owner e admin (per funzionalit&agrave; condivise)</td>
+    </tr>
+</table>
+
+<h4 id="s6-rete">6.3 Sicurezza di rete</h4>
+
+<div class="feature-box">
+    <strong>Misure di sicurezza:</strong>
+    <ul>
+        <li><strong>Rete locale:</strong> l'applicazione &egrave; accessibile esclusivamente dalla rete interna aziendale; non &egrave; esposta su Internet</li>
+        <li><strong>Password bcrypt:</strong> le password degli operatori sono memorizzate con hash bcrypt (costo computazionale elevato, resistente a brute-force)</li>
+        <li><strong>Sessione PHP:</strong> autenticazione basata su sessione con timeout configurabile</li>
+        <li><strong>CSRF Protection:</strong> Laravel include di default la protezione CSRF su tutti i form POST</li>
+        <li><strong>Validazione input:</strong> tutti gli input utente sono validati lato server con le regole Laravel</li>
+        <li><strong>File .env:</strong> credenziali e chiavi API sono escluse dal repository Git e memorizzate nel file <code>.env</code></li>
+    </ul>
+</div>
+
+<!-- ================================================================ -->
+<!-- 7. FUNZIONALITA PRINCIPALI -->
+<!-- ================================================================ -->
+<h3 id="s7">7. Funzionalit&agrave; Principali</h3>
+
+<p>
+Questa sezione descrive in dettaglio tutte le funzionalit&agrave; operative del sistema MES,
+organizzate per area funzionale. Ogni funzionalit&agrave; viene descritta dal punto di vista
+dell'utente e, dove rilevante, con dettagli tecnici sull'implementazione.
+</p>
+
+<!-- 7A - IMPORT ORDINI -->
+<h4 id="s7-import">7.1 Import ordini</h4>
+
+<p>
+L'import degli ordini &egrave; il punto di ingresso di tutti i dati produttivi nel sistema MES.
+Sono disponibili due canali di import, entrambi con lo stesso risultato finale: creazione degli ordini
+e delle relative fasi di lavorazione nel database MES.
+</p>
+
+<div class="feature-box">
+    <strong>A) Import da Onda ERP (canale primario):</strong>
+    <ul>
+        <li>Il servizio <code>OndaSyncService</code> si connette al database SQL Server di Onda</li>
+        <li>Legge tutti gli ordini di produzione aperti (non completati, non annullati)</li>
+        <li>Per ogni ordine, recupera le fasi di lavorazione dalla tabella <code>PRDDocFasi</code></li>
+        <li>Crea o aggiorna i record nelle tabelle <code>ordini</code> e <code>ordine_fasi</code></li>
+        <li>Ogni nome di fase viene mappato automaticamente al reparto corrispondente tramite il catalogo fasi (100+ mapping)</li>
+        <li>Gestisce la deduplicazione: ordini monofase, con massimo 2 fasi, multifase</li>
+        <li>Al termine della sincronizzazione, ricalcola le priorit&agrave; di tutti gli ordini attivi</li>
+        <li>Attivabile: bottone &ldquo;Sync Onda&rdquo; nella dashboard owner, oppure comando <code>php artisan onda:sync</code></li>
+    </ul>
+</div>
+
+<div class="feature-box">
+    <strong>B) Import da Excel (canale fallback):</strong>
+    <ul>
+        <li>Upload manuale di un file Excel dalla dashboard owner</li>
+        <li>Le stesse regole di mapping fasi e deduplicazione si applicano</li>
+        <li>Utilizzabile quando la connessione Onda non &egrave; disponibile</li>
+        <li>Comando alternativo: <code>php artisan import:excel-tutto {file}</code> per import da riga di comando</li>
+    </ul>
+</div>
+
+<div class="feature-box">
+    <strong>Mapping fasi a reparti:</strong>
+    <p style="margin-top:8px;">Il sistema mantiene un catalogo di oltre 100 nomi di fase, ciascuno associato al reparto di competenza.
+    Quando un ordine viene importato, ogni fase viene automaticamente assegnata al reparto corretto. Esempi di mapping:</p>
+    <table>
+        <tr><th>Nome fase (da Onda)</th><th>Reparto MES</th></tr>
+        <tr><td>STAMPAXL106, STAMPAXL106.1, STAMPAXL106.2</td><td>stampa offset</td></tr>
+        <tr><td>STAMPAINDIGO, STAMPAINDIGO.2</td><td>digitale</td></tr>
+        <tr><td>BROSSURA, PUNTOMETALLICO, CUCITOFILO</td><td>legatoria</td></tr>
+        <tr><td>FUSTELLAPIANA, FUSTIML75X106</td><td>fustella piana</td></tr>
+        <tr><td>FUSTELLACILINDRICA</td><td>fustella cilindrica</td></tr>
+        <tr><td>PLASTIFICAZIONE, PLASTIFICAZIONEOPACA</td><td>plastificazione</td></tr>
+        <tr><td>PIEGAINCOLLA</td><td>piegaincolla</td></tr>
+        <tr><td>STAMPACALDO</td><td>stampa a caldo</td></tr>
+        <tr><td>TAGLIACARTE, TAGLIACARTE.IML</td><td>tagliacarte</td></tr>
+        <tr><td>BRT, SPEDIZIONE</td><td>spedizione</td></tr>
+        <tr><td>AVVIAMENTISTAMPA.EST1.1, PUNTOMETALLICOEST</td><td>esterno</td></tr>
+    </table>
+</div>
+
+<!-- 7B - DASHBOARD OPERATORE -->
+<h4 id="s7-dash-op">7.2 Dashboard Operatore</h4>
+
+<p>
+La dashboard operatore &egrave; la schermata principale di lavoro per gli operatori di produzione.
+Ogni operatore accede con il proprio codice e visualizza esclusivamente le fasi relative ai reparti
+a cui &egrave; assegnato.
+</p>
+
+<div class="feature-box">
+    <strong>Accesso:</strong>
+    <ul>
+        <li>Login tramite codice operatore (badge) e password</li>
+        <li>Il sistema identifica i reparti assegnati all'operatore dalla tabella <code>operatore_reparto</code></li>
+        <li>Vengono mostrate solo le fasi dei reparti di competenza con stato 0 (Caricato), 1 (Pronto) o 2 (Avviato)</li>
+    </ul>
+</div>
+
+<div class="feature-box">
+    <strong>Contenuto della tabella fasi:</strong>
+    <table>
+        <tr><th>Colonna</th><th>Descrizione</th></tr>
+        <tr><td>Priorit&agrave;</td><td>Valore numerico calcolato. Pi&ugrave; basso (o negativo) = pi&ugrave; urgente</td></tr>
+        <tr><td>Operatori</td><td>Operatore/i attualmente assegnati alla fase</td></tr>
+        <tr><td>Fase</td><td>Nome della fase (es. STAMPA XL, PLASTIFICAZIONE)</td></tr>
+        <tr><td>Stato</td><td>Badge colorato: Caricato, Pronto, Avviato, In pausa</td></tr>
+        <tr><td>Commessa</td><td>Numero commessa (cliccabile per aprire il dettaglio)</td></tr>
+        <tr><td>Cliente</td><td>Ragione sociale del cliente</td></tr>
+        <tr><td>Descrizione</td><td>Descrizione dell'articolo/lavoro</td></tr>
+        <tr><td>Quantit&agrave;</td><td>Quantit&agrave; ordinata</td></tr>
+        <tr><td>Data consegna</td><td>Data prevista di consegna</td></tr>
+        <tr><td>Note</td><td>Note eventuali</td></tr>
+    </table>
+</div>
+
+<p>
+La tabella &egrave; ordinata per priorit&agrave; crescente (le fasi pi&ugrave; urgenti in cima).
+Un campo di ricerca permette di trovare rapidamente una commessa per numero.
+Cliccando sul numero di commessa si accede alla pagina di dettaglio con i pulsanti di azione.
+</p>
+
+<!-- 7C - DETTAGLIO COMMESSA -->
+<h4 id="s7-dettaglio">7.3 Dettaglio Commessa (pagina operatore)</h4>
+
+<p>
+La pagina dettaglio commessa &egrave; il centro operativo dove l'operatore gestisce la lavorazione
+di una specifica fase. La pagina &egrave; divisa in diverse sezioni informative e operative.
+</p>
+
+<div class="feature-box">
+    <strong>Sezione 1 &mdash; Informazioni ordine:</strong>
+    <ul>
+        <li>Cliente e ragione sociale</li>
+        <li>Descrizione articolo/lavoro</li>
+        <li>Quantit&agrave; ordinata</li>
+        <li>Note prestampa (istruzioni dalla prestampa)</li>
+        <li>Operatore prestampa assegnato</li>
+        <li>Commento produzione (note del responsabile)</li>
+    </ul>
+</div>
+
+<div class="feature-box">
+    <strong>Sezione 2 &mdash; Anteprima foglio di stampa (Prinect):</strong>
+    <ul>
+        <li>Se disponibile, mostra l'immagine del foglio di stampa imposto recuperata da Prinect</li>
+        <li>L'immagine &egrave; cliccabile per aprirla a dimensione intera in una nuova finestra</li>
+        <li>Visibile per le fasi di stampa offset; non mostrata se Prinect non &egrave; disponibile</li>
+    </ul>
+</div>
+
+<div class="feature-box">
+    <strong>Sezione 3 &mdash; Fase selezionata con pulsanti azione:</strong>
+    <ul>
+        <li><strong>Avvia:</strong> imposta lo stato a 2 (Avviato), registra data/ora inizio e operatore</li>
+        <li><strong>Pausa:</strong> apre un menu per selezionare il motivo della pausa (Attesa materiale, Problema macchina, Pranzo, Altro). Lo stato della fase diventa il testo del motivo</li>
+        <li><strong>Termina:</strong> apre un modal Bootstrap con:
+            <ul>
+                <li>Quantit&agrave; target (sola lettura, valore previsto dall'ordine)</li>
+                <li>Quantit&agrave; prodotta (obbligatorio, campo numerico)</li>
+                <li>Scarti (facoltativo, default 0)</li>
+                <li>Pre-fill automatico da Prinect per fasi STAMPA XL (fogli buoni e fogli scarto)</li>
+                <li>Bottone &ldquo;Conferma e Termina&rdquo; per salvare e impostare stato 3</li>
+            </ul>
+        </li>
+        <li><strong>Riprendi:</strong> disponibile quando la fase &egrave; in pausa, riporta lo stato a 2 (Avviato)</li>
+    </ul>
+</div>
+
+<div class="feature-box">
+    <strong>Sezione 4 &mdash; Note operatore:</strong>
+    <ul>
+        <li>Campo testuale editabile dove l'operatore pu&ograve; inserire annotazioni libere</li>
+        <li>Le note vengono salvate e sono visibili a tutti gli utenti che accedono alla commessa</li>
+    </ul>
+</div>
+
+<div class="feature-box">
+    <strong>Sezione 5 &mdash; Altre fasi del reparto:</strong>
+    <ul>
+        <li>Elenco delle altre fasi dello stesso reparto per la stessa commessa</li>
+        <li>Sola lettura, ma cliccabili per passare alla gestione di un'altra fase</li>
+    </ul>
+</div>
+
+<div class="feature-box">
+    <strong>Sezione 6 &mdash; Fasi di altri reparti:</strong>
+    <ul>
+        <li>Panoramica dello stato di avanzamento della commessa negli altri reparti</li>
+        <li>Sola lettura, utile per capire a che punto &egrave; il lavoro complessivo</li>
+    </ul>
+</div>
+
+<!-- 7D - CICLO VITA FASE -->
+<h4 id="s7-ciclo">7.4 Ciclo di vita della fase</h4>
+
+<p>
+Ogni fase di lavorazione attraversa un ciclo di vita ben definito, rappresentato da uno stato numerico
+(o testuale nel caso delle pause). Le transizioni sono gestite dal sistema con regole precise.
+</p>
+
+<table>
+    <tr>
+        <th>Stato</th>
+        <th>Codice</th>
+        <th>Descrizione</th>
+        <th>Badge</th>
+    </tr>
+    <tr>
+        <td><strong>Caricato</strong></td>
+        <td>0</td>
+        <td>Fase appena importata, in attesa che le fasi precedenti vengano completate</td>
+        <td><span class="stato-box stato-grigio">Caricato</span></td>
+    </tr>
+    <tr>
+        <td><strong>Pronto</strong></td>
+        <td>1</td>
+        <td>Tutte le fasi prerequisite sono completate (stato &ge; 3); la fase pu&ograve; essere avviata</td>
+        <td><span class="stato-box stato-blu">Pronto</span></td>
+    </tr>
+    <tr>
+        <td><strong>Avviato</strong></td>
+        <td>2</td>
+        <td>Fase in lavorazione; operatore e timestamp registrati</td>
+        <td><span class="stato-box stato-arancione">Avviato</span></td>
+    </tr>
+    <tr>
+        <td><strong>Terminato</strong></td>
+        <td>3</td>
+        <td>Fase completata; quantit&agrave; prodotta e scarti registrati</td>
+        <td><span class="stato-box stato-verde">Terminato</span></td>
+    </tr>
+    <tr>
+        <td><strong>Spedito</strong></td>
+        <td>4</td>
+        <td>Ordine spedito al cliente; stato finale</td>
+        <td><span class="stato-box stato-rosso">Spedito</span></td>
+    </tr>
+</table>
+
+<div class="feature-box">
+    <strong>Transizioni automatiche:</strong>
+    <ul>
+        <li><strong>0 &rarr; 1 (Caricato &rarr; Pronto):</strong> avviene automaticamente quando tutte le fasi precedenti dell'ordine raggiungono lo stato 3 (Terminato) o superiore. Il sistema verifica la sequenza delle fasi definita nell'ordine.</li>
+        <li><strong>Tutte le fasi &rarr; 4 (Spedito):</strong> quando l'operatore di spedizione conferma l'invio, il sistema imposta automaticamente lo stato 4 su tutte le fasi dell'ordine.</li>
+    </ul>
+</div>
+
+<div class="feature-box">
+    <strong>Gestione delle pause:</strong>
+    <ul>
+        <li>Quando un operatore mette in pausa una fase, lo stato diventa una stringa descrittiva del motivo</li>
+        <li>Motivi disponibili: <em>Attesa materiale</em>, <em>Problema macchina</em>, <em>Pranzo</em>, <em>Altro</em></li>
+        <li>Viene creato un record nella tabella <code>pausa_operatores</code> con timestamp inizio e motivo</li>
+        <li>Alla ripresa, il record viene aggiornato con il timestamp fine e lo stato torna a 2 (Avviato)</li>
+        <li>Il tempo in pausa viene escluso dal calcolo delle ore effettive di lavorazione</li>
+    </ul>
+</div>
+
+<div class="feature-box">
+    <strong>Terminazione della fase (modal v1.2):</strong>
+    <ul>
+        <li>Il click su &ldquo;Termina&rdquo; apre un modal di conferma (non pi&ugrave; un semplice dialog)</li>
+        <li><strong>Quantit&agrave; target:</strong> mostrata in sola lettura come riferimento (dalla quantit&agrave; dell'ordine)</li>
+        <li><strong>Quantit&agrave; prodotta:</strong> campo obbligatorio, deve essere &ge; 0</li>
+        <li><strong>Scarti:</strong> campo opzionale, default 0, deve essere &ge; 0</li>
+        <li><strong>Pre-fill Prinect:</strong> per le fasi STAMPA XL, i campi vengono pre-compilati con i dati reali dal servizio PrinectSyncService (fogli buoni &rarr; qta prodotta, fogli scarto &rarr; scarti). L'operatore pu&ograve; modificare i valori prima di confermare</li>
+        <li>I valori vengono salvati nei campi <code>qta_prod</code> e <code>scarti</code> della tabella <code>ordine_fasi</code></li>
+    </ul>
+</div>
+
+<!-- 7E - DASHBOARD OWNER -->
+<h4 id="s7-dash-owner">7.5 Dashboard Owner (Responsabile Produzione)</h4>
+
+<p>
+La dashboard owner offre una visione completa di tutta la produzione e gli strumenti per gestire
+lo scheduling e l'import degli ordini. &Egrave; la schermata principale del responsabile di produzione.
+</p>
+
+<div class="feature-box">
+    <strong>Contenuti principali:</strong>
+    <ul>
+        <li><strong>Tabella fasi attive:</strong> tutte le fasi di tutti i reparti, ordinate per priorit&agrave;. Include le stesse colonne della dashboard operatore, ma senza filtro per reparto</li>
+        <li><strong>KPI giornalieri:</strong> box in alto con i principali indicatori del giorno:
+            <ul>
+                <li>Fasi completate oggi</li>
+                <li>Ore lavorate oggi (somma di tutti gli operatori)</li>
+                <li>Ordini spediti oggi</li>
+                <li>Fasi attualmente in lavorazione (stato 2)</li>
+            </ul>
+        </li>
+        <li><strong>Report spedizione giorno:</strong> elenco degli ordini spediti nella giornata corrente</li>
+        <li><strong>Pulsanti azione:</strong>
+            <ul>
+                <li>Import Excel (upload file)</li>
+                <li>Sync Onda (sincronizzazione con ERP)</li>
+                <li>Scheduling produzione</li>
+                <li>Fasi terminate</li>
+                <li>Export Excel</li>
+            </ul>
+        </li>
+        <li><strong>Dettaglio commessa:</strong> click su una commessa apre la pagina dettaglio con anteprima Prinect e tutti i pulsanti di azione</li>
+    </ul>
+</div>
+
+<!-- 7F - DASHBOARD SPEDIZIONE -->
+<h4 id="s7-dash-sped">7.6 Dashboard Spedizione</h4>
+
+<p>
+La dashboard spedizione &egrave; dedicata al reparto spedizione e gestisce l'ultima fase del ciclo produttivo:
+la verifica del completamento e l'invio dell'ordine al cliente.
+</p>
+
+<div class="feature-box">
+    <strong>Sezioni della dashboard:</strong>
+    <ul>
+        <li><strong>&ldquo;Da consegnare&rdquo;:</strong> ordini con tutte le fasi non-spedizione completate (stato &ge; 3). Il sistema controlla l'intera commessa (tutti gli ordini collegati), non solo il singolo ordine. Un ordine appare qui solo quando ogni fase di ogni reparto (esclusa la spedizione stessa) &egrave; stata terminata.</li>
+        <li><strong>&ldquo;Spedite oggi&rdquo;:</strong> ordini con stato 4 (Spedito) e data_fine nella giornata corrente. Conferma visiva delle spedizioni effettuate.</li>
+        <li><strong>&ldquo;In attesa&rdquo;:</strong> ordini ancora in lavorazione, con percentuale di completamento calcolata come rapporto tra fasi terminate e fasi totali.</li>
+    </ul>
+</div>
+
+<div class="feature-box">
+    <strong>Lavorazioni esterne:</strong>
+    <ul>
+        <li>Pagina dedicata accessibile tramite bottone dal KPI box nella dashboard spedizione</li>
+        <li>Mostra tutte le fasi assegnate al reparto &ldquo;esterno&rdquo;</li>
+        <li>Selezione fornitore tramite dropdown con lista fornitori precaricata da Excel</li>
+        <li>Opzione &ldquo;Altro&rdquo; per fornitori non in lista</li>
+        <li>Pulsanti: Avvia (con fornitore), Pausa (con motivo), Termina (con modal qta/scarti)</li>
+    </ul>
+</div>
+
+<div class="feature-box">
+    <strong>Invio spedizione:</strong>
+    <ul>
+        <li>Pulsante &ldquo;Invia&rdquo; disponibile per gli ordini nella sezione &ldquo;Da consegnare&rdquo;</li>
+        <li>L'azione imposta automaticamente lo stato 4 (Spedito) su <strong>tutte le fasi</strong> dell'ordine</li>
+        <li>Registra la data/ora di spedizione</li>
+        <li>Invia notifica email automatica (se configurata)</li>
+        <li>&Egrave; possibile forzare la spedizione anche se alcune fasi non sono ancora completate (con conferma esplicita)</li>
+    </ul>
+</div>
+
+<!-- 7G - DASHBOARD PRINECT -->
+<h4 id="s7-prinect">7.7 Dashboard Prinect</h4>
+
+<p>
+La dashboard Prinect &egrave; riservata agli amministratori e fornisce un monitoraggio completo
+della macchina da stampa offset Heidelberg XL106, con dati acquisiti in tempo reale
+dall'API Prinect.
+</p>
+
+<div class="feature-box">
+    <strong>Informazioni visualizzate:</strong>
+    <ul>
+        <li><strong>Status macchina:</strong> stato corrente dell'XL106 in tempo reale (in produzione, in avviamento, ferma, manutenzione)</li>
+        <li><strong>Attivit&agrave; oggi:</strong> elenco delle commesse lavorate nella giornata, con cicli buoni/scarto, tempi di avviamento e produzione</li>
+        <li><strong>Attivit&agrave; ultimi 7 giorni:</strong> storico della settimana per analisi trend</li>
+    </ul>
+</div>
+
+<div class="feature-box">
+    <strong>KPI e indicatori:</strong>
+    <ul>
+        <li><strong>Cicli buoni / scarto:</strong> conteggio totale e per commessa</li>
+        <li><strong>Percentuale scarto:</strong> rapporto scarti/totale, con alert se supera la soglia</li>
+        <li><strong>Tempo avviamento vs produzione:</strong> rapporto tra tempo dedicato all'avviamento (setup) e alla produzione effettiva</li>
+        <li><strong>OEE (Overall Equipment Effectiveness):</strong> indicatore complessivo di efficienza (Disponibilit&agrave; &times; Performance &times; Qualit&agrave;)</li>
+        <li><strong>Produzione per giorno:</strong> grafico/tabella con cicli giornalieri</li>
+        <li><strong>Produzione per operatore:</strong> confronto performance tra operatori macchina</li>
+        <li><strong>Top commesse per cicli:</strong> classifica delle commesse con pi&ugrave; cicli di stampa</li>
+        <li><strong>Statistiche cambi lastre:</strong> numero e durata media dei cambi lastre</li>
+    </ul>
+</div>
+
+<div class="feature-box">
+    <strong>Alert automatici:</strong>
+    <ul>
+        <li><span class="stato-box stato-rosso">Macchina ferma</span> Se la macchina risulta ferma durante l'orario di produzione</li>
+        <li><span class="stato-box stato-arancione">Scarto alto</span> Se la percentuale di scarto supera la soglia configurata</li>
+        <li><span class="stato-box stato-arancione">OEE basso</span> Se l'OEE scende sotto il livello target</li>
+    </ul>
+</div>
+
+<p>Le attivit&agrave; Prinect vengono sincronizzate nel database locale (tabella <code>prinect_attivita</code>) tramite il comando <code>php artisan prinect:sync-attivita</code> per consentire analisi storiche anche quando il server Prinect non &egrave; raggiungibile.</p>
+
+<!-- 7H - COSTI E MARGINI -->
+<h4 id="s7-costi">7.8 Costi e Margini</h4>
+
+<p>
+Il modulo costi e margini permette all'amministrazione di analizzare la redditivit&agrave; della produzione,
+confrontando il valore degli ordini con i costi effettivi di lavorazione e materiali.
+</p>
+
+<div class="feature-box">
+    <strong>Configurazione tariffe orarie:</strong>
+    <ul>
+        <li>Ogni reparto ha una tariffa oraria configurabile (euro/ora)</li>
+        <li>Le tariffe hanno date di validit&agrave; (inizio/fine) per gestire gli aggiornamenti nel tempo</li>
+        <li>La configurazione &egrave; accessibile dall'area admin</li>
+        <li>I dati sono memorizzati nella tabella <code>costi_reparto</code></li>
+    </ul>
+</div>
+
+<div class="feature-box">
+    <strong>Calcolo costi di produzione:</strong>
+
+    <div class="formula-box">
+        Costo lavoro = Ore effettive &times; Tariffa oraria del reparto<br><br>
+        Ore effettive = Tempo totale fase - Tempo in pausa<br><br>
+        Costo totale = Costo lavoro + Costo materiali (da Onda)
+    </div>
+
+    <ul style="margin-top:10px;">
+        <li>Le ore effettive escludono automaticamente il tempo delle pause registrate</li>
+        <li>Il costo materiali proviene dai dati importati da Onda</li>
+        <li>Il calcolo &egrave; eseguito per singola fase, poi aggregato per ordine</li>
+    </ul>
+</div>
+
+<div class="feature-box">
+    <strong>Calcolo margine:</strong>
+
+    <div class="formula-box">
+        Margine (%) = (Valore ordine - Costo materiali - Costo lavoro) / Valore ordine &times; 100
+    </div>
+
+    <ul style="margin-top:10px;">
+        <li>Il valore ordine proviene dai dati Onda</li>
+        <li>Un margine positivo indica redditivit&agrave;; un margine negativo indica una perdita</li>
+    </ul>
+</div>
+
+<div class="feature-box">
+    <strong>Report costi disponibili:</strong>
+    <ul>
+        <li><strong>Per periodo:</strong> settimana, mese, trimestre, anno</li>
+        <li><strong>Confronto:</strong> con il periodo precedente (es. mese corrente vs mese precedente)</li>
+        <li><strong>Dettaglio per reparto:</strong> ore lavorate e costo per ciascun reparto</li>
+        <li><strong>Dettaglio per commessa:</strong> costo totale e margine per singola commessa</li>
+        <li><strong>Export Excel:</strong> tutti i report sono esportabili in formato Excel</li>
+    </ul>
+</div>
+
+<!-- 7I - REPORT E ANALYTICS -->
+<h4 id="s7-report">7.9 Report e Analytics</h4>
+
+<p>
+Il sistema MES offre una serie completa di report per diversi livelli di utenza: dall'operatore
+al responsabile produzione fino alla direzione aziendale.
+</p>
+
+<div class="feature-box">
+    <strong>A) Statistiche operatori:</strong>
+    <ul>
+        <li>Fasi completate totali e negli ultimi 7 giorni</li>
+        <li>Fasi attualmente in corso</li>
+        <li>Ore totali lavorate (netto pause)</li>
+        <li>Dettaglio per singolo operatore</li>
+    </ul>
+</div>
+
+<div class="feature-box">
+    <strong>B) Report commessa singola:</strong>
+    <ul>
+        <li>Stato di avanzamento di tutte le fasi dell'ordine</li>
+        <li>Tempi di lavorazione per fase</li>
+        <li>Operatori coinvolti</li>
+        <li>Quantit&agrave; prodotta e scarti</li>
+        <li>Note operatore</li>
+    </ul>
+</div>
+
+<div class="feature-box">
+    <strong>C) Report produzione:</strong>
+    <ul>
+        <li>Panoramica dell'attivit&agrave; produttiva per periodo</li>
+        <li>Fasi completate per reparto</li>
+        <li>Ore lavorate per reparto</li>
+        <li>Tasso di completamento e ritardi</li>
+    </ul>
+</div>
+
+<div class="feature-box">
+    <strong>D) Report direzione (multi-foglio Excel):</strong>
+    <ul>
+        <li><strong>Foglio &ldquo;Commesse&rdquo;:</strong> elenco completo delle commesse con stato, valore, costi, margine</li>
+        <li><strong>Foglio &ldquo;KPI&rdquo;:</strong> indicatori di performance aggregati (produzione, efficienza, qualit&agrave;)</li>
+        <li><strong>Foglio &ldquo;Reparti&rdquo;:</strong> performance per reparto (ore, fasi, costi)</li>
+        <li><strong>Foglio &ldquo;Operatori&rdquo;:</strong> performance per operatore</li>
+        <li><strong>Foglio &ldquo;Ritardi&rdquo;:</strong> ordini in ritardo rispetto alla data di consegna prevista</li>
+    </ul>
+</div>
+
+<div class="feature-box">
+    <strong>E) Report Prinect:</strong>
+    <ul>
+        <li>Produzione macchina XL106 per periodo</li>
+        <li>OEE giornaliero e medio</li>
+        <li>Analisi scarti e performance</li>
+        <li>Export Excel dedicato</li>
+    </ul>
+</div>
+
+<div class="feature-box">
+    <strong>F) Report operatori (stampabile):</strong>
+    <ul>
+        <li>Elenco operatori con reparti assegnati e fasi di competenza</li>
+        <li>Layout ottimizzato per la stampa su carta (formato A4)</li>
+        <li>Utile per il responsabile produzione e per le verifiche periodiche</li>
+    </ul>
+</div>
+
+<!-- 7J - PRIORITA AUTOMATICHE -->
+<h4 id="s7-priorita">7.10 Priorit&agrave; automatiche</h4>
+
+<p>
+Il sistema calcola automaticamente la priorit&agrave; di ogni fase di lavorazione utilizzando una formula
+che tiene conto della data di consegna, dei tempi stimati di lavorazione e della sequenza delle fasi.
+La priorit&agrave; determina l'ordine di visualizzazione nelle dashboard e guida gli operatori sulle
+lavorazioni da eseguire per prime.
+</p>
+
+<div class="formula-box">
+    <strong>Formula di calcolo priorit&agrave;:</strong><br><br>
+    Priorit&agrave; = GiorniMancanti - OreStimate / 24 + OrdineFase / 100<br><br>
+    dove:<br>
+    &nbsp;&nbsp;GiorniMancanti = (DataConsegna - Oggi) / 86400<br>
+    &nbsp;&nbsp;OreStimate = TempoAvviamento + (QtaCarta / CopieOra)<br>
+    &nbsp;&nbsp;OrdineFase = valore da configurazione fasi_priorita (range 0-999)
+</div>
+
+<div class="feature-box">
+    <strong>Interpretazione del valore di priorit&agrave;:</strong>
+    <ul>
+        <li><strong>Valore negativo:</strong> la fase &egrave; urgente o gi&agrave; in ritardo rispetto alla data di consegna; apparir&agrave; in cima alla lista con evidenziazione</li>
+        <li><strong>Valore prossimo a zero:</strong> la fase deve essere lavorata a breve per rispettare la scadenza</li>
+        <li><strong>Valore positivo:</strong> la fase ha margine temporale; la consegna &egrave; nel futuro</li>
+    </ul>
+</div>
+
+<p>
+Le priorit&agrave; vengono ricalcolate automaticamente ad ogni sincronizzazione Onda e possono essere
+ricalcolate manualmente con il comando <code>php artisan priorita:ricalcola</code>.
+Il responsabile produzione pu&ograve; inoltre intervenire manualmente sulle priorit&agrave;
+dalla pagina di scheduling.
+</p>
+
+<!-- 7K - COMANDI ARTISAN -->
+<h4 id="s7-artisan">7.11 Comandi Artisan</h4>
+
+<p>
+Il sistema mette a disposizione una serie di comandi Artisan personalizzati per operazioni di
+sincronizzazione e manutenzione, eseguibili da riga di comando o schedulabili con cron/task scheduler.
+</p>
+
+<table>
+    <tr>
+        <th>Comando</th>
+        <th>Descrizione</th>
+        <th>Frequenza consigliata</th>
+    </tr>
+    <tr>
+        <td><code>php artisan onda:sync</code></td>
+        <td>Sincronizza gli ordini aperti da Onda ERP. Crea/aggiorna ordini e fasi, ricalcola priorit&agrave;.</td>
+        <td>Manuale o pi&ugrave; volte/giorno</td>
+    </tr>
+    <tr>
+        <td><code>php artisan sync:fiery</code></td>
+        <td>Sincronizza lo stato del dispositivo Fiery e la coda lavori digitale.</td>
+        <td>Schedulabile</td>
+    </tr>
+    <tr>
+        <td><code>php artisan prinect:sync-attivita</code></td>
+        <td>Sincronizza le attivit&agrave; macchina XL106 da Prinect e le salva nella tabella locale <code>prinect_attivita</code>.</td>
+        <td>Schedulabile (ogni 15-30 minuti)</td>
+    </tr>
+    <tr>
+        <td><code>php artisan excel:sync</code></td>
+        <td>Sincronizzazione bidirezionale con il file Excel <code>dashboard_mes.xlsx</code>. Esporta e importa stato, qta, note, priorit&agrave;.</td>
+        <td>Schedulabile</td>
+    </tr>
+    <tr>
+        <td><code>php artisan priorita:ricalcola</code></td>
+        <td>Ricalcola le priorit&agrave; di tutte le fasi attive utilizzando la formula automatica.</td>
+        <td>Manuale o dopo sync</td>
+    </tr>
+    <tr>
+        <td><code>php artisan import:excel-tutto {file}</code></td>
+        <td>Importa ordini e fasi da un foglio Excel &ldquo;tutto&rdquo;. Accetta il percorso del file come parametro.</td>
+        <td>Manuale (fallback)</td>
+    </tr>
+</table>
+
+<!-- ================================================================ -->
+<!-- 8. PROCEDURA DI DEPLOY -->
+<!-- ================================================================ -->
+<h3 id="s8">8. Procedura di Deploy</h3>
+
+<p>
+Il deploy del sistema MES &egrave; stato progettato per essere semplice e rapido, con un tempo di fermo
+stimato inferiore a un minuto. Non &egrave; necessario alcun processo di build frontend poich&eacute;
+l'applicazione utilizza Blade templates e Bootstrap via CDN.
+</p>
+
+<div class="feature-box">
+    <strong>Passi per il deploy:</strong>
+    <ol class="step-list">
+        <li><strong>Backup preventivo:</strong> copiare il file <code>database/database.sqlite</code> in una posizione sicura</li>
+        <li><strong>Pull del codice:</strong> eseguire <code>git pull origin master</code> nella directory del progetto</li>
+        <li><strong>Migrazioni database:</strong> eseguire <code>php artisan migrate --force</code> per applicare eventuali nuove migrazioni</li>
+        <li><strong>Verifica funzionale:</strong> accedere al sistema e verificare che le dashboard siano operative</li>
+    </ol>
+</div>
+
+<div class="alert-box">
+    <strong>Note importanti:</strong>
+    <ul>
+        <li>Non &egrave; necessario eseguire <code>composer install</code> per gli aggiornamenti normali (solo per il primo deploy o se cambiano le dipendenze PHP)</li>
+        <li>Non &egrave; necessario alcun build frontend (nessun <code>npm run build</code>)</li>
+        <li>Le modifiche a view e controller sono immediatamente attive dopo il <code>git pull</code></li>
+        <li>Il tempo di fermo effettivo &egrave; limitato ai pochi secondi della migrazione database</li>
+        <li>In caso di problemi, il rollback consiste nel ripristino del file SQLite dal backup e nel <code>git checkout</code> della versione precedente</li>
+    </ul>
+</div>
+
+<!-- ================================================================ -->
+<!-- 9. GESTIONE VERSIONI -->
+<!-- ================================================================ -->
+<h3 id="s9">9. Gestione Versioni</h3>
+
+<p>
+Il sistema MES utilizza un versionamento semantico per tracciare le release. Di seguito lo storico
+completo delle versioni rilasciate.
+</p>
+
+<table>
+    <tr>
+        <th>Versione</th>
+        <th>Data</th>
+        <th>Principali novit&agrave;</th>
+    </tr>
+    <tr>
+        <td><strong>v1.0</strong></td>
+        <td>Febbraio 2026</td>
+        <td>
+            <ul>
+                <li>Sistema base funzionante</li>
+                <li>Import ordini da file Excel</li>
+                <li>Dashboard operatore con gestione fasi (avvia/pausa/termina)</li>
+                <li>Dashboard owner con scheduling e KPI</li>
+                <li>Dashboard spedizione con verifica completamento</li>
+                <li>Gestione fasi con stati 0-4 e transizioni automatiche</li>
+                <li>Autenticazione operatori con ruoli</li>
+                <li>Gestione reparti e assegnazioni</li>
+            </ul>
+        </td>
+    </tr>
+    <tr>
+        <td><strong>v1.1</strong></td>
+        <td>18 Febbraio 2026</td>
+        <td>
+            <ul>
+                <li><span class="tag tag-new">Nuovo</span> Sincronizzazione automatica con Onda ERP (OndaSyncService)</li>
+                <li><span class="tag tag-new">Nuovo</span> Scheduling produzione riprogettato</li>
+                <li><span class="tag tag-new">Nuovo</span> Calcolo automatico priorit&agrave; con formula basata su scadenze e tempi stimati</li>
+                <li><span class="tag tag-new">Nuovo</span> Calcolo ore stimate per fase</li>
+                <li><span class="tag tag-fix">Miglioramento</span> Deduplicazione ordini multifase</li>
+                <li><span class="tag tag-fix">Miglioramento</span> Mapping fasi a reparti ampliato</li>
+            </ul>
+        </td>
+    </tr>
+    <tr>
+        <td><strong>v1.2</strong></td>
+        <td>24 Febbraio 2026</td>
+        <td>
+            <ul>
+                <li><span class="tag tag-new">Nuovo</span> Modal termina con quantit&agrave; prodotta e scarti obbligatori</li>
+                <li><span class="tag tag-new">Nuovo</span> Anteprima foglio di stampa Prinect visibile anche per gli operatori</li>
+                <li><span class="tag tag-new">Nuovo</span> Pre-fill automatico dati Prinect (fogli buoni/scarto) al termina fasi stampa offset</li>
+                <li><span class="tag tag-new">Nuovo</span> Nome abbreviato STAMPA XL nelle dashboard</li>
+                <li><span class="tag tag-new">Nuovo</span> Reparti &ldquo;tagliacarte&rdquo; e &ldquo;finitura digitale&rdquo;</li>
+                <li><span class="tag tag-data">Dati</span> Riorganizzazione anagrafica operatori e assegnazioni reparti</li>
+                <li><span class="tag tag-fix">Miglioramento</span> Lavorazioni esterne: dropdown fornitori da Excel con opzione Altro</li>
+                <li><span class="tag tag-fix">Miglioramento</span> Lavorazioni esterne in pagina separata con bottone da KPI box</li>
+                <li><span class="tag tag-fix">Fix</span> Controllo &ldquo;Da consegnare&rdquo; su tutte le fasi dell'intera commessa</li>
+                <li><span class="tag tag-fix">Fix</span> Report operatori con reparti e fasi, pagina stampabile</li>
+            </ul>
+        </td>
+    </tr>
+</table>
+
+<!-- ================================================================ -->
+<!-- 10. ROADMAP -->
+<!-- ================================================================ -->
+<h3 id="s10">10. Roadmap e Piano di Miglioramento</h3>
+
+<p>
+Il sistema MES segue un piano di sviluppo biennale (Febbraio 2026 &ndash; Febbraio 2028) articolato in 10 versioni.
+La versione 1.0 (MES Completo) &egrave; stata rilasciata. Di seguito le versioni successive pianificate.
+</p>
+
+<table>
+    <tr>
+        <th>Versione</th>
+        <th>Tema</th>
+        <th>Periodo</th>
+        <th>Contenuto principale</th>
+    </tr>
+    <tr>
+        <td><strong>v2.0</strong></td>
+        <td>Notifiche &amp; Mobilit&agrave;</td>
+        <td>Apr-Giu 2026</td>
+        <td>Progressive Web App (PWA) installabile su tablet e smartphone operatori. Scansione barcode/QR per avvio/termine fase. Notifiche push per commesse in ritardo. Dashboard su TV in reparto (kiosk mode). Notifica Telegram/WhatsApp al titolare. WebSocket real-time (Laravel Reverb) per aggiornamento istantaneo.</td>
+    </tr>
+    <tr>
+        <td><strong>v3.0</strong></td>
+        <td>AI Intelligence (Open Source)</td>
+        <td>Lug-Set 2026</td>
+        <td>Integrazione modello AI open-source (LLaMA / Mistral / Gemma via Ollama). Assistente AI per il titolare in linguaggio naturale. Analisi predittiva ritardi. Ottimizzazione tempi stimati basata su dati reali. Report AI generati con osservazioni e raccomandazioni. Anomaly detection su tempi anomali.</td>
+    </tr>
+    <tr>
+        <td><strong>v4.0</strong></td>
+        <td>Pianificazione Intelligente</td>
+        <td>Ott-Dic 2026</td>
+        <td>Scheduling automatico AI con minimizzazione ritardi e setup. Drag &amp; drop fasi nel Gantt. Simulazione &ldquo;what-if&rdquo; per commesse urgenti. Gestione manutenzione macchine. Previsione carico lavoro settimanale. Assegnazione intelligente operatori. Ottimizzazione sequenza lavori per ridurre cambi formato/lastre.</td>
+    </tr>
+    <tr>
+        <td><strong>v5.0</strong></td>
+        <td>Qualit&agrave; &amp; Tracciabilit&agrave;</td>
+        <td>Gen-Mar 2027</td>
+        <td>Checklist qualit&agrave; obbligatorie per fase (colore, registro, grammatura, piega). Foto allegata a fine lavorazione. Tracciabilit&agrave; completa per foglio stampato. Gestione non conformit&agrave; con ticket e azione correttiva. Dashboard qualit&agrave; (% scarti per macchina/operatore). Storico reclami cliente. Tracciabilit&agrave; FSC.</td>
+    </tr>
+    <tr>
+        <td><strong>v6.0</strong></td>
+        <td>Magazzino &amp; Materiali</td>
+        <td>Apr-Giu 2027</td>
+        <td>Anagrafica materiali con giacenza e soglia riordino. Scarico automatico materiali a fine fase. Movimenti di magazzino (carico, scarico, rettifiche). Alert scorta minima. Costo medio ponderato FIFO. Integrazione Onda per carico da DDT fornitore. Report consumi mensili.</td>
+    </tr>
+    <tr>
+        <td><strong>v7.0</strong></td>
+        <td>IoT &amp; Digital Twin</td>
+        <td>Lug-Set 2027</td>
+        <td>Sensori IoT su macchine principali (contatori fogli, temperatura, vibrazione). Digital Twin 2D dello stabilimento. Manutenzione predittiva AI. Monitoraggio consumi energetici. Conteggio automatico produzione da sensori. Protocollo MQTT. Storico dati sensori con trend.</td>
+    </tr>
+    <tr>
+        <td><strong>v8.0</strong></td>
+        <td>BI &amp; Analytics Avanzata</td>
+        <td>Ott-Dic 2027</td>
+        <td>Dashboard direzionale con drill-down multi-livello. Benchmark per reparto. Previsione fatturato e margine trimestrale. Analisi ABC clienti. Analisi costi fissi vs variabili. KPI personalizzabili. Export automatico report periodici via email.</td>
+    </tr>
+    <tr>
+        <td><strong>v9.0</strong></td>
+        <td>Portale Clienti &amp; API</td>
+        <td>Ott-Dic 2027</td>
+        <td>Portale clienti read-only con tracking avanzamento. Notifiche automatiche al cliente. Download documenti (DDT, certificati). API REST pubblica documentata (OpenAPI/Swagger). Webhook per eventi. Integrazione contabile per fatturazione. Single Sign-On Onda + MES.</td>
+    </tr>
+    <tr>
+        <td><strong>v10.0</strong></td>
+        <td>Industria 4.0 Completa</td>
+        <td>Gen-Feb 2028</td>
+        <td>App nativa iOS/Android per il titolare. AI Coach per operatori. Digital Twin 3D navigabile. Gestione completa manutenzione (programmata, preventiva AI, correttiva). Sostenibilit&agrave;: impronta carbonio per commessa, report ESG. Multi-stabilimento. Formazione AI per nuovi operatori. Audit trail completo per compliance.</td>
+    </tr>
+</table>
+
+<div class="feature-box">
+    <strong>Totale funzionalit&agrave; pianificate:</strong> 146 &mdash; di cui 81 completate (v1.0), 65 da sviluppare (v2.0&ndash;v10.0)<br>
+    <strong>Metodologia:</strong> Sviluppo AI-Assisted con Claude Code (Anthropic), che consente tempi significativamente ridotti rispetto allo sviluppo tradizionale.<br>
+    <strong>Stack tecnologico previsto:</strong> AI Open Source (LLaMA/Mistral/Gemma via Ollama) &middot; Laravel Reverb (WebSocket) &middot; PWA/Service Workers &middot; Redis &middot; MQTT (IoT) &middot; API REST pubblica (OpenAPI) &middot; Telegram Bot &middot; Three.js (Digital Twin 3D) &middot; App nativa (React Native/Flutter)
+</div>
+
+<!-- ================================================================ -->
+<!-- 11. RISCHI IDENTIFICATI -->
+<!-- ================================================================ -->
+<h3 id="s11">11. Rischi Identificati</h3>
+
+<p>
+L'analisi dei rischi &egrave; parte integrante della documentazione del sistema. Di seguito sono elencati
+i principali rischi identificati, con valutazione dell'impatto, della probabilit&agrave; e delle
+contromisure previste o in fase di implementazione.
+</p>
+
+<table>
+    <tr>
+        <th>Rischio</th>
+        <th>Impatto</th>
+        <th>Probabilit&agrave;</th>
+        <th>Contromisura</th>
+    </tr>
+    <tr>
+        <td><strong>Server singolo locale (no ridondanza)</strong></td>
+        <td><span class="stato-box stato-rosso">Alto</span></td>
+        <td><span class="stato-box stato-arancione">Media</span></td>
+        <td>In roadmap: server secondario o virtualizzazione per disaster recovery. Attualmente mitigato da backup periodici e procedura di ripristino documentata.</td>
+    </tr>
+    <tr>
+        <td><strong>Database SQLite file-based (no replication nativa)</strong></td>
+        <td><span class="stato-box stato-arancione">Medio</span></td>
+        <td><span class="stato-box stato-blu">Bassa</span></td>
+        <td>Backup regolari del file <code>database.sqlite</code>. In roadmap: backup automatico off-site. Volumi di dati compatibili con SQLite (non critici per performance).</td>
+    </tr>
+    <tr>
+        <td><strong>Dipendenza da rete interna per accesso</strong></td>
+        <td><span class="stato-box stato-arancione">Medio</span></td>
+        <td><span class="stato-box stato-blu">Bassa</span></td>
+        <td>La rete interna aziendale &egrave; gestita e monitorata. In caso di problemi di rete, il sistema non &egrave; raggiungibile ma non perde dati. In roadmap: valutazione accesso VPN per emergenze.</td>
+    </tr>
+    <tr>
+        <td><strong>Backup da verificare periodicamente</strong></td>
+        <td><span class="stato-box stato-arancione">Medio</span></td>
+        <td><span class="stato-box stato-arancione">Media</span></td>
+        <td>Implementare una procedura di verifica periodica (mensile) dei backup: test di ripristino su ambiente separato per confermare l'integrit&agrave; dei dati.</td>
+    </tr>
+    <tr>
+        <td><strong>Connessione Onda non disponibile</strong></td>
+        <td><span class="stato-box stato-arancione">Medio</span></td>
+        <td><span class="stato-box stato-blu">Bassa</span></td>
+        <td>Fallback tramite import Excel. Il MES continua a funzionare con i dati gi&agrave; importati. La sincronizzazione pu&ograve; essere ripresa quando Onda torna disponibile.</td>
+    </tr>
+    <tr>
+        <td><strong>Aggiornamenti non testati prima del deploy</strong></td>
+        <td><span class="stato-box stato-arancione">Medio</span></td>
+        <td><span class="stato-box stato-arancione">Media</span></td>
+        <td>Ogni release include una lista di test consigliati (vedi relazioni tecniche). In futuro: ambiente di staging per test pre-deploy.</td>
+    </tr>
+</table>
+
+<div class="risk-box">
+    <strong>Nota sulla gestione dei rischi:</strong> i rischi classificati come &ldquo;Alto impatto&rdquo; sono
+    prioritari nel piano di miglioramento (sezione 10). Si raccomanda di affrontarli entro i prossimi 3 mesi
+    per garantire la continuit&agrave; operativa del sistema.
+</div>
+
+<!-- ================================================================ -->
+<!-- 12. PROCEDURA DI RIPRISTINO EMERGENZA -->
+<!-- ================================================================ -->
+<h3 id="s12">12. Procedura di Ripristino di Emergenza</h3>
+
+<p>
+In caso di guasto completo del server o di corruzione del sistema, la seguente procedura consente
+di ripristinare il MES su un nuovo server. Il tempo stimato per il ripristino completo &egrave;
+di <strong>2-4 ore</strong>, a seconda della disponibilit&agrave; dell'hardware e della velocit&agrave;
+di download delle dipendenze.
+</p>
+
+<div class="feature-box">
+    <strong>Prerequisiti:</strong>
+    <ul>
+        <li>Server Windows funzionante con accesso alla rete aziendale</li>
+        <li>Accesso al repository Git (locale o remoto)</li>
+        <li>Backup recente del file <code>database.sqlite</code></li>
+        <li>Copia del file <code>.env</code> con le configurazioni (chiavi API, credenziali)</li>
+    </ul>
+</div>
+
+<div class="feature-box">
+    <strong>Procedura di ripristino passo-passo:</strong>
+    <ol class="step-list">
+        <li><strong>Ripristino server Windows:</strong> installare o ripristinare il sistema operativo Windows Server. Verificare la connettivit&agrave; di rete con gli altri sistemi aziendali (Onda, Prinect).</li>
+        <li><strong>Installazione PHP 8.x:</strong> installare PHP 8.x con le estensioni necessarie: sqlite3, pdo_sqlite, sqlsrv, pdo_sqlsrv, mbstring, openssl, curl, xml. Verificare il funzionamento con <code>php -v</code>.</li>
+        <li><strong>Installazione Composer:</strong> scaricare e installare Composer (gestore dipendenze PHP) se non gi&agrave; presente.</li>
+        <li><strong>Clone del repository:</strong> eseguire <code>git clone</code> del repository nella directory di destinazione. Verificare che tutti i file siano presenti.</li>
+        <li><strong>Installazione dipendenze:</strong> eseguire <code>composer install --no-dev</code> nella directory del progetto per installare tutte le dipendenze PHP.</li>
+        <li><strong>Ripristino database:</strong> copiare il file <code>database.sqlite</code> dal backup nella directory <code>database/</code> del progetto. Verificare i permessi di lettura/scrittura.</li>
+        <li><strong>Configurazione ambiente:</strong> ripristinare il file <code>.env</code> con le configurazioni corrette:
+            <ul>
+                <li>Chiave API Prinect (<code>PRINECT_API_URL</code>, credenziali Basic Auth)</li>
+                <li>Connessione Onda SQL Server (<code>ONDA_DB_HOST</code>, <code>ONDA_DB_DATABASE</code>, credenziali)</li>
+                <li>Configurazione email SMTP</li>
+                <li>Path del file Excel per sincronizzazione</li>
+                <li>Generare una nuova <code>APP_KEY</code> con <code>php artisan key:generate</code></li>
+            </ul>
+        </li>
+        <li><strong>Migrazioni (se necessario):</strong> eseguire <code>php artisan migrate</code> per applicare eventuali migrazioni mancanti rispetto al backup del database.</li>
+        <li><strong>Avvio web server:</strong> avviare il server web (PHP built-in con <code>php artisan serve --host=0.0.0.0 --port=80</code> oppure configurare Apache/Nginx).</li>
+        <li><strong>Test funzionale completo:</strong>
+            <ul>
+                <li>Accesso login operatore &rarr; verificare dashboard con fasi</li>
+                <li>Accesso login owner &rarr; verificare dashboard e import</li>
+                <li>Test sync Onda &rarr; verificare connessione SQL Server</li>
+                <li>Test dashboard Prinect &rarr; verificare connessione API</li>
+                <li>Test termina fase &rarr; verificare modal e salvataggio dati</li>
+                <li>Test spedizione &rarr; verificare cambio stato e notifica email</li>
+            </ul>
+        </li>
+    </ol>
+</div>
+
+<div class="alert-box">
+    <strong>Tempo stimato per il ripristino:</strong>
+    <table>
+        <tr><th>Fase</th><th>Tempo stimato</th></tr>
+        <tr><td>Setup server + PHP</td><td>30-60 minuti</td></tr>
+        <tr><td>Clone + composer install</td><td>15-30 minuti</td></tr>
+        <tr><td>Ripristino database + .env</td><td>15-30 minuti</td></tr>
+        <tr><td>Test funzionale</td><td>30-60 minuti</td></tr>
+        <tr><td><strong>Totale</strong></td><td><strong>2-4 ore</strong></td></tr>
+    </table>
+</div>
+
+<div class="risk-box">
+    <strong>Raccomandazione critica:</strong> verificare periodicamente (almeno mensilmente) che il backup del file
+    <code>database.sqlite</code> sia recente e integro. Verificare che una copia del file <code>.env</code> sia
+    conservata in una posizione sicura e separata dal server principale. Senza questi due file, il ripristino
+    richieder&agrave; la riconfigurazione manuale di tutte le credenziali e la perdita dei dati produttivi.
+</div>
+
+<!-- ================================================================ -->
+<!-- FOOTER -->
+<!-- ================================================================ -->
+<div class="footer">
+    Grafica Nappa srl &mdash; Sistema MES Produzione &mdash; Documentazione Tecnica Completa &mdash; v1.2<br>
+    24 Febbraio 2026 &mdash; Redatto da Giovanni Pietropaolo (IT)<br>
+    <em>Documento riservato ad uso interno aziendale</em>
+</div>
+
+</body>
+</html>

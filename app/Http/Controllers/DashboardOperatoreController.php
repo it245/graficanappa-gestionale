@@ -67,7 +67,8 @@ class DashboardOperatoreController extends Controller
                 $cliente = $fase->ordine->cliente_nome ?? '';
                 $repNome = optional($fase->faseCatalogo)->reparto->nome ?? '';
                 $fase->colori = DescrizioneParser::parseColori($desc, $cliente, $repNome);
-                $fase->fustella_codice = DescrizioneParser::parseFustella($desc, $cliente);
+                $notePre = $fase->ordine->note_prestampa ?? '';
+                $fase->fustella_codice = DescrizioneParser::parseFustella($desc, $cliente, $notePre);
 
                 // Fornitore esterno: estrai "Inviato a: XXX" dalla note
                 $fase->fornitore_esterno = preg_match('/Inviato a:\s*(.+)/i', $fase->note ?? '', $m) ? trim($m[1]) : null;
@@ -85,6 +86,7 @@ class DashboardOperatoreController extends Controller
         $showColori = !empty(array_intersect($nomiReparti, ['stampa offset']));
         $showFustella = empty(array_intersect($nomiReparti, ['piegaincolla']));
         $showEsterno = !empty(array_intersect($nomiReparti, ['spedizione']));
+        $isFustellaOperatore = !empty(array_intersect($nomiReparti, ['fustella piana', 'fustella cilindrica']));
 
         // Raggruppa fasi per reparto (per operatori multi-reparto)
         $repartiOperatore = $operatore->reparti->sortBy('nome');
@@ -110,6 +112,67 @@ class DashboardOperatoreController extends Controller
             ->orderByDesc('data_fine')
             ->get();
 
-        return view('operatore.dashboard', compact('fasiVisibili', 'operatore', 'fasiPerReparto', 'showColori', 'showFustella', 'showEsterno', 'fasiTerminate'));
+        return view('operatore.dashboard', compact('fasiVisibili', 'operatore', 'fasiPerReparto', 'showColori', 'showFustella', 'showEsterno', 'fasiTerminate', 'isFustellaOperatore'));
+    }
+
+    /**
+     * Pagina Fustelle: mostra le fustelle da utilizzare nei prossimi 30 giorni
+     * raggruppate per codice FS, con commesse associate.
+     * Visibile solo agli operatori di fustella piana/cilindrica.
+     */
+    public function fustelle(Request $request)
+    {
+        $operatore = $request->attributes->get('operatore') ?? auth()->guard('operatore')->user();
+        if (!$operatore) abort(403, 'Accesso negato');
+
+        // Reparti fustella: 5=fustella, 15=fustella piana, 16=fustella cilindrica
+        $repartiFustella = [5, 15, 16];
+
+        // Fasi nei reparti fustella con stato < 3 e consegna nei prossimi 30 giorni
+        $fasi = OrdineFase::where('stato', '<', 3)
+            ->where(fn($q) => $q->where('esterno', false)->orWhereNull('esterno'))
+            ->whereHas('faseCatalogo', function ($q) use ($repartiFustella) {
+                $q->whereIn('reparto_id', $repartiFustella);
+            })
+            ->whereHas('ordine', function ($q) {
+                $q->where('data_prevista_consegna', '<=', Carbon::today()->addDays(30));
+            })
+            ->with(['ordine', 'faseCatalogo.reparto'])
+            ->get();
+
+        // Raggruppa per codice fustella (FS####)
+        $fustelleMap = [];
+        foreach ($fasi as $fase) {
+            $desc = $fase->ordine->descrizione ?? '';
+            $cliente = $fase->ordine->cliente_nome ?? '';
+            $notePre = $fase->ordine->note_prestampa ?? '';
+            $fsCodice = DescrizioneParser::parseFustella($desc, $cliente, $notePre);
+
+            if (!$fsCodice) continue;
+
+            // Può contenere "FS0001 / FS0002" — splittiamo
+            $codici = array_map('trim', explode('/', $fsCodice));
+            foreach ($codici as $codice) {
+                if (!isset($fustelleMap[$codice])) {
+                    $fustelleMap[$codice] = [];
+                }
+                $commessa = $fase->ordine->commessa;
+                if (!isset($fustelleMap[$codice][$commessa])) {
+                    $fustelleMap[$codice][$commessa] = [
+                        'commessa' => $commessa,
+                        'cliente' => $fase->ordine->cliente_nome ?? '-',
+                        'descrizione' => $fase->ordine->descrizione ?? '-',
+                        'data_consegna' => $fase->ordine->data_prevista_consegna,
+                        'stato' => $fase->stato,
+                        'fase' => $fase->faseCatalogo->reparto->nome ?? $fase->fase,
+                    ];
+                }
+            }
+        }
+
+        // Ordina per codice fustella
+        ksort($fustelleMap);
+
+        return view('operatore.fustelle', compact('operatore', 'fustelleMap'));
     }
 }

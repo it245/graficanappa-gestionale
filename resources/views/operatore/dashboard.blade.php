@@ -166,10 +166,15 @@
         </div>
     </div>
     </div>
-    <div class="action-icons" style="display:flex; align-items:center;">
+    <div class="action-icons" style="display:flex; align-items:center; gap:12px;">
         <img src="{{ asset('images/icons8-ricerca-50.png') }}"
              title="Cerca commessa"
              onclick="cercaCommessa()">
+        @if($isFustellaOperatore ?? false)
+            <a href="{{ route('operatore.fustelle', ['op_token' => request('op_token')]) }}"
+               title="Fustelle"
+               style="font-size:22px; text-decoration:none; margin-right:8px;">&#9881;</a>
+        @endif
         <span title="Storico fasi terminate"
               style="font-size:28px; cursor:pointer; user-select:none; margin-right:15px;"
               data-bs-toggle="offcanvas" data-bs-target="#offcanvasStorico">&#9776;</span>

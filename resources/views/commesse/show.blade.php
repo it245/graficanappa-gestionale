@@ -81,7 +81,7 @@
                 $desc = $ordine->descrizione ?? '';
                 $cliente = $ordine->cliente_nome ?? '';
                 $coloriCalc = \App\Helpers\DescrizioneParser::parseColori($desc, $cliente);
-                $fustellaCalc = \App\Helpers\DescrizioneParser::parseFustella($desc, $cliente);
+                $fustellaCalc = \App\Helpers\DescrizioneParser::parseFustella($desc, $cliente, $ordine->note_prestampa ?? '');
             @endphp
             <p><strong>Cliente:</strong> {{ $ordine->cliente_nome }}</p>
             <p><strong>Descrizione:</strong> {{ $ordine->descrizione }}</p>
