@@ -1091,7 +1091,7 @@ public function calcolaOreEPriorita($fase)
                     'data_invio'    => $dataInvio,
                     'note'          => $fasi->pluck('note')->filter()->unique()->implode(' | '),
                 ];
-            })->filter(fn($c) => $c->fornitore !== '-')
+            })->filter(fn($c) => $c->stato == 2)
               ->sortBy(fn($c) => $c->ordine->data_prevista_consegna ?? '9999-12-31')->values();
         }
 
