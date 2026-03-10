@@ -96,7 +96,7 @@
 
     @media print {
         .top-bar, .fustelle-sidebar, .kpi-row, .btn-stampa,
-        .filtri-bar-fustelle { display: none !important; }
+        .filtri-bar-fustelle, .hide-print { display: none !important; }
         .fustelle-layout { display: block !important; }
         .fustelle-container { padding: 0 !important; }
         .fs-card { break-inside: avoid; margin-bottom: 12px; box-shadow: none; border: 1px solid #aaa; }
@@ -197,7 +197,7 @@
                             <th>Descrizione</th>
                             <th>Consegna</th>
                             <th>Stato</th>
-                            <th>Reparto</th>
+                            <th class="hide-print">Reparto</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -230,7 +230,7 @@
                                     @endif
                                 </td>
                                 <td><span class="badge-stato badge-stato-{{ $c['stato'] }}">{{ $c['stato'] }}</span></td>
-                                <td>{{ ucfirst($c['fase']) }}</td>
+                                <td class="hide-print">{{ ucfirst($c['fase']) }}</td>
                             </tr>
                         @endforeach
                     </tbody>
