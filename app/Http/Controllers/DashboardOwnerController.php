@@ -333,7 +333,7 @@ public function calcolaOreEPriorita($fase)
 
                 if ($fase->operatori->isNotEmpty()) {
                     $primaData = $fase->operatori->sortBy('pivot.data_inizio')->first()->pivot->data_inizio;
-                    $fase->data_inizio = $primaData ? Carbon::parse($primaData)->format('d/m/Y H:i:s') : null;
+                    $fase->data_inizio = $primaData ? Carbon::parse($primaData)->format('Y-m-d H:i:s') : null;
                 } else {
                     $fase->data_inizio = null;
                 }
@@ -660,14 +660,14 @@ public function calcolaOreEPriorita($fase)
 
                 if ($primaDataInizio) {
                     $carbonInizio = Carbon::parse($primaDataInizio);
-                    $fase->data_inizio = $carbonInizio->format('d/m/Y H:i:s');
+                    $fase->data_inizio = $carbonInizio->format('Y-m-d H:i:s');
                 }
             }
 
             // Fallback: data_inizio dal campo ordine_fasi (impostato da Prinect sync)
             if (!$fase->data_inizio && $dataInizioOriginale) {
                 $carbonInizio = Carbon::parse($dataInizioOriginale);
-                $fase->data_inizio = $carbonInizio->format('d/m/Y H:i:s');
+                $fase->data_inizio = $carbonInizio->format('Y-m-d H:i:s');
             }
 
             // DATA FINE: dalla pivot operatore, fallback dal campo ordine_fasi
@@ -683,14 +683,14 @@ public function calcolaOreEPriorita($fase)
 
                 if ($primaDataFine) {
                     $carbonFine = Carbon::parse($primaDataFine);
-                    $fase->data_fine = $carbonFine->format('d/m/Y H:i:s');
+                    $fase->data_fine = $carbonFine->format('Y-m-d H:i:s');
                 }
             }
 
             // Fallback: data_fine dal campo ordine_fasi (impostato da Prinect sync)
             if (!$fase->data_fine && $dataFineOriginale) {
                 $carbonFine = Carbon::parse($dataFineOriginale);
-                $fase->data_fine = $carbonFine->format('d/m/Y H:i:s');
+                $fase->data_fine = $carbonFine->format('Y-m-d H:i:s');
             }
 
             // Calcolo ore lavorate e pausa
