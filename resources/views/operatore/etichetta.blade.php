@@ -367,8 +367,12 @@ function aggiornaAnteprima() {
     var canvas = document.getElementById('datamatrix');
     var dmImg = document.getElementById('datamatrix-img');
     if (ean && ean.length >= 4) {
-        // EAN/GTIN: usa così com'è (può contenere lettere es. A8022470254327)
+        // EAN/GTIN: strip prefisso "A" (equivale allo 0 di padding GTIN-14)
         var gtin = ean.trim();
+        if (/^[Aa]/.test(gtin)) gtin = gtin.substring(1);
+        gtin = gtin.replace(/[^0-9]/g, '');
+        while (gtin.length < 14) gtin = '0' + gtin;
+        if (gtin.length > 14) gtin = gtin.substring(0, 14);
 
         // AI(30) = quantità variabile (NO zero-padding, max 8 cifre)
         var qty = pzcassa ? String(parseInt(pzcassa, 10)) : '';
