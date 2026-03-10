@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('viewport')
-<meta name="viewport" content="width=1400, initial-scale=0.3">
+{{-- Nessun viewport: il browser mobile usa il default ~980px, la pagina è scrollabile --}}
 @endsection
 
 @section('content')
