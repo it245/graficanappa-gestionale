@@ -527,6 +527,14 @@ tr:hover td {
             <button class="sidebar-close" id="sidebarClose">&times;</button>
         </div>
 
+        {{-- Panoramica Reparti --}}
+        <a href="{{ route('owner.repartiOverview', ['op_token' => $opToken ?? request()->query('op_token')]) }}" class="sidebar-item">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+            </svg>
+            <span>Panoramica Reparti</span>
+        </a>
+
         {{-- Visualizza fasi terminate --}}
         <a href="{{ route('owner.fasiTerminate') }}" class="sidebar-item">
             <img src="{{ asset('images/out-of-the-box.png') }}" alt="">
