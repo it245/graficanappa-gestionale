@@ -1876,9 +1876,8 @@ function caricaNoteSpedizione() {
     })
     .then(r => r.json())
     .then(d => {
-        document.getElementById('ownerNotaAM').value = d.contenuto_am || '';
-        document.getElementById('ownerNotaPM').value = d.contenuto_pm || '';
-        document.getElementById('ownerNoteSaveStatus').textContent = '';
+        document.getElementById('ownerNotaContenuto').value = d.contenuto || '';
+        document.getElementById('ownerNoteSaveStatus').textContent = d.da_data ? '(dal ' + new Date(d.da_data).toLocaleDateString('it-IT') + ')' : '';
     })
     .catch(() => {
         document.getElementById('ownerNoteSaveStatus').textContent = 'Errore caricamento';
@@ -1898,8 +1897,7 @@ function salvaNoteSped() {
         },
         body: JSON.stringify({
             data: '{{ now()->toDateString() }}',
-            contenuto_am: document.getElementById('ownerNotaAM').value,
-            contenuto_pm: document.getElementById('ownerNotaPM').value
+            contenuto: document.getElementById('ownerNotaContenuto').value
         })
     })
     .then(r => r.json())
@@ -1926,14 +1924,7 @@ function salvaNoteSped() {
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <div style="margin-bottom:12px;">
-                    <label style="font-weight:bold; color:#198754;">AM (Mattina)</label>
-                    <textarea id="ownerNotaAM" rows="4" class="form-control" style="border-color:#198754; font-size:14px;" placeholder="Mattina..."></textarea>
-                </div>
-                <div>
-                    <label style="font-weight:bold; color:#fd7e14;">PM (Pomeriggio)</label>
-                    <textarea id="ownerNotaPM" rows="4" class="form-control" style="border-color:#fd7e14; font-size:14px;" placeholder="Pomeriggio..."></textarea>
-                </div>
+                <textarea id="ownerNotaContenuto" rows="10" class="form-control" style="font-size:14px;" placeholder="Note consegne..."></textarea>
             </div>
             <div class="modal-footer" style="justify-content:space-between;">
                 <span id="ownerNoteSaveStatus" style="font-size:12px; color:#6c757d;"></span>
