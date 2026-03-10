@@ -394,7 +394,7 @@ function aggiornaAnteprima() {
             });
             dmImg.src = canvas.toDataURL('image/png');
             dmImg.style.display = '';
-            document.getElementById('print-ean').textContent = eanOriginal;
+            document.getElementById('print-ean').textContent = displayData.replace(/[()]/g, '');
         } catch(e) {
             console.warn('gs1datamatrix failed, trying datamatrix:', e.message || e);
             // Fallback: datamatrix con FNC1
@@ -411,7 +411,7 @@ function aggiornaAnteprima() {
                 });
                 dmImg.src = canvas.toDataURL('image/png');
                 dmImg.style.display = '';
-                document.getElementById('print-ean').textContent = eanOriginal;
+                document.getElementById('print-ean').textContent = displayData.replace(/[()]/g, '');
             } catch(e2) {
                 console.error('DataMatrix fallback error:', e2);
                 dmImg.style.display = 'none';
