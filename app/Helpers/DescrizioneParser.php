@@ -21,8 +21,8 @@ class DescrizioneParser
             return '4C';
         }
 
-        // Cerca pattern: "stampa [a] NUM colori" oppure "- NUM colori" / ", NUM colori"
-        $pattern = '/(?:stampa\s+(?:a\s+)?|[-,]\s*)(\d+(?:[\/+]\d+)?)\s*colou?r[ei]?\b(.{0,120})/is';
+        // Cerca pattern: "stampa [a] NUM colori", "- NUM colori", ", NUM colori", o "NUM COLORI" standalone
+        $pattern = '/(?:stampa\s+(?:a\s+)?|[-,]\s*|\b)(\d+(?:[\/+]\d+)?)\s*colou?r[ei]?\b(.{0,120})/is';
 
         if (preg_match($pattern, $descrizione, $m)) {
             $numColori = trim($m[1]);
