@@ -58,11 +58,17 @@ h2, p {
     background: none;
     border: none;
     cursor: pointer;
-    padding: 4px;
+    padding: 12px;
     display: flex;
     flex-direction: column;
     gap: 5px;
     transition: transform 0.15s ease;
+    z-index: 100;
+    position: relative;
+    min-width: 44px;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
 }
 .hamburger-btn:hover { transform: scale(1.1); }
 .hamburger-btn span {
