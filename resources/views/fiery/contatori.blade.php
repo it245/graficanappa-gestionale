@@ -76,6 +76,53 @@
     .timestamp-live {
         font-size: 12px; color: #6c757d; margin-top: 8px;
     }
+
+    /* Click per commessa */
+    .filter-bar {
+        display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+        margin-bottom: 16px; padding: 12px 16px;
+        background: #f8f9fa; border-radius: 8px; border: 1px solid #e9ecef;
+    }
+    .filter-bar label { font-size: 12px; font-weight: 600; color: #495057; margin: 0; }
+    .filter-bar input[type="date"] {
+        font-size: 13px; padding: 4px 10px; border: 1px solid #dee2e6;
+        border-radius: 6px; color: #212529;
+    }
+    .filter-bar button {
+        background: #1d4ed8; color: #fff; border: none; padding: 6px 16px;
+        border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;
+    }
+    .filter-bar button:hover { background: #1e40af; }
+    .filter-bar .totals { margin-left: auto; font-size: 12px; color: #6c757d; }
+    .filter-bar .totals strong { color: #1a1a2e; }
+
+    .click-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+    .click-table thead th {
+        font-size: 10px; text-transform: uppercase; letter-spacing: 1px;
+        color: #6c757d; font-weight: 600; padding: 8px 10px;
+        border-bottom: 2px solid #dee2e6; text-align: right; white-space: nowrap;
+    }
+    .click-table thead th:nth-child(1),
+    .click-table thead th:nth-child(2),
+    .click-table thead th:nth-child(3) { text-align: left; }
+    .click-table tbody td {
+        font-size: 13px; color: #495057; padding: 8px 10px;
+        border-bottom: 1px solid #f1f3f5; text-align: right;
+        font-variant-numeric: tabular-nums;
+    }
+    .click-table tbody td:nth-child(1) { text-align: left; font-weight: 600; color: #1d4ed8; }
+    .click-table tbody td:nth-child(2) { text-align: left; font-weight: 500; color: #212529; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .click-table tbody td:nth-child(3) { text-align: left; font-size: 11px; color: #6c757d; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .click-table tbody tr:hover { background: #f0f7ff; }
+    .click-table tfoot td {
+        font-size: 13px; font-weight: 700; color: #1a1a2e; padding: 10px;
+        border-top: 2px solid #dee2e6; text-align: right;
+    }
+    .click-table tfoot td:first-child { text-align: left; }
+    .formato-tag {
+        display: inline-block; font-size: 10px; background: #e9ecef; color: #495057;
+        padding: 1px 6px; border-radius: 4px; margin: 1px 2px;
+    }
 </style>
 
 <div class="fiery-header">
@@ -176,6 +223,93 @@
                 </tr>
                 @endforeach
             </tbody>
+        </table>
+        </div>
+    @endif
+</div>
+
+{{-- Click per Commessa --}}
+<div class="fc">
+    <div class="fc-label">Click per Commessa (Fiery Accounting)</div>
+
+    <form method="GET" action="{{ route('mes.fiery.contatori') }}" class="filter-bar">
+        <label>Dal</label>
+        <input type="date" name="da" value="{{ $da }}">
+        <label>Al</label>
+        <input type="date" name="a" value="{{ $a }}">
+        <button type="submit">Filtra</button>
+        @if(!empty($clickPerCommessa))
+        @php
+            $totFogli = collect($clickPerCommessa)->sum('fogli');
+            $totColore = collect($clickPerCommessa)->sum('colore');
+            $totBN = collect($clickPerCommessa)->sum('bn');
+        @endphp
+        <div class="totals">
+            Totale: <strong>{{ number_format($totFogli, 0, ',', '.') }}</strong> fogli
+            &middot; <strong>{{ number_format($totColore, 0, ',', '.') }}</strong> colore
+            &middot; <strong>{{ number_format($totBN, 0, ',', '.') }}</strong> B/N
+            &middot; {{ count($clickPerCommessa) }} commesse
+        </div>
+        @endif
+    </form>
+
+    @if(empty($clickPerCommessa))
+        <div style="color:#6c757d; font-size:14px; padding:12px 0;">Nessun dato nel periodo selezionato.</div>
+    @else
+        <div style="overflow-x:auto;">
+        <table class="click-table">
+            <thead>
+                <tr>
+                    <th>Commessa</th>
+                    <th>Cliente</th>
+                    <th>Descrizione</th>
+                    <th>Fogli</th>
+                    <th>Pag. Colore</th>
+                    <th>Pag. B/N</th>
+                    <th>Copie</th>
+                    <th>Run</th>
+                    <th>Formato</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($clickPerCommessa as $c)
+                <tr>
+                    <td>{{ $c['commessa'] }}</td>
+                    <td>{{ $c['cliente'] }}</td>
+                    <td>{{ $c['descrizione'] }}</td>
+                    <td>{{ number_format($c['fogli'], 0, ',', '.') }}</td>
+                    <td>{{ number_format($c['colore'], 0, ',', '.') }}</td>
+                    <td>{{ number_format($c['bn'], 0, ',', '.') }}</td>
+                    <td>{{ number_format($c['copie'], 0, ',', '.') }}</td>
+                    <td>{{ $c['run'] }}</td>
+                    <td>
+                        @foreach($c['formati'] as $fmt)
+                        @php
+                            // Semplifica il formato da "Formato personal. (330.000x480.000 mm)" a "330x480"
+                            $fmtShort = $fmt;
+                            if (preg_match('/\((\d+)[\.,]\d+\s*x\s*(\d+)[\.,]\d+/', $fmt, $fm)) {
+                                $fmtShort = $fm[1] . 'x' . $fm[2];
+                            } elseif (preg_match('/^(SRA3|A4|A3)$/i', $fmt)) {
+                                $fmtShort = $fmt;
+                            }
+                        @endphp
+                        <span class="formato-tag">{{ $fmtShort }}</span>
+                        @endforeach
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="3">TOTALE</td>
+                    <td>{{ number_format($totFogli, 0, ',', '.') }}</td>
+                    <td>{{ number_format($totColore, 0, ',', '.') }}</td>
+                    <td>{{ number_format($totBN, 0, ',', '.') }}</td>
+                    <td>{{ number_format(collect($clickPerCommessa)->sum('copie'), 0, ',', '.') }}</td>
+                    <td>{{ collect($clickPerCommessa)->sum('run') }}</td>
+                    <td></td>
+                </tr>
+            </tfoot>
         </table>
         </div>
     @endif

@@ -260,7 +260,7 @@ class FieryController extends Controller
     /**
      * Pagina contatori Canon iPR V900 — SNMP live + storico da DB
      */
-    public function contatori(FieryService $fiery)
+    public function contatori(Request $request, FieryService $fiery)
     {
         // Lettura live SNMP
         $live = $this->leggiContatoriSnmp();
@@ -268,13 +268,15 @@ class FieryController extends Controller
         // Storico dal DB
         $storico = ContatoreStampante::where('stampante', 'Canon iPR V900')
             ->orderByDesc('rilevato_at')
-            ->limit(52) // ultimo anno di snapshot settimanali
+            ->limit(52)
             ->get();
 
-        // Accounting per periodo (da Fiery API)
-        $accountingDisponibile = $fiery->isOnline();
+        // Click per commessa da Accounting API
+        $da = $request->get('da', now()->subDays(30)->format('Y-m-d'));
+        $a = $request->get('a', now()->format('Y-m-d'));
+        $clickPerCommessa = $this->getClickPerCommessa($fiery, $da, $a);
 
-        return view('fiery.contatori', compact('live', 'storico', 'accountingDisponibile'));
+        return view('fiery.contatori', compact('live', 'storico', 'clickPerCommessa', 'da', 'a'));
     }
 
     /**
@@ -314,6 +316,116 @@ class FieryController extends Controller
         }
 
         return $result;
+    }
+
+    /**
+     * Click (fogli/pagine colore/BN) per commessa dal Fiery Accounting API, filtrati per data
+     */
+    private function getClickPerCommessa(FieryService $fiery, string $da, string $a): array
+    {
+        $host = config('fiery.host');
+        $baseUrl = 'https://' . $host;
+
+        try {
+            $loginR = \Illuminate\Support\Facades\Http::withoutVerifying()->timeout(15)
+                ->post($baseUrl . '/live/api/v5/login', [
+                    'username' => config('fiery.username'),
+                    'password' => config('fiery.password'),
+                    'accessrights' => config('fiery.api_key'),
+                ]);
+
+            if (!$loginR->successful()) return [];
+
+            $cookies = [];
+            foreach ($loginR->cookies() as $cookie) {
+                $cookies[$cookie->getName()] = $cookie->getValue();
+            }
+
+            $r = \Illuminate\Support\Facades\Http::withoutVerifying()
+                ->timeout(60)
+                ->withCookies($cookies, $host)
+                ->get($baseUrl . '/live/api/v5/accounting');
+
+            // Logout
+            try {
+                \Illuminate\Support\Facades\Http::withoutVerifying()
+                    ->withCookies($cookies, $host)
+                    ->post($baseUrl . '/live/api/v5/logout');
+            } catch (\Exception $e) {}
+
+            if (!$r->successful()) return [];
+
+            $json = $r->json();
+            $items = $json['data']['items'] ?? $json;
+            if (!is_array($items)) return [];
+
+            $daTs = strtotime($da);
+            $aTs = strtotime($a . ' 23:59:59');
+
+            $perCommessa = [];
+            foreach ($items as $entry) {
+                // Parsa data
+                $dateStr = $entry['date'] ?? '';
+                $ts = $this->parseFieryDate($dateStr);
+                if (!$ts || $ts < $daTs || $ts > $aTs) continue;
+
+                $title = $entry['title'] ?? '';
+                $commessa = $fiery->estraiCommessaDaTitolo($title);
+                if (!$commessa) continue;
+
+                $fogli = (int) ($entry['total sheets printed'] ?? 0);
+                $colore = (int) ($entry['total color pages printed'] ?? 0);
+                $bn = (int) ($entry['total bw pages printed'] ?? 0);
+                $copie = (int) ($entry['copies printed'] ?? 0);
+                $mediaSize = $entry['media size'] ?? '';
+
+                if (!isset($perCommessa[$commessa])) {
+                    // Cerca nel MES
+                    $ordine = Ordine::where('commessa', $commessa)->first();
+                    $perCommessa[$commessa] = [
+                        'commessa' => $commessa,
+                        'cliente' => $ordine->cliente_nome ?? '',
+                        'descrizione' => $ordine ? \Illuminate\Support\Str::limit($ordine->descrizione ?? '', 60) : '',
+                        'fogli' => 0,
+                        'colore' => 0,
+                        'bn' => 0,
+                        'copie' => 0,
+                        'run' => 0,
+                        'formati' => [],
+                    ];
+                }
+
+                $perCommessa[$commessa]['fogli'] += $fogli;
+                $perCommessa[$commessa]['colore'] += $colore;
+                $perCommessa[$commessa]['bn'] += $bn;
+                $perCommessa[$commessa]['copie'] += $copie;
+                $perCommessa[$commessa]['run']++;
+                if ($mediaSize && !in_array($mediaSize, $perCommessa[$commessa]['formati'])) {
+                    $perCommessa[$commessa]['formati'][] = $mediaSize;
+                }
+            }
+
+            // Ordina per fogli decrescenti
+            usort($perCommessa, fn($a, $b) => $b['fogli'] - $a['fogli']);
+
+            return $perCommessa;
+        } catch (\Exception $e) {
+            return [];
+        }
+    }
+
+    /**
+     * Parsa date in vari formati Fiery
+     */
+    private function parseFieryDate(string $dateStr): ?int
+    {
+        if (empty($dateStr)) return null;
+        foreach (['Y-m-d H:i:s', 'Y-m-d\TH:i:s', 'Y-m-d\TH:i:sP', 'm/d/Y H:i:s', 'd/m/Y H:i:s', 'Y-m-d'] as $fmt) {
+            $d = \DateTime::createFromFormat($fmt, $dateStr);
+            if ($d) return $d->getTimestamp();
+        }
+        $ts = strtotime($dateStr);
+        return $ts !== false ? $ts : null;
     }
 
     /**
