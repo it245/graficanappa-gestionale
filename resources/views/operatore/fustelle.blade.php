@@ -6,8 +6,8 @@
         display: flex; justify-content: space-between; align-items: center;
         padding: 8px 12px; background: #1a1a2e; color: #fff;
     }
-    .top-bar a { color: #adb5bd; text-decoration: none; font-size: 14px; }
-    .top-bar a:hover { color: #fff; }
+    .top-bar a { color: #fff; text-decoration: none; font-size: 14px; font-weight: 600; background: rgba(255,255,255,.15); padding: 6px 14px; border-radius: 6px; }
+    .top-bar a:hover { background: rgba(255,255,255,.25); }
     .operatore-info { position: relative; cursor: pointer; }
     .operatore-popup {
         display: none; position: absolute; top: 40px; left: 0;
