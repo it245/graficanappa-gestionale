@@ -416,8 +416,22 @@ function aggiornaAnteprima() {
                 dmImg.style.display = '';
                 document.getElementById('print-ean').textContent = ean.trim();
             } catch(e2) {
-                console.error('DataMatrix fallback error:', e2);
-                dmImg.style.display = 'none';
+                console.warn('datamatrix FNC1 failed, trying plain:', e2.message || e2);
+                // Fallback finale: datamatrix semplice con solo EAN
+                try {
+                    bwipjs.toCanvas(canvas, {
+                        bcid: 'datamatrix',
+                        text: ean.trim(),
+                        scale: 10,
+                        padding: 4,
+                    });
+                    dmImg.src = canvas.toDataURL('image/png');
+                    dmImg.style.display = '';
+                    document.getElementById('print-ean').textContent = ean.trim();
+                } catch(e3) {
+                    console.error('DataMatrix plain error:', e3);
+                    dmImg.style.display = 'none';
+                }
             }
         }
     } else {
