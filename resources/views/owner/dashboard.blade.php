@@ -866,7 +866,7 @@ tr:hover td {
                         @endphp
                         @if(!empty($righeNfsOwner) && is_array($righeNfsOwner))
                             @foreach($righeNfsOwner as $r)
-                                {{ $r['testo'] ?? '' }}@if(!$loop->last) — @endif
+                                <strong>{{ $r['nome'] ?? '' }}</strong>: {{ $r['testo'] ?? '' }}@if(!$loop->last) — @endif
                             @endforeach
                             @if($notePulitaOwner)<br>@endif
                         @endif

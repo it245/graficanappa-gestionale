@@ -62,7 +62,7 @@
         @endphp
         @if(!empty($righeNfs) && is_array($righeNfs))
             @foreach($righeNfs as $r)
-                {{ $r['testo'] ?? '' }}@if(!$loop->last) — @endif
+                <strong>{{ $r['nome'] ?? '' }}</strong>: {{ $r['testo'] ?? '' }}@if(!$loop->last) — @endif
             @endforeach
             @if($noteBase)<br>{{ $noteBase }}@endif
         @else
