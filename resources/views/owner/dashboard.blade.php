@@ -180,8 +180,8 @@ thead th {
    LARGHEZZA COLONNE (27 colonne) — ordine attuale:
    1=Commessa 2=Stato 3=Cliente 4=CodArt 5=Colori 6=Fustella
    7=Descrizione 8=Qta 9=UM 10=Priorità 11=Fase 12=Reparto
-   13=DataReg 14=DataConsegna 15=CodCarta 16=Carta
-   17=QtaCarta 18=UMCarta 19=Operatori 20=QtaProd
+   13=Carta 14=QtaCarta 15=DataReg 16=DataConsegna 17=CodCarta
+   18=UMCarta 19=Operatori 20=QtaProd
    21=Esterno 22=Note 23=DataInizio 24=DataFine 25=OrePrev 26=OreLav 27=Progresso
    ========================= */
 
@@ -221,20 +221,20 @@ th:nth-child(11), td:nth-child(11) { width: 125px; }
 /* 12. Reparto */
 th:nth-child(12), td:nth-child(12) { width: 110px; }
 
-/* 13. Data Registrazione / 14. Data Prevista Consegna */
-th:nth-child(13), td:nth-child(13),
-th:nth-child(14), td:nth-child(14) {
+/* 13. Carta */
+th:nth-child(13), td:nth-child(13) { width: 190px; white-space: normal; }
+
+/* 14. Qta Carta */
+th:nth-child(14), td:nth-child(14) { width: 50px; text-align: center; }
+
+/* 15. Data Registrazione / 16. Data Prevista Consegna */
+th:nth-child(15), td:nth-child(15),
+th:nth-child(16), td:nth-child(16) {
     width: 100px;
 }
 
-/* 15. Cod Carta */
-th:nth-child(15), td:nth-child(15) { width: 170px; white-space: normal; }
-
-/* 16. Carta */
-th:nth-child(16), td:nth-child(16) { width: 190px; white-space: normal; }
-
-/* 17. Qta Carta */
-th:nth-child(17), td:nth-child(17) { width: 50px; text-align: center; }
+/* 17. Cod Carta */
+th:nth-child(17), td:nth-child(17) { width: 170px; white-space: normal; }
 
 /* 18. UM Carta */
 th:nth-child(18), td:nth-child(18) { width: 40px; text-align: center; }
@@ -768,11 +768,11 @@ tr:hover td {
                     <th>Priorità</th>
                     <th>Fase</th>
                     <th>Reparto</th>
+                    <th>Carta</th>
+                    <th>Qta Carta</th>
                     <th>Data Registrazione</th>
                     <th>Data Prevista Consegna</th>
                     <th>Cod Carta</th>
-                    <th>Carta</th>
-                    <th>Qta Carta</th>
                     <th>UM Carta</th>
                     <th>Operatori</th>
                     <th>Qta Prod.</th>
@@ -822,11 +822,11 @@ tr:hover td {
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'priorita', this.innerText)">{{ $fase->priorita !== null ? number_format($fase->priorita, 2) : '-' }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'fase', this.innerText)">{{ $fase->faseCatalogo->nome_display ?? '-' }}</td>
                     <td>{{ $fase->faseCatalogo->reparto->nome ?? '-' }}</td>
+                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'carta', this.innerText)">{{ $fase->ordine->carta ?? '-' }}</td>
+                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'qta_carta', this.innerText)">{{ $fase->ordine->qta_carta ?? '-' }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_registrazione', this.innerText)">{{ formatItalianDate($fase->ordine->data_registrazione) }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_prevista_consegna', this.innerText)">{{ formatItalianDate($fase->ordine->data_prevista_consegna) }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'cod_carta', this.innerText)">{{ $fase->ordine->cod_carta ?? '-' }}</td>
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'carta', this.innerText)">{{ $fase->ordine->carta ?? '-' }}</td>
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'qta_carta', this.innerText)">{{ $fase->ordine->qta_carta ?? '-' }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'UM_carta', this.innerText)">{{ $fase->ordine->UM_carta ?? '-' }}</td>
                     <td>
                         @forelse($fase->operatori as $op)
