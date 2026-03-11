@@ -577,10 +577,12 @@ function stampa() {
     var articolo = document.getElementById('campo-articolo-manuale').value;
     @endif
 
+    @if($isItalianaConfetti)
     if (!ean) {
         alert('Inserisci o scansiona il codice EAN.');
         return;
     }
+    @endif
     if (!pzcassa) {
         alert('Inserisci i pezzi per cassa.');
         return;
