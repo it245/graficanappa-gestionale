@@ -710,7 +710,7 @@ tr:hover td {
     {{-- MODALE AGGIUNGI RIGA --}}
     <div class="modal fade" id="aggiungiRigaModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
-            <form method="POST" action="{{ route('owner.aggiungiRiga') }}">
+            <form method="POST" action="{{ route('owner.aggiungiRiga') }}{{ request('op_token') ? '?op_token='.request('op_token') : '' }}">
                 @csrf
                 <div class="modal-content">
                     <div class="modal-header">
