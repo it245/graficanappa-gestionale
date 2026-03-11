@@ -1175,7 +1175,8 @@ function toggleScanner(scannerId, inputId) {
 
 // Ferma scanner quando i modal vengono chiusi
 ['modalConsegna', 'modalSegnacollo'].forEach(function(modalId) {
-    document.getElementById(modalId).addEventListener('hidden.bs.modal', function() {
+    var el = document.getElementById(modalId);
+    if (el) el.addEventListener('hidden.bs.modal', function() {
         if (modalId === 'modalConsegna') fermaScanner('mc_scanner');
         if (modalId === 'modalSegnacollo') fermaScanner('msDDT_scanner');
     });
