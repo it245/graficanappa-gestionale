@@ -298,7 +298,7 @@
 <!-- Ricerca + matita note + pannello inline -->
 <div style="display:flex; align-items:center; gap:8px; margin:12px 8px; flex-wrap:nowrap;">
     <input type="text" id="searchBox" class="form-control search-box" placeholder="Cerca commessa, cliente, descrizione..." style="margin:0; flex:1; min-width:200px;">
-    <button onclick="toggleNotePanel()" title="Note consegne" style="background:none; border:none; cursor:pointer; font-size:24px; color:#0d6efd; padding:4px 8px;">&#9998;</button>
+    <button onclick="toggleNotePanel()" title="Note consegne" style="background:none; border:none; cursor:pointer; font-size:24px; color:#0d6efd; padding:4px 8px; position:relative;">&#9998;<span id="noteConsegneBadge" style="display:none; position:absolute; top:-2px; right:-2px; background:#dc3545; color:#fff; border-radius:50%; width:16px; height:16px; font-size:10px; font-weight:bold; text-align:center; line-height:16px;">!</span></button>
     <div id="notePanel" style="display:none; padding:8px 14px; background:#fff; border:2px solid #0d6efd; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.1); flex:0 0 auto; white-space:nowrap;">
         <div style="display:flex; align-items:center; gap:8px;">
             <strong style="color:#0d6efd; font-size:13px; white-space:nowrap;">Note consegne</strong>
@@ -1196,6 +1196,7 @@ function toggleNotePanel() {
     if (panel.style.display === 'none') {
         panel.style.display = 'block';
         caricaNote();
+        document.getElementById('noteConsegneBadge').style.display = 'none';
     } else {
         panel.style.display = 'none';
     }
@@ -1238,6 +1239,8 @@ function salvaNote() {
         if (d.success) {
             document.getElementById('noteSaveStatus').textContent = 'Salvato alle ' + new Date().toLocaleTimeString('it-IT');
             document.getElementById('noteSaveStatus').style.color = '#198754';
+            _noteLastUpdate = new Date().toISOString();
+            localStorage.setItem('noteConsegne_lastUpdate_sped', _noteLastUpdate);
         }
     })
     .catch(() => {
@@ -1246,5 +1249,61 @@ function salvaNote() {
     })
     .finally(() => { btn.disabled = false; });
 }
+
+// === Notifiche Note Consegne (polling) ===
+var _noteLastUpdate = localStorage.getItem('noteConsegne_lastUpdate_sped') || '';
+
+if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+}
+
+function checkNoteConsegne() {
+    fetch('{{ route("spedizione.noteCheck") }}', {
+        headers: {'Accept': 'application/json'}
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+        if (d.updated_at && d.updated_at !== _noteLastUpdate) {
+            if (_noteLastUpdate !== '') {
+                document.getElementById('noteConsegneBadge').style.display = 'inline-block';
+                try {
+                    var ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    var osc = ctx.createOscillator();
+                    var gain = ctx.createGain();
+                    osc.connect(gain); gain.connect(ctx.destination);
+                    osc.frequency.value = 800; gain.gain.value = 0.3;
+                    osc.start(); osc.stop(ctx.currentTime + 0.3);
+                } catch(e) {}
+                if ('Notification' in window && Notification.permission === 'granted') {
+                    new Notification('Note Consegne aggiornate', {
+                        body: (d.contenuto || '').substring(0, 100) || 'Le note consegne sono state aggiornate',
+                        icon: '/favicon.ico'
+                    });
+                }
+                showNoteToast('Le note consegne sono state aggiornate');
+                document.getElementById('notaContenuto').value = d.contenuto || '';
+            }
+            _noteLastUpdate = d.updated_at;
+            localStorage.setItem('noteConsegne_lastUpdate_sped', _noteLastUpdate);
+        }
+    })
+    .catch(function() {});
+}
+
+function showNoteToast(msg) {
+    var toast = document.createElement('div');
+    toast.innerHTML = '<strong>Note Consegne</strong><br>' + msg;
+    toast.style.cssText = 'position:fixed; top:20px; right:20px; z-index:9999; background:#0d6efd; color:#fff; padding:15px 20px; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.3); font-size:14px; cursor:pointer; max-width:350px;';
+    toast.onclick = function() {
+        toast.remove();
+        document.getElementById('noteConsegneBadge').style.display = 'none';
+        if (document.getElementById('notePanel').style.display === 'none') toggleNotePanel();
+    };
+    document.body.appendChild(toast);
+    setTimeout(function() { if (toast.parentNode) toast.remove(); }, 30000);
+}
+
+checkNoteConsegne();
+setInterval(checkNoteConsegne, 15000);
 </script>
 @endsection
