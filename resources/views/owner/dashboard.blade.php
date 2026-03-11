@@ -1944,6 +1944,10 @@ function salvaNoteSped() {
         if (d.success) {
             document.getElementById('ownerNoteSaveStatus').textContent = 'Salvato alle ' + new Date().toLocaleTimeString('it-IT');
             document.getElementById('ownerNoteSaveStatus').style.color = '#198754';
+            // Aggiorna timestamp per non auto-notificarsi
+            fetch(urlToken('{{ route("owner.noteSpedizioneCheck") }}'), {headers:{'Accept':'application/json'}})
+                .then(function(r){return r.json();})
+                .then(function(dd){ if(dd.updated_at){ _noteLastUpdate=dd.updated_at; localStorage.setItem('noteConsegne_lastUpdate',_noteLastUpdate); } });
         }
     })
     .catch(() => {

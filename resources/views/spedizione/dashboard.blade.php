@@ -1191,6 +1191,17 @@ document.getElementById('modalBRT').addEventListener('shown.bs.modal', function(
     }
 });
 
+// === Token e CSRF per fetch autenticate ===
+var _opToken = '{{ request()->query("op_token", "") }}';
+function urlToken(url) {
+    if (!_opToken) return url;
+    return url + (url.indexOf('?') >= 0 ? '&' : '?') + 'op_token=' + encodeURIComponent(_opToken);
+}
+function csrfToken() {
+    var meta = document.querySelector('meta[name="csrf-token"]');
+    return meta ? meta.getAttribute('content') : '';
+}
+
 // === Note giornaliere ===
 function toggleNotePanel() {
     var panel = document.getElementById('notePanel');
@@ -1204,7 +1215,7 @@ function toggleNotePanel() {
 }
 
 function caricaNote() {
-    fetch('{{ route("spedizione.noteGiornaliere") }}?data={{ now()->toDateString() }}', {
+    fetch(urlToken('{{ route("spedizione.noteGiornaliere") }}?data={{ now()->toDateString() }}'), {
         headers: {'Accept': 'application/json'}
     })
     .then(r => r.json())
@@ -1240,8 +1251,10 @@ function salvaNote() {
         if (d.success) {
             document.getElementById('noteSaveStatus').textContent = 'Salvato alle ' + new Date().toLocaleTimeString('it-IT');
             document.getElementById('noteSaveStatus').style.color = '#198754';
-            _noteLastUpdate = new Date().toISOString();
-            localStorage.setItem('noteConsegne_lastUpdate_sped', _noteLastUpdate);
+            // Aggiorna timestamp per non auto-notificarsi
+            fetch(urlToken('{{ route("spedizione.noteCheck") }}'), {headers:{'Accept':'application/json'}})
+                .then(function(r){return r.json();})
+                .then(function(dd){ if(dd.updated_at){ _noteLastUpdate=dd.updated_at; localStorage.setItem('noteConsegne_lastUpdate_sped',_noteLastUpdate); } });
         }
     })
     .catch(() => {
@@ -1249,17 +1262,6 @@ function salvaNote() {
         document.getElementById('noteSaveStatus').style.color = '#dc3545';
     })
     .finally(() => { btn.disabled = false; });
-}
-
-// === Token e CSRF per fetch autenticate ===
-var _opToken = '{{ request()->query("op_token", "") }}';
-function urlToken(url) {
-    if (!_opToken) return url;
-    return url + (url.indexOf('?') >= 0 ? '&' : '?') + 'op_token=' + encodeURIComponent(_opToken);
-}
-function csrfToken() {
-    var meta = document.querySelector('meta[name="csrf-token"]');
-    return meta ? meta.getAttribute('content') : '';
 }
 
 // === Notifiche Note Consegne (polling) ===
