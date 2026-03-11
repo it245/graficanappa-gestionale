@@ -46,10 +46,14 @@ class CheckBrtRitardi extends Command
                 continue;
             }
 
-            // Se già consegnata, skip
+            // Se già consegnata o multi-spedizione, skip
             $stato = $tracking['stato'] ?? '';
             if (stripos($stato, 'CONSEGNATA') !== false) {
                 $this->line("    Già consegnata, skip.");
+                continue;
+            }
+            if (!empty($tracking['multi_spedizione'])) {
+                $this->line("    Multi-spedizione, skip.");
                 continue;
             }
 
