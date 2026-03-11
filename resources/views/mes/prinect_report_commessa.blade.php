@@ -193,8 +193,8 @@
                     <tbody>
                         @foreach($attivita->sortByDesc('start_time') as $att)
                             <tr class="@if($att->activity_name === 'Avviamento') table-warning @else table-success @endif">
-                                <td>{{ $att->start_time ? $att->start_time->format('d/m H:i:s') : '-' }}</td>
-                                <td>{{ $att->end_time ? $att->end_time->format('d/m H:i:s') : '-' }}</td>
+                                <td>{{ $att->start_time ? $att->start_time->format('d/m/Y H:i:s') : '-' }}</td>
+                                <td>{{ $att->end_time ? $att->end_time->format('d/m/Y H:i:s') : '-' }}</td>
                                 <td>
                                     @if($att->start_time && $att->end_time)
                                         @php
