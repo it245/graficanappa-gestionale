@@ -3,209 +3,173 @@
 @section('title', 'Report Ore')
 
 @section('content')
-<div class="container-fluid px-3 py-3" style="max-width:1400px;">
-    {{-- Header --}}
-    <div class="d-flex align-items-center justify-content-between mb-4">
-        <div>
-            <h4 class="mb-0 fw-bold" style="letter-spacing:-0.5px;">Report Ore Lavorate</h4>
-            <small class="text-muted">Confronto ore previste vs lavorate per commessa</small>
-        </div>
-        <a href="{{ route('owner.dashboard', ['op_token' => request()->query('op_token')]) }}" class="btn btn-outline-secondary btn-sm">&larr; Dashboard</a>
-    </div>
+@php
+    $totPreviste = $commesse->sum('ore_previste');
+    $totLavorate = $commesse->sum('ore_lavorate');
+    $diff = $totLavorate - $totPreviste;
+    $efficienza = $totPreviste > 0 ? round(($totLavorate / $totPreviste) * 100) : 0;
+    $commesseSforate = $commesse->filter(fn($c) => $c->ore_lavorate > $c->ore_previste && $c->ore_lavorate > 0)->count();
+@endphp
 
-    {{-- Filtri --}}
-    <form method="GET" class="mb-4">
-        @if(request()->query('op_token'))
-            <input type="hidden" name="op_token" value="{{ request()->query('op_token') }}">
-        @endif
-        <div class="card border-0 shadow-sm">
-            <div class="card-body py-3">
-                <div class="row g-2 align-items-end">
-                    <div class="col-md-3 col-sm-6">
-                        <label class="form-label small text-muted mb-1">Commessa</label>
-                        <input type="text" name="commessa" class="form-control form-control-sm" placeholder="Cerca commessa..." value="{{ $filtroCommessa ?? '' }}">
-                    </div>
-                    <div class="col-md-3 col-sm-6">
-                        <label class="form-label small text-muted mb-1">Reparto</label>
-                        <select name="reparto" class="form-select form-select-sm">
-                            <option value="">Tutti i reparti</option>
-                            @foreach($reparti as $id => $nome)
-                                <option value="{{ $id }}" {{ ($filtroReparto ?? '') == $id ? 'selected' : '' }}>{{ ucfirst($nome) }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-auto">
-                        <button type="submit" class="btn btn-primary btn-sm px-4">Filtra</button>
-                        <a href="{{ route('owner.reportOre', ['op_token' => request()->query('op_token')]) }}" class="btn btn-outline-secondary btn-sm">Reset</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </form>
+<div style="min-height:100vh; background:#0f172a; color:#e2e8f0; font-family:'Inter','Segoe UI',system-ui,sans-serif;">
 
-    {{-- KPI Cards --}}
-    @php
-        $totPreviste = $commesse->sum('ore_previste');
-        $totLavorate = $commesse->sum('ore_lavorate');
-        $diff = $totLavorate - $totPreviste;
-        $efficienza = $totPreviste > 0 ? round(($totLavorate / $totPreviste) * 100) : 0;
-    @endphp
-    <div class="row mb-4 g-3">
-        <div class="col-6 col-md-3">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body py-3 px-3 text-center">
-                    <div class="text-muted" style="font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">Ore Previste</div>
-                    <div style="font-size:28px; font-weight:700; color:#0d6efd;">{{ number_format($totPreviste, 1) }}<small style="font-size:14px;">h</small></div>
+    {{-- Top bar --}}
+    <div style="background:#1e293b; border-bottom:1px solid #334155; padding:16px 24px;">
+        <div style="max-width:1400px; margin:0 auto; display:flex; align-items:center; justify-content:space-between;">
+            <div style="display:flex; align-items:center; gap:12px;">
+                <div style="width:36px; height:36px; border-radius:8px; background:linear-gradient(135deg,#3b82f6,#8b5cf6); display:flex; align-items:center; justify-content:center;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                </div>
+                <div>
+                    <h1 style="font-size:18px; font-weight:700; margin:0; color:#f1f5f9; letter-spacing:-0.3px;">Report Ore</h1>
+                    <span style="font-size:12px; color:#64748b;">Ore lavorate vs previste per commessa</span>
                 </div>
             </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body py-3 px-3 text-center">
-                    <div class="text-muted" style="font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">Ore Lavorate</div>
-                    <div style="font-size:28px; font-weight:700; color:#198754;">{{ number_format($totLavorate, 1) }}<small style="font-size:14px;">h</small></div>
-                </div>
-            </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body py-3 px-3 text-center">
-                    <div class="text-muted" style="font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">Scostamento</div>
-                    <div style="font-size:28px; font-weight:700; color:{{ $diff > 0 ? '#dc3545' : '#198754' }};">
-                        {{ $diff > 0 ? '+' : '' }}{{ number_format($diff, 1) }}<small style="font-size:14px;">h</small>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body py-3 px-3 text-center">
-                    <div class="text-muted" style="font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">Commesse</div>
-                    <div style="font-size:28px; font-weight:700;">{{ $commesse->count() }}</div>
-                </div>
-            </div>
+            <a href="{{ route('owner.dashboard', ['op_token' => request()->query('op_token')]) }}" style="display:inline-flex; align-items:center; gap:6px; padding:8px 16px; border-radius:6px; background:#334155; color:#94a3b8; text-decoration:none; font-size:13px; font-weight:500; border:1px solid #475569; transition:all .15s;" onmouseover="this.style.background='#475569';this.style.color='#e2e8f0'" onmouseout="this.style.background='#334155';this.style.color='#94a3b8'">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+                Dashboard
+            </a>
         </div>
     </div>
 
-    {{-- Barra efficienza --}}
-    @if($totPreviste > 0)
-    <div class="card border-0 shadow-sm mb-4">
-        <div class="card-body py-3">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <span class="text-muted" style="font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">Efficienza complessiva</span>
-                <span class="fw-bold" style="font-size:16px; color:{{ $efficienza > 100 ? '#dc3545' : '#198754' }};">{{ $efficienza }}%</span>
+    <div style="max-width:1400px; margin:0 auto; padding:24px;">
+
+        {{-- Filtri --}}
+        <form method="GET" style="margin-bottom:24px;">
+            @if(request()->query('op_token'))
+                <input type="hidden" name="op_token" value="{{ request()->query('op_token') }}">
+            @endif
+            <div style="background:#1e293b; border:1px solid #334155; border-radius:10px; padding:16px 20px; display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap;">
+                <div style="flex:1; min-width:180px;">
+                    <label style="display:block; font-size:11px; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px; font-weight:600;">Commessa</label>
+                    <input type="text" name="commessa" value="{{ $filtroCommessa ?? '' }}" placeholder="Cerca..." style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid #334155; background:#0f172a; color:#e2e8f0; font-size:13px; outline:none;" onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='#334155'">
+                </div>
+                <div style="flex:1; min-width:180px;">
+                    <label style="display:block; font-size:11px; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px; font-weight:600;">Reparto</label>
+                    <select name="reparto" style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid #334155; background:#0f172a; color:#e2e8f0; font-size:13px; outline:none;" onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='#334155'">
+                        <option value="">Tutti i reparti</option>
+                        @foreach($reparti as $id => $nome)
+                            <option value="{{ $id }}" {{ ($filtroReparto ?? '') == $id ? 'selected' : '' }}>{{ ucfirst($nome) }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <button type="submit" style="padding:8px 20px; border-radius:6px; background:#3b82f6; color:#fff; border:none; font-size:13px; font-weight:600; cursor:pointer; transition:background .15s;" onmouseover="this.style.background='#2563eb'" onmouseout="this.style.background='#3b82f6'">Filtra</button>
+                    <a href="{{ route('owner.reportOre', ['op_token' => request()->query('op_token')]) }}" style="padding:8px 16px; border-radius:6px; background:transparent; color:#94a3b8; border:1px solid #475569; font-size:13px; text-decoration:none; font-weight:500;" onmouseover="this.style.background='#334155'" onmouseout="this.style.background='transparent'">Reset</a>
+                </div>
             </div>
-            <div class="progress" style="height:8px; border-radius:4px;">
-                <div class="progress-bar {{ $efficienza > 100 ? 'bg-danger' : 'bg-success' }}" style="width:{{ min($efficienza, 100) }}%; border-radius:4px;"></div>
+        </form>
+
+        {{-- KPI --}}
+        <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; margin-bottom:24px;">
+            <div style="background:#1e293b; border:1px solid #334155; border-radius:10px; padding:20px;">
+                <div style="font-size:11px; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; font-weight:600; margin-bottom:8px;">Ore Previste</div>
+                <div style="font-size:32px; font-weight:700; color:#3b82f6; letter-spacing:-1px;">{{ number_format($totPreviste, 1) }}<span style="font-size:16px; color:#64748b; font-weight:400;">h</span></div>
             </div>
-            <div class="d-flex justify-content-between mt-1">
-                <small class="text-muted">0%</small>
-                <small class="text-muted">{{ $efficienza > 100 ? 'Sopra budget' : 'Sotto budget' }}</small>
-                <small class="text-muted">100%</small>
+            <div style="background:#1e293b; border:1px solid #334155; border-radius:10px; padding:20px;">
+                <div style="font-size:11px; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; font-weight:600; margin-bottom:8px;">Ore Lavorate</div>
+                <div style="font-size:32px; font-weight:700; color:#10b981; letter-spacing:-1px;">{{ number_format($totLavorate, 1) }}<span style="font-size:16px; color:#64748b; font-weight:400;">h</span></div>
+            </div>
+            <div style="background:#1e293b; border:1px solid #334155; border-radius:10px; padding:20px;">
+                <div style="font-size:11px; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; font-weight:600; margin-bottom:8px;">Scostamento</div>
+                <div style="font-size:32px; font-weight:700; color:{{ $diff > 0 ? '#ef4444' : '#10b981' }}; letter-spacing:-1px;">{{ $diff > 0 ? '+' : '' }}{{ number_format($diff, 1) }}<span style="font-size:16px; color:#64748b; font-weight:400;">h</span></div>
+            </div>
+            <div style="background:#1e293b; border:1px solid #334155; border-radius:10px; padding:20px;">
+                <div style="font-size:11px; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; font-weight:600; margin-bottom:8px;">Commesse Sforate</div>
+                <div style="font-size:32px; font-weight:700; color:{{ $commesseSforate > 0 ? '#ef4444' : '#10b981' }}; letter-spacing:-1px;">{{ $commesseSforate }}<span style="font-size:16px; color:#64748b; font-weight:400;"> / {{ $commesse->count() }}</span></div>
             </div>
         </div>
-    </div>
-    @endif
 
-    {{-- Tabella per commessa --}}
-    <div class="card border-0 shadow-sm">
-        <div class="card-body p-0">
+        {{-- Tabella --}}
+        <div style="background:#1e293b; border:1px solid #334155; border-radius:10px; overflow:hidden;">
             <div style="overflow-x:auto;">
-                <table class="table table-hover mb-0" style="white-space:nowrap; font-size:13px;">
+                <table style="width:100%; border-collapse:collapse; font-size:13px; white-space:nowrap;">
                     <thead>
-                        <tr style="background:#f8f9fa; border-bottom:2px solid #dee2e6;">
-                            <th style="width:30px;"></th>
-                            <th style="padding:12px 10px;">Commessa</th>
-                            <th style="padding:12px 10px;">Cliente</th>
-                            <th style="padding:12px 10px;">Fasi</th>
-                            <th class="text-end" style="padding:12px 10px;">Previste</th>
-                            <th class="text-end" style="padding:12px 10px;">Lavorate</th>
-                            <th class="text-end" style="padding:12px 10px;">Scostamento</th>
-                            <th style="padding:12px 10px; width:120px;">Progresso</th>
+                        <tr style="background:#0f172a;">
+                            <th style="padding:12px 10px; text-align:left; color:#64748b; font-size:11px; text-transform:uppercase; letter-spacing:0.5px; font-weight:600; width:30px;"></th>
+                            <th style="padding:12px 10px; text-align:left; color:#64748b; font-size:11px; text-transform:uppercase; letter-spacing:0.5px; font-weight:600;">Commessa</th>
+                            <th style="padding:12px 10px; text-align:left; color:#64748b; font-size:11px; text-transform:uppercase; letter-spacing:0.5px; font-weight:600;">Cliente</th>
+                            <th style="padding:12px 10px; text-align:center; color:#64748b; font-size:11px; text-transform:uppercase; letter-spacing:0.5px; font-weight:600;">Fasi</th>
+                            <th style="padding:12px 10px; text-align:right; color:#64748b; font-size:11px; text-transform:uppercase; letter-spacing:0.5px; font-weight:600;">Previste</th>
+                            <th style="padding:12px 10px; text-align:right; color:#64748b; font-size:11px; text-transform:uppercase; letter-spacing:0.5px; font-weight:600;">Lavorate</th>
+                            <th style="padding:12px 10px; text-align:right; color:#64748b; font-size:11px; text-transform:uppercase; letter-spacing:0.5px; font-weight:600;">Scostamento</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach($commesse as $c)
                         @php
                             $d = $c->ore_lavorate - $c->ore_previste;
-                            $pct = $c->ore_previste > 0 ? round(($c->ore_lavorate / $c->ore_previste) * 100) : 0;
-                            $rowClass = '';
-                            if ($c->ore_lavorate > 0 && $d > 0) $rowClass = 'border-start border-3 border-danger';
-                            elseif ($c->num_terminate == $c->num_fasi && $c->ore_lavorate > 0 && $d <= 0) $rowClass = 'border-start border-3 border-success';
+                            $sforata = $c->ore_lavorate > 0 && $d > 0;
+                            $completata = $c->num_terminate == $c->num_fasi && $c->ore_lavorate > 0;
                             $rowId = 'fasi-' . str_replace(['-', '.'], '_', $c->commessa);
                         @endphp
-                        <tr class="{{ $rowClass }}" style="cursor:pointer;" data-bs-toggle="collapse" data-bs-target="#{{ $rowId }}">
-                            <td class="text-center" style="padding:10px 6px;">
-                                <svg class="chevron-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                        <tr onclick="toggleRow('{{ $rowId }}')" style="cursor:pointer; border-bottom:1px solid #1e293b; transition:background .1s;{{ $sforata ? 'border-left:3px solid #ef4444;' : ($completata && $d <= 0 ? 'border-left:3px solid #10b981;' : 'border-left:3px solid transparent;') }}" onmouseover="this.style.background='#263044'" onmouseout="this.style.background='transparent'">
+                            <td style="padding:12px 10px; text-align:center;">
+                                <svg id="icon-{{ $rowId }}" class="row-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .2s;"><polyline points="9 18 15 12 9 6"/></svg>
                             </td>
-                            <td style="padding:10px;"><strong>{{ $c->commessa }}</strong></td>
-                            <td style="padding:10px;">{{ $c->cliente }}</td>
-                            <td style="padding:10px;">
-                                <span class="badge {{ $c->num_terminate == $c->num_fasi ? 'bg-success' : 'bg-secondary' }}" style="font-size:11px;">{{ $c->num_terminate }}/{{ $c->num_fasi }}</span>
+                            <td style="padding:12px 10px; font-weight:600; color:#f1f5f9;">{{ $c->commessa }}</td>
+                            <td style="padding:12px 10px; color:#94a3b8;">{{ $c->cliente }}</td>
+                            <td style="padding:12px 10px; text-align:center;">
+                                <span style="display:inline-block; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:600; {{ $completata ? 'background:#064e3b; color:#34d399;' : 'background:#1e293b; color:#64748b; border:1px solid #334155;' }}">{{ $c->num_terminate }}/{{ $c->num_fasi }}</span>
                             </td>
-                            <td class="text-end fw-bold" style="padding:10px;">{{ number_format($c->ore_previste, 1) }}h</td>
-                            <td class="text-end fw-bold" style="padding:10px;">{{ number_format($c->ore_lavorate, 1) }}h</td>
-                            <td class="text-end fw-bold" style="padding:10px; color:{{ $d > 0 ? '#dc3545' : '#198754' }};">
+                            <td style="padding:12px 10px; text-align:right; font-weight:600; color:#93c5fd;">{{ number_format($c->ore_previste, 1) }}h</td>
+                            <td style="padding:12px 10px; text-align:right; font-weight:600; color:#6ee7b7;">{{ number_format($c->ore_lavorate, 1) }}h</td>
+                            <td style="padding:12px 10px; text-align:right; font-weight:700; color:{{ $sforata ? '#ef4444' : '#10b981' }};">
                                 {{ $d > 0 ? '+' : '' }}{{ number_format($d, 1) }}h
                             </td>
-                            <td style="padding:10px;">
-                                <div class="progress" style="height:6px; border-radius:3px; min-width:80px;">
-                                    <div class="progress-bar {{ $pct > 100 ? 'bg-danger' : 'bg-primary' }}" style="width:{{ min($pct, 100) }}%; border-radius:3px;"></div>
-                                </div>
-                            </td>
                         </tr>
-                        <tr class="collapse" id="{{ $rowId }}">
-                            <td colspan="8" class="p-0" style="border:none;">
-                                <div style="background:#f8f9fa; border-left:3px solid #0d6efd; margin:0 0 0 20px; padding:8px 0;">
-                                    <table class="table table-sm mb-0" style="white-space:nowrap; font-size:12px;">
+                        <tr id="{{ $rowId }}" style="display:none;">
+                            <td colspan="7" style="padding:0; background:#0f172a;">
+                                <div style="margin:0 0 0 16px; border-left:2px solid #3b82f6; padding:12px 0 12px 16px;">
+                                    <table style="width:100%; border-collapse:collapse; font-size:12px;">
                                         <thead>
-                                            <tr style="background:transparent;">
-                                                <th style="padding:6px 10px 6px 20px; color:#666; font-weight:600;">Fase</th>
-                                                <th style="padding:6px 10px; color:#666; font-weight:600;">Reparto</th>
-                                                <th style="padding:6px 10px; color:#666; font-weight:600;">Stato</th>
-                                                <th style="padding:6px 10px; color:#666; font-weight:600;">Qta Carta</th>
-                                                <th class="text-end" style="padding:6px 10px; color:#666; font-weight:600;">Previste</th>
-                                                <th class="text-end" style="padding:6px 10px; color:#666; font-weight:600;">Lavorate</th>
-                                                <th style="padding:6px 10px; color:#666; font-weight:600;">Fonte</th>
-                                                <th class="text-end" style="padding:6px 10px; color:#666; font-weight:600;">Diff</th>
-                                                <th style="padding:6px 10px; color:#666; font-weight:600;">Operatori</th>
+                                            <tr>
+                                                <th style="padding:6px 10px; text-align:left; color:#475569; font-size:10px; text-transform:uppercase; letter-spacing:0.5px;">Fase</th>
+                                                <th style="padding:6px 10px; text-align:left; color:#475569; font-size:10px; text-transform:uppercase; letter-spacing:0.5px;">Reparto</th>
+                                                <th style="padding:6px 10px; text-align:left; color:#475569; font-size:10px; text-transform:uppercase; letter-spacing:0.5px;">Stato</th>
+                                                <th style="padding:6px 10px; text-align:right; color:#475569; font-size:10px; text-transform:uppercase; letter-spacing:0.5px;">Qta Carta</th>
+                                                <th style="padding:6px 10px; text-align:right; color:#475569; font-size:10px; text-transform:uppercase; letter-spacing:0.5px;">Previste</th>
+                                                <th style="padding:6px 10px; text-align:right; color:#475569; font-size:10px; text-transform:uppercase; letter-spacing:0.5px;">Lavorate</th>
+                                                <th style="padding:6px 10px; text-align:left; color:#475569; font-size:10px; text-transform:uppercase; letter-spacing:0.5px;">Fonte</th>
+                                                <th style="padding:6px 10px; text-align:right; color:#475569; font-size:10px; text-transform:uppercase; letter-spacing:0.5px;">Diff</th>
+                                                <th style="padding:6px 10px; text-align:left; color:#475569; font-size:10px; text-transform:uppercase; letter-spacing:0.5px;">Operatori</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             @foreach($c->fasi as $fase)
                                             @php $df = $fase->ore_lavorate - $fase->ore_previste; @endphp
-                                            <tr style="border-bottom:1px solid #e9ecef;">
-                                                <td style="padding:6px 10px 6px 20px; font-weight:500;">{{ $fase->faseCatalogo->nome_display ?? $fase->fase }}</td>
-                                                <td style="padding:6px 10px;">{{ optional($fase->faseCatalogo)->reparto->nome ?? '-' }}</td>
-                                                <td style="padding:6px 10px;">
+                                            <tr style="border-bottom:1px solid #1e293b;">
+                                                <td style="padding:8px 10px; color:#e2e8f0; font-weight:500;">{{ $fase->faseCatalogo->nome_display ?? $fase->fase }}</td>
+                                                <td style="padding:8px 10px; color:#94a3b8;">{{ optional($fase->faseCatalogo)->reparto->nome ?? '-' }}</td>
+                                                <td style="padding:8px 10px;">
                                                     @switch($fase->stato)
-                                                        @case(0) <span class="badge bg-secondary" style="font-size:10px;">Caricato</span> @break
-                                                        @case(1) <span class="badge bg-info text-dark" style="font-size:10px;">Pronto</span> @break
-                                                        @case(2) <span class="badge bg-warning text-dark" style="font-size:10px;">Avviato</span> @break
-                                                        @case(3) <span class="badge bg-success" style="font-size:10px;">Terminato</span> @break
-                                                        @case(4) <span class="badge bg-primary" style="font-size:10px;">Consegnato</span> @break
+                                                        @case(0) <span style="display:inline-block; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:600; background:#334155; color:#94a3b8;">Caricato</span> @break
+                                                        @case(1) <span style="display:inline-block; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:600; background:#164e63; color:#67e8f9;">Pronto</span> @break
+                                                        @case(2) <span style="display:inline-block; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:600; background:#713f12; color:#fde047;">Avviato</span> @break
+                                                        @case(3) <span style="display:inline-block; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:600; background:#064e3b; color:#34d399;">Terminato</span> @break
+                                                        @case(4) <span style="display:inline-block; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:600; background:#1e3a5f; color:#93c5fd;">Consegnato</span> @break
                                                     @endswitch
                                                 </td>
-                                                <td style="padding:6px 10px;">{{ number_format($fase->ordine->qta_carta ?? 0, 0, ',', '.') }}</td>
-                                                <td class="text-end" style="padding:6px 10px;">{{ number_format($fase->ore_previste, 2) }}h</td>
-                                                <td class="text-end" style="padding:6px 10px;">{{ number_format($fase->ore_lavorate, 2) }}h</td>
-                                                <td style="padding:6px 10px;">
+                                                <td style="padding:8px 10px; text-align:right; color:#94a3b8;">{{ number_format($fase->ordine->qta_carta ?? 0, 0, ',', '.') }}</td>
+                                                <td style="padding:8px 10px; text-align:right; color:#93c5fd;">{{ number_format($fase->ore_previste, 2) }}h</td>
+                                                <td style="padding:8px 10px; text-align:right; color:#6ee7b7;">{{ number_format($fase->ore_lavorate, 2) }}h</td>
+                                                <td style="padding:8px 10px;">
                                                     @if($fase->fonte_ore === 'Prinect')
-                                                        <span class="badge bg-primary" style="font-size:10px;">Prinect</span>
+                                                        <span style="display:inline-block; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:600; background:#1e3a5f; color:#93c5fd;">Prinect</span>
                                                     @elseif($fase->fonte_ore === 'MES')
-                                                        <span class="badge bg-dark" style="font-size:10px;">MES</span>
+                                                        <span style="display:inline-block; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:600; background:#334155; color:#e2e8f0;">MES</span>
                                                     @else
-                                                        <span class="text-muted">-</span>
+                                                        <span style="color:#475569;">-</span>
                                                     @endif
                                                 </td>
-                                                <td class="text-end" style="padding:6px 10px; color:{{ $df > 0 ? '#dc3545' : '#198754' }};">
+                                                <td style="padding:8px 10px; text-align:right; font-weight:600; color:{{ $df > 0 ? '#ef4444' : '#10b981' }};">
                                                     @if($fase->ore_lavorate > 0)
                                                         {{ $df > 0 ? '+' : '' }}{{ number_format($df, 2) }}h
                                                     @else
-                                                        -
+                                                        <span style="color:#475569;">-</span>
                                                     @endif
                                                 </td>
-                                                <td style="padding:6px 10px;">
+                                                <td style="padding:8px 10px; color:#94a3b8;">
                                                     @foreach($fase->operatori as $op)
                                                         {{ $op->nome }} {{ $op->cognome }}@if(!$loop->last), @endif
                                                     @endforeach
@@ -222,40 +186,27 @@
                 </table>
             </div>
         </div>
-    </div>
 
-    @if($commesse->isEmpty())
-        <div class="text-center py-5">
-            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            <p class="text-muted mt-3">Nessuna commessa con ore lavorate trovata.</p>
+        @if($commesse->isEmpty())
+        <div style="text-align:center; padding:60px 0;">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#334155" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <p style="color:#475569; margin-top:16px;">Nessuna commessa con ore lavorate trovata.</p>
         </div>
-    @endif
+        @endif
+    </div>
 </div>
 
-<style>
-    .chevron-icon {
-        transition: transform 0.2s ease;
-    }
-    tr[aria-expanded="true"] .chevron-icon,
-    tr:not(.collapsed) + tr.collapse.show ~ .chevron-icon {
-        transform: rotate(90deg);
-    }
-</style>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('[data-bs-toggle="collapse"]').forEach(function(row) {
-        var target = document.querySelector(row.dataset.bsTarget);
-        if (target) {
-            target.addEventListener('show.bs.collapse', function() {
-                var icon = row.querySelector('.chevron-icon');
-                if (icon) icon.style.transform = 'rotate(90deg)';
-            });
-            target.addEventListener('hide.bs.collapse', function() {
-                var icon = row.querySelector('.chevron-icon');
-                if (icon) icon.style.transform = 'rotate(0deg)';
-            });
-        }
-    });
-});
+function toggleRow(id) {
+    var row = document.getElementById(id);
+    var icon = document.getElementById('icon-' + id);
+    if (row.style.display === 'none') {
+        row.style.display = '';
+        if (icon) icon.style.transform = 'rotate(90deg)';
+    } else {
+        row.style.display = 'none';
+        if (icon) icon.style.transform = 'rotate(0deg)';
+    }
+}
 </script>
 @endsection
