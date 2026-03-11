@@ -1287,7 +1287,7 @@ function checkNoteConsegne() {
             localStorage.setItem('noteConsegne_lastUpdate_sped', _noteLastUpdate);
         }
     })
-    .catch(function() {});
+    .catch(function(e) { console.error('noteCheck error:', e); });
 }
 
 function showNoteToast(msg) {
