@@ -1255,10 +1255,21 @@ document.querySelectorAll('.sidebar-menu a.sidebar-item').forEach(function(el) {
     el.addEventListener('click', function() { setTimeout(closeSidebar, 100); });
 });
 
+// === Token per fetch autenticate ===
+var _opToken = '{{ $opToken ?? request()->query("op_token", "") }}';
+function urlToken(url) {
+    if (!_opToken) return url;
+    return url + (url.indexOf('?') >= 0 ? '&' : '?') + 'op_token=' + encodeURIComponent(_opToken);
+}
+function csrfToken() {
+    var meta = document.querySelector('meta[name="csrf-token"]');
+    return meta ? meta.getAttribute('content') : '';
+}
+
 // === BRT Tracking ===
 function getBrtHdrs() {
     return {
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+        'X-CSRF-TOKEN': csrfToken(),
         'Content-Type': 'application/json',
         'Accept': 'application/json'
     };
@@ -1298,7 +1309,7 @@ function caricaTuttiTrackingBRT() {
 }
 
 function caricaStatoBRT(numeroDDT, hash, callback) {
-    fetch('{{ route("owner.trackingByDDT") }}', {
+    fetch(urlToken('{{ route("owner.trackingByDDT") }}'), {
         method: 'POST', headers: getBrtHdrs(),
         body: JSON.stringify({ numero_ddt: numeroDDT })
     })
@@ -1351,7 +1362,7 @@ function apriTrackingDDT(numeroDDT, btn) {
     document.getElementById('trackingContenuto').classList.add('d-none');
     new bootstrap.Modal(document.getElementById('modalTracking')).show();
 
-    fetch('{{ route("owner.trackingByDDT") }}', {
+    fetch(urlToken('{{ route("owner.trackingByDDT") }}'), {
         method: 'POST', headers: getBrtHdrs(),
         body: JSON.stringify({ numero_ddt: numeroDDT })
     })
@@ -1451,7 +1462,7 @@ function aggiornaCampo(faseId, campo, valore){
         }
     }
 
-    fetch('{{ route("owner.aggiornaCampo") }}', {
+    fetch(urlToken('{{ route("owner.aggiornaCampo") }}'), {
         method: 'POST',
         headers: {'X-CSRF-TOKEN': csrfToken(), 'Content-Type': 'application/json'},
         body: JSON.stringify({ fase_id: faseId, campo: campo, valore: valore })
@@ -1476,7 +1487,7 @@ function aggiornaStato(faseId, testo) {
         alert('Stato non valido. Usa: 0, 1, 2, 3');
         return;
     }
-    fetch('{{ route("owner.aggiornaStato") }}', {
+    fetch(urlToken('{{ route("owner.aggiornaStato") }}'), {
         method: 'POST',
         headers: {'X-CSRF-TOKEN': csrfToken(), 'Content-Type': 'application/json'},
         body: JSON.stringify({ fase_id: faseId, stato: nuovoStato })
@@ -1819,7 +1830,7 @@ if ('Notification' in window && Notification.permission === 'default') {
 }
 
 function checkNoteConsegne() {
-    fetch('{{ route("owner.noteSpedizioneCheck") }}', {
+    fetch(urlToken('{{ route("owner.noteSpedizioneCheck") }}'), {
         headers: {'Accept': 'application/json'}
     })
     .then(r => r.json())
@@ -1889,7 +1900,7 @@ setInterval(checkNoteConsegne, _noteCheckInterval);
 
 // === Note Consegne (readonly per owner) ===
 function caricaNoteSpedizione() {
-    fetch('{{ route("owner.noteSpedizione") }}?data={{ now()->toDateString() }}', {
+    fetch(urlToken('{{ route("owner.noteSpedizione") }}?data={{ now()->toDateString() }}'), {
         headers: {'Accept': 'application/json'}
     })
     .then(r => r.json())
@@ -1906,7 +1917,7 @@ function caricaNoteSpedizione() {
 function salvaNoteSped() {
     var btn = event.target;
     btn.disabled = true;
-    fetch('{{ route("owner.salvaNotaSpedizione") }}', {
+    fetch(urlToken('{{ route("owner.salvaNotaSpedizione") }}'), {
         method: 'POST',
         headers: {
             'X-CSRF-TOKEN': csrfToken(),
