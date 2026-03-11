@@ -1890,9 +1890,19 @@ function showNoteToast(msg) {
 }
 
 // Nascondi badge quando apre le note
-document.getElementById('modalNoteSpedizione').addEventListener('show.bs.modal', function() {
-    document.getElementById('noteConsegneBadge').style.display = 'none';
-});
+var _modalNote = document.getElementById('modalNoteSpedizione');
+if (_modalNote) {
+    _modalNote.addEventListener('show.bs.modal', function() {
+        document.getElementById('noteConsegneBadge').style.display = 'none';
+    });
+} else {
+    document.addEventListener('DOMContentLoaded', function() {
+        var m = document.getElementById('modalNoteSpedizione');
+        if (m) m.addEventListener('show.bs.modal', function() {
+            document.getElementById('noteConsegneBadge').style.display = 'none';
+        });
+    });
+}
 
 // Avvia polling
 checkNoteConsegne();
