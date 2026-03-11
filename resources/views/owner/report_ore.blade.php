@@ -483,12 +483,13 @@ if (ctxF) {
 }
 
 // Grafico orizzontale: top commesse sforate
+var sforateLabels = {!! json_encode($sforate->pluck('commessa')->values()) !!};
 var ctxS = document.getElementById('chartSforate');
 if (ctxS) {
-    new Chart(ctxS, {
+    var chartSforate = new Chart(ctxS, {
         type: 'bar',
         data: {
-            labels: {!! json_encode($sforate->pluck('commessa')->values()) !!},
+            labels: sforateLabels,
             datasets: [{
                 label: 'Ore extra',
                 data: {!! json_encode($sforate->map(fn($c) => round($c->ore_lavorate - $c->ore_previste, 1))->values()) !!},
@@ -503,10 +504,31 @@ if (ctxS) {
             plugins: { legend: { display: false } },
             scales: {
                 x: { grid: { color: '#f3f4f6' }, ticks: { font: { size: 10 }, callback: function(v){ return '+'+v+'h'; } } },
-                y: { grid: { display: false }, ticks: { font: { size: 10 } } }
+                y: { grid: { display: false }, ticks: { font: { size: 10 }, color: '#4f46e5', font: { weight: 'bold' } } }
+            },
+            onClick: function(e, elements) {
+                if (elements.length > 0) {
+                    var idx = elements[0].index;
+                    var commessa = sforateLabels[idx];
+                    var rowId = 'fasi-' + commessa.replace(/[-\.]/g, '_');
+                    var row = document.getElementById(rowId);
+                    if (row) {
+                        // Apri il dettaglio
+                        if (row.style.display === 'none' || row.style.display === '') {
+                            toggleDetail(rowId);
+                        }
+                        // Scrolla alla riga
+                        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        // Flash highlight
+                        row.previousElementSibling.style.background = '#fef2f2';
+                        setTimeout(function(){ row.previousElementSibling.style.background = ''; }, 2000);
+                    }
+                }
             }
         }
     });
+    // Cursor pointer sulle barre
+    ctxS.style.cursor = 'pointer';
 }
 
 // Grafico efficienza per reparto
