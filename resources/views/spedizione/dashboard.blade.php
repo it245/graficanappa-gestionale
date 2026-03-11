@@ -1222,7 +1222,7 @@ function caricaNote() {
 function salvaNote() {
     var btn = event.target;
     btn.disabled = true;
-    fetch('{{ route("spedizione.salvaNotaGiornaliera") }}', {
+    fetch(urlToken('{{ route("spedizione.salvaNotaGiornaliera") }}'), {
         method: 'POST',
         headers: {
             'X-CSRF-TOKEN': csrfToken(),
@@ -1250,6 +1250,17 @@ function salvaNote() {
     .finally(() => { btn.disabled = false; });
 }
 
+// === Token e CSRF per fetch autenticate ===
+var _opToken = '{{ request()->query("op_token", "") }}';
+function urlToken(url) {
+    if (!_opToken) return url;
+    return url + (url.indexOf('?') >= 0 ? '&' : '?') + 'op_token=' + encodeURIComponent(_opToken);
+}
+function csrfToken() {
+    var meta = document.querySelector('meta[name="csrf-token"]');
+    return meta ? meta.getAttribute('content') : '';
+}
+
 // === Notifiche Note Consegne (polling) ===
 var _noteLastUpdate = localStorage.getItem('noteConsegne_lastUpdate_sped') || '';
 
@@ -1258,7 +1269,7 @@ if ('Notification' in window && Notification.permission === 'default') {
 }
 
 function checkNoteConsegne() {
-    fetch('{{ route("spedizione.noteCheck") }}', {
+    fetch(urlToken('{{ route("spedizione.noteCheck") }}'), {
         headers: {'Accept': 'application/json'}
     })
     .then(function(r) { return r.json(); })
