@@ -321,7 +321,11 @@ class PrinectController extends Controller
         if ($request->filled('tipo')) $attivita->where('activity_name', $request->tipo);
         if ($request->filled('da')) $attivita->whereDate('start_time', '>=', $request->da);
         if ($request->filled('a')) $attivita->whereDate('start_time', '<=', $request->a);
-        $attivita = $attivita->orderByDesc('start_time')->paginate(50);
+
+        $sortable = ['start_time', 'end_time', 'prinect_job_name', 'commessa_gestionale', 'good_cycles', 'waste_cycles'];
+        $sort = in_array($request->sort, $sortable) ? $request->sort : 'start_time';
+        $dir = $request->dir === 'asc' ? 'asc' : 'desc';
+        $attivita = $attivita->orderBy($sort, $dir)->paginate(50);
 
         return view('mes.prinect_attivita', compact('riepilogoJobs', 'attivita'));
     }
