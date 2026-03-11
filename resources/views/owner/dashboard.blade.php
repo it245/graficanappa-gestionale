@@ -1886,7 +1886,7 @@ function showNoteToast(msg) {
         caricaNoteSpedizione();
     };
     document.body.appendChild(toast);
-    setTimeout(function() { if (toast.parentNode) toast.remove(); }, 8000);
+    setTimeout(function() { if (toast.parentNode) toast.remove(); }, 30000);
 }
 
 // Nascondi badge quando apre le note
