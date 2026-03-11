@@ -906,8 +906,14 @@ public function calcolaOreEPriorita($fase)
             $query->whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', $filtroReparto));
         }
 
-        // Tutte le fasi (escluse BRT/spedizione già filtrate sopra)
-        $fasi = $query->get()
+        // Solo fasi con stato > 2 o con operatori o con dati Prinect
+        $fasi = $query->where(function ($q) {
+                $q->where('stato', '>', 2)
+                  ->orWhereHas('operatori')
+                  ->orWhere('tempo_avviamento_sec', '>', 0)
+                  ->orWhere('tempo_esecuzione_sec', '>', 0);
+            })
+            ->get()
             ->map(function ($fase) {
                 // Ore previste
                 $qta_carta = $fase->ordine->qta_carta ?? 0;
