@@ -315,7 +315,7 @@ class PrinectController extends Controller
                 MAX(end_time) as last_end,
                 COUNT(*) as count')
             ->groupBy('prinect_job_id', 'prinect_job_name', 'commessa_gestionale')
-            ->orderByDesc('count')
+            ->orderByDesc('first_start')
             ->get();
 
         $attivita = PrinectAttivita::query();
