@@ -411,10 +411,6 @@ th.selected {
    PERFORMANCE
    ========================= */
 
-table * {
-    user-select: none;
-}
-
 td[contenteditable] {
     user-select: text;
     cursor: text;
