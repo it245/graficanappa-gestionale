@@ -104,6 +104,6 @@ class CommessaController extends Controller
             }
         }
 
-        return view('commesse.show', compact('ordine', 'prossime', 'operatore', 'preview'));
+        return view('commesse.show', compact('ordine', 'ordini', 'prossime', 'operatore', 'preview'));
     }
 }
