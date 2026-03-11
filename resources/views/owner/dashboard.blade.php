@@ -446,10 +446,7 @@ tr:hover td {
                 <div class="operatore-popup" id="operatorePopup" style="position:absolute; top:50px; left:0; background:#fff; border:1px solid #ccc; padding:10px; border-radius:5px; box-shadow:0 2px 10px rgba(0,0,0,0.2); display:none; z-index:1000; min-width:200px;">
                     <div><strong>{{ $operatore->nome ?? '' }} {{ $operatore->cognome ?? '' }}</strong></div>
                     <div><p class="mb-1">Ruolo: <strong>Owner</strong></p></div>
-                    <form action="{{ route('operatore.logout') }}" method="POST">
-                        @csrf
-                        <button type="submit" class="btn btn-secondary btn-sm mt-2">Logout</button>
-                    </form>
+                    <a href="{{ route('operatore.logout') }}" class="btn btn-secondary btn-sm mt-2">Logout</a>
                 </div>
             </div>
         </div>

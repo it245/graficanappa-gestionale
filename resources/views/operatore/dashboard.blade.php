@@ -159,10 +159,7 @@
                     <p>Reparto: <strong>{{ $operatore->reparti->pluck('nome')->join(', ') }} </strong></p>
                 @endif
             </div>
-            <form action="{{ route('operatore.logout') }}" method="POST">
-                @csrf
-                <button type="submit" class="btn btn-secondary btn-sm mt-2">Logout</button>
-            </form>
+            <a href="{{ route('operatore.logout') }}" class="btn btn-secondary btn-sm mt-2">Logout</a>
         </div>
     </div>
     </div>
