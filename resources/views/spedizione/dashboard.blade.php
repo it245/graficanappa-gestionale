@@ -1267,6 +1267,14 @@ function salvaNote() {
 // === Notifiche Note Consegne (polling) ===
 var _noteLastUpdate = localStorage.getItem('noteConsegne_lastUpdate_sped') || '';
 
+// Sblocca AudioContext al primo click (richiesto dai browser)
+var _audioCtx = null;
+document.addEventListener('click', function() {
+    if (!_audioCtx) {
+        _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+}, {once: true});
+
 if ('Notification' in window && Notification.permission === 'default') {
     Notification.requestPermission();
 }
@@ -1281,12 +1289,13 @@ function checkNoteConsegne() {
             if (_noteLastUpdate !== '') {
                 document.getElementById('noteConsegneBadge').style.display = 'inline-block';
                 try {
-                    var ctx = new (window.AudioContext || window.webkitAudioContext)();
-                    var osc = ctx.createOscillator();
-                    var gain = ctx.createGain();
-                    osc.connect(gain); gain.connect(ctx.destination);
+                    if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    if (_audioCtx.state === 'suspended') _audioCtx.resume();
+                    var osc = _audioCtx.createOscillator();
+                    var gain = _audioCtx.createGain();
+                    osc.connect(gain); gain.connect(_audioCtx.destination);
                     osc.frequency.value = 800; gain.gain.value = 0.3;
-                    osc.start(); osc.stop(ctx.currentTime + 0.3);
+                    osc.start(); osc.stop(_audioCtx.currentTime + 0.3);
                 } catch(e) {}
                 if ('Notification' in window && Notification.permission === 'granted') {
                     new Notification('Note Consegne aggiornate', {

@@ -1824,6 +1824,14 @@ document.addEventListener('click', function(e){
 var _noteLastUpdate = localStorage.getItem('noteConsegne_lastUpdate') || '';
 var _noteCheckInterval = 15000; // 15 secondi
 
+// Sblocca AudioContext al primo click (richiesto dai browser)
+var _audioCtx = null;
+document.addEventListener('click', function() {
+    if (!_audioCtx) {
+        _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+}, {once: true});
+
 // Chiedi permesso notifiche browser
 if ('Notification' in window && Notification.permission === 'default') {
     Notification.requestPermission();
@@ -1843,15 +1851,16 @@ function checkNoteConsegne() {
 
                 // 2. Suono
                 try {
-                    var ctx = new (window.AudioContext || window.webkitAudioContext)();
-                    var osc = ctx.createOscillator();
-                    var gain = ctx.createGain();
+                    if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    if (_audioCtx.state === 'suspended') _audioCtx.resume();
+                    var osc = _audioCtx.createOscillator();
+                    var gain = _audioCtx.createGain();
                     osc.connect(gain);
-                    gain.connect(ctx.destination);
+                    gain.connect(_audioCtx.destination);
                     osc.frequency.value = 800;
                     gain.gain.value = 0.3;
                     osc.start();
-                    osc.stop(ctx.currentTime + 0.3);
+                    osc.stop(_audioCtx.currentTime + 0.3);
                 } catch(e) {}
 
                 // 3. Notifica browser
