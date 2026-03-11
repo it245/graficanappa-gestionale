@@ -489,14 +489,17 @@ public function calcolaOreEPriorita($fase)
         $valore = $request->valore;
 
         if (in_array($campo, ['data_registrazione','data_prevista_consegna','data_inizio','data_fine'])) {
-            try {
-                $valore = $valore ? Carbon::createFromFormat('d/m/Y H:i:s', $valore)->format('Y-m-d H:i:s') : null;
-            } catch (\Exception $e1) {
+            $formati = ['d/m/Y H:i:s', 'd/m/Y H:i', 'd/m/Y'];
+            $parsed = false;
+            foreach ($formati as $fmt) {
                 try {
-                    $valore = $valore ? Carbon::createFromFormat('d/m/Y', $valore)->format('Y-m-d') : null;
-                } catch (\Exception $e2) {
-                    return response()->json(['success' => false, 'messaggio' => 'Formato data non valido'], 422);
-                }
+                    $valore = $valore ? Carbon::createFromFormat($fmt, trim($valore))->format('Y-m-d H:i:s') : null;
+                    $parsed = true;
+                    break;
+                } catch (\Exception $e) {}
+            }
+            if (!$parsed && $valore) {
+                return response()->json(['success' => false, 'messaggio' => 'Formato data non valido'], 422);
             }
         }
 
