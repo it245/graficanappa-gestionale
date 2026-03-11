@@ -489,6 +489,7 @@ public function calcolaOreEPriorita($fase)
         $valore = $request->valore;
 
         if (in_array($campo, ['data_registrazione','data_prevista_consegna','data_inizio','data_fine'])) {
+            if (in_array(trim($valore), ['-', ''])) $valore = null;
             $formati = ['d/m/Y H:i:s', 'd/m/Y H:i', 'd/m/Y'];
             $parsed = false;
             foreach ($formati as $fmt) {
