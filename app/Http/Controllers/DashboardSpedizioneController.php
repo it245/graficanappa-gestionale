@@ -133,7 +133,8 @@ class DashboardSpedizioneController extends Controller
             ->get();
 
         // Spedizioni BRT: dalla tabella ddt_spedizioni (supporta più DDT per commessa)
-        $spedizioniBRT = DdtSpedizione::where('vettore', 'LIKE', '%BRT%')
+        $spedizioniBRT = DdtSpedizione::with('ordine:id,descrizione')
+            ->where('vettore', 'LIKE', '%BRT%')
             ->orderByDesc('onda_id_doc')
             ->get()
             ->groupBy('numero_ddt');

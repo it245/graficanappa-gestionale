@@ -1061,7 +1061,7 @@ tr:hover td {
                         <tr id="brt_row_{{ md5($numDDT) }}">
                             <td class="fw-bold" style="padding:10px 14px; font-size:16px;">{{ ltrim($numDDT, '0') }}</td>
                             <td style="padding:10px 14px;">{{ $commesse }}</td>
-                            <td style="padding:10px 14px; max-width:250px; white-space:normal;">{!! $ordiniGruppo->pluck('descrizione')->unique()->filter()->map(fn($d) => e(Str::limit($d, 60)))->implode('<hr style="margin:4px 0; border-color:#ccc;">') !!}</td>
+                            <td style="padding:10px 14px; max-width:250px; white-space:normal;">{!! $ordiniGruppo->map(fn($d) => $d->ordine->descrizione ?? '')->filter()->unique()->map(fn($d) => e(Str::limit($d, 60)))->implode('<hr style="margin:4px 0; border-color:#ccc;">') !!}</td>
                             <td style="padding:10px 14px;">{{ $primo->cliente_nome ?? '-' }}</td>
                             <td id="brt_stato_{{ md5($numDDT) }}" style="padding:10px 14px;">
                                 <span class="badge {{ $badgeClass }}" style="font-size:13px; padding:6px 10px;">{{ $badgeText }}</span>
