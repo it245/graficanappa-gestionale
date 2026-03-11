@@ -1822,7 +1822,7 @@ document.addEventListener('click', function(e){
 
 // === Notifiche Note Consegne ===
 var _noteLastUpdate = localStorage.getItem('noteConsegne_lastUpdate') || '';
-var _noteCheckInterval = 1000; // 1 secondo
+var _noteCheckInterval = 15000; // 15 secondi
 
 // Chiedi permesso notifiche browser
 if ('Notification' in window && Notification.permission === 'default') {
