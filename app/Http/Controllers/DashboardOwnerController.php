@@ -947,20 +947,34 @@ public function calcolaOreEPriorita($fase)
 
         // Raggruppa per commessa
         $commesse = $fasi->groupBy(fn($f) => $f->ordine->commessa ?? '-')->map(function ($fasiCommessa, $commessa) {
+            $first = $fasiCommessa->first();
+            $ordine = $first->ordine;
             return (object) [
                 'commessa' => $commessa,
-                'cliente' => $fasiCommessa->first()->ordine->cliente_nome ?? '-',
+                'cliente' => $ordine->cliente_nome ?? '-',
+                'descrizione' => $ordine->descrizione ?? '-',
+                'data_consegna' => $ordine->data_prevista_consegna,
+                'responsabile' => $ordine->responsabile ?? '-',
                 'ore_previste' => round($fasiCommessa->sum('ore_previste'), 2),
                 'ore_lavorate' => round($fasiCommessa->sum('ore_lavorate'), 2),
                 'fasi' => $fasiCommessa->sortBy(fn($f) => config('fasi_priorita')[$f->fase] ?? 500),
                 'num_fasi' => $fasiCommessa->count(),
                 'num_terminate' => $fasiCommessa->where('stato', '>=', 3)->count(),
+                'num_avviate' => $fasiCommessa->where('stato', 2)->count(),
             ];
         })->sortBy('commessa');
 
+        // Statistiche per reparto
+        $orePerReparto = $fasi->groupBy(fn($f) => optional($f->faseCatalogo)->reparto->nome ?? 'Altro')
+            ->map(fn($group) => (object)[
+                'previste' => round($group->sum('ore_previste'), 1),
+                'lavorate' => round($group->sum('ore_lavorate'), 1),
+                'fasi' => $group->count(),
+            ])->sortByDesc('lavorate');
+
         $reparti = Reparto::where('nome', '!=', 'spedizione')->orderBy('nome')->pluck('nome', 'id');
 
-        return view('owner.report_ore', compact('commesse', 'reparti', 'filtroCommessa', 'filtroReparto'));
+        return view('owner.report_ore', compact('commesse', 'reparti', 'filtroCommessa', 'filtroReparto', 'orePerReparto'));
     }
 
     public function scheduling(PrinectService $prinect, PrinectSyncService $syncService)
