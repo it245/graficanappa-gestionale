@@ -311,6 +311,8 @@ class PrinectController extends Controller
             ->selectRaw('prinect_job_id, prinect_job_name, commessa_gestionale,
                 SUM(good_cycles) as total_good,
                 SUM(waste_cycles) as total_waste,
+                MIN(start_time) as first_start,
+                MAX(end_time) as last_end,
                 COUNT(*) as count')
             ->groupBy('prinect_job_id', 'prinect_job_name', 'commessa_gestionale')
             ->orderByDesc('count')

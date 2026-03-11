@@ -57,6 +57,8 @@
                             <th>Job ID</th>
                             <th>Descrizione</th>
                             <th>Commessa</th>
+                            <th>Inizio</th>
+                            <th>Fine</th>
                             <th>Fogli buoni</th>
                             <th>Fogli scarto</th>
                             <th>% Scarto</th>
@@ -75,6 +77,8 @@
                                         -
                                     @endif
                                 </td>
+                                <td>{{ $job->first_start ? \Carbon\Carbon::parse($job->first_start)->format('d/m/Y H:i') : '-' }}</td>
+                                <td>{{ $job->last_end ? \Carbon\Carbon::parse($job->last_end)->format('d/m/Y H:i') : '-' }}</td>
                                 <td class="text-success fw-bold">{{ number_format($job->total_good) }}</td>
                                 <td class="text-danger">{{ number_format($job->total_waste) }}</td>
                                 <td>
