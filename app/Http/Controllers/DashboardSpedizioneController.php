@@ -445,7 +445,7 @@ class DashboardSpedizioneController extends Controller
 
         return response()->json([
             'data' => $data,
-            'contenuto' => $nota->contenuto ?? '',
+            'contenuto' => $nota ? $nota->contenuto : '',
         ]);
     }
 
@@ -470,10 +470,12 @@ class DashboardSpedizioneController extends Controller
      */
     public function noteUltimoAggiornamento()
     {
-        $nota = NotaSpedizione::where('data', now()->toDateString())->first();
+        // Cerca l'ultima nota modificata (qualsiasi data), non solo oggi
+        $nota = NotaSpedizione::orderByDesc('updated_at')->first();
         return response()->json([
             'updated_at' => $nota ? $nota->updated_at->toIso8601String() : null,
-            'contenuto'  => $nota->contenuto ?? '',
+            'contenuto'  => $nota ? $nota->contenuto : '',
+            'data'       => $nota ? $nota->data->format('d/m/Y') : null,
         ]);
     }
 }
