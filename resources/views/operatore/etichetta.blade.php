@@ -305,7 +305,7 @@
     @endif
     @if($isTifataPlastica ?? false)
     {{-- TIFATA PLASTICA: descrizione sopra, lotto/qta/data affiancati, no EAN/DataMatrix --}}
-    <div style="margin-top: 10mm; margin-bottom: 5mm; font-size: 13pt; font-weight: bold; text-align: center;" id="print-descrizione-tifata">{{ $ordine->descrizione ?? '' }}</div>
+    <div style="margin-top: 18mm; margin-bottom: 5mm; font-size: 16pt; font-weight: bold; text-align: center;" id="print-descrizione-tifata">{{ $ordine->descrizione ?? '' }}</div>
     <div style="display: flex; justify-content: space-between; align-items: center; gap: 3mm; font-size: 11pt;">
         <div><span class="label">Lotto:</span> <span id="print-lotto">{{ $lotto }}</span></div>
         <div><span class="label">Pz x cassa:</span> <span id="print-pzcassa"></span></div>
@@ -356,6 +356,10 @@ function aggiornaAnteprima() {
         cliente = document.getElementById('campo-cliente').value;
         articolo = document.getElementById('campo-articolo').value;
         ean = document.getElementById('campo-ean').value;
+    @elseif($isTifataPlastica ?? false)
+        cliente = document.getElementById('campo-cliente').value;
+        articolo = document.getElementById('campo-articolo-manuale').value;
+        ean = '';
     @else
         cliente = document.getElementById('campo-cliente').value;
         articolo = document.getElementById('campo-articolo-manuale').value;
@@ -588,6 +592,9 @@ function stampa() {
     @if($isItalianaConfetti)
     var ean = document.getElementById('campo-ean').value;
     var articolo = document.getElementById('campo-articolo').value;
+    @elseif($isTifataPlastica ?? false)
+    var ean = '';
+    var articolo = document.getElementById('campo-articolo-manuale').value;
     @else
     var ean = document.getElementById('campo-ean-manuale').value;
     var articolo = document.getElementById('campo-articolo-manuale').value;

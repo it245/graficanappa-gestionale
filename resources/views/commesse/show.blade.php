@@ -177,6 +177,25 @@
                                             onclick="inviaNotaFS({{ $ordine->id }}, {{ $fase->id }})">Invia</button>
                                 </div>
                             </div>
+
+                            {{-- Scarti Prinect + Scarti Reali --}}
+                            <div class="mt-3 p-2" style="background:#f8f9fa; border-radius:6px;">
+                                <div class="d-flex align-items-center gap-3 flex-wrap">
+                                    @if($fase->fogli_scarto)
+                                    <div>
+                                        <strong style="font-size:15px;">Scarti Prinect:</strong>
+                                        <span class="badge bg-secondary" style="font-size:14px; padding:6px 12px;">{{ $fase->fogli_scarto }}</span>
+                                    </div>
+                                    @endif
+                                    <div>
+                                        <strong style="font-size:15px;">Scarti Reali:</strong>
+                                        <input type="number" min="0" style="width:100px; padding:4px 8px; font-size:15px; border:1px solid #ced4da; border-radius:4px;"
+                                               value="{{ $fase->scarti ?? '' }}"
+                                               onchange="salvaScartiCommessa({{ $fase->id }}, this.value)"
+                                               onkeydown="if(event.key==='Enter'){this.blur();}">
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div class="azioni-cerchi" id="azioni-fase-{{ $fase->id }}">
                             {{-- Tutti e 3 i bottoni sempre visibili --}}
@@ -194,21 +213,6 @@
                                    onchange="aggiornaStato({{ $fase->id }}, 'termina', this.checked)">
                             <label for="termina-{{ $fase->id }}" class="badge-termina">Termina</label>
 
-                            @if($fase->fogli_scarto || $fase->scarti)
-                            <div class="mt-2" style="font-size:12px;">
-                                <span class="badge bg-secondary">Scarti Prinect: {{ $fase->fogli_scarto ?? 0 }}</span>
-                                <span class="badge bg-warning text-dark">Scarti Reali: {{ $fase->scarti ?? 0 }}</span>
-                            </div>
-                            @endif
-                            <div class="mt-1">
-                                <label style="font-size:11px;" class="text-muted">Scarti reali:</label>
-                                <input type="number" min="0" style="width:80px; padding:2px 4px; font-size:12px; border:1px solid #ced4da; border-radius:3px;"
-                                       value="{{ $fase->scarti ?? '' }}"
-                                       onchange="salvaScartiCommessa({{ $fase->id }}, this.value)">
-                                @if($fase->fogli_scarto)
-                                <small class="text-muted ms-1">Prinect: {{ $fase->fogli_scarto }}</small>
-                                @endif
-                            </div>
 
                             @if(!is_numeric($fase->stato))
                                 <input type="checkbox" id="riprendi-{{ $fase->id }}" onchange="riprendiFase({{ $fase->id }}, this.checked)">
