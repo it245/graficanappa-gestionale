@@ -397,10 +397,13 @@
             </div>
         </div>
 
-        {{-- Scarti (solo stampa offset) --}}
+        {{-- Dati Prinect (solo stampa offset) --}}
         @if(strtolower(optional(optional($fase->faseCatalogo)->reparto)->nome ?? '') === 'stampa offset')
         <div class="card-body pt-0">
-            <div class="d-flex align-items-center gap-3" style="font-size:16px;">
+            <div class="d-flex align-items-center gap-3 flex-wrap" style="font-size:16px;">
+                <div><strong>Fogli Buoni:</strong>
+                    <span class="badge bg-success" style="font-size:15px; padding:5px 12px;">{{ $fase->fogli_buoni ?? 0 }}</span>
+                </div>
                 <div><strong>Scarti Prinect:</strong>
                     <span class="badge bg-secondary" style="font-size:15px; padding:5px 12px;">{{ $fase->fogli_scarto ?? 0 }}</span>
                 </div>
