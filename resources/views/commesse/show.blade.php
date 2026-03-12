@@ -183,6 +183,10 @@
                             <div class="mt-3 p-2" style="background:#f8f9fa; border-radius:6px;">
                                 <div class="d-flex align-items-center gap-3 flex-wrap">
                                     <div>
+                                        <strong style="font-size:15px;">Fogli Buoni Prinect:</strong>
+                                        <span class="badge bg-success" style="font-size:14px; padding:6px 12px;">{{ $fase->fogli_buoni ?? 0 }}</span>
+                                    </div>
+                                    <div>
                                         <strong style="font-size:15px;">Scarti Prinect:</strong>
                                         <span class="badge bg-secondary" style="font-size:14px; padding:6px 12px;">{{ $fase->fogli_scarto ?? 0 }}</span>
                                     </div>
