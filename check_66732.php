@@ -14,7 +14,7 @@ echo implode(', ', array_map(fn($c) => $c->COLUMN_NAME, $colsT)) . "\n\n";
 $righe = DB::connection('onda')->select(
     "SELECT r.CodCommessa, r.CodArt, r.Descrizione, r.Qta, r.CodUnMis, r.DataConsegna, r.DataPresConsegna,
             r.OC_Tiratura, r.OC_Pagine, r.OC_Base, r.OC_Altezza, r.Priorita,
-            t.CodCliente, t.DataRegistrazione
+            t.IdAnagrafica, t.DataRegistrazione, t.OC_CommentoProduz, t.ncpcommentoprestampa
      FROM ATTDocRighe r
      JOIN ATTDocTeste t ON r.IdDoc = t.IdDoc
      WHERE r.CodCommessa LIKE '%66732%'
@@ -26,7 +26,7 @@ if (empty($righe)) {
 } else {
     foreach ($righe as $r) {
         echo "Commessa: {$r->CodCommessa}\n";
-        echo "  CodCliente: {$r->CodCliente}\n";
+        echo "  IdAnagrafica: {$r->IdAnagrafica}\n";
         echo "  CodArt: {$r->CodArt}\n";
         echo "  Descrizione: {$r->Descrizione}\n";
         echo "  Qta: {$r->Qta} {$r->CodUnMis}\n";
@@ -35,6 +35,8 @@ if (empty($righe)) {
         echo "  Data Pres Consegna: {$r->DataPresConsegna}\n";
         echo "  Data Reg: {$r->DataRegistrazione}\n";
         echo "  Priorita: {$r->Priorita}\n";
+        echo "  Commento Prod: {$r->OC_CommentoProduz}\n";
+        echo "  Note Prestampa: {$r->ncpcommentoprestampa}\n";
         echo "---\n";
     }
 }
