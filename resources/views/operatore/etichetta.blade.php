@@ -5,7 +5,7 @@
     /* ===== FORM (no-print) ===== */
     .etichetta-form {
         max-width: 600px;
-        margin: 20px auto;
+        margin: 20px auto 20px 40px;
         padding: 20px;
     }
     .etichetta-form .form-label { font-weight: bold; }
@@ -65,7 +65,7 @@
         width: 150mm;
         height: 100mm;
         border: 1px solid #ccc;
-        margin: 30px auto;
+        margin: 30px auto 30px 40px;
         padding: 5mm 7mm;
         font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
         box-sizing: border-box;
