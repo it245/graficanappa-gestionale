@@ -189,6 +189,159 @@
     }
 </style>
 
+{{-- ===== CARD GESTIONE FASE (nascosta in stampa) ===== --}}
+@if($faseOperatore ?? false)
+<div class="no-print" style="max-width:700px; margin:20px auto;">
+    <style>
+    .azioni-cerchi-et { display:flex; flex-direction:column; gap:10px; margin-left:20px; }
+    .azioni-cerchi-et label { display:inline-flex; justify-content:center; align-items:center; width:75px; height:75px; border-radius:50%; color:#fff; font-weight:bold; font-size:12px; cursor:pointer; user-select:none; }
+    .azioni-cerchi-et .badge-avvia { background-color:#28a745; }
+    .azioni-cerchi-et .badge-pausa { background-color:#ffc107; }
+    .azioni-cerchi-et .badge-termina { background-color:#dc3545; }
+    .azioni-cerchi-et input[type="checkbox"] { display:none; }
+    .azioni-cerchi-et input[type="checkbox"]:checked + label { opacity:0.7; box-shadow:inset 0 0 2px rgba(0,0,0,0.5); }
+    @keyframes lampeggio-et { 0%,100%{opacity:1;background-color:#28a745;} 50%{opacity:0.3;background-color:#ff6600;} }
+    .azioni-cerchi-et .badge-avvia.lampeggia { animation:lampeggio-et 1s ease-in-out infinite; }
+    </style>
+    <div class="card border-primary">
+        <div class="card-header bg-primary text-white">
+            <strong>{{ $faseOperatore->faseCatalogo->nome_display ?? '-' }}</strong>
+            @php $badgeBg = [0=>'bg-secondary',1=>'bg-info',2=>'bg-warning text-dark',3=>'bg-success']; @endphp
+            <span class="badge {{ $badgeBg[$faseOperatore->stato] ?? 'bg-dark' }} ms-2 fs-5" id="badge-fase-{{ $faseOperatore->id }}">{{ $faseOperatore->stato }}</span>
+            <span class="ms-2" id="operatori-fase-{{ $faseOperatore->id }}">
+                @foreach($faseOperatore->operatori as $op)
+                    <small class="badge bg-light text-dark">{{ $op->nome }} ({{ $op->pivot->data_inizio ? \Carbon\Carbon::parse($op->pivot->data_inizio)->format('d/m/Y H:i:s') : '-' }})</small>
+                @endforeach
+            </span>
+        </div>
+        <div class="card-body border-bottom py-2">
+            <small class="text-muted">{{ $ordine->descrizione ?? '-' }}</small>
+        </div>
+        <div class="card-body d-flex align-items-start gap-3">
+            <div class="flex-grow-1">
+                {{-- Note fasi successive --}}
+                <div>
+                    <label><strong>Informazioni generali / per fasi successive:</strong></label>
+                    @if(!empty($righeFS))
+                        <div class="mb-2" style="max-height:150px; overflow-y:auto; background:#f8f9fa; border-radius:4px; padding:8px; font-size:13px;">
+                            @foreach($righeFS as $riga)
+                                <div class="mb-1">
+                                    <small class="text-muted">{{ $riga['data'] ?? '' }}</small>
+                                    <strong>{{ $riga['reparto'] ?? '' }} - {{ $riga['nome'] ?? '' }}:</strong>
+                                    {{ $riga['testo'] ?? '' }}
+                                </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="mb-2 text-muted" style="font-size:13px;">Nessuna nota</div>
+                    @endif
+                    <div class="d-flex gap-2">
+                        <textarea id="nuova-nota-fs-{{ $faseOperatore->id }}" class="form-control form-control-sm" rows="1"
+                                  placeholder="Scrivi una nota..."></textarea>
+                        <button type="button" class="btn btn-sm btn-outline-primary" style="white-space:nowrap"
+                                onclick="inviaNotaFS({{ $ordine->id }}, {{ $faseOperatore->id }})">Invia</button>
+                    </div>
+                </div>
+
+                {{-- Scarti (solo stampa offset) --}}
+                @if(strtolower(optional(optional($faseOperatore->faseCatalogo)->reparto)->nome ?? '') === 'stampa offset')
+                <div class="mt-3 p-2" style="background:#f8f9fa; border-radius:6px;">
+                    <div class="d-flex align-items-center gap-3 flex-wrap">
+                        <div>
+                            <strong style="font-size:15px;">Scarti Prinect:</strong>
+                            <span class="badge bg-secondary" style="font-size:14px; padding:6px 12px;">{{ $faseOperatore->fogli_scarto ?? 0 }}</span>
+                        </div>
+                        <div>
+                            <strong style="font-size:15px;">Scarti Reali:</strong>
+                            <input type="number" min="0" style="width:100px; padding:4px 8px; font-size:15px; border:1px solid #ced4da; border-radius:4px;"
+                                   value="{{ $faseOperatore->scarti ?? '' }}"
+                                   onchange="salvaScartiEtichetta({{ $faseOperatore->id }}, this.value)"
+                                   onkeydown="if(event.key==='Enter'){this.blur();}">
+                        </div>
+                    </div>
+                </div>
+                @endif
+            </div>
+            <div class="azioni-cerchi-et">
+                <input type="checkbox" id="avvia-{{ $faseOperatore->id }}" onchange="aggiornaStatoEt({{ $faseOperatore->id }}, 'avvia', this.checked)">
+                <label for="avvia-{{ $faseOperatore->id }}" class="badge-avvia{{ $faseOperatore->stato == 2 ? ' lampeggia' : '' }}">{{ $faseOperatore->stato == 2 ? 'Avviato' : 'Avvia' }}</label>
+
+                <input type="checkbox" id="pausa-{{ $faseOperatore->id }}" onchange="gestisciPausaEt({{ $faseOperatore->id }}, this.checked)">
+                <label for="pausa-{{ $faseOperatore->id }}" class="badge-pausa">Pausa</label>
+
+                <input type="checkbox" id="termina-{{ $faseOperatore->id }}"
+                       data-qta-fase="{{ $ordine->qta_richiesta ?? 0 }}"
+                       data-fogli-buoni="{{ $faseOperatore->fogli_buoni ?? 0 }}"
+                       data-fogli-scarto="{{ $faseOperatore->fogli_scarto ?? 0 }}"
+                       data-qta-prod="{{ $faseOperatore->qta_prod ?? 0 }}"
+                       onchange="aggiornaStatoEt({{ $faseOperatore->id }}, 'termina', this.checked)">
+                <label for="termina-{{ $faseOperatore->id }}" class="badge-termina">Termina</label>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Termina -->
+<div class="modal fade" id="modalTermina" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Termina Fase</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="terminaFaseId">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Qta prodotta <span class="text-danger">*</span></label>
+                    <input type="number" id="terminaQtaProdotta" class="form-control" min="0" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Scarti</label>
+                    <input type="number" id="terminaScarti" class="form-control" min="0" value="0">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                <button type="button" class="btn btn-danger fw-bold" onclick="confermaTerminaEt()">Conferma e Termina</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Pausa -->
+<div class="modal fade" id="modalPausa" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title">Pausa Fase</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="pausaFaseId">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Motivo della pausa</label>
+                    <select id="pausaMotivoSelect" class="form-select" onchange="document.getElementById('pausaAltroWrap').style.display=this.value==='__altro__'?'':'none'">
+                        <option value="">-- Seleziona --</option>
+                        <option>Attesa materiale</option>
+                        <option>Problema macchina</option>
+                        <option>Pranzo</option>
+                        <option value="__altro__">Altro...</option>
+                    </select>
+                </div>
+                <div class="mb-3" id="pausaAltroWrap" style="display:none;">
+                    <label class="form-label fw-bold">Specifica motivo</label>
+                    <input type="text" id="pausaAltroInput" class="form-control" placeholder="Scrivi il motivo...">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                <button type="button" class="btn btn-warning fw-bold" onclick="confermaPausaEt()">Conferma Pausa</button>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+
 {{-- ===== FORM (nascosto in stampa) ===== --}}
 <div class="etichetta-form no-print">
     <div class="d-flex align-items-center mb-3">
@@ -636,5 +789,133 @@ function stampa() {
 
 // Aggiorna anteprima iniziale
 aggiornaAnteprima();
+
+// ===== Gestione fase (Avvia/Pausa/Termina/Note/Scarti) =====
+@if($faseOperatore ?? false)
+function csrfTokenEt() {
+    return document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}';
+}
+
+function updateBadgeEt(faseId, stato) {
+    var badge = document.getElementById('badge-fase-'+faseId);
+    if (badge) { badge.textContent = stato; badge.className = 'badge ms-2 fs-5 ' + ({0:'bg-secondary',1:'bg-info',2:'bg-warning text-dark',3:'bg-success'}[stato] || 'bg-dark'); }
+}
+
+function updateOperatoriEt(faseId, operatori) {
+    var c = document.getElementById('operatori-fase-'+faseId);
+    if (!c || !operatori) return;
+    c.innerHTML = operatori.map(function(op) { return '<small class="badge bg-light text-dark">' + op.nome + ' (' + op.data_inizio + ')</small>'; }).join(' ');
+}
+
+function aggiornaStatoEt(faseId, azione, checked) {
+    if (!checked) return;
+    if (azione === 'termina') {
+        var cb = document.getElementById('termina-'+faseId);
+        var fogliBuoni = parseInt(cb?.getAttribute('data-fogli-buoni') || 0) || 0;
+        var fogliScarto = parseInt(cb?.getAttribute('data-fogli-scarto') || 0) || 0;
+        var qtaProd = parseInt(cb?.getAttribute('data-qta-prod') || 0) || 0;
+        document.getElementById('terminaFaseId').value = faseId;
+        document.getElementById('terminaQtaProdotta').value = fogliBuoni > 0 ? fogliBuoni : (qtaProd > 0 ? qtaProd : '');
+        document.getElementById('terminaScarti').value = fogliScarto > 0 ? fogliScarto : 0;
+        new bootstrap.Modal(document.getElementById('modalTermina')).show();
+        return;
+    }
+    fetch('{{ route("produzione.avvia") }}', {
+        method: 'POST',
+        headers: {'X-CSRF-TOKEN': csrfTokenEt(), 'Content-Type': 'application/json'},
+        body: JSON.stringify({fase_id: faseId})
+    }).then(r => r.json()).then(data => {
+        if (data.success) { updateBadgeEt(faseId, 2); if (data.operatori) updateOperatoriEt(faseId, data.operatori); }
+        else alert('Errore: ' + (data.messaggio || 'operazione fallita'));
+    });
+}
+
+function confermaTerminaEt() {
+    var faseId = document.getElementById('terminaFaseId').value;
+    var qta = document.getElementById('terminaQtaProdotta').value;
+    var scarti = document.getElementById('terminaScarti').value;
+    if (qta === '' || parseInt(qta) <= 0) { alert('Inserire la quantità prodotta'); return; }
+    bootstrap.Modal.getInstance(document.getElementById('modalTermina')).hide();
+    fetch('{{ route("produzione.termina") }}', {
+        method: 'POST',
+        headers: {'X-CSRF-TOKEN': csrfTokenEt(), 'Content-Type': 'application/json'},
+        body: JSON.stringify({fase_id: faseId, qta_prodotta: parseInt(qta), scarti: parseInt(scarti) || 0})
+    }).then(r => r.json()).then(data => {
+        if (data.success) { updateBadgeEt(faseId, 3); }
+        else { alert('Errore: ' + (data.messaggio || 'operazione fallita')); document.getElementById('termina-'+faseId).checked = false; }
+    });
+}
+
+document.getElementById('modalTermina').addEventListener('hidden.bs.modal', function() {
+    var faseId = document.getElementById('terminaFaseId').value;
+    var cb = document.getElementById('termina-'+faseId);
+    if (cb) cb.checked = false;
+});
+
+function gestisciPausaEt(faseId, checked) {
+    if (!checked) return;
+    document.getElementById('pausaFaseId').value = faseId;
+    document.getElementById('pausaMotivoSelect').value = '';
+    document.getElementById('pausaAltroInput').value = '';
+    document.getElementById('pausaAltroWrap').style.display = 'none';
+    new bootstrap.Modal(document.getElementById('modalPausa')).show();
+}
+
+document.getElementById('modalPausa').addEventListener('hidden.bs.modal', function() {
+    var faseId = document.getElementById('pausaFaseId').value;
+    var cb = document.getElementById('pausa-'+faseId);
+    if (cb) cb.checked = false;
+});
+
+function confermaPausaEt() {
+    var sel = document.getElementById('pausaMotivoSelect').value;
+    var motivo = sel === '__altro__' ? (document.getElementById('pausaAltroInput').value.trim() || 'Altro') : sel;
+    if (!motivo) { alert('Seleziona un motivo'); return; }
+    var faseId = document.getElementById('pausaFaseId').value;
+    bootstrap.Modal.getInstance(document.getElementById('modalPausa')).hide();
+    fetch('{{ route("produzione.pausa") }}', {
+        method: 'POST',
+        headers: {'X-CSRF-TOKEN': csrfTokenEt(), 'Content-Type': 'application/json'},
+        body: JSON.stringify({fase_id: faseId, motivo: motivo})
+    }).then(r => r.json()).then(data => {
+        if (data.success) { updateBadgeEt(faseId, data.nuovo_stato); }
+        else alert('Errore: ' + (data.messaggio || 'operazione fallita'));
+    });
+}
+
+function salvaScartiEtichetta(faseId, valore) {
+    fetch('{{ route("produzione.aggiornaCampo") }}', {
+        method: 'POST',
+        headers: {'X-CSRF-TOKEN': csrfTokenEt(), 'X-Op-Token': new URLSearchParams(window.location.search).get('op_token') || '', 'Content-Type': 'application/json', 'Accept': 'application/json'},
+        body: JSON.stringify({fase_id: faseId, campo: 'scarti', valore: valore})
+    }).then(function(r) {
+        if (r.ok) { var input = document.querySelector('input[onchange*="salvaScartiEtichetta('+faseId+'"]'); if (input) { input.style.borderColor='#28a745'; setTimeout(function(){input.style.borderColor='#ced4da';},1500); } }
+        else alert('Errore nel salvataggio');
+    });
+}
+
+function inviaNotaFS(ordineId, faseId) {
+    var textarea = document.getElementById('nuova-nota-fs-'+faseId);
+    var testo = textarea.value.trim();
+    if (!testo) { alert('Scrivi una nota prima di inviare'); return; }
+
+    var noteEsistenti = @json($righeFS ?? []);
+    noteEsistenti.push({
+        data: new Date().toLocaleString('it-IT'),
+        reparto: @json($operatore?->reparti?->pluck('nome')->first() ?? 'N/D'),
+        nome: @json(trim(($operatore->nome ?? '') . ' ' . ($operatore->cognome ?? ''))),
+        testo: testo
+    });
+
+    fetch('{{ route("produzione.aggiornaOrdineCampo") }}', {
+        method: 'POST',
+        headers: {'X-CSRF-TOKEN': csrfTokenEt(), 'Content-Type': 'application/json'},
+        body: JSON.stringify({ordine_id: ordineId, campo: 'note_fasi_successive', valore: JSON.stringify(noteEsistenti)})
+    }).then(r => r.json()).then(data => {
+        if (data.success) location.reload();
+        else alert('Errore: ' + (data.messaggio || JSON.stringify(data.errors)));
+    });
+}
+@endif
 </script>
 @endsection

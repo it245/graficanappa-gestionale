@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Ordine;
+use App\Models\OrdineFase;
 use App\Models\EanProdotto;
 
 class EtichettaController extends Controller
@@ -53,9 +54,24 @@ class EtichettaController extends Controller
             $eanSalvato = EanProdotto::where('articolo', $articoloDefault)->first();
         }
 
+        // Trova la fase dell'operatore per questo ordine (per la card gestione fase)
+        $operatore = $request->attributes->get('operatore') ?? auth()->guard('operatore')->user();
+        $repartiOperatore = $operatore?->reparti?->pluck('id')->toArray() ?? [];
+
+        $faseOperatore = OrdineFase::where('ordine_id', $ordine->id)
+            ->whereHas('faseCatalogo', fn($q) => $q->whereIn('reparto_id', $repartiOperatore))
+            ->with(['faseCatalogo.reparto', 'operatori'])
+            ->first();
+
+        // Note fasi successive
+        $noteFS = $ordine->note_fasi_successive ?? '';
+        $righeFS = $noteFS ? json_decode($noteFS, true) : [];
+        if (!is_array($righeFS)) $righeFS = [];
+
         return view('operatore.etichetta', compact(
             'ordine', 'lotto', 'cliente', 'data',
-            'isItalianaConfetti', 'isSimpleLabel', 'isTifataPlastica', 'eanProdotti', 'articoloDefault', 'eanSalvato'
+            'isItalianaConfetti', 'isSimpleLabel', 'isTifataPlastica', 'eanProdotti', 'articoloDefault', 'eanSalvato',
+            'faseOperatore', 'operatore', 'righeFS'
         ));
     }
 
