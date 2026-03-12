@@ -54,14 +54,18 @@ class EtichettaController extends Controller
             $eanSalvato = EanProdotto::where('articolo', $articoloDefault)->first();
         }
 
-        // Trova la fase dell'operatore per questo ordine (per la card gestione fase)
+        // Trova TUTTE le fasi dell'operatore per questo ordine (per le card gestione fase)
         $operatore = $request->attributes->get('operatore') ?? auth()->guard('operatore')->user();
         $repartiOperatore = $operatore?->reparti?->pluck('id')->toArray() ?? [];
 
-        $faseOperatore = OrdineFase::where('ordine_id', $ordine->id)
+        $fasiOperatore = OrdineFase::where('ordine_id', $ordine->id)
             ->whereHas('faseCatalogo', fn($q) => $q->whereIn('reparto_id', $repartiOperatore))
             ->with(['faseCatalogo.reparto', 'operatori'])
-            ->first();
+            ->orderBy('id')
+            ->get();
+
+        // Retrocompatibilità: prima fase per variabili singole
+        $faseOperatore = $fasiOperatore->first();
 
         // Note fasi successive
         $noteFS = $ordine->note_fasi_successive ?? '';
@@ -71,7 +75,7 @@ class EtichettaController extends Controller
         return view('operatore.etichetta', compact(
             'ordine', 'lotto', 'cliente', 'data',
             'isItalianaConfetti', 'isSimpleLabel', 'isTifataPlastica', 'eanProdotti', 'articoloDefault', 'eanSalvato',
-            'faseOperatore', 'operatore', 'righeFS'
+            'fasiOperatore', 'faseOperatore', 'operatore', 'righeFS'
         ));
     }
 

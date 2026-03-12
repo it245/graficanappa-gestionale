@@ -189,159 +189,6 @@
     }
 </style>
 
-{{-- ===== CARD GESTIONE FASE (nascosta in stampa) ===== --}}
-@if($faseOperatore ?? false)
-<div class="no-print" style="max-width:700px; margin:20px auto;">
-    <style>
-    .azioni-cerchi-et { display:flex; flex-direction:column; gap:10px; margin-left:20px; }
-    .azioni-cerchi-et label { display:inline-flex; justify-content:center; align-items:center; width:75px; height:75px; border-radius:50%; color:#fff; font-weight:bold; font-size:12px; cursor:pointer; user-select:none; }
-    .azioni-cerchi-et .badge-avvia { background-color:#28a745; }
-    .azioni-cerchi-et .badge-pausa { background-color:#ffc107; }
-    .azioni-cerchi-et .badge-termina { background-color:#dc3545; }
-    .azioni-cerchi-et input[type="checkbox"] { display:none; }
-    .azioni-cerchi-et input[type="checkbox"]:checked + label { opacity:0.7; box-shadow:inset 0 0 2px rgba(0,0,0,0.5); }
-    @keyframes lampeggio-et { 0%,100%{opacity:1;background-color:#28a745;} 50%{opacity:0.3;background-color:#ff6600;} }
-    .azioni-cerchi-et .badge-avvia.lampeggia { animation:lampeggio-et 1s ease-in-out infinite; }
-    </style>
-    <div class="card border-primary">
-        <div class="card-header bg-primary text-white">
-            <strong>{{ $faseOperatore->faseCatalogo->nome_display ?? '-' }}</strong>
-            @php $badgeBg = [0=>'bg-secondary',1=>'bg-info',2=>'bg-warning text-dark',3=>'bg-success']; @endphp
-            <span class="badge {{ $badgeBg[$faseOperatore->stato] ?? 'bg-dark' }} ms-2 fs-5" id="badge-fase-{{ $faseOperatore->id }}">{{ $faseOperatore->stato }}</span>
-            <span class="ms-2" id="operatori-fase-{{ $faseOperatore->id }}">
-                @foreach($faseOperatore->operatori as $op)
-                    <small class="badge bg-light text-dark">{{ $op->nome }} ({{ $op->pivot->data_inizio ? \Carbon\Carbon::parse($op->pivot->data_inizio)->format('d/m/Y H:i:s') : '-' }})</small>
-                @endforeach
-            </span>
-        </div>
-        <div class="card-body border-bottom py-2">
-            <small class="text-muted">{{ $ordine->descrizione ?? '-' }}</small>
-        </div>
-        <div class="card-body d-flex align-items-start gap-3">
-            <div class="flex-grow-1">
-                {{-- Note fasi successive --}}
-                <div>
-                    <label><strong>Informazioni generali / per fasi successive:</strong></label>
-                    @if(!empty($righeFS))
-                        <div class="mb-2" style="max-height:150px; overflow-y:auto; background:#f8f9fa; border-radius:4px; padding:8px; font-size:13px;">
-                            @foreach($righeFS as $riga)
-                                <div class="mb-1">
-                                    <small class="text-muted">{{ $riga['data'] ?? '' }}</small>
-                                    <strong>{{ $riga['reparto'] ?? '' }} - {{ $riga['nome'] ?? '' }}:</strong>
-                                    {{ $riga['testo'] ?? '' }}
-                                </div>
-                            @endforeach
-                        </div>
-                    @else
-                        <div class="mb-2 text-muted" style="font-size:13px;">Nessuna nota</div>
-                    @endif
-                    <div class="d-flex gap-2">
-                        <textarea id="nuova-nota-fs-{{ $faseOperatore->id }}" class="form-control form-control-sm" rows="1"
-                                  placeholder="Scrivi una nota..."></textarea>
-                        <button type="button" class="btn btn-sm btn-outline-primary" style="white-space:nowrap"
-                                onclick="inviaNotaFS({{ $ordine->id }}, {{ $faseOperatore->id }})">Invia</button>
-                    </div>
-                </div>
-
-                {{-- Scarti (solo stampa offset) --}}
-                @if(strtolower(optional(optional($faseOperatore->faseCatalogo)->reparto)->nome ?? '') === 'stampa offset')
-                <div class="mt-3 p-2" style="background:#f8f9fa; border-radius:6px;">
-                    <div class="d-flex align-items-center gap-3 flex-wrap">
-                        <div>
-                            <strong style="font-size:15px;">Scarti Prinect:</strong>
-                            <span class="badge bg-secondary" style="font-size:14px; padding:6px 12px;">{{ $faseOperatore->fogli_scarto ?? 0 }}</span>
-                        </div>
-                        <div>
-                            <strong style="font-size:15px;">Scarti Reali:</strong>
-                            <input type="number" min="0" style="width:100px; padding:4px 8px; font-size:15px; border:1px solid #ced4da; border-radius:4px;"
-                                   value="{{ $faseOperatore->scarti ?? '' }}"
-                                   onchange="salvaScartiEtichetta({{ $faseOperatore->id }}, this.value)"
-                                   onkeydown="if(event.key==='Enter'){this.blur();}">
-                        </div>
-                    </div>
-                </div>
-                @endif
-            </div>
-            <div class="azioni-cerchi-et">
-                <input type="checkbox" id="avvia-{{ $faseOperatore->id }}" onchange="aggiornaStatoEt({{ $faseOperatore->id }}, 'avvia', this.checked)">
-                <label for="avvia-{{ $faseOperatore->id }}" class="badge-avvia{{ $faseOperatore->stato == 2 ? ' lampeggia' : '' }}">{{ $faseOperatore->stato == 2 ? 'Avviato' : 'Avvia' }}</label>
-
-                <input type="checkbox" id="pausa-{{ $faseOperatore->id }}" onchange="gestisciPausaEt({{ $faseOperatore->id }}, this.checked)">
-                <label for="pausa-{{ $faseOperatore->id }}" class="badge-pausa">Pausa</label>
-
-                <input type="checkbox" id="termina-{{ $faseOperatore->id }}"
-                       data-qta-fase="{{ $ordine->qta_richiesta ?? 0 }}"
-                       data-fogli-buoni="{{ $faseOperatore->fogli_buoni ?? 0 }}"
-                       data-fogli-scarto="{{ $faseOperatore->fogli_scarto ?? 0 }}"
-                       data-qta-prod="{{ $faseOperatore->qta_prod ?? 0 }}"
-                       onchange="aggiornaStatoEt({{ $faseOperatore->id }}, 'termina', this.checked)">
-                <label for="termina-{{ $faseOperatore->id }}" class="badge-termina">Termina</label>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal Termina -->
-<div class="modal fade" id="modalTermina" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title">Termina Fase</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <input type="hidden" id="terminaFaseId">
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Qta prodotta <span class="text-danger">*</span></label>
-                    <input type="number" id="terminaQtaProdotta" class="form-control" min="0" required>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Scarti</label>
-                    <input type="number" id="terminaScarti" class="form-control" min="0" value="0">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
-                <button type="button" class="btn btn-danger fw-bold" onclick="confermaTerminaEt()">Conferma e Termina</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal Pausa -->
-<div class="modal fade" id="modalPausa" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-warning text-dark">
-                <h5 class="modal-title">Pausa Fase</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <input type="hidden" id="pausaFaseId">
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Motivo della pausa</label>
-                    <select id="pausaMotivoSelect" class="form-select" onchange="document.getElementById('pausaAltroWrap').style.display=this.value==='__altro__'?'':'none'">
-                        <option value="">-- Seleziona --</option>
-                        <option>Attesa materiale</option>
-                        <option>Problema macchina</option>
-                        <option>Pranzo</option>
-                        <option value="__altro__">Altro...</option>
-                    </select>
-                </div>
-                <div class="mb-3" id="pausaAltroWrap" style="display:none;">
-                    <label class="form-label fw-bold">Specifica motivo</label>
-                    <input type="text" id="pausaAltroInput" class="form-control" placeholder="Scrivi il motivo...">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
-                <button type="button" class="btn btn-warning fw-bold" onclick="confermaPausaEt()">Conferma Pausa</button>
-            </div>
-        </div>
-    </div>
-</div>
-@endif
-
 {{-- ===== FORM (nascosto in stampa) ===== --}}
 <div class="etichetta-form no-print">
     <div class="d-flex align-items-center mb-3">
@@ -481,6 +328,162 @@
     </div>
     @endif
 </div>
+
+{{-- ===== CARD GESTIONE FASI (nascosta in stampa) ===== --}}
+@if(($fasiOperatore ?? collect())->isNotEmpty())
+<div class="no-print" style="max-width:700px; margin:20px auto;">
+    <style>
+    .azioni-cerchi-et { display:flex; flex-direction:column; gap:10px; margin-left:20px; }
+    .azioni-cerchi-et label { display:inline-flex; justify-content:center; align-items:center; width:75px; height:75px; border-radius:50%; color:#fff; font-weight:bold; font-size:12px; cursor:pointer; user-select:none; }
+    .azioni-cerchi-et .badge-avvia { background-color:#28a745; }
+    .azioni-cerchi-et .badge-pausa { background-color:#ffc107; }
+    .azioni-cerchi-et .badge-termina { background-color:#dc3545; }
+    .azioni-cerchi-et input[type="checkbox"] { display:none; }
+    .azioni-cerchi-et input[type="checkbox"]:checked + label { opacity:0.7; box-shadow:inset 0 0 2px rgba(0,0,0,0.5); }
+    @keyframes lampeggio-et { 0%,100%{opacity:1;background-color:#28a745;} 50%{opacity:0.3;background-color:#ff6600;} }
+    .azioni-cerchi-et .badge-avvia.lampeggia { animation:lampeggio-et 1s ease-in-out infinite; }
+    </style>
+
+    {{-- Note fasi successive (una sola volta, fuori dal loop) --}}
+    <div class="card border-secondary mb-3">
+        <div class="card-body py-2">
+            <label><strong>Informazioni generali / per fasi successive:</strong></label>
+            @if(!empty($righeFS))
+                <div class="mb-2" style="max-height:150px; overflow-y:auto; background:#f8f9fa; border-radius:4px; padding:8px; font-size:13px;">
+                    @foreach($righeFS as $riga)
+                        <div class="mb-1">
+                            <small class="text-muted">{{ $riga['data'] ?? '' }}</small>
+                            <strong>{{ $riga['reparto'] ?? '' }} - {{ $riga['nome'] ?? '' }}:</strong>
+                            {{ $riga['testo'] ?? '' }}
+                        </div>
+                    @endforeach
+                </div>
+            @else
+                <div class="mb-2 text-muted" style="font-size:13px;">Nessuna nota</div>
+            @endif
+            <div class="d-flex gap-2">
+                <textarea id="nuova-nota-fs-{{ $fasiOperatore->first()->id }}" class="form-control form-control-sm" rows="1"
+                          placeholder="Scrivi una nota..."></textarea>
+                <button type="button" class="btn btn-sm btn-outline-primary" style="white-space:nowrap"
+                        onclick="inviaNotaFS({{ $ordine->id }}, {{ $fasiOperatore->first()->id }})">Invia</button>
+            </div>
+        </div>
+    </div>
+
+    {{-- Card per ogni fase dell'operatore --}}
+    @foreach($fasiOperatore as $fase)
+    @php $badgeBg = [0=>'bg-secondary',1=>'bg-info',2=>'bg-warning text-dark',3=>'bg-success']; @endphp
+    <div class="card border-primary mb-3">
+        <div class="card-header bg-primary text-white">
+            <strong>{{ $fase->faseCatalogo->nome_display ?? '-' }}</strong>
+            <span class="badge {{ $badgeBg[$fase->stato] ?? 'bg-dark' }} ms-2 fs-5" id="badge-fase-{{ $fase->id }}">{{ $fase->stato }}</span>
+            <span class="ms-2" id="operatori-fase-{{ $fase->id }}">
+                @foreach($fase->operatori as $op)
+                    <small class="badge bg-light text-dark">{{ $op->nome }} ({{ $op->pivot->data_inizio ? \Carbon\Carbon::parse($op->pivot->data_inizio)->format('d/m/Y H:i:s') : '-' }})</small>
+                @endforeach
+            </span>
+        </div>
+        <div class="card-body d-flex align-items-start gap-3">
+            <div class="flex-grow-1">
+                {{-- Scarti (solo stampa offset) --}}
+                @if(strtolower(optional(optional($fase->faseCatalogo)->reparto)->nome ?? '') === 'stampa offset')
+                <div class="p-2 mb-2" style="background:#f8f9fa; border-radius:6px;">
+                    <div class="d-flex align-items-center gap-3 flex-wrap">
+                        <div>
+                            <strong style="font-size:15px;">Scarti Prinect:</strong>
+                            <span class="badge bg-secondary" style="font-size:14px; padding:6px 12px;">{{ $fase->fogli_scarto ?? 0 }}</span>
+                        </div>
+                        <div>
+                            <strong style="font-size:15px;">Scarti Reali:</strong>
+                            <input type="number" min="0" style="width:100px; padding:4px 8px; font-size:15px; border:1px solid #ced4da; border-radius:4px;"
+                                   value="{{ $fase->scarti ?? '' }}"
+                                   onchange="salvaScartiEtichetta({{ $fase->id }}, this.value)"
+                                   onkeydown="if(event.key==='Enter'){this.blur();}">
+                        </div>
+                    </div>
+                </div>
+                @endif
+            </div>
+            <div class="azioni-cerchi-et">
+                <input type="checkbox" id="avvia-{{ $fase->id }}" onchange="aggiornaStatoEt({{ $fase->id }}, 'avvia', this.checked)">
+                <label for="avvia-{{ $fase->id }}" class="badge-avvia{{ $fase->stato == 2 ? ' lampeggia' : '' }}">{{ $fase->stato == 2 ? 'Avviato' : 'Avvia' }}</label>
+
+                <input type="checkbox" id="pausa-{{ $fase->id }}" onchange="gestisciPausaEt({{ $fase->id }}, this.checked)">
+                <label for="pausa-{{ $fase->id }}" class="badge-pausa">Pausa</label>
+
+                <input type="checkbox" id="termina-{{ $fase->id }}"
+                       data-qta-fase="{{ $ordine->qta_richiesta ?? 0 }}"
+                       data-fogli-buoni="{{ $fase->fogli_buoni ?? 0 }}"
+                       data-fogli-scarto="{{ $fase->fogli_scarto ?? 0 }}"
+                       data-qta-prod="{{ $fase->qta_prod ?? 0 }}"
+                       onchange="aggiornaStatoEt({{ $fase->id }}, 'termina', this.checked)">
+                <label for="termina-{{ $fase->id }}" class="badge-termina">Termina</label>
+            </div>
+        </div>
+    </div>
+    @endforeach
+</div>
+
+<!-- Modal Termina -->
+<div class="modal fade" id="modalTermina" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Termina Fase</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="terminaFaseId">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Qta prodotta <span class="text-danger">*</span></label>
+                    <input type="number" id="terminaQtaProdotta" class="form-control" min="0" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Scarti</label>
+                    <input type="number" id="terminaScarti" class="form-control" min="0" value="0">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                <button type="button" class="btn btn-danger fw-bold" onclick="confermaTerminaEt()">Conferma e Termina</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Pausa -->
+<div class="modal fade" id="modalPausa" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title">Pausa Fase</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="pausaFaseId">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Motivo della pausa</label>
+                    <select id="pausaMotivoSelect" class="form-select" onchange="document.getElementById('pausaAltroWrap').style.display=this.value==='__altro__'?'':'none'">
+                        <option value="">-- Seleziona --</option>
+                        <option>Attesa materiale</option>
+                        <option>Problema macchina</option>
+                        <option>Pranzo</option>
+                        <option value="__altro__">Altro...</option>
+                    </select>
+                </div>
+                <div class="mb-3" id="pausaAltroWrap" style="display:none;">
+                    <label class="form-label fw-bold">Specifica motivo</label>
+                    <input type="text" id="pausaAltroInput" class="form-control" placeholder="Scrivi il motivo...">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                <button type="button" class="btn btn-warning fw-bold" onclick="confermaPausaEt()">Conferma Pausa</button>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
 
 {{-- bwip-js CDN (barcode/DataMatrix generator) --}}
 <script src="https://cdn.jsdelivr.net/npm/bwip-js@4.5.1/dist/bwip-js-min.js"></script>
