@@ -55,11 +55,14 @@ class EtichettaController extends Controller
         $operatore = $request->attributes->get('operatore') ?? auth()->guard('operatore')->user();
         $repartiOperatore = $operatore?->reparti?->pluck('id')->toArray() ?? [];
 
-        // Card: mostra la fase attualmente avviata (stato 2) nel reparto dell'operatore (qualsiasi commessa)
-        $faseOperatore = OrdineFase::where('stato', 2)
-            ->whereHas('faseCatalogo', fn($q) => $q->whereIn('reparto_id', $repartiOperatore))
-            ->with(['faseCatalogo.reparto', 'operatori', 'ordine'])
-            ->first();
+        // Card: mostra solo se accesso dalla dashboard (con op_token)
+        $faseOperatore = null;
+        if ($request->query('op_token')) {
+            $faseOperatore = OrdineFase::where('stato', 2)
+                ->whereHas('faseCatalogo', fn($q) => $q->whereIn('reparto_id', $repartiOperatore))
+                ->with(['faseCatalogo.reparto', 'operatori', 'ordine'])
+                ->first();
+        }
 
         $fasiOperatore = collect($faseOperatore ? [$faseOperatore] : []);
 
