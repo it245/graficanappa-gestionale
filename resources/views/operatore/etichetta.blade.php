@@ -329,13 +329,13 @@
     @endif
 {{-- ===== PANNELLO LATERALE: Card gestione fase ===== --}}
 @if(($fasiOperatore ?? collect())->isNotEmpty())
-<div class="no-print" id="pannello-fase" style="position:fixed; top:10px; right:10px; width:420px; max-height:calc(100vh - 20px); overflow-y:auto; z-index:50;">
+<div class="no-print" id="pannello-fase" style="position:fixed; top:10px; right:10px; width:520px; max-height:calc(100vh - 20px); overflow-y:auto; z-index:50;">
     <style>
-    .azioni-btn-et { display:flex; gap:8px; justify-content:center; padding:12px 0; }
+    .azioni-btn-et { display:flex; gap:14px; justify-content:center; padding:18px 0; }
     .azioni-btn-et label {
         display:inline-flex; justify-content:center; align-items:center;
-        width:90px; height:90px; border-radius:50%; color:#fff;
-        font-weight:bold; font-size:13px; cursor:pointer; user-select:none;
+        width:110px; height:110px; border-radius:50%; color:#fff;
+        font-weight:bold; font-size:15px; cursor:pointer; user-select:none;
         box-shadow: 0 3px 8px rgba(0,0,0,0.2); transition: transform 0.15s, box-shadow 0.15s;
     }
     .azioni-btn-et label:hover { transform:scale(1.08); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
@@ -347,9 +347,9 @@
     .azioni-btn-et input[type="checkbox"]:checked + label { opacity:0.7; box-shadow:inset 0 0 3px rgba(0,0,0,0.5); transform:scale(0.95); }
     @keyframes lampeggio-et { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
     .azioni-btn-et .badge-avvia.lampeggia { animation:lampeggio-et 1s ease-in-out infinite; }
-    .card-fase-et { border-radius:12px; overflow:hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.1); border:none; }
-    .card-fase-et .card-header { border-radius:0; border-bottom:none; padding:10px 16px; }
-    .card-fase-et .card-body { padding:12px 16px; }
+    .card-fase-et { border-radius:14px; overflow:hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.13); border:none; }
+    .card-fase-et .card-header { border-radius:0; border-bottom:none; padding:14px 20px; }
+    .card-fase-et .card-body { padding:16px 20px; }
     </style>
 
     {{-- Card per ogni fase dell'operatore --}}
@@ -358,8 +358,8 @@
     <div class="card card-fase-et mb-3">
         <div class="card-header bg-primary text-white d-flex align-items-center justify-content-between">
             <div>
-                <strong style="font-size:16px;">{{ $fase->faseCatalogo->nome_display ?? '-' }}</strong>
-                <span class="badge {{ $badgeBg[$fase->stato] ?? 'bg-dark' }} ms-2 fs-6" id="badge-fase-{{ $fase->id }}">{{ $fase->stato }}</span>
+                <strong style="font-size:20px;">{{ $fase->faseCatalogo->nome_display ?? '-' }}</strong>
+                <span class="badge {{ $badgeBg[$fase->stato] ?? 'bg-dark' }} ms-2" style="font-size:16px;" id="badge-fase-{{ $fase->id }}">{{ $fase->stato }}</span>
             </div>
             <div id="operatori-fase-{{ $fase->id }}">
                 @foreach($fase->operatori as $op)
@@ -369,15 +369,15 @@
         </div>
 
         {{-- Descrizione --}}
-        <div class="card-body py-2" style="background:#f0f4ff; font-size:13px;">
+        <div class="card-body py-3" style="background:#f0f4ff; font-size:16px;">
             {{ $fase->ordine->descrizione ?? $ordine->descrizione ?? '-' }}
         </div>
 
         {{-- Note fasi successive --}}
         <div class="card-body">
-            <label class="fw-bold" style="font-size:13px;">Info per fasi successive</label>
+            <label class="fw-bold" style="font-size:16px;">Info per fasi successive</label>
             @if(!empty($righeFS))
-                <div class="mb-2" style="max-height:120px; overflow-y:auto; background:#f8f9fa; border-radius:6px; padding:8px; font-size:12px;">
+                <div class="mb-2" style="max-height:150px; overflow-y:auto; background:#f8f9fa; border-radius:6px; padding:10px; font-size:14px;">
                     @foreach($righeFS as $riga)
                         <div class="mb-1">
                             <small class="text-muted">{{ $riga['data'] ?? '' }}</small>
@@ -387,12 +387,12 @@
                     @endforeach
                 </div>
             @else
-                <div class="mb-2 text-muted" style="font-size:12px;">Nessuna nota</div>
+                <div class="mb-2 text-muted" style="font-size:14px;">Nessuna nota</div>
             @endif
             <div class="d-flex gap-2">
-                <textarea id="nuova-nota-fs-{{ $fase->id }}" class="form-control form-control-sm" rows="1"
-                          placeholder="Scrivi una nota..." style="font-size:12px;"></textarea>
-                <button type="button" class="btn btn-sm btn-outline-primary" style="white-space:nowrap; font-size:12px;"
+                <textarea id="nuova-nota-fs-{{ $fase->id }}" class="form-control" rows="1"
+                          placeholder="Scrivi una nota..." style="font-size:14px;"></textarea>
+                <button type="button" class="btn btn-outline-primary" style="white-space:nowrap; font-size:14px;"
                         onclick="inviaNotaFS({{ $ordine->id }}, {{ $fase->id }})">Invia</button>
             </div>
         </div>
@@ -400,12 +400,12 @@
         {{-- Scarti (solo stampa offset) --}}
         @if(strtolower(optional(optional($fase->faseCatalogo)->reparto)->nome ?? '') === 'stampa offset')
         <div class="card-body pt-0">
-            <div class="d-flex align-items-center gap-3" style="font-size:14px;">
+            <div class="d-flex align-items-center gap-3" style="font-size:16px;">
                 <div><strong>Scarti Prinect:</strong>
-                    <span class="badge bg-secondary" style="font-size:13px; padding:4px 10px;">{{ $fase->fogli_scarto ?? 0 }}</span>
+                    <span class="badge bg-secondary" style="font-size:15px; padding:5px 12px;">{{ $fase->fogli_scarto ?? 0 }}</span>
                 </div>
                 <div><strong>Scarti Reali:</strong>
-                    <input type="number" min="0" style="width:80px; padding:3px 6px; font-size:14px; border:1px solid #ced4da; border-radius:4px;"
+                    <input type="number" min="0" style="width:90px; padding:5px 8px; font-size:16px; border:1px solid #ced4da; border-radius:4px;"
                            value="{{ $fase->scarti ?? '' }}"
                            onchange="salvaScartiEtichetta({{ $fase->id }}, this.value)"
                            onkeydown="if(event.key==='Enter'){this.blur();}">
