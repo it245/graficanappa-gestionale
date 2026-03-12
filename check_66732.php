@@ -4,8 +4,15 @@ $app = require_once __DIR__ . '/bootstrap/app.php';
 $app->make('Illuminate\Contracts\Console\Kernel')->bootstrap();
 
 echo "=== ONDA: Commessa 66732 ===\n";
+// Prima scopriamo le colonne disponibili
+$colsR = DB::connection('onda')->select(
+    "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'ATTDocRighe' ORDER BY ORDINAL_POSITION"
+);
+echo "Colonne ATTDocRighe: ";
+echo implode(', ', array_map(fn($c) => $c->COLUMN_NAME, $colsR)) . "\n\n";
+
 $righe = DB::connection('onda')->select(
-    "SELECT r.CodCommessa, r.CodArticolo, r.Descrizione, r.Quantita, r.UM, r.DataConsegna, r.Note, t.ClienteDescrizione, t.DataRegistrazione
+    "SELECT r.CodCommessa, r.Descrizione, r.Quantita, r.UM, r.DataConsegna, r.Note, t.ClienteDescrizione, t.DataRegistrazione
      FROM ATTDocRighe r
      JOIN ATTDocTeste t ON r.IdDoc = t.IdDoc
      WHERE r.CodCommessa LIKE '%66732%'
@@ -18,7 +25,6 @@ if (empty($righe)) {
     foreach ($righe as $r) {
         echo "Commessa: {$r->CodCommessa}\n";
         echo "  Cliente: {$r->ClienteDescrizione}\n";
-        echo "  Articolo: {$r->CodArticolo}\n";
         echo "  Descrizione: {$r->Descrizione}\n";
         echo "  Qta: {$r->Quantita} {$r->UM}\n";
         echo "  Data Consegna: {$r->DataConsegna}\n";
