@@ -48,11 +48,8 @@ class EtichettaController extends Controller
         // Per altri clienti: articolo = descrizione ordine (precompilato)
         $articoloDefault = $ordine->descrizione ?? '';
 
-        // Cerca EAN già salvato per questo articolo (non-IC)
+        // EAN precompilato solo per IC (gli altri inseriscono manualmente)
         $eanSalvato = null;
-        if (!$isItalianaConfetti && $articoloDefault) {
-            $eanSalvato = EanProdotto::where('articolo', $articoloDefault)->first();
-        }
 
         // Trova la fase specifica dell'operatore (da query param o fallback)
         $operatore = $request->attributes->get('operatore') ?? auth()->guard('operatore')->user();
