@@ -87,6 +87,9 @@ class DashboardOperatoreController extends Controller
         $showFustella = true;
         $showEsterno = !empty(array_intersect($nomiReparti, ['spedizione']));
         $isFustellaOperatore = !empty(array_intersect($nomiReparti, ['fustella piana', 'fustella cilindrica']));
+        $showScarti = !empty(array_intersect($nomiReparti, ['stampa offset']));
+        $repartiConHamburger = ['legatoria', 'finestratura', 'tagliacarte', 'piegaincolla'];
+        $showHamburger = !empty(array_intersect($nomiReparti, $repartiConHamburger));
 
         // Raggruppa fasi per reparto (per operatori multi-reparto)
         $repartiOperatore = $operatore->reparti->sortBy('nome');
@@ -112,7 +115,7 @@ class DashboardOperatoreController extends Controller
             ->orderByDesc('data_fine')
             ->get();
 
-        return view('operatore.dashboard', compact('fasiVisibili', 'operatore', 'fasiPerReparto', 'showColori', 'showFustella', 'showEsterno', 'fasiTerminate', 'isFustellaOperatore'));
+        return view('operatore.dashboard', compact('fasiVisibili', 'operatore', 'fasiPerReparto', 'showColori', 'showFustella', 'showEsterno', 'fasiTerminate', 'isFustellaOperatore', 'showScarti', 'showHamburger'));
     }
 
     /**

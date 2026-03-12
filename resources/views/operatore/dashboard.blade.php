@@ -171,7 +171,7 @@
             <a href="{{ route('operatore.fustelle', ['op_token' => request('op_token')]) }}"
                title="Fustelle"
                style="font-size:28px; text-decoration:none; margin-right:15px;">&#9881;</a>
-        @else
+        @elseif($showHamburger ?? false)
             <span title="Storico fasi terminate"
                   style="font-size:28px; cursor:pointer; user-select:none; margin-right:15px;"
                   data-bs-toggle="offcanvas" data-bs-target="#offcanvasStorico">&#9776;</span>
@@ -303,6 +303,7 @@
                     <th>UM</th>
                     <th>Data Prevista Consegna</th>
                     <th>Qta Prodotta</th>
+                    @if($showScarti ?? false)<th>Scarti Reali</th><th>Scarti Prinect</th>@endif
                     <th>Codice Carta</th>
                     <th>Carta</th>
                     <th>Quantità Carta</th>
@@ -439,6 +440,29 @@ function resetFiltri(el) {
     bar.querySelector('.filtro-cliente').value = '';
     bar.querySelector('.filtro-descrizione').value = '';
     applicaFiltri(el);
+}
+
+function salvaScarti(faseId, valore) {
+    fetch('{{ route("produzione.aggiornaCampo") }}', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': window.csrfToken(),
+            'X-Op-Token': window.opToken(),
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({ fase_id: faseId, campo: 'scarti', valore: valore })
+    }).then(function(r) {
+        if (r.ok) {
+            var input = document.querySelector('#fase-' + faseId + ' input[onchange*="salvaScarti"]');
+            if (input) {
+                input.style.borderColor = '#28a745';
+                setTimeout(function() { input.style.borderColor = '#ced4da'; }, 1500);
+            }
+        } else {
+            alert('Errore nel salvataggio');
+        }
+    }).catch(function() { alert('Errore di connessione'); });
 }
 
 function salvaQtaProd(faseId, valore) {

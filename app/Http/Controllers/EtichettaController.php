@@ -22,6 +22,9 @@ class EtichettaController extends Controller
         // Verifica se è Italiana Confetti (confronto case-insensitive)
         $isItalianaConfetti = str_contains(strtolower($cliente), 'italiana confetti');
 
+        // Verifica se è Tifata Plastica
+        $isTifataPlastica = str_contains(strtolower($cliente), 'tifata');
+
         // Clienti con etichetta semplificata (solo Pz x cassa, Lotto, Data)
         $clientiSemplici = [
             'comprof', 'horecapp', 'promocart', 'bpack communication',
@@ -52,7 +55,7 @@ class EtichettaController extends Controller
 
         return view('operatore.etichetta', compact(
             'ordine', 'lotto', 'cliente', 'data',
-            'isItalianaConfetti', 'isSimpleLabel', 'eanProdotti', 'articoloDefault', 'eanSalvato'
+            'isItalianaConfetti', 'isSimpleLabel', 'isTifataPlastica', 'eanProdotti', 'articoloDefault', 'eanSalvato'
         ));
     }
 

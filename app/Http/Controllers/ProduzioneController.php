@@ -231,7 +231,7 @@ public function aggiornaCampo(Request $request)
 {
     $validator = Validator::make($request->all(), [
         'fase_id' => 'required|exists:ordine_fasi,id',
-        'campo'   => 'required|string|in:qta_prod,note',
+        'campo'   => 'required|string|in:qta_prod,note,scarti',
         'valore'  => 'nullable'
     ]);
 

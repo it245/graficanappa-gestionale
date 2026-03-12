@@ -50,6 +50,17 @@
                onchange="salvaQtaProd({{ $fase->id }}, this.value)"
                onkeydown="if(event.key==='Enter'){this.blur();}">
     </td>
+    @if($showScarti ?? false)
+    <td>
+        <input type="number" min="0" style="width:70px; padding:2px 4px; font-size:13px; border:1px solid #ced4da; border-radius:3px;"
+               value="{{ $fase->scarti ?? '' }}"
+               onchange="salvaScarti({{ $fase->id }}, this.value)"
+               onkeydown="if(event.key==='Enter'){this.blur();}">
+    </td>
+    <td style="text-align:center; font-weight:bold; color:#6c757d;">
+        {{ $fase->fogli_scarto ?? '-' }}
+    </td>
+    @endif
     <td>{{ $fase->ordine->cod_carta ?? '-' }}</td>
     <td>{{ $fase->ordine->carta ?? '-' }}</td>
     <td>{{ $fase->ordine->qta_carta ?? '-' }}</td>
