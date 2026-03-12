@@ -181,12 +181,10 @@
                             {{-- Scarti Prinect + Scarti Reali --}}
                             <div class="mt-3 p-2" style="background:#f8f9fa; border-radius:6px;">
                                 <div class="d-flex align-items-center gap-3 flex-wrap">
-                                    @if($fase->fogli_scarto)
                                     <div>
                                         <strong style="font-size:15px;">Scarti Prinect:</strong>
-                                        <span class="badge bg-secondary" style="font-size:14px; padding:6px 12px;">{{ $fase->fogli_scarto }}</span>
+                                        <span class="badge bg-secondary" style="font-size:14px; padding:6px 12px;">{{ $fase->fogli_scarto ?? 0 }}</span>
                                     </div>
-                                    @endif
                                     <div>
                                         <strong style="font-size:15px;">Scarti Reali:</strong>
                                         <input type="number" min="0" style="width:100px; padding:4px 8px; font-size:15px; border:1px solid #ced4da; border-radius:4px;"
