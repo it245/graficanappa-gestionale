@@ -12,11 +12,13 @@ echo "Colonne ATTDocRighe: ";
 echo implode(', ', array_map(fn($c) => $c->COLUMN_NAME, $colsR)) . "\n\n";
 
 $righe = DB::connection('onda')->select(
-    "SELECT r.CodCommessa, r.Descrizione, r.Quantita, r.UM, r.DataConsegna, r.Note, t.ClienteDescrizione, t.DataRegistrazione
+    "SELECT r.CodCommessa, r.CodArt, r.Descrizione, r.Qta, r.CodUnMis, r.DataConsegna, r.DataPresConsegna,
+            r.OC_Tiratura, r.OC_Pagine, r.OC_Base, r.OC_Altezza, r.Priorita,
+            t.ClienteDescrizione, t.DataRegistrazione
      FROM ATTDocRighe r
      JOIN ATTDocTeste t ON r.IdDoc = t.IdDoc
      WHERE r.CodCommessa LIKE '%66732%'
-     ORDER BY r.CodCommessa"
+     ORDER BY r.CodCommessa, r.NrRiga"
 );
 
 if (empty($righe)) {
@@ -25,11 +27,14 @@ if (empty($righe)) {
     foreach ($righe as $r) {
         echo "Commessa: {$r->CodCommessa}\n";
         echo "  Cliente: {$r->ClienteDescrizione}\n";
+        echo "  CodArt: {$r->CodArt}\n";
         echo "  Descrizione: {$r->Descrizione}\n";
-        echo "  Qta: {$r->Quantita} {$r->UM}\n";
+        echo "  Qta: {$r->Qta} {$r->CodUnMis}\n";
+        echo "  Tiratura: {$r->OC_Tiratura} | Pagine: {$r->OC_Pagine} | Base: {$r->OC_Base} | Alt: {$r->OC_Altezza}\n";
         echo "  Data Consegna: {$r->DataConsegna}\n";
+        echo "  Data Pres Consegna: {$r->DataPresConsegna}\n";
         echo "  Data Reg: {$r->DataRegistrazione}\n";
-        echo "  Note: {$r->Note}\n";
+        echo "  Priorita: {$r->Priorita}\n";
         echo "---\n";
     }
 }
