@@ -381,7 +381,15 @@ function applicaFiltri(el) {
         var clienteCell = riga.querySelector('.td-cliente');
         var descCell = riga.querySelector('.td-descrizione');
 
-        var statoOk = !filtroStato || (statoCell && statoCell.textContent.trim() === filtroStato);
+        // Le fasi in pausa sono sempre visibili (stato non numerico = motivo pausa)
+        var statoText = statoCell ? statoCell.textContent.trim() : '';
+        var inPausa = statoText !== '' && isNaN(statoText) && statoText !== '0' && statoText !== '1' && statoText !== '2' && statoText !== '3' && statoText !== '4';
+        if (inPausa) {
+            riga.style.display = '';
+            return;
+        }
+
+        var statoOk = !filtroStato || (statoCell && statoText === filtroStato);
         var faseOk = !filtroFase || (faseCell && faseCell.textContent.trim() === filtroFase);
         var clienteOk = !filtroCliente || (clienteCell && clienteCell.textContent.toLowerCase().includes(filtroCliente));
         var descOk = !filtroDescrizione || (descCell && descCell.textContent.toLowerCase().includes(filtroDescrizione));
