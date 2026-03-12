@@ -99,7 +99,7 @@ class DashboardOperatoreController extends Controller
         $showEsterno = !empty(array_intersect($nomiReparti, ['spedizione']));
         $isFustellaOperatore = !empty(array_intersect($nomiReparti, ['fustella piana', 'fustella cilindrica']));
         $showScarti = !empty(array_intersect($nomiReparti, ['stampa offset']));
-        $repartiConHamburger = ['legatoria', 'finestratura', 'tagliacarte', 'piegaincolla'];
+        $repartiConHamburger = ['legatoria', 'finestratura', 'tagliacarte', 'piegaincolla', 'stampa offset'];
         $showHamburger = !empty(array_intersect($nomiReparti, $repartiConHamburger));
 
         // Raggruppa fasi per reparto (per operatori multi-reparto)
