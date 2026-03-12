@@ -305,8 +305,8 @@
     @endif
     @if($isTifataPlastica ?? false)
     {{-- TIFATA PLASTICA: descrizione sopra, lotto/qta/data affiancati, no EAN/DataMatrix --}}
-    <div style="margin-top: 18mm; margin-bottom: 5mm; font-size: 16pt; font-weight: bold; text-align: center;" id="print-descrizione-tifata">{{ $ordine->descrizione ?? '' }}</div>
-    <div style="display: flex; justify-content: space-between; align-items: center; gap: 3mm; font-size: 11pt;">
+    <div style="margin-top: 30mm; margin-bottom: 8mm; font-size: 22pt; font-weight: bold; text-align: center; text-transform: uppercase;" id="print-descrizione-tifata">{{ $ordine->descrizione ?? '' }}</div>
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 5mm; font-size: 18pt; font-weight: bold;">
         <div><span class="label">Lotto:</span> <span id="print-lotto">{{ $lotto }}</span></div>
         <div><span class="label">Pz x cassa:</span> <span id="print-pzcassa"></span></div>
         <div><span class="label">Data:</span> <span id="print-data">{{ $data }}</span></div>
