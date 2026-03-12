@@ -370,7 +370,9 @@ function aggiornaAnteprima() {
     var lotto = document.getElementById('campo-lotto').value;
     var data = document.getElementById('campo-data').value;
 
-    @if(!$isSimpleLabel)
+    @if($isTifataPlastica ?? false)
+    // Tifata: aggiorna solo descrizione (già precompilata)
+    @elseif(!$isSimpleLabel)
     document.getElementById('print-cliente').textContent = cliente;
     document.getElementById('print-articolo').textContent = articolo;
     // Auto-ridimensiona articolo se troppo lungo
