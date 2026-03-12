@@ -178,7 +178,8 @@
                                 </div>
                             </div>
 
-                            {{-- Scarti Prinect + Scarti Reali --}}
+                            {{-- Scarti Prinect + Scarti Reali (solo stampa offset) --}}
+                            @if(strtolower(optional(optional($fase->faseCatalogo)->reparto)->nome ?? '') === 'stampa offset')
                             <div class="mt-3 p-2" style="background:#f8f9fa; border-radius:6px;">
                                 <div class="d-flex align-items-center gap-3 flex-wrap">
                                     <div>
@@ -194,6 +195,7 @@
                                     </div>
                                 </div>
                             </div>
+                            @endif
                         </div>
                         <div class="azioni-cerchi" id="azioni-fase-{{ $fase->id }}">
                             {{-- Tutti e 3 i bottoni sempre visibili --}}
