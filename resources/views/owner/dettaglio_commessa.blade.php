@@ -61,12 +61,14 @@
     th:nth-child(4), td:nth-child(4) { width: 100px; }
     th:nth-child(5), td:nth-child(5) { width: 80px; text-align: center; }
     th:nth-child(6), td:nth-child(6) { width: 80px; text-align: center; }
-    th:nth-child(7), td:nth-child(7) { width: 120px; }
-    th:nth-child(8), td:nth-child(8) { width: 100px; }
-    th:nth-child(9), td:nth-child(9) { width: 180px; }
-    th:nth-child(10), td:nth-child(10) { width: 110px; }
-    th:nth-child(11), td:nth-child(11) { width: 110px; }
-    th:nth-child(12), td:nth-child(12) { width: 50px; text-align: center; }
+    th:nth-child(7), td:nth-child(7) { width: 65px; text-align: center; }
+    th:nth-child(8), td:nth-child(8) { width: 65px; text-align: center; }
+    th:nth-child(9), td:nth-child(9) { width: 120px; }
+    th:nth-child(10), td:nth-child(10) { width: 100px; }
+    th:nth-child(11), td:nth-child(11) { width: 180px; }
+    th:nth-child(12), td:nth-child(12) { width: 110px; }
+    th:nth-child(13), td:nth-child(13) { width: 110px; }
+    th:nth-child(14), td:nth-child(14) { width: 50px; text-align: center; }
     .btn-elimina {
         background: #dc3545;
         color: #fff;
@@ -243,6 +245,8 @@
                 <th>Reparto</th>
                 <th>Qta Carta</th>
                 <th>Qta Prod.</th>
+                <th>Scarti P.</th>
+                <th>Scarti R.</th>
                 <th>Operatori</th>
                 <th>Note</th>
                 <th>Descrizione</th>
@@ -264,6 +268,8 @@
                 <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'reparto', this.innerText)">{{ $fase->reparto_nome ?? '-' }}</td>
                 <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'qta_carta', this.innerText)">{{ $fase->ordine->qta_carta ?? '-' }}</td>
                 <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'qta_prod', this.innerText)">{{ $fase->qta_prod ?? '-' }}</td>
+                <td style="text-align:center;">{{ $fase->fogli_scarto ?? '-' }}</td>
+                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'scarti', this.innerText)" style="text-align:center;">{{ $fase->scarti ?? '-' }}</td>
                 <td>
                     @forelse($fase->operatori as $op)
                         {{ $op->nome }} {{ $op->cognome }}@if(!$loop->last), @endif

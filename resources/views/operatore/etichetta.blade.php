@@ -338,95 +338,106 @@
 
 {{-- COLONNA DESTRA: Card gestione fase --}}
 @if(($fasiOperatore ?? collect())->isNotEmpty())
-<div style="flex:1; min-width:0; max-width:700px;">
+<div style="flex:0 0 420px; position:sticky; top:10px;">
     <style>
-    .azioni-cerchi-et { display:flex; flex-direction:column; gap:10px; margin-left:20px; }
-    .azioni-cerchi-et label { display:inline-flex; justify-content:center; align-items:center; width:75px; height:75px; border-radius:50%; color:#fff; font-weight:bold; font-size:12px; cursor:pointer; user-select:none; }
-    .azioni-cerchi-et .badge-avvia { background-color:#28a745; }
-    .azioni-cerchi-et .badge-pausa { background-color:#ffc107; }
-    .azioni-cerchi-et .badge-termina { background-color:#dc3545; }
-    .azioni-cerchi-et input[type="checkbox"] { display:none; }
-    .azioni-cerchi-et input[type="checkbox"]:checked + label { opacity:0.7; box-shadow:inset 0 0 2px rgba(0,0,0,0.5); }
-    @keyframes lampeggio-et { 0%,100%{opacity:1;background-color:#28a745;} 50%{opacity:0.3;background-color:#ff6600;} }
-    .azioni-cerchi-et .badge-avvia.lampeggia { animation:lampeggio-et 1s ease-in-out infinite; }
+    .azioni-btn-et { display:flex; gap:8px; justify-content:center; padding:12px 0; }
+    .azioni-btn-et label {
+        display:inline-flex; justify-content:center; align-items:center;
+        width:90px; height:90px; border-radius:50%; color:#fff;
+        font-weight:bold; font-size:13px; cursor:pointer; user-select:none;
+        box-shadow: 0 3px 8px rgba(0,0,0,0.2); transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .azioni-btn-et label:hover { transform:scale(1.08); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+    .azioni-btn-et label:active { transform:scale(0.95); }
+    .azioni-btn-et .badge-avvia { background: linear-gradient(135deg, #28a745, #20c040); }
+    .azioni-btn-et .badge-pausa { background: linear-gradient(135deg, #ffc107, #ffb300); color:#333; }
+    .azioni-btn-et .badge-termina { background: linear-gradient(135deg, #dc3545, #c82333); }
+    .azioni-btn-et input[type="checkbox"] { display:none; }
+    .azioni-btn-et input[type="checkbox"]:checked + label { opacity:0.7; box-shadow:inset 0 0 3px rgba(0,0,0,0.5); transform:scale(0.95); }
+    @keyframes lampeggio-et { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+    .azioni-btn-et .badge-avvia.lampeggia { animation:lampeggio-et 1s ease-in-out infinite; }
+    .card-fase-et { border-radius:12px; overflow:hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.1); border:none; }
+    .card-fase-et .card-header { border-radius:0; border-bottom:none; padding:10px 16px; }
+    .card-fase-et .card-body { padding:12px 16px; }
     </style>
 
-    {{-- Card per ogni fase dell'operatore (identica a commesse/show) --}}
+    {{-- Card per ogni fase dell'operatore --}}
     @foreach($fasiOperatore as $fase)
     @php $badgeBg = [0=>'bg-secondary',1=>'bg-info',2=>'bg-warning text-dark',3=>'bg-success']; @endphp
-    <div class="card border-primary mb-3">
-        <div class="card-header bg-primary text-white">
-            <strong>{{ $fase->faseCatalogo->nome_display ?? '-' }}</strong>
-            <span class="badge {{ $badgeBg[$fase->stato] ?? 'bg-dark' }} ms-2 fs-5" id="badge-fase-{{ $fase->id }}">{{ $fase->stato }}</span>
-            <span class="ms-2" id="operatori-fase-{{ $fase->id }}">
+    <div class="card card-fase-et mb-3">
+        <div class="card-header bg-primary text-white d-flex align-items-center justify-content-between">
+            <div>
+                <strong style="font-size:16px;">{{ $fase->faseCatalogo->nome_display ?? '-' }}</strong>
+                <span class="badge {{ $badgeBg[$fase->stato] ?? 'bg-dark' }} ms-2 fs-6" id="badge-fase-{{ $fase->id }}">{{ $fase->stato }}</span>
+            </div>
+            <div id="operatori-fase-{{ $fase->id }}">
                 @foreach($fase->operatori as $op)
-                    <small class="badge bg-light text-dark">{{ $op->nome }} ({{ $op->pivot->data_inizio ? \Carbon\Carbon::parse($op->pivot->data_inizio)->format('d/m/Y H:i:s') : '-' }})</small>
+                    <small class="badge bg-light text-dark">{{ $op->nome }}</small>
                 @endforeach
-            </span>
-        </div>
-        <div class="card-body border-bottom py-2">
-            <small class="text-muted">{{ $fase->ordine->descrizione ?? $ordine->descrizione ?? '-' }}</small>
-        </div>
-        <div class="card-body d-flex align-items-start gap-3">
-            <div class="flex-grow-1">
-                {{-- Informazioni generali / per fasi successive --}}
-                <div>
-                    <label><strong>Informazioni generali / per fasi successive:</strong></label>
-                    @if(!empty($righeFS))
-                        <div class="mb-2" style="max-height:150px; overflow-y:auto; background:#f8f9fa; border-radius:4px; padding:8px; font-size:13px;">
-                            @foreach($righeFS as $riga)
-                                <div class="mb-1">
-                                    <small class="text-muted">{{ $riga['data'] ?? '' }}</small>
-                                    <strong>{{ $riga['reparto'] ?? '' }} - {{ $riga['nome'] ?? '' }}:</strong>
-                                    {{ $riga['testo'] ?? '' }}
-                                </div>
-                            @endforeach
-                        </div>
-                    @else
-                        <div class="mb-2 text-muted" style="font-size:13px;">Nessuna nota</div>
-                    @endif
-                    <div class="d-flex gap-2">
-                        <textarea id="nuova-nota-fs-{{ $fase->id }}" class="form-control form-control-sm" rows="1"
-                                  placeholder="Scrivi una nota..."></textarea>
-                        <button type="button" class="btn btn-sm btn-outline-primary" style="white-space:nowrap"
-                                onclick="inviaNotaFS({{ $ordine->id }}, {{ $fase->id }})">Invia</button>
-                    </div>
-                </div>
-
-                {{-- Scarti (solo stampa offset) --}}
-                @if(strtolower(optional(optional($fase->faseCatalogo)->reparto)->nome ?? '') === 'stampa offset')
-                <div class="mt-3 p-2" style="background:#f8f9fa; border-radius:6px;">
-                    <div class="d-flex align-items-center gap-3 flex-wrap">
-                        <div>
-                            <strong style="font-size:15px;">Scarti Prinect:</strong>
-                            <span class="badge bg-secondary" style="font-size:14px; padding:6px 12px;">{{ $fase->fogli_scarto ?? 0 }}</span>
-                        </div>
-                        <div>
-                            <strong style="font-size:15px;">Scarti Reali:</strong>
-                            <input type="number" min="0" style="width:100px; padding:4px 8px; font-size:15px; border:1px solid #ced4da; border-radius:4px;"
-                                   value="{{ $fase->scarti ?? '' }}"
-                                   onchange="salvaScartiEtichetta({{ $fase->id }}, this.value)"
-                                   onkeydown="if(event.key==='Enter'){this.blur();}">
-                        </div>
-                    </div>
-                </div>
-                @endif
             </div>
-            <div class="azioni-cerchi-et">
-                <input type="checkbox" id="avvia-{{ $fase->id }}" onchange="aggiornaStatoEt({{ $fase->id }}, 'avvia', this.checked)">
-                <label for="avvia-{{ $fase->id }}" class="badge-avvia{{ $fase->stato == 2 ? ' lampeggia' : '' }}">{{ $fase->stato == 2 ? 'Avviato' : 'Avvia' }}</label>
+        </div>
 
-                <input type="checkbox" id="pausa-{{ $fase->id }}" onchange="gestisciPausaEt({{ $fase->id }}, this.checked)">
-                <label for="pausa-{{ $fase->id }}" class="badge-pausa">Pausa</label>
+        {{-- Descrizione --}}
+        <div class="card-body py-2" style="background:#f0f4ff; font-size:13px;">
+            {{ $fase->ordine->descrizione ?? $ordine->descrizione ?? '-' }}
+        </div>
 
-                <input type="checkbox" id="termina-{{ $fase->id }}"
-                       data-qta-fase="{{ $ordine->qta_richiesta ?? 0 }}"
-                       data-fogli-buoni="{{ $fase->fogli_buoni ?? 0 }}"
-                       data-fogli-scarto="{{ $fase->fogli_scarto ?? 0 }}"
-                       data-qta-prod="{{ $fase->qta_prod ?? 0 }}"
-                       onchange="aggiornaStatoEt({{ $fase->id }}, 'termina', this.checked)">
-                <label for="termina-{{ $fase->id }}" class="badge-termina">Termina</label>
+        {{-- Note fasi successive --}}
+        <div class="card-body">
+            <label class="fw-bold" style="font-size:13px;">Info per fasi successive</label>
+            @if(!empty($righeFS))
+                <div class="mb-2" style="max-height:120px; overflow-y:auto; background:#f8f9fa; border-radius:6px; padding:8px; font-size:12px;">
+                    @foreach($righeFS as $riga)
+                        <div class="mb-1">
+                            <small class="text-muted">{{ $riga['data'] ?? '' }}</small>
+                            <strong>{{ $riga['reparto'] ?? '' }} - {{ $riga['nome'] ?? '' }}:</strong>
+                            {{ $riga['testo'] ?? '' }}
+                        </div>
+                    @endforeach
+                </div>
+            @else
+                <div class="mb-2 text-muted" style="font-size:12px;">Nessuna nota</div>
+            @endif
+            <div class="d-flex gap-2">
+                <textarea id="nuova-nota-fs-{{ $fase->id }}" class="form-control form-control-sm" rows="1"
+                          placeholder="Scrivi una nota..." style="font-size:12px;"></textarea>
+                <button type="button" class="btn btn-sm btn-outline-primary" style="white-space:nowrap; font-size:12px;"
+                        onclick="inviaNotaFS({{ $ordine->id }}, {{ $fase->id }})">Invia</button>
             </div>
+        </div>
+
+        {{-- Scarti (solo stampa offset) --}}
+        @if(strtolower(optional(optional($fase->faseCatalogo)->reparto)->nome ?? '') === 'stampa offset')
+        <div class="card-body pt-0">
+            <div class="d-flex align-items-center gap-3" style="font-size:14px;">
+                <div><strong>Scarti Prinect:</strong>
+                    <span class="badge bg-secondary" style="font-size:13px; padding:4px 10px;">{{ $fase->fogli_scarto ?? 0 }}</span>
+                </div>
+                <div><strong>Scarti Reali:</strong>
+                    <input type="number" min="0" style="width:80px; padding:3px 6px; font-size:14px; border:1px solid #ced4da; border-radius:4px;"
+                           value="{{ $fase->scarti ?? '' }}"
+                           onchange="salvaScartiEtichetta({{ $fase->id }}, this.value)"
+                           onkeydown="if(event.key==='Enter'){this.blur();}">
+                </div>
+            </div>
+        </div>
+        @endif
+
+        {{-- Pulsanti Avvia / Pausa / Termina --}}
+        <div class="azioni-btn-et">
+            <input type="checkbox" id="avvia-{{ $fase->id }}" onchange="aggiornaStatoEt({{ $fase->id }}, 'avvia', this.checked)">
+            <label for="avvia-{{ $fase->id }}" class="badge-avvia{{ $fase->stato == 2 ? ' lampeggia' : '' }}">{{ $fase->stato == 2 ? 'Avviato' : 'Avvia' }}</label>
+
+            <input type="checkbox" id="pausa-{{ $fase->id }}" onchange="gestisciPausaEt({{ $fase->id }}, this.checked)">
+            <label for="pausa-{{ $fase->id }}" class="badge-pausa">Pausa</label>
+
+            <input type="checkbox" id="termina-{{ $fase->id }}"
+                   data-qta-fase="{{ $ordine->qta_richiesta ?? 0 }}"
+                   data-fogli-buoni="{{ $fase->fogli_buoni ?? 0 }}"
+                   data-fogli-scarto="{{ $fase->fogli_scarto ?? 0 }}"
+                   data-qta-prod="{{ $fase->qta_prod ?? 0 }}"
+                   onchange="aggiornaStatoEt({{ $fase->id }}, 'termina', this.checked)">
+            <label for="termina-{{ $fase->id }}" class="badge-termina">Termina</label>
         </div>
     </div>
     @endforeach
