@@ -23,20 +23,12 @@ class CommessaController extends Controller
         $ordine = $ordini->first();
 
         // Raccoglie TUTTE le fasi da tutti gli ordini
-        // Dedup TAGLIACARTE: ne basta una per commessa (fisicamente è un'unica operazione)
-        $tagliacarteVista = false;
         $tutteLeFasi = $ordini->flatMap(function ($o) {
             return $o->fasi->map(function ($fase) use ($o) {
                 $fase->ordine_descrizione = $o->descrizione;
                 return $fase;
             });
-        })->filter(function ($fase) use (&$tagliacarteVista) {
-            if (strtoupper($fase->fase) === 'TAGLIACARTE') {
-                if ($tagliacarteVista) return false;
-                $tagliacarteVista = true;
-            }
-            return true;
-        })->values();
+        });
 
         // Sostituisci la relazione fasi con tutte le fasi combinate
         $ordine->setRelation('fasi', $tutteLeFasi);
