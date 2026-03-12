@@ -141,8 +141,13 @@ class ProduzioneController extends Controller
         ]);
     }
 
-    // Ricalcola stati fasi successive della stessa commessa
-    FaseStatoService::ricalcolaStati($fase->ordine_id);
+    // Ricalcola stati fasi successive di tutta la commessa (non solo questo ordine)
+    $commessa = $fase->ordine->commessa ?? null;
+    if ($commessa) {
+        FaseStatoService::ricalcolaCommessa($commessa);
+    } else {
+        FaseStatoService::ricalcolaStati($fase->ordine_id);
+    }
 
     return response()->json([
         'success' => true,
