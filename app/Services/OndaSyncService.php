@@ -478,7 +478,8 @@ class OndaSyncService
                 if (isset($fasiViste[$chiaveFase])) continue;
                 $fasiViste[$chiaveFase] = true;
 
-                $repartoNome = $mappaReparti[$faseNome] ?? 'generico';
+                $repartoNome = $mappaReparti[$faseNome]
+                    ?? (str_starts_with(strtoupper($faseNome), 'EXT') ? 'esterno' : 'legatoria');
                 $tipo = $tipiFase[$faseNome] ?? 'monofase';
                 $prioritaFase = $mappaPriorita[$faseNome] ?? 500;
 
@@ -711,6 +712,7 @@ class OndaSyncService
                     'priorita'         => $prioritaFase,
                     'stato'            => 0,
                     'scarti_previsti'   => $scartiMacchine[trim($riga->CodMacchina ?? '')] ?? null,
+                    'esterno'          => $repartoNome === 'esterno',
                 ];
 
                 // Se la fase è stata rimappata da STAMPA generico, aggiorna la fase esistente
@@ -992,7 +994,8 @@ class OndaSyncService
                 if (isset($fasiViste[$chiaveFase])) continue;
                 $fasiViste[$chiaveFase] = true;
 
-                $repartoNome = $mappaReparti[$faseNome] ?? 'generico';
+                $repartoNome = $mappaReparti[$faseNome]
+                    ?? (str_starts_with(strtoupper($faseNome), 'EXT') ? 'esterno' : 'legatoria');
                 $tipo = $tipiFase[$faseNome] ?? 'monofase';
                 $prioritaFase = $mappaPriorita[$faseNome] ?? 500;
 
@@ -1062,6 +1065,7 @@ class OndaSyncService
                     'priorita'         => $prioritaFase,
                     'stato'            => 0,
                     'scarti_previsti'   => $scartiMacchine[trim($riga->CodMacchina ?? '')] ?? null,
+                    'esterno'          => $repartoNome === 'esterno',
                 ];
 
                 // Rimappa STAMPA generico
@@ -1387,6 +1391,9 @@ class OndaSyncService
             'STAMPACALDOJOHEST' => 'esterno',
             'BROSSFRESATA/A5EST' => 'esterno',
             'PIEGA6ANTESINGOLO' => 'legatoria',
+            'PIEGA4ANTESINGOLO' => 'legatoria',
+            'PMDUPLO40AUTO' => 'legatoria',
+            'BROSSPUR' => 'legatoria',
 
             // Fasi con "est" nel nome o prefisso "EXT" → esterno
             'est STAMPACALDOJOH' => 'esterno',
