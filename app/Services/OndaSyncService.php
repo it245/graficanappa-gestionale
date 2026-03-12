@@ -454,6 +454,10 @@ class OndaSyncService
                 // Rimappa STAMPA generico in base alla macchina assegnata in Onda
                 if ($faseNome === 'STAMPA') {
                     $macchina = trim($riga->CodMacchina ?? '');
+                    // "NO STAMPA" = nessuna stampa, skip fase
+                    if (stripos($macchina, 'NO STAMPA') !== false || $macchina === 'NO STAMPA') {
+                        continue;
+                    }
                     if (stripos($macchina, 'INDIGO') !== false) {
                         // HPINDIGOCO → STAMPAINDIGO, HPINDIGOBN → STAMPAINDIGOBN
                         if (stripos($macchina, 'BN') !== false || stripos($macchina, 'MONO') !== false) {
