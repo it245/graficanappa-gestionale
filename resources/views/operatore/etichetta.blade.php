@@ -233,6 +233,12 @@
                 <button type="button" class="btn btn-sm btn-outline-danger ms-2" onclick="clearEan()">X</button>
             </div>
         </div>
+    @elseif($isTifataPlastica ?? false)
+        {{-- TIFATA PLASTICA: solo articolo, senza EAN --}}
+        <div class="mb-3">
+            <label class="form-label">Articolo</label>
+            <input type="text" id="campo-articolo-manuale" class="form-control" value="{{ $articoloDefault }}">
+        </div>
     @else
         {{-- ALTRI CLIENTI: articolo da descrizione + scansione/input EAN --}}
         <div class="mb-3">
@@ -298,19 +304,12 @@
     <div class="articolo-row" id="print-descrizione-simple" style="font-size: 14pt;">{{ $ordine->descrizione ?? '' }}</div>
     @endif
     @if($isTifataPlastica ?? false)
-    {{-- TIFATA PLASTICA: descrizione sopra, lotto/qta/data affiancati --}}
+    {{-- TIFATA PLASTICA: descrizione sopra, lotto/qta/data affiancati, no EAN/DataMatrix --}}
     <div style="margin-bottom: 3mm; font-size: 13pt; font-weight: bold; text-align: center;" id="print-descrizione-tifata">{{ $ordine->descrizione ?? '' }}</div>
     <div style="display: flex; justify-content: space-between; align-items: center; gap: 3mm; font-size: 11pt;">
         <div><span class="label">Lotto:</span> <span id="print-lotto">{{ $lotto }}</span></div>
         <div><span class="label">Pz x cassa:</span> <span id="print-pzcassa"></span></div>
         <div><span class="label">Data:</span> <span id="print-data">{{ $data }}</span></div>
-    </div>
-    <div style="margin-top: 3mm; display: flex; justify-content: flex-end;">
-        <div class="qr-right">
-            <canvas id="datamatrix" style="display:none;"></canvas>
-            <img id="datamatrix-img" style="width:30mm; height:30mm; image-rendering:pixelated;" />
-            <span class="ean-text" id="print-ean" style="font-size:4.5pt; max-width:30mm; word-break:break-all; text-align:center; line-height:1.2;"></span>
-        </div>
     </div>
     @else
     <div class="info-bottom" @if($isSimpleLabel) style="flex-direction: column; align-items: flex-start; font-size: 16pt;" @endif>
