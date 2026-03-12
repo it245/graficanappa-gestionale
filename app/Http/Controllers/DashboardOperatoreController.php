@@ -90,7 +90,17 @@ class DashboardOperatoreController extends Controller
 
                 return $fase;
             })
-            ->sortBy('priorita');
+            ->sortBy('priorita')
+            // Dedup TAGLIACARTE: una sola per commessa (fisicamente è un'unica operazione)
+            ->filter(function ($fase) {
+                static $tagliacarteViste = [];
+                if (strtoupper($fase->fase) === 'TAGLIACARTE') {
+                    $commessa = $fase->ordine->commessa ?? '';
+                    if (isset($tagliacarteViste[$commessa])) return false;
+                    $tagliacarteViste[$commessa] = true;
+                }
+                return true;
+            });
 
         // Flag per colonne condizionali
         $nomiReparti = $operatore->reparti->pluck('nome')->map(fn($n) => strtolower($n))->toArray();
