@@ -171,7 +171,6 @@
         body, html { margin: 0; padding: 0; }
         .etichetta-form, .no-print, .alert, .top-bar, nav, header, footer { display: none !important; }
         .container-fluid { padding: 0 !important; margin: 0 !important; }
-        .layout-due-colonne { display:block !important; padding:0 !important; }
         .etichetta-preview {
             border: none;
             margin: 0;
@@ -189,12 +188,6 @@
         }
     }
 </style>
-
-{{-- ===== LAYOUT DUE COLONNE: etichetta sx, card fase dx ===== --}}
-<div class="layout-due-colonne" style="display:flex; gap:20px; align-items:flex-start; max-width:1400px; margin:0 auto; padding:10px;">
-
-{{-- COLONNA SINISTRA: Form + Preview --}}
-<div style="flex:1; min-width:0; max-width:700px;">
 
 {{-- ===== FORM (nascosto in stampa) ===== --}}
 <div class="etichetta-form no-print">
@@ -334,12 +327,9 @@
         @endif
     </div>
     @endif
-</div>
-</div>{{-- fine colonna sinistra --}}
-
-{{-- COLONNA DESTRA: Card gestione fase --}}
+{{-- ===== PANNELLO LATERALE: Card gestione fase ===== --}}
 @if(($fasiOperatore ?? collect())->isNotEmpty())
-<div class="no-print" style="flex:0 0 420px; position:sticky; top:10px;">
+<div class="no-print" id="pannello-fase" style="position:fixed; top:10px; right:10px; width:420px; max-height:calc(100vh - 20px); overflow-y:auto; z-index:50;">
     <style>
     .azioni-btn-et { display:flex; gap:8px; justify-content:center; padding:12px 0; }
     .azioni-btn-et label {
@@ -503,9 +493,8 @@
         </div>
     </div>
 </div>
-</div>{{-- fine colonna destra --}}
+</div>{{-- fine pannello fase --}}
 @endif
-</div>{{-- fine layout due colonne --}}
 
 {{-- bwip-js CDN (barcode/DataMatrix generator) --}}
 <script src="https://cdn.jsdelivr.net/npm/bwip-js@4.5.1/dist/bwip-js-min.js"></script>
