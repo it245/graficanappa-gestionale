@@ -99,9 +99,6 @@ class DashboardOperatoreController extends Controller
         $showEsterno = !empty(array_intersect($nomiReparti, ['spedizione']));
         $isFustellaOperatore = !empty(array_intersect($nomiReparti, ['fustella piana', 'fustella cilindrica']));
         $showScarti = !empty(array_intersect($nomiReparti, ['stampa offset']));
-        $repartiConHamburger = ['legatoria', 'finestratura', 'tagliacarte', 'piegaincolla'];
-        $showHamburger = !empty(array_intersect($nomiReparti, $repartiConHamburger));
-
         // Raggruppa fasi per reparto (per operatori multi-reparto)
         $repartiOperatore = $operatore->reparti->sortBy('nome');
         $fasiPerReparto = [];
@@ -116,17 +113,7 @@ class DashboardOperatoreController extends Controller
             }
         }
 
-        // Storico fasi terminate (ultimi 30 giorni)
-        $fasiTerminate = OrdineFase::whereIn('stato', [3, 4])
-            ->whereHas('faseCatalogo', function ($q) use ($reparti) {
-                $q->whereIn('reparto_id', $reparti);
-            })
-            ->whereDate('data_fine', '>=', Carbon::today()->subDays(30))
-            ->with(['ordine', 'faseCatalogo.reparto'])
-            ->orderByDesc('data_fine')
-            ->get();
-
-        return view('operatore.dashboard', compact('fasiVisibili', 'operatore', 'fasiPerReparto', 'showColori', 'showFustella', 'showEsterno', 'fasiTerminate', 'isFustellaOperatore', 'showScarti', 'showHamburger'));
+        return view('operatore.dashboard', compact('fasiVisibili', 'operatore', 'fasiPerReparto', 'showColori', 'showFustella', 'showEsterno', 'isFustellaOperatore', 'showScarti'));
     }
 
     /**

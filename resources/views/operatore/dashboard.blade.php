@@ -171,10 +171,6 @@
             <a href="{{ route('operatore.fustelle', ['op_token' => request('op_token')]) }}"
                title="Fustelle"
                style="font-size:28px; text-decoration:none; margin-right:15px;">&#9881;</a>
-        @elseif($showHamburger ?? false)
-            <span title="Storico fasi terminate"
-                  style="font-size:28px; cursor:pointer; user-select:none; margin-right:15px;"
-                  data-bs-toggle="offcanvas" data-bs-target="#offcanvasStorico">&#9776;</span>
         @endif
     </div>
 </div>
@@ -321,45 +317,6 @@
     </div>
 @endif
 
-<!-- OFFCANVAS STORICO FASI TERMINATE -->
-<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasStorico" style="width:75vw; max-width:900px;">
-    <div class="offcanvas-header">
-        <h5 class="offcanvas-title">Storico fasi terminate (ultimi 30 giorni)</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
-    </div>
-    <div class="offcanvas-body p-0">
-        <table class="table table-bordered table-sm table-striped mb-0">
-            <thead class="table-dark">
-                <tr>
-                    <th>Commessa</th>
-                    <th>Cliente</th>
-                    <th>Fase</th>
-                    <th>Descrizione</th>
-                    <th>Data Fine</th>
-                    <th>Etichetta</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($fasiTerminate as $ft)
-                    <tr>
-                        <td>{{ $ft->ordine->commessa ?? '-' }}</td>
-                        <td>{{ $ft->ordine->cliente_nome ?? '-' }}</td>
-                        <td>{{ $ft->fase }}</td>
-                        <td style="white-space:normal; max-width:300px;">{{ Str::limit($ft->ordine->descrizione ?? '-', 80) }}</td>
-                        <td>{{ $ft->data_fine ? \Carbon\Carbon::parse($ft->data_fine)->format('d/m/Y H:i') : '-' }}</td>
-                        <td>
-                            @if($ft->ordine)
-                                <a href="{{ route('operatore.etichetta', $ft->ordine->id) }}" class="btn btn-sm btn-outline-primary" target="_blank">Stampa</a>
-                            @endif
-                        </td>
-                    </tr>
-                @empty
-                    <tr><td colspan="6" class="text-center text-muted">Nessuna fase terminata</td></tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
-</div>
 
 </div>
 
