@@ -383,6 +383,9 @@
                 @endforeach
             </span>
         </div>
+        <div class="card-body border-bottom py-2">
+            <small class="text-muted">{{ $fase->ordine->descrizione ?? '-' }}</small>
+        </div>
         <div class="card-body d-flex align-items-start gap-3">
             <div class="flex-grow-1">
                 {{-- Scarti (solo stampa offset) --}}

@@ -54,18 +54,26 @@ class EtichettaController extends Controller
             $eanSalvato = EanProdotto::where('articolo', $articoloDefault)->first();
         }
 
-        // Trova TUTTE le fasi dell'operatore per questo ordine (per le card gestione fase)
+        // Trova la fase specifica dell'operatore (da query param o fallback)
         $operatore = $request->attributes->get('operatore') ?? auth()->guard('operatore')->user();
         $repartiOperatore = $operatore?->reparti?->pluck('id')->toArray() ?? [];
 
-        $fasiOperatore = OrdineFase::where('ordine_id', $ordine->id)
-            ->whereHas('faseCatalogo', fn($q) => $q->whereIn('reparto_id', $repartiOperatore))
-            ->with(['faseCatalogo.reparto', 'operatori'])
-            ->orderBy('id')
-            ->get();
+        $faseIdParam = $request->query('fase');
 
-        // Retrocompatibilità: prima fase per variabili singole
-        $faseOperatore = $fasiOperatore->first();
+        if ($faseIdParam) {
+            // Fase specifica passata dal link della dashboard
+            $faseOperatore = OrdineFase::where('id', $faseIdParam)
+                ->with(['faseCatalogo.reparto', 'operatori', 'ordine'])
+                ->first();
+        } else {
+            // Fallback: prima fase dell'operatore per questo ordine
+            $faseOperatore = OrdineFase::where('ordine_id', $ordine->id)
+                ->whereHas('faseCatalogo', fn($q) => $q->whereIn('reparto_id', $repartiOperatore))
+                ->with(['faseCatalogo.reparto', 'operatori', 'ordine'])
+                ->first();
+        }
+
+        $fasiOperatore = collect($faseOperatore ? [$faseOperatore] : []);
 
         // Note fasi successive
         $noteFS = $ordine->note_fasi_successive ?? '';

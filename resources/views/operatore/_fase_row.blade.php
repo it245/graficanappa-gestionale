@@ -34,7 +34,7 @@
         </a>
         @php $repNomeEtichetta = strtolower(optional(optional($fase->faseCatalogo)->reparto)->nome ?? ''); @endphp
         @if(in_array($repNomeEtichetta, ['finestratura', 'legatoria', 'piegaincolla', 'tagliacarte', 'digitale']))
-        <a href="{{ route('operatore.etichetta', $fase->ordine->id) }}" class="ms-1"
+        <a href="{{ route('operatore.etichetta', $fase->ordine->id) }}?fase={{ $fase->id }}" class="ms-1"
            title="Stampa etichetta" style="text-decoration:none;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="#6c757d" viewBox="0 0 16 16"><path d="M2 1a1 1 0 0 0-1 1v4.586a1 1 0 0 0 .293.707l7 7a1 1 0 0 0 1.414 0l4.586-4.586a1 1 0 0 0 0-1.414l-7-7A1 1 0 0 0 6.586 1H2zm4 3.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/></svg></a>
         @endif
     </td>
