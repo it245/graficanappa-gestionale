@@ -189,6 +189,12 @@
     }
 </style>
 
+{{-- ===== LAYOUT DUE COLONNE: etichetta sx, card fase dx ===== --}}
+<div style="display:flex; gap:20px; align-items:flex-start; max-width:1400px; margin:0 auto; padding:10px;">
+
+{{-- COLONNA SINISTRA: Form + Preview --}}
+<div style="flex:1; min-width:0; max-width:700px;">
+
 {{-- ===== FORM (nascosto in stampa) ===== --}}
 <div class="etichetta-form no-print">
     <div class="d-flex align-items-center mb-3">
@@ -328,10 +334,11 @@
     </div>
     @endif
 </div>
+</div>{{-- fine colonna sinistra --}}
 
-{{-- ===== CARD GESTIONE FASI (nascosta in stampa) ===== --}}
+{{-- COLONNA DESTRA: Card gestione fase --}}
 @if(($fasiOperatore ?? collect())->isNotEmpty())
-<div class="no-print" style="max-width:700px; margin:20px auto;">
+<div style="flex:1; min-width:0; max-width:700px;">
     <style>
     .azioni-cerchi-et { display:flex; flex-direction:column; gap:10px; margin-left:20px; }
     .azioni-cerchi-et label { display:inline-flex; justify-content:center; align-items:center; width:75px; height:75px; border-radius:50%; color:#fff; font-weight:bold; font-size:12px; cursor:pointer; user-select:none; }
@@ -344,33 +351,7 @@
     .azioni-cerchi-et .badge-avvia.lampeggia { animation:lampeggio-et 1s ease-in-out infinite; }
     </style>
 
-    {{-- Note fasi successive (una sola volta, fuori dal loop) --}}
-    <div class="card border-secondary mb-3">
-        <div class="card-body py-2">
-            <label><strong>Informazioni generali / per fasi successive:</strong></label>
-            @if(!empty($righeFS))
-                <div class="mb-2" style="max-height:150px; overflow-y:auto; background:#f8f9fa; border-radius:4px; padding:8px; font-size:13px;">
-                    @foreach($righeFS as $riga)
-                        <div class="mb-1">
-                            <small class="text-muted">{{ $riga['data'] ?? '' }}</small>
-                            <strong>{{ $riga['reparto'] ?? '' }} - {{ $riga['nome'] ?? '' }}:</strong>
-                            {{ $riga['testo'] ?? '' }}
-                        </div>
-                    @endforeach
-                </div>
-            @else
-                <div class="mb-2 text-muted" style="font-size:13px;">Nessuna nota</div>
-            @endif
-            <div class="d-flex gap-2">
-                <textarea id="nuova-nota-fs-{{ $fasiOperatore->first()->id }}" class="form-control form-control-sm" rows="1"
-                          placeholder="Scrivi una nota..."></textarea>
-                <button type="button" class="btn btn-sm btn-outline-primary" style="white-space:nowrap"
-                        onclick="inviaNotaFS({{ $ordine->id }}, {{ $fasiOperatore->first()->id }})">Invia</button>
-            </div>
-        </div>
-    </div>
-
-    {{-- Card per ogni fase dell'operatore --}}
+    {{-- Card per ogni fase dell'operatore (identica a commesse/show) --}}
     @foreach($fasiOperatore as $fase)
     @php $badgeBg = [0=>'bg-secondary',1=>'bg-info',2=>'bg-warning text-dark',3=>'bg-success']; @endphp
     <div class="card border-primary mb-3">
@@ -384,13 +365,37 @@
             </span>
         </div>
         <div class="card-body border-bottom py-2">
-            <small class="text-muted">{{ $fase->ordine->descrizione ?? '-' }}</small>
+            <small class="text-muted">{{ $fase->ordine->descrizione ?? $ordine->descrizione ?? '-' }}</small>
         </div>
         <div class="card-body d-flex align-items-start gap-3">
             <div class="flex-grow-1">
+                {{-- Informazioni generali / per fasi successive --}}
+                <div>
+                    <label><strong>Informazioni generali / per fasi successive:</strong></label>
+                    @if(!empty($righeFS))
+                        <div class="mb-2" style="max-height:150px; overflow-y:auto; background:#f8f9fa; border-radius:4px; padding:8px; font-size:13px;">
+                            @foreach($righeFS as $riga)
+                                <div class="mb-1">
+                                    <small class="text-muted">{{ $riga['data'] ?? '' }}</small>
+                                    <strong>{{ $riga['reparto'] ?? '' }} - {{ $riga['nome'] ?? '' }}:</strong>
+                                    {{ $riga['testo'] ?? '' }}
+                                </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="mb-2 text-muted" style="font-size:13px;">Nessuna nota</div>
+                    @endif
+                    <div class="d-flex gap-2">
+                        <textarea id="nuova-nota-fs-{{ $fase->id }}" class="form-control form-control-sm" rows="1"
+                                  placeholder="Scrivi una nota..."></textarea>
+                        <button type="button" class="btn btn-sm btn-outline-primary" style="white-space:nowrap"
+                                onclick="inviaNotaFS({{ $ordine->id }}, {{ $fase->id }})">Invia</button>
+                    </div>
+                </div>
+
                 {{-- Scarti (solo stampa offset) --}}
                 @if(strtolower(optional(optional($fase->faseCatalogo)->reparto)->nome ?? '') === 'stampa offset')
-                <div class="p-2 mb-2" style="background:#f8f9fa; border-radius:6px;">
+                <div class="mt-3 p-2" style="background:#f8f9fa; border-radius:6px;">
                     <div class="d-flex align-items-center gap-3 flex-wrap">
                         <div>
                             <strong style="font-size:15px;">Scarti Prinect:</strong>
@@ -486,7 +491,9 @@
         </div>
     </div>
 </div>
+</div>{{-- fine colonna destra --}}
 @endif
+</div>{{-- fine layout due colonne --}}
 
 {{-- bwip-js CDN (barcode/DataMatrix generator) --}}
 <script src="https://cdn.jsdelivr.net/npm/bwip-js@4.5.1/dist/bwip-js-min.js"></script>
