@@ -171,6 +171,7 @@
         body, html { margin: 0; padding: 0; }
         .etichetta-form, .no-print, .alert, .top-bar, nav, header, footer { display: none !important; }
         .container-fluid { padding: 0 !important; margin: 0 !important; }
+        .layout-due-colonne { display:block !important; padding:0 !important; }
         .etichetta-preview {
             border: none;
             margin: 0;
@@ -190,7 +191,7 @@
 </style>
 
 {{-- ===== LAYOUT DUE COLONNE: etichetta sx, card fase dx ===== --}}
-<div style="display:flex; gap:20px; align-items:flex-start; max-width:1400px; margin:0 auto; padding:10px;">
+<div class="layout-due-colonne" style="display:flex; gap:20px; align-items:flex-start; max-width:1400px; margin:0 auto; padding:10px;">
 
 {{-- COLONNA SINISTRA: Form + Preview --}}
 <div style="flex:1; min-width:0; max-width:700px;">
@@ -338,7 +339,7 @@
 
 {{-- COLONNA DESTRA: Card gestione fase --}}
 @if(($fasiOperatore ?? collect())->isNotEmpty())
-<div style="flex:0 0 420px; position:sticky; top:10px;">
+<div class="no-print" style="flex:0 0 420px; position:sticky; top:10px;">
     <style>
     .azioni-btn-et { display:flex; gap:8px; justify-content:center; padding:12px 0; }
     .azioni-btn-et label {
