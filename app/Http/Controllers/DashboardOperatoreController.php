@@ -27,7 +27,18 @@ class DashboardOperatoreController extends Controller
         $fasiInfo = config('fasi_ore');
 
         // Recupera le fasi visibili per i reparti dell'operatore
-        $fasiVisibili = OrdineFase::where('stato', '<', 3)
+        $fasiVisibili = OrdineFase::where(function ($q) use ($reparti) {
+                // Fasi attive (stato < 3)
+                $q->where('stato', '<', 3);
+                // + fasi stampa offset chiuse da meno di 1h (per inserire scarti reali)
+                $q->orWhere(function ($q2) use ($reparti) {
+                    $q2->where('stato', 3)
+                        ->where('data_fine', '>=', Carbon::now()->subHour())
+                        ->whereHas('faseCatalogo', function ($q3) {
+                            $q3->whereHas('reparto', fn($r) => $r->where('nome', 'stampa offset'));
+                        });
+                });
+            })
             ->where(fn($q) => $q->where('esterno', false)->orWhereNull('esterno'))
             ->whereHas('faseCatalogo', function ($q) use ($reparti) {
                 $q->whereIn('reparto_id', $reparti);

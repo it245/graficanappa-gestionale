@@ -19,7 +19,12 @@
         @endforeach
     </td>
     <td class="td-fase">{{ $fase->faseCatalogo->nome_display ?? '-' }}</td>
-    <td class="td-stato" id="stato-{{ $fase->id }}" style="background:{{ $statoBg[$fase->stato] ?? '#e9ecef' }};font-weight:bold;text-align:center;">{{ $fase->stato }}</td>
+    <td class="td-stato" id="stato-{{ $fase->id }}" style="background:{{ $statoBg[$fase->stato] ?? '#e9ecef' }};font-weight:bold;text-align:center;">
+        {{ $fase->stato }}
+        @if($fase->stato == 3 && $fase->data_fine && \Carbon\Carbon::parse($fase->data_fine)->gt(now()->subHour()))
+            <br><small style="font-weight:normal; color:#dc3545;">Inserisci scarti</small>
+        @endif
+    </td>
 
     {{-- COMMESSA CLICCABILE --}}
     <td>
