@@ -51,24 +51,16 @@ class EtichettaController extends Controller
         // EAN precompilato solo per IC (gli altri inseriscono manualmente)
         $eanSalvato = null;
 
-        // Trova la fase specifica dell'operatore (da query param o fallback)
+        // Trova la fase a stato 2 (avviata) dell'operatore per questo ordine
         $operatore = $request->attributes->get('operatore') ?? auth()->guard('operatore')->user();
         $repartiOperatore = $operatore?->reparti?->pluck('id')->toArray() ?? [];
 
-        $faseIdParam = $request->query('fase');
-
-        if ($faseIdParam) {
-            // Fase specifica passata dal link della dashboard
-            $faseOperatore = OrdineFase::where('id', $faseIdParam)
-                ->with(['faseCatalogo.reparto', 'operatori', 'ordine'])
-                ->first();
-        } else {
-            // Fallback: prima fase dell'operatore per questo ordine
-            $faseOperatore = OrdineFase::where('ordine_id', $ordine->id)
-                ->whereHas('faseCatalogo', fn($q) => $q->whereIn('reparto_id', $repartiOperatore))
-                ->with(['faseCatalogo.reparto', 'operatori', 'ordine'])
-                ->first();
-        }
+        // Card: mostra la fase attualmente avviata (stato 2) nel reparto dell'operatore
+        $faseOperatore = OrdineFase::where('ordine_id', $ordine->id)
+            ->where('stato', 2)
+            ->whereHas('faseCatalogo', fn($q) => $q->whereIn('reparto_id', $repartiOperatore))
+            ->with(['faseCatalogo.reparto', 'operatori', 'ordine'])
+            ->first();
 
         $fasiOperatore = collect($faseOperatore ? [$faseOperatore] : []);
 
