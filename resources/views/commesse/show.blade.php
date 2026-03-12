@@ -194,6 +194,22 @@
                                    onchange="aggiornaStato({{ $fase->id }}, 'termina', this.checked)">
                             <label for="termina-{{ $fase->id }}" class="badge-termina">Termina</label>
 
+                            @if($fase->fogli_scarto || $fase->scarti)
+                            <div class="mt-2" style="font-size:12px;">
+                                <span class="badge bg-secondary">Scarti Prinect: {{ $fase->fogli_scarto ?? 0 }}</span>
+                                <span class="badge bg-warning text-dark">Scarti Reali: {{ $fase->scarti ?? 0 }}</span>
+                            </div>
+                            @endif
+                            <div class="mt-1">
+                                <label style="font-size:11px;" class="text-muted">Scarti reali:</label>
+                                <input type="number" min="0" style="width:80px; padding:2px 4px; font-size:12px; border:1px solid #ced4da; border-radius:3px;"
+                                       value="{{ $fase->scarti ?? '' }}"
+                                       onchange="salvaScartiCommessa({{ $fase->id }}, this.value)">
+                                @if($fase->fogli_scarto)
+                                <small class="text-muted ms-1">Prinect: {{ $fase->fogli_scarto }}</small>
+                                @endif
+                            </div>
+
                             @if(!is_numeric($fase->stato))
                                 <input type="checkbox" id="riprendi-{{ $fase->id }}" onchange="riprendiFase({{ $fase->id }}, this.checked)">
                                 <label for="riprendi-{{ $fase->id }}" class="badge-avvia">Riprendi</label>
@@ -433,6 +449,24 @@ function updateOperatori(faseId, operatori) {
     container.innerHTML = operatori.map(function(op) {
         return '<small class="badge bg-light text-dark">' + op.nome + ' (' + op.data_inizio + ')</small>';
     }).join(' ');
+}
+
+function salvaScartiCommessa(faseId, valore) {
+    fetch('{{ route("produzione.aggiornaCampo") }}', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}',
+            'X-Op-Token': new URLSearchParams(window.location.search).get('op_token') || '',
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({ fase_id: faseId, campo: 'scarti', valore: valore })
+    }).then(function(r) {
+        if (r.ok) {
+            var input = document.querySelector('input[onchange*="salvaScartiCommessa(' + faseId + '"]');
+            if (input) { input.style.borderColor = '#28a745'; setTimeout(function() { input.style.borderColor = '#ced4da'; }, 1500); }
+        } else { alert('Errore nel salvataggio'); }
+    }).catch(function() { alert('Errore di connessione'); });
 }
 
 function aggiornaStato(faseId, azione, checked){
