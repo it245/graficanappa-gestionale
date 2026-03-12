@@ -371,7 +371,9 @@ function aggiornaAnteprima() {
     var data = document.getElementById('campo-data').value;
 
     @if($isTifataPlastica ?? false)
-    // Tifata: aggiorna solo descrizione (già precompilata)
+    // Tifata: articolo aggiorna la descrizione nell'anteprima
+    var descTifata = document.getElementById('campo-articolo-manuale').value;
+    document.getElementById('print-descrizione-tifata').textContent = descTifata;
     @elseif(!$isSimpleLabel)
     document.getElementById('print-cliente').textContent = cliente;
     document.getElementById('print-articolo').textContent = articolo;
