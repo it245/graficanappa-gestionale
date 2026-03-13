@@ -656,6 +656,15 @@ tr:hover td {
             <span id="noteConsegneBadge" style="display:none; background:#dc3545; color:#fff; border-radius:50%; width:20px; height:20px; font-size:11px; font-weight:bold; text-align:center; line-height:20px; margin-left:6px;">!</span>
         </a>
 
+        {{-- Presenti in azienda --}}
+        <a href="#" class="sidebar-item" data-bs-toggle="modal" data-bs-target="#modalPresenti" onclick="closeSidebar(); caricaPresenti();">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#198754" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            <span>Presenti in azienda</span>
+            <span id="presentiCount" class="badge rounded-pill bg-success" style="font-size:11px; vertical-align:middle;"></span>
+        </a>
+
         {{-- Riferimenti Marco (solo readonly) --}}
         @if($isReadonly ?? false)
         <a href="#" class="sidebar-item" onclick="filtraRiferimentiMarco(); closeSidebar(); return false;">
@@ -2044,6 +2053,89 @@ function salvaNoteSped() {
         </div>
     </div>
 </div>
+{{-- Modal Presenti in azienda --}}
+<div class="modal fade" id="modalPresenti" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#198754; color:#fff;">
+                <h5 class="modal-title">Presenti in azienda - <span id="presentiData">{{ now()->format('d/m/Y') }}</span></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="max-height:70vh; overflow-y:auto;">
+                <div id="presentiLoading" class="text-center py-3"><div class="spinner-border text-success"></div></div>
+                <div id="presentiContent" style="display:none;">
+                    <h6 style="color:#198754; margin-bottom:8px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#198754" stroke="none"><circle cx="12" cy="12" r="6"/></svg>
+                        Presenti (<span id="presentiTotale">0</span>)
+                    </h6>
+                    <table class="table table-sm table-striped" style="font-size:13px;">
+                        <thead><tr><th>Nome</th><th>Entrata</th><th>Ultima</th></tr></thead>
+                        <tbody id="presentiBody"></tbody>
+                    </table>
+                    <h6 style="color:#6c757d; margin-top:16px; margin-bottom:8px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#6c757d" stroke="none"><circle cx="12" cy="12" r="6"/></svg>
+                        Usciti (<span id="uscitiTotale">0</span>)
+                    </h6>
+                    <table class="table table-sm" style="font-size:13px; opacity:0.7;">
+                        <thead><tr><th>Nome</th><th>Entrata</th><th>Uscita</th></tr></thead>
+                        <tbody id="uscitiBody"></tbody>
+                    </table>
+                    <div class="text-end" style="font-size:11px; color:#999;">Ultimo aggiornamento: <span id="presentiSync">-</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+var _presentiInterval = null;
+function caricaPresenti() {
+    document.getElementById('presentiLoading').style.display = 'block';
+    document.getElementById('presentiContent').style.display = 'none';
+    fetchPresenti();
+    if (_presentiInterval) clearInterval(_presentiInterval);
+    _presentiInterval = setInterval(fetchPresenti, 60000);
+}
+function fetchPresenti() {
+    fetch('{{ route("owner.presenti") }}')
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            document.getElementById('presentiLoading').style.display = 'none';
+            document.getElementById('presentiContent').style.display = 'block';
+            document.getElementById('presentiTotale').textContent = d.totale_presenti;
+            document.getElementById('uscitiTotale').textContent = d.totale_usciti;
+            document.getElementById('presentiSync').textContent = d.ultimo_sync;
+            // Badge sidebar
+            var badge = document.getElementById('presentiCount');
+            if (badge) badge.textContent = d.totale_presenti;
+
+            var pb = document.getElementById('presentiBody');
+            pb.innerHTML = '';
+            d.presenti.forEach(function(p) {
+                pb.innerHTML += '<tr><td><strong>' + p.nome + '</strong></td><td>' + (p.entrata || '-') + '</td><td>' + p.ultima_timbratura + '</td></tr>';
+            });
+            if (d.presenti.length === 0) pb.innerHTML = '<tr><td colspan="3" class="text-muted">Nessuno presente</td></tr>';
+
+            var ub = document.getElementById('uscitiBody');
+            ub.innerHTML = '';
+            d.usciti.forEach(function(u) {
+                ub.innerHTML += '<tr><td>' + u.nome + '</td><td>' + (u.entrata || '-') + '</td><td>' + u.ultima_timbratura + '</td></tr>';
+            });
+            if (d.usciti.length === 0) ub.innerHTML = '<tr><td colspan="3" class="text-muted">-</td></tr>';
+        }).catch(function() {});
+}
+// Stop polling quando modal chiuso
+document.getElementById('modalPresenti').addEventListener('hidden.bs.modal', function() {
+    if (_presentiInterval) { clearInterval(_presentiInterval); _presentiInterval = null; }
+});
+// Carica badge presenti al load della pagina
+fetch('{{ route("owner.presenti") }}')
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+        var badge = document.getElementById('presentiCount');
+        if (badge) badge.textContent = d.totale_presenti;
+    }).catch(function() {});
+</script>
+
 @if($isReadonly ?? false)
 <script>
 // Owner readonly: rimuovi contenteditable e nascondi azioni
