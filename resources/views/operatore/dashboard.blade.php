@@ -143,10 +143,6 @@
         cursor: pointer;
     }
     .filtri-bar .btn-reset-filtri:hover { background: #e9ecef; }
-    .filtro-stato-checks { display:inline-flex; gap:6px; align-items:center; }
-    .stato-check { display:inline-flex; align-items:center; gap:2px; font-size:13px; font-weight:600; cursor:pointer; padding:2px 6px; border-radius:4px; background:#f0f0f0; }
-    .stato-check:hover { background:#e0e0e0; }
-    .stato-check input { margin:0; cursor:pointer; }
 </style>
 
 <div class="top-bar">
@@ -197,12 +193,14 @@
             @php $fasiDistinte = $info['fasi']->map(fn($f) => $f->faseCatalogo->nome_display ?? $f->fase)->unique()->sort()->values(); @endphp
             <div class="filtri-bar filtri-reparto" data-reparto="{{ $repartoId }}">
                 <label>Stato:</label>
-                <span class="filtro-stato-checks">
-                    <label class="stato-check"><input type="checkbox" class="check-stato" value="0" onchange="applicaFiltri(this)"> 0</label>
-                    <label class="stato-check"><input type="checkbox" class="check-stato" value="1" checked onchange="applicaFiltri(this)"> 1</label>
-                    <label class="stato-check"><input type="checkbox" class="check-stato" value="2" checked onchange="applicaFiltri(this)"> 2</label>
-                    <label class="stato-check"><input type="checkbox" class="check-stato" value="3" onchange="applicaFiltri(this)"> 3</label>
-                </span>
+                <select class="filtro-stato" onchange="applicaFiltri(this)">
+                    <option value="1,2" selected>1 + 2</option>
+                    <option value="">Tutti</option>
+                    <option value="0">0</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                </select>
                 <label>Fase:</label>
                 <select class="filtro-fase" onchange="applicaFiltri(this)">
                     <option value="">Tutte</option>
@@ -262,12 +260,14 @@
     @php $fasiDistinte = $fasiVisibili->map(fn($f) => $f->faseCatalogo->nome_display ?? $f->fase)->unique()->sort()->values(); @endphp
     <div class="filtri-bar filtri-reparto" data-reparto="singolo">
         <label>Stato:</label>
-        <span class="filtro-stato-checks">
-            <label class="stato-check"><input type="checkbox" class="check-stato" value="0" onchange="applicaFiltri(this)"> 0</label>
-            <label class="stato-check"><input type="checkbox" class="check-stato" value="1" checked onchange="applicaFiltri(this)"> 1</label>
-            <label class="stato-check"><input type="checkbox" class="check-stato" value="2" checked onchange="applicaFiltri(this)"> 2</label>
-            <label class="stato-check"><input type="checkbox" class="check-stato" value="3" onchange="applicaFiltri(this)"> 3</label>
-        </span>
+        <select class="filtro-stato" onchange="applicaFiltri(this)">
+            <option value="1,2" selected>1 + 2</option>
+            <option value="">Tutti</option>
+            <option value="0">0</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+        </select>
         <label>Fase:</label>
         <select class="filtro-fase" onchange="applicaFiltri(this)">
             <option value="">Tutte</option>
@@ -362,11 +362,9 @@ function cercaCommessa(){
 // ===== Filtri per stato, cliente, descrizione =====
 function applicaFiltri(el) {
     var bar = el.closest('.filtri-reparto');
-    // Leggi stati selezionati dai checkbox
-    var checks = bar.querySelectorAll('.check-stato');
-    var statiAttivi = [];
-    checks.forEach(function(c) { if (c.checked) statiAttivi.push(c.value); });
-    var tuttiStati = statiAttivi.length === 0 || statiAttivi.length === 4;
+    var filtroStato = bar.querySelector('.filtro-stato').value;
+    var statiAttivi = filtroStato ? filtroStato.split(',') : [];
+    var tuttiStati = statiAttivi.length === 0;
 
     var filtroFase = bar.querySelector('.filtro-fase').value.trim();
     var filtroCliente = bar.querySelector('.filtro-cliente').value.toLowerCase().trim();
@@ -407,9 +405,7 @@ function applicaFiltri(el) {
 
 function resetFiltri(el) {
     var bar = el.closest('.filtri-reparto');
-    bar.querySelectorAll('.check-stato').forEach(function(c) {
-        c.checked = (c.value === '1' || c.value === '2');
-    });
+    bar.querySelector('.filtro-stato').value = '1,2';
     bar.querySelector('.filtro-fase').value = '';
     bar.querySelector('.filtro-cliente').value = '';
     bar.querySelector('.filtro-descrizione').value = '';
@@ -466,7 +462,7 @@ function salvaQtaProd(faseId, valore) {
 
 // Applica filtro stato 1+2 al caricamento pagina
 document.querySelectorAll('.filtri-reparto').forEach(function(bar) {
-    applicaFiltri(bar.querySelector('.check-stato'));
+    applicaFiltri(bar.querySelector('.filtro-stato'));
 });
 
 </script>
