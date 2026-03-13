@@ -220,7 +220,6 @@
                     <thead class="table-dark">
                         <tr>
                             <th>Priorità</th>
-                            <th>Operatori</th>
                             <th>Fase</th>
                             <th>Stato</th>
                             <th>Commessa</th>
@@ -239,6 +238,7 @@
                             <th>Carta</th>
                             <th>Quantità Carta</th>
                             <th>UM Carta</th>
+                            <th>Operatori</th>
                             <th>Note Operatore</th>
                             <th>Timeout</th>
                         </tr>
@@ -286,7 +286,6 @@
             <thead class="table-dark">
                 <tr>
                     <th>Priorità</th>
-                    <th>Operatori</th>
                     <th>Fase</th>
                     <th>Stato</th>
                     <th>Commessa</th>
@@ -306,6 +305,7 @@
                     <th>Carta</th>
                     <th>Quantità Carta</th>
                     <th>UM Carta</th>
+                    <th>Operatori</th>
                     <th>Note Operatore</th>
                     <th>Timeout</th>
                 </tr>
@@ -346,7 +346,7 @@ function cercaCommessa(){
         if (filtro) {
             // Ricerca attiva: mostra tutte le righe che corrispondono, ignorando filtri stato
             document.querySelectorAll("tbody tr").forEach(riga=>{
-                const commessa = riga.cells[4]?.innerText.toLowerCase() || '';
+                const commessa = riga.cells[3]?.innerText.toLowerCase() || '';
                 riga.style.display = commessa.includes(filtro) ? '' : 'none';
             });
         } else {

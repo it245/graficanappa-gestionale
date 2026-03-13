@@ -13,11 +13,6 @@
 
 <tr id="fase-{{ $fase->id }}" class="{{ $rowClass }}">
     <td>{{ $fase->priorita !== null ? number_format($fase->priorita, 2) : '-' }}</td>
-    <td id="operatore-{{ $fase->id }}">
-        @foreach($fase->operatori as $op)
-            {{ $op->nome }} ({{ $op->pivot->data_inizio ? \Carbon\Carbon::parse($op->pivot->data_inizio)->format('d/m/Y H:i:s') : '-' }})<br>
-        @endforeach
-    </td>
     <td class="td-fase">{{ $fase->faseCatalogo->nome_display ?? '-' }}</td>
     <td class="td-stato" id="stato-{{ $fase->id }}" style="background:{{ $statoBg[$fase->stato] ?? '#e9ecef' }};font-weight:bold;text-align:center;">
         {{ $fase->stato }}
@@ -70,6 +65,11 @@
     <td>{{ $fase->ordine->carta ?? '-' }}</td>
     <td>{{ $fase->ordine->qta_carta ?? '-' }}</td>
     <td>{{ $fase->ordine->UM_carta ?? '-' }}</td>
+    <td id="operatore-{{ $fase->id }}">
+        @foreach($fase->operatori as $op)
+            {{ $op->nome }} ({{ $op->pivot->data_inizio ? \Carbon\Carbon::parse($op->pivot->data_inizio)->format('d/m/Y H:i:s') : '-' }})<br>
+        @endforeach
+    </td>
     <td>
         @php
             $nfs = $fase->ordine->note_fasi_successive ?? '';
