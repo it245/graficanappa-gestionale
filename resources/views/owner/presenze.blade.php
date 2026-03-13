@@ -40,6 +40,12 @@
     .pz-timbrature span { display:inline-block; margin-right:6px; }
     .pz-timbrature .e { color:#059669; }
     .pz-timbrature .u { color:#dc2626; }
+    .pz-intervalli { display:flex; gap:4px; flex-wrap:wrap; align-items:center; }
+    .pz-int { display:inline-flex; align-items:center; gap:3px; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:500; }
+    .pz-int.lavoro { background:#d1fae5; color:#065f46; }
+    .pz-int.pausa { background:#fef3c7; color:#92400e; }
+    .pz-int .pz-int-ore { font-weight:700; }
+    .pz-int-arrow { color:#d1d5db; font-size:10px; }
     .pz-anagrafica-search { padding:6px 12px; border:1px solid #e5e7eb; border-radius:6px; font-size:12px; width:220px; }
 </style>
 
@@ -115,8 +121,9 @@
                         <th>Stato</th>
                         <th>Entrata</th>
                         <th>Uscita</th>
-                        <th>Ore</th>
-                        <th>Timbrature</th>
+                        <th>Ore Lavoro</th>
+                        <th>Pausa</th>
+                        <th>Intervalli</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -137,10 +144,37 @@
                                 $h = floor($dip['ore_lavorate'] / 60);
                                 $m = $dip['ore_lavorate'] % 60;
                             @endphp
-                            {{ $h }}h {{ str_pad($m, 2, '0', STR_PAD_LEFT) }}m
+                            <strong>{{ $h }}h {{ str_pad($m, 2, '0', STR_PAD_LEFT) }}m</strong>
+                        </td>
+                        <td class="pz-ore">
+                            @php
+                                $hp = floor(($dip['minuti_pausa'] ?? 0) / 60);
+                                $mp = ($dip['minuti_pausa'] ?? 0) % 60;
+                            @endphp
+                            @if(($dip['minuti_pausa'] ?? 0) > 0)
+                                {{ $hp }}h {{ str_pad($mp, 2, '0', STR_PAD_LEFT) }}m
+                            @else
+                                -
+                            @endif
                         </td>
                         <td>
-                            <div class="pz-timbrature">
+                            <div class="pz-intervalli">
+                                @foreach($dip['intervalli'] ?? [] as $int)
+                                    <span class="pz-int {{ $int['tipo'] }}">
+                                        @if($int['tipo'] === 'lavoro')
+                                            &#9654;
+                                        @else
+                                            &#9208;
+                                        @endif
+                                        {{ $int['da'] }}-{{ $int['a'] }}
+                                        <span class="pz-int-ore">
+                                            @php $ih = floor($int['minuti'] / 60); $im = $int['minuti'] % 60; @endphp
+                                            {{ $ih > 0 ? $ih.'h' : '' }}{{ str_pad($im, 2, '0', STR_PAD_LEFT) }}m
+                                        </span>
+                                    </span>
+                                @endforeach
+                            </div>
+                            <div class="pz-timbrature" style="margin-top:3px;">
                                 @foreach($dip['timbrature'] as $t)
                                     <span class="{{ $t->verso === 'E' ? 'e' : 'u' }}">
                                         {{ $t->verso }}{{ \Carbon\Carbon::parse($t->data_ora)->format('H:i') }}

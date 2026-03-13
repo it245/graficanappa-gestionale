@@ -65,22 +65,63 @@ class PresenzeController extends Controller
             $ultimaTimb = end($timb);
             $dip['presente'] = $ultimaTimb && $ultimaTimb->verso === 'E';
 
-            // Calcola ore: somma intervalli E→U
+            // Calcola intervalli lavoro/pausa
+            $intervalli = [];
             $ore = 0;
+            $orePausa = 0;
             $entr = null;
+            $idx = 0;
             foreach ($timb as $t) {
                 if ($t->verso === 'E') {
                     $entr = Carbon::parse($t->data_ora);
                 } elseif ($t->verso === 'U' && $entr) {
-                    $ore += $entr->diffInMinutes(Carbon::parse($t->data_ora));
+                    $uscita = Carbon::parse($t->data_ora);
+                    $minuti = $entr->diffInMinutes($uscita);
+                    $tipo = $idx === 0 ? 'lavoro' : 'lavoro'; // primo intervallo sempre lavoro
+                    $intervalli[] = [
+                        'da' => $entr->format('H:i'),
+                        'a' => $uscita->format('H:i'),
+                        'minuti' => $minuti,
+                        'tipo' => 'lavoro',
+                    ];
+                    $ore += $minuti;
                     $entr = null;
+                    $idx++;
                 }
             }
             // Se ancora dentro (E senza U), conta fino ad adesso (solo se è oggi)
             if ($entr && $dataCarbon->isToday()) {
-                $ore += $entr->diffInMinutes(now());
+                $minuti = $entr->diffInMinutes(now());
+                $intervalli[] = [
+                    'da' => $entr->format('H:i'),
+                    'a' => 'in corso',
+                    'minuti' => $minuti,
+                    'tipo' => 'lavoro',
+                ];
+                $ore += $minuti;
             }
+
+            // Inserisci pause tra gli intervalli di lavoro
+            $intervalliCompleti = [];
+            for ($i = 0; $i < count($intervalli); $i++) {
+                $intervalliCompleti[] = $intervalli[$i];
+                if (isset($intervalli[$i + 1])) {
+                    $finePrec = $intervalli[$i]['a'];
+                    $inizioSucc = $intervalli[$i + 1]['da'];
+                    $minPausa = Carbon::parse($data . ' ' . $finePrec)->diffInMinutes(Carbon::parse($data . ' ' . $inizioSucc));
+                    $intervalliCompleti[] = [
+                        'da' => $finePrec,
+                        'a' => $inizioSucc,
+                        'minuti' => $minPausa,
+                        'tipo' => 'pausa',
+                    ];
+                    $orePausa += $minPausa;
+                }
+            }
+
+            $dip['intervalli'] = $intervalliCompleti;
             $dip['ore_lavorate'] = $ore;
+            $dip['minuti_pausa'] = $orePausa;
         }
         unset($dip);
 
