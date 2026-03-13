@@ -8,25 +8,41 @@ use Carbon\Carbon;
 
 class SyncPresenze extends Command
 {
-    protected $signature = 'presenze:sync';
+    protected $signature = 'presenze:sync {--storico : Importa tutto lo storico (no filtro 7gg)}';
     protected $description = 'Sincronizza timbrature dal file NetTime';
 
-    // Path UNC al file timbrature (copiato dal .253 ogni minuto)
-    const TIMBRATURE_PATH = '\\\\192.168.1.253\\timbrature\\timbrature.txt';
+    // Path primario: direttamente dal PC NetTime (.34)
+    const TIMBRATURE_PATH_PRIMARY = '\\\\192.168.1.34\\NetTime\\TIMBRA\\TIMBRACP.BKP';
+    // Fallback: copia su .253
+    const TIMBRATURE_PATH_FALLBACK = '\\\\192.168.1.253\\timbrature\\timbrature.txt';
     const PRESENZE_PATH = '\\\\192.168.1.253\\timbrature\\presenze.txt';
 
     public function handle()
     {
+        // 0. Assicura connessione alla share .34
+        $this->ensureNetUse();
+
         // 1. Assicura che la tabella esista
         $this->ensureTable();
 
         // 2. Sync anagrafica (ogni esecuzione, updateOrInsert)
         $this->syncAnagrafica();
 
-        // 3. Sync timbrature di oggi
+        // 3. Sync timbrature
         $this->syncTimbrature();
 
         $this->info('Sync presenze completata.');
+    }
+
+    protected function ensureNetUse()
+    {
+        // Se la share .34 non è raggiungibile, prova a connetterla
+        if (!file_exists(self::TIMBRATURE_PATH_PRIMARY)) {
+            @exec('net use \\\\192.168.1.34\\NetTime /user:mes M3s@Nappa26 2>&1', $out, $code);
+            if ($code !== 0) {
+                $this->warn("Share .34 non raggiungibile: " . implode(' ', $out));
+            }
+        }
     }
 
     protected function ensureTable()
@@ -101,49 +117,89 @@ class SyncPresenze extends Command
 
     protected function syncTimbrature()
     {
-        $path = self::TIMBRATURE_PATH;
-        if (!file_exists($path)) {
-            $this->warn("File timbrature non trovato: $path");
+        // Prova prima .34 (fonte diretta), poi fallback .253
+        $path = null;
+        if (file_exists(self::TIMBRATURE_PATH_PRIMARY)) {
+            $path = self::TIMBRATURE_PATH_PRIMARY;
+            $this->info("Lettura da .34 (NetTime diretto)");
+        } elseif (file_exists(self::TIMBRATURE_PATH_FALLBACK)) {
+            $path = self::TIMBRATURE_PATH_FALLBACK;
+            $this->info("Lettura da .253 (fallback)");
+        } else {
+            $this->warn("Nessun file timbrature trovato (.34 e .253 non raggiungibili)");
             return;
         }
 
+        $storico = $this->option('storico');
         $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-        $oggi = Carbon::today()->format('dmy'); // es: 130326
+        $this->info("Righe nel file: " . count($lines));
 
         $nuove = 0;
+        $saltate = 0;
+        $batch = [];
+
         foreach ($lines as $line) {
             // Formato: R001001000 00000654 130326 1159 E
-            // oppure:  001001000 00000654 030323 0756 E
             if (!preg_match('/^R?(\d{9})\s+(\d{8})\s+(\d{6})\s+(\d{4})\s+([EU])/', $line, $m)) {
                 continue;
             }
 
             $terminale = $m[1];
-            $matricola = ltrim($m[2], '0'); // Rimuovi zeri iniziali per matching
-            $matricola = str_pad($matricola, 6, '0', STR_PAD_LEFT); // Pad a 6 come anagrafica
+            $matricola = ltrim($m[2], '0');
+            $matricola = str_pad($matricola, 6, '0', STR_PAD_LEFT);
             $dataStr = $m[3]; // ddmmyy
             $oraStr = $m[4];  // HHmm
             $verso = $m[5];
 
-            // Solo timbrature degli ultimi 7 giorni per non importare tutto lo storico
-            $data = Carbon::createFromFormat('dmy', $dataStr);
-            if ($data->lt(Carbon::today()->subDays(7))) continue;
+            // Filtro temporale: solo ultimi 7gg (a meno che --storico)
+            if (!$storico) {
+                $data = Carbon::createFromFormat('dmy', $dataStr);
+                if ($data->lt(Carbon::today()->subDays(7))) {
+                    $saltate++;
+                    continue;
+                }
+            } else {
+                $data = Carbon::createFromFormat('dmy', $dataStr);
+            }
 
             $dataOra = $data->format('Y-m-d') . ' ' . substr($oraStr, 0, 2) . ':' . substr($oraStr, 2, 2) . ':00';
 
-            try {
-                DB::table('nettime_timbrature')->insertOrIgnore([
-                    'matricola' => $matricola,
-                    'data_ora' => $dataOra,
-                    'verso' => $verso,
-                    'terminale' => $terminale,
-                ]);
-                $nuove++;
-            } catch (\Exception $e) {
-                // Duplicato, ignora
+            $batch[] = [
+                'matricola' => $matricola,
+                'data_ora' => $dataOra,
+                'verso' => $verso,
+                'terminale' => $terminale,
+            ];
+
+            // Insert in batch da 500
+            if (count($batch) >= 500) {
+                $nuove += $this->insertBatch($batch);
+                $batch = [];
             }
         }
 
-        $this->info("Timbrature: $nuove nuove importate.");
+        // Inserisci il resto
+        if (!empty($batch)) {
+            $nuove += $this->insertBatch($batch);
+        }
+
+        $this->info("Timbrature: $nuove nuove importate" . ($saltate ? ", $saltate saltate (>7gg)" : "") . ".");
+    }
+
+    protected function insertBatch(array $batch): int
+    {
+        try {
+            return DB::table('nettime_timbrature')->insertOrIgnore($batch);
+        } catch (\Exception $e) {
+            // Fallback: inserisci una per una se il batch fallisce
+            $n = 0;
+            foreach ($batch as $row) {
+                try {
+                    DB::table('nettime_timbrature')->insertOrIgnore([$row]);
+                    $n++;
+                } catch (\Exception $e2) {}
+            }
+            return $n;
+        }
     }
 }
