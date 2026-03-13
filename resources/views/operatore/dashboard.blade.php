@@ -262,13 +262,12 @@
     @php $fasiDistinte = $fasiVisibili->map(fn($f) => $f->faseCatalogo->nome_display ?? $f->fase)->unique()->sort()->values(); @endphp
     <div class="filtri-bar filtri-reparto" data-reparto="singolo">
         <label>Stato:</label>
-        <select class="filtro-stato" onchange="applicaFiltri(this)">
-            <option value="">Tutti</option>
-            <option value="0">0</option>
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-        </select>
+        <span class="filtro-stato-checks">
+            <label class="stato-check"><input type="checkbox" class="check-stato" value="0" onchange="applicaFiltri(this)"> 0</label>
+            <label class="stato-check"><input type="checkbox" class="check-stato" value="1" checked onchange="applicaFiltri(this)"> 1</label>
+            <label class="stato-check"><input type="checkbox" class="check-stato" value="2" checked onchange="applicaFiltri(this)"> 2</label>
+            <label class="stato-check"><input type="checkbox" class="check-stato" value="3" onchange="applicaFiltri(this)"> 3</label>
+        </span>
         <label>Fase:</label>
         <select class="filtro-fase" onchange="applicaFiltri(this)">
             <option value="">Tutte</option>
