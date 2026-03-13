@@ -20,11 +20,8 @@ class SyncPresenze extends Command
         // 1. Assicura che la tabella esista
         $this->ensureTable();
 
-        // 2. Sync anagrafica (solo se vuota)
-        $count = DB::table('nettime_anagrafica')->count();
-        if ($count === 0) {
-            $this->syncAnagrafica();
-        }
+        // 2. Sync anagrafica (ogni esecuzione, updateOrInsert)
+        $this->syncAnagrafica();
 
         // 3. Sync timbrature di oggi
         $this->syncTimbrature();
@@ -71,23 +68,47 @@ class SyncPresenze extends Command
         }
 
         $content = file_get_contents($path);
-        // Il file è una riga continua con record separati dal pattern "011900RP" o "0119PRRP"
-        // Ogni record inizia con "0119..." e contiene matricola (6 cifre), cognome (40 char), nome (34 char)
-        preg_match_all('/011[09](?:00|PR)RP\s*(\d{6})([A-ZÀ-Ú\' ]{40})([A-ZÀ-Ú\' ]{1,40})/u', $content, $matches, PREG_SET_ORDER);
 
+        // Trova ogni occorrenza dell'header record e usa substr per i campi fissi
+        // Header: "0119PRRP" o "011900RP" seguito da spazio e matricola 6 cifre
+        // Dopo la matricola: cognome 30 char, nome 30 char (larghezze reali NetTime)
         $inseriti = 0;
-        foreach ($matches as $m) {
-            $matricola = $m[1];
-            $cognome = trim($m[2]);
-            $nome = trim($m[3]);
+        $offset = 0;
 
-            if (empty($cognome)) continue;
+        while (($pos = strpos($content, 'RP', $offset)) !== false) {
+            // Verifica che sia un header valido: 011x00RP o 011xPRRP
+            if ($pos < 4) { $offset = $pos + 2; continue; }
+
+            $header = substr($content, $pos - 4, 8);
+            if (!preg_match('/^011[09](?:00|PR)RP$/', $header)) {
+                $offset = $pos + 2;
+                continue;
+            }
+
+            // Dopo l'header c'è uno spazio opzionale, poi 6 cifre matricola
+            $rest = substr($content, $pos + 4, 200); // prendi abbastanza
+            if (!preg_match('/^\s*(\d{6})(.{30})(.{30})/s', $rest, $m)) {
+                $offset = $pos + 2;
+                continue;
+            }
+
+            $matricola = $m[1];
+            // Trim robusto: spazi, null bytes, tab
+            $cognome = trim($m[2], " \t\n\r\0\x0B");
+            $nome = trim($m[3], " \t\n\r\0\x0B");
+
+            // Rimuovi spazi interni multipli (residui padding)
+            $cognome = preg_replace('/\s{2,}/', ' ', $cognome);
+            $nome = preg_replace('/\s{2,}/', ' ', $nome);
+
+            if (empty($cognome)) { $offset = $pos + 2; continue; }
 
             DB::table('nettime_anagrafica')->updateOrInsert(
                 ['matricola' => $matricola],
                 ['cognome' => $cognome, 'nome' => $nome]
             );
             $inseriti++;
+            $offset = $pos + 2;
         }
 
         $this->info("Anagrafica: $inseriti dipendenti importati.");
