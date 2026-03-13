@@ -987,6 +987,51 @@ public function calcolaOreEPriorita($fase)
             $syncService->sincronizzaDaLive($rawOggi);
         } catch (\Exception $e) {}
 
+        // Calcola tempi medi storici per tipo fase (da Prinect e operatori)
+        $tempiMediPerFase = [];
+        $fasiCompletate = OrdineFase::with(['ordine', 'operatori'])
+            ->where('stato', '>=', 3)
+            ->where('data_fine', '>=', Carbon::now()->subDays(90))
+            ->get();
+        foreach ($fasiCompletate as $fc) {
+            $tipo = $fc->fase;
+            $qtaCarta = $fc->ordine->qta_carta ?? 0;
+            if ($qtaCarta <= 0) continue;
+
+            // Ore effettive: prima Prinect, poi pivot operatore
+            $ore = null;
+            $secP = ($fc->tempo_avviamento_sec ?? 0) + ($fc->tempo_esecuzione_sec ?? 0);
+            if ($secP > 60) {
+                $ore = $secP / 3600;
+            } else {
+                // Calcola da operatori pivot
+                if ($fc->operatori->isNotEmpty()) {
+                    $secOp = 0;
+                    foreach ($fc->operatori as $op) {
+                        if ($op->pivot->data_inizio && $op->pivot->data_fine) {
+                            $s = Carbon::parse($op->pivot->data_fine)->diffInSeconds(Carbon::parse($op->pivot->data_inizio));
+                            $s -= ($op->pivot->secondi_pausa ?? 0);
+                            if ($s > 0) $secOp += $s;
+                        }
+                    }
+                    if ($secOp > 60) $ore = $secOp / 3600;
+                }
+            }
+            if ($ore && $ore > 0.01 && $ore < 200) {
+                if (!isset($tempiMediPerFase[$tipo])) $tempiMediPerFase[$tipo] = ['totOre' => 0, 'totQta' => 0, 'count' => 0];
+                $tempiMediPerFase[$tipo]['totOre'] += $ore;
+                $tempiMediPerFase[$tipo]['totQta'] += $qtaCarta;
+                $tempiMediPerFase[$tipo]['count']++;
+            }
+        }
+        // Calcola ore medie per foglio e avviamento medio
+        $tempiMedi = [];
+        foreach ($tempiMediPerFase as $tipo => $dati) {
+            if ($dati['count'] >= 2 && $dati['totQta'] > 0) {
+                $tempiMedi[$tipo] = round($dati['totOre'] / $dati['count'], 3); // ore medie per job
+            }
+        }
+
         $fasi = OrdineFase::with(['ordine', 'faseCatalogo.reparto', 'operatori'])
             ->where('stato', '<', 3)
             ->get()
@@ -995,7 +1040,7 @@ public function calcolaOreEPriorita($fase)
             })
             ->sortBy('priorita');
 
-        $dataScheduling = $fasi->map(function ($fase) {
+        $dataScheduling = $fasi->map(function ($fase) use ($tempiMedi) {
             // Data inizio: dalla pivot operatore, fallback dal campo ordine_fasi
             $dataInizio = null;
             if ($fase->operatori->isNotEmpty()) {
@@ -1012,6 +1057,30 @@ public function calcolaOreEPriorita($fase)
                 $giorniAllaConsegna = round((Carbon::parse($consegna)->startOfDay()->timestamp - Carbon::today()->timestamp) / 86400);
             }
 
+            // Ore reali da Prinect (se disponibili)
+            $orePrinect = null;
+            $secPrinect = ($fase->tempo_avviamento_sec ?? 0) + ($fase->tempo_esecuzione_sec ?? 0);
+            if ($secPrinect > 0) {
+                $orePrinect = round($secPrinect / 3600, 2);
+            }
+
+            // Ore reali da pivot operatore (data_fine - data_inizio - pausa)
+            $oreOperatore = null;
+            if ($fase->operatori->isNotEmpty()) {
+                $oreOp = 0;
+                foreach ($fase->operatori as $op) {
+                    if ($op->pivot->data_inizio && $op->pivot->data_fine) {
+                        $sec = Carbon::parse($op->pivot->data_fine)->diffInSeconds(Carbon::parse($op->pivot->data_inizio));
+                        $sec -= ($op->pivot->secondi_pausa ?? 0);
+                        if ($sec > 0) $oreOp += $sec / 3600;
+                    }
+                }
+                if ($oreOp > 0) $oreOperatore = round($oreOp, 2);
+            }
+
+            // Ordine nel flusso produttivo (da config fasi_priorita)
+            $faseOrdine = config('fasi_priorita')[$fase->fase] ?? 500;
+
             return [
                 'id' => $fase->id,
                 'commessa' => $fase->ordine->commessa ?? '-',
@@ -1021,6 +1090,10 @@ public function calcolaOreEPriorita($fase)
                 'fase' => $fase->fase,
                 'stato' => $fase->stato,
                 'ore' => round($fase->ore, 2),
+                'ore_prinect' => $orePrinect,
+                'ore_operatore' => $oreOperatore,
+                'ore_media_storica' => $tempiMedi[$fase->fase] ?? null,
+                'fase_ordine' => $faseOrdine,
                 'priorita' => $fase->priorita,
                 'consegna' => $consegna,
                 'giorni_consegna' => $giorniAllaConsegna,
