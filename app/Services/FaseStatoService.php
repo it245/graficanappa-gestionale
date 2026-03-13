@@ -24,6 +24,9 @@ class FaseStatoService
             // Se già avviato (2) o terminato (3), non toccare
             if ($fase->stato >= 2) continue;
 
+            // STAMPA XL (offset) non viene MAI promossa automaticamente a stato 1
+            if (str_starts_with($fase->fase, 'STAMPAXL106')) continue;
+
             // Predecessori basati sul flusso produttivo reale (config)
             $mioOrdine = $flusso[$fase->fase] ?? 500;
             $fasiPrecedenti = $fasi->filter(fn($f) =>
@@ -129,6 +132,9 @@ class FaseStatoService
 
         foreach ($fasi as $fase) {
             if ($fase->stato >= 2) continue;
+
+            // STAMPA XL (offset) non viene MAI promossa automaticamente a stato 1
+            if (str_starts_with($fase->fase, 'STAMPAXL106')) continue;
 
             // Ordine nel flusso produttivo reale (dalla config)
             $mioOrdine = $flusso[$fase->fase] ?? 500;
