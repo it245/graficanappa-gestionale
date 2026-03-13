@@ -656,6 +656,22 @@ tr:hover td {
             <span id="noteConsegneBadge" style="display:none; background:#dc3545; color:#fff; border-radius:50%; width:20px; height:20px; font-size:11px; font-weight:bold; text-align:center; line-height:20px; margin-left:6px;">!</span>
         </a>
 
+        {{-- Riferimenti Marco (solo readonly) --}}
+        @if($isReadonly ?? false)
+        <a href="#" class="sidebar-item" onclick="filtraRiferimentiMarco(); closeSidebar(); return false;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#198754" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            <span>Riferimenti Marco</span>
+        </a>
+        <a href="#" class="sidebar-item" onclick="resetRiferimentiMarco(); closeSidebar(); return false;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#6c757d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+            <span>Mostra tutte le commesse</span>
+        </a>
+        @endif
+
         {{-- Sync Onda --}}
         @if(!($isReadonly ?? false))
         <form method="POST" action="{{ route('owner.syncOnda') }}" style="margin:0;" onsubmit="this.querySelector('button').disabled=true;">
@@ -1818,6 +1834,39 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+// Riferimenti Marco: filtra per clienti specifici
+const CLIENTI_MARCO = [
+    'WYCON', 'ARMATORE', 'FARMARICCI', 'ELLEBI', 'FEUDI DI SAN GREGORIO',
+    'DE NIGRIS', 'VOYAGE PITTORESQUE', 'ANTIMO CAPUTO', 'DI MARTINO AIR',
+    "DE' NOBILI", 'MIA COSMETICS', 'VISION SRL', 'PASTIFICIO DI MARTINO',
+    'LA RUOTA', 'AMES CENTRO', 'PASTIFICIO ARTIGIANALE LEONESSA', 'A5CREW',
+    'VISIONA', 'LINGO COMMUNICATIONS', 'POMOROSSO', 'ESA - ESRIN',
+    'PASTICCERIA TROIANO', 'BALTHAZAR', 'GRUPPO CASEARIO', 'NATURAL SOAP',
+    'QUESTION MARK', 'PROMOPHARMA', 'LEOPOLDO VILLANO', 'BORGODEA',
+    'HILTRON LAND', 'PROMOITALIA', 'AT ADV', 'CARMEN COMMERCIALE',
+    'AGRELLI', 'GIAGUARO', 'MUSEO SAN SEVERO', 'DOPPIAVU', 'ITALY STAMPE',
+    'SPRINT SRL', 'EXTON', 'FABULA PROJECT', 'EUROSTYLE', 'FRATELLI CUOMO',
+    'F.LLI CUOMO', 'DISTILL HUB', 'SAN GREGORIO S.R.L.', 'STARWOOD'
+];
+
+function filtraRiferimentiMarco() {
+    const fCliente = document.getElementById('filterCliente');
+    const filterBox = document.getElementById('filterBox');
+    if (filterBox.style.display === 'none') {
+        filterBox.style.display = 'flex';
+        filterBox.style.opacity = 1;
+        filterBox.style.transform = 'translateY(0)';
+    }
+    fCliente.value = CLIENTI_MARCO.join(', ');
+    fCliente.dispatchEvent(new Event('input'));
+}
+
+function resetRiferimentiMarco() {
+    const fCliente = document.getElementById('filterCliente');
+    fCliente.value = '';
+    fCliente.dispatchEvent(new Event('input'));
+}
 
 // Popup operatore
 document.getElementById('operatoreInfo').addEventListener('click', function(){
