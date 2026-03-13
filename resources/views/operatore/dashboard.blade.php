@@ -68,6 +68,12 @@
         min-width: 500px;
         white-space: normal;
     }
+    /* CAMPO CLIENTE */
+    td.td-cliente {
+        max-width: 140px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
     th, td { white-space:nowrap; }
 
     a.commessa-link{
