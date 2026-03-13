@@ -482,5 +482,25 @@ document.querySelectorAll('.filtri-reparto').forEach(function(bar) {
     applicaFiltri(bar.querySelector('.filtro-stato'));
 });
 
+// Auto-refresh su deploy: controlla ogni 10 minuti se c'è una nuova versione
+(function() {
+    var currentVersion = null;
+    function checkVersion() {
+        fetch('/version.txt?t=' + Date.now())
+            .then(function(r) { return r.text(); })
+            .then(function(v) {
+                v = v.trim();
+                if (currentVersion === null) {
+                    currentVersion = v;
+                } else if (v !== currentVersion) {
+                    location.reload();
+                }
+            })
+            .catch(function() {});
+    }
+    checkVersion();
+    setInterval(checkVersion, 600000); // 10 minuti
+})();
+
 </script>
 @endsection
