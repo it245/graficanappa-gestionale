@@ -69,46 +69,31 @@ class SyncPresenze extends Command
 
         $content = file_get_contents($path);
 
-        // Trova ogni occorrenza dell'header record e usa substr per i campi fissi
-        // Header: "0119PRRP" o "011900RP" seguito da spazio e matricola 6 cifre
-        // Dopo la matricola: cognome 30 char, nome 30 char (larghezze reali NetTime)
+        // Cattura header + matricola + blocco 80 char (cognome + nome padding)
+        // Poi split intelligente: cognome e nome separati da 2+ spazi
+        preg_match_all('/011[09](?:00|PR)RP\s*(\d{6})([A-Za-zÀ-ú\' ]{20,80})/u', $content, $matches, PREG_SET_ORDER);
+
         $inseriti = 0;
-        $offset = 0;
-
-        while (($pos = strpos($content, 'RP', $offset)) !== false) {
-            // Verifica che sia un header valido: 011x00RP o 011xPRRP
-            if ($pos < 4) { $offset = $pos + 2; continue; }
-
-            $header = substr($content, $pos - 4, 8);
-            if (!preg_match('/^011[09](?:00|PR)RP$/', $header)) {
-                $offset = $pos + 2;
-                continue;
-            }
-
-            // Dopo l'header c'è uno spazio opzionale, poi 6 cifre matricola
-            $rest = substr($content, $pos + 4, 200); // prendi abbastanza
-            if (!preg_match('/^\s*(\d{6})(.{30})(.{30})/s', $rest, $m)) {
-                $offset = $pos + 2;
-                continue;
-            }
-
+        foreach ($matches as $m) {
             $matricola = $m[1];
-            // Trim robusto: spazi, null bytes, tab
-            $cognome = trim($m[2], " \t\n\r\0\x0B");
-            $nome = trim($m[3], " \t\n\r\0\x0B");
+            $blocco = $m[2];
 
-            // Rimuovi spazi interni multipli (residui padding)
-            $cognome = preg_replace('/\s{2,}/', ' ', $cognome);
-            $nome = preg_replace('/\s{2,}/', ' ', $nome);
+            // Rimuovi tutto dopo il primo digit (dati successivi nel record)
+            $blocco = preg_replace('/\d.*$/', '', $blocco);
 
-            if (empty($cognome)) { $offset = $pos + 2; continue; }
+            // Split cognome/nome: separati da 2+ spazi consecutivi
+            $parts = preg_split('/\s{2,}/', trim($blocco));
+
+            $cognome = trim($parts[0] ?? '');
+            $nome = trim($parts[1] ?? '');
+
+            if (empty($cognome)) continue;
 
             DB::table('nettime_anagrafica')->updateOrInsert(
                 ['matricola' => $matricola],
                 ['cognome' => $cognome, 'nome' => $nome]
             );
             $inseriti++;
-            $offset = $pos + 2;
         }
 
         $this->info("Anagrafica: $inseriti dipendenti importati.");

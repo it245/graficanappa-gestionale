@@ -54,6 +54,7 @@ Route::get('/owner/reparti', [DashboardOwnerController::class, 'repartiOverview'
 Route::get('/owner/fustelle', [DashboardOwnerController::class, 'fustelleOverview'])->name('owner.fustelle');
 Route::post('/owner/tracking-ddt', [DashboardSpedizioneController::class, 'trackingByDDT'])->name('owner.trackingByDDT');
 Route::get('/owner/presenti', [PresenzeController::class, 'presenti'])->name('owner.presenti');
+Route::get('/owner/presenze', [PresenzeController::class, 'index'])->name('owner.presenze');
 Route::get('/owner/note-spedizione', [DashboardSpedizioneController::class, 'noteGiornaliere'])->name('owner.noteSpedizione');
 Route::post('/owner/note-spedizione', [DashboardSpedizioneController::class, 'salvaNotaGiornaliera'])->name('owner.salvaNotaSpedizione');
 Route::get('/owner/note-spedizione-check', [DashboardSpedizioneController::class, 'noteUltimoAggiornamento'])->name('owner.noteSpedizioneCheck');

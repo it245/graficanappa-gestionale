@@ -3,10 +3,109 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
 use Carbon\Carbon;
 
 class PresenzeController extends Controller
 {
+    /**
+     * Pagina presenze completa: anagrafica, oggi, storico
+     */
+    public function index(Request $request)
+    {
+        $data = $request->get('data', Carbon::today()->format('Y-m-d'));
+        $dataCarbon = Carbon::parse($data);
+
+        // Anagrafica completa
+        $anagrafica = DB::table('nettime_anagrafica')
+            ->orderBy('cognome')
+            ->get();
+
+        // Timbrature del giorno selezionato
+        $timbrature = DB::table('nettime_timbrature')
+            ->whereDate('data_ora', $data)
+            ->orderBy('data_ora')
+            ->get();
+
+        // Raggruppa timbrature per matricola
+        $perDipendente = [];
+        foreach ($timbrature as $t) {
+            $matr = $t->matricola;
+            if (!isset($perDipendente[$matr])) {
+                $anag = $anagrafica->firstWhere('matricola', $matr);
+                $perDipendente[$matr] = [
+                    'matricola' => $matr,
+                    'nome' => $anag ? "{$anag->cognome} {$anag->nome}" : "Matricola {$matr}",
+                    'timbrature' => [],
+                    'prima_entrata' => null,
+                    'ultima_uscita' => null,
+                    'ore_lavorate' => 0,
+                    'presente' => false,
+                ];
+            }
+            $perDipendente[$matr]['timbrature'][] = $t;
+        }
+
+        // Calcola ore lavorate e stato per ogni dipendente
+        foreach ($perDipendente as $matr => &$dip) {
+            $timb = $dip['timbrature'];
+            $entrate = array_filter($timb, fn($t) => $t->verso === 'E');
+            $uscite = array_filter($timb, fn($t) => $t->verso === 'U');
+
+            if (!empty($entrate)) {
+                $prima = min(array_map(fn($t) => $t->data_ora, $entrate));
+                $dip['prima_entrata'] = Carbon::parse($prima)->format('H:i');
+            }
+            if (!empty($uscite)) {
+                $ultima = max(array_map(fn($t) => $t->data_ora, $uscite));
+                $dip['ultima_uscita'] = Carbon::parse($ultima)->format('H:i');
+            }
+
+            // L'ultimo verso determina se è presente
+            $ultimaTimb = end($timb);
+            $dip['presente'] = $ultimaTimb && $ultimaTimb->verso === 'E';
+
+            // Calcola ore: somma intervalli E→U
+            $ore = 0;
+            $entr = null;
+            foreach ($timb as $t) {
+                if ($t->verso === 'E') {
+                    $entr = Carbon::parse($t->data_ora);
+                } elseif ($t->verso === 'U' && $entr) {
+                    $ore += $entr->diffInMinutes(Carbon::parse($t->data_ora));
+                    $entr = null;
+                }
+            }
+            // Se ancora dentro (E senza U), conta fino ad adesso (solo se è oggi)
+            if ($entr && $dataCarbon->isToday()) {
+                $ore += $entr->diffInMinutes(now());
+            }
+            $dip['ore_lavorate'] = $ore;
+        }
+        unset($dip);
+
+        // Ordina per cognome
+        usort($perDipendente, fn($a, $b) => strcmp($a['nome'], $b['nome']));
+
+        // Giorni disponibili (ultimi 7 giorni con timbrature)
+        $giorniDisponibili = DB::table('nettime_timbrature')
+            ->select(DB::raw('DATE(data_ora) as giorno'))
+            ->groupBy('giorno')
+            ->orderByDesc('giorno')
+            ->limit(14)
+            ->pluck('giorno')
+            ->toArray();
+
+        return view('owner.presenze', [
+            'data' => $dataCarbon,
+            'dipendenti' => $perDipendente,
+            'anagrafica' => $anagrafica,
+            'giorniDisponibili' => $giorniDisponibili,
+            'totalePresenti' => count(array_filter($perDipendente, fn($d) => $d['presente'])),
+            'totaleUsciti' => count(array_filter($perDipendente, fn($d) => !$d['presente'])),
+        ]);
+    }
+
     /**
      * API: chi è presente adesso?
      * Restituisce lista dipendenti con ultima timbratura di oggi.
