@@ -469,7 +469,7 @@ public function calcolaOreEPriorita($fase)
     public function aggiornaCampo(Request $request)
     {
         if ($deny = $this->denyIfReadonly()) return $deny;
-        $campiFase = ['qta_prod', 'note', 'stato', 'data_inizio', 'data_fine', 'ore', 'priorita', 'fase'];
+        $campiFase = ['qta_prod', 'note', 'stato', 'data_inizio', 'data_fine', 'ore', 'priorita', 'fase', 'esterno'];
         $campiOrdine = ['cliente_nome', 'cod_art', 'descrizione', 'qta_richiesta', 'um',
                         'data_registrazione', 'data_prevista_consegna',
                         'cod_carta', 'carta', 'qta_carta', 'UM_carta'];

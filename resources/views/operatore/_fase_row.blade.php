@@ -39,15 +39,15 @@
         @endif
     </td>
 
-    <td>{{ $fase->ordine->data_registrazione ? \Carbon\Carbon::parse($fase->ordine->data_registrazione)->format('d/m/Y') : '-' }}</td>
     <td class="td-cliente">{{ $fase->ordine->cliente_nome ?? '-' }}</td>
+    <td>{{ $fase->fustella_codice ?? '-' }}</td>
     <td>{{ $fase->ordine->cod_art ?? '-' }}</td>
     @if($showColori ?? false)<td>{{ $fase->colori ?? '-' }}</td>@endif
-    @if($showFustella ?? false)<td>{{ $fase->fustella_codice ?? '-' }}</td>@endif
     @if($showEsterno ?? false)<td>{{ $fase->fornitore_esterno ?? '-' }}</td>@endif
     <td class="descrizione td-descrizione">{{ $fase->ordine->descrizione ?? '-' }}</td>
     <td>{{ $fase->ordine->qta_richiesta ?? '-' }}</td>
     <td>{{ $fase->ordine->um ?? '-' }}</td>
+    <td>{{ $fase->ordine->data_registrazione ? \Carbon\Carbon::parse($fase->ordine->data_registrazione)->format('d/m/Y') : '-' }}</td>
     <td>{{ $fase->ordine->data_prevista_consegna ? \Carbon\Carbon::parse($fase->ordine->data_prevista_consegna)->format('d/m/Y') : '-' }}</td>
     <td>
         <input type="number" min="0" style="width:70px; padding:2px 4px; font-size:13px; border:1px solid #ced4da; border-radius:3px;"
