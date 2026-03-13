@@ -648,7 +648,11 @@ function schedulaPerMacchina(data) {
         if (!macchine[key]) macchine[key] = { nome: key, reparto_id: f.reparto_id, fasi: [] };
         macchine[key].fasi.push({...f});
     });
+
+    // Prima passa: schedula tutti tranne spedizione
+    const spedizioneKey = 'Spedizione';
     Object.values(macchine).forEach(m => {
+        if (m.nome === spedizioneKey) return; // skip per ora
         m.fasi.sort((a, b) => a.priorita - b.priorita);
         let cursor = skipToWorkTime(0, m.nome);
 
@@ -699,6 +703,43 @@ function schedulaPerMacchina(data) {
         }
         m.ore_totali = cursor;
     });
+
+    // Seconda passa: schedula spedizione dopo tutte le altre fasi della stessa commessa
+    if (macchine[spedizioneKey]) {
+        const mSped = macchine[spedizioneKey];
+        // Calcola la fine più tarda per ogni commessa (esclusa spedizione)
+        const commessaMaxEnd = {};
+        Object.values(macchine).forEach(m => {
+            if (m.nome === spedizioneKey) return;
+            m.fasi.forEach(f => {
+                const c = f.commessa;
+                if (!commessaMaxEnd[c] || f.end_h > commessaMaxEnd[c]) {
+                    commessaMaxEnd[c] = f.end_h;
+                }
+            });
+        });
+
+        mSped.fasi.sort((a, b) => {
+            const endA = commessaMaxEnd[a.commessa] || 0;
+            const endB = commessaMaxEnd[b.commessa] || 0;
+            return endA - endB;
+        });
+
+        let cursor = skipToWorkTime(0, mSped.nome);
+        mSped.fasi.forEach(fase => {
+            // BRT parte dopo che tutte le altre fasi della commessa sono finite
+            const minStart = commessaMaxEnd[fase.commessa] || 0;
+            cursor = Math.max(cursor, minStart);
+            cursor = skipToWorkTime(cursor, mSped.nome);
+            fase.start_h = cursor;
+            fase.end_h = advanceCursor(cursor, Math.max(fase.ore, 0.1), mSped.nome);
+            cursor = fase.end_h;
+            fase.lane = 0;
+        });
+        mSped.lanes = 1;
+        mSped.ore_totali = cursor;
+    }
+
     return Object.values(macchine).sort((a, b) => b.ore_totali - a.ore_totali);
 }
 
