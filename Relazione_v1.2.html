@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Relazione v1.2 — MES Grafica Nappa</title>
+<style>
+    @page { margin: 2cm; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #222; line-height: 1.6; padding: 40px; max-width: 800px; margin: 0 auto; }
+
+    .header { text-align: center; border-bottom: 3px solid #d11317; padding-bottom: 20px; margin-bottom: 30px; }
+    .header h1 { color: #d11317; font-size: 24px; margin-bottom: 4px; }
+    .header h2 { color: #333; font-size: 16px; font-weight: 400; }
+    .header .date { color: #888; font-size: 13px; margin-top: 8px; }
+
+    h3 { color: #d11317; font-size: 17px; margin-top: 30px; margin-bottom: 10px; border-left: 4px solid #d11317; padding-left: 10px; }
+
+    p { margin-bottom: 10px; font-size: 14px; text-align: justify; }
+
+    .feature-box { background: #f9f9f9; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px 18px; margin: 12px 0; }
+    .feature-box strong { color: #d11317; }
+
+    ul { margin: 8px 0 8px 20px; font-size: 14px; }
+    li { margin-bottom: 4px; }
+
+    table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 13px; }
+    th { background: #d11317; color: #fff; padding: 8px 12px; text-align: left; }
+    td { padding: 8px 12px; border-bottom: 1px solid #e0e0e0; }
+    tr:nth-child(even) { background: #f9f9f9; }
+
+    .stato-box { display: inline-block; padding: 2px 10px; border-radius: 4px; font-weight: bold; font-size: 12px; color: #fff; margin-right: 6px; }
+    .stato-verde { background: #28a745; }
+    .stato-arancione { background: #e67e22; }
+    .stato-rosso { background: #dc3545; }
+    .stato-blu { background: #0d6efd; }
+
+    .footer { margin-top: 40px; padding-top: 15px; border-top: 2px solid #e0e0e0; text-align: center; font-size: 12px; color: #888; }
+
+    .panoramica { font-size: 15px; color: #444; font-style: italic; margin-bottom: 20px; }
+
+    .screenshot { background: #fff; border: 1px solid #dee2e6; border-radius: 8px; padding: 15px; margin: 12px 0; text-align: center; }
+    .screenshot .caption { font-size: 12px; color: #888; margin-top: 8px; }
+
+    .tag { display: inline-block; padding: 1px 8px; border-radius: 3px; font-size: 11px; font-weight: bold; margin-right: 4px; }
+    .tag-new { background: #d4edda; color: #155724; }
+    .tag-fix { background: #fff3cd; color: #856404; }
+    .tag-data { background: #cce5ff; color: #004085; }
+
+    @media print {
+        body { padding: 0; }
+        h3 { page-break-after: avoid; }
+        .feature-box { page-break-inside: avoid; }
+        table { page-break-inside: avoid; }
+    }
+</style>
+</head>
+<body>
+
+<div class="header">
+    <h1>RELAZIONE TECNICA &mdash; Release v1.2</h1>
+    <h2>Sistema Gestionale MES &mdash; Grafica Nappa srl</h2>
+    <div class="date">24 Febbraio 2026</div>
+</div>
+
+<p class="panoramica">
+La versione 1.2 introduce il controllo obbligatorio della quantit&agrave; prodotta e degli scarti al termine di ogni fase di lavorazione, l'anteprima del foglio di stampa Prinect visibile direttamente agli operatori, la visualizzazione abbreviata delle fasi di stampa XL e una serie di aggiornamenti all'anagrafica operatori e reparti.
+</p>
+
+<!-- ================================================================ -->
+<h3>1. Quantit&agrave; prodotta e scarti obbligatori al Termina</h3>
+
+<p>Quando un operatore clicca &ldquo;Termina&rdquo; su una fase, il sistema ora apre un modal di conferma che richiede obbligatoriamente l'inserimento della <strong>quantit&agrave; prodotta</strong> e degli <strong>scarti</strong>, al posto del precedente semplice messaggio di conferma.</p>
+
+<div class="feature-box">
+    <strong>Funzionamento del modal:</strong>
+    <ul>
+        <li><strong>Qta target</strong> (sola lettura): mostra la quantit&agrave; prevista dalla fase, come riferimento per l'operatore</li>
+        <li><strong>Qta prodotta</strong> (obbligatorio): campo numerico che l'operatore deve compilare. Se la fase &egrave; collegata a Prinect (es. STAMPA XL), il campo viene pre-compilato automaticamente con il valore <em>fogli buoni</em> sincronizzati dall'API Prinect</li>
+        <li><strong>Scarti</strong> (facoltativo, default 0): campo numerico pre-compilato con <em>fogli scarto</em> da Prinect se disponibili</li>
+        <li>Il bottone &ldquo;Conferma e Termina&rdquo; invia i dati al server; senza quantit&agrave; prodotta il termina non procede</li>
+    </ul>
+</div>
+
+<p><strong>Pre-fill automatico Prinect:</strong> per le fasi di stampa offset collegate al sistema Prinect, i campi vengono pre-compilati con i dati di produzione reali (fogli buoni e fogli scarto) gi&agrave; sincronizzati dal servizio PrinectSyncService. L'operatore pu&ograve; comunque modificare i valori prima di confermare.</p>
+
+<p><strong>Dove si applica:</strong> il modal &egrave; presente sia nella pagina dettaglio commessa (per tutti gli operatori) sia nella pagina lavorazioni esterne (per il reparto spedizione).</p>
+
+<div class="feature-box">
+    <strong>Modifiche tecniche:</strong>
+    <ul>
+        <li>Nuovo campo <code>scarti</code> (integer, default 0) nella tabella <code>ordine_fasi</code></li>
+        <li>Validazione server: <code>qta_prodotta</code> obbligatorio e &ge; 0, <code>scarti</code> &ge; 0</li>
+        <li>I valori vengono salvati nei campi <code>qta_prod</code> e <code>scarti</code> della fase</li>
+    </ul>
+</div>
+
+<!-- ================================================================ -->
+<h3>2. Anteprima foglio di stampa per gli operatori</h3>
+
+<p>L'anteprima del foglio di stampa, precedentemente visibile solo nella dashboard proprietario, &egrave; ora disponibile anche per gli operatori nella pagina dettaglio commessa.</p>
+
+<div class="feature-box">
+    <strong>Come funziona:</strong>
+    <ul>
+        <li>Quando un operatore apre una commessa, il sistema recupera automaticamente l'anteprima del foglio di stampa dall'API Prinect</li>
+        <li>L'immagine viene mostrata in una card sopra la fase selezionata</li>
+        <li>Cliccando sull'immagine si apre in una nuova finestra a dimensione intera</li>
+        <li>Se Prinect non &egrave; disponibile o la commessa non ha un foglio di stampa, la sezione non viene mostrata</li>
+    </ul>
+</div>
+
+<p><strong>Beneficio:</strong> gli operatori in produzione possono verificare visivamente il lavoro da eseguire senza dover chiedere alla prestampa o accedere a Prinect.</p>
+
+<!-- ================================================================ -->
+<h3>3. Nomi fasi abbreviati in dashboard</h3>
+
+<p>Le fasi di stampa offset XL (STAMPAXL106, STAMPAXL106.1, STAMPAXL106.2, ecc.) vengono ora visualizzate nelle dashboard con il nome abbreviato <strong>&ldquo;STAMPA XL&rdquo;</strong> per migliorare la leggibilit&agrave;.</p>
+
+<div class="feature-box">
+    <strong>Dettagli:</strong>
+    <ul>
+        <li>Il nome originale resta invariato nel database (necessario per Prinect e import)</li>
+        <li>L'abbreviazione si applica ovunque il nome fase viene mostrato: dashboard operatore, dettaglio commessa, lavorazioni esterne, dashboard spedizione, dashboard proprietario, fasi terminate</li>
+        <li>Le altre fasi (STAMPA, STAMPAINDIGO, STAMPACALDO, ecc.) non vengono modificate</li>
+    </ul>
+</div>
+
+<!-- ================================================================ -->
+<h3>4. Aggiornamenti anagrafica operatori</h3>
+
+<table>
+    <tr>
+        <th>Operatore</th>
+        <th>Modifica</th>
+        <th>Dettaglio</th>
+    </tr>
+    <tr>
+        <td><strong>Francesco Verde</strong></td>
+        <td><span class="tag tag-fix">Correzione</span></td>
+        <td>Creato reparto dedicato &ldquo;finitura digitale&rdquo; con solo le 4 fasi di competenza: CORDONATURAPETRATTO, DEKIA-Difficile, DEKIA-semplice, PIEGA2ANTECORDONE. Reparti attuali: digitale, finitura digitale</td>
+    </tr>
+    <tr>
+        <td><strong>Mario Santoro</strong></td>
+        <td><span class="tag tag-fix">Correzione</span></td>
+        <td>Creato reparto dedicato &ldquo;tagliacarte&rdquo; con solo le 3 fasi di competenza: TAGLIACARTE, TAGLIACARTE.IML, TAGLIOINDIGO. Reparto legatoria aggiungibile da admin</td>
+    </tr>
+    <tr>
+        <td><strong>Gennaro La Scala</strong></td>
+        <td><span class="tag tag-new">Nuovo</span></td>
+        <td>Operatore creato con codice LASCALA. Reparti assegnati: fustella, fustella cilindrica</td>
+    </tr>
+    <tr>
+        <td><strong>Giuseppe Torromacco</strong></td>
+        <td><span class="tag tag-data">Disattivato</span></td>
+        <td>Operatore disattivato (pensionamento). Non appare pi&ugrave; nelle dashboard</td>
+    </tr>
+</table>
+
+<!-- ================================================================ -->
+<h3>5. Aggiornamenti fasi e reparti</h3>
+
+<table>
+    <tr>
+        <th>Fase</th>
+        <th>Reparto precedente</th>
+        <th>Reparto attuale</th>
+        <th>Motivo</th>
+    </tr>
+    <tr>
+        <td>AVVIAMENTISTAMPA.EST1.1</td>
+        <td>stampa offset</td>
+        <td><span class="stato-box stato-blu">esterno</span></td>
+        <td>Fase di avviamento esternalizzata</td>
+    </tr>
+    <tr>
+        <td>PUNTOMETALLICOEST</td>
+        <td>legatoria</td>
+        <td><span class="stato-box stato-blu">esterno</span></td>
+        <td>Lavorazione esterna</td>
+    </tr>
+    <tr>
+        <td>FUSTIML75X106</td>
+        <td>fustella</td>
+        <td>fustella piana</td>
+        <td>Riclassificazione per gestione visibilit&agrave; operatori</td>
+    </tr>
+    <tr>
+        <td>CORDONATURAPETRATTO, DEKIA-Difficile, DEKIA-semplice, PIEGA2ANTECORDONE</td>
+        <td>legatoria</td>
+        <td>finitura digitale</td>
+        <td>Reparto dedicato per operatore Verde</td>
+    </tr>
+    <tr>
+        <td>TAGLIACARTE, TAGLIACARTE.IML, TAGLIOINDIGO</td>
+        <td>legatoria</td>
+        <td>tagliacarte</td>
+        <td>Reparto dedicato per operatore Santoro</td>
+    </tr>
+</table>
+
+<!-- ================================================================ -->
+<h3>6. Riepilogo nuovi reparti</h3>
+
+<table>
+    <tr>
+        <th>Reparto</th>
+        <th>Fasi contenute</th>
+        <th>Operatori assegnati</th>
+    </tr>
+    <tr>
+        <td><strong>tagliacarte</strong></td>
+        <td>TAGLIACARTE, TAGLIACARTE.IML, TAGLIOINDIGO</td>
+        <td>Mario Santoro</td>
+    </tr>
+    <tr>
+        <td><strong>finitura digitale</strong></td>
+        <td>CORDONATURAPETRATTO, DEKIA-Difficile, DEKIA-semplice, PIEGA2ANTECORDONE</td>
+        <td>Francesco Verde</td>
+    </tr>
+</table>
+
+<!-- ================================================================ -->
+<h3>7. File modificati</h3>
+
+<table>
+    <tr>
+        <th>File</th>
+        <th>Tipo</th>
+    </tr>
+    <tr>
+        <td><code>database/migrations/2026_02_24_add_scarti_to_ordine_fasi.php</code></td>
+        <td><span class="tag tag-new">Nuovo</span> Migration campo scarti</td>
+    </tr>
+    <tr>
+        <td><code>database/migrations/2026_02_24_120000_data_changes_operatori_fasi.php</code></td>
+        <td><span class="tag tag-new">Nuovo</span> Migration dati operatori/fasi</td>
+    </tr>
+    <tr>
+        <td><code>database/migrations/2026_02_24_130000_fix_verde_lascala.php</code></td>
+        <td><span class="tag tag-new">Nuovo</span> Migration fix Verde e La Scala</td>
+    </tr>
+    <tr>
+        <td><code>app/Models/OrdineFase.php</code></td>
+        <td><span class="tag tag-fix">Modificato</span> Aggiunto scarti al fillable</td>
+    </tr>
+    <tr>
+        <td><code>app/Models/FasiCatalogo.php</code></td>
+        <td><span class="tag tag-fix">Modificato</span> Accessor nome_display per STAMPA XL</td>
+    </tr>
+    <tr>
+        <td><code>app/Http/Controllers/ProduzioneController.php</code></td>
+        <td><span class="tag tag-fix">Modificato</span> terminaFase() con validazione qta/scarti</td>
+    </tr>
+    <tr>
+        <td><code>app/Http/Controllers/CommessaController.php</code></td>
+        <td><span class="tag tag-fix">Modificato</span> Anteprima Prinect per operatori</td>
+    </tr>
+    <tr>
+        <td><code>resources/views/commesse/show.blade.php</code></td>
+        <td><span class="tag tag-fix">Modificato</span> Modal termina + anteprima</td>
+    </tr>
+    <tr>
+        <td><code>resources/views/spedizione/esterne.blade.php</code></td>
+        <td><span class="tag tag-fix">Modificato</span> Modal termina</td>
+    </tr>
+    <tr>
+        <td><code>resources/views/operatore/dashboard.blade.php</code></td>
+        <td><span class="tag tag-fix">Modificato</span> Nome display fasi</td>
+    </tr>
+    <tr>
+        <td><code>resources/views/owner/dashboard.blade.php</code></td>
+        <td><span class="tag tag-fix">Modificato</span> Nome display fasi</td>
+    </tr>
+    <tr>
+        <td><code>resources/views/owner/dettaglio_commessa.blade.php</code></td>
+        <td><span class="tag tag-fix">Modificato</span> Nome display fasi</td>
+    </tr>
+    <tr>
+        <td><code>resources/views/owner/fasi_terminate.blade.php</code></td>
+        <td><span class="tag tag-fix">Modificato</span> Nome display fasi</td>
+    </tr>
+    <tr>
+        <td><code>resources/views/spedizione/dashboard.blade.php</code></td>
+        <td><span class="tag tag-fix">Modificato</span> Nome display fasi</td>
+    </tr>
+</table>
+
+<!-- ================================================================ -->
+<h3>8. Procedura di deploy</h3>
+
+<div class="feature-box">
+    <strong>Passi necessari:</strong>
+    <ul>
+        <li><code>git pull origin master</code></li>
+        <li><code>php artisan migrate --force</code> &mdash; esegue le 3 nuove migration (campo scarti, dati operatori/fasi, fix Verde/La Scala)</li>
+        <li>Nessun'altra azione richiesta. Le modifiche alle view e ai controller sono immediatamente attive</li>
+    </ul>
+</div>
+
+<div class="feature-box">
+    <strong>Azioni manuali post-deploy (opzionali):</strong>
+    <ul>
+        <li>Dalla dashboard admin, aggiungere il reparto &ldquo;legatoria&rdquo; a Mario Santoro se necessario</li>
+        <li>Verificare il codice operatore di Gennaro La Scala (attualmente LASCALA) e assegnargli un codice badge se diverso</li>
+    </ul>
+</div>
+
+<!-- ================================================================ -->
+<h3>9. Test consigliati</h3>
+
+<div class="feature-box">
+    <ul>
+        <li><strong>Terminare una fase manuale:</strong> verificare che il modal si apra con campi vuoti e che sia obbligatorio inserire la quantit&agrave; prodotta</li>
+        <li><strong>Terminare una fase Prinect (STAMPA XL):</strong> verificare che i campi siano pre-compilati con fogli buoni e fogli scarto</li>
+        <li><strong>Terminare senza qta prodotta:</strong> verificare che il sistema blocchi l'operazione</li>
+        <li><strong>Verificare salvataggio:</strong> dopo il termina, controllare nel database che <code>qta_prod</code> e <code>scarti</code> siano salvati</li>
+        <li><strong>Anteprima:</strong> aprire una commessa con stampa offset e verificare che l'immagine anteprima sia visibile</li>
+        <li><strong>Nome fasi:</strong> verificare che STAMPAXL106.x appaia come &ldquo;STAMPA XL&rdquo; nelle dashboard</li>
+        <li><strong>Login operatori:</strong> verificare che Verde veda solo le 4 fasi assegnate, Santoro solo le 3 fasi tagliacarte, La Scala le fasi fustella e fustella cilindrica</li>
+    </ul>
+</div>
+
+<div class="footer">
+    Grafica Nappa srl &mdash; Sistema MES &mdash; Release v1.2 &mdash; 24 Febbraio 2026<br>
+    Commit: 582746b
+</div>
+
+</body>
+</html>

@@ -66,8 +66,8 @@
                     <div class="text-muted small" id="liveWorkstep">{{ $device['deviceStatus']['workstep']['name'] ?? '-' }}</div>
                 </div>
                 @php
-                    $liveJobId = $device['deviceStatus']['workstep']['job']['id'] ?? null;
-                    $liveCommessa = ($liveJobId && is_numeric($liveJobId)) ? str_pad($liveJobId, 7, '0', STR_PAD_LEFT) . '-' . date('y') : null;
+                    $liveJobId = \App\Http\Services\PrinectSyncService::estraiJobIdNumerico($device['deviceStatus']['workstep']['job']['id'] ?? null);
+                    $liveCommessa = $liveJobId ? str_pad($liveJobId, 7, '0', STR_PAD_LEFT) . '-' . date('y') : null;
                 @endphp
                 <div class="col-md-1 text-center">
                     <div class="kpi-label mb-1">Commessa</div>
@@ -324,7 +324,8 @@
                         @foreach($attivitaOggiPerCommessa as $att)
                         @php
                             $jId = $att->prinect_job_id ?? null;
-                            $comm = ($jId && is_numeric($jId)) ? str_pad($jId, 7, '0', STR_PAD_LEFT) . '-' . date('y') : null;
+                            $jId = \App\Http\Services\PrinectSyncService::estraiJobIdNumerico($jId);
+                            $comm = $jId ? str_pad($jId, 7, '0', STR_PAD_LEFT) . '-' . date('y') : null;
                             $sec = $att->sec_totali ?? 0;
                         @endphp
                         <tr class="@if($att->activity_name === 'Avviamento') table-warning @else table-success @endif">
@@ -488,8 +489,9 @@ setInterval(() => {
         document.getElementById('liveJob').textContent = d.job_name;
         document.getElementById('liveWorkstep').textContent = d.workstep + ' (' + d.ws_status + ')';
         var commEl = document.getElementById('liveCommessa');
-        if (d.job_id && !isNaN(d.job_id)) {
-            var comm = String(d.job_id).padStart(7, '0') + '-' + new Date().getFullYear().toString().slice(-2);
+        var numJobId = d.job_id ? String(d.job_id).match(/^(\d+)/)?.[1] : null;
+        if (numJobId) {
+            var comm = numJobId.padStart(7, '0') + '-' + new Date().getFullYear().toString().slice(-2);
             commEl.innerHTML = '<a href="/commesse/' + comm + '">' + comm + '</a>';
         } else {
             commEl.textContent = '-';

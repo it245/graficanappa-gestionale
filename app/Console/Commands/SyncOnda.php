@@ -7,10 +7,49 @@ use App\Services\OndaSyncService;
 
 class SyncOnda extends Command
 {
-    protected $signature = 'onda:sync';
-    protected $description = 'Sincronizza ordini e fasi da Onda (SQL Server)';
+    protected $signature = 'onda:sync {commessa? : Codice commessa singola da sincronizzare (senza filtro data)}';
+    protected $description = 'Sincronizza ordini e fasi da Onda (SQL Server). Con argomento: sync singola commessa.';
 
     public function handle()
+    {
+        $commessa = $this->argument('commessa');
+
+        if ($commessa) {
+            return $this->syncSingolaCommessa($commessa);
+        }
+
+        return $this->syncTutte();
+    }
+
+    protected function syncSingolaCommessa(string $commessa): int
+    {
+        $this->info("Sync commessa $commessa da Onda (senza filtro data)...");
+
+        try {
+            $risultato = OndaSyncService::sincronizzaSingolaCommessa($commessa);
+
+            if (!$risultato['trovata']) {
+                $this->warn($risultato['messaggio']);
+                return 1;
+            }
+
+            $this->info($risultato['messaggio']);
+            if (!empty($risultato['fasi'])) {
+                foreach ($risultato['fasi'] as $fase) {
+                    $this->line("  + $fase");
+                }
+            }
+
+            $this->info('Sync commessa completato.');
+        } catch (\Exception $e) {
+            $this->error('Errore: ' . $e->getMessage());
+            return 1;
+        }
+
+        return 0;
+    }
+
+    protected function syncTutte(): int
     {
         $this->info('Sync Onda in corso...');
 

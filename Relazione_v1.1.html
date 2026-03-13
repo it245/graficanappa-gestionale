@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Relazione v1.1 — MES Grafica Nappa</title>
+<style>
+    @page { margin: 2cm; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #222; line-height: 1.6; padding: 40px; max-width: 800px; margin: 0 auto; }
+
+    .header { text-align: center; border-bottom: 3px solid #d11317; padding-bottom: 20px; margin-bottom: 30px; }
+    .header img { width: 80px; height: 80px; border-radius: 50%; border: 3px solid #d11317; margin-bottom: 10px; }
+    .header h1 { color: #d11317; font-size: 24px; margin-bottom: 4px; }
+    .header h2 { color: #333; font-size: 16px; font-weight: 400; }
+    .header .date { color: #888; font-size: 13px; margin-top: 8px; }
+
+    h3 { color: #d11317; font-size: 17px; margin-top: 30px; margin-bottom: 10px; border-left: 4px solid #d11317; padding-left: 10px; }
+
+    p { margin-bottom: 10px; font-size: 14px; text-align: justify; }
+
+    .feature-box { background: #f9f9f9; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px 18px; margin: 12px 0; }
+    .feature-box strong { color: #d11317; }
+
+    ul { margin: 8px 0 8px 20px; font-size: 14px; }
+    li { margin-bottom: 4px; }
+
+    table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 13px; }
+    th { background: #d11317; color: #fff; padding: 8px 12px; text-align: left; }
+    td { padding: 8px 12px; border-bottom: 1px solid #e0e0e0; }
+    tr:nth-child(even) { background: #f9f9f9; }
+
+    .stato-box { display: inline-block; padding: 2px 10px; border-radius: 4px; font-weight: bold; font-size: 12px; color: #fff; margin-right: 6px; }
+    .stato-verde { background: #28a745; }
+    .stato-arancione { background: #e67e22; }
+    .stato-rosso { background: #dc3545; }
+
+    .footer { margin-top: 40px; padding-top: 15px; border-top: 2px solid #e0e0e0; text-align: center; font-size: 12px; color: #888; }
+
+    .panoramica { font-size: 15px; color: #444; font-style: italic; margin-bottom: 20px; }
+
+    @media print {
+        body { padding: 0; }
+        h3 { page-break-after: avoid; }
+        .feature-box { page-break-inside: avoid; }
+        table { page-break-inside: avoid; }
+    }
+</style>
+</head>
+<body>
+
+<div class="header">
+    <h1>RELAZIONE TECNICA — Release v1.1</h1>
+    <h2>Sistema Gestionale MES — Grafica Nappa srl</h2>
+    <div class="date">18 Febbraio 2026</div>
+</div>
+
+<p class="panoramica">
+La versione 1.1 del sistema MES rappresenta un importante aggiornamento che introduce l'automazione dell'import dati dal gestionale Onda, una riprogettazione completa dell'interfaccia di scheduling produzione e numerosi miglioramenti alla precisione dei calcoli.
+</p>
+
+<h3>1. Sincronizzazione automatica con Onda</h3>
+
+<p>La principale novit&agrave; della v1.1 &egrave; l'integrazione diretta con il gestionale Onda (server SQL Server). Il sistema ora legge automaticamente gli ordini di produzione, eliminando completamente la necessit&agrave; di esportare ed importare file Excel manualmente.</p>
+
+<div class="feature-box">
+    <strong>Come funziona:</strong>
+    <ul>
+        <li>Ogni ora, dal luned&igrave; al sabato (06:00 &ndash; 22:00), il sistema si collega ad Onda e importa gli ordini aperti con le relative fasi di lavorazione</li>
+        <li>Gli ordini gi&agrave; presenti vengono aggiornati, quelli nuovi vengono creati automaticamente</li>
+        <li>Le priorit&agrave; e le ore stimate vengono ricalcolate ad ogni sincronizzazione</li>
+        <li>L'import Excel resta disponibile come procedura di emergenza</li>
+    </ul>
+</div>
+
+<p><strong>Beneficio:</strong> Azzeramento del lavoro manuale di import. Dati sempre aggiornati senza intervento umano.</p>
+
+<h3>2. Scheduling produzione &mdash; Nuova interfaccia</h3>
+
+<p>L'intera sezione di scheduling &egrave; stata riprogettata con un'interfaccia moderna, pi&ugrave; leggibile e professionale.</p>
+
+<div class="feature-box">
+    <strong>Gantt per macchina &mdash; Turni configurati per reparto:</strong>
+    <ul>
+        <li><strong>Stampa Offset:</strong> ciclo continuo (0:00 &ndash; 23:00)</li>
+        <li><strong>Piegaincolla:</strong> 06:00 &ndash; 22:00</li>
+        <li><strong>Stampa a caldo:</strong> 06:00 &ndash; 22:00 (sabato 06:00 &ndash; 13:00)</li>
+        <li><strong>Fustella:</strong> 06:00 &ndash; 22:00</li>
+    </ul>
+</div>
+
+<div class="feature-box">
+    <strong>Miglioramenti al Gantt:</strong>
+    <ul>
+        <li>Le fasi esterne (fornitori) vengono schedulate in parallelo, riflettendo la realt&agrave; produttiva</li>
+        <li>La macchina Bobst gestisce correttamente sia fustella che rilievo come unica risorsa</li>
+        <li>Pannello laterale di dettaglio commessa accessibile da qualsiasi vista</li>
+    </ul>
+</div>
+
+<div class="feature-box">
+    <strong>Tabella priorit&agrave; &mdash; Nuova vista raggruppata per commessa:</strong>
+    <ul>
+        <li>Colonne: Priorit&agrave;, Commessa, Prodotto, Cliente, Consegna, Ore Totali, Margine, Fasi, Fine Stimata, Stato</li>
+        <li>Indicatori di stato a colori:<br>
+            <span class="stato-box stato-verde">In tempo</span> produzione nei tempi previsti<br>
+            <span class="stato-box stato-arancione">Ritardo</span> produzione in ritardo sulla tabella di marcia<br>
+            <span class="stato-box stato-rosso">Critico</span> consegna superata da oltre 5 giorni
+        </li>
+    </ul>
+</div>
+
+<h3>3. Precisione calcoli di produzione</h3>
+
+<div class="feature-box">
+    <ul>
+        <li>Corretta la formula di calcolo ore per le fasi non ancora mappate</li>
+        <li>Le priorit&agrave; vengono ora salvate nel database, garantendo coerenza tra le diverse viste</li>
+        <li>Corretto il servizio di cascata stati fasi: le fasi vengono ordinate per sequenza, rispettando il flusso di produzione reale</li>
+    </ul>
+</div>
+
+<h3>4. Riepilogo interventi</h3>
+
+<table>
+    <thead>
+        <tr>
+            <th>Componente</th>
+            <th>Intervento</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Import dati</td>
+            <td>Da manuale (Excel) ad automatico (SQL Server Onda)</td>
+        </tr>
+        <tr>
+            <td>Scheduling</td>
+            <td>Nuova interfaccia, turni specifici per reparto, Gantt migliorato</td>
+        </tr>
+        <tr>
+            <td>Priorit&agrave;</td>
+            <td>Salvate in database, ricalcolo automatico ad ogni sync</td>
+        </tr>
+        <tr>
+            <td>Fasi esterne</td>
+            <td>Schedulazione parallela (prima sequenziale)</td>
+        </tr>
+        <tr>
+            <td>Macchina Bobst</td>
+            <td>Unificata gestione fustella + rilievo</td>
+        </tr>
+        <tr>
+            <td>Pagina di accesso</td>
+            <td>Restyling con brand aziendale</td>
+        </tr>
+    </tbody>
+</table>
+
+<div class="footer">
+    <p>Sistema Gestionale MES &mdash; Grafica Nappa srl &mdash; Aversa (CE)</p>
+    <p>Server di produzione: gestionale.local</p>
+</div>
+
+</body>
+</html>

@@ -109,5 +109,19 @@
 
         <p class="info-message">Assistenza reparto informatico: <strong>it@graficanappa.com</strong></p>
     </div>
+    <script>
+    // Rinnova CSRF token ogni 10 minuti per evitare "Page Expired"
+    setInterval(function() {
+        fetch('{{ route("operatore.login") }}', { credentials: 'same-origin' })
+            .then(function(r) { return r.text(); })
+            .then(function(html) {
+                var match = html.match(/name="_token"\s+value="([^"]+)"/);
+                if (match) {
+                    var input = document.querySelector('input[name="_token"]');
+                    if (input) input.value = match[1];
+                }
+            }).catch(function(){});
+    }, 600000);
+    </script>
 </body>
 </html>

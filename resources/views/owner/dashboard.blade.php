@@ -1,5 +1,9 @@
 @extends('layouts.app')
 
+@section('viewport')
+{{-- Nessun viewport: il browser mobile usa il default ~980px, la pagina è scrollabile --}}
+@endsection
+
 @section('content')
 <div class="container-fluid px-0">
 <style>
@@ -48,6 +52,10 @@ h2, p {
     height: 35px;
     cursor: pointer;
     transition: transform 0.15s ease;
+    touch-action: manipulation;
+}
+.action-icons a, .action-icons button, .sidebar-menu a {
+    touch-action: manipulation;
 }
 .action-icons img:hover {
     transform: scale(1.15);
@@ -58,11 +66,18 @@ h2, p {
     background: none;
     border: none;
     cursor: pointer;
-    padding: 4px;
+    padding: 12px;
     display: flex;
     flex-direction: column;
     gap: 5px;
     transition: transform 0.15s ease;
+    z-index: 100;
+    position: relative;
+    min-width: 44px;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+    touch-action: manipulation;
 }
 .hamburger-btn:hover { transform: scale(1.1); }
 .hamburger-btn span {
@@ -136,8 +151,8 @@ h2, p {
    ========================= */
 
 table {
-    width: 2560px;              /* OTTIMIZZATO PER 2560x1440 */
-    max-width: 2560px;
+    width: 2970px;
+    max-width: 2970px;
     border-collapse: collapse;
     table-layout: fixed;        /* FONDAMENTALE */
     font-size: 12px;
@@ -177,12 +192,12 @@ thead th {
 }
 
 /* =========================
-   LARGHEZZA COLONNE (24 colonne) — ordine attuale:
+   LARGHEZZA COLONNE (27 colonne) — ordine attuale:
    1=Commessa 2=Stato 3=Cliente 4=CodArt 5=Colori 6=Fustella
    7=Descrizione 8=Qta 9=UM 10=Priorità 11=Fase 12=Reparto
-   13=DataReg 14=DataConsegna 15=CodCarta 16=Carta
-   17=QtaCarta 18=UMCarta 19=Operatori 20=QtaProd
-   21=Esterno 22=Note 23=DataInizio 24=DataFine
+   13=Carta 14=QtaCarta 15=DataReg 16=DataConsegna 17=CodCarta
+   18=UMCarta 19=Operatori 20=QtaProd
+   21=Esterno 22=Note 23=DataInizio 24=DataFine 25=OrePrev 26=OreLav 27=Progresso
    ========================= */
 
 /* 1. Commessa */
@@ -198,7 +213,7 @@ th:nth-child(3), td:nth-child(3) { width: 170px; white-space: normal; }
 th:nth-child(4), td:nth-child(4) { width: 95px; }
 
 /* 5. Colori */
-th:nth-child(5), td:nth-child(5) { width: 110px; white-space: normal; }
+th:nth-child(5), td:nth-child(5) { width: 180px; white-space: normal; }
 
 /* 6. Fustella */
 th:nth-child(6), td:nth-child(6) { width: 75px; }
@@ -221,20 +236,20 @@ th:nth-child(11), td:nth-child(11) { width: 125px; }
 /* 12. Reparto */
 th:nth-child(12), td:nth-child(12) { width: 110px; }
 
-/* 13. Data Registrazione / 14. Data Prevista Consegna */
-th:nth-child(13), td:nth-child(13),
-th:nth-child(14), td:nth-child(14) {
+/* 13. Carta */
+th:nth-child(13), td:nth-child(13) { width: 190px; white-space: normal; }
+
+/* 14. Qta Carta */
+th:nth-child(14), td:nth-child(14) { width: 50px; text-align: center; }
+
+/* 15. Data Registrazione / 16. Data Prevista Consegna */
+th:nth-child(15), td:nth-child(15),
+th:nth-child(16), td:nth-child(16) {
     width: 100px;
 }
 
-/* 15. Cod Carta */
-th:nth-child(15), td:nth-child(15) { width: 170px; white-space: normal; }
-
-/* 16. Carta */
-th:nth-child(16), td:nth-child(16) { width: 190px; white-space: normal; }
-
-/* 17. Qta Carta */
-th:nth-child(17), td:nth-child(17) { width: 50px; text-align: center; }
+/* 17. Cod Carta */
+th:nth-child(17), td:nth-child(17) { width: 170px; white-space: normal; }
 
 /* 18. UM Carta */
 th:nth-child(18), td:nth-child(18) { width: 40px; text-align: center; }
@@ -266,6 +281,15 @@ th:nth-child(23), td:nth-child(23),
 th:nth-child(24), td:nth-child(24) {
     width: 110px;
 }
+
+/* 25. Ore Prev. */
+th:nth-child(25), td:nth-child(25) { width: 70px; text-align: center; }
+
+/* 26. Ore Lav. */
+th:nth-child(26), td:nth-child(26) { width: 70px; text-align: center; }
+
+/* 27. Progresso */
+th:nth-child(27), td:nth-child(27) { width: 100px; }
 
 /* =========================
    SELEZIONE EXCEL
@@ -387,10 +411,6 @@ th.selected {
    PERFORMANCE
    ========================= */
 
-table * {
-    user-select: none;
-}
-
 td[contenteditable] {
     user-select: text;
     cursor: text;
@@ -416,21 +436,41 @@ tr:hover td {
     transition: transform 0.2s ease;
 }
 
+
 </style>
     <div class="d-flex align-items-center justify-content-between mb-2 mx-2">
         <div style="display:flex; align-items:center; gap:10px;">
             <img src="{{ asset('images/logo_gn.png') }}" alt="Logo" style="height:40px;">
-            <h2 class="mb-0">Dashboard Owner</h2>
+            <div class="operatore-info" id="operatoreInfo" style="position:relative; display:flex; align-items:center; gap:10px; cursor:pointer;">
+                <img src="{{ asset('images/icons8-utente-uomo-cerchiato-50.png') }}" alt="Operatore" style="width:40px; height:40px; border-radius:50%;">
+                <div class="operatore-popup" id="operatorePopup" style="position:absolute; top:50px; left:0; background:#fff; border:1px solid #ccc; padding:10px; border-radius:5px; box-shadow:0 2px 10px rgba(0,0,0,0.2); display:none; z-index:1000; min-width:200px;">
+                    <div><strong>{{ $operatore->nome ?? '' }} {{ $operatore->cognome ?? '' }}</strong></div>
+                    <div><p class="mb-1">Ruolo: <strong>Owner</strong></p></div>
+                    <a href="{{ route('operatore.logout') }}" class="btn btn-secondary btn-sm mt-2">Logout</a>
+                </div>
+            </div>
         </div>
-        <div class="operatore-info" id="operatoreInfo" style="position:relative; display:flex; align-items:center; gap:10px; cursor:pointer;">
-            <img src="{{ asset('images/icons8-utente-uomo-cerchiato-50.png') }}" alt="Operatore" style="width:50px; height:50px; border-radius:50%;">
-            <div class="operatore-popup" id="operatorePopup" style="position:absolute; top:60px; right:0; background:#fff; border:1px solid #ccc; padding:10px; border-radius:5px; box-shadow:0 2px 10px rgba(0,0,0,0.2); display:none; z-index:1000; min-width:200px;">
-                <div><strong>{{ $operatore->nome ?? '' }} {{ $operatore->cognome ?? '' }}</strong></div>
-                <div><p class="mb-1">Ruolo: <strong>Owner</strong></p></div>
-                <form action="{{ route('operatore.logout') }}" method="POST">
-                    @csrf
-                    <button type="submit" class="btn btn-secondary btn-sm mt-2">Logout</button>
-                </form>
+        {{-- LEGENDA --}}
+        <div style="background:#fff; border:1px solid #dee2e6; border-radius:8px; padding:8px 14px; box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+            <div class="d-flex gap-4" style="font-size:11px;">
+                <div>
+                    <div style="font-weight:700; font-size:10px; color:#666; text-transform:uppercase; margin-bottom:4px;">Stati Fase</div>
+                    <div class="d-flex flex-column gap-1">
+                        <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#e9ecef;border:1px solid #ccc;border-radius:2px;"></span> 0 Caricato</div>
+                        <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#cfe2ff;border:1px solid #9ec5fe;border-radius:2px;"></span> 1 Pronto</div>
+                        <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#fff3cd;border:1px solid #ffc107;border-radius:2px;"></span> 2 Avviato</div>
+                        <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#d1e7dd;border:1px solid #198754;border-radius:2px;"></span> 3 Terminato</div>
+                        <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#c3c3c3;border:1px solid #999;border-radius:2px;"></span> 4 Consegnato</div>
+                    </div>
+                </div>
+                <div style="border-left:1px solid #dee2e6; padding-left:12px;">
+                    <div style="font-weight:700; font-size:10px; color:#666; text-transform:uppercase; margin-bottom:4px;">Barra Progresso</div>
+                    <div class="d-flex flex-column gap-1">
+                        <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#0d6efd;border-radius:2px;"></span> Completate</div>
+                        <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#fd7e14;border-radius:2px;"></span> In corso</div>
+                        <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#198754;border-radius:2px;"></span> Tutte completate</div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -495,6 +535,22 @@ tr:hover td {
             <button class="sidebar-close" id="sidebarClose">&times;</button>
         </div>
 
+        {{-- Fustelle --}}
+        <a href="{{ route('owner.fustelle', ['op_token' => $opToken ?? request()->query('op_token')]) }}" class="sidebar-item">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#6f42c1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 3v18"/>
+            </svg>
+            <span>Fustelle</span>
+        </a>
+
+        {{-- Panoramica Reparti --}}
+        <a href="{{ route('owner.repartiOverview', ['op_token' => $opToken ?? request()->query('op_token')]) }}" class="sidebar-item">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+            </svg>
+            <span>Panoramica Reparti</span>
+        </a>
+
         {{-- Visualizza fasi terminate --}}
         <a href="{{ route('owner.fasiTerminate') }}" class="sidebar-item">
             <img src="{{ asset('images/out-of-the-box.png') }}" alt="">
@@ -505,6 +561,14 @@ tr:hover td {
         <a href="{{ route('owner.scheduling') }}" class="sidebar-item">
             <img src="{{ asset('images/icons8-report-grafico-a-torta-50.png') }}" alt="">
             <span>Scheduling Produzione</span>
+        </a>
+
+        {{-- Report Ore --}}
+        <a href="{{ route('owner.reportOre', ['op_token' => $opToken ?? request()->query('op_token')]) }}" class="sidebar-item">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0d6efd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+            </svg>
+            <span>Report Ore</span>
         </a>
 
         {{-- Lavorazioni Esterne --}}
@@ -589,7 +653,24 @@ tr:hover td {
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
             </svg>
             <span>Note Consegne</span>
+            <span id="noteConsegneBadge" style="display:none; background:#dc3545; color:#fff; border-radius:50%; width:20px; height:20px; font-size:11px; font-weight:bold; text-align:center; line-height:20px; margin-left:6px;">!</span>
         </a>
+
+        {{-- Riferimenti Marco (solo readonly) --}}
+        @if($isReadonly ?? false)
+        <a href="#" class="sidebar-item" onclick="filtraRiferimentiMarco(); closeSidebar(); return false;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#198754" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            <span>Riferimenti Marco</span>
+        </a>
+        <a href="#" class="sidebar-item" onclick="resetRiferimentiMarco(); closeSidebar(); return false;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#6c757d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+            <span>Mostra tutte le commesse</span>
+        </a>
+        @endif
 
         {{-- Sync Onda --}}
         @if(!($isReadonly ?? false))
@@ -645,7 +726,7 @@ tr:hover td {
     {{-- MODALE AGGIUNGI RIGA --}}
     <div class="modal fade" id="aggiungiRigaModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
-            <form method="POST" action="{{ route('owner.aggiungiRiga') }}">
+            <form method="POST" action="{{ route('owner.aggiungiRiga') }}{{ request('op_token') ? '?op_token='.request('op_token') : '' }}">
                 @csrf
                 <div class="modal-content">
                     <div class="modal-header">
@@ -720,7 +801,7 @@ tr:hover td {
 @endphp
 
     {{-- TABELLA --}}
-    <div id="tableScroll" style="width:100%;">
+    <div id="tableScroll" style="width:100%; overflow-x:auto;">
         <table id="tabellaOrdini" class="table table-bordered table-sm table-striped" style="white-space:nowrap;">
             <thead class="table-dark">
                 <tr>
@@ -736,11 +817,11 @@ tr:hover td {
                     <th>Priorità</th>
                     <th>Fase</th>
                     <th>Reparto</th>
+                    <th>Carta</th>
+                    <th>Qta Carta</th>
                     <th>Data Registrazione</th>
                     <th>Data Prevista Consegna</th>
                     <th>Cod Carta</th>
-                    <th>Carta</th>
-                    <th>Qta Carta</th>
                     <th>UM Carta</th>
                     <th>Operatori</th>
                     <th>Qta Prod.</th>
@@ -748,6 +829,9 @@ tr:hover td {
                     <th>Note</th>
                     <th>Data Inizio</th>
                     <th>Data Fine</th>
+                    <th>Ore Prev.</th>
+                    <th>Ore Lav.</th>
+                    <th>Progresso</th>
                 </tr>
             </thead>
             <tbody>
@@ -777,7 +861,7 @@ tr:hover td {
                         $clienteOwner = $fase->ordine->cliente_nome ?? '';
                         $repartoOwner = strtolower($fase->faseCatalogo->reparto->nome ?? '');
                         $coloriOwner = \App\Helpers\DescrizioneParser::parseColori($descOwner, $clienteOwner, $repartoOwner);
-                        $fustellaOwner = \App\Helpers\DescrizioneParser::parseFustella($descOwner, $clienteOwner);
+                        $fustellaOwner = \App\Helpers\DescrizioneParser::parseFustella($descOwner, $clienteOwner, $fase->ordine->note_prestampa ?? '');
                     @endphp
                     <td>{{ $coloriOwner ?: '-' }}</td>
                     <td>{{ $fustellaOwner ?: '-' }}</td>
@@ -787,11 +871,11 @@ tr:hover td {
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'priorita', this.innerText)">{{ $fase->priorita !== null ? number_format($fase->priorita, 2) : '-' }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'fase', this.innerText)">{{ $fase->faseCatalogo->nome_display ?? '-' }}</td>
                     <td>{{ $fase->faseCatalogo->reparto->nome ?? '-' }}</td>
+                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'carta', this.innerText)">{{ $fase->ordine->carta ?? '-' }}</td>
+                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'qta_carta', this.innerText)">{{ $fase->ordine->qta_carta ?? '-' }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_registrazione', this.innerText)">{{ formatItalianDate($fase->ordine->data_registrazione) }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_prevista_consegna', this.innerText)">{{ formatItalianDate($fase->ordine->data_prevista_consegna) }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'cod_carta', this.innerText)">{{ $fase->ordine->cod_carta ?? '-' }}</td>
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'carta', this.innerText)">{{ $fase->ordine->carta ?? '-' }}</td>
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'qta_carta', this.innerText)">{{ $fase->ordine->qta_carta ?? '-' }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'UM_carta', this.innerText)">{{ $fase->ordine->UM_carta ?? '-' }}</td>
                     <td>
                         @forelse($fase->operatori as $op)
@@ -808,10 +892,91 @@ tr:hover td {
                     @endphp
                     <td>{{ $fornitoreEsterno ?? '-' }}</td>
                     <td>
+                        @php
+                            $nfsOwner = $fase->ordine->note_fasi_successive ?? '';
+                            $righeNfsOwner = $nfsOwner ? json_decode($nfsOwner, true) : [];
+                        @endphp
+                        @if(!empty($righeNfsOwner) && is_array($righeNfsOwner))
+                            @foreach($righeNfsOwner as $r)
+                                <strong>{{ $r['nome'] ?? '' }}</strong>: {{ $r['testo'] ?? '' }}@if(!$loop->last) — @endif
+                            @endforeach
+                            @if($notePulitaOwner)<br>@endif
+                        @endif
                         <span contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'note', this.innerText)">{{ $notePulitaOwner ?? '-' }}</span>
                     </td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_inizio', this.innerText)">{{ formatItalianDate($fase->data_inizio, true) }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_fine', this.innerText)">{{ formatItalianDate($fase->data_fine, true) }}</td>
+                    @php
+                        // Ore previste: avviamento + qta_carta / copieh
+                        $fasiInfoOw = config('fasi_ore');
+                        $infoFaseOw = $fasiInfoOw[$fase->fase] ?? null;
+                        $orePreviste = null;
+                        if ($infoFaseOw) {
+                            $qtaCartaOw = $fase->ordine->qta_carta ?? 0;
+                            $copiehOw = $infoFaseOw['copieh'] ?: 1;
+                            $orePreviste = round($infoFaseOw['avviamento'] + ($qtaCartaOw / $copiehOw), 1);
+                        }
+                    @endphp
+                    <td>
+                        @if($orePreviste !== null)
+                            @if($orePreviste >= 1)
+                                {{ floor($orePreviste) }}h {{ round(($orePreviste - floor($orePreviste)) * 60) }}m
+                            @else
+                                {{ round($orePreviste * 60) }}m
+                            @endif
+                        @else
+                            -
+                        @endif
+                    </td>
+                    @php
+                        // Prinect (stampa XL): tempo_avviamento_sec + tempo_esecuzione_sec
+                        $secPrinect = ($fase->tempo_avviamento_sec ?? 0) + ($fase->tempo_esecuzione_sec ?? 0);
+                        if ($secPrinect > 0) {
+                            $oreNetteOw = $secPrinect / 3600;
+                            $secNettoOw = $secPrinect;
+                            $fonteTempo = 'P';
+                        } else {
+                            // Fallback: pivot operatore (data_fine - data_inizio - pause)
+                            $totSecPausa = $fase->operatori->sum(fn($op) => $op->pivot->secondi_pausa ?? 0);
+                            $secLordoOw = 0;
+                            $diOw = $fase->operatori->whereNotNull('pivot.data_inizio')->sortBy('pivot.data_inizio')->first()?->pivot->data_inizio;
+                            $dfOw = $fase->operatori->whereNotNull('pivot.data_fine')->sortByDesc('pivot.data_fine')->first()?->pivot->data_fine;
+                            if ($diOw && $dfOw) {
+                                $secLordoOw = abs(\Carbon\Carbon::parse($dfOw)->getTimestamp() - \Carbon\Carbon::parse($diOw)->getTimestamp());
+                            }
+                            $secNettoOw = max($secLordoOw - $totSecPausa, 0);
+                            $oreNetteOw = $secNettoOw / 3600;
+                            $fonteTempo = '';
+                        }
+                    @endphp
+                    <td>
+                        @if($secNettoOw > 0)
+                            @if($secNettoOw >= 3600)
+                                {{ floor($secNettoOw / 3600) }}h {{ floor(($secNettoOw % 3600) / 60) }}m
+                            @elseif($secNettoOw >= 60)
+                                {{ floor($secNettoOw / 60) }}m
+                            @else
+                                {{ $secNettoOw }}s
+                            @endif
+                            @if($fonteTempo)<small class="text-muted">{{ $fonteTempo }}</small>@endif
+                        @else
+                            -
+                        @endif
+                    </td>
+                    @php
+                        $prog = $progressoCommesse[$fase->ordine->commessa ?? ''] ?? ['totale'=>0,'terminate'=>0,'avviate'=>0,'percentuale'=>0];
+                        $progPerc = $prog['percentuale'];
+                        $progAvv = $prog['totale'] > 0 ? round(($prog['avviate'] / $prog['totale']) * 100) : 0;
+                    @endphp
+                    <td style="padding:2px 4px; vertical-align:middle;">
+                        <div style="position:relative; background:#e9ecef; border-radius:4px; height:16px; min-width:60px;" title="{{ $prog['terminate'] }}/{{ $prog['totale'] }} terminate{{ $prog['avviate'] > 0 ? ', '.$prog['avviate'].' in corso' : '' }}">
+                            @if($prog['avviate'] > 0 && $progPerc < 100)
+                            <div style="position:absolute; top:0; left:0; height:100%; width:{{ min($progPerc + $progAvv, 100) }}%; background:#fd7e14; border-radius:4px;"></div>
+                            @endif
+                            <div style="position:absolute; top:0; left:0; height:100%; width:{{ $progPerc }}%; background:{{ $progPerc >= 100 ? '#198754' : '#0d6efd' }}; border-radius:4px;"></div>
+                            <span style="position:relative; z-index:1; font-size:10px; font-weight:bold; color:{{ $progPerc >= 40 ? '#fff' : '#333' }}; line-height:16px; padding-left:4px;">{{ $prog['terminate'] }}/{{ $prog['totale'] }}</span>
+                        </div>
+                    </td>
                 </tr>
             @endforeach
             </tbody>
@@ -889,6 +1054,7 @@ tr:hover td {
                         <tr>
                             <th style="padding:12px 14px;">DDT</th>
                             <th style="padding:12px 14px;">Commesse</th>
+                            <th style="padding:12px 14px;">Descrizione</th>
                             <th style="padding:12px 14px;">Cliente</th>
                             <th style="padding:12px 14px;">Stato BRT</th>
                             <th style="padding:12px 14px;">Data Consegna</th>
@@ -902,17 +1068,31 @@ tr:hover td {
                         @php
                             $primo = $ordiniGruppo->first();
                             $commesse = $ordiniGruppo->pluck('commessa')->unique()->implode(', ');
+                            $cached = $primo->brt_cache_at ? true : false;
+                            $statoCache = $primo->brt_stato ?? null;
+                            $badgeClass = 'bg-light text-muted';
+                            $badgeText = 'Da verificare';
+                            if ($cached && $statoCache) {
+                                $badgeText = $statoCache;
+                                if (str_contains($statoCache, 'CONSEGNATA')) $badgeClass = 'bg-success';
+                                elseif (str_contains($statoCache, 'IN TRANSITO') || str_contains($statoCache, 'PARTITA')) $badgeClass = 'bg-primary';
+                                elseif (str_contains($statoCache, 'CONSEGNA')) $badgeClass = 'bg-warning text-dark';
+                                elseif (str_contains($statoCache, 'RITIRATA')) $badgeClass = 'bg-info';
+                                elseif (str_contains($statoCache, 'MULTI')) $badgeClass = 'bg-purple" style="background:#7c3aed!important;color:#fff';
+                                else $badgeClass = 'bg-secondary';
+                            }
                         @endphp
                         <tr id="brt_row_{{ md5($numDDT) }}">
                             <td class="fw-bold" style="padding:10px 14px; font-size:16px;">{{ ltrim($numDDT, '0') }}</td>
                             <td style="padding:10px 14px;">{{ $commesse }}</td>
+                            <td style="padding:10px 14px; max-width:250px; white-space:normal;">{!! $ordiniGruppo->map(fn($d) => $d->ordine->descrizione ?? '')->filter()->unique()->map(fn($d) => e(Str::limit($d, 60)))->implode('<hr style="margin:4px 0; border-color:#ccc;">') !!}</td>
                             <td style="padding:10px 14px;">{{ $primo->cliente_nome ?? '-' }}</td>
                             <td id="brt_stato_{{ md5($numDDT) }}" style="padding:10px 14px;">
-                                <span class="badge bg-light text-muted" style="font-size:13px; padding:6px 10px;">Da verificare</span>
+                                <span class="badge {{ $badgeClass }}" style="font-size:13px; padding:6px 10px;">{{ $badgeText }}</span>
                             </td>
-                            <td id="brt_data_{{ md5($numDDT) }}" style="padding:10px 14px;">-</td>
-                            <td id="brt_dest_{{ md5($numDDT) }}" style="padding:10px 14px;">-</td>
-                            <td id="brt_colli_{{ md5($numDDT) }}" style="padding:10px 14px;">-</td>
+                            <td id="brt_data_{{ md5($numDDT) }}" style="padding:10px 14px;">{{ $cached ? ($primo->brt_data_consegna ?? '-') : '-' }}</td>
+                            <td id="brt_dest_{{ md5($numDDT) }}" style="padding:10px 14px;">{{ $cached ? ($primo->brt_destinatario ?? '-') : '-' }}</td>
+                            <td id="brt_colli_{{ md5($numDDT) }}" style="padding:10px 14px;">{{ $cached ? ($primo->brt_colli ?? '-') : '-' }}</td>
                             <td style="padding:10px 14px;">
                                 <button class="btn btn-outline-danger fw-bold" style="font-size:14px; padding:6px 16px;" onclick="apriTrackingDDT('{{ $numDDT }}', this)">
                                     Dettagli
@@ -1101,10 +1281,21 @@ document.querySelectorAll('.sidebar-menu a.sidebar-item').forEach(function(el) {
     el.addEventListener('click', function() { setTimeout(closeSidebar, 100); });
 });
 
+// === Token per fetch autenticate ===
+var _opToken = '{{ $opToken ?? request()->query("op_token", "") }}';
+function urlToken(url) {
+    if (!_opToken) return url;
+    return url + (url.indexOf('?') >= 0 ? '&' : '?') + 'op_token=' + encodeURIComponent(_opToken);
+}
+function csrfToken() {
+    var meta = document.querySelector('meta[name="csrf-token"]');
+    return meta ? meta.getAttribute('content') : '';
+}
+
 // === BRT Tracking ===
 function getBrtHdrs() {
     return {
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+        'X-CSRF-TOKEN': csrfToken(),
         'Content-Type': 'application/json',
         'Accept': 'application/json'
     };
@@ -1144,7 +1335,7 @@ function caricaTuttiTrackingBRT() {
 }
 
 function caricaStatoBRT(numeroDDT, hash, callback) {
-    fetch('{{ route("owner.trackingByDDT") }}', {
+    fetch(urlToken('{{ route("owner.trackingByDDT") }}'), {
         method: 'POST', headers: getBrtHdrs(),
         body: JSON.stringify({ numero_ddt: numeroDDT })
     })
@@ -1155,6 +1346,10 @@ function caricaStatoBRT(numeroDDT, hash, callback) {
         var destEl = document.getElementById('brt_dest_' + hash);
         var colliEl = document.getElementById('brt_colli_' + hash);
 
+        if (data.multi_spedizione) {
+            statoEl.innerHTML = '<span class="badge" style="background:#7c3aed!important;color:#fff;">Multi-spedizione</span>';
+            callback(); return;
+        }
         if (data.error) {
             statoEl.innerHTML = '<span class="badge bg-warning text-dark">In attesa</span>';
             callback(); return;
@@ -1193,7 +1388,7 @@ function apriTrackingDDT(numeroDDT, btn) {
     document.getElementById('trackingContenuto').classList.add('d-none');
     new bootstrap.Modal(document.getElementById('modalTracking')).show();
 
-    fetch('{{ route("owner.trackingByDDT") }}', {
+    fetch(urlToken('{{ route("owner.trackingByDDT") }}'), {
         method: 'POST', headers: getBrtHdrs(),
         body: JSON.stringify({ numero_ddt: numeroDDT })
     })
@@ -1293,7 +1488,7 @@ function aggiornaCampo(faseId, campo, valore){
         }
     }
 
-    fetch('{{ route("owner.aggiornaCampo") }}', {
+    fetch(urlToken('{{ route("owner.aggiornaCampo") }}'), {
         method: 'POST',
         headers: {'X-CSRF-TOKEN': csrfToken(), 'Content-Type': 'application/json'},
         body: JSON.stringify({ fase_id: faseId, campo: campo, valore: valore })
@@ -1318,7 +1513,7 @@ function aggiornaStato(faseId, testo) {
         alert('Stato non valido. Usa: 0, 1, 2, 3');
         return;
     }
-    fetch('{{ route("owner.aggiornaStato") }}', {
+    fetch(urlToken('{{ route("owner.aggiornaStato") }}'), {
         method: 'POST',
         headers: {'X-CSRF-TOKEN': csrfToken(), 'Content-Type': 'application/json'},
         body: JSON.stringify({ fase_id: faseId, stato: nuovoStato })
@@ -1481,8 +1676,9 @@ document.addEventListener('DOMContentLoaded', () => {
             <head>
                 <title>Stampa</title>
                 <style>
-                    table { border-collapse: collapse; }
-                    td, th { border:1px solid #ccc; padding:4px; }
+                    table { border-collapse: collapse; width: 100%; table-layout: auto; }
+                    td, th { border:1px solid #ccc; padding:6px 8px; font-size:11px; white-space: normal; word-wrap: break-word; }
+                    @page { size: landscape; margin: 10mm; }
                 </style>
             </head>
             <body><table>
@@ -1639,6 +1835,39 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+// Riferimenti Marco: filtra per clienti specifici
+const CLIENTI_MARCO = [
+    'WYCON', 'ARMATORE', 'FARMARICCI', 'ELLEBI', 'FEUDI DI SAN GREGORIO',
+    'DE NIGRIS', 'VOYAGE PITTORESQUE', 'ANTIMO CAPUTO', 'DI MARTINO AIR',
+    "DE' NOBILI", 'MIA COSMETICS', 'VISION SRL', 'PASTIFICIO DI MARTINO',
+    'LA RUOTA', 'AMES CENTRO', 'PASTIFICIO ARTIGIANALE LEONESSA', 'A5CREW',
+    'VISIONA', 'LINGO COMMUNICATIONS', 'POMOROSSO', 'ESA - ESRIN',
+    'PASTICCERIA TROIANO', 'BALTHAZAR', 'GRUPPO CASEARIO', 'NATURAL SOAP',
+    'QUESTION MARK', 'PROMOPHARMA', 'LEOPOLDO VILLANO', 'BORGODEA',
+    'HILTRON LAND', 'PROMOITALIA', 'AT ADV', 'CARMEN COMMERCIALE',
+    'AGRELLI', 'GIAGUARO', 'MUSEO SAN SEVERO', 'DOPPIAVU', 'ITALY STAMPE',
+    'SPRINT SRL', 'EXTON', 'FABULA PROJECT', 'EUROSTYLE', 'FRATELLI CUOMO',
+    'F.LLI CUOMO', 'DISTILL HUB', 'SAN GREGORIO S.R.L.', 'STARWOOD'
+];
+
+function filtraRiferimentiMarco() {
+    const fCliente = document.getElementById('filterCliente');
+    const filterBox = document.getElementById('filterBox');
+    if (filterBox.style.display === 'none') {
+        filterBox.style.display = 'flex';
+        filterBox.style.opacity = 1;
+        filterBox.style.transform = 'translateY(0)';
+    }
+    fCliente.value = CLIENTI_MARCO.join(', ');
+    fCliente.dispatchEvent(new Event('input'));
+}
+
+function resetRiferimentiMarco() {
+    const fCliente = document.getElementById('filterCliente');
+    fCliente.value = '';
+    fCliente.dispatchEvent(new Event('input'));
+}
+
 // Popup operatore
 document.getElementById('operatoreInfo').addEventListener('click', function(){
     var popup = document.getElementById('operatorePopup');
@@ -1650,16 +1879,112 @@ document.addEventListener('click', function(e){
     }
 });
 
-// === Note Consegne (readonly per owner) ===
-function caricaNoteSpedizione() {
-    fetch('{{ route("owner.noteSpedizione") }}?data={{ now()->toDateString() }}', {
+// === Notifiche Note Consegne ===
+var _noteLastUpdate = localStorage.getItem('noteConsegne_lastUpdate') || '';
+var _noteCheckInterval = 15000; // 15 secondi
+
+// Sblocca AudioContext al primo click (richiesto dai browser)
+var _audioCtx = null;
+document.addEventListener('click', function() {
+    if (!_audioCtx) {
+        _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+}, {once: true});
+
+// Chiedi permesso notifiche browser
+if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+}
+
+function checkNoteConsegne() {
+    fetch(urlToken('{{ route("owner.noteSpedizioneCheck") }}'), {
         headers: {'Accept': 'application/json'}
     })
     .then(r => r.json())
     .then(d => {
-        document.getElementById('ownerNotaAM').value = d.contenuto_am || '';
-        document.getElementById('ownerNotaPM').value = d.contenuto_pm || '';
-        document.getElementById('ownerNoteSaveStatus').textContent = '';
+        if (d.updated_at && d.updated_at !== _noteLastUpdate) {
+            if (_noteLastUpdate !== '') {
+                // Nuova modifica: mostra tutte le notifiche
+                // 1. Badge rosso
+                document.getElementById('noteConsegneBadge').style.display = 'inline-block';
+
+                // 2. Suono
+                try {
+                    if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    if (_audioCtx.state === 'suspended') _audioCtx.resume();
+                    var osc = _audioCtx.createOscillator();
+                    var gain = _audioCtx.createGain();
+                    osc.connect(gain);
+                    gain.connect(_audioCtx.destination);
+                    osc.frequency.value = 800;
+                    gain.gain.value = 0.3;
+                    osc.start();
+                    osc.stop(_audioCtx.currentTime + 0.3);
+                } catch(e) {}
+
+                // 3. Notifica browser
+                if ('Notification' in window && Notification.permission === 'granted') {
+                    var preview = (d.contenuto || '').substring(0, 100);
+                    new Notification('Note Consegne aggiornate', {
+                        body: preview || 'La logistica ha aggiornato le note consegne',
+                        icon: '/favicon.ico'
+                    });
+                }
+
+                // 4. Toast popup
+                showNoteToast('La logistica ha aggiornato le note consegne');
+            }
+            _noteLastUpdate = d.updated_at;
+            localStorage.setItem('noteConsegne_lastUpdate', d.updated_at);
+        }
+    })
+    .catch(() => {});
+}
+
+function showNoteToast(msg) {
+    var toast = document.createElement('div');
+    toast.innerHTML = '<strong>Note Consegne</strong><br>' + msg;
+    toast.style.cssText = 'position:fixed; top:20px; right:20px; z-index:9999; background:#0d6efd; color:#fff; padding:15px 20px; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.3); font-size:14px; cursor:pointer; max-width:350px; animation:slideIn 0.3s ease;';
+    toast.onclick = function() {
+        toast.remove();
+        document.getElementById('noteConsegneBadge').style.display = 'none';
+        // Apri modale note
+        var modal = new bootstrap.Modal(document.getElementById('modalNoteSpedizione'));
+        modal.show();
+        caricaNoteSpedizione();
+    };
+    document.body.appendChild(toast);
+    setTimeout(function() { if (toast.parentNode) toast.remove(); }, 30000);
+}
+
+// Nascondi badge quando apre le note
+var _modalNote = document.getElementById('modalNoteSpedizione');
+if (_modalNote) {
+    _modalNote.addEventListener('show.bs.modal', function() {
+        document.getElementById('noteConsegneBadge').style.display = 'none';
+    });
+} else {
+    document.addEventListener('DOMContentLoaded', function() {
+        var m = document.getElementById('modalNoteSpedizione');
+        if (m) m.addEventListener('show.bs.modal', function() {
+            document.getElementById('noteConsegneBadge').style.display = 'none';
+        });
+    });
+}
+
+// Avvia polling
+checkNoteConsegne();
+setInterval(checkNoteConsegne, _noteCheckInterval);
+
+// === Note Consegne (readonly per owner) ===
+function caricaNoteSpedizione() {
+    fetch(urlToken('{{ route("owner.noteSpedizione") }}?data={{ now()->toDateString() }}'), {
+        headers: {'Accept': 'application/json'}
+    })
+    .then(r => r.json())
+    .then(d => {
+        document.getElementById('ownerNotaContenuto').value = d.contenuto || '';
+        document.getElementById('ownerNoteSaveStatus').textContent = d.da_data ? '(dal ' + new Date(d.da_data).toLocaleDateString('it-IT') + ')' : '';
     })
     .catch(() => {
         document.getElementById('ownerNoteSaveStatus').textContent = 'Errore caricamento';
@@ -1670,7 +1995,7 @@ function caricaNoteSpedizione() {
 function salvaNoteSped() {
     var btn = event.target;
     btn.disabled = true;
-    fetch('{{ route("owner.salvaNotaSpedizione") }}', {
+    fetch(urlToken('{{ route("owner.salvaNotaSpedizione") }}'), {
         method: 'POST',
         headers: {
             'X-CSRF-TOKEN': csrfToken(),
@@ -1679,8 +2004,7 @@ function salvaNoteSped() {
         },
         body: JSON.stringify({
             data: '{{ now()->toDateString() }}',
-            contenuto_am: document.getElementById('ownerNotaAM').value,
-            contenuto_pm: document.getElementById('ownerNotaPM').value
+            contenuto: document.getElementById('ownerNotaContenuto').value
         })
     })
     .then(r => r.json())
@@ -1688,6 +2012,10 @@ function salvaNoteSped() {
         if (d.success) {
             document.getElementById('ownerNoteSaveStatus').textContent = 'Salvato alle ' + new Date().toLocaleTimeString('it-IT');
             document.getElementById('ownerNoteSaveStatus').style.color = '#198754';
+            // Aggiorna timestamp per non auto-notificarsi
+            fetch(urlToken('{{ route("owner.noteSpedizioneCheck") }}'), {headers:{'Accept':'application/json'}})
+                .then(function(r){return r.json();})
+                .then(function(dd){ if(dd.updated_at){ _noteLastUpdate=dd.updated_at; localStorage.setItem('noteConsegne_lastUpdate',_noteLastUpdate); } });
         }
     })
     .catch(() => {
@@ -1707,14 +2035,7 @@ function salvaNoteSped() {
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <div style="margin-bottom:12px;">
-                    <label style="font-weight:bold; color:#198754;">AM (Mattina)</label>
-                    <textarea id="ownerNotaAM" rows="4" class="form-control" style="border-color:#198754; font-size:14px;" placeholder="Mattina..."></textarea>
-                </div>
-                <div>
-                    <label style="font-weight:bold; color:#fd7e14;">PM (Pomeriggio)</label>
-                    <textarea id="ownerNotaPM" rows="4" class="form-control" style="border-color:#fd7e14; font-size:14px;" placeholder="Pomeriggio..."></textarea>
-                </div>
+                <textarea id="ownerNotaContenuto" rows="10" class="form-control" style="font-size:14px;" placeholder="Note consegne..."></textarea>
             </div>
             <div class="modal-footer" style="justify-content:space-between;">
                 <span id="ownerNoteSaveStatus" style="font-size:12px; color:#6c757d;"></span>
@@ -1744,4 +2065,30 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 @endif
+{{-- Scrollbar orizzontale sticky in fondo alla viewport --}}
+<div id="stickyScroll" style="position:fixed;bottom:0;left:0;right:0;overflow-x:auto;overflow-y:hidden;z-index:1000;height:16px;background:#f8f8f8;border-top:1px solid #ddd;">
+    <div id="stickyScrollInner" style="height:1px;"></div>
+</div>
+<script>
+(function(){
+    var ts = document.getElementById('tableScroll');
+    var sb = document.getElementById('stickyScroll');
+    var si = document.getElementById('stickyScrollInner');
+    if(!ts||!sb) return;
+    function sync(){ si.style.width = ts.scrollWidth+'px'; }
+    sync();
+    window.addEventListener('resize', sync);
+    new MutationObserver(sync).observe(ts,{childList:true,subtree:true});
+    var lock=false;
+    sb.addEventListener('scroll',function(){ if(lock)return; lock=true; ts.scrollLeft=sb.scrollLeft; lock=false; });
+    ts.addEventListener('scroll',function(){ if(lock)return; lock=true; sb.scrollLeft=ts.scrollLeft; lock=false; });
+    function vis(){
+        var r=ts.getBoundingClientRect();
+        sb.style.display = r.bottom > window.innerHeight ? 'block':'none';
+    }
+    vis();
+    window.addEventListener('scroll',vis);
+    window.addEventListener('resize',vis);
+})();
+</script>
 @endsection

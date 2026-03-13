@@ -312,6 +312,8 @@ th:nth-child(23), td:nth-child(23) {
                 <th>Reparto</th>
                 <th>Operatori</th>
                 <th>Qta Prod.</th>
+                <th>Scarti P.</th>
+                <th>Scarti R.</th>
                 <th>Note</th>
                 <th>Data Inizio</th>
                 <th>Data Fine</th>
@@ -358,6 +360,8 @@ th:nth-child(23), td:nth-child(23) {
                         @endforelse
                     </td>
                     <td>{{ $fase->qta_prod ?? '-' }}</td>
+                    <td style="text-align:center;">{{ $fase->fogli_scarto ?? '-' }}</td>
+                    <td style="text-align:center;">{{ $fase->scarti ?? '-' }}</td>
                     <td>{{ $fase->note ?? '-' }}</td>
                     <td>{{ $fase->data_inizio ?? ($fase->operatori->count() > 0 ? $fase->operatori->min('pivot.data_inizio') : '-') }}</td>
                     <td>{{ $fase->data_fine ?? ($fase->operatori->count() > 0 ? $fase->operatori->max('pivot.data_fine') : '-') }}</td>
@@ -408,7 +412,7 @@ th:nth-child(23), td:nth-child(23) {
                 </tr>
             @empty
                 <tr>
-                    <td colspan="23" style="text-align:center; color:#6c757d; padding:20px;">Nessuna fase terminata</td>
+                    <td colspan="25" style="text-align:center; color:#6c757d; padding:20px;">Nessuna fase terminata</td>
                 </tr>
             @endforelse
         </tbody>

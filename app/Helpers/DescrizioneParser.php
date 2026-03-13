@@ -21,8 +21,8 @@ class DescrizioneParser
             return '4C';
         }
 
-        // Cerca pattern: "stampa [a] NUM colori" oppure "- NUM colori" / ", NUM colori"
-        $pattern = '/(?:stampa\s+(?:a\s+)?|[-,]\s*)(\d+(?:[\/+]\d+)?)\s*colou?r[ei]?\b(.{0,120})/is';
+        // Cerca pattern: "stampa [a] NUM colori", "- NUM colori", ", NUM colori", o "NUM COLORI" standalone
+        $pattern = '/(?:stampa\s+(?:a\s+)?|[-,]\s*|\b)(\d+(?:[\/+]\d+)?)\s*colou?r[ei]?\b(.{0,120})/is';
 
         if (preg_match($pattern, $descrizione, $m)) {
             $numColori = trim($m[1]);
@@ -127,15 +127,33 @@ class DescrizioneParser
     }
 
     /**
-     * Estrae tutti i codici fustella (FSxxxx) dalla descrizione.
-     * Restituisce tutti i codici FS unici trovati, separati da " / ".
-     * Fallback per clienti specifici (es. Italiana Confetti) basato su descrizione.
+     * Estrae tutti i codici fustella dalla descrizione e/o note prestampa.
+     * Cerca: FS#### (standard), ETI N ### (etichette in-mould).
+     * Controlla sia descrizione che note_prestampa (es. "NUOVA FUSTELLA FS1610").
      */
-    public static function parseFustella(string $descrizione, string $clienteNome = ''): ?string
+    public static function parseFustella(string $descrizione, string $clienteNome = '', string $notePrestampa = ''): ?string
     {
-        if (preg_match_all('/\b(FS\d{3,5})\b/', $descrizione, $m)) {
-            $codes = array_unique($m[1]);
-            return implode(' / ', $codes);
+        $codes = [];
+
+        // Cerca in entrambi i campi
+        $testi = array_filter([$descrizione, $notePrestampa]);
+
+        foreach ($testi as $testo) {
+            // Pattern FS#### (codici fustella standard)
+            if (preg_match_all('/\b(FS\d{3,5})\b/', $testo, $m)) {
+                $codes = array_merge($codes, $m[1]);
+            }
+
+            // Pattern ETI N ### (etichette in-mould = tipo fustella)
+            if (preg_match_all('/\b(ETI\s*N\s*\d+)\b/i', $testo, $m)) {
+                foreach ($m[1] as $etiCode) {
+                    $codes[] = preg_replace('/\s+/', ' ', strtoupper(trim($etiCode)));
+                }
+            }
+        }
+
+        if (!empty($codes)) {
+            return implode(' / ', array_unique($codes));
         }
 
         // Fallback Italiana Confetti: FS dalla descrizione articolo

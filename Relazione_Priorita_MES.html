@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Calcolo Priorita e Precedenza - MES Grafica Nappa</title>
+    <style>
+        @page { size: A4; margin: 20mm 18mm; }
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
+            font-size: 11pt;
+            line-height: 1.55;
+            color: #222;
+            max-width: 210mm;
+            margin: 0 auto;
+            padding: 20mm 18mm;
+        }
+        h1 {
+            font-size: 20pt;
+            color: #c0392b;
+            border-bottom: 3px solid #c0392b;
+            padding-bottom: 6px;
+            margin-bottom: 8px;
+        }
+        .subtitle {
+            font-size: 11pt;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        h2 {
+            font-size: 14pt;
+            color: #2c3e50;
+            margin-top: 22px;
+            margin-bottom: 8px;
+            border-left: 4px solid #c0392b;
+            padding-left: 10px;
+        }
+        h3 {
+            font-size: 12pt;
+            color: #34495e;
+            margin-top: 14px;
+            margin-bottom: 6px;
+        }
+        p { margin: 6px 0; }
+        .formula-box {
+            background: #f7f9fc;
+            border: 1px solid #d5dce4;
+            border-left: 4px solid #2980b9;
+            border-radius: 4px;
+            padding: 12px 16px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 12pt;
+            margin: 10px 0;
+            color: #2c3e50;
+        }
+        .highlight {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 4px;
+            padding: 10px 14px;
+            margin: 10px 0;
+            font-size: 10.5pt;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0 14px 0;
+            font-size: 10pt;
+        }
+        th {
+            background: #2c3e50;
+            color: #fff;
+            padding: 7px 10px;
+            text-align: left;
+            font-weight: 600;
+        }
+        td {
+            padding: 5px 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        tr:nth-child(even) td { background: #f8f9fa; }
+        .example-box {
+            background: #eaf7ea;
+            border: 1px solid #82c985;
+            border-radius: 4px;
+            padding: 12px 16px;
+            margin: 10px 0;
+        }
+        .example-box .calc {
+            font-family: 'Consolas', monospace;
+            font-size: 10pt;
+            color: #1a5e1f;
+            margin: 4px 0;
+        }
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 9pt;
+            font-weight: 600;
+        }
+        .badge-red { background: #f8d7da; color: #842029; }
+        .badge-green { background: #d1e7dd; color: #0f5132; }
+        .badge-blue { background: #cfe2ff; color: #084298; }
+        .page-break { page-break-before: always; }
+        footer {
+            margin-top: 30px;
+            padding-top: 10px;
+            border-top: 1px solid #ddd;
+            font-size: 9pt;
+            color: #999;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Calcolo Priorita e Precedenza</h1>
+<p class="subtitle">Dashboard Owner &mdash; MES Grafica Nappa S.r.l. &mdash; Marzo 2026</p>
+
+<!-- SEZIONE 1 -->
+<h2>1. Formula Priorita</h2>
+<p>Ogni fase di una commessa ha un valore di <strong>priorita</strong> calcolato automaticamente dal sistema:</p>
+
+<div class="formula-box">
+    Priorita = giorni_rimasti &minus; (ore_lavoro / 24) + (ordine_fase / 100)
+</div>
+
+<p>Dove:</p>
+<ul>
+    <li><strong>giorni_rimasti</strong> = data prevista consegna &minus; data odierna <em>(negativo se la consegna e scaduta)</em></li>
+    <li><strong>ore_lavoro</strong> = tempo di avviamento + (quantita carta / copie all'ora della fase)</li>
+    <li><strong>ordine_fase</strong> = peso della fase nel ciclo produttivo (da 2 a 96, definito in configurazione)</li>
+</ul>
+
+<div class="highlight">
+    <strong>Regola:</strong> Piu basso e il numero di priorita, piu urgente e la fase.
+    Le commesse scadute hanno giorni_rimasti negativo, quindi appaiono sempre in cima alla dashboard.
+</div>
+
+<!-- SEZIONE 2 -->
+<h2>2. Calcolo Ore Lavoro</h2>
+
+<div class="formula-box">
+    ore = avviamento + (qta_carta / copie_ora)
+</div>
+
+<p>Ogni fase ha parametri specifici di <strong>avviamento</strong> (ore fisse di setup) e <strong>copie/ora</strong> (velocita di produzione). Esempi:</p>
+
+<table>
+    <tr><th>Fase</th><th>Avviamento (h)</th><th>Copie/ora</th><th>Note</th></tr>
+    <tr><td>STAMPA</td><td>0.5</td><td>4000</td><td>Stampa generica</td></tr>
+    <tr><td>STAMPAXL106</td><td>0.5</td><td>5000</td><td>Heidelberg XL 106</td></tr>
+    <tr><td>STAMPAINDIGO</td><td>0.5</td><td>1000</td><td>Digitale HP Indigo</td></tr>
+    <tr><td>PLAOPA1LATO</td><td>0.25</td><td>4000</td><td>Plastificazione OPA</td></tr>
+    <tr><td>STAMPACALDOJOH</td><td>1.0</td><td>2200</td><td>Stampa a caldo</td></tr>
+    <tr><td>FUSTBOBST75X106</td><td>0.5</td><td>3000</td><td>Fustella Bobst</td></tr>
+    <tr><td>PIEGA2ANTESINGOLO</td><td>0.5</td><td>3000</td><td>Piega</td></tr>
+    <tr><td>Fasi EXT* (esterno)</td><td>72</td><td>varia</td><td>3 giorni per invio/rientro</td></tr>
+    <tr><td>BRT1 (spedizione)</td><td>0.5</td><td>10000</td><td>Fase finale</td></tr>
+</table>
+
+<p>Le fasi esterne (EXT*) hanno <strong>72 ore di avviamento</strong> (= 3 giorni lavorativi) perche il materiale viene inviato al fornitore e deve rientrare.</p>
+
+<!-- SEZIONE 3 -->
+<h2 class="page-break">3. Ordine Fasi nel Ciclo Produttivo (Precedenza)</h2>
+<p>Ogni fase ha un <strong>peso ordinale</strong> che riflette la sua posizione nel ciclo produttivo. Questo peso influenza la priorita: a parita di urgenza, le fasi iniziali vengono prima.</p>
+
+<table>
+    <tr><th>Peso</th><th>Categoria</th><th>Fasi principali</th></tr>
+    <tr><td>2 &ndash; 14</td><td>Stampa</td><td>STAMPA, STAMPAXL106, STAMPAINDIGO</td></tr>
+    <tr><td>15 &ndash; 26</td><td>Plastificazione / Laminatura</td><td>PLAOPA, PLASAB, PLASOFTTOUCH, PLALUX</td></tr>
+    <tr><td>27 &ndash; 33</td><td>Foil / UV / Serigrafia</td><td>FOILMGI, UVSPOT, UVSERIGRAFICO</td></tr>
+    <tr><td>34 &ndash; 36</td><td>Taglio</td><td>TAGLIACARTE, TAGLIOINDIGO</td></tr>
+    <tr><td>37 &ndash; 45</td><td>Accoppiatura / Fustella / Rilievo</td><td>FUSTBOBST, FUSTIML, RILIEVOASECCO</td></tr>
+    <tr><td>46 &ndash; 49</td><td>Finitura / Numerazione</td><td>FIN01, FIN03, NUM33.44</td></tr>
+    <tr><td>50 &ndash; 52</td><td>Piega-Incolla</td><td>PI01, PI02, PI03</td></tr>
+    <tr><td>53 &ndash; 57</td><td>Brossura / Cartonato</td><td>BROSSCOPEST, CARTONATO.GEN</td></tr>
+    <tr><td>58 &ndash; 64</td><td>Legatoria / Piega</td><td>PIEGA2ANTE, PIEGA3ANTE, PIEGAMANUALE</td></tr>
+    <tr><td>65 &ndash; 71</td><td>Punto metallico / Spirale</td><td>PUNTOMETALLICO, SPIRBLOCCO</td></tr>
+    <tr><td>72 &ndash; 91</td><td>Allestimento / Sfustella / Altro</td><td>SFUST, ZUND, LAVGEN, ALLEST.SHOPPER</td></tr>
+    <tr><td>92 &ndash; 95</td><td>Esterno</td><td>Tutte le fasi EXT*</td></tr>
+    <tr><td>96</td><td>Spedizione</td><td>BRT1</td></tr>
+</table>
+
+<p>Il peso entra nella formula come <code>ordine_fase / 100</code>, quindi contribuisce da +0.02 (stampa) a +0.96 (spedizione).</p>
+
+<!-- SEZIONE 4 -->
+<h2>4. Ordinamento nella Dashboard</h2>
+
+<p>Le fasi nella dashboard owner vengono ordinate per <strong>priorita crescente</strong>:</p>
+<ul>
+    <li><span class="badge badge-red">Valori negativi</span> &rarr; commesse scadute, massima urgenza (in cima)</li>
+    <li><span class="badge badge-blue">Valori bassi positivi</span> &rarr; consegne imminenti</li>
+    <li><span class="badge badge-green">Valori alti</span> &rarr; consegne lontane (in fondo)</li>
+</ul>
+<p>A parita di scadenza, le fasi iniziali del ciclo (stampa, peso 2&ndash;14) appaiono prima delle fasi finali (spedizione, peso 96).</p>
+
+<!-- SEZIONE 5 -->
+<h2>5. Priorita Manuale</h2>
+<p>Un operatore o l'import da Excel possono impostare una <strong>priorita manuale</strong> che sovrascrive il calcolo automatico:</p>
+<ul>
+    <li>Se il campo viene modificato dalla dashboard owner, il flag <code>priorita_manuale</code> si attiva e il ricalcolo automatico non sovrascrive piu il valore</li>
+    <li>Valori nel range <strong>da &minus;901 a &minus;999</strong> sono considerati forzature manuali e non vengono mai sovrascritti dal sistema</li>
+    <li>Per riportare una fase al calcolo automatico, si rimuove il flag manuale</li>
+</ul>
+
+<!-- SEZIONE 6 -->
+<h2>6. Esempio Pratico</h2>
+
+<div class="example-box">
+    <h3>Commessa con consegna tra 5 giorni, 2000 fogli</h3>
+
+    <p><strong>Fase STAMPAXL106:</strong></p>
+    <p class="calc">ore = 0.5 + (2000 / 5000) = 0.5 + 0.4 = <strong>0.9 h</strong></p>
+    <p class="calc">Priorita = 5 &minus; (0.9 / 24) + (5 / 100) = 5 &minus; 0.038 + 0.05 = <strong>5.01</strong></p>
+
+    <p style="margin-top:10px;"><strong>Fase FUSTBOBST75X106 (fustella):</strong></p>
+    <p class="calc">ore = 0.5 + (2000 / 3000) = 0.5 + 0.67 = <strong>1.17 h</strong></p>
+    <p class="calc">Priorita = 5 &minus; (1.17 / 24) + (43 / 100) = 5 &minus; 0.049 + 0.43 = <strong>5.38</strong></p>
+
+    <p style="margin-top:10px;"><strong>Fase BRT1 (spedizione):</strong></p>
+    <p class="calc">ore = 0.5 + (2000 / 10000) = 0.5 + 0.2 = <strong>0.7 h</strong></p>
+    <p class="calc">Priorita = 5 &minus; (0.7 / 24) + (96 / 100) = 5 &minus; 0.029 + 0.96 = <strong>5.93</strong></p>
+
+    <p style="margin-top:12px;">
+        Risultato nell'ordine della dashboard:<br>
+        <strong>1.</strong> STAMPAXL106 (5.01) &rarr;
+        <strong>2.</strong> FUSTBOBST (5.38) &rarr;
+        <strong>3.</strong> BRT1 (5.93)
+    </p>
+</div>
+
+<div class="example-box" style="background:#fdf2f2; border-color:#e57373;">
+    <h3>Commessa scaduta da 2 giorni, 1000 fogli</h3>
+
+    <p><strong>Fase STAMPAXL106:</strong></p>
+    <p class="calc">ore = 0.5 + (1000 / 5000) = <strong>0.7 h</strong></p>
+    <p class="calc">Priorita = &minus;2 &minus; (0.7 / 24) + (5 / 100) = &minus;2 &minus; 0.029 + 0.05 = <strong>&minus;1.98</strong></p>
+
+    <p style="margin-top:6px;">Questa fase appare <strong>in cima alla dashboard</strong> perche ha priorita negativa.</p>
+</div>
+
+<footer>
+    MES Grafica Nappa S.r.l. &mdash; Documento generato il 06/03/2026 &mdash; Sviluppo: Giovanni
+</footer>
+
+</body>
+</html>

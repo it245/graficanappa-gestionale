@@ -5,7 +5,7 @@
     /* ===== FORM (no-print) ===== */
     .etichetta-form {
         max-width: 600px;
-        margin: 20px auto;
+        margin: 20px auto 20px 40px;
         padding: 20px;
     }
     .etichetta-form .form-label { font-weight: bold; }
@@ -65,7 +65,7 @@
         width: 150mm;
         height: 100mm;
         border: 1px solid #ccc;
-        margin: 30px auto;
+        margin: 30px auto 30px 40px;
         padding: 5mm 7mm;
         font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
         box-sizing: border-box;
@@ -192,7 +192,8 @@
 {{-- ===== FORM (nascosto in stampa) ===== --}}
 <div class="etichetta-form no-print">
     <div class="d-flex align-items-center mb-3">
-        <a href="{{ route('operatore.dashboard') }}" class="btn btn-outline-secondary btn-sm me-3">&larr; Dashboard</a>
+        <a href="{{ route('operatore.dashboard') }}" class="btn btn-outline-secondary btn-sm me-2">&larr; Dashboard</a>
+        <a href="/commesse/{{ $ordine->commessa }}?op_token={{ request('op_token') }}" class="btn btn-outline-primary btn-sm me-3">&larr; Commessa</a>
         <h4 class="mb-0">Stampa Etichetta</h4>
     </div>
 
@@ -232,6 +233,12 @@
                 <span class="badge bg-success fs-6" id="ean-badge"></span>
                 <button type="button" class="btn btn-sm btn-outline-danger ms-2" onclick="clearEan()">X</button>
             </div>
+        </div>
+    @elseif($isTifataPlastica ?? false)
+        {{-- TIFATA PLASTICA: solo articolo, senza EAN --}}
+        <div class="mb-3">
+            <label class="form-label">Articolo</label>
+            <input type="text" id="campo-articolo-manuale" class="form-control" value="{{ $articoloDefault }}">
         </div>
     @else
         {{-- ALTRI CLIENTI: articolo da descrizione + scansione/input EAN --}}
@@ -297,6 +304,15 @@
     @if($isSimpleLabel)
     <div class="articolo-row" id="print-descrizione-simple" style="font-size: 14pt;">{{ $ordine->descrizione ?? '' }}</div>
     @endif
+    @if($isTifataPlastica ?? false)
+    {{-- TIFATA PLASTICA: descrizione sopra, lotto/qta/data affiancati, no EAN/DataMatrix --}}
+    <div style="margin-top: 18mm; margin-bottom: 8mm; font-size: 20pt; font-weight: bold; text-align: center;" id="print-descrizione-tifata">{{ $ordine->descrizione ?? '' }}</div>
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 3mm; font-size: 13pt; font-weight: bold; white-space: nowrap;">
+        <div><span class="label">Lotto:</span> <span id="print-lotto">{{ $lotto }}</span></div>
+        <div><span class="label">Pz x cassa:</span> <span id="print-pzcassa"></span></div>
+        <div><span class="label">Data:</span> <span id="print-data">{{ $data }}</span></div>
+    </div>
+    @else
     <div class="info-bottom" @if($isSimpleLabel) style="flex-direction: column; align-items: flex-start; font-size: 16pt;" @endif>
         <div class="fields-left" @if($isSimpleLabel) style="font-size: 16pt;" @endif>
             <div><span class="label">Pz x cassa:</span> <span id="print-pzcassa"></span></div>
@@ -307,11 +323,182 @@
         <div class="qr-right">
             <canvas id="datamatrix" style="display:none;"></canvas>
             <img id="datamatrix-img" style="width:30mm; height:30mm; image-rendering:pixelated;" />
-            <span class="ean-text" id="print-ean" style="font-size:7pt; max-width:30mm; word-break:break-all; text-align:center;"></span>
+            <span class="ean-text" id="print-ean" style="font-size:4.5pt; max-width:30mm; word-break:break-all; text-align:center; line-height:1.2;"></span>
         </div>
         @endif
     </div>
+    @endif
+{{-- ===== PANNELLO LATERALE: Card gestione fase ===== --}}
+@if(($fasiOperatore ?? collect())->isNotEmpty())
+<div class="no-print" id="pannello-fase" style="position:fixed; top:10px; right:10px; width:520px; max-height:calc(100vh - 20px); overflow-y:auto; z-index:50;">
+    <style>
+    .azioni-btn-et { display:flex; gap:14px; justify-content:center; padding:18px 0; }
+    .azioni-btn-et label {
+        display:inline-flex; justify-content:center; align-items:center;
+        width:110px; height:110px; border-radius:50%; color:#fff;
+        font-weight:bold; font-size:15px; cursor:pointer; user-select:none;
+        box-shadow: 0 3px 8px rgba(0,0,0,0.2); transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .azioni-btn-et label:hover { transform:scale(1.08); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+    .azioni-btn-et label:active { transform:scale(0.95); }
+    .azioni-btn-et .badge-avvia { background: linear-gradient(135deg, #28a745, #20c040); }
+    .azioni-btn-et .badge-pausa { background: linear-gradient(135deg, #ffc107, #ffb300); color:#333; }
+    .azioni-btn-et .badge-termina { background: linear-gradient(135deg, #dc3545, #c82333); }
+    .azioni-btn-et input[type="checkbox"] { display:none; }
+    .azioni-btn-et input[type="checkbox"]:checked + label { opacity:0.7; box-shadow:inset 0 0 3px rgba(0,0,0,0.5); transform:scale(0.95); }
+    @keyframes lampeggio-et { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+    .azioni-btn-et .badge-avvia.lampeggia { animation:lampeggio-et 1s ease-in-out infinite; }
+    .card-fase-et { border-radius:14px; overflow:hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.13); border:none; }
+    .card-fase-et .card-header { border-radius:0; border-bottom:none; padding:14px 20px; }
+    .card-fase-et .card-body { padding:16px 20px; }
+    </style>
+
+    {{-- Card per ogni fase dell'operatore --}}
+    @foreach($fasiOperatore as $fase)
+    @php $badgeBg = [0=>'bg-secondary',1=>'bg-info',2=>'bg-warning text-dark',3=>'bg-success']; @endphp
+    <div class="card card-fase-et mb-3">
+        <div class="card-header bg-primary text-white d-flex align-items-center justify-content-between">
+            <div>
+                <strong style="font-size:20px;">{{ $fase->faseCatalogo->nome_display ?? '-' }}</strong>
+                <span class="badge {{ $badgeBg[$fase->stato] ?? 'bg-dark' }} ms-2" style="font-size:16px;" id="badge-fase-{{ $fase->id }}">{{ $fase->stato }}</span>
+            </div>
+            <div id="operatori-fase-{{ $fase->id }}">
+                @foreach($fase->operatori as $op)
+                    <small class="badge bg-light text-dark">{{ $op->nome }}</small>
+                @endforeach
+            </div>
+        </div>
+
+        {{-- Descrizione --}}
+        <div class="card-body py-3" style="background:#f0f4ff; font-size:16px;">
+            {{ $fase->ordine->descrizione ?? $ordine->descrizione ?? '-' }}
+        </div>
+
+        {{-- Note fasi successive --}}
+        <div class="card-body">
+            <label class="fw-bold" style="font-size:16px;">Info per fasi successive</label>
+            @if(!empty($righeFS))
+                <div class="mb-2" style="max-height:150px; overflow-y:auto; background:#f8f9fa; border-radius:6px; padding:10px; font-size:14px;">
+                    @foreach($righeFS as $riga)
+                        <div class="mb-1">
+                            <small class="text-muted">{{ $riga['data'] ?? '' }}</small>
+                            <strong>{{ $riga['reparto'] ?? '' }} - {{ $riga['nome'] ?? '' }}:</strong>
+                            {{ $riga['testo'] ?? '' }}
+                        </div>
+                    @endforeach
+                </div>
+            @else
+                <div class="mb-2 text-muted" style="font-size:14px;">Nessuna nota</div>
+            @endif
+            <div class="d-flex gap-2">
+                <textarea id="nuova-nota-fs-{{ $fase->id }}" class="form-control" rows="1"
+                          placeholder="Scrivi una nota..." style="font-size:14px;"></textarea>
+                <button type="button" class="btn btn-outline-primary" style="white-space:nowrap; font-size:14px;"
+                        onclick="inviaNotaFS({{ $ordine->id }}, {{ $fase->id }})">Invia</button>
+            </div>
+        </div>
+
+        {{-- Dati Prinect (solo stampa offset) --}}
+        @if(strtolower(optional(optional($fase->faseCatalogo)->reparto)->nome ?? '') === 'stampa offset')
+        <div class="card-body pt-0">
+            <div class="d-flex align-items-center gap-3 flex-wrap" style="font-size:16px;">
+                <div><strong>Fogli Buoni:</strong>
+                    <span class="badge bg-success" style="font-size:15px; padding:5px 12px;">{{ $fase->fogli_buoni ?? 0 }}</span>
+                </div>
+                <div><strong>Scarti Prinect:</strong>
+                    <span class="badge bg-secondary" style="font-size:15px; padding:5px 12px;">{{ $fase->fogli_scarto ?? 0 }}</span>
+                </div>
+                <div><strong>Scarti Reali:</strong>
+                    <input type="number" min="0" style="width:90px; padding:5px 8px; font-size:16px; border:1px solid #ced4da; border-radius:4px;"
+                           value="{{ $fase->scarti ?? '' }}"
+                           onchange="salvaScartiEtichetta({{ $fase->id }}, this.value)"
+                           onkeydown="if(event.key==='Enter'){this.blur();}">
+                </div>
+            </div>
+        </div>
+        @endif
+
+        {{-- Pulsanti Avvia / Pausa / Termina --}}
+        <div class="azioni-btn-et">
+            <input type="checkbox" id="avvia-{{ $fase->id }}" onchange="aggiornaStatoEt({{ $fase->id }}, 'avvia', this.checked)">
+            <label for="avvia-{{ $fase->id }}" class="badge-avvia{{ $fase->stato == 2 ? ' lampeggia' : '' }}">{{ $fase->stato == 2 ? 'Avviato' : 'Avvia' }}</label>
+
+            <input type="checkbox" id="pausa-{{ $fase->id }}" onchange="gestisciPausaEt({{ $fase->id }}, this.checked)">
+            <label for="pausa-{{ $fase->id }}" class="badge-pausa">Pausa</label>
+
+            <input type="checkbox" id="termina-{{ $fase->id }}"
+                   data-qta-fase="{{ $ordine->qta_richiesta ?? 0 }}"
+                   data-fogli-buoni="{{ $fase->fogli_buoni ?? 0 }}"
+                   data-fogli-scarto="{{ $fase->fogli_scarto ?? 0 }}"
+                   data-qta-prod="{{ $fase->qta_prod ?? 0 }}"
+                   onchange="aggiornaStatoEt({{ $fase->id }}, 'termina', this.checked)">
+            <label for="termina-{{ $fase->id }}" class="badge-termina">Termina</label>
+        </div>
+    </div>
+    @endforeach
 </div>
+
+<!-- Modal Termina -->
+<div class="modal fade" id="modalTermina" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Termina Fase</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="terminaFaseId">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Qta prodotta <span class="text-danger">*</span></label>
+                    <input type="number" id="terminaQtaProdotta" class="form-control" min="0" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Scarti</label>
+                    <input type="number" id="terminaScarti" class="form-control" min="0" value="0">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                <button type="button" class="btn btn-danger fw-bold" onclick="confermaTerminaEt()">Conferma e Termina</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Pausa -->
+<div class="modal fade" id="modalPausa" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title">Pausa Fase</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="pausaFaseId">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Motivo della pausa</label>
+                    <select id="pausaMotivoSelect" class="form-select" onchange="document.getElementById('pausaAltroWrap').style.display=this.value==='__altro__'?'':'none'">
+                        <option value="">-- Seleziona --</option>
+                        <option>Attesa materiale</option>
+                        <option>Problema macchina</option>
+                        <option>Pranzo</option>
+                        <option value="__altro__">Altro...</option>
+                    </select>
+                </div>
+                <div class="mb-3" id="pausaAltroWrap" style="display:none;">
+                    <label class="form-label fw-bold">Specifica motivo</label>
+                    <input type="text" id="pausaAltroInput" class="form-control" placeholder="Scrivi il motivo...">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                <button type="button" class="btn btn-warning fw-bold" onclick="confermaPausaEt()">Conferma Pausa</button>
+            </div>
+        </div>
+    </div>
+</div>
+</div>{{-- fine pannello fase --}}
+@endif
 
 {{-- bwip-js CDN (barcode/DataMatrix generator) --}}
 <script src="https://cdn.jsdelivr.net/npm/bwip-js@4.5.1/dist/bwip-js-min.js"></script>
@@ -340,6 +527,10 @@ function aggiornaAnteprima() {
         cliente = document.getElementById('campo-cliente').value;
         articolo = document.getElementById('campo-articolo').value;
         ean = document.getElementById('campo-ean').value;
+    @elseif($isTifataPlastica ?? false)
+        cliente = document.getElementById('campo-cliente').value;
+        articolo = document.getElementById('campo-articolo-manuale').value;
+        ean = '';
     @else
         cliente = document.getElementById('campo-cliente').value;
         articolo = document.getElementById('campo-articolo-manuale').value;
@@ -350,7 +541,11 @@ function aggiornaAnteprima() {
     var lotto = document.getElementById('campo-lotto').value;
     var data = document.getElementById('campo-data').value;
 
-    @if(!$isSimpleLabel)
+    @if($isTifataPlastica ?? false)
+    // Tifata: articolo aggiorna la descrizione nell'anteprima
+    var descTifata = document.getElementById('campo-articolo-manuale').value;
+    document.getElementById('print-descrizione-tifata').textContent = descTifata;
+    @elseif(!$isSimpleLabel)
     document.getElementById('print-cliente').textContent = cliente;
     document.getElementById('print-articolo').textContent = articolo;
     // Auto-ridimensiona articolo se troppo lungo
@@ -367,54 +562,34 @@ function aggiornaAnteprima() {
     var canvas = document.getElementById('datamatrix');
     var dmImg = document.getElementById('datamatrix-img');
     if (ean && ean.length >= 4) {
-        // GTIN: tenere EAN così com'è (può contenere lettere es. A8022470871951)
-        // Pad a 14 caratteri con 0 davanti se serve
+        // GTIN: mantieni la A nel codice EAN, padding a 14 caratteri
         var gtin = ean.trim();
         while (gtin.length < 14) gtin = '0' + gtin;
         if (gtin.length > 14) gtin = gtin.substring(0, 14);
 
-        // AI(30) = quantità, zero-padded a 8 cifre
-        var qty = pzcassa ? ('00000000' + pzcassa).slice(-8) : '';
+        // AI(30) = quantità zero-paddata a 8 cifre (come BarTender)
+        var qty = pzcassa ? String(parseInt(pzcassa, 10)).padStart(8, '0') : '';
         // Lotto senza trattino
         var lottoClean = lotto ? lotto.replace(/-/g, '') : '';
 
-        // Costruisci stringa GS1: (01)GTIN (30)QTY (10)LOTTO
-        var displayData = '(01)' + gtin;
-        if (qty) displayData += '(30)' + qty;
-        if (lottoClean) displayData += '(10)' + lottoClean;
+        // Costruisci stringa dati come testo puro (come BarTender)
+        var plainData = '01' + gtin;
+        if (qty) plainData += '30' + qty;
+        if (lottoClean) plainData += '10' + lottoClean;
 
         try {
             bwipjs.toCanvas(canvas, {
-                bcid: 'gs1datamatrix',
-                text: displayData,
+                bcid: 'datamatrix',
+                text: plainData,
                 scale: 10,
                 padding: 4,
             });
             dmImg.src = canvas.toDataURL('image/png');
             dmImg.style.display = '';
-            document.getElementById('print-ean').textContent = displayData.replace(/[()]/g, '');
+            document.getElementById('print-ean').textContent = plainData;
         } catch(e) {
-            console.warn('gs1datamatrix failed, trying datamatrix:', e.message || e);
-            // Fallback: datamatrix standard con FNC1 manuale
-            try {
-                var fnc1 = '\xF1';
-                var bwipData = fnc1 + '01' + gtin;
-                if (qty) bwipData += '30' + qty;
-                if (lottoClean) bwipData += '10' + lottoClean;
-                bwipjs.toCanvas(canvas, {
-                    bcid: 'datamatrix',
-                    text: bwipData,
-                    scale: 5,
-                    padding: 2,
-                    parsefnc: true,
-                });
-                dmImg.src = canvas.toDataURL('image/png');
-                dmImg.style.display = '';
-                document.getElementById('print-ean').textContent = displayData.replace(/[()]/g, '');
-            } catch(e2) {
-                console.error('DataMatrix fallback error:', e2);
-                dmImg.style.display = 'none';
-            }
+            console.error('DataMatrix error:', e);
+            dmImg.style.display = 'none';
         }
     } else {
         dmImg.style.display = 'none';
@@ -592,15 +767,20 @@ function stampa() {
     @if($isItalianaConfetti)
     var ean = document.getElementById('campo-ean').value;
     var articolo = document.getElementById('campo-articolo').value;
+    @elseif($isTifataPlastica ?? false)
+    var ean = '';
+    var articolo = document.getElementById('campo-articolo-manuale').value;
     @else
     var ean = document.getElementById('campo-ean-manuale').value;
     var articolo = document.getElementById('campo-articolo-manuale').value;
     @endif
 
+    @if($isItalianaConfetti)
     if (!ean) {
         alert('Inserisci o scansiona il codice EAN.');
         return;
     }
+    @endif
     if (!pzcassa) {
         alert('Inserisci i pezzi per cassa.');
         return;
@@ -627,5 +807,133 @@ function stampa() {
 
 // Aggiorna anteprima iniziale
 aggiornaAnteprima();
+
+// ===== Gestione fase (Avvia/Pausa/Termina/Note/Scarti) =====
+@if($faseOperatore ?? false)
+function csrfTokenEt() {
+    return document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}';
+}
+
+function updateBadgeEt(faseId, stato) {
+    var badge = document.getElementById('badge-fase-'+faseId);
+    if (badge) { badge.textContent = stato; badge.className = 'badge ms-2 fs-5 ' + ({0:'bg-secondary',1:'bg-info',2:'bg-warning text-dark',3:'bg-success'}[stato] || 'bg-dark'); }
+}
+
+function updateOperatoriEt(faseId, operatori) {
+    var c = document.getElementById('operatori-fase-'+faseId);
+    if (!c || !operatori) return;
+    c.innerHTML = operatori.map(function(op) { return '<small class="badge bg-light text-dark">' + op.nome + ' (' + op.data_inizio + ')</small>'; }).join(' ');
+}
+
+function aggiornaStatoEt(faseId, azione, checked) {
+    if (!checked) return;
+    if (azione === 'termina') {
+        var cb = document.getElementById('termina-'+faseId);
+        var fogliBuoni = parseInt(cb?.getAttribute('data-fogli-buoni') || 0) || 0;
+        var fogliScarto = parseInt(cb?.getAttribute('data-fogli-scarto') || 0) || 0;
+        var qtaProd = parseInt(cb?.getAttribute('data-qta-prod') || 0) || 0;
+        document.getElementById('terminaFaseId').value = faseId;
+        document.getElementById('terminaQtaProdotta').value = fogliBuoni > 0 ? fogliBuoni : (qtaProd > 0 ? qtaProd : '');
+        document.getElementById('terminaScarti').value = fogliScarto > 0 ? fogliScarto : 0;
+        new bootstrap.Modal(document.getElementById('modalTermina')).show();
+        return;
+    }
+    fetch('{{ route("produzione.avvia") }}', {
+        method: 'POST',
+        headers: {'X-CSRF-TOKEN': csrfTokenEt(), 'Content-Type': 'application/json'},
+        body: JSON.stringify({fase_id: faseId})
+    }).then(r => r.json()).then(data => {
+        if (data.success) { updateBadgeEt(faseId, 2); if (data.operatori) updateOperatoriEt(faseId, data.operatori); }
+        else alert('Errore: ' + (data.messaggio || 'operazione fallita'));
+    });
+}
+
+function confermaTerminaEt() {
+    var faseId = document.getElementById('terminaFaseId').value;
+    var qta = document.getElementById('terminaQtaProdotta').value;
+    var scarti = document.getElementById('terminaScarti').value;
+    if (qta === '' || parseInt(qta) <= 0) { alert('Inserire la quantità prodotta'); return; }
+    bootstrap.Modal.getInstance(document.getElementById('modalTermina')).hide();
+    fetch('{{ route("produzione.termina") }}', {
+        method: 'POST',
+        headers: {'X-CSRF-TOKEN': csrfTokenEt(), 'Content-Type': 'application/json'},
+        body: JSON.stringify({fase_id: faseId, qta_prodotta: parseInt(qta), scarti: parseInt(scarti) || 0})
+    }).then(r => r.json()).then(data => {
+        if (data.success) { updateBadgeEt(faseId, 3); }
+        else { alert('Errore: ' + (data.messaggio || 'operazione fallita')); document.getElementById('termina-'+faseId).checked = false; }
+    });
+}
+
+document.getElementById('modalTermina').addEventListener('hidden.bs.modal', function() {
+    var faseId = document.getElementById('terminaFaseId').value;
+    var cb = document.getElementById('termina-'+faseId);
+    if (cb) cb.checked = false;
+});
+
+function gestisciPausaEt(faseId, checked) {
+    if (!checked) return;
+    document.getElementById('pausaFaseId').value = faseId;
+    document.getElementById('pausaMotivoSelect').value = '';
+    document.getElementById('pausaAltroInput').value = '';
+    document.getElementById('pausaAltroWrap').style.display = 'none';
+    new bootstrap.Modal(document.getElementById('modalPausa')).show();
+}
+
+document.getElementById('modalPausa').addEventListener('hidden.bs.modal', function() {
+    var faseId = document.getElementById('pausaFaseId').value;
+    var cb = document.getElementById('pausa-'+faseId);
+    if (cb) cb.checked = false;
+});
+
+function confermaPausaEt() {
+    var sel = document.getElementById('pausaMotivoSelect').value;
+    var motivo = sel === '__altro__' ? (document.getElementById('pausaAltroInput').value.trim() || 'Altro') : sel;
+    if (!motivo) { alert('Seleziona un motivo'); return; }
+    var faseId = document.getElementById('pausaFaseId').value;
+    bootstrap.Modal.getInstance(document.getElementById('modalPausa')).hide();
+    fetch('{{ route("produzione.pausa") }}', {
+        method: 'POST',
+        headers: {'X-CSRF-TOKEN': csrfTokenEt(), 'Content-Type': 'application/json'},
+        body: JSON.stringify({fase_id: faseId, motivo: motivo})
+    }).then(r => r.json()).then(data => {
+        if (data.success) { updateBadgeEt(faseId, data.nuovo_stato); }
+        else alert('Errore: ' + (data.messaggio || 'operazione fallita'));
+    });
+}
+
+function salvaScartiEtichetta(faseId, valore) {
+    fetch('{{ route("produzione.aggiornaCampo") }}', {
+        method: 'POST',
+        headers: {'X-CSRF-TOKEN': csrfTokenEt(), 'X-Op-Token': new URLSearchParams(window.location.search).get('op_token') || '', 'Content-Type': 'application/json', 'Accept': 'application/json'},
+        body: JSON.stringify({fase_id: faseId, campo: 'scarti', valore: valore})
+    }).then(function(r) {
+        if (r.ok) { var input = document.querySelector('input[onchange*="salvaScartiEtichetta('+faseId+'"]'); if (input) { input.style.borderColor='#28a745'; setTimeout(function(){input.style.borderColor='#ced4da';},1500); } }
+        else alert('Errore nel salvataggio');
+    });
+}
+
+function inviaNotaFS(ordineId, faseId) {
+    var textarea = document.getElementById('nuova-nota-fs-'+faseId);
+    var testo = textarea.value.trim();
+    if (!testo) { alert('Scrivi una nota prima di inviare'); return; }
+
+    var noteEsistenti = @json($righeFS ?? []);
+    noteEsistenti.push({
+        data: new Date().toLocaleString('it-IT'),
+        reparto: @json($operatore?->reparti?->pluck('nome')->first() ?? 'N/D'),
+        nome: @json(trim(($operatore->nome ?? '') . ' ' . ($operatore->cognome ?? ''))),
+        testo: testo
+    });
+
+    fetch('{{ route("produzione.aggiornaOrdineCampo") }}', {
+        method: 'POST',
+        headers: {'X-CSRF-TOKEN': csrfTokenEt(), 'Content-Type': 'application/json'},
+        body: JSON.stringify({ordine_id: ordineId, campo: 'note_fasi_successive', valore: JSON.stringify(noteEsistenti)})
+    }).then(r => r.json()).then(data => {
+        if (data.success) location.reload();
+        else alert('Errore: ' + (data.messaggio || JSON.stringify(data.errors)));
+    });
+}
+@endif
 </script>
 @endsection

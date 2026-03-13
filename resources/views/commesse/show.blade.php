@@ -56,9 +56,22 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h2>Commessa {{ $ordine->commessa }}</h2>
     <div class="d-flex gap-2">
+        @if($ordini->count() > 1)
+        <div class="dropdown">
+            <button class="btn btn-outline-dark d-flex align-items-center dropdown-toggle" data-bs-toggle="dropdown">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" class="me-1"><path d="M2 1a1 1 0 0 0-1 1v4.586a1 1 0 0 0 .293.707l7 7a1 1 0 0 0 1.414 0l4.586-4.586a1 1 0 0 0 0-1.414l-7-7A1 1 0 0 0 6.586 1H2zm4 3.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/></svg> Stampa Etichetta
+            </button>
+            <ul class="dropdown-menu">
+                @foreach($ordini as $ord)
+                <li><a class="dropdown-item" href="{{ route('operatore.etichetta', $ord->id) }}">{{ Str::limit($ord->descrizione, 60) }}</a></li>
+                @endforeach
+            </ul>
+        </div>
+        @else
         <a href="{{ route('operatore.etichetta', $ordine->id) }}" class="btn btn-outline-dark d-flex align-items-center">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" class="me-1"><path d="M2 1a1 1 0 0 0-1 1v4.586a1 1 0 0 0 .293.707l7 7a1 1 0 0 0 1.414 0l4.586-4.586a1 1 0 0 0 0-1.414l-7-7A1 1 0 0 0 6.586 1H2zm4 3.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/></svg> Stampa Etichetta
         </a>
+        @endif
         <a href="{{ $isSpedizione ? route('spedizione.dashboard') : route('operatore.dashboard') }}" class="btn btn-primary d-flex align-items-center">
             <img src="{{ asset('images/turn-left_15441589.png') }}" alt="Dashboard" style="width:20px; height:20px; margin-right:5px;">
             Dashboard
@@ -81,7 +94,7 @@
                 $desc = $ordine->descrizione ?? '';
                 $cliente = $ordine->cliente_nome ?? '';
                 $coloriCalc = \App\Helpers\DescrizioneParser::parseColori($desc, $cliente);
-                $fustellaCalc = \App\Helpers\DescrizioneParser::parseFustella($desc, $cliente);
+                $fustellaCalc = \App\Helpers\DescrizioneParser::parseFustella($desc, $cliente, $ordine->note_prestampa ?? '');
             @endphp
             <p><strong>Cliente:</strong> {{ $ordine->cliente_nome }}</p>
             <p><strong>Descrizione:</strong> {{ $ordine->descrizione }}</p>
@@ -136,13 +149,9 @@
                     </div>
                     <div class="card-body d-flex align-items-start gap-3">
                         <div class="flex-grow-1">
-                            <label for="note-fase-{{ $fase->id }}"><strong>Note Operatore:</strong></label>
-                            <textarea id="note-fase-{{ $fase->id }}" class="form-control" rows="2"
-                                      onblur="aggiornaCampo({{ $fase->id }}, 'note', this.value)">{{ $fase->note ?? '' }}</textarea>
-
-                            {{-- Info per fasi successive --}}
-                            <div class="mt-3 border-top pt-2">
-                                <label><strong>Info per fasi successive:</strong></label>
+                            {{-- Informazioni generali / per fasi successive --}}
+                            <div>
+                                <label><strong>Informazioni generali / per fasi successive:</strong></label>
                                 @php
                                     $noteFS = $ordine->note_fasi_successive ?? '';
                                     $righeFS = $noteFS ? json_decode($noteFS, true) : [];
@@ -163,11 +172,34 @@
                                 @endif
                                 <div class="d-flex gap-2">
                                     <textarea id="nuova-nota-fs-{{ $fase->id }}" class="form-control form-control-sm" rows="1"
-                                              placeholder="Scrivi una nota per le fasi successive..."></textarea>
+                                              placeholder="Scrivi una nota..."></textarea>
                                     <button type="button" class="btn btn-sm btn-outline-primary" style="white-space:nowrap"
                                             onclick="inviaNotaFS({{ $ordine->id }}, {{ $fase->id }})">Invia</button>
                                 </div>
                             </div>
+
+                            {{-- Scarti Prinect + Scarti Reali (solo stampa offset) --}}
+                            @if(strtolower(optional(optional($fase->faseCatalogo)->reparto)->nome ?? '') === 'stampa offset')
+                            <div class="mt-3 p-2" style="background:#f8f9fa; border-radius:6px;">
+                                <div class="d-flex align-items-center gap-3 flex-wrap">
+                                    <div>
+                                        <strong style="font-size:15px;">Fogli Buoni Prinect:</strong>
+                                        <span class="badge bg-success" style="font-size:14px; padding:6px 12px;">{{ $fase->fogli_buoni ?? 0 }}</span>
+                                    </div>
+                                    <div>
+                                        <strong style="font-size:15px;">Scarti Prinect:</strong>
+                                        <span class="badge bg-secondary" style="font-size:14px; padding:6px 12px;">{{ $fase->fogli_scarto ?? 0 }}</span>
+                                    </div>
+                                    <div>
+                                        <strong style="font-size:15px;">Scarti Reali:</strong>
+                                        <input type="number" min="0" style="width:100px; padding:4px 8px; font-size:15px; border:1px solid #ced4da; border-radius:4px;"
+                                               value="{{ $fase->scarti ?? '' }}"
+                                               onchange="salvaScartiCommessa({{ $fase->id }}, this.value)"
+                                               onkeydown="if(event.key==='Enter'){this.blur();}">
+                                    </div>
+                                </div>
+                            </div>
+                            @endif
                         </div>
                         <div class="azioni-cerchi" id="azioni-fase-{{ $fase->id }}">
                             {{-- Tutti e 3 i bottoni sempre visibili --}}
@@ -184,6 +216,7 @@
                                    data-qta-prod="{{ $fase->qta_prod ?? 0 }}"
                                    onchange="aggiornaStato({{ $fase->id }}, 'termina', this.checked)">
                             <label for="termina-{{ $fase->id }}" class="badge-termina">Termina</label>
+
 
                             @if(!is_numeric($fase->stato))
                                 <input type="checkbox" id="riprendi-{{ $fase->id }}" onchange="riprendiFase({{ $fase->id }}, this.checked)">
@@ -424,6 +457,24 @@ function updateOperatori(faseId, operatori) {
     container.innerHTML = operatori.map(function(op) {
         return '<small class="badge bg-light text-dark">' + op.nome + ' (' + op.data_inizio + ')</small>';
     }).join(' ');
+}
+
+function salvaScartiCommessa(faseId, valore) {
+    fetch('{{ route("produzione.aggiornaCampo") }}', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}',
+            'X-Op-Token': new URLSearchParams(window.location.search).get('op_token') || '',
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({ fase_id: faseId, campo: 'scarti', valore: valore })
+    }).then(function(r) {
+        if (r.ok) {
+            var input = document.querySelector('input[onchange*="salvaScartiCommessa(' + faseId + '"]');
+            if (input) { input.style.borderColor = '#28a745'; setTimeout(function() { input.style.borderColor = '#ced4da'; }, 1500); }
+        } else { alert('Errore nel salvataggio'); }
+    }).catch(function() { alert('Errore di connessione'); });
 }
 
 function aggiornaStato(faseId, azione, checked){

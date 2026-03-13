@@ -68,6 +68,12 @@
         min-width: 500px;
         white-space: normal;
     }
+    /* CAMPO CLIENTE */
+    td.td-cliente {
+        max-width: 140px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
     th, td { white-space:nowrap; }
 
     a.commessa-link{
@@ -159,20 +165,19 @@
                     <p>Reparto: <strong>{{ $operatore->reparti->pluck('nome')->join(', ') }} </strong></p>
                 @endif
             </div>
-            <form action="{{ route('operatore.logout') }}" method="POST">
-                @csrf
-                <button type="submit" class="btn btn-secondary btn-sm mt-2">Logout</button>
-            </form>
+            <a href="{{ route('operatore.logout') }}" class="btn btn-secondary btn-sm mt-2">Logout</a>
         </div>
     </div>
     </div>
-    <div class="action-icons" style="display:flex; align-items:center;">
+    <div class="action-icons" style="display:flex; align-items:center; gap:12px;">
         <img src="{{ asset('images/icons8-ricerca-50.png') }}"
              title="Cerca commessa"
              onclick="cercaCommessa()">
-        <span title="Storico fasi terminate"
-              style="font-size:28px; cursor:pointer; user-select:none; margin-right:15px;"
-              data-bs-toggle="offcanvas" data-bs-target="#offcanvasStorico">&#9776;</span>
+        @if($isFustellaOperatore ?? false)
+            <a href="{{ route('operatore.fustelle', ['op_token' => request('op_token')]) }}"
+               title="Fustelle"
+               style="font-size:28px; text-decoration:none; margin-right:15px;">&#9881;</a>
+        @endif
     </div>
 </div>
 
@@ -186,18 +191,28 @@
 @if(!empty($fasiPerReparto))
     {{-- MULTI-REPARTO: sezioni separate per ogni reparto --}}
     @foreach($fasiPerReparto as $repartoId => $info)
+        @if($info['fasi']->isEmpty()) @continue @endif
         <div class="reparto-section">
             <h3>
                 <span>{{ $info['nome'] }} <small>({{ $info['fasi']->count() }})</small></span>
             </h3>
+            @php $fasiDistinte = $info['fasi']->map(fn($f) => $f->faseCatalogo->nome_display ?? $f->fase)->unique()->sort()->values(); @endphp
             <div class="filtri-bar filtri-reparto" data-reparto="{{ $repartoId }}">
                 <label>Stato:</label>
                 <select class="filtro-stato" onchange="applicaFiltri(this)">
+                    <option value="1,2" selected>1 + 2</option>
                     <option value="">Tutti</option>
                     <option value="0">0</option>
                     <option value="1">1</option>
                     <option value="2">2</option>
                     <option value="3">3</option>
+                </select>
+                <label>Fase:</label>
+                <select class="filtro-fase" onchange="applicaFiltri(this)">
+                    <option value="">Tutte</option>
+                    @foreach($fasiDistinte as $nomeFase)
+                        <option value="{{ $nomeFase }}">{{ $nomeFase }}</option>
+                    @endforeach
                 </select>
                 <label>Cliente:</label>
                 <input type="text" class="filtro-cliente" placeholder="Cerca cliente..." oninput="applicaFiltri(this)">
@@ -211,25 +226,25 @@
                     <thead class="table-dark">
                         <tr>
                             <th>Priorità</th>
-                            <th>Operatori</th>
                             <th>Fase</th>
                             <th>Stato</th>
                             <th>Commessa</th>
-                            <th>Data Registrazione</th>
                             <th>Cliente</th>
+                            <th>Fustella</th>
                             <th>Codice Articolo</th>
                             @if($showColori)<th>Colori</th>@endif
-                            @if($showFustella)<th>Fustella</th>@endif
                             @if($showEsterno ?? false)<th>Esterno</th>@endif
                             <th>Descrizione Articolo</th>
                             <th>Quantità Richiesta</th>
                             <th>UM</th>
+                            <th>Data Registrazione</th>
                             <th>Data Prevista Consegna</th>
                             <th>Qta Prodotta</th>
                             <th>Codice Carta</th>
                             <th>Carta</th>
                             <th>Quantità Carta</th>
                             <th>UM Carta</th>
+                            <th>Operatori</th>
                             <th>Note Operatore</th>
                             <th>Timeout</th>
                         </tr>
@@ -238,7 +253,7 @@
                         @forelse($info['fasi'] as $fase)
                             @include('operatore._fase_row', ['fase' => $fase])
                         @empty
-                            <tr><td colspan="{{ 19 + ($showFustella ? 1 : 0) + ($showColori ? 1 : 0) + ($showEsterno ? 1 : 0) }}" class="text-center text-muted">Nessuna fase attiva</td></tr>
+                            <tr><td colspan="{{ 20 + ($showColori ? 1 : 0) + ($showEsterno ? 1 : 0) }}" class="text-center text-muted">Nessuna fase attiva</td></tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -248,14 +263,23 @@
     @endforeach
 @else
     {{-- SINGOLO REPARTO: tabella unica come prima --}}
+    @php $fasiDistinte = $fasiVisibili->map(fn($f) => $f->faseCatalogo->nome_display ?? $f->fase)->unique()->sort()->values(); @endphp
     <div class="filtri-bar filtri-reparto" data-reparto="singolo">
         <label>Stato:</label>
         <select class="filtro-stato" onchange="applicaFiltri(this)">
+            <option value="1,2" selected>1 + 2</option>
             <option value="">Tutti</option>
             <option value="0">0</option>
             <option value="1">1</option>
             <option value="2">2</option>
             <option value="3">3</option>
+        </select>
+        <label>Fase:</label>
+        <select class="filtro-fase" onchange="applicaFiltri(this)">
+            <option value="">Tutte</option>
+            @foreach($fasiDistinte as $nomeFase)
+                <option value="{{ $nomeFase }}">{{ $nomeFase }}</option>
+            @endforeach
         </select>
         <label>Cliente:</label>
         <input type="text" class="filtro-cliente" placeholder="Cerca cliente..." oninput="applicaFiltri(this)">
@@ -268,25 +292,26 @@
             <thead class="table-dark">
                 <tr>
                     <th>Priorità</th>
-                    <th>Operatori</th>
                     <th>Fase</th>
                     <th>Stato</th>
                     <th>Commessa</th>
-                    <th>Data Registrazione</th>
                     <th>Cliente</th>
+                    <th>Fustella</th>
                     <th>Codice Articolo</th>
                     @if($showColori)<th>Colori</th>@endif
-                    @if($showFustella)<th>Fustella</th>@endif
                     @if($showEsterno ?? false)<th>Esterno</th>@endif
                     <th>Descrizione Articolo</th>
                     <th>Quantità Richiesta</th>
                     <th>UM</th>
+                    <th>Data Registrazione</th>
                     <th>Data Prevista Consegna</th>
                     <th>Qta Prodotta</th>
+                    @if($showScarti ?? false)<th>Scarti Reali</th><th>Scarti Prinect</th>@endif
                     <th>Codice Carta</th>
                     <th>Carta</th>
                     <th>Quantità Carta</th>
                     <th>UM Carta</th>
+                    <th>Operatori</th>
                     <th>Note Operatore</th>
                     <th>Timeout</th>
                 </tr>
@@ -300,45 +325,6 @@
     </div>
 @endif
 
-<!-- OFFCANVAS STORICO FASI TERMINATE -->
-<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasStorico" style="width:75vw; max-width:900px;">
-    <div class="offcanvas-header">
-        <h5 class="offcanvas-title">Storico fasi terminate (ultimi 30 giorni)</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
-    </div>
-    <div class="offcanvas-body p-0">
-        <table class="table table-bordered table-sm table-striped mb-0">
-            <thead class="table-dark">
-                <tr>
-                    <th>Commessa</th>
-                    <th>Cliente</th>
-                    <th>Fase</th>
-                    <th>Descrizione</th>
-                    <th>Data Fine</th>
-                    <th>Etichetta</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($fasiTerminate as $ft)
-                    <tr>
-                        <td>{{ $ft->ordine->commessa ?? '-' }}</td>
-                        <td>{{ $ft->ordine->cliente_nome ?? '-' }}</td>
-                        <td>{{ $ft->fase }}</td>
-                        <td style="white-space:normal; max-width:300px;">{{ Str::limit($ft->ordine->descrizione ?? '-', 80) }}</td>
-                        <td>{{ $ft->data_fine ? \Carbon\Carbon::parse($ft->data_fine)->format('d/m/Y H:i') : '-' }}</td>
-                        <td>
-                            @if($ft->ordine)
-                                <a href="{{ route('operatore.etichetta', $ft->ordine->id) }}" class="btn btn-sm btn-outline-primary" target="_blank">Stampa</a>
-                            @endif
-                        </td>
-                    </tr>
-                @empty
-                    <tr><td colspan="6" class="text-center text-muted">Nessuna fase terminata</td></tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
-</div>
 
 </div>
 
@@ -363,10 +349,18 @@ function cercaCommessa(){
 
     input.onkeyup = function(){
         const filtro = input.value.toLowerCase();
-        document.querySelectorAll("tbody tr").forEach(riga=>{
-            const commessa = riga.cells[4]?.innerText.toLowerCase() || '';
-            riga.style.display = commessa.includes(filtro) ? '' : 'none';
-        });
+        if (filtro) {
+            // Ricerca attiva: mostra tutte le righe che corrispondono, ignorando filtri stato
+            document.querySelectorAll("tbody tr").forEach(riga=>{
+                const commessa = riga.cells[3]?.innerText.toLowerCase() || '';
+                riga.style.display = commessa.includes(filtro) ? '' : 'none';
+            });
+        } else {
+            // Campo vuoto: riapplica i filtri stato attivi
+            document.querySelectorAll('.filtri-reparto').forEach(function(bar) {
+                applicaFiltri(bar.querySelector('.filtro-stato'));
+            });
+        }
     };
 
     // chiudi con ESC
@@ -374,7 +368,10 @@ function cercaCommessa(){
         if(e.key === "Escape"){
             box.style.display = 'none';
             input.value = '';
-            document.querySelectorAll("tbody tr").forEach(riga=>riga.style.display='');
+            // Riapplica filtri stato
+            document.querySelectorAll('.filtri-reparto').forEach(function(bar) {
+                applicaFiltri(bar.querySelector('.filtro-stato'));
+            });
         }
     };
 }
@@ -383,13 +380,15 @@ function cercaCommessa(){
 function applicaFiltri(el) {
     var bar = el.closest('.filtri-reparto');
     var filtroStato = bar.querySelector('.filtro-stato').value;
+    var statiAttivi = filtroStato ? filtroStato.split(',') : [];
+    var tuttiStati = statiAttivi.length === 0;
+
+    var filtroFase = bar.querySelector('.filtro-fase').value.trim();
     var filtroCliente = bar.querySelector('.filtro-cliente').value.toLowerCase().trim();
     var filtroDescrizione = bar.querySelector('.filtro-descrizione').value.toLowerCase().trim();
 
     // Trova la tabella associata a questa barra filtri
     var tableWrapper = bar.nextElementSibling;
-    // Per multi-reparto la struttura è: filtri-bar → reparto-body → table-wrapper → table
-    // Per singolo reparto: filtri-bar → table-wrapper → table
     if (tableWrapper.classList.contains('reparto-body')) {
         tableWrapper = tableWrapper.querySelector('table');
     } else {
@@ -400,23 +399,57 @@ function applicaFiltri(el) {
     var righe = tableWrapper.querySelectorAll('tbody tr');
     righe.forEach(function(riga) {
         var statoCell = riga.querySelector('.td-stato');
+        var faseCell = riga.querySelector('.td-fase');
         var clienteCell = riga.querySelector('.td-cliente');
         var descCell = riga.querySelector('.td-descrizione');
 
-        var statoOk = !filtroStato || (statoCell && statoCell.textContent.trim() === filtroStato);
+        // Le fasi in pausa sono sempre visibili (stato non numerico = motivo pausa)
+        var statoText = statoCell ? statoCell.textContent.trim() : '';
+        var inPausa = statoText !== '' && isNaN(statoText) && statoText !== '0' && statoText !== '1' && statoText !== '2' && statoText !== '3' && statoText !== '4';
+        if (inPausa) {
+            riga.style.display = '';
+            return;
+        }
+
+        var statoOk = tuttiStati || statiAttivi.includes(statoText);
+        var faseOk = !filtroFase || (faseCell && faseCell.textContent.trim() === filtroFase);
         var clienteOk = !filtroCliente || (clienteCell && clienteCell.textContent.toLowerCase().includes(filtroCliente));
         var descOk = !filtroDescrizione || (descCell && descCell.textContent.toLowerCase().includes(filtroDescrizione));
 
-        riga.style.display = (statoOk && clienteOk && descOk) ? '' : 'none';
+        riga.style.display = (statoOk && faseOk && clienteOk && descOk) ? '' : 'none';
     });
 }
 
 function resetFiltri(el) {
     var bar = el.closest('.filtri-reparto');
-    bar.querySelector('.filtro-stato').value = '';
+    bar.querySelector('.filtro-stato').value = '1,2';
+    bar.querySelector('.filtro-fase').value = '';
     bar.querySelector('.filtro-cliente').value = '';
     bar.querySelector('.filtro-descrizione').value = '';
     applicaFiltri(el);
+}
+
+function salvaScarti(faseId, valore) {
+    fetch('{{ route("produzione.aggiornaCampo") }}', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': window.csrfToken(),
+            'X-Op-Token': window.opToken(),
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({ fase_id: faseId, campo: 'scarti', valore: valore })
+    }).then(function(r) {
+        if (r.ok) {
+            var input = document.querySelector('#fase-' + faseId + ' input[onchange*="salvaScarti"]');
+            if (input) {
+                input.style.borderColor = '#28a745';
+                setTimeout(function() { input.style.borderColor = '#ced4da'; }, 1500);
+            }
+        } else {
+            alert('Errore nel salvataggio');
+        }
+    }).catch(function() { alert('Errore di connessione'); });
 }
 
 function salvaQtaProd(faseId, valore) {
@@ -442,6 +475,32 @@ function salvaQtaProd(faseId, valore) {
         }
     }).catch(function() { alert('Errore di connessione'); });
 }
+
+
+// Applica filtro stato 1+2 al caricamento pagina
+document.querySelectorAll('.filtri-reparto').forEach(function(bar) {
+    applicaFiltri(bar.querySelector('.filtro-stato'));
+});
+
+// Auto-refresh su deploy: controlla ogni 10 minuti se c'è una nuova versione
+(function() {
+    var currentVersion = null;
+    function checkVersion() {
+        fetch('/version.txt?t=' + Date.now())
+            .then(function(r) { return r.text(); })
+            .then(function(v) {
+                v = v.trim();
+                if (currentVersion === null) {
+                    currentVersion = v;
+                } else if (v !== currentVersion) {
+                    location.reload();
+                }
+            })
+            .catch(function() {});
+    }
+    checkVersion();
+    setInterval(checkVersion, 600000); // 10 minuti
+})();
 
 </script>
 @endsection

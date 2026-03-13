@@ -6,6 +6,7 @@ use App\Models\Ordine;
 use App\Models\OrdineFase;
 use App\Models\FasiCatalogo;
 use App\Models\Reparto;
+use App\Models\DdtSpedizione;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Services\FaseStatoService;
@@ -316,6 +317,40 @@ class OndaSyncService
             }
         }
 
+        // Pulizia duplicati TAGLIACARTE per commessa: 1 sola per commessa
+        $repartiTagliacarte = Reparto::where('nome', 'tagliacarte')->pluck('id');
+        if ($repartiTagliacarte->isNotEmpty()) {
+            $dupTaglio = DB::table('ordine_fasi')
+                ->join('ordini', 'ordini.id', '=', 'ordine_fasi.ordine_id')
+                ->join('fasi_catalogo', 'fasi_catalogo.id', '=', 'ordine_fasi.fase_catalogo_id')
+                ->select('ordini.commessa', 'ordine_fasi.fase_catalogo_id', DB::raw('COUNT(*) as cnt'))
+                ->whereIn('fasi_catalogo.reparto_id', $repartiTagliacarte)
+                ->whereNull('ordine_fasi.deleted_at')
+                ->where('ordine_fasi.manuale', false)
+                ->groupBy('ordini.commessa', 'ordine_fasi.fase_catalogo_id')
+                ->having('cnt', '>', 1)
+                ->get();
+
+            foreach ($dupTaglio as $dup) {
+                $faseIds = OrdineFase::withTrashed()
+                    ->where('fase_catalogo_id', $dup->fase_catalogo_id)
+                    ->whereHas('ordine', fn($q) => $q->where('commessa', $dup->commessa))
+                    ->whereNull('deleted_at')
+                    ->orderBy('id')
+                    ->pluck('id');
+
+                $keepId = $faseIds->first();
+                $deleteIds = $faseIds->slice(1)->filter();
+                if ($deleteIds->isNotEmpty()) {
+                    $deleted = OrdineFase::whereIn('id', $deleteIds)
+                        ->where('stato', '<=', 1)
+                        ->where('manuale', false)
+                        ->delete();
+                    $fasiEliminate += $deleted;
+                }
+            }
+        }
+
         if ($fasiEliminate > 0) {
             Log::info("OndaSync: eliminati $fasiEliminate duplicati");
         }
@@ -369,6 +404,11 @@ class OndaSyncService
             ];
 
             if ($ordine) {
+                // Non sovrascrivere data_prevista_consegna se modificata manualmente nel MES
+                $dataConsegnaOnda = $datiOrdine['data_prevista_consegna'];
+                if ($ordine->data_prevista_consegna && $ordine->data_prevista_consegna != $dataConsegnaOnda) {
+                    unset($datiOrdine['data_prevista_consegna']);
+                }
                 $ordine->update($datiOrdine);
                 $ordiniAggiornati++;
                 $logOrdiniAggiornati[] = $commessa;
@@ -419,6 +459,10 @@ class OndaSyncService
                 // Rimappa STAMPA generico in base alla macchina assegnata in Onda
                 if ($faseNome === 'STAMPA') {
                     $macchina = trim($riga->CodMacchina ?? '');
+                    // "NO STAMPA" = nessuna stampa, skip fase
+                    if (stripos($macchina, 'NO STAMPA') !== false || $macchina === 'NO STAMPA') {
+                        continue;
+                    }
                     if (stripos($macchina, 'INDIGO') !== false) {
                         // HPINDIGOCO → STAMPAINDIGO, HPINDIGOBN → STAMPAINDIGOBN
                         if (stripos($macchina, 'BN') !== false || stripos($macchina, 'MONO') !== false) {
@@ -439,7 +483,8 @@ class OndaSyncService
                 if (isset($fasiViste[$chiaveFase])) continue;
                 $fasiViste[$chiaveFase] = true;
 
-                $repartoNome = $mappaReparti[$faseNome] ?? 'generico';
+                $repartoNome = $mappaReparti[$faseNome]
+                    ?? (str_starts_with(strtoupper($faseNome), 'EXT') ? 'esterno' : 'legatoria');
                 $tipo = $tipiFase[$faseNome] ?? 'monofase';
                 $prioritaFase = $mappaPriorita[$faseNome] ?? 500;
 
@@ -636,6 +681,33 @@ class OndaSyncService
                     }
                 }
 
+                // Dedup TAGLIACARTE per commessa: 1 sola per commessa per fase_catalogo
+                if ($repartoNome === 'tagliacarte') {
+                    $chiaveDedup = $commessa . '|tagliacarte|' . $faseNome;
+                    $qtaRiga = (int)($riga->QtaDaLavorare ?? 0);
+
+                    if (isset($dedupPerCommessa[$chiaveDedup])) {
+                        if ($qtaRiga > 0 && !in_array($qtaRiga, $dedupQta[$chiaveDedup] ?? [])) {
+                            $dedupQta[$chiaveDedup][] = $qtaRiga;
+                            $nuovaQta = array_sum($dedupQta[$chiaveDedup]);
+                            OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
+                                ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
+                                ->update(['qta_fase' => $nuovaQta]);
+                        }
+                        continue;
+                    }
+
+                    $existsInCommessa = OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
+                        ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
+                        ->exists();
+
+                    $dedupPerCommessa[$chiaveDedup] = true;
+                    $dedupQta[$chiaveDedup] = $qtaRiga > 0 ? [$qtaRiga] : [];
+                    if ($existsInCommessa) {
+                        continue;
+                    }
+                }
+
                 $dataFase = [
                     'ordine_id'        => $ordine->id,
                     'fase'             => $faseNome,
@@ -646,6 +718,7 @@ class OndaSyncService
                     'stato'            => 0,
                     'scarti_previsti'   => $scartiMacchine[trim($riga->CodMacchina ?? '')] ?? null,
                     'sequenza'         => config('sequenza_fasi')[$faseNome] ?? 500,
+                    'esterno'          => $repartoNome === 'esterno',
                 ];
 
                 // Se la fase è stata rimappata da STAMPA generico, aggiorna la fase esistente
@@ -724,7 +797,7 @@ class OndaSyncService
             $fase->save();
         }
 
-        // Ricalcola stati (demote prime fasi senza predecessori da 1→0)
+        // Ricalcola stati (promuove fasi con predecessori terminati, rispetta modifiche manuali)
         FaseStatoService::ricalcolaTutti();
 
         Log::info("Sync Onda completato: $ordiniCreati creati, $ordiniAggiornati aggiornati, $fasiCreate fasi");
@@ -736,6 +809,334 @@ class OndaSyncService
             'log_ordini_creati'     => $logOrdiniCreati,
             'log_ordini_aggiornati' => $logOrdiniAggiornati,
             'log_fasi_create'       => $logFasiCreate,
+        ];
+    }
+
+    /**
+     * Sincronizza una singola commessa da Onda, senza filtro data.
+     * Utile per commesse vecchie che il sync normale non prende.
+     */
+    public static function sincronizzaSingolaCommessa(string $codCommessa): array
+    {
+        $mappaReparti = self::getMappaReparti();
+        $tipiFase = self::getTipoReparto();
+        $mappaPriorita = config('fasi_priorita');
+        $oggi = now()->format('Y-m-d');
+
+        $scartiMacchine = collect(DB::connection('onda')->select(
+            "SELECT CodMacchina, OC_FogliScartoIniz FROM PRDMacchinari WHERE OC_FogliScartoIniz > 0"
+        ))->pluck('OC_FogliScartoIniz', 'CodMacchina')->toArray();
+
+        $righeOnda = DB::connection('onda')->select("
+            SELECT
+                t.CodCommessa,
+                p.CodArt,
+                p.OC_Descrizione,
+                COALESCE(NULLIF(p.NCPRagioneSociale, ''), a.RagioneSociale) AS ClienteNome,
+                p.QtaDaProdurre,
+                p.DataPresConsegna,
+                t.DataRegistrazione,
+                carta.CodArt AS CodCarta,
+                carta.Descrizione AS DescrizioneCarta,
+                carta.Qta AS QtaCarta,
+                carta.CodUnMis AS UMCarta,
+                t.TotMerce,
+                t.ncpcommentoprestampa AS NotePrestampa,
+                t.ncprespocommessa AS Responsabile,
+                t.OC_CommentoProduz AS CommentoProduzione,
+                t.ncpordinecliente AS OrdineCliente,
+                materiali.CostoMateriali,
+                f.CodFase,
+                f.CodMacchina,
+                f.QtaDaLavorare,
+                f.CodUnMis AS UMFase
+            FROM ATTDocTeste t
+            INNER JOIN PRDDocTeste p ON t.CodCommessa = p.CodCommessa
+            LEFT JOIN STDAnagrafiche a ON t.IdAnagrafica = a.IdAnagrafica
+            LEFT JOIN PRDDocFasi f ON p.IdDoc = f.IdDoc
+            OUTER APPLY (
+                SELECT TOP 1 r.CodArt, r.Descrizione, r.Qta, r.CodUnMis
+                FROM PRDDocRighe r WHERE r.IdDoc = p.IdDoc
+                ORDER BY r.Sequenza
+            ) carta
+            OUTER APPLY (
+                SELECT SUM(r2.Totale) AS CostoMateriali
+                FROM PRDDocRighe r2 WHERE r2.IdDoc = p.IdDoc
+            ) materiali
+            WHERE t.TipoDocumento = '2'
+              AND t.CodCommessa = ?
+        ", [$codCommessa]);
+
+        if (empty($righeOnda)) {
+            return ['trovata' => false, 'messaggio' => "Commessa $codCommessa non trovata in Onda"];
+        }
+
+        $ordiniCreati = 0;
+        $ordiniAggiornati = 0;
+        $fasiCreate = 0;
+        $logFasi = [];
+
+        // Raggruppa per (CodCommessa, CodArt, OC_Descrizione)
+        $gruppi = collect($righeOnda)->groupBy(function ($riga) {
+            $desc = preg_replace('/\s+/', ' ', trim($riga->OC_Descrizione ?? ''));
+            return $riga->CodCommessa . '|' . $riga->CodArt . '|' . $desc;
+        });
+
+        $codArtMax2 = [
+            'Volumi','Vassoio','Vassoi','SPILLATI.OFFSET','SPILLATI.DIGITALE',
+            'SOVRACOPERTA','RIVISTE.FRECCIA','riviste','RIVISTA.FRECCIA.128PP',
+            'RICETTARI','Raccoglitori','Quaderni','Opuscoli','Libro.di.bordo',
+            'Libricino','LibriBN','Libri','INSERTO.RIVISTA.NOTE.4pp',
+            'I.Volumi','I.riviste','I.Raccoglitori','I.Quaderni','I.Poster',
+            'I.Opuscoli','I.Menu','I.Libricino','I.Libri','I.copertina',
+            'I.cataloghi','I.cartoline','I.Calendari.da.Tavolo',
+            'I.Calendari.da.Muro','I.Calendari','I.Block.Notes',
+            'I.Blocchi.autocopianti','I.Blocchi','I.Bilanci',
+            'Espositori.da.Terra','Espositori.da.banco','Depliant','COPERTINA',
+            'cataloghi','Calendari.da.Tavolo','Calendari.da.Muro','Calendari',
+            'BROSSURATI.OFFSET','BROSSURATI.DIGITALE','brochure','Block.Notes',
+            'Blocchi.Mod.TI','Blocchi.Mod.R1','Blocchi.Mod.K','Blocchi.Mod.CH69',
+            'Blocchi.autocopianti.M40a','Blocchi.autocopianti','Blocchi','Bilanci',
+        ];
+
+        $repartiStampaOffset = Reparto::where('nome', 'stampa offset')->pluck('id');
+        $dedupPerCommessa = [];
+        $dedupQta = [];
+
+        foreach ($gruppi as $chiave => $righe) {
+            $prima = $righe->first();
+            $commessa = trim($prima->CodCommessa ?? '');
+            $codArt = trim($prima->CodArt ?? '');
+            $descrizione = preg_replace('/\s+/', ' ', trim($prima->OC_Descrizione ?? ''));
+
+            if (!$commessa) continue;
+
+            $ordine = Ordine::where('commessa', $commessa)
+                ->where('cod_art', $codArt)
+                ->where('descrizione', $descrizione)
+                ->first();
+
+            if (!$ordine && $descrizione === '') {
+                $ordine = Ordine::where('commessa', $commessa)
+                    ->where('cod_art', $codArt)
+                    ->first();
+            }
+
+            $datiOrdine = [
+                'cliente_nome'           => trim($prima->ClienteNome ?? ''),
+                'data_prevista_consegna' => $prima->DataPresConsegna && date('Y', strtotime($prima->DataPresConsegna)) >= 2024 ? date('Y-m-d', strtotime($prima->DataPresConsegna)) : null,
+                'qta_richiesta'          => $prima->QtaDaProdurre ?? 0,
+                'cod_carta'              => trim($prima->CodCarta ?? ''),
+                'carta'                  => trim($prima->DescrizioneCarta ?? ''),
+                'qta_carta'              => $prima->QtaCarta ?? 0,
+                'UM_carta'               => trim($prima->UMCarta ?? ''),
+                'note_prestampa'         => trim($prima->NotePrestampa ?? ''),
+                'responsabile'           => trim($prima->Responsabile ?? ''),
+                'commento_produzione'    => trim($prima->CommentoProduzione ?? ''),
+                'ordine_cliente'         => trim($prima->OrdineCliente ?? '') ?: null,
+                'valore_ordine'          => ($prima->TotMerce ?? 0) > 0 ? (float) $prima->TotMerce : null,
+                'costo_materiali'        => ($prima->CostoMateriali ?? 0) > 0 ? (float) $prima->CostoMateriali : null,
+            ];
+
+            if ($ordine) {
+                // Non sovrascrivere data_prevista_consegna se modificata manualmente nel MES
+                $dataConsegnaOnda = $datiOrdine['data_prevista_consegna'];
+                if ($ordine->data_prevista_consegna && $ordine->data_prevista_consegna != $dataConsegnaOnda) {
+                    unset($datiOrdine['data_prevista_consegna']);
+                }
+                $ordine->update($datiOrdine);
+                $ordiniAggiornati++;
+            } else {
+                $ordine = Ordine::create(array_merge([
+                    'commessa'    => $commessa,
+                    'cod_art'     => $codArt,
+                    'descrizione' => $descrizione,
+                    'stato'       => 0,
+                    'data_registrazione' => $prima->DataRegistrazione ? date('Y-m-d', strtotime($prima->DataRegistrazione)) : $oggi,
+                ], $datiOrdine));
+                $ordiniCreati++;
+            }
+
+            // BRT1 auto
+            $hasBrt = OrdineFase::where(function ($q) {
+                    $q->where('fase', 'BRT1')->orWhere('fase', 'brt1');
+                })
+                ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
+                ->exists();
+
+            if (!$hasBrt) {
+                $repartoBrt = Reparto::firstOrCreate(['nome' => 'spedizione']);
+                $faseCatalogoBrt = FasiCatalogo::firstOrCreate(
+                    ['nome' => 'BRT1'],
+                    ['reparto_id' => $repartoBrt->id]
+                );
+                OrdineFase::create([
+                    'ordine_id'        => $ordine->id,
+                    'fase'             => 'BRT1',
+                    'fase_catalogo_id' => $faseCatalogoBrt->id,
+                    'qta_fase'         => $ordine->qta_richiesta ?? 0,
+                    'um'               => 'FG',
+                    'priorita'         => $mappaPriorita['BRT1'] ?? 96,
+                    'stato'            => 0,
+                ]);
+                $fasiCreate++;
+                $logFasi[] = 'BRT1 (auto)';
+            }
+
+            // Fasi
+            $fasiViste = [];
+            foreach ($righe as $riga) {
+                $faseNome = trim($riga->CodFase ?? '');
+                if (!$faseNome) continue;
+
+                if ($faseNome === 'STAMPA') {
+                    $macchina = trim($riga->CodMacchina ?? '');
+                    if (stripos($macchina, 'INDIGO') !== false) {
+                        $faseNome = (stripos($macchina, 'BN') !== false || stripos($macchina, 'MONO') !== false)
+                            ? 'STAMPAINDIGOBN' : 'STAMPAINDIGO';
+                    } elseif (preg_match('/XL106[.-]?(\d+)/i', $macchina, $m)) {
+                        $faseNome = 'STAMPAXL106.' . $m[1];
+                    } else {
+                        $faseNome = 'STAMPAXL106';
+                    }
+                }
+
+                $chiaveFase = $faseNome . '|' . ($riga->QtaDaLavorare ?? 0);
+                if (isset($fasiViste[$chiaveFase])) continue;
+                $fasiViste[$chiaveFase] = true;
+
+                $repartoNome = $mappaReparti[$faseNome]
+                    ?? (str_starts_with(strtoupper($faseNome), 'EXT') ? 'esterno' : 'legatoria');
+                $tipo = $tipiFase[$faseNome] ?? 'monofase';
+                $prioritaFase = $mappaPriorita[$faseNome] ?? 500;
+
+                if (str_starts_with($faseNome, 'STAMPAXL106') && in_array($codArt, $codArtMax2)) {
+                    $tipo = 'max 2 fasi';
+                }
+
+                $reparto = Reparto::firstOrCreate(['nome' => $repartoNome]);
+                $faseCatalogo = FasiCatalogo::updateOrCreate(
+                    ['nome' => $faseNome],
+                    ['reparto_id' => $reparto->id]
+                );
+
+                // Dedup per commessa (fustella, digitale, stampa offset, stampa a caldo, BRT)
+                if (in_array($repartoNome, ['fustella piana', 'fustella cilindrica', 'fustella'])) {
+                    $chiaveDedup = $commessa . '|fust|' . $faseNome;
+                    if (isset($dedupPerCommessa[$chiaveDedup])) continue;
+                    $existsInCommessa = OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
+                        ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))->exists();
+                    $dedupPerCommessa[$chiaveDedup] = true;
+                    if ($existsInCommessa) continue;
+                }
+
+                if ($repartoNome === 'stampa offset' && str_starts_with($faseNome, 'STAMPAXL106')) {
+                    $chiaveDedup = $commessa . '|stampa_offset';
+                    $maxStampa = in_array($codArt, $codArtMax2) ? 2 : 1;
+                    if (!isset($dedupPerCommessa[$chiaveDedup])) {
+                        $existCount = OrdineFase::whereHas('faseCatalogo', fn($q) =>
+                                $q->whereIn('reparto_id', $repartiStampaOffset)
+                                  ->where('nome', 'like', 'STAMPAXL106%'))
+                            ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
+                            ->count();
+                        $dedupPerCommessa[$chiaveDedup] = $existCount;
+                    }
+                    if ($dedupPerCommessa[$chiaveDedup] >= $maxStampa) continue;
+                    $existsThisVariant = OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
+                        ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))->exists();
+                    if ($existsThisVariant) continue;
+                    $dedupPerCommessa[$chiaveDedup]++;
+                }
+
+                if ($repartoNome === 'spedizione') {
+                    $chiaveDedup = $commessa . '|spedizione|' . $faseNome;
+                    if (isset($dedupPerCommessa[$chiaveDedup])) continue;
+                    $existsInCommessa = OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
+                        ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))->exists();
+                    $dedupPerCommessa[$chiaveDedup] = true;
+                    if ($existsInCommessa) continue;
+                }
+
+                // Dedup TAGLIACARTE per commessa: 1 sola per commessa per fase_catalogo
+                if ($repartoNome === 'tagliacarte') {
+                    $chiaveDedup = $commessa . '|tagliacarte|' . $faseNome;
+                    if (isset($dedupPerCommessa[$chiaveDedup])) continue;
+                    $existsInCommessa = OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
+                        ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))->exists();
+                    $dedupPerCommessa[$chiaveDedup] = true;
+                    if ($existsInCommessa) continue;
+                }
+
+                $dataFase = [
+                    'ordine_id'        => $ordine->id,
+                    'fase'             => $faseNome,
+                    'fase_catalogo_id' => $faseCatalogo->id,
+                    'qta_fase'         => $riga->QtaDaLavorare ?? 0,
+                    'um'               => trim($riga->UMFase ?? 'FG'),
+                    'priorita'         => $prioritaFase,
+                    'stato'            => 0,
+                    'scarti_previsti'   => $scartiMacchine[trim($riga->CodMacchina ?? '')] ?? null,
+                    'esterno'          => $repartoNome === 'esterno',
+                ];
+
+                // Rimappa STAMPA generico
+                $faseOriginaleOnda = trim($riga->CodFase ?? '');
+                if ($faseOriginaleOnda === 'STAMPA' && $faseNome !== 'STAMPA') {
+                    $faseStampaGenerica = OrdineFase::where('ordine_id', $ordine->id)
+                        ->where('fase', 'STAMPA')->first();
+                    if ($faseStampaGenerica) {
+                        $faseStampaGenerica->update([
+                            'fase'             => $faseNome,
+                            'fase_catalogo_id' => $faseCatalogo->id,
+                            'qta_fase'         => $riga->QtaDaLavorare ?? 0,
+                            'um'               => trim($riga->UMFase ?? 'FG'),
+                            'priorita'         => $prioritaFase,
+                            'scarti_previsti'   => $scartiMacchine[trim($riga->CodMacchina ?? '')] ?? null,
+                        ]);
+                        $fasiCreate++;
+                        $logFasi[] = $faseNome . ' (remapped)';
+                        continue;
+                    }
+                }
+
+                $exists = OrdineFase::where('ordine_id', $ordine->id)
+                    ->where('fase_catalogo_id', $faseCatalogo->id)->exists();
+
+                if ($tipo === 'max 2 fasi') {
+                    $count = OrdineFase::where('ordine_id', $ordine->id)
+                        ->where('fase_catalogo_id', $faseCatalogo->id)->count();
+                    if ($count < 2) {
+                        OrdineFase::create($dataFase);
+                        $fasiCreate++;
+                        $logFasi[] = $faseNome;
+                    }
+                } elseif (!$exists) {
+                    OrdineFase::create($dataFase);
+                    $fasiCreate++;
+                    $logFasi[] = $faseNome;
+                }
+            }
+        }
+
+        // Ricalcola priorità e stati per la commessa
+        $controller = app(\App\Http\Controllers\DashboardOwnerController::class);
+        $fasiCommessa = OrdineFase::with('ordine')
+            ->whereHas('ordine', fn($q) => $q->where('commessa', $codCommessa))
+            ->get();
+        foreach ($fasiCommessa as $fase) {
+            $controller->calcolaOreEPriorita($fase);
+            $fase->save();
+        }
+        FaseStatoService::ricalcolaCommessa($codCommessa);
+
+        return [
+            'trovata'           => true,
+            'ordini_creati'     => $ordiniCreati,
+            'ordini_aggiornati' => $ordiniAggiornati,
+            'fasi_create'       => $fasiCreate,
+            'fasi'              => $logFasi,
+            'messaggio'         => "Commessa $codCommessa: $ordiniCreati ordini creati, $ordiniAggiornati aggiornati, $fasiCreate fasi create" .
+                                   ($logFasi ? ' (' . implode(', ', $logFasi) . ')' : ''),
         ];
     }
 
@@ -853,29 +1254,40 @@ class OndaSyncService
 
             $idDoc = $riga->IdDoc;
             $qtaDDT = (float) ($riga->QtaDDT ?? 0);
+            $numeroDDT = trim($riga->NumeroDocumento ?? '');
+            $vettore = trim($riga->Vettore ?? '');
+            $cliente = trim($riga->Cliente ?? '');
 
-            // CodCommessa nelle righe è già nel formato completo (es. 0066398-26)
             // Cerca ordine con match diretto
             $ordine = Ordine::where('commessa', $codCommessa)->first();
 
-            if (!$ordine) {
-                continue;
+            // Salva nella tabella ddt_spedizioni (supporta più DDT per commessa)
+            if ($ordine) {
+                DdtSpedizione::updateOrCreate(
+                    ['onda_id_doc' => $idDoc, 'commessa' => $codCommessa],
+                    [
+                        'numero_ddt'   => $numeroDDT,
+                        'data_ddt'     => $riga->DataDocumento ? substr($riga->DataDocumento, 0, 10) : null,
+                        'vettore'      => $vettore,
+                        'cliente_nome' => $cliente,
+                        'ordine_id'    => $ordine->id,
+                        'qta'          => $qtaDDT,
+                    ]
+                );
             }
 
-            // Idempotenza: skip se ordine ha già un ddt_vendita_id
-            if ($ordine->ddt_vendita_id) {
-                continue;
+            // Aggiorna anche il campo legacy sull'ordine (primo DDT trovato)
+            if ($ordine && !$ordine->ddt_vendita_id) {
+                $ordine->update([
+                    'ddt_vendita_id'      => $idDoc,
+                    'numero_ddt_vendita'  => $numeroDDT,
+                    'vettore_ddt'         => $vettore,
+                    'qta_ddt_vendita'     => $qtaDDT,
+                ]);
             }
-
-            $ordine->update([
-                'ddt_vendita_id'      => $idDoc,
-                'numero_ddt_vendita'  => trim($riga->NumeroDocumento ?? ''),
-                'vettore_ddt'         => trim($riga->Vettore ?? ''),
-                'qta_ddt_vendita'     => $qtaDDT,
-            ]);
 
             $aggiornati++;
-            Log::info("DDT Vendita: aggiornato ordine #{$ordine->id} commessa {$ordine->commessa} con DDT {$idDoc} (qta DDT: {$qtaDDT})");
+            Log::info("DDT Vendita: commessa {$codCommessa} DDT {$numeroDDT} (IdDoc {$idDoc}, qta: {$qtaDDT})");
         }
 
         return $aggiornati;
@@ -990,6 +1402,9 @@ class OndaSyncService
             'STAMPACALDOJOHEST' => 'esterno',
             'BROSSFRESATA/A5EST' => 'esterno',
             'PIEGA6ANTESINGOLO' => 'legatoria',
+            'PIEGA4ANTESINGOLO' => 'legatoria',
+            'PMDUPLO40AUTO' => 'legatoria',
+            'BROSSPUR' => 'legatoria',
 
             // Fasi con "est" nel nome o prefisso "EXT" → esterno
             'est STAMPACALDOJOH' => 'esterno',

@@ -236,10 +236,7 @@
         <div class="operatore-popup" id="operatorePopup">
             <div><strong>{{ $operatore->nome }} {{ $operatore->cognome }}</strong></div>
             <div><p>Reparto: <strong>Spedizione</strong></p></div>
-            <form action="{{ route('operatore.logout') }}" method="POST">
-                @csrf
-                <button type="submit" class="btn btn-secondary btn-sm mt-2">Logout</button>
-            </form>
+            <a href="{{ route('operatore.logout') }}" class="btn btn-secondary btn-sm mt-2">Logout</a>
         </div>
     </div>
 </div>
@@ -253,38 +250,34 @@
         <h5>Riepilogo</h5>
         <button class="sidebar-close" id="sidebarClose">&times;</button>
     </div>
-    <div class="sidebar-item">
+    <a href="#sezDaConsegnare" class="sidebar-item" onclick="closeSidebar()">
         <span class="kpi-inline" style="color:#28a745;">{{ $fasiDaSpedire->count() }}</span>
         <span>Da consegnare</span>
-    </div>
-    <div class="sidebar-item">
+    </a>
+    <a href="#sezInAttesa" class="sidebar-item" onclick="closeSidebar()">
         <span class="kpi-inline" style="color:#ffc107;">{{ $fasiInAttesa->count() }}</span>
         <span>In attesa</span>
-    </div>
-    <div class="sidebar-item">
+    </a>
+    <a href="#sezDDT" class="sidebar-item" onclick="closeSidebar()">
         <span class="kpi-inline" style="color:#6f42c1;">{{ $fasiDDT->count() }}</span>
         <span>DDT Emesse</span>
-    </div>
-    <div class="sidebar-item">
+    </a>
+    <a href="#sezParziali" class="sidebar-item" onclick="closeSidebar()">
         <span class="kpi-inline" style="color:#fd7e14;">{{ $fasiParziali->count() }}</span>
         <span>Parziali in attesa</span>
-    </div>
-    <div class="sidebar-item">
-        <span class="kpi-inline" style="color:#198754;">{{ $consegneTotali }}</span>
-        <span>Consegne totali oggi</span>
-    </div>
-    <div class="sidebar-item">
-        <span class="kpi-inline" style="color:#fd7e14;">{{ $consegneParziali }}</span>
-        <span>Consegne parziali oggi</span>
-    </div>
-    <hr style="margin:4px 18px;">
-    <a href="{{ route('spedizione.esterne') }}" class="sidebar-item">
-        <span class="kpi-inline" style="color:#17a2b8;">{{ $fasiEsterne->count() }}</span>
-        <span>Lav. esterne</span>
     </a>
     <a href="#" class="sidebar-item" data-bs-toggle="modal" data-bs-target="#modalSpediteOggi" onclick="closeSidebar()">
-        <span class="kpi-inline" style="color:#0d6efd;">{{ $fasiSpediteOggi->count() }}</span>
-        <span>Consegnate oggi</span>
+        <span class="kpi-inline" style="color:#198754;">{{ $consegneTotali }}</span>
+        <span>Consegne totali oggi</span>
+    </a>
+    <a href="#" class="sidebar-item" data-bs-toggle="modal" data-bs-target="#modalSpediteOggi" onclick="closeSidebar()">
+        <span class="kpi-inline" style="color:#fd7e14;">{{ $consegneParziali }}</span>
+        <span>Consegne parziali oggi</span>
+    </a>
+    <hr style="margin:4px 18px;">
+    <a href="{{ route('spedizione.esterne') }}" class="sidebar-item" onclick="closeSidebar()">
+        <span class="kpi-inline" style="color:#17a2b8;">{{ $fasiEsterne->count() }}</span>
+        <span>Lav. esterne</span>
     </a>
     <a href="#" class="sidebar-item" data-bs-toggle="modal" data-bs-target="#modalBRT" onclick="closeSidebar()">
         <span class="kpi-inline" style="color:#d4380d;">{{ $spedizioniBRT->count() }}</span>
@@ -305,7 +298,7 @@
 <!-- Ricerca + matita note + pannello inline -->
 <div style="display:flex; align-items:center; gap:8px; margin:12px 8px; flex-wrap:nowrap;">
     <input type="text" id="searchBox" class="form-control search-box" placeholder="Cerca commessa, cliente, descrizione..." style="margin:0; flex:1; min-width:200px;">
-    <button onclick="toggleNotePanel()" title="Note consegne" style="background:none; border:none; cursor:pointer; font-size:24px; color:#0d6efd; padding:4px 8px;">&#9998;</button>
+    <button onclick="toggleNotePanel()" title="Note consegne" style="background:none; border:none; cursor:pointer; font-size:24px; color:#0d6efd; padding:4px 8px; position:relative;">&#9998;<span id="noteConsegneBadge" style="display:none; position:absolute; top:-2px; right:-2px; background:#dc3545; color:#fff; border-radius:50%; width:16px; height:16px; font-size:10px; font-weight:bold; text-align:center; line-height:16px;">!</span></button>
     <div id="notePanel" style="display:none; padding:8px 14px; background:#fff; border:2px solid #0d6efd; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.1); flex:0 0 auto; white-space:nowrap;">
         <div style="display:flex; align-items:center; gap:8px;">
             <strong style="color:#0d6efd; font-size:13px; white-space:nowrap;">Note consegne</strong>
@@ -318,6 +311,7 @@
 </div>
 
 <!-- Tabella DDT Emesse da Onda -->
+<div id="sezDDT"></div>
 @if($fasiDDT->count() > 0)
 <h4 class="mx-2 mt-2" style="color:#6f42c1;">DDT Emesse da Onda</h4>
 <div class="table-wrapper">
@@ -383,7 +377,7 @@
 @endif
 
 <!-- Tabella fasi da spedire -->
-<h4 class="mx-2 mt-2" style="color:#28a745;">Da consegnare</h4>
+<h4 class="mx-2 mt-2" id="sezDaConsegnare" style="color:#28a745;">Da consegnare</h4>
 <div class="table-wrapper">
     <table class="table table-bordered table-sm table-striped" id="tabDaSpedire">
         <thead class="table-dark">
@@ -444,6 +438,7 @@
 </div>
 
 <!-- Tabella Consegne Parziali -->
+<div id="sezParziali"></div>
 @if($fasiParziali->count() > 0)
 <h4 class="mx-2 mt-4" style="color:#fd7e14;">Consegne Parziali</h4>
 <div class="table-wrapper">
@@ -477,6 +472,7 @@
 @endif
 
 <!-- Tabella fasi in attesa -->
+<div id="sezInAttesa"></div>
 @if($fasiInAttesa->count() > 0)
 <h4 class="mx-2 mt-4" style="color:#ffc107;">In attesa (lavorazione in corso)</h4>
 <div class="table-wrapper">
@@ -693,6 +689,7 @@
                         <tr>
                             <th style="padding:12px 14px;">DDT</th>
                             <th style="padding:12px 14px;">Commesse</th>
+                            <th style="padding:12px 14px;">Descrizione</th>
                             <th style="padding:12px 14px;">Cliente</th>
                             <th style="padding:12px 14px;">Stato BRT</th>
                             <th style="padding:12px 14px;">Data Consegna</th>
@@ -706,17 +703,31 @@
                         @php
                             $primo = $ordiniGruppo->first();
                             $commesse = $ordiniGruppo->pluck('commessa')->unique()->implode(', ');
+                            $cached = $primo->brt_cache_at ? true : false;
+                            $statoCache = $primo->brt_stato ?? null;
+                            $badgeClass = 'bg-light text-muted';
+                            $badgeText = 'Da verificare';
+                            if ($cached && $statoCache) {
+                                $badgeText = $statoCache;
+                                if (str_contains($statoCache, 'CONSEGNATA')) $badgeClass = 'bg-success';
+                                elseif (str_contains($statoCache, 'IN TRANSITO') || str_contains($statoCache, 'PARTITA')) $badgeClass = 'bg-primary';
+                                elseif (str_contains($statoCache, 'CONSEGNA')) $badgeClass = 'bg-warning text-dark';
+                                elseif (str_contains($statoCache, 'RITIRATA')) $badgeClass = 'bg-info';
+                                elseif (str_contains($statoCache, 'MULTI')) $badgeClass = 'bg-purple" style="background:#7c3aed!important;color:#fff';
+                                else $badgeClass = 'bg-secondary';
+                            }
                         @endphp
                         <tr id="brt_row_{{ md5($numDDT) }}">
                             <td class="fw-bold" style="padding:10px 14px; font-size:16px;">{{ ltrim($numDDT, '0') }}</td>
                             <td style="padding:10px 14px;">{{ $commesse }}</td>
+                            <td style="padding:10px 14px; max-width:250px; white-space:normal;">{!! $ordiniGruppo->map(fn($d) => $d->ordine->descrizione ?? '')->filter()->unique()->map(fn($d) => e(Str::limit($d, 60)))->implode('<hr style="margin:4px 0; border-color:#ccc;">') !!}</td>
                             <td style="padding:10px 14px;">{{ $primo->cliente_nome ?? '-' }}</td>
                             <td id="brt_stato_{{ md5($numDDT) }}" style="padding:10px 14px;">
-                                <span class="badge bg-light text-muted" style="font-size:13px; padding:6px 10px;">Da verificare</span>
+                                <span class="badge {{ $badgeClass }}" style="font-size:13px; padding:6px 10px;">{{ $badgeText }}</span>
                             </td>
-                            <td id="brt_data_{{ md5($numDDT) }}" style="padding:10px 14px;">-</td>
-                            <td id="brt_dest_{{ md5($numDDT) }}" style="padding:10px 14px;">-</td>
-                            <td id="brt_colli_{{ md5($numDDT) }}" style="padding:10px 14px;">-</td>
+                            <td id="brt_data_{{ md5($numDDT) }}" style="padding:10px 14px;">{{ $cached ? ($primo->brt_data_consegna ?? '-') : '-' }}</td>
+                            <td id="brt_dest_{{ md5($numDDT) }}" style="padding:10px 14px;">{{ $cached ? ($primo->brt_destinatario ?? '-') : '-' }}</td>
+                            <td id="brt_colli_{{ md5($numDDT) }}" style="padding:10px 14px;">{{ $cached ? ($primo->brt_colli ?? '-') : '-' }}</td>
                             <td style="padding:10px 14px;">
                                 <button class="btn btn-outline-danger fw-bold" style="font-size:14px; padding:6px 16px;" onclick="apriTrackingDDT('{{ $numDDT }}', this)">
                                     Dettagli
@@ -1025,6 +1036,12 @@ function caricaStatoBRT(numeroDDT, hash, callback) {
         var destEl = document.getElementById('brt_dest_' + hash);
         var colliEl = document.getElementById('brt_colli_' + hash);
 
+        if (data.multi_spedizione) {
+            statoEl.innerHTML = '<span class="badge bg-purple" style="background:#7c3aed!important;">Multi-spedizione</span>';
+            callback();
+            return;
+        }
+
         if (data.error) {
             statoEl.innerHTML = '<span class="badge bg-warning text-dark">In attesa</span>';
             callback();
@@ -1160,7 +1177,8 @@ function toggleScanner(scannerId, inputId) {
 
 // Ferma scanner quando i modal vengono chiusi
 ['modalConsegna', 'modalSegnacollo'].forEach(function(modalId) {
-    document.getElementById(modalId).addEventListener('hidden.bs.modal', function() {
+    var el = document.getElementById(modalId);
+    if (el) el.addEventListener('hidden.bs.modal', function() {
         if (modalId === 'modalConsegna') fermaScanner('mc_scanner');
         if (modalId === 'modalSegnacollo') fermaScanner('msDDT_scanner');
     });
@@ -1175,19 +1193,31 @@ document.getElementById('modalBRT').addEventListener('shown.bs.modal', function(
     }
 });
 
+// === Token e CSRF per fetch autenticate ===
+var _opToken = '{{ request()->query("op_token", "") }}';
+function urlToken(url) {
+    if (!_opToken) return url;
+    return url + (url.indexOf('?') >= 0 ? '&' : '?') + 'op_token=' + encodeURIComponent(_opToken);
+}
+function csrfToken() {
+    var meta = document.querySelector('meta[name="csrf-token"]');
+    return meta ? meta.getAttribute('content') : '';
+}
+
 // === Note giornaliere ===
 function toggleNotePanel() {
     var panel = document.getElementById('notePanel');
     if (panel.style.display === 'none') {
         panel.style.display = 'block';
         caricaNote();
+        document.getElementById('noteConsegneBadge').style.display = 'none';
     } else {
         panel.style.display = 'none';
     }
 }
 
 function caricaNote() {
-    fetch('{{ route("spedizione.noteGiornaliere") }}?data={{ now()->toDateString() }}', {
+    fetch(urlToken('{{ route("spedizione.noteGiornaliere") }}?data={{ now()->toDateString() }}'), {
         headers: {'Accept': 'application/json'}
     })
     .then(r => r.json())
@@ -1206,7 +1236,7 @@ function caricaNote() {
 function salvaNote() {
     var btn = event.target;
     btn.disabled = true;
-    fetch('{{ route("spedizione.salvaNotaGiornaliera") }}', {
+    fetch(urlToken('{{ route("spedizione.salvaNotaGiornaliera") }}'), {
         method: 'POST',
         headers: {
             'X-CSRF-TOKEN': csrfToken(),
@@ -1223,6 +1253,10 @@ function salvaNote() {
         if (d.success) {
             document.getElementById('noteSaveStatus').textContent = 'Salvato alle ' + new Date().toLocaleTimeString('it-IT');
             document.getElementById('noteSaveStatus').style.color = '#198754';
+            // Aggiorna timestamp per non auto-notificarsi
+            fetch(urlToken('{{ route("spedizione.noteCheck") }}'), {headers:{'Accept':'application/json'}})
+                .then(function(r){return r.json();})
+                .then(function(dd){ if(dd.updated_at){ _noteLastUpdate=dd.updated_at; localStorage.setItem('noteConsegne_lastUpdate_sped',_noteLastUpdate); } });
         }
     })
     .catch(() => {
@@ -1231,5 +1265,70 @@ function salvaNote() {
     })
     .finally(() => { btn.disabled = false; });
 }
+
+// === Notifiche Note Consegne (polling) ===
+var _noteLastUpdate = localStorage.getItem('noteConsegne_lastUpdate_sped') || '';
+
+// Sblocca AudioContext al primo click (richiesto dai browser)
+var _audioCtx = null;
+document.addEventListener('click', function() {
+    if (!_audioCtx) {
+        _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+}, {once: true});
+
+if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+}
+
+function checkNoteConsegne() {
+    fetch(urlToken('{{ route("spedizione.noteCheck") }}'), {
+        headers: {'Accept': 'application/json'}
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+        if (d.updated_at && d.updated_at !== _noteLastUpdate) {
+            if (_noteLastUpdate !== '') {
+                document.getElementById('noteConsegneBadge').style.display = 'inline-block';
+                try {
+                    if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    if (_audioCtx.state === 'suspended') _audioCtx.resume();
+                    var osc = _audioCtx.createOscillator();
+                    var gain = _audioCtx.createGain();
+                    osc.connect(gain); gain.connect(_audioCtx.destination);
+                    osc.frequency.value = 800; gain.gain.value = 0.3;
+                    osc.start(); osc.stop(_audioCtx.currentTime + 0.3);
+                } catch(e) {}
+                if ('Notification' in window && Notification.permission === 'granted') {
+                    new Notification('Note Consegne aggiornate', {
+                        body: (d.contenuto || '').substring(0, 100) || 'Le note consegne sono state aggiornate',
+                        icon: '/favicon.ico'
+                    });
+                }
+                showNoteToast('Le note consegne sono state aggiornate');
+                document.getElementById('notaContenuto').value = d.contenuto || '';
+            }
+            _noteLastUpdate = d.updated_at;
+            localStorage.setItem('noteConsegne_lastUpdate_sped', _noteLastUpdate);
+        }
+    })
+    .catch(function(e) { console.error('noteCheck error:', e); });
+}
+
+function showNoteToast(msg) {
+    var toast = document.createElement('div');
+    toast.innerHTML = '<strong>Note Consegne</strong><br>' + msg;
+    toast.style.cssText = 'position:fixed; top:20px; right:20px; z-index:9999; background:#0d6efd; color:#fff; padding:15px 20px; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.3); font-size:14px; cursor:pointer; max-width:350px;';
+    toast.onclick = function() {
+        toast.remove();
+        document.getElementById('noteConsegneBadge').style.display = 'none';
+        if (document.getElementById('notePanel').style.display === 'none') toggleNotePanel();
+    };
+    document.body.appendChild(toast);
+    setTimeout(function() { if (toast.parentNode) toast.remove(); }, 30000);
+}
+
+checkNoteConsegne();
+setInterval(checkNoteConsegne, 15000);
 </script>
 @endsection

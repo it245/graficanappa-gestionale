@@ -23,6 +23,9 @@ Route::prefix('operatore')->group(function() {
         Route::get('dashboard', [DashboardOperatoreController::class, 'index'])->name('operatore.dashboard');
         Route::match(['get', 'post'], '/logout', [OperatoreLoginController::class, 'logout'])->name('operatore.logout');
 
+        // Fustelle (per operatori fustella piana/cilindrica)
+        Route::get('/fustelle', [DashboardOperatoreController::class, 'fustelle'])->name('operatore.fustelle');
+
         // Etichette EAN
         Route::get('/etichetta/search-ean', [EtichettaController::class, 'searchEan'])->name('operatore.etichetta.searchEan');
         Route::post('/etichetta/salva-ean', [EtichettaController::class, 'salvaEan'])->name('operatore.etichetta.salvaEan');
@@ -46,9 +49,12 @@ Route::get('/owner/scheduling', [DashboardOwnerController::class, 'scheduling'])
 Route::get('/owner/report-ore', [DashboardOwnerController::class, 'reportOre'])->name('owner.reportOre');
 Route::get('/owner/excel-download', [DashboardOwnerController::class, 'downloadExcel'])->name('owner.downloadExcel');
 Route::get('/owner/esterne', [DashboardOwnerController::class, 'esterne'])->name('owner.esterne');
+Route::get('/owner/reparti', [DashboardOwnerController::class, 'repartiOverview'])->name('owner.repartiOverview');
+Route::get('/owner/fustelle', [DashboardOwnerController::class, 'fustelleOverview'])->name('owner.fustelle');
 Route::post('/owner/tracking-ddt', [DashboardSpedizioneController::class, 'trackingByDDT'])->name('owner.trackingByDDT');
 Route::get('/owner/note-spedizione', [DashboardSpedizioneController::class, 'noteGiornaliere'])->name('owner.noteSpedizione');
 Route::post('/owner/note-spedizione', [DashboardSpedizioneController::class, 'salvaNotaGiornaliera'])->name('owner.salvaNotaSpedizione');
+Route::get('/owner/note-spedizione-check', [DashboardSpedizioneController::class, 'noteUltimoAggiornamento'])->name('owner.noteSpedizioneCheck');
 });
 
 // Admin — login pubblico
@@ -100,11 +106,17 @@ Route::middleware(['owner.or.admin'])->prefix('mes/prinect')->group(function() {
     Route::get('/job/{jobId}', [PrinectController::class, 'jobDetail'])->name('mes.prinect.jobDetail');
 });
 
-// Fiery V900 — accessibile a owner e admin
+// Fiery V900 — dashboard e debug solo owner/admin
 Route::middleware(['owner.or.admin'])->prefix('mes/fiery')->group(function() {
     Route::get('/', [FieryController::class, 'index'])->name('mes.fiery');
     Route::get('/status', [FieryController::class, 'statusJson'])->name('mes.fiery.status');
     Route::get('/debug', [FieryController::class, 'debugSync'])->name('mes.fiery.debug');
+});
+
+// Fiery contatori — accessibile anche al ruolo fiery_contatori
+Route::middleware(['owner.or.admin:fiery_contatori'])->prefix('mes/fiery')->group(function() {
+    Route::get('/contatori', [FieryController::class, 'contatori'])->name('mes.fiery.contatori');
+    Route::get('/contatori/json', [FieryController::class, 'contatoriJson'])->name('mes.fiery.contatori.json');
 });
 
 // Produzione
@@ -130,6 +142,7 @@ Route::prefix('spedizione')->middleware(['operatore.auth'])->group(function() {
     Route::post('/tracking-ddt', [DashboardSpedizioneController::class, 'trackingByDDT'])->name('spedizione.trackingByDDT');
     Route::get('/note-giornaliere', [DashboardSpedizioneController::class, 'noteGiornaliere'])->name('spedizione.noteGiornaliere');
     Route::post('/note-giornaliere', [DashboardSpedizioneController::class, 'salvaNotaGiornaliera'])->name('spedizione.salvaNotaGiornaliera');
+    Route::get('/note-check', [DashboardSpedizioneController::class, 'noteUltimoAggiornamento'])->name('spedizione.noteCheck');
 });
 
 // Tracking BRT test (accesso diretto)

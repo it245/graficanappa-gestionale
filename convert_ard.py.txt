@@ -1,0 +1,370 @@
+"""
+Batch converter ArtiosCAD .ARD → DXF + PDF
+Usa pywinauto per automazione UI.
+
+Uso: py -3 convert_ard.py
+
+IMPORTANTE:
+- Non toccare mouse/tastiera durante l'esecuzione
+- Lanciare di sera/notte per file numerosi
+- ArtiosCAD deve essere CHIUSO prima di lanciare lo script
+"""
+
+import os
+import sys
+import time
+import glob
+import logging
+import subprocess
+from datetime import datetime
+
+try:
+    from pywinauto import Application, keyboard, timings
+    from pywinauto.findwindows import ElementNotFoundError
+except ImportError:
+    print("ERRORE: pywinauto non installato. Esegui: py -3 -m pip install pywinauto")
+    sys.exit(1)
+
+# ============================================================
+# CONFIGURAZIONE — MODIFICA QUESTI PERCORSI
+# ============================================================
+CARTELLA_ARD = r"\\CARTOTECNICA\Users\mirko.GRNAPPA\Desktop\BACKUP PROGETTI"
+CARTELLA_DXF = os.path.join(CARTELLA_ARD, "DXF_EXPORT")
+CARTELLA_PDF = os.path.join(CARTELLA_ARD, "PDF_EXPORT")
+ARTIOSCAD_EXE = r"C:\Esko\Artios\ArtiosCAD21.03\Program\artioscad.exe"
+DXF_VERSION = "DXF 2010"  # Cambia se usi altra versione
+
+# Timeout e pause (secondi)
+TIMEOUT_OPEN = 30       # Attesa apertura file
+TIMEOUT_EXPORT = 20     # Attesa finestra esporta
+PAUSA_TRA_FILE = 3      # Pausa tra un file e l'altro
+PAUSA_DOPO_EXPORT = 5   # Pausa dopo ogni export
+
+# ============================================================
+# SETUP LOGGING
+# ============================================================
+log_file = os.path.join(CARTELLA_ARD, f"convert_log_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt")
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s',
+    handlers=[
+        logging.FileHandler(log_file, encoding='utf-8'),
+        logging.StreamHandler()
+    ]
+)
+log = logging.getLogger(__name__)
+
+
+def crea_cartelle():
+    """Crea cartelle output se non esistono."""
+    os.makedirs(CARTELLA_DXF, exist_ok=True)
+    os.makedirs(CARTELLA_PDF, exist_ok=True)
+    log.info(f"Cartella DXF: {CARTELLA_DXF}")
+    log.info(f"Cartella PDF: {CARTELLA_PDF}")
+
+
+def trova_file_ard():
+    """Trova tutti i file .ARD nella cartella sorgente (ricorsivo)."""
+    pattern = os.path.join(CARTELLA_ARD, "**", "*.ard")
+    files = glob.glob(pattern, recursive=True)
+    # Escludi file nelle cartelle di output
+    files = [f for f in files if CARTELLA_DXF not in f and CARTELLA_PDF not in f]
+    # Cerca anche .ARD maiuscolo
+    pattern2 = os.path.join(CARTELLA_ARD, "**", "*.ARD")
+    files2 = glob.glob(pattern2, recursive=True)
+    files2 = [f for f in files2 if CARTELLA_DXF not in f and CARTELLA_PDF not in f]
+    tutti = list(set(files + files2))
+    tutti.sort()
+    return tutti
+
+
+def avvia_artioscad():
+    """Avvia ArtiosCAD e attendi che sia pronto."""
+    log.info(f"Avvio ArtiosCAD: {ARTIOSCAD_EXE}")
+    subprocess.Popen([ARTIOSCAD_EXE])
+    time.sleep(10)  # Attendi avvio iniziale
+
+    # Connettiti al processo
+    for tentativo in range(6):
+        try:
+            app = Application(backend='uia').connect(path=ARTIOSCAD_EXE, timeout=10)
+            log.info("ArtiosCAD connesso!")
+            return app
+        except Exception as e:
+            log.info(f"Attesa connessione... tentativo {tentativo+1}/6")
+            time.sleep(5)
+
+    log.error("Impossibile connettersi ad ArtiosCAD dopo 30 secondi")
+    sys.exit(1)
+
+
+def apri_file(app, filepath):
+    """Apre un file .ARD in ArtiosCAD."""
+    log.info(f"Apertura: {os.path.basename(filepath)}")
+    try:
+        main_win = app.top_window()
+        main_win.set_focus()
+        time.sleep(0.5)
+
+        # Ctrl+O per aprire
+        keyboard.send_keys('^o')
+        time.sleep(2)
+
+        # Trova la finestra di dialogo "Apri" / "Open"
+        dlg = None
+        for tentativo in range(5):
+            try:
+                dlg = app.window(title_re='.*([Aa]pri|[Oo]pen).*')
+                if dlg.exists(timeout=3):
+                    break
+            except:
+                pass
+            time.sleep(1)
+
+        if dlg is None or not dlg.exists(timeout=2):
+            log.warning("Finestra Apri non trovata, provo con menu File")
+            keyboard.send_keys('%f')  # Alt+F
+            time.sleep(1)
+            keyboard.send_keys('a')   # "Apri" in italiano
+            time.sleep(2)
+            dlg = app.window(title_re='.*([Aa]pri|[Oo]pen).*')
+
+        # Inserisci il percorso file
+        dlg.set_focus()
+        time.sleep(0.5)
+
+        # Trova il campo nome file e inserisci il percorso
+        edit = dlg.child_window(title="Nome file:", control_type="Edit")
+        if not edit.exists(timeout=3):
+            edit = dlg.child_window(title="File name:", control_type="Edit")
+        if not edit.exists(timeout=3):
+            # Prova con ComboBox
+            edit = dlg.child_window(control_type="ComboBox", found_index=0).child_window(control_type="Edit")
+
+        edit.set_focus()
+        edit.set_text("")
+        time.sleep(0.3)
+        keyboard.send_keys(filepath.replace('\\', '/'), with_spaces=True, pause=0.02)
+        time.sleep(0.5)
+        keyboard.send_keys('{ENTER}')
+        time.sleep(TIMEOUT_OPEN / 3)
+
+        return True
+    except Exception as e:
+        log.error(f"Errore apertura: {e}")
+        return False
+
+
+def esporta_file(app, nome_base, formato, cartella_output):
+    """
+    Esporta il file corrente.
+    formato: 'dxf' o 'pdf'
+    """
+    log.info(f"  Export {formato.upper()}: {nome_base}")
+    try:
+        main_win = app.top_window()
+        main_win.set_focus()
+        time.sleep(0.5)
+
+        # File → Esporta (Alt+F, poi cerca Esporta/Export)
+        keyboard.send_keys('%f')  # Alt+F per menu File
+        time.sleep(1)
+
+        # Cerca voce "Esporta" nel menu
+        keyboard.send_keys('e')  # 'E' per Esporta
+        time.sleep(1)
+
+        # Ora dovrebbe apparire il sottomenu con DXF, PDF, ecc.
+        if formato == 'dxf':
+            # Cerca DXF nel sottomenu
+            keyboard.send_keys('d')  # D per DXF
+            time.sleep(1)
+            # Seleziona versione DXF (es. DXF 2010)
+            # Potrebbe servire un altro click
+        elif formato == 'pdf':
+            keyboard.send_keys('p')  # P per PDF
+            time.sleep(1)
+
+        time.sleep(2)
+
+        # Dovrebbe apparire la finestra "Salva con nome" / "Save As"
+        dlg = None
+        for tentativo in range(5):
+            try:
+                dlg = app.window(title_re='.*([Ss]alva|[Ss]ave|[Ee]sporta|[Ee]xport).*')
+                if dlg.exists(timeout=3):
+                    break
+            except:
+                pass
+            time.sleep(1)
+
+        if dlg is None or not dlg.exists(timeout=2):
+            log.warning(f"  Finestra salvataggio non trovata per {formato}")
+            keyboard.send_keys('{ESCAPE}')
+            return False
+
+        dlg.set_focus()
+        time.sleep(0.5)
+
+        # Imposta percorso output
+        ext = '.dxf' if formato == 'dxf' else '.pdf'
+        output_path = os.path.join(cartella_output, nome_base + ext)
+
+        # Trova campo nome file
+        edit = dlg.child_window(title="Nome file:", control_type="Edit")
+        if not edit.exists(timeout=3):
+            edit = dlg.child_window(title="File name:", control_type="Edit")
+        if not edit.exists(timeout=3):
+            edit = dlg.child_window(control_type="ComboBox", found_index=0).child_window(control_type="Edit")
+
+        edit.set_focus()
+        edit.set_text("")
+        time.sleep(0.3)
+        keyboard.send_keys(output_path.replace('\\', '/'), with_spaces=True, pause=0.02)
+        time.sleep(0.5)
+        keyboard.send_keys('{ENTER}')
+        time.sleep(PAUSA_DOPO_EXPORT)
+
+        # Gestisci eventuale popup "Sovrascrivi?"
+        try:
+            confirm = app.window(title_re='.*([Cc]onferm|[Oo]verwrite|[Ss]ostitui|[Rr]eplace).*')
+            if confirm.exists(timeout=2):
+                confirm.child_window(title_re='.*([Ss]i|[Ss]ì|[Yy]es).*', control_type="Button").click()
+                time.sleep(1)
+        except:
+            pass
+
+        log.info(f"  {formato.upper()} salvato: {output_path}")
+        return True
+
+    except Exception as e:
+        log.error(f"  Errore export {formato}: {e}")
+        # Prova a chiudere eventuali finestre di dialogo
+        keyboard.send_keys('{ESCAPE}')
+        time.sleep(1)
+        keyboard.send_keys('{ESCAPE}')
+        return False
+
+
+def chiudi_file(app):
+    """Chiude il file corrente senza salvare."""
+    try:
+        main_win = app.top_window()
+        main_win.set_focus()
+        time.sleep(0.3)
+        keyboard.send_keys('^w')  # Ctrl+W per chiudere
+        time.sleep(1)
+
+        # Se chiede "Vuoi salvare?", clicca "No"
+        try:
+            dlg = app.window(title_re='.*([Ss]alv|[Ss]ave).*')
+            if dlg.exists(timeout=2):
+                # Cerca bottone No/Non salvare
+                for label in ['No', '&No', 'Non salvare', "Don't Save"]:
+                    try:
+                        btn = dlg.child_window(title_re=f'.*{label}.*', control_type="Button")
+                        if btn.exists(timeout=1):
+                            btn.click()
+                            break
+                    except:
+                        continue
+                time.sleep(1)
+        except:
+            pass
+    except Exception as e:
+        log.warning(f"  Errore chiusura file: {e}")
+
+
+def main():
+    print("=" * 60)
+    print("  ArtiosCAD Batch Converter ARD → DXF + PDF")
+    print("=" * 60)
+    print()
+
+    # Crea cartelle output
+    crea_cartelle()
+
+    # Trova file ARD
+    files = trova_file_ard()
+    if not files:
+        log.error(f"Nessun file .ARD trovato in: {CARTELLA_ARD}")
+        sys.exit(1)
+
+    log.info(f"Trovati {len(files)} file .ARD")
+    print()
+
+    # Chiedi conferma
+    risposta = input(f"Convertire {len(files)} file? (s/n): ").strip().lower()
+    if risposta != 's':
+        print("Annullato.")
+        sys.exit(0)
+
+    # Avvia ArtiosCAD
+    app = avvia_artioscad()
+
+    # Contatori
+    successi_dxf = 0
+    successi_pdf = 0
+    errori = []
+    inizio = datetime.now()
+
+    for i, filepath in enumerate(files, 1):
+        nome_base = os.path.splitext(os.path.basename(filepath))[0]
+        log.info(f"\n--- File {i}/{len(files)}: {nome_base} ---")
+
+        # Controlla se già convertito
+        dxf_esiste = os.path.exists(os.path.join(CARTELLA_DXF, nome_base + '.dxf'))
+        pdf_esiste = os.path.exists(os.path.join(CARTELLA_PDF, nome_base + '.pdf'))
+        if dxf_esiste and pdf_esiste:
+            log.info("  Già convertito, skip.")
+            successi_dxf += 1
+            successi_pdf += 1
+            continue
+
+        # Apri file
+        if not apri_file(app, filepath):
+            errori.append((filepath, "Errore apertura"))
+            continue
+
+        time.sleep(3)  # Attendi caricamento completo
+
+        # Export DXF
+        if not dxf_esiste:
+            if esporta_file(app, nome_base, 'dxf', CARTELLA_DXF):
+                successi_dxf += 1
+            else:
+                errori.append((filepath, "Errore export DXF"))
+
+        # Export PDF
+        if not pdf_esiste:
+            if esporta_file(app, nome_base, 'pdf', CARTELLA_PDF):
+                successi_pdf += 1
+            else:
+                errori.append((filepath, "Errore export PDF"))
+
+        # Chiudi file
+        chiudi_file(app)
+        time.sleep(PAUSA_TRA_FILE)
+
+    # Report finale
+    durata = datetime.now() - inizio
+    print()
+    print("=" * 60)
+    log.info("REPORT FINALE")
+    log.info(f"File totali:  {len(files)}")
+    log.info(f"DXF creati:   {successi_dxf}")
+    log.info(f"PDF creati:   {successi_pdf}")
+    log.info(f"Errori:       {len(errori)}")
+    log.info(f"Durata:       {durata}")
+
+    if errori:
+        log.info("\nFile con errori:")
+        for filepath, motivo in errori:
+            log.info(f"  {os.path.basename(filepath)} — {motivo}")
+
+    log.info(f"\nLog salvato in: {log_file}")
+    print("=" * 60)
+
+
+if __name__ == '__main__':
+    main()

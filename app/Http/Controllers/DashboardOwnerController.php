@@ -8,10 +8,12 @@ use App\Models\OrdineFase;
 use App\Models\Operatore;
 use App\Models\Reparto;
 use App\Models\FasiCatalogo;
+use App\Models\DdtSpedizione;
 use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\Helpers\DescrizioneParser;
 use App\Services\FaseStatoService;
 use App\Services\OndaSyncService;
 use App\Http\Services\PrinectService;
@@ -36,6 +38,240 @@ class DashboardOwnerController extends Controller
         }
         return null;
     }
+
+    /**
+     * Panoramica commesse attive raggruppate per reparto
+     */
+    public function repartiOverview(Request $request)
+    {
+        // Ordine ciclo produttivo
+        $ordineReparti = [
+            'prestampa', 'stampa offset', 'digitale', 'stampa a caldo',
+            'plastificazione', 'fustella', 'fustella piana', 'fustella cilindrica',
+            'tagliacarte', 'finestratura', 'piegaincolla', 'legatoria',
+            'finitura digitale', 'generico', 'produzione', 'magazzino',
+            'spedizione', 'esterno',
+        ];
+        $reparti = Reparto::all()->sortBy(function ($r) use ($ordineReparti) {
+            $pos = array_search(strtolower($r->nome), $ordineReparti);
+            return $pos !== false ? $pos : 999;
+        });
+
+        $data = [];
+        foreach ($reparti as $reparto) {
+            // Fasi in corso (stato 2) in questo reparto, non esterne
+            $fasi = OrdineFase::query()
+                ->join('ordini', 'ordini.id', '=', 'ordine_fasi.ordine_id')
+                ->join('fasi_catalogo', 'ordine_fasi.fase_catalogo_id', '=', 'fasi_catalogo.id')
+                ->where('fasi_catalogo.reparto_id', $reparto->id)
+                ->where('ordine_fasi.stato', 2)
+                ->where(fn($q) => $q->where('ordine_fasi.esterno', false)->orWhereNull('ordine_fasi.esterno'))
+                ->whereNull('ordine_fasi.deleted_at')
+                ->select([
+                    'ordini.commessa',
+                    'ordini.cliente_nome',
+                    'ordini.descrizione',
+                    'ordini.data_prevista_consegna',
+                    'ordini.qta_richiesta',
+                    'ordine_fasi.id as fase_id',
+                    'ordine_fasi.fase',
+                    'ordine_fasi.stato as fase_stato',
+                    'ordine_fasi.priorita',
+                    'ordine_fasi.priorita_manuale',
+                    'ordine_fasi.qta_prod',
+                    'ordine_fasi.operatore_id',
+                    'fasi_catalogo.nome as fase_catalogo_nome',
+                ])
+                ->orderBy('ordine_fasi.priorita')
+                ->get();
+
+            // Raggruppa per commessa
+            $fasiInfo = $this->fasiInfo;
+            $commesse = $fasi->groupBy('commessa')->map(function ($group) use ($fasiInfo) {
+                $first = $group->first();
+                $stati = $group->pluck('fase_stato');
+                // Calcola ore previste per commessa in questo reparto
+                $orePreviste = $group->sum(function ($f) use ($fasiInfo) {
+                    $info = $fasiInfo[$f->fase] ?? ['avviamento' => 0.5, 'copieh' => 1000];
+                    $copieh = $info['copieh'] ?: 1000;
+                    return $info['avviamento'] + (($f->qta_richiesta ?: 0) / $copieh);
+                });
+                return (object)[
+                    'commessa'    => $first->commessa,
+                    'cliente'     => $first->cliente_nome ?: '-',
+                    'descrizione' => $first->descrizione ?: '-',
+                    'consegna'    => $first->data_prevista_consegna,
+                    'qta'         => $first->qta_richiesta,
+                    'priorita'    => $group->min('priorita'),
+                    'n_fasi'      => $group->count(),
+                    'n_inizio'    => $stati->filter(fn($s) => $s == 1)->count(),
+                    'n_terminato' => $stati->filter(fn($s) => $s == 2)->count(),
+                    'n_attesa'    => $stati->filter(fn($s) => $s == 0)->count(),
+                    'fasi'        => $group->pluck('fase_catalogo_nome')->unique()->values()->all(),
+                    'ore_previste' => round($orePreviste, 1),
+                ];
+            })->sortBy('priorita')->values();
+
+            $data[] = (object)[
+                'reparto'  => $reparto,
+                'commesse' => $commesse,
+                'totale'   => $commesse->count(),
+            ];
+        }
+
+        // Rimuovi reparti senza commesse attive
+        $data = collect($data)->filter(fn($r) => $r->totale > 0)->values();
+
+        $totReparti = $reparti->count();
+        $opToken = request()->query('op_token') ?? request()->attributes->get('op_token');
+
+        return view('owner.reparti_overview', compact('data', 'opToken', 'totReparti'));
+    }
+
+    private $fasiInfo = [
+        'accopp+fust' => ['avviamento' => 72, 'copieh' => 100],
+        'ACCOPPIATURA.FOG.33.48INT' => ['avviamento' => 1, 'copieh' => 100],
+        'ACCOPPIATURA.FOGLI' => ['avviamento' => 72, 'copieh' => 100],
+        'Allest.Manuale' => ['avviamento' => 0.5, 'copieh' => 100],
+        'ALLEST.SHOPPER' => ['avviamento' => 144, 'copieh' => 500],
+        'ALLEST.SHOPPER030' => ['avviamento' => 144, 'copieh' => 500],
+        'APPL.BIADESIVO30' => ['avviamento' => 0.5, 'copieh' => 500],
+        'appl.laccetto' => ['avviamento' => 0.5, 'copieh' => 500],
+        'ARROT2ANGOLI' => ['avviamento' => 0.5, 'copieh' => 100],
+        'ARROT4ANGOLI' => ['avviamento' => 0.5, 'copieh' => 100],
+        'AVVIAMENTISTAMPA.EST1.1' => ['avviamento' => 144, 'copieh' => 100],
+        'blocchi.manuale' => ['avviamento' => 0.5, 'copieh' => 100],
+        'BROSSCOPBANDELLAEST' => ['avviamento' => 72, 'copieh' => 1000],
+        'BROSSCOPEST' => ['avviamento' => 72, 'copieh' => 1000],
+        'BROSSFILOREFE/A4EST' => ['avviamento' => 72, 'copieh' => 1000],
+        'BROSSFILOREFE/A5EST' => ['avviamento' => 72, 'copieh' => 1000],
+        'BRT1' => ['avviamento' => 0.1, 'copieh' => 10000],
+        'brt1' => ['avviamento' => 0.1, 'copieh' => 10000],
+        'CARTONATO.GEN' => ['avviamento' => 144, 'copieh' => 1000],
+        'CORDONATURAPETRATTO' => ['avviamento' => 0.5, 'copieh' => 200],
+        'DEKIA-Difficile' => ['avviamento' => 0.5, 'copieh' => 200],
+        'FIN01' => ['avviamento' => 0.5, 'copieh' => 4000],
+        'FIN03' => ['avviamento' => 1, 'copieh' => 4000],
+        'FIN04' => ['avviamento' => 1, 'copieh' => 4000],
+        'FOIL.MGI.30M' => ['avviamento' => 0.5, 'copieh' => 200],
+        'FOILMGI' => ['avviamento' => 0.5, 'copieh' => 200],
+        'FUST.STARPACK.74X104' => ['avviamento' => 72, 'copieh' => 500],
+        'FUSTBIML75X106' => ['avviamento' => 0.5, 'copieh' => 1600],
+        'FUSTbIML75X106' => ['avviamento' => 0.3, 'copieh' => 2000],
+        'FUSTBOBST75X106' => ['avviamento' => 0.5, 'copieh' => 3000],
+        'FUSTBOBSTRILIEVI' => ['avviamento' => 0.5, 'copieh' => 3000],
+        'FUSTSTELG33.44' => ['avviamento' => 0.5, 'copieh' => 1500],
+        'FUSTSTELP25.35' => ['avviamento' => 0.5, 'copieh' => 1500],
+        'INCOLLAGGIO.PATTINA' => ['avviamento' => 0, 'copieh' => 100],
+        'INCOLLAGGIOBLOCCHI' => ['avviamento' => 0, 'copieh' => 100],
+        'LAVGEN' => ['avviamento' => 0.1, 'copieh' => 100],
+        'NUM.PROGR.' => ['avviamento' => 0.1, 'copieh' => 100],
+        'NUM33.44' => ['avviamento' => 0.1, 'copieh' => 100],
+        'PERF.BUC' => ['avviamento' => 0.1, 'copieh' => 100],
+        'PI01' => ['avviamento' => 0.5, 'copieh' => 6000],
+        'PI02' => ['avviamento' => 1, 'copieh' => 5000],
+        'PI03' => ['avviamento' => 1, 'copieh' => 4000],
+        'PIEGA2ANTECORDONE' => ['avviamento' => 0.5, 'copieh' => 500],
+        'PIEGA2ANTESINGOLO' => ['avviamento' => 0.5, 'copieh' => 500],
+        'PIEGA3ANTESINGOLO' => ['avviamento' => 0.5, 'copieh' => 500],
+        'PIEGA8ANTESINGOLO' => ['avviamento' => 0.5, 'copieh' => 500],
+        'PIEGA8TTAVO' => ['avviamento' => 0.5, 'copieh' => 500],
+        'PIEGAMANUALE' => ['avviamento' => 0.1, 'copieh' => 100],
+        'PLALUX1LATO' => ['avviamento' => 0.5, 'copieh' => 1500],
+        'PLALUXBV' => ['avviamento' => 0.5, 'copieh' => 1500],
+        'PLAOPA1LATO' => ['avviamento' => 0.5, 'copieh' => 1500],
+        'PLAOPABV' => ['avviamento' => 0.5, 'copieh' => 1500],
+        'PLAPOLIESARG1LATO' => ['avviamento' => 0.5, 'copieh' => 1500],
+        'PLASAB1LATO' => ['avviamento' => 0.5, 'copieh' => 1500],
+        'PLASABBIA1LATO' => ['avviamento' => 0.5, 'copieh' => 1500],
+        'PLASOFTBV' => ['avviamento' => 0.5, 'copieh' => 1500],
+        'PLASOFTBVEST' => ['avviamento' => 0.5, 'copieh' => 1500],
+        'PLASOFTTOUCH1' => ['avviamento' => 0.5, 'copieh' => 1500],
+        'PUNTOMETALLICO' => ['avviamento' => 72, 'copieh' => 1500],
+        'PUNTOMETALLICOEST' => ['avviamento' => 72, 'copieh' => 1500],
+        'PUNTOMETALLICOESTCOPERT.' => ['avviamento' => 72, 'copieh' => 1500],
+        'PUNTOMETAMANUALE' => ['avviamento' => 0.5, 'copieh' => 100],
+        'RILIEVOASECCOJOH' => ['avviamento' => 0.5, 'copieh' => 2000],
+        'SFUST' => ['avviamento' => 0.2, 'copieh' => 1000],
+        'SFUST.IML.FUSTELLATO' => ['avviamento' => 0.2, 'copieh' => 1000],
+        'SPIRBLOCCOLIBROA3' => ['avviamento' => 0.2, 'copieh' => 100],
+        'SPIRBLOCCOLIBROA4' => ['avviamento' => 0.2, 'copieh' => 100],
+        'SPIRBLOCCOLIBROA5' => ['avviamento' => 0.2, 'copieh' => 100],
+        'STAMPA' => ['avviamento' => 0, 'copieh' => 1000],
+        'STAMPA.OFFSET11.EST' => ['avviamento' => 72, 'copieh' => 1000],
+        'STAMPABUSTE.EST' => ['avviamento' => 72, 'copieh' => 1000],
+        'STAMPACALDOJOH' => ['avviamento' => 1, 'copieh' => 2200],
+        'STAMPACALDOJOH0,1' => ['avviamento' => 1, 'copieh' => 2200],
+        'STAMPAINDIGO' => ['avviamento' => 0.5, 'copieh' => 1000],
+        'STAMPAINDIGOBN' => ['avviamento' => 0.5, 'copieh' => 1000],
+        'STAMPAXL106' => ['avviamento' => 0.65, 'copieh' => 3900],
+        'STAMPAXL106.1' => ['avviamento' => 0.65, 'copieh' => 3900],
+        'STAMPAXL106.2' => ['avviamento' => 0.65, 'copieh' => 3900],
+        'STAMPAXL106.3' => ['avviamento' => 0.65, 'copieh' => 3900],
+        'STAMPAXL106.4' => ['avviamento' => 0.65, 'copieh' => 3900],
+        'STAMPAXL106.5' => ['avviamento' => 0.65, 'copieh' => 3900],
+        'STAMPAXL106.6' => ['avviamento' => 0.65, 'copieh' => 3900],
+        'STAMPAXL106.7' => ['avviamento' => 0.65, 'copieh' => 3900],
+        'TAGLIACARTE' => ['avviamento' => 0.5, 'copieh' => 4000],
+        'TAGLIACARTE.IML' => ['avviamento' => 0.5, 'copieh' => 2000],
+        'TAGLIOINDIGO' => ['avviamento' => 0.5, 'copieh' => 4000],
+        'UVSERIGRAFICOEST' => ['avviamento' => 72, 'copieh' => 1000],
+        'UVSPOT.MGI.30M' => ['avviamento' => 0.5, 'copieh' => 200],
+        'UVSPOT.MGI.9M' => ['avviamento' => 0.5, 'copieh' => 200],
+        'UVSPOTEST' => ['avviamento' => 72, 'copieh' => 1000],
+        'UVSPOTSPESSEST' => ['avviamento' => 72, 'copieh' => 1000],
+        'ZUND' => ['avviamento' => 0.5, 'copieh' => 50],
+        'APPL.CORDONCINO0,035' => ['avviamento' => 0.02, 'copieh' => 50],
+        // Nuove fasi (valori da fasi simili)
+        '4graph' => ['avviamento' => 0.5, 'copieh' => 100],           // come Allest.Manuale (esterno)
+        'stampalaminaoro' => ['avviamento' => 1, 'copieh' => 2200],   // come STAMPACALDOJOH
+        'STAMPALAMINAORO' => ['avviamento' => 1, 'copieh' => 2200],
+        'ALL.COFANETTO.ISMAsrl' => ['avviamento' => 0.5, 'copieh' => 100], // come Allest.Manuale (esterno)
+        'PMDUPLO36COP' => ['avviamento' => 0.5, 'copieh' => 100],    // esterno generico
+        'FINESTRATURA.MANUALE' => ['avviamento' => 0.5, 'copieh' => 100], // come FINESTRATURA.INT
+        'FINESTRATURA.INT' => ['avviamento' => 0.5, 'copieh' => 100],
+        'STAMPACALDOJOHEST' => ['avviamento' => 72, 'copieh' => 2200], // come STAMPACALDOJOH ma est (avv.72)
+        'BROSSFRESATA/A5EST' => ['avviamento' => 72, 'copieh' => 1000], // come BROSSFILOREFE/A5EST
+        'PIEGA6ANTESINGOLO' => ['avviamento' => 0.5, 'copieh' => 500], // come PIEGA3ANTESINGOLO
+        'ALLESTIMENTO.ESPOSITORI' => ['avviamento' => 0.5, 'copieh' => 100], // come Allest.Manuale
+        'FUSTIML75X106' => ['avviamento' => 0.5, 'copieh' => 3000],   // come FUSTBOBST75X106
+        'FUSTELLATURA72X51' => ['avviamento' => 0.5, 'copieh' => 1500], // come FUSTSTELG33.44
+
+        // Fasi "est" (esterno) — avviamento 72, copieh come fase interna corrispondente
+        'est STAMPACALDOJOH' => ['avviamento' => 72, 'copieh' => 2200],
+        'est FUSTSTELG33.44' => ['avviamento' => 72, 'copieh' => 1500],
+        'est FUSTBOBST75X106' => ['avviamento' => 72, 'copieh' => 3000],
+        'STAMPA.ESTERNA' => ['avviamento' => 72, 'copieh' => 1000],
+
+        // Fasi EXT* (esterno) — avviamento 72, copieh come fase interna corrispondente
+        'EXTALL.COFANETTO.LEGOKART' => ['avviamento' => 72, 'copieh' => 100],
+        'EXTAllest.Manuale' => ['avviamento' => 72, 'copieh' => 100],
+        'EXTALLEST.SHOPPER' => ['avviamento' => 72, 'copieh' => 500],
+        'EXTALLESTIMENTO.ESPOSITOR' => ['avviamento' => 72, 'copieh' => 100],
+        'EXTAPPL.CORDONCINO0,035' => ['avviamento' => 72, 'copieh' => 50],
+        'EXTAVVIAMENTISTAMPA.EST1.' => ['avviamento' => 72, 'copieh' => 100],
+        'EXTBROSSCOPEST' => ['avviamento' => 72, 'copieh' => 1000],
+        'EXTBROSSFILOREFE/A4EST' => ['avviamento' => 72, 'copieh' => 1000],
+        'EXTBROSSFILOREFE/A5EST' => ['avviamento' => 72, 'copieh' => 1000],
+        'EXTBROSSFRESATA/A4EST' => ['avviamento' => 72, 'copieh' => 1000],
+        'EXTBROSSFRESATA/A5EST' => ['avviamento' => 72, 'copieh' => 1000],
+        'EXTCARTONATO' => ['avviamento' => 72, 'copieh' => 1000],
+        'EXTCARTONATO.GEN' => ['avviamento' => 72, 'copieh' => 1000],
+        'EXTFUSTELLATURA72X51' => ['avviamento' => 72, 'copieh' => 1500],
+        'EXTPUNTOMETALLICOEST' => ['avviamento' => 72, 'copieh' => 1500],
+        'EXTSTAMPA.OFFSET11.EST' => ['avviamento' => 72, 'copieh' => 1000],
+        'EXTSTAMPABUSTE.EST' => ['avviamento' => 72, 'copieh' => 1000],
+        'EXTSTAMPASECCO' => ['avviamento' => 72, 'copieh' => 2000],
+        'EXTUVSPOTEST' => ['avviamento' => 72, 'copieh' => 1000],
+        'EXTUVSPOTSPESSEST' => ['avviamento' => 72, 'copieh' => 1000],
+
+        // Altre fasi nuove
+        'DEKIA-semplice' => ['avviamento' => 0.5, 'copieh' => 200],    // come DEKIA-Difficile
+        'STAMPASECCO' => ['avviamento' => 0.5, 'copieh' => 2000],      // come RILIEVOASECCOJOH
+        'STAMPACALDO04' => ['avviamento' => 1, 'copieh' => 2200],      // come STAMPACALDOJOH
+        'STAMPACALDOBR' => ['avviamento' => 1, 'copieh' => 2200],      // come STAMPACALDOJOH
+        'STAMPAINDIGOBIANCO' => ['avviamento' => 0.5, 'copieh' => 1000], // come STAMPAINDIGO
+    ];
 
     public function calcolaOreEPriorita($fase)
     {
@@ -106,7 +342,7 @@ class DashboardOwnerController extends Controller
 
                 if ($fase->operatori->isNotEmpty()) {
                     $primaData = $fase->operatori->sortBy('pivot.data_inizio')->first()->pivot->data_inizio;
-                    $fase->data_inizio = $primaData ? Carbon::parse($primaData)->format('d/m/Y H:i:s') : null;
+                    $fase->data_inizio = $primaData ? Carbon::parse($primaData)->format('Y-m-d H:i:s') : null;
                 } else {
                     $fase->data_inizio = null;
                 }
@@ -193,13 +429,30 @@ class DashboardOwnerController extends Controller
                 ->get();
         }
 
-        // Spedizioni BRT: DDT unici con vettore BRT
-        $spedizioniBRT = Ordine::where('vettore_ddt', 'LIKE', '%BRT%')
-            ->whereNotNull('numero_ddt_vendita')
-            ->where('numero_ddt_vendita', '!=', '')
-            ->orderByDesc('ddt_vendita_id')
+        // Spedizioni BRT: dalla tabella ddt_spedizioni (supporta più DDT per commessa)
+        $spedizioniBRT = DdtSpedizione::with('ordine:id,descrizione')
+            ->where('vettore', 'LIKE', '%BRT%')
+            ->orderByDesc('onda_id_doc')
             ->get()
-            ->groupBy('numero_ddt_vendita');
+            ->groupBy('numero_ddt');
+
+        // Progresso fasi per commessa (tutte le fasi, incluse stato >= 4)
+        $tutteFasiCommesse = OrdineFase::with('ordine')
+            ->whereHas('ordine')
+            ->get()
+            ->groupBy(fn($f) => $f->ordine->commessa ?? '');
+        $progressoCommesse = [];
+        foreach ($tutteFasiCommesse as $comm => $fasiComm) {
+            $totale = $fasiComm->count();
+            $terminate = $fasiComm->where('stato', '>=', 3)->count();
+            $avviate = $fasiComm->where('stato', 2)->count();
+            $progressoCommesse[$comm] = [
+                'totale' => $totale,
+                'terminate' => $terminate,
+                'avviate' => $avviate,
+                'percentuale' => $totale > 0 ? round(($terminate / $totale) * 100) : 0,
+            ];
+        }
 
         // Sync Excel: aggiorna il file con i dati freschi
         ExcelSyncService::exportToExcel();
@@ -209,14 +462,15 @@ class DashboardOwnerController extends Controller
 
         return view('owner.dashboard', compact(
             'fasi', 'reparti', 'fasiCatalogo', 'spedizioniOggi', 'storicoConsegne',
-            'fasiCompletateOggi', 'oreLavorateOggi', 'commesseSpediteOggi', 'fasiAttive', 'spedizioniBRT', 'operatore', 'isReadonly'
+            'fasiCompletateOggi', 'oreLavorateOggi', 'commesseSpediteOggi', 'fasiAttive', 'spedizioniBRT', 'operatore', 'isReadonly',
+            'progressoCommesse'
         ));
     }
 
     public function aggiornaCampo(Request $request)
     {
         if ($deny = $this->denyIfReadonly()) return $deny;
-        $campiFase = ['qta_prod', 'note', 'stato', 'data_inizio', 'data_fine', 'ore', 'priorita', 'fase'];
+        $campiFase = ['qta_prod', 'note', 'stato', 'data_inizio', 'data_fine', 'ore', 'priorita', 'fase', 'esterno'];
         $campiOrdine = ['cliente_nome', 'cod_art', 'descrizione', 'qta_richiesta', 'um',
                         'data_registrazione', 'data_prevista_consegna',
                         'cod_carta', 'carta', 'qta_carta', 'UM_carta'];
@@ -236,14 +490,18 @@ class DashboardOwnerController extends Controller
         $valore = $request->valore;
 
         if (in_array($campo, ['data_registrazione','data_prevista_consegna','data_inizio','data_fine'])) {
-            try {
-                $valore = $valore ? Carbon::createFromFormat('d/m/Y H:i:s', $valore)->format('Y-m-d H:i:s') : null;
-            } catch (\Exception $e1) {
+            if (in_array(trim($valore), ['-', ''])) $valore = null;
+            $formati = ['d/m/Y H:i:s', 'd/m/Y H:i', 'd/m/Y'];
+            $parsed = false;
+            foreach ($formati as $fmt) {
                 try {
-                    $valore = $valore ? Carbon::createFromFormat('d/m/Y', $valore)->format('Y-m-d') : null;
-                } catch (\Exception $e2) {
-                    return response()->json(['success' => false, 'messaggio' => 'Formato data non valido'], 422);
-                }
+                    $valore = $valore ? Carbon::createFromFormat($fmt, trim($valore))->format('Y-m-d H:i:s') : null;
+                    $parsed = true;
+                    break;
+                } catch (\Exception $e) {}
+            }
+            if (!$parsed && $valore) {
+                return response()->json(['success' => false, 'messaggio' => 'Formato data non valido'], 422);
             }
         }
 
@@ -416,14 +674,14 @@ class DashboardOwnerController extends Controller
 
                 if ($primaDataInizio) {
                     $carbonInizio = Carbon::parse($primaDataInizio);
-                    $fase->data_inizio = $carbonInizio->format('d/m/Y H:i:s');
+                    $fase->data_inizio = $carbonInizio->format('Y-m-d H:i:s');
                 }
             }
 
             // Fallback: data_inizio dal campo ordine_fasi (impostato da Prinect sync)
             if (!$fase->data_inizio && $dataInizioOriginale) {
                 $carbonInizio = Carbon::parse($dataInizioOriginale);
-                $fase->data_inizio = $carbonInizio->format('d/m/Y H:i:s');
+                $fase->data_inizio = $carbonInizio->format('Y-m-d H:i:s');
             }
 
             // DATA FINE: dalla pivot operatore, fallback dal campo ordine_fasi
@@ -439,14 +697,14 @@ class DashboardOwnerController extends Controller
 
                 if ($primaDataFine) {
                     $carbonFine = Carbon::parse($primaDataFine);
-                    $fase->data_fine = $carbonFine->format('d/m/Y H:i:s');
+                    $fase->data_fine = $carbonFine->format('Y-m-d H:i:s');
                 }
             }
 
             // Fallback: data_fine dal campo ordine_fasi (impostato da Prinect sync)
             if (!$fase->data_fine && $dataFineOriginale) {
                 $carbonFine = Carbon::parse($dataFineOriginale);
-                $fase->data_fine = $carbonFine->format('d/m/Y H:i:s');
+                $fase->data_fine = $carbonFine->format('Y-m-d H:i:s');
             }
 
             // Calcolo ore lavorate e pausa
@@ -649,13 +907,8 @@ class DashboardOwnerController extends Controller
             $query->whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', $filtroReparto));
         }
 
-        // Solo fasi con stato >= 2 o con operatori o con dati Prinect
-        $fasi = $query->where(function ($q) {
-                $q->where('stato', '>=', 2)
-                  ->orWhereHas('operatori')
-                  ->orWhere('tempo_avviamento_sec', '>', 0)
-                  ->orWhere('tempo_esecuzione_sec', '>', 0);
-            })
+        // Solo fasi terminate o consegnate (stato 3/4)
+        $fasi = $query->where('stato', '>', 2)
             ->get()
             ->map(function ($fase) {
                 // Ore previste
@@ -690,20 +943,34 @@ class DashboardOwnerController extends Controller
 
         // Raggruppa per commessa
         $commesse = $fasi->groupBy(fn($f) => $f->ordine->commessa ?? '-')->map(function ($fasiCommessa, $commessa) {
+            $first = $fasiCommessa->first();
+            $ordine = $first->ordine;
             return (object) [
                 'commessa' => $commessa,
-                'cliente' => $fasiCommessa->first()->ordine->cliente_nome ?? '-',
+                'cliente' => $ordine->cliente_nome ?? '-',
+                'descrizione' => $ordine->descrizione ?? '-',
+                'data_consegna' => $ordine->data_prevista_consegna,
+                'responsabile' => $ordine->responsabile ?? '-',
                 'ore_previste' => round($fasiCommessa->sum('ore_previste'), 2),
                 'ore_lavorate' => round($fasiCommessa->sum('ore_lavorate'), 2),
                 'fasi' => $fasiCommessa->sortBy(fn($f) => config('fasi_priorita')[$f->fase] ?? 500),
                 'num_fasi' => $fasiCommessa->count(),
                 'num_terminate' => $fasiCommessa->where('stato', '>=', 3)->count(),
+                'num_avviate' => $fasiCommessa->where('stato', 2)->count(),
             ];
         })->sortBy('commessa');
 
+        // Statistiche per reparto
+        $orePerReparto = $fasi->groupBy(fn($f) => optional($f->faseCatalogo)->reparto->nome ?? 'Altro')
+            ->map(fn($group) => (object)[
+                'previste' => round($group->sum('ore_previste'), 1),
+                'lavorate' => round($group->sum('ore_lavorate'), 1),
+                'fasi' => $group->count(),
+            ])->sortByDesc('lavorate');
+
         $reparti = Reparto::where('nome', '!=', 'spedizione')->orderBy('nome')->pluck('nome', 'id');
 
-        return view('owner.report_ore', compact('commesse', 'reparti', 'filtroCommessa', 'filtroReparto'));
+        return view('owner.report_ore', compact('commesse', 'reparti', 'filtroCommessa', 'filtroReparto', 'orePerReparto'));
     }
 
     public function scheduling(PrinectService $prinect, PrinectSyncService $syncService)
@@ -721,6 +988,51 @@ class DashboardOwnerController extends Controller
             $syncService->sincronizzaDaLive($rawOggi);
         } catch (\Exception $e) {}
 
+        // Calcola tempi medi storici per tipo fase (da Prinect e operatori)
+        $tempiMediPerFase = [];
+        $fasiCompletate = OrdineFase::with(['ordine', 'operatori'])
+            ->where('stato', '>=', 3)
+            ->where('data_fine', '>=', Carbon::now()->subDays(90))
+            ->get();
+        foreach ($fasiCompletate as $fc) {
+            $tipo = $fc->fase;
+            $qtaCarta = $fc->ordine->qta_carta ?? 0;
+            if ($qtaCarta <= 0) continue;
+
+            // Ore effettive: prima Prinect, poi pivot operatore
+            $ore = null;
+            $secP = ($fc->tempo_avviamento_sec ?? 0) + ($fc->tempo_esecuzione_sec ?? 0);
+            if ($secP > 60) {
+                $ore = $secP / 3600;
+            } else {
+                // Calcola da operatori pivot
+                if ($fc->operatori->isNotEmpty()) {
+                    $secOp = 0;
+                    foreach ($fc->operatori as $op) {
+                        if ($op->pivot->data_inizio && $op->pivot->data_fine) {
+                            $s = Carbon::parse($op->pivot->data_fine)->diffInSeconds(Carbon::parse($op->pivot->data_inizio));
+                            $s -= ($op->pivot->secondi_pausa ?? 0);
+                            if ($s > 0) $secOp += $s;
+                        }
+                    }
+                    if ($secOp > 60) $ore = $secOp / 3600;
+                }
+            }
+            if ($ore && $ore > 0.01 && $ore < 200) {
+                if (!isset($tempiMediPerFase[$tipo])) $tempiMediPerFase[$tipo] = ['totOre' => 0, 'totQta' => 0, 'count' => 0];
+                $tempiMediPerFase[$tipo]['totOre'] += $ore;
+                $tempiMediPerFase[$tipo]['totQta'] += $qtaCarta;
+                $tempiMediPerFase[$tipo]['count']++;
+            }
+        }
+        // Calcola ore medie per foglio e avviamento medio
+        $tempiMedi = [];
+        foreach ($tempiMediPerFase as $tipo => $dati) {
+            if ($dati['count'] >= 2 && $dati['totQta'] > 0) {
+                $tempiMedi[$tipo] = round($dati['totOre'] / $dati['count'], 3); // ore medie per job
+            }
+        }
+
         $fasi = OrdineFase::with(['ordine', 'faseCatalogo.reparto', 'operatori'])
             ->where('stato', '<', 3)
             ->get()
@@ -729,7 +1041,7 @@ class DashboardOwnerController extends Controller
             })
             ->sortBy('priorita');
 
-        $dataScheduling = $fasi->map(function ($fase) {
+        $dataScheduling = $fasi->map(function ($fase) use ($tempiMedi) {
             // Data inizio: dalla pivot operatore, fallback dal campo ordine_fasi
             $dataInizio = null;
             if ($fase->operatori->isNotEmpty()) {
@@ -746,6 +1058,30 @@ class DashboardOwnerController extends Controller
                 $giorniAllaConsegna = round((Carbon::parse($consegna)->startOfDay()->timestamp - Carbon::today()->timestamp) / 86400);
             }
 
+            // Ore reali da Prinect (se disponibili)
+            $orePrinect = null;
+            $secPrinect = ($fase->tempo_avviamento_sec ?? 0) + ($fase->tempo_esecuzione_sec ?? 0);
+            if ($secPrinect > 0) {
+                $orePrinect = round($secPrinect / 3600, 2);
+            }
+
+            // Ore reali da pivot operatore (data_fine - data_inizio - pausa)
+            $oreOperatore = null;
+            if ($fase->operatori->isNotEmpty()) {
+                $oreOp = 0;
+                foreach ($fase->operatori as $op) {
+                    if ($op->pivot->data_inizio && $op->pivot->data_fine) {
+                        $sec = Carbon::parse($op->pivot->data_fine)->diffInSeconds(Carbon::parse($op->pivot->data_inizio));
+                        $sec -= ($op->pivot->secondi_pausa ?? 0);
+                        if ($sec > 0) $oreOp += $sec / 3600;
+                    }
+                }
+                if ($oreOp > 0) $oreOperatore = round($oreOp, 2);
+            }
+
+            // Ordine nel flusso produttivo (da config fasi_priorita)
+            $faseOrdine = config('fasi_priorita')[$fase->fase] ?? 500;
+
             return [
                 'id' => $fase->id,
                 'commessa' => $fase->ordine->commessa ?? '-',
@@ -755,6 +1091,10 @@ class DashboardOwnerController extends Controller
                 'fase' => $fase->fase,
                 'stato' => $fase->stato,
                 'ore' => round($fase->ore, 2),
+                'ore_prinect' => $orePrinect,
+                'ore_operatore' => $oreOperatore,
+                'ore_media_storica' => $tempiMedi[$fase->fase] ?? null,
+                'fase_ordine' => $faseOrdine,
                 'priorita' => $fase->priorita,
                 'consegna' => $consegna,
                 'giorni_consegna' => $giorniAllaConsegna,
@@ -839,11 +1179,61 @@ class DashboardOwnerController extends Controller
                     'data_invio'    => $dataInvio,
                     'note'          => $fasi->pluck('note')->filter()->unique()->implode(' | '),
                 ];
-            })->filter(fn($c) => $c->fornitore !== '-')
+            })->filter(fn($c) => $c->stato == 2)
               ->sortBy(fn($c) => $c->ordine->data_prevista_consegna ?? '9999-12-31')->values();
         }
 
         return view('owner.esterne', compact('commesseEsterne'));
     }
 
+    /**
+     * Pagina Fustelle owner: tutte le fustelle da utilizzare nei prossimi 30 giorni.
+     */
+    public function fustelleOverview()
+    {
+        $repartiFustella = [5, 15, 16]; // fustella, fustella piana, fustella cilindrica
+
+        $fasi = OrdineFase::where('stato', '<', 3)
+            ->where(fn($q) => $q->where('esterno', false)->orWhereNull('esterno'))
+            ->whereHas('faseCatalogo', function ($q) use ($repartiFustella) {
+                $q->whereIn('reparto_id', $repartiFustella);
+            })
+            ->whereHas('ordine', function ($q) {
+                $q->where('data_prevista_consegna', '<=', Carbon::today()->addDays(30));
+            })
+            ->with(['ordine', 'faseCatalogo.reparto'])
+            ->get();
+
+        $fustelleMap = [];
+        foreach ($fasi as $fase) {
+            $desc = $fase->ordine->descrizione ?? '';
+            $cliente = $fase->ordine->cliente_nome ?? '';
+            $notePre = $fase->ordine->note_prestampa ?? '';
+            $fsCodice = DescrizioneParser::parseFustella($desc, $cliente, $notePre);
+
+            if (!$fsCodice) continue;
+
+            $codici = array_map('trim', explode('/', $fsCodice));
+            foreach ($codici as $codice) {
+                if (!isset($fustelleMap[$codice])) {
+                    $fustelleMap[$codice] = [];
+                }
+                $commessa = $fase->ordine->commessa;
+                if (!isset($fustelleMap[$codice][$commessa])) {
+                    $fustelleMap[$codice][$commessa] = [
+                        'commessa' => $commessa,
+                        'cliente' => $fase->ordine->cliente_nome ?? '-',
+                        'descrizione' => $fase->ordine->descrizione ?? '-',
+                        'data_consegna' => $fase->ordine->data_prevista_consegna,
+                        'stato' => $fase->stato,
+                        'fase' => $fase->faseCatalogo->reparto->nome ?? $fase->fase,
+                    ];
+                }
+            }
+        }
+
+        ksort($fustelleMap);
+
+        return view('owner.fustelle', compact('fustelleMap'));
+    }
 }

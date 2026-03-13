@@ -25,6 +25,9 @@ class FaseStatoService
             // Se già avviato (2) o terminato (3), non toccare
             if ($fase->stato >= 2) continue;
 
+            // STAMPA XL (offset) non viene MAI promossa automaticamente a stato 1
+            if (str_starts_with($fase->fase, 'STAMPAXL106')) continue;
+
             // Predecessori basati sul flusso produttivo reale (config)
             $mioOrdine = $flusso[$fase->fase] ?? 500;
             $fasiPrecedenti = $fasi->filter(fn($f) =>
@@ -32,20 +35,13 @@ class FaseStatoService
             );
 
             if ($fasiPrecedenti->isEmpty()) {
-                // Nessuna fase precedente → resta a 0 (non promuovere automaticamente)
-                // Se era già a 1 (promossa prima del fix), riportala a 0
-                if ($fase->stato == 1) {
-                    $fase->stato = 0;
-                    $fase->save();
-                }
+                // Nessuna fase precedente: non toccare lo stato (rispetta modifiche manuali)
             } else {
                 $tuttTerminate = $fasiPrecedenti->every(fn($f) => $f->stato >= 3);
                 if ($tuttTerminate && $fase->stato == 0) {
-                    // Tutte le precedenti terminate → pronto (1)
                     $fase->stato = 1;
                     $fase->save();
                 } elseif (!$tuttTerminate && $fase->stato == 1) {
-                    // Predecessori non tutte terminate → torna a caricato (0)
                     $fase->stato = 0;
                     $fase->save();
                 }
@@ -141,6 +137,9 @@ class FaseStatoService
         foreach ($fasi as $fase) {
             if ($fase->stato >= 2) continue;
 
+            // STAMPA XL (offset) non viene MAI promossa automaticamente a stato 1
+            if (str_starts_with($fase->fase, 'STAMPAXL106')) continue;
+
             // Ordine nel flusso produttivo reale (dalla config)
             $mioOrdine = $flusso[$fase->fase] ?? 500;
 
@@ -150,10 +149,7 @@ class FaseStatoService
             );
 
             if ($fasiPrecedenti->isEmpty()) {
-                if ($fase->stato == 1) {
-                    $fase->stato = 0;
-                    $fase->save();
-                }
+                // Nessuna fase precedente: non toccare lo stato (rispetta modifiche manuali)
             } else {
                 $tuttTerminate = $fasiPrecedenti->every(fn($f) => $f->stato >= 3);
                 if ($tuttTerminate && $fase->stato == 0) {

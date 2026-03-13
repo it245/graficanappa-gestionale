@@ -635,71 +635,236 @@ function isEsterno(reparto) {
 function isBobst(fase) {
     const nome = (fase.fase || '').toLowerCase();
     const reparto = (fase.reparto || '').toLowerCase();
-    if (reparto === 'esterno') return false; // esterni no
-    if (nome.startsWith('sfust')) return false; // sfustellatura è legatoria
+    if (reparto === 'esterno') return false;
+    if (nome.startsWith('sfust')) return false;
     return nome.includes('fust') || nome.includes('rilievo');
+}
+
+// Piegaincolla: config diversa (PI01/PI02/PI03)
+function isPiegaincolla(reparto) {
+    return (reparto || '').toLowerCase() === 'piegaincolla';
+}
+
+// Config per changeover: quale "tipo setup" ha questa fase sulla macchina?
+function getSetupConfig(fase) {
+    const nome = (fase.fase || '').toUpperCase();
+    // Bobst: rilievo vs fustella
+    if (nome.includes('RILIEVO') || nome.includes('STAMPASECCO')) return 'rilievo';
+    if (nome.includes('FUST')) return 'fustella';
+    // Piegaincolla: PI01, PI02, PI03
+    if (nome.startsWith('PI0')) return nome.substring(0, 4);
+    return nome;
+}
+
+// Ore stimate migliori: usa Prinect > media storica > formula teorica
+function getBestOre(fase) {
+    // Se fase avviata, usa ore reali Prinect se disponibili
+    if (fase.ore_prinect && fase.ore_prinect > 0) return fase.ore_prinect;
+    // Media storica (ultimi 90gg) se disponibile
+    if (fase.ore_media_storica && fase.ore_media_storica > 0) return fase.ore_media_storica;
+    // Fallback: formula teorica (avviamento + qta/copieh)
+    return fase.ore;
 }
 
 function schedulaPerMacchina(data) {
     const macchine = {};
     const BOBST_KEY = 'Fustella / Rilievo (Bobst)';
+    const SPED_KEY = 'Spedizione';
+
+    // Raggruppa fasi per macchina
     data.forEach(f => {
         const key = isBobst(f) ? BOBST_KEY : f.reparto;
         if (!macchine[key]) macchine[key] = { nome: key, reparto_id: f.reparto_id, fasi: [] };
-        macchine[key].fasi.push({...f});
+        macchine[key].fasi.push({...f, ore_effettive: getBestOre(f)});
     });
-    Object.values(macchine).forEach(m => {
-        m.fasi.sort((a, b) => a.priorita - b.priorita);
-        let cursor = skipToWorkTime(0, m.nome);
 
-        if (isEsterno(m.nome)) {
-            // Esterno: fornitori diversi → fasi in parallelo con swim lanes
-            const lanes = []; // ogni lane = end_h dell'ultima fase
-            m.fasi.forEach(fase => {
-                let start;
-                if (fase.stato === 2 && fase.data_inizio_reale) {
-                    const reale = new Date(fase.data_inizio_reale);
-                    start = Math.max(0, (reale - NOW) / 3600000);
-                } else {
-                    start = skipToWorkTime(0, m.nome);
-                }
-                fase.start_h = start;
-                fase.end_h = advanceCursor(start, Math.max(fase.ore, 0.1), m.nome);
+    // Indice fasi schedulate per commessa (per dipendenze cross-reparto)
+    // Chiave: "commessa", Valore: array di { fase_ordine, end_h }
+    const scheduledByCommessa = {};
 
-                // Trova la prima lane libera (dove la fase precedente è già finita)
-                let laneIdx = lanes.findIndex(laneEnd => start >= laneEnd);
-                if (laneIdx === -1) {
-                    laneIdx = lanes.length;
-                    lanes.push(0);
-                }
-                lanes[laneIdx] = fase.end_h;
-                fase.lane = laneIdx;
-
-                if (fase.end_h > cursor) cursor = fase.end_h;
-            });
-            m.lanes = lanes.length;
-        } else {
-            // Macchina reale: fasi in serie (una dopo l'altra)
-            m.fasi.forEach(fase => {
-                if (fase.stato === 2 && fase.data_inizio_reale) {
-                    const reale = new Date(fase.data_inizio_reale);
-                    const hFromNow = Math.max(0, (reale - NOW) / 3600000);
-                    fase.start_h = hFromNow;
-                    fase.end_h = advanceCursor(hFromNow, Math.max(fase.ore, 0.1), m.nome);
-                    if (fase.end_h > cursor) cursor = fase.end_h;
-                } else {
-                    cursor = skipToWorkTime(cursor, m.nome);
-                    fase.start_h = cursor;
-                    fase.end_h = advanceCursor(cursor, Math.max(fase.ore, 0.1), m.nome);
-                    cursor = fase.end_h;
-                }
-                fase.lane = 0;
-            });
-            m.lanes = 1;
+    function getCommessaPredecessorEnd(commessa, mioFaseOrdine) {
+        const scheduled = scheduledByCommessa[commessa];
+        if (!scheduled || scheduled.length === 0) return 0;
+        let maxEnd = 0;
+        for (const s of scheduled) {
+            if (s.fase_ordine < mioFaseOrdine && s.end_h > maxEnd) {
+                maxEnd = s.end_h;
+            }
         }
-        m.ore_totali = cursor;
+        return maxEnd;
+    }
+
+    function registerScheduled(commessa, faseOrdine, endH) {
+        if (!scheduledByCommessa[commessa]) scheduledByCommessa[commessa] = [];
+        scheduledByCommessa[commessa].push({ fase_ordine: faseOrdine, end_h: endH });
+    }
+
+    // Raccolta TUTTE le fasi non-spedizione, ordinate per fase_ordine (flusso produttivo)
+    // Questo garantisce che le dipendenze cross-reparto siano rispettate
+    const allFasi = [];
+    Object.values(macchine).forEach(m => {
+        if (m.nome === SPED_KEY) return;
+        m.fasi.forEach(f => {
+            f._macchina = m.nome;
+            allFasi.push(f);
+        });
     });
-    return Object.values(macchine).sort((a, b) => b.ore_totali - a.ore_totali);
+    // Ordina per fase_ordine (flusso produttivo), poi per priorità
+    allFasi.sort((a, b) => {
+        const ordA = a.fase_ordine || 500;
+        const ordB = b.fase_ordine || 500;
+        if (ordA !== ordB) return ordA - ordB;
+        return a.priorita - b.priorita;
+    });
+
+    // Cursori per macchina e ultima config per changeover
+    const machineCursors = {};
+    const machineLastConfig = {};
+    Object.keys(macchine).forEach(key => {
+        if (key !== SPED_KEY) {
+            machineCursors[key] = skipToWorkTime(0, key);
+            machineLastConfig[key] = null;
+        }
+    });
+
+    // Schedula fase per fase nell'ordine del flusso produttivo
+    allFasi.forEach(fase => {
+        const mKey = fase._macchina;
+        const macchina = macchine[mKey];
+
+        if (isEsterno(mKey)) {
+            // Esterno: parallelo (verrà gestito dopo)
+            return;
+        }
+
+        let cursor = machineCursors[mKey];
+
+        // Dipendenza cross-reparto: aspetta predecessori della stessa commessa
+        const predEnd = getCommessaPredecessorEnd(fase.commessa, fase.fase_ordine || 500);
+        cursor = Math.max(cursor, predEnd);
+
+        // Changeover time per BOBST e Piegaincolla
+        const config = getSetupConfig(fase);
+        if ((mKey === BOBST_KEY || isPiegaincolla(mKey)) && machineLastConfig[mKey] !== null && machineLastConfig[mKey] !== config) {
+            cursor += 1; // +1h cambio setup
+        }
+        machineLastConfig[mKey] = config;
+
+        if (fase.stato === 2 && fase.data_inizio_reale) {
+            const reale = new Date(fase.data_inizio_reale);
+            const hFromNow = Math.max(0, (reale - NOW) / 3600000);
+            fase.start_h = hFromNow;
+            fase.end_h = advanceCursor(hFromNow, Math.max(fase.ore_effettive, 0.1), mKey);
+            if (fase.end_h > cursor) machineCursors[mKey] = fase.end_h;
+            else machineCursors[mKey] = Math.max(machineCursors[mKey], fase.end_h);
+        } else {
+            cursor = skipToWorkTime(cursor, mKey);
+            fase.start_h = cursor;
+            fase.end_h = advanceCursor(cursor, Math.max(fase.ore_effettive, 0.1), mKey);
+            machineCursors[mKey] = fase.end_h;
+        }
+        fase.lane = 0;
+
+        registerScheduled(fase.commessa, fase.fase_ordine || 500, fase.end_h);
+    });
+
+    // Gestione Esterno: parallelo con swim lanes + dipendenze cross-reparto
+    Object.values(macchine).forEach(m => {
+        if (m.nome === SPED_KEY || !isEsterno(m.nome)) return;
+        const lanes = [];
+        let maxCursor = 0;
+        m.fasi.sort((a, b) => a.priorita - b.priorita);
+        m.fasi.forEach(fase => {
+            let start;
+            if (fase.stato === 2 && fase.data_inizio_reale) {
+                const reale = new Date(fase.data_inizio_reale);
+                start = Math.max(0, (reale - NOW) / 3600000);
+            } else {
+                // Dipendenza cross-reparto
+                const predEnd = getCommessaPredecessorEnd(fase.commessa, fase.fase_ordine || 500);
+                start = Math.max(skipToWorkTime(0, m.nome), predEnd);
+            }
+            fase.start_h = start;
+            fase.end_h = advanceCursor(start, Math.max(fase.ore_effettive, 0.1), m.nome);
+
+            let laneIdx = lanes.findIndex(laneEnd => start >= laneEnd);
+            if (laneIdx === -1) { laneIdx = lanes.length; lanes.push(0); }
+            lanes[laneIdx] = fase.end_h;
+            fase.lane = laneIdx;
+
+            if (fase.end_h > maxCursor) maxCursor = fase.end_h;
+            registerScheduled(fase.commessa, fase.fase_ordine || 500, fase.end_h);
+        });
+        m.lanes = lanes.length || 1;
+        m.ore_totali = maxCursor;
+    });
+
+    // Calcola ore_totali e lanes per macchine non-esterno non-spedizione
+    // Riordina fasi per start_h per rendering Gantt corretto
+    Object.values(macchine).forEach(m => {
+        if (m.nome === SPED_KEY || isEsterno(m.nome)) return;
+        m.fasi.sort((a, b) => a.start_h - b.start_h);
+        m.ore_totali = machineCursors[m.nome] || 0;
+        m.lanes = 1;
+    });
+
+    // Spedizione (BRT): dopo tutte le altre fasi della stessa commessa
+    if (macchine[SPED_KEY]) {
+        const mSped = macchine[SPED_KEY];
+        // Per ogni commessa, trova la fine più tarda di tutte le fasi non-spedizione
+        const commessaMaxEnd = {};
+        Object.values(macchine).forEach(m => {
+            if (m.nome === SPED_KEY) return;
+            m.fasi.forEach(f => {
+                const c = f.commessa;
+                if (!commessaMaxEnd[c] || f.end_h > commessaMaxEnd[c]) {
+                    commessaMaxEnd[c] = f.end_h;
+                }
+            });
+        });
+
+        mSped.fasi.sort((a, b) => {
+            const endA = commessaMaxEnd[a.commessa] || 0;
+            const endB = commessaMaxEnd[b.commessa] || 0;
+            return endA - endB;
+        });
+
+        let cursor = skipToWorkTime(0, mSped.nome);
+        mSped.fasi.forEach(fase => {
+            const minStart = commessaMaxEnd[fase.commessa] || 0;
+            cursor = Math.max(cursor, minStart);
+            cursor = skipToWorkTime(cursor, mSped.nome);
+            fase.start_h = cursor;
+            fase.end_h = advanceCursor(cursor, Math.max(fase.ore_effettive || fase.ore, 0.1), mSped.nome);
+            cursor = fase.end_h;
+            fase.lane = 0;
+        });
+        mSped.lanes = 1;
+        mSped.ore_totali = cursor;
+    }
+
+    // Ordina macchine per flusso produttivo (stampa offset prima, spedizione ultima)
+    const REPARTO_ORDINE = {
+        'Stampa offset': 1,
+        'Fustella / Rilievo (Bobst)': 2,
+        'Digitale': 3,
+        'Plastificazione': 4,
+        'Stampa a caldo': 5,
+        'Finitura digitale': 6,
+        'Fustella piana': 7,
+        'Tagliacarte': 8,
+        'Piegaincolla': 9,
+        'Finestratura': 10,
+        'Legatoria': 11,
+        'Allestimento': 12,
+        'Esterno': 50,
+        'Spedizione': 99,
+    };
+    return Object.values(macchine).sort((a, b) => {
+        const ordA = REPARTO_ORDINE[a.nome] ?? 40;
+        const ordB = REPARTO_ORDINE[b.nome] ?? 40;
+        return ordA - ordB;
+    });
 }
 
 // Cache dello scheduling completo (calcolato su TUTTI i dati, non filtrati)
@@ -914,7 +1079,7 @@ function renderDayLines(timeline, maxCalH, repartoNome) {
 
 function renderKPI() {
     const macchine = filterScheduledMacchine(getFullSchedule());
-    const oreTotali = Math.round(macchine.reduce((s, m) => s + m.fasi.reduce((s2, f) => s2 + f.ore, 0), 0));
+    const oreTotali = Math.round(macchine.reduce((s, m) => s + m.fasi.reduce((s2, f) => s2 + (f.ore_effettive || f.ore), 0), 0));
     const commMap = {};
     macchine.forEach(m => m.fasi.forEach(f => {
         if (!commMap[f.commessa]) commMap[f.commessa] = {
@@ -990,7 +1155,10 @@ function showTooltip(e, fase) {
         <div class="tt-row"><span class="tt-label">Turno</span><span class="tt-val">${turno}</span></div>
         <div class="tt-row"><span class="tt-label">Stato</span><span class="tt-val">${statoNomi[fase.stato] || '?'}</span></div>
         <div class="tt-divider"></div>
-        <div class="tt-row"><span class="tt-label">Ore effettive</span><span class="tt-val">${fase.ore}h</span></div>
+        <div class="tt-row"><span class="tt-label">Ore stimate</span><span class="tt-val">${(fase.ore_effettive || fase.ore).toFixed(1)}h ${fase.ore_prinect ? '(Prinect)' : fase.ore_media_storica ? '(media storica)' : '(teorico)'}</span></div>
+        ${fase.ore_prinect ? `<div class="tt-row"><span class="tt-label">Prinect reale</span><span class="tt-val" style="color:#5dd39e">${fase.ore_prinect}h</span></div>` : ''}
+        ${fase.ore_media_storica ? `<div class="tt-row"><span class="tt-label">Media storica</span><span class="tt-val" style="color:#f0a04b">${fase.ore_media_storica}h</span></div>` : ''}
+        <div class="tt-row"><span class="tt-label">Ore teoriche</span><span class="tt-val">${fase.ore}h</span></div>
         <div class="tt-row"><span class="tt-label">Priorita</span><span class="tt-val">${fase.priorita}</span></div>
         <div class="tt-row"><span class="tt-label">Consegna</span><span class="tt-val">${formatDate(fase.consegna)}${fase.giorni_consegna !== null ? ' (' + fase.giorni_consegna + 'gg)' : ''}</span></div>
         <div class="tt-divider"></div>
@@ -1045,7 +1213,7 @@ function renderGanttMacchina() {
         const row = el('div', 'gantt-row');
         const label = el('div', 'gantt-label');
         const turnoLabel = getTurnoLabel(macchina.nome);
-        label.innerHTML = `<div>${macchina.nome}<div class="label-sub">${macchina.fasi.length} fasi &middot; ${Math.round(macchina.fasi.reduce((s,f)=>s+f.ore,0))}h &middot; ${turnoLabel}</div></div>`;
+        label.innerHTML = `<div>${macchina.nome}<div class="label-sub">${macchina.fasi.length} fasi &middot; ${Math.round(macchina.fasi.reduce((s,f)=>s+(f.ore_effettive||f.ore),0))}h &middot; ${turnoLabel}</div></div>`;
         row.appendChild(label);
 
         // Swim lanes: altezza dinamica per esterno
@@ -1193,7 +1361,7 @@ function renderTabella() {
         };
         const c = commMap[f.commessa];
         c.fasi.push(f);
-        c.ore_tot += f.ore;
+        c.ore_tot += (f.ore_effettive || f.ore);
         if (f.end_h > c.max_end_h) c.max_end_h = f.end_h;
         if (f.priorita < c.min_priorita) c.min_priorita = f.priorita;
     }));
@@ -1359,7 +1527,7 @@ function openSidePanel(commessaId) {
     if (allFasi.length === 0) return;
 
     const prima = allFasi[0];
-    const oreTot = Math.round(allFasi.reduce((s, f) => s + f.ore, 0) * 100) / 100;
+    const oreTot = Math.round(allFasi.reduce((s, f) => s + (f.ore_effettive || f.ore), 0) * 100) / 100;
     const maxEndH = Math.max(...allFasi.map(f => f.end_h));
     const fineStimata = new Date(NOW.getTime() + maxEndH * 3600000);
 
@@ -1423,7 +1591,7 @@ function openSidePanel(commessaId) {
                 <span class="sp-stato-badge sp-stato-${f.stato}">${statoNomi[f.stato] || '?'}</span>
             </div>
             <div class="sp-fase-row">
-                <span class="sp-fase-detail">Ore: <strong>${f.ore}h</strong></span>
+                <span class="sp-fase-detail">Ore: <strong>${(f.ore_effettive || f.ore).toFixed(1)}h</strong> ${f.ore_prinect ? '<small style="color:#5dd39e">(P)</small>' : f.ore_media_storica ? '<small style="color:#f0a04b">(S)</small>' : ''}</span>
                 <span class="sp-fase-detail">Inizio: <strong>${oreToDateStr(f.start_h)}</strong></span>
             </div>
             <div class="sp-fase-row">

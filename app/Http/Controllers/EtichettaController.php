@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Ordine;
+use App\Models\OrdineFase;
 use App\Models\EanProdotto;
 
 class EtichettaController extends Controller
@@ -21,6 +22,9 @@ class EtichettaController extends Controller
 
         // Verifica se è Italiana Confetti (confronto case-insensitive)
         $isItalianaConfetti = str_contains(strtolower($cliente), 'italiana confetti');
+
+        // Verifica se è Tifata Plastica
+        $isTifataPlastica = str_contains(strtolower($cliente), 'tifata');
 
         // Clienti con etichetta semplificata (solo Pz x cassa, Lotto, Data)
         $clientiSemplici = [
@@ -44,15 +48,33 @@ class EtichettaController extends Controller
         // Per altri clienti: articolo = descrizione ordine (precompilato)
         $articoloDefault = $ordine->descrizione ?? '';
 
-        // Cerca EAN già salvato per questo articolo (non-IC)
+        // EAN precompilato solo per IC (gli altri inseriscono manualmente)
         $eanSalvato = null;
-        if (!$isItalianaConfetti && $articoloDefault) {
-            $eanSalvato = EanProdotto::where('articolo', $articoloDefault)->first();
+
+        // Trova la fase a stato 2 (avviata) dell'operatore per questo ordine
+        $operatore = $request->attributes->get('operatore') ?? auth()->guard('operatore')->user();
+        $repartiOperatore = $operatore?->reparti?->pluck('id')->toArray() ?? [];
+
+        // Card: mostra solo se accesso dalla dashboard (con op_token)
+        $faseOperatore = null;
+        if ($request->query('op_token')) {
+            $faseOperatore = OrdineFase::where('stato', 2)
+                ->whereHas('faseCatalogo', fn($q) => $q->whereIn('reparto_id', $repartiOperatore))
+                ->with(['faseCatalogo.reparto', 'operatori', 'ordine'])
+                ->first();
         }
+
+        $fasiOperatore = collect($faseOperatore ? [$faseOperatore] : []);
+
+        // Note fasi successive
+        $noteFS = $ordine->note_fasi_successive ?? '';
+        $righeFS = $noteFS ? json_decode($noteFS, true) : [];
+        if (!is_array($righeFS)) $righeFS = [];
 
         return view('operatore.etichetta', compact(
             'ordine', 'lotto', 'cliente', 'data',
-            'isItalianaConfetti', 'isSimpleLabel', 'eanProdotti', 'articoloDefault', 'eanSalvato'
+            'isItalianaConfetti', 'isSimpleLabel', 'isTifataPlastica', 'eanProdotti', 'articoloDefault', 'eanSalvato',
+            'fasiOperatore', 'faseOperatore', 'operatore', 'righeFS'
         ));
     }
 

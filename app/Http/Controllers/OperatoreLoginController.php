@@ -51,6 +51,10 @@ class OperatoreLoginController extends Controller
             'expires_at' => now()->addHours(12),
         ]);
 
+        if ($operatore->ruolo === 'fiery_contatori') {
+            return redirect()->route('mes.fiery.contatori', ['op_token' => $token]);
+        }
+
         if ($operatore->ruolo === 'owner' || $operatore->ruolo === 'owner_readonly') {
             return redirect()->route('owner.dashboard', ['op_token' => $token]);
         }

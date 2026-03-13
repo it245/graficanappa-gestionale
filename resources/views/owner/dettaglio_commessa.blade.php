@@ -61,12 +61,14 @@
     th:nth-child(4), td:nth-child(4) { width: 100px; }
     th:nth-child(5), td:nth-child(5) { width: 80px; text-align: center; }
     th:nth-child(6), td:nth-child(6) { width: 80px; text-align: center; }
-    th:nth-child(7), td:nth-child(7) { width: 120px; }
-    th:nth-child(8), td:nth-child(8) { width: 100px; }
-    th:nth-child(9), td:nth-child(9) { width: 180px; }
-    th:nth-child(10), td:nth-child(10) { width: 110px; }
-    th:nth-child(11), td:nth-child(11) { width: 110px; }
-    th:nth-child(12), td:nth-child(12) { width: 50px; text-align: center; }
+    th:nth-child(7), td:nth-child(7) { width: 65px; text-align: center; }
+    th:nth-child(8), td:nth-child(8) { width: 65px; text-align: center; }
+    th:nth-child(9), td:nth-child(9) { width: 120px; }
+    th:nth-child(10), td:nth-child(10) { width: 100px; }
+    th:nth-child(11), td:nth-child(11) { width: 180px; }
+    th:nth-child(12), td:nth-child(12) { width: 110px; }
+    th:nth-child(13), td:nth-child(13) { width: 110px; }
+    th:nth-child(14), td:nth-child(14) { width: 50px; text-align: center; }
     .btn-elimina {
         background: #dc3545;
         color: #fff;
@@ -103,6 +105,36 @@
             <a href="{{ route('mes.prinect.jobDetail', $jobIdNum) }}" class="btn btn-outline-secondary btn-sm">Dettaglio Prinect</a>
         @endif
         <a href="{{ route('mes.prinect.report', $commessa) }}" class="btn btn-outline-success btn-sm">Report Stampa</a>
+        <button class="btn btn-outline-info btn-sm" onclick="document.getElementById('invioEsternoBox').style.display = document.getElementById('invioEsternoBox').style.display === 'none' ? 'block' : 'none';">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="7.5 4.21 12 6.81 16.5 4.21"/></svg>
+            Invia all'esterno
+        </button>
+    </div>
+</div>
+
+{{-- Box invio esterno --}}
+<div id="invioEsternoBox" style="display:none;" class="mb-3 mt-2">
+    <div class="border rounded p-3" style="background:#e8f4f8;">
+        <strong style="font-size:14px; color:#17a2b8;">Invia lavorazione all'esterno</strong>
+        <div class="row g-2 mt-2">
+            <div class="col-md-4">
+                <label class="form-label" style="font-size:12px; font-weight:600;">Fase da inviare</label>
+                <select id="esternoFaseId" class="form-select form-select-sm">
+                    @foreach($fasi as $f)
+                        @if($f->stato < 3)
+                        <option value="{{ $f->id }}">{{ $f->faseCatalogo->nome_display ?? $f->fase }} (stato: {{ $f->stato }})</option>
+                        @endif
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" style="font-size:12px; font-weight:600;">Fornitore esterno</label>
+                <input type="text" id="esternoFornitore" class="form-control form-control-sm" placeholder="Es: Tipografia Rossi, Plastificatura XYZ...">
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button class="btn btn-info btn-sm text-white" onclick="inviaEsterno()">Conferma invio esterno</button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -122,7 +154,7 @@
 @if($ordine)
 @php
     $coloriDett = \App\Helpers\DescrizioneParser::parseColori($ordine->descrizione ?? '', $ordine->cliente_nome ?? '');
-    $fustellaDett = \App\Helpers\DescrizioneParser::parseFustella($ordine->descrizione ?? '', $ordine->cliente_nome ?? '');
+    $fustellaDett = \App\Helpers\DescrizioneParser::parseFustella($ordine->descrizione ?? '', $ordine->cliente_nome ?? '', $ordine->note_prestampa ?? '');
 @endphp
 <div class="row g-2 mb-2" style="font-size:13px;">
     <div class="col-auto">
@@ -136,8 +168,42 @@
 </div>
 @endif
 
-{{-- Info Onda --}}
+{{-- Info Commessa --}}
 @if($ordine)
+<div class="row g-2 mb-2" style="font-size:13px;">
+    <div class="col-md-4">
+        <div class="border rounded p-2 h-100" style="background:#e8f4fd">
+            <strong class="d-block mb-1">Descrizione</strong>
+            <span>{{ $ordine->descrizione ?: '-' }}</span>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="border rounded p-2 h-100" style="background:#e8f4fd">
+            <strong class="d-block mb-1">Cliente</strong>
+            <span>{{ $ordine->cliente_nome ?: '-' }}</span>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="border rounded p-2 h-100" style="background:#e8f4fd">
+            <strong class="d-block mb-1">Cod. Articolo</strong>
+            <span>{{ $ordine->cod_art ?: '-' }}</span>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="border rounded p-2 h-100" style="background:#e8f4fd">
+            <strong class="d-block mb-1">Quantit&agrave;</strong>
+            <span>{{ $ordine->qta_richiesta ? number_format($ordine->qta_richiesta, 0, ',', '.') : '-' }}</span>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="border rounded p-2 h-100" style="background:#e8f4fd">
+            <strong class="d-block mb-1">Data Consegna</strong>
+            <span>{{ $ordine->data_prevista_consegna ? \Carbon\Carbon::parse($ordine->data_prevista_consegna)->format('d/m/Y') : '-' }}</span>
+        </div>
+    </div>
+</div>
+
+{{-- Info Onda --}}
 <div class="row g-2 mb-3" style="font-size:13px;">
     <div class="col-md-4">
         <div class="border rounded p-2 h-100" style="background:#f8f9fa">
@@ -209,6 +275,8 @@
                 <th>Reparto</th>
                 <th>Qta Carta</th>
                 <th>Qta Prod.</th>
+                <th>Scarti P.</th>
+                <th>Scarti R.</th>
                 <th>Operatori</th>
                 <th>Note</th>
                 <th>Descrizione</th>
@@ -230,6 +298,8 @@
                 <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'reparto', this.innerText)">{{ $fase->reparto_nome ?? '-' }}</td>
                 <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'qta_carta', this.innerText)">{{ $fase->ordine->qta_carta ?? '-' }}</td>
                 <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'qta_prod', this.innerText)">{{ $fase->qta_prod ?? '-' }}</td>
+                <td style="text-align:center;">{{ $fase->fogli_scarto ?? '-' }}</td>
+                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'scarti', this.innerText)" style="text-align:center;">{{ $fase->scarti ?? '-' }}</td>
                 <td>
                     @forelse($fase->operatori as $op)
                         {{ $op->nome }} {{ $op->cognome }}@if(!$loop->last), @endif
@@ -247,7 +317,7 @@
                         if ($coloriDett2) $noteExtraDett .= '[COL: '.$coloriDett2.'] ';
                     }
                     if (str_contains($repartoDett, 'fustella')) {
-                        $fustellaDett2 = \App\Helpers\DescrizioneParser::parseFustella($descDett, $clienteDett);
+                        $fustellaDett2 = \App\Helpers\DescrizioneParser::parseFustella($descDett, $clienteDett, $fase->ordine->note_prestampa ?? '');
                         if ($fustellaDett2) $noteExtraDett .= '[FS: '.$fustellaDett2.'] ';
                     }
                 @endphp
@@ -331,6 +401,41 @@ function aggiornaStato(faseId, testo) {
         }
     })
     .catch(err => { console.error(err); alert('Errore di connessione'); });
+}
+
+function inviaEsterno() {
+    var faseId = document.getElementById('esternoFaseId').value;
+    var fornitore = document.getElementById('esternoFornitore').value.trim();
+    if (!faseId) { alert('Seleziona una fase'); return; }
+    if (!fornitore) { alert('Inserisci il nome del fornitore esterno'); return; }
+
+    if (!confirm('Confermi invio all\'esterno a "' + fornitore + '"?')) return;
+
+    // 1. Segna come esterno
+    fetch('{{ route("owner.aggiornaCampo") }}', {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': csrfToken(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fase_id: faseId, campo: 'esterno', valore: 1 })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function() {
+        // 2. Aggiungi nota "Inviato a: fornitore"
+        return fetch('{{ route("owner.aggiornaCampo") }}', {
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': csrfToken(), 'Content-Type': 'application/json' },
+            body: JSON.stringify({ fase_id: faseId, campo: 'note', valore: 'Inviato a: ' + fornitore })
+        });
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+        if (d.success) {
+            alert('Fase inviata all\'esterno a: ' + fornitore);
+            window.location.reload();
+        } else {
+            alert('Errore: ' + (d.messaggio || ''));
+        }
+    })
+    .catch(function(err) { console.error(err); alert('Errore di connessione'); });
 }
 
 function eliminaFase(faseId) {

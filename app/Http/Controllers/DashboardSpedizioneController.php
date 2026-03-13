@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\OrdineFase;
 use App\Models\Ordine;
 use App\Models\Reparto;
+use App\Models\DdtSpedizione;
 use App\Http\Services\BrtService;
 use App\Models\NotaSpedizione;
 use Carbon\Carbon;
@@ -48,21 +49,24 @@ class DashboardSpedizioneController extends Controller
             ->with(['ordine', 'faseCatalogo', 'operatori'])
             ->get();
 
-        // "Da consegnare" = tutte le fasi non-BRT dell'intera commessa (tutti gli ordini) sono a stato >= 3
-        $fasiDaSpedire = $fasiSpedizione->filter(function ($fase) use ($repartoSpedizione) {
+        // Pre-fetch: tutte le commesse coinvolte e le loro fasi non-spedizione (evita N+1)
+        $commesseSpedizione = $fasiSpedizione->map(fn($f) => $f->ordine->commessa)->filter()->unique()->values();
+        $tutteFasiPerCommessa = collect();
+        if ($commesseSpedizione->isNotEmpty()) {
+            $tutteFasiPerCommessa = OrdineFase::whereHas('ordine', fn($q) => $q->whereIn('commessa', $commesseSpedizione))
+                ->whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', '!=', $repartoSpedizione->id))
+                ->with('faseCatalogo')
+                ->get()
+                ->groupBy(fn($f) => $f->ordine->commessa);
+        }
+
+        // "Da consegnare" = tutte le fasi non-BRT dell'intera commessa sono a stato >= 3
+        $fasiDaSpedire = $fasiSpedizione->filter(function ($fase) use ($tutteFasiPerCommessa) {
             $commessa = $fase->ordine->commessa ?? null;
             if (!$commessa) return false;
-
-            $fasiNonBrtCommessa = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
-                ->whereHas('faseCatalogo', function ($q) use ($repartoSpedizione) {
-                    $q->where('reparto_id', '!=', $repartoSpedizione->id);
-                })
-                ->get();
-
-            return $fasiNonBrtCommessa->isNotEmpty() && $fasiNonBrtCommessa->every(fn($f) => $f->stato >= 3);
-        })->sortBy(function ($fase) {
-            return $fase->ordine->data_prevista_consegna ?? '9999-12-31';
-        });
+            $fasiNonBrt = $tutteFasiPerCommessa->get($commessa, collect());
+            return $fasiNonBrt->isNotEmpty() && $fasiNonBrt->every(fn($f) => $f->stato >= 3);
+        })->sortBy(fn($fase) => $fase->ordine->data_prevista_consegna ?? '9999-12-31');
 
         // Auto-promuovi fasi stato 0→1 che sono pronte per la spedizione
         foreach ($fasiDaSpedire as $fase) {
@@ -72,16 +76,12 @@ class DashboardSpedizioneController extends Controller
             }
         }
 
-        // Calcola percentuale completamento per commessa
-        foreach ($fasiDaSpedire as $fase) {
+        // Calcola percentuale completamento per tutte le fasi spedizione
+        foreach ($fasiSpedizione as $fase) {
             $commessa = $fase->ordine->commessa ?? null;
-            $totaleFasi = $commessa ? OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
-                ->whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', '!=', $repartoSpedizione->id))
-                ->count() : 0;
-            $fasiTerminate = $commessa ? OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
-                ->whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', '!=', $repartoSpedizione->id))
-                ->where('stato', '>=', 3)
-                ->count() : 0;
+            $fasiNonBrt = $tutteFasiPerCommessa->get($commessa, collect());
+            $totaleFasi = $fasiNonBrt->count();
+            $fasiTerminate = $fasiNonBrt->where('stato', '>=', 3)->count();
             $fase->percentuale = $totaleFasi > 0 ? round(($fasiTerminate / $totaleFasi) * 100) : 0;
         }
 
@@ -95,29 +95,15 @@ class DashboardSpedizioneController extends Controller
             ->get()
             ->sortByDesc('data_fine');
 
-        // Fasi in attesa: fasi spedizione stato 0 le cui altre fasi NON sono tutte terminate
+        // Fasi in attesa: fasi spedizione le cui altre fasi NON sono tutte terminate
         $fasiDaSpedireIds = $fasiDaSpedire->pluck('id')->toArray();
         $fasiInAttesa = $fasiSpedizione->filter(fn($f) => !in_array($f->id, $fasiDaSpedireIds));
 
+        // Fasi non terminate per il bottone Forza Consegna (usa dati pre-caricati)
         foreach ($fasiInAttesa as $fase) {
             $commessa = $fase->ordine->commessa ?? null;
-
-            // Percentuale calcolata su tutte le fasi non-BRT dell'intera commessa
-            $totaleFasi = $commessa ? OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
-                ->whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', '!=', $repartoSpedizione->id))
-                ->count() : 0;
-            $fasiTerminate = $commessa ? OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
-                ->whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', '!=', $repartoSpedizione->id))
-                ->where('stato', '>=', 3)
-                ->count() : 0;
-            $fase->percentuale = $totaleFasi > 0 ? round(($fasiTerminate / $totaleFasi) * 100) : 0;
-
-            // Fasi non terminate dell'intera commessa (per il bottone Forza Consegna)
-            $fase->fasiNonTerminate = $commessa ? OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
-                ->whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', '!=', $repartoSpedizione->id))
-                ->where('stato', '<', 3)
-                ->with('faseCatalogo')
-                ->get() : collect();
+            $fasiNonBrt = $tutteFasiPerCommessa->get($commessa, collect());
+            $fase->fasiNonTerminate = $fasiNonBrt->where('stato', '<', 3)->values();
         }
 
         $fasiInAttesa = $fasiInAttesa->sortByDesc('percentuale');
@@ -146,13 +132,12 @@ class DashboardSpedizioneController extends Controller
             ->orderByDesc('data_fine')
             ->get();
 
-        // Spedizioni BRT: DDT unici con vettore BRT
-        $spedizioniBRT = Ordine::where('vettore_ddt', 'LIKE', '%BRT%')
-            ->whereNotNull('numero_ddt_vendita')
-            ->where('numero_ddt_vendita', '!=', '')
-            ->orderByDesc('ddt_vendita_id')
+        // Spedizioni BRT: dalla tabella ddt_spedizioni (supporta più DDT per commessa)
+        $spedizioniBRT = DdtSpedizione::with('ordine:id,descrizione')
+            ->where('vettore', 'LIKE', '%BRT%')
+            ->orderByDesc('onda_id_doc')
             ->get()
-            ->groupBy('numero_ddt_vendita');
+            ->groupBy('numero_ddt');
 
         return view('spedizione.dashboard', compact('fasiDaSpedire', 'fasiSpediteOggi', 'fasiInAttesa', 'fasiEsterne', 'fasiDDT', 'fasiParziali', 'spedizioniBRT', 'storicoConsegne', 'operatore'));
     }
@@ -348,7 +333,38 @@ class DashboardSpedizioneController extends Controller
             ]);
         }
 
+        // Salva nella cache ddt_spedizioni
+        $this->cacheBrtTracking($numeroDDT, $data);
+
         return response()->json($data);
+    }
+
+    /**
+     * Salva lo stato BRT nella tabella ddt_spedizioni come cache.
+     */
+    protected function cacheBrtTracking(string $numeroDDT, array $data): void
+    {
+        try {
+            $stato = $data['stato'] ?? null;
+            $bolla = $data['bolla'] ?? [];
+            $dataConsegna = $bolla['data_consegna'] ?? null;
+            $ora = $bolla['ora_consegna'] ?? null;
+            if ($dataConsegna && $ora) $dataConsegna .= ' ' . $ora;
+            $destinatario = collect([$bolla['destinatario_ragione_sociale'] ?? null, $bolla['destinatario_localita'] ?? null])
+                ->filter()->implode(' - ');
+            $colli = $bolla['colli'] ?? null;
+
+            DdtSpedizione::where('numero_ddt', $numeroDDT)
+                ->update([
+                    'brt_stato' => $stato,
+                    'brt_data_consegna' => $dataConsegna ?: null,
+                    'brt_destinatario' => $destinatario ?: null,
+                    'brt_colli' => $colli,
+                    'brt_cache_at' => now(),
+                ]);
+        } catch (\Exception $e) {
+            // Cache fail non è critico
+        }
     }
 
     public function recuperaConsegna(Request $request)
@@ -430,7 +446,7 @@ class DashboardSpedizioneController extends Controller
 
         return response()->json([
             'data' => $data,
-            'contenuto' => $nota->contenuto ?? '',
+            'contenuto' => $nota ? $nota->contenuto : '',
         ]);
     }
 
@@ -447,5 +463,20 @@ class DashboardSpedizioneController extends Controller
         );
 
         return response()->json(['success' => true]);
+    }
+
+    /**
+     * Restituisce l'ultimo updated_at delle note spedizione di oggi.
+     * Usato per polling notifiche owner.
+     */
+    public function noteUltimoAggiornamento()
+    {
+        // Cerca l'ultima nota modificata (qualsiasi data), non solo oggi
+        $nota = NotaSpedizione::orderByDesc('updated_at')->first();
+        return response()->json([
+            'updated_at' => $nota ? $nota->updated_at->toIso8601String() : null,
+            'contenuto'  => $nota ? $nota->contenuto : '',
+            'data'       => $nota ? $nota->data->format('d/m/Y') : null,
+        ]);
     }
 }

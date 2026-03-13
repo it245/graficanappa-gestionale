@@ -23,8 +23,8 @@ class PrinectSyncService
     {
         $deviceId = env('PRINECT_DEVICE_XL106_ID', '4001');
 
-        // Fetch ultimi 7 giorni di attivita per catturare anche job completati in passato
-        $start = Carbon::now()->subDays(7)->format('Y-m-d\TH:i:sP');
+        // Fetch ultimi 30 giorni di attivita per catturare anche job completati in passato
+        $start = Carbon::now()->subDays(30)->format('Y-m-d\TH:i:sP');
         $end = Carbon::now()->format('Y-m-d\TH:i:sP');
         $data = $this->prinect->getDeviceActivity($deviceId, $start, $end);
 
@@ -54,9 +54,10 @@ class PrinectSyncService
             if ($esiste) continue;
 
             // Estrai commessa dal job_id con anno corretto da creationDate
-            $jobId = $att['workstep']['job']['id'] ?? null;
+            $rawJobId = $att['workstep']['job']['id'] ?? null;
+            $jobId = self::estraiJobIdNumerico($rawJobId);
             $commessa = null;
-            if ($jobId && is_numeric($jobId)) {
+            if ($jobId) {
                 $anno = $this->getAnnoJob($jobId, $att['startTime'], $cacheAnnoJob);
                 $commessa = str_pad($jobId, 7, '0', STR_PAD_LEFT) . '-' . $anno;
             }
@@ -252,8 +253,9 @@ class PrinectSyncService
         foreach ($rawActivities as $att) {
             if (empty($att['id'])) continue;
 
-            $jobId = $att['workstep']['job']['id'] ?? null;
-            if (!$jobId || !is_numeric($jobId)) continue;
+            $rawJobId = $att['workstep']['job']['id'] ?? null;
+            $jobId = self::estraiJobIdNumerico($rawJobId);
+            if (!$jobId) continue;
 
             $startTime = isset($att['startTime']) ? date('Y-m-d H:i:s', strtotime($att['startTime'])) : null;
             $endTime = isset($att['endTime']) ? date('Y-m-d H:i:s', strtotime($att['endTime'])) : null;
@@ -689,5 +691,17 @@ class PrinectSyncService
         }
 
         return $matched;
+    }
+
+    /**
+     * Estrae la parte numerica dal job ID Prinect.
+     * Es. "66698 int" → "66698", "66410" → "66410", "abc" → null
+     */
+    public static function estraiJobIdNumerico($jobId): ?string
+    {
+        if (!$jobId) return null;
+        if (is_numeric($jobId)) return (string) $jobId;
+        if (preg_match('/^(\d+)/', trim($jobId), $m)) return $m[1];
+        return null;
     }
 }

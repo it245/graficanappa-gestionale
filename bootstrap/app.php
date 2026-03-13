@@ -19,6 +19,14 @@ return Application::configure(basePath: dirname(__DIR__))
         // Trust tunnel/proxy headers (tnnl.in e simili)
         $middleware->trustProxies(at: '*');
 
+        // Escludi CSRF per route owner che usano op_token
+        $middleware->validateCsrfTokens(except: [
+            'owner/aggiungi-riga',
+            'owner/sync-onda',
+            'owner/import',
+            'owner/aggiorna-campo',
+        ]);
+
         $middleware->alias([
             'operatore.auth' => OperatoreAuth::class,
             'owner' => \App\Http\Middleware\OwnerMiddleware::class,

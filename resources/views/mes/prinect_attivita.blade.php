@@ -57,6 +57,8 @@
                             <th>Job ID</th>
                             <th>Descrizione</th>
                             <th>Commessa</th>
+                            <th>Inizio</th>
+                            <th>Fine</th>
                             <th>Fogli buoni</th>
                             <th>Fogli scarto</th>
                             <th>% Scarto</th>
@@ -75,6 +77,8 @@
                                         -
                                     @endif
                                 </td>
+                                <td>{{ $job->first_start ? \Carbon\Carbon::parse($job->first_start)->format('d/m/Y H:i') : '-' }}</td>
+                                <td>{{ $job->last_end ? \Carbon\Carbon::parse($job->last_end)->format('d/m/Y H:i') : '-' }}</td>
                                 <td class="text-success fw-bold">{{ number_format($job->total_good) }}</td>
                                 <td class="text-danger">{{ number_format($job->total_waste) }}</td>
                                 <td>
@@ -104,23 +108,30 @@
                 <table class="table table-bordered table-sm mb-0">
                     <thead class="table-light">
                         <tr>
-                            <th>Inizio</th>
-                            <th>Fine</th>
+                            @php
+                                $currentSort = request('sort', 'start_time');
+                                $currentDir = request('dir', 'desc');
+                                $toggleDir = $currentDir === 'asc' ? 'desc' : 'asc';
+                                $arrow = fn($col) => $currentSort === $col ? ($currentDir === 'asc' ? ' ▲' : ' ▼') : '';
+                                $sortUrl = fn($col) => request()->fullUrlWithQuery(['sort' => $col, 'dir' => $currentSort === $col ? $toggleDir : 'asc']);
+                            @endphp
+                            <th><a href="{{ $sortUrl('start_time') }}" class="text-dark text-decoration-none">Inizio{!! $arrow('start_time') !!}</a></th>
+                            <th><a href="{{ $sortUrl('end_time') }}" class="text-dark text-decoration-none">Fine{!! $arrow('end_time') !!}</a></th>
                             <th>Durata</th>
                             <th>Tipo</th>
-                            <th>Job</th>
-                            <th>Commessa</th>
+                            <th><a href="{{ $sortUrl('prinect_job_name') }}" class="text-dark text-decoration-none">Job{!! $arrow('prinect_job_name') !!}</a></th>
+                            <th><a href="{{ $sortUrl('commessa_gestionale') }}" class="text-dark text-decoration-none">Commessa{!! $arrow('commessa_gestionale') !!}</a></th>
                             <th>Workstep</th>
-                            <th>Buoni</th>
-                            <th>Scarto</th>
+                            <th><a href="{{ $sortUrl('good_cycles') }}" class="text-dark text-decoration-none">Buoni{!! $arrow('good_cycles') !!}</a></th>
+                            <th><a href="{{ $sortUrl('waste_cycles') }}" class="text-dark text-decoration-none">Scarto{!! $arrow('waste_cycles') !!}</a></th>
                             <th>Operatore</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($attivita as $att)
                             <tr class="@if($att->activity_name === 'Avviamento') table-warning @elseif($att->activity_name === 'Produzione fogli buoni') table-success @endif">
-                                <td>{{ $att->start_time ? $att->start_time->format('d/m H:i:s') : '-' }}</td>
-                                <td>{{ $att->end_time ? $att->end_time->format('d/m H:i:s') : '-' }}</td>
+                                <td>{{ $att->start_time ? $att->start_time->format('d/m/Y H:i:s') : '-' }}</td>
+                                <td>{{ $att->end_time ? $att->end_time->format('d/m/Y H:i:s') : '-' }}</td>
                                 <td>
                                     @if($att->start_time && $att->end_time)
                                         @php
