@@ -1807,12 +1807,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const filtraDebounced = debounce(filtra, 100);
 
-    fCommessa.addEventListener('input', filtraDebounced);
-    fCliente.addEventListener('input', filtraDebounced);
-    fDescrizione.addEventListener('input', filtraDebounced);
-    fStato.addEventListener('change', filtraDebounced);
-    fFase.addEventListener('change', filtraDebounced);
-    fReparto.addEventListener('change', filtraDebounced);
+    // Salva filtri in sessionStorage dopo ogni modifica
+    function salvaFiltri() {
+        sessionStorage.setItem('ownerFilters', JSON.stringify({
+            commessa: fCommessa.value,
+            cliente: fCliente.value,
+            descrizione: fDescrizione.value,
+            stato: Array.from(fStato.selectedOptions).map(o => o.value),
+            fase: Array.from(fFase.selectedOptions).map(o => o.value),
+            reparto: Array.from(fReparto.selectedOptions).map(o => o.value),
+        }));
+    }
+    function filtraESalva() { filtraDebounced(); setTimeout(salvaFiltri, 150); }
+
+    fCommessa.addEventListener('input', filtraESalva);
+    fCliente.addEventListener('input', filtraESalva);
+    fDescrizione.addEventListener('input', filtraESalva);
+    fStato.addEventListener('change', filtraESalva);
+    fFase.addEventListener('change', filtraESalva);
+    fReparto.addEventListener('change', filtraESalva);
 
     document.getElementById('btnResetFilters').addEventListener('click', function() {
         fCommessa.value = '';
@@ -1822,7 +1835,26 @@ document.addEventListener('DOMContentLoaded', () => {
         choiceFase.removeActiveItems();
         choiceReparto.removeActiveItems();
         rowData.forEach(data => { data.row.style.display = ''; });
+        sessionStorage.removeItem('ownerFilters');
     });
+
+    // Ripristina filtri da sessionStorage al caricamento
+    try {
+        var saved = JSON.parse(sessionStorage.getItem('ownerFilters'));
+        if (saved) {
+            var hasFilter = false;
+            if (saved.commessa) { fCommessa.value = saved.commessa; hasFilter = true; }
+            if (saved.cliente) { fCliente.value = saved.cliente; hasFilter = true; }
+            if (saved.descrizione) { fDescrizione.value = saved.descrizione; hasFilter = true; }
+            if (saved.stato && saved.stato.length) { saved.stato.forEach(v => choiceStato.setChoiceByValue(v)); hasFilter = true; }
+            if (saved.fase && saved.fase.length) { saved.fase.forEach(v => choiceFase.setChoiceByValue(v)); hasFilter = true; }
+            if (saved.reparto && saved.reparto.length) { saved.reparto.forEach(v => choiceReparto.setChoiceByValue(v)); hasFilter = true; }
+            if (hasFilter) {
+                filterBox.style.display = 'flex';
+                filtra();
+            }
+        }
+    } catch(e) {}
 
     if (toggleFilter) {
         toggleFilter.addEventListener('click', () => {
