@@ -843,7 +843,28 @@ function schedulaPerMacchina(data) {
         mSped.ore_totali = cursor;
     }
 
-    return Object.values(macchine).sort((a, b) => b.ore_totali - a.ore_totali);
+    // Ordina macchine per flusso produttivo (stampa offset prima, spedizione ultima)
+    const REPARTO_ORDINE = {
+        'Stampa offset': 1,
+        'Fustella / Rilievo (Bobst)': 2,
+        'Digitale': 3,
+        'Plastificazione': 4,
+        'Stampa a caldo': 5,
+        'Finitura digitale': 6,
+        'Fustella piana': 7,
+        'Tagliacarte': 8,
+        'Piegaincolla': 9,
+        'Finestratura': 10,
+        'Legatoria': 11,
+        'Allestimento': 12,
+        'Esterno': 50,
+        'Spedizione': 99,
+    };
+    return Object.values(macchine).sort((a, b) => {
+        const ordA = REPARTO_ORDINE[a.nome] ?? 40;
+        const ordB = REPARTO_ORDINE[b.nome] ?? 40;
+        return ordA - ordB;
+    });
 }
 
 // Cache dello scheduling completo (calcolato su TUTTI i dati, non filtrati)
