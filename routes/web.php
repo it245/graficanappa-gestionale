@@ -13,6 +13,7 @@ use App\Http\Controllers\AdminLoginController;
 use App\Http\Controllers\DashboardAdminController;
 use App\Http\Controllers\FieryController;
 use App\Http\Controllers\EtichettaController;
+use App\Http\Controllers\PresenzeController;
 
 // Operatori
 Route::prefix('operatore')->group(function() {
@@ -52,6 +53,7 @@ Route::get('/owner/esterne', [DashboardOwnerController::class, 'esterne'])->name
 Route::get('/owner/reparti', [DashboardOwnerController::class, 'repartiOverview'])->name('owner.repartiOverview');
 Route::get('/owner/fustelle', [DashboardOwnerController::class, 'fustelleOverview'])->name('owner.fustelle');
 Route::post('/owner/tracking-ddt', [DashboardSpedizioneController::class, 'trackingByDDT'])->name('owner.trackingByDDT');
+Route::get('/owner/presenti', [PresenzeController::class, 'presenti'])->name('owner.presenti');
 Route::get('/owner/note-spedizione', [DashboardSpedizioneController::class, 'noteGiornaliere'])->name('owner.noteSpedizione');
 Route::post('/owner/note-spedizione', [DashboardSpedizioneController::class, 'salvaNotaGiornaliera'])->name('owner.salvaNotaSpedizione');
 Route::get('/owner/note-spedizione-check', [DashboardSpedizioneController::class, 'noteUltimoAggiornamento'])->name('owner.noteSpedizioneCheck');
