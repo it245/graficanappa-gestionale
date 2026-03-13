@@ -343,10 +343,18 @@ function cercaCommessa(){
 
     input.onkeyup = function(){
         const filtro = input.value.toLowerCase();
-        document.querySelectorAll("tbody tr").forEach(riga=>{
-            const commessa = riga.cells[4]?.innerText.toLowerCase() || '';
-            riga.style.display = commessa.includes(filtro) ? '' : 'none';
-        });
+        if (filtro) {
+            // Ricerca attiva: mostra tutte le righe che corrispondono, ignorando filtri stato
+            document.querySelectorAll("tbody tr").forEach(riga=>{
+                const commessa = riga.cells[4]?.innerText.toLowerCase() || '';
+                riga.style.display = commessa.includes(filtro) ? '' : 'none';
+            });
+        } else {
+            // Campo vuoto: riapplica i filtri stato attivi
+            document.querySelectorAll('.filtri-reparto').forEach(function(bar) {
+                applicaFiltri(bar.querySelector('.filtro-stato'));
+            });
+        }
     };
 
     // chiudi con ESC
@@ -354,7 +362,10 @@ function cercaCommessa(){
         if(e.key === "Escape"){
             box.style.display = 'none';
             input.value = '';
-            document.querySelectorAll("tbody tr").forEach(riga=>riga.style.display='');
+            // Riapplica filtri stato
+            document.querySelectorAll('.filtri-reparto').forEach(function(bar) {
+                applicaFiltri(bar.querySelector('.filtro-stato'));
+            });
         }
     };
 }
