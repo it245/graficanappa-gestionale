@@ -404,6 +404,11 @@ class OndaSyncService
             ];
 
             if ($ordine) {
+                // Non sovrascrivere data_prevista_consegna se modificata manualmente nel MES
+                $dataConsegnaOnda = $datiOrdine['data_prevista_consegna'];
+                if ($ordine->data_prevista_consegna && $ordine->data_prevista_consegna != $dataConsegnaOnda) {
+                    unset($datiOrdine['data_prevista_consegna']);
+                }
                 $ordine->update($datiOrdine);
                 $ordiniAggiornati++;
                 $logOrdiniAggiornati[] = $commessa;
@@ -933,6 +938,11 @@ class OndaSyncService
             ];
 
             if ($ordine) {
+                // Non sovrascrivere data_prevista_consegna se modificata manualmente nel MES
+                $dataConsegnaOnda = $datiOrdine['data_prevista_consegna'];
+                if ($ordine->data_prevista_consegna && $ordine->data_prevista_consegna != $dataConsegnaOnda) {
+                    unset($datiOrdine['data_prevista_consegna']);
+                }
                 $ordine->update($datiOrdine);
                 $ordiniAggiornati++;
             } else {
