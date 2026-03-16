@@ -357,7 +357,7 @@ th:nth-child(23), td:nth-child(23) {
                         }
                     @endphp
                     <td>{{ $qtaFaseFt ? number_format($qtaFaseFt, 0, ',', '.') : '-' }}</td>
-                    <td>{{ $isPezziFt ? 'pz' : 'fg' }}</td>
+                    <td style="font-weight:600;color:{{ $isPezziFt ? '#2563eb' : '#059669' }}">{{ $isPezziFt ? 'pz' : 'fg' }}</td>
                     <td>{{ $fase->faseCatalogo->nome_display ?? '-' }}</td>
                     <td>{{ $fase->reparto_nome ?? '-' }}</td>
                     <td>
