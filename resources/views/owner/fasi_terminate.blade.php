@@ -307,7 +307,7 @@ th:nth-child(23), td:nth-child(23) {
                 <th>Cod Carta</th>
                 <th>Carta</th>
                 <th>Qta Carta</th>
-                <th>UM Carta</th>
+                <th>UM</th>
                 <th>Fase</th>
                 <th>Reparto</th>
                 <th>Operatori</th>
@@ -347,8 +347,17 @@ th:nth-child(23), td:nth-child(23) {
                     <td>{{ $fase->ordine->data_prevista_consegna ? \Carbon\Carbon::parse($fase->ordine->data_prevista_consegna)->format('d/m/Y') : '-' }}</td>
                     <td>{{ $fase->ordine->cod_carta ?? '-' }}</td>
                     <td>{{ $fase->ordine->carta ?? '-' }}</td>
-                    <td>{{ $fase->ordine->qta_carta ?? '-' }}</td>
-                    <td>{{ $fase->ordine->UM_carta ?? '-' }}</td>
+                    @php
+                        $umFaseFt = strtoupper(trim($fase->um ?? 'FG'));
+                        $isPezziFt = in_array($umFaseFt, ['TR', 'PZ', 'KG']);
+                        if ($umFaseFt === 'KG') {
+                            $qtaFaseFt = $fase->ordine->qta_richiesta ?? 0;
+                        } else {
+                            $qtaFaseFt = $fase->qta_fase ?: ($isPezziFt ? ($fase->ordine->qta_richiesta ?? 0) : ($fase->ordine->qta_carta ?? 0));
+                        }
+                    @endphp
+                    <td>{{ $qtaFaseFt ? number_format($qtaFaseFt, 0, ',', '.') : '-' }}</td>
+                    <td>{{ $isPezziFt ? 'pz' : 'fg' }}</td>
                     <td>{{ $fase->faseCatalogo->nome_display ?? '-' }}</td>
                     <td>{{ $fase->reparto_nome ?? '-' }}</td>
                     <td>

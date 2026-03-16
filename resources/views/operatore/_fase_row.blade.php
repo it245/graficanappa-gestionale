@@ -63,8 +63,17 @@
     @endif
     <td>{{ $fase->ordine->cod_carta ?? '-' }}</td>
     <td>{{ $fase->ordine->carta ?? '-' }}</td>
-    <td>{{ $fase->ordine->qta_carta ?? '-' }}</td>
-    <td>{{ $fase->ordine->UM_carta ?? '-' }}</td>
+    @php
+        $umFaseOp = strtoupper(trim($fase->um ?? 'FG'));
+        $isPezziOp = in_array($umFaseOp, ['TR', 'PZ', 'KG']);
+        if ($umFaseOp === 'KG') {
+            $qtaFaseOp = $fase->ordine->qta_richiesta ?? 0;
+        } else {
+            $qtaFaseOp = $fase->qta_fase ?: ($isPezziOp ? ($fase->ordine->qta_richiesta ?? 0) : ($fase->ordine->qta_carta ?? 0));
+        }
+    @endphp
+    <td>{{ $qtaFaseOp ? number_format($qtaFaseOp, 0, ',', '.') : '-' }}</td>
+    <td>{{ $isPezziOp ? 'pz' : 'fg' }}</td>
     <td id="operatore-{{ $fase->id }}">
         @foreach($fase->operatori as $op)
             {{ $op->nome }} ({{ $op->pivot->data_inizio ? \Carbon\Carbon::parse($op->pivot->data_inizio)->format('d/m/Y H:i:s') : '-' }})<br>
