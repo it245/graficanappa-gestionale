@@ -551,21 +551,30 @@ public function calcolaOreEPriorita($fase)
                 FaseStatoService::ricalcolaCommessa($fase->ordine->commessa);
             }
 
-            // Se note contengono "esterno" o "lavorato esternamente", segna come esterno
-            if ($campo === 'note' && preg_match('/\b(lavorato esternamente|esterno)\b/i', $valore ?? '')) {
+            // Se note contengono "esterno", "lavorato esternamente" o "Inviato a:", segna come esterno
+            if ($campo === 'note' && preg_match('/\b(lavorato esternamente|esterno)\b|Inviato a:/i', $valore ?? '')) {
                 if (!$fase->esterno) {
                     $fase->esterno = true;
                     $fase->save();
                 }
             }
 
-            // Se note contengono "Inviato a:", notifica la spedizione
+            // Se note contengono "Inviato a:", notifica la spedizione + avvia la fase
             if ($campo === 'note' && preg_match('/Inviato a:\s*(.+)/i', $valore ?? '', $mInv)) {
                 $fornitore = trim($mInv[1]);
                 $commessa = $fase->ordine->commessa ?? '';
                 $faseNome = $fase->faseCatalogo->nome_display ?? $fase->fase ?? '';
                 $descrizione = mb_substr($fase->ordine->descrizione ?? '', 0, 60);
 
+                // Segna come esterno e avvia (stato 1 = in lavorazione esterna)
+                if (in_array($fase->stato, [0, '0'])) {
+                    $fase->stato = 1;
+                    $fase->data_inizio = now();
+                    $fase->esterno = true;
+                    $fase->save();
+                }
+
+                // Notifica la spedizione
                 DB::table('notifiche_spedizione')->insert([
                     'tipo' => 'invio_esterno',
                     'commessa' => $commessa,
