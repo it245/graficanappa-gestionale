@@ -3,11 +3,14 @@
 namespace App\Console\Commands;
 
 use App\Services\SchedulerService;
+use App\Services\SchedulerExportService;
+use App\Mail\PianoProduzione;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Mail;
 
 class RunScheduler extends Command
 {
-    protected $signature = 'scheduler:run';
+    protected $signature = 'scheduler:run {--email : Genera Excel e invia email con piano produzione}';
     protected $description = 'Esegue lo scheduler Mossa 37 — simulazione a eventi discreti';
 
     public function handle()
@@ -38,6 +41,22 @@ class RunScheduler extends Command
         }
 
         $this->info("Tempo: {$elapsed}s");
+
+        // Genera Excel e invia email
+        if ($this->option('email')) {
+            $path = storage_path('app/piano_produzione_' . now()->format('Y-m-d') . '.xlsx');
+
+            try {
+                SchedulerExportService::export($path);
+                $this->info("Excel generato: $path");
+
+                Mail::to('anappa@graficanappa.com')->send(new PianoProduzione($path, $result));
+                $this->info("Email inviata a anappa@graficanappa.com");
+            } catch (\Throwable $e) {
+                $this->error("Errore export/email: {$e->getMessage()}");
+            }
+        }
+
         return 0;
     }
 }
