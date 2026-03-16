@@ -877,10 +877,9 @@ class OndaSyncService
         $fasiCreate = 0;
         $logFasi = [];
 
-        // Raggruppa per (CodCommessa, CodArt, OC_Descrizione)
+        // Raggruppa per PrdIdDoc (documento di produzione Onda)
         $gruppi = collect($righeOnda)->groupBy(function ($riga) {
-            $desc = preg_replace('/\s+/', ' ', trim($riga->OC_Descrizione ?? ''));
-            return $riga->CodCommessa . '|' . $riga->CodArt . '|' . $desc;
+            return $riga->CodCommessa . '|' . ($riga->PrdIdDoc ?? $riga->CodArt);
         });
 
         $codArtMax2 = [
@@ -1032,19 +1031,19 @@ class OndaSyncService
                 }
 
                 if ($repartoNome === 'stampa offset' && str_starts_with($faseNome, 'STAMPAXL106')) {
-                    $chiaveDedup = $commessa . '|stampa_offset';
+                    $chiaveDedup = $ordine->id . '|stampa_offset';
                     $maxStampa = in_array($codArt, $codArtMax2) ? 2 : 1;
                     if (!isset($dedupPerCommessa[$chiaveDedup])) {
                         $existCount = OrdineFase::whereHas('faseCatalogo', fn($q) =>
                                 $q->whereIn('reparto_id', $repartiStampaOffset)
                                   ->where('nome', 'like', 'STAMPAXL106%'))
-                            ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
+                            ->where('ordine_id', $ordine->id)
                             ->count();
                         $dedupPerCommessa[$chiaveDedup] = $existCount;
                     }
                     if ($dedupPerCommessa[$chiaveDedup] >= $maxStampa) continue;
                     $existsThisVariant = OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
-                        ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))->exists();
+                        ->where('ordine_id', $ordine->id)->exists();
                     if ($existsThisVariant) continue;
                     $dedupPerCommessa[$chiaveDedup]++;
                 }
