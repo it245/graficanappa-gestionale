@@ -40,8 +40,8 @@ Schedule::command('fiery:snapshot-contatori')->weeklyOn(1, '08:00');
 // Sync presenze NetTime ogni minuto (lun-ven 5:00-23:00)
 Schedule::command('presenze:sync')->everyMinute()->weekdays()->between('5:00', '23:00')->withoutOverlapping();
 
-// Scheduler Mossa 37 ogni 15 minuti (lun-ven 6:00-22:00)
-Schedule::command('scheduler:run')->everyFifteenMinutes()->weekdays()->between('6:00', '22:00')->withoutOverlapping();
+// Scheduler Mossa 37 — DISABILITATO (in attesa approvazione capo)
+// Schedule::command('scheduler:run')->everyFifteenMinutes()->weekdays()->between('6:00', '22:00')->withoutOverlapping();
 
-// Piano produzione serale via email (lun-ven alle 22:00)
-Schedule::command('scheduler:run --email')->weekdays()->dailyAt('22:00');
+// Piano produzione serale via email — DISABILITATO
+// Schedule::command('scheduler:run --email')->weekdays()->dailyAt('22:00');
