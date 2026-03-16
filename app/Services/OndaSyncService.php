@@ -318,7 +318,7 @@ class OndaSyncService
             }
         }
 
-        // Pulizia duplicati TAGLIACARTE per commessa: 1 sola per commessa
+        // Pulizia duplicati TAGLIACARTE per commessa: 1 sola per commessa per fase_catalogo
         $repartiTagliacarte = Reparto::where('nome', 'tagliacarte')->pluck('id');
         if ($repartiTagliacarte->isNotEmpty()) {
             $dupTaglio = DB::table('ordine_fasi')
@@ -575,19 +575,19 @@ class OndaSyncService
                     }
                 }
 
-                // Dedup stampa offset per commessa: max 1 STAMPAXL106 per commessa (max 2 per cod_art multi-passaggio)
-                // Chiave unica per commessa (senza suffisso .1/.2) per contare TUTTE le varianti
+                // Dedup stampa offset per ordine: max 1 STAMPAXL106 per ordine (max 2 per cod_art multi-passaggio)
+                // Ogni documento di produzione (IdDoc) ha il suo ordine → può avere la sua stampa
                 if ($repartoNome === 'stampa offset' && str_starts_with($faseNome, 'STAMPAXL106')) {
-                    $chiaveDedup = $commessa . '|stampa_offset';
+                    $chiaveDedup = $ordine->id . '|stampa_offset';
                     $maxStampa = in_array($codArt, $codArtMax2) ? 2 : 1;
                     $qtaRiga = (int)($riga->QtaDaLavorare ?? 0);
 
                     if (!isset($dedupPerCommessa[$chiaveDedup])) {
-                        // Prima volta per questa commessa: conta quante STAMPAXL106* esistono già
+                        // Prima volta per questo ordine: conta quante STAMPAXL106* esistono già
                         $existCount = OrdineFase::whereHas('faseCatalogo', fn($q) =>
                                 $q->whereIn('reparto_id', $repartiStampaOffset)
                                   ->where('nome', 'like', 'STAMPAXL106%'))
-                            ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
+                            ->where('ordine_id', $ordine->id)
                             ->count();
                         $dedupPerCommessa[$chiaveDedup] = $existCount;
                         $dedupQta[$chiaveDedup] = $qtaRiga > 0 ? [$qtaRiga] : [];
@@ -601,7 +601,7 @@ class OndaSyncService
                             OrdineFase::whereHas('faseCatalogo', fn($q) =>
                                     $q->whereIn('reparto_id', $repartiStampaOffset)
                                       ->where('nome', 'like', 'STAMPAXL106%'))
-                                ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
+                                ->where('ordine_id', $ordine->id)
                                 ->update(['qta_fase' => $nuovaQta]);
                         }
                         continue;
@@ -609,14 +609,14 @@ class OndaSyncService
 
                     // Controlla se questa specifica variante esiste già
                     $existsThisVariant = OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
-                        ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
+                        ->where('ordine_id', $ordine->id)
                         ->exists();
 
                     if ($existsThisVariant) {
                         $scartiValue = $scartiMacchine[trim($riga->CodMacchina ?? '')] ?? null;
                         if ($scartiValue !== null) {
                             OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
-                                ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
+                                ->where('ordine_id', $ordine->id)
                                 ->whereNull('scarti_previsti')
                                 ->update(['scarti_previsti' => $scartiValue]);
                         }
@@ -682,9 +682,9 @@ class OndaSyncService
                     }
                 }
 
-                // Dedup TAGLIACARTE per commessa: 1 sola per commessa per fase_catalogo
+                // Dedup TAGLIACARTE per ordine: 1 sola per ordine_id per fase_catalogo
                 if ($repartoNome === 'tagliacarte') {
-                    $chiaveDedup = $commessa . '|tagliacarte|' . $faseNome;
+                    $chiaveDedup = $ordine->id . '|tagliacarte|' . $faseNome;
                     $qtaRiga = (int)($riga->QtaDaLavorare ?? 0);
 
                     if (isset($dedupPerCommessa[$chiaveDedup])) {
@@ -1058,9 +1058,9 @@ class OndaSyncService
                     if ($existsInCommessa) continue;
                 }
 
-                // Dedup TAGLIACARTE per commessa: 1 sola per commessa per fase_catalogo
+                // Dedup TAGLIACARTE per ordine: 1 sola per ordine_id per fase_catalogo
                 if ($repartoNome === 'tagliacarte') {
-                    $chiaveDedup = $commessa . '|tagliacarte|' . $faseNome;
+                    $chiaveDedup = $ordine->id . '|tagliacarte|' . $faseNome;
                     if (isset($dedupPerCommessa[$chiaveDedup])) continue;
                     $existsInCommessa = OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
                         ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))->exists();
