@@ -20,7 +20,8 @@
       "WebFetch(domain:developer.fiery.com)",
       "WebFetch(domain:communities.efi.com)",
       "WebFetch(domain:raw.githubusercontent.com)",
-      "WebFetch(domain:efi.my.site.com)"
+      "WebFetch(domain:efi.my.site.com)",
+      "Bash(git checkout:*)"
     ]
   }
 }
