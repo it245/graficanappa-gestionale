@@ -65,6 +65,30 @@ class PresenzeController extends Controller
             $ultimaTimb = end($timb);
             $dip['presente'] = $ultimaTimb && $ultimaTimb->verso === 'E';
 
+            // Pulisci timbrature: rimuovi E duplicate consecutive (tieni l'ultima)
+            $timbPulite = [];
+            for ($i = 0; $i < count($timb); $i++) {
+                $curr = $timb[$i];
+                $next = $timb[$i + 1] ?? null;
+                // Se E seguita da E, ignora la prima (doppio badge o errore)
+                if ($curr->verso === 'E' && $next && $next->verso === 'E') {
+                    continue;
+                }
+                $timbPulite[] = $curr;
+            }
+            $timb = $timbPulite;
+            $dip['timbrature'] = $timb;
+
+            // Ricalcola prima entrata/ultima uscita con timbrature pulite
+            $entrate = array_filter($timb, fn($t) => $t->verso === 'E');
+            $uscite = array_filter($timb, fn($t) => $t->verso === 'U');
+            if (!empty($entrate)) {
+                $dip['prima_entrata'] = Carbon::parse(min(array_map(fn($t) => $t->data_ora, $entrate)))->format('H:i');
+            }
+            if (!empty($uscite)) {
+                $dip['ultima_uscita'] = Carbon::parse(max(array_map(fn($t) => $t->data_ora, $uscite)))->format('H:i');
+            }
+
             // Calcola intervalli lavoro/pausa
             $intervalli = [];
             $ore = 0;
