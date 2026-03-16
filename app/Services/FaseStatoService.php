@@ -86,6 +86,14 @@ class FaseStatoService
             }
         }
 
+        // Per fasi stampa offset: non auto-terminare basandosi solo sui fogli
+        // perché commesse con montaggi multipli possono avere fogli > qta_fase
+        // ma non aver finito tutti i montaggi. Lasciare che Prinect (stato COMPLETED) termini.
+        $isStampaOffset = str_starts_with($fase->fase ?? '', 'STAMPAXL106') || ($fase->fase ?? '') === 'STAMPA';
+        if ($isStampaOffset && $fase->fogli_buoni > 0) {
+            $completata = false; // Prinect gestisce la terminazione della stampa
+        }
+
         if ($completata && $fase->stato < 3) {
             $fase->stato = 3;
             $fase->data_fine = now()->format('Y-m-d H:i:s');
