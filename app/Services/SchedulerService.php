@@ -123,6 +123,7 @@ class SchedulerService
                 'id' => $fid,
                 'db_id' => $row->id,
                 'commessa' => $comm,
+                'cod_art' => $ordine->cod_art ?? '',
                 'cliente' => $ordine->cliente_nome ?? '',
                 'desc' => $ordine->descrizione ?? '',
                 'fase' => $faseNome,
@@ -303,7 +304,15 @@ class SchedulerService
                         $batchIds[$f['id']] = true;
                     }
                 }
-                usort($batch, fn($a, $b) => $a['gg'] <=> $b['gg']);
+                // Ordina batch: per PIEGA/FIN raggruppa per cod_art (articoli uguali consecutivi)
+                if (in_array($mid, ['PIEGA', 'FIN'])) {
+                    usort($batch, function ($a, $b) {
+                        $artCmp = ($a['cod_art'] ?? '') <=> ($b['cod_art'] ?? '');
+                        return $artCmp !== 0 ? $artCmp : $a['gg'] <=> $b['gg'];
+                    });
+                } else {
+                    usort($batch, fn($a, $b) => $a['gg'] <=> $b['gg']);
+                }
 
                 // Schedula il batch
                 $t = $macTempo[$mid]->copy();
@@ -407,6 +416,9 @@ class SchedulerService
             'PLAST' => $f['formato_carta']
                 ? $f['fase'] . '|' . $f['formato_carta']
                 : $f['fase'],
+            // PIEGA e FIN: raggruppa per fustella (stessa fustella = setup ridotto)
+            // Dentro il batch, l'ordinamento per cod_art mette articoli uguali consecutivi
+            'PIEGA', 'FIN' => $f['fs'] ?? 'NOFS_' . $f['commessa'],
             default => $f['fs'] ?? 'NOFS_' . $f['commessa'],
         };
     }
