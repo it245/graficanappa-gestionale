@@ -5,17 +5,18 @@ $app->make('Illuminate\Contracts\Console\Kernel')->bootstrap();
 
 use Illuminate\Support\Facades\DB;
 
-// Cerca commesse ITALIANA CONFETTI con fustella FS0898
+// Cerca commesse ITALIANA CONFETTI con "AST. 1 KG" (= FS0898 dal parser)
 // che hanno fase piegaincolla (PI01/PI02/PI03)
 
-echo "=== COMMESSE ITALIANA CONFETTI CON FS0898 + PIEGAINCOLLA ===" . PHP_EOL . PHP_EOL;
+echo "=== COMMESSE ITALIANA CONFETTI FS0898 (AST. 1 KG) + PIEGAINCOLLA ===" . PHP_EOL . PHP_EOL;
 
 $fasi = DB::table('ordine_fasi')
     ->join('ordini', 'ordini.id', '=', 'ordine_fasi.ordine_id')
     ->where('ordini.cliente_nome', 'LIKE', '%ITALIANA CONFETTI%')
-    ->where('ordini.descrizione', 'LIKE', '%FS0898%')
+    ->where('ordini.descrizione', 'LIKE', 'AST%1 KG%')
     ->whereIn('ordine_fasi.fase', ['PI01', 'PI02', 'PI03'])
     ->whereNull('ordine_fasi.deleted_at')
+    ->where('ordine_fasi.stato', '<', 3)
     ->select(
         'ordini.commessa', 'ordini.cod_art', 'ordini.descrizione',
         'ordini.qta_richiesta', 'ordini.data_prevista_consegna',
