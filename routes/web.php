@@ -146,6 +146,9 @@ Route::prefix('spedizione')->middleware(['operatore.auth'])->group(function() {
     Route::get('/note-giornaliere', [DashboardSpedizioneController::class, 'noteGiornaliere'])->name('spedizione.noteGiornaliere');
     Route::post('/note-giornaliere', [DashboardSpedizioneController::class, 'salvaNotaGiornaliera'])->name('spedizione.salvaNotaGiornaliera');
     Route::get('/note-check', [DashboardSpedizioneController::class, 'noteUltimoAggiornamento'])->name('spedizione.noteCheck');
+    Route::get('/notifiche', [DashboardSpedizioneController::class, 'notifiche'])->name('spedizione.notifiche');
+    Route::post('/notifiche/{id}/letta', [DashboardSpedizioneController::class, 'notificaLetta'])->name('spedizione.notificaLetta');
+    Route::post('/notifiche/lette', [DashboardSpedizioneController::class, 'notificheLette'])->name('spedizione.notificheLette');
 });
 
 // Tracking BRT test (accesso diretto)

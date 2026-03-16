@@ -479,4 +479,40 @@ class DashboardSpedizioneController extends Controller
             'data'       => $nota ? $nota->data->format('d/m/Y') : null,
         ]);
     }
+
+    /**
+     * Notifiche per la spedizione (invii esterni, ecc.)
+     * Polling dalla dashboard spedizione.
+     */
+    public function notifiche()
+    {
+        $notifiche = \DB::table('notifiche_spedizione')
+            ->where('letto', false)
+            ->orderByDesc('created_at')
+            ->limit(20)
+            ->get();
+
+        return response()->json([
+            'notifiche' => $notifiche,
+            'count' => $notifiche->count(),
+        ]);
+    }
+
+    /**
+     * Segna una notifica come letta.
+     */
+    public function notificaLetta($id)
+    {
+        \DB::table('notifiche_spedizione')->where('id', $id)->update(['letto' => true]);
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Segna tutte le notifiche come lette.
+     */
+    public function notificheLette()
+    {
+        \DB::table('notifiche_spedizione')->where('letto', false)->update(['letto' => true]);
+        return response()->json(['success' => true]);
+    }
 }

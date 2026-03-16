@@ -1330,5 +1330,53 @@ function showNoteToast(msg) {
 
 checkNoteConsegne();
 setInterval(checkNoteConsegne, 15000);
+
+// === NOTIFICHE INVII ESTERNI ===
+var _notifIdsViste = JSON.parse(localStorage.getItem('notifiche_sped_viste') || '[]');
+
+function checkNotificheEsterne() {
+    fetch('{{ route("spedizione.notifiche") }}')
+    .then(r => r.json())
+    .then(function(d) {
+        if (!d.notifiche || d.notifiche.length === 0) return;
+        d.notifiche.forEach(function(n) {
+            if (_notifIdsViste.indexOf(n.id) === -1) {
+                _notifIdsViste.push(n.id);
+                localStorage.setItem('notifiche_sped_viste', JSON.stringify(_notifIdsViste));
+                showNotificaEsterna(n);
+                // Beep
+                try {
+                    var ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    var osc = ctx.createOscillator();
+                    osc.type = 'sine'; osc.frequency.value = 880;
+                    osc.connect(ctx.destination);
+                    osc.start(); osc.stop(ctx.currentTime + 0.15);
+                    setTimeout(function() {
+                        var osc2 = ctx.createOscillator();
+                        osc2.type = 'sine'; osc2.frequency.value = 1100;
+                        osc2.connect(ctx.destination);
+                        osc2.start(); osc2.stop(ctx.currentTime + 0.15);
+                    }, 200);
+                } catch(e) {}
+            }
+        });
+    })
+    .catch(function(e) { console.error('notifiche error:', e); });
+}
+
+function showNotificaEsterna(n) {
+    var toast = document.createElement('div');
+    toast.innerHTML = '<strong>📦 Invio Esterno</strong><br>' + n.messaggio;
+    toast.style.cssText = 'position:fixed; top:20px; left:50%; transform:translateX(-50%); z-index:9999; background:#f59e0b; color:#000; padding:15px 20px; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.3); font-size:14px; cursor:pointer; max-width:450px; text-align:center;';
+    toast.onclick = function() {
+        toast.remove();
+        fetch('{{ url("/spedizione/notifiche") }}/' + n.id + '/letta', {method:'POST', headers:{'X-CSRF-TOKEN':'{{ csrf_token() }}'}});
+    };
+    document.body.appendChild(toast);
+    setTimeout(function() { if (toast.parentNode) toast.remove(); }, 30000);
+}
+
+checkNotificheEsterne();
+setInterval(checkNotificheEsterne, 15000);
 </script>
 @endsection

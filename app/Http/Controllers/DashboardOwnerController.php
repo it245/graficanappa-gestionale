@@ -558,6 +558,24 @@ public function calcolaOreEPriorita($fase)
                     $fase->save();
                 }
             }
+
+            // Se note contengono "Inviato a:", notifica la spedizione
+            if ($campo === 'note' && preg_match('/Inviato a:\s*(.+)/i', $valore ?? '', $mInv)) {
+                $fornitore = trim($mInv[1]);
+                $commessa = $fase->ordine->commessa ?? '';
+                $faseNome = $fase->faseCatalogo->nome_display ?? $fase->fase ?? '';
+                $descrizione = mb_substr($fase->ordine->descrizione ?? '', 0, 60);
+
+                DB::table('notifiche_spedizione')->insert([
+                    'tipo' => 'invio_esterno',
+                    'commessa' => $commessa,
+                    'fase' => $faseNome,
+                    'fornitore' => $fornitore,
+                    'messaggio' => "{$faseNome} commessa {$commessa} inviata a {$fornitore} — {$descrizione}",
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
         } elseif (in_array($campo, $campiOrdine)) {
             $fase->ordine->{$campo} = $valore;
             $fase->ordine->save();
