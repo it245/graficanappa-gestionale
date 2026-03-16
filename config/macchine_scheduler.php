@@ -68,7 +68,7 @@ return [
         'TAGLIO' => [
             'nome' => 'Tagliacarte',
             'turni' => 'standard',
-            'fasi' => ['TAGLIACARTE','TAGLIOINDIGO'],
+            'fasi' => ['TAGLIACARTE','TAGLIACARTE.IML','TAGLIOINDIGO'],
         ],
         'LEGAT' => [
             'nome' => 'Legatoria',
@@ -99,7 +99,14 @@ return [
         'PI01' => [0.50, 6000], 'PI02' => [1.00, 5000], 'PI03' => [1.00, 4000],
         'FOIL.MGI.30M' => [0.50, 500], 'UVSPOT.MGI.30M' => [0.50, 500], 'UVSPOT.MGI.9M' => [0.50, 500],
         'DEKIA-semplice' => [0.30, 500], 'ZUND' => [0.30, 300],
-        'TAGLIACARTE' => [0.30, 2000], 'TAGLIOINDIGO' => [0.30, 1000],
+        'TAGLIACARTE' => [0.30, 2000], 'TAGLIACARTE.IML' => [0.30, 2000], 'TAGLIOINDIGO' => [0.30, 1000],
+        'INCOLLAGGIO.PATTINA' => [0.50, 1500], 'SFUST.IML.FUSTELLATO' => [0.50, 1000],
+        'SPIRBLOCCOLIBROA4' => [0.50, 100], 'BROSSPUR' => [0.50, 300], 'PUNTOMETALLICO' => [0.50, 2000],
+        'PERF.BUC' => [0.30, 3000], 'PIEGA2ANTESINGOLO' => [0.50, 2000], 'PIEGA2ANTECORDONE' => [0.50, 2000],
+        'PIEGA4ANTESINGOLO' => [0.50, 1500], 'APPL.CORDONCINO0,035' => [0.50, 500],
+        'APPL.BIADESIVO30' => [0.50, 1000], 'LAVGEN' => [0.30, 1000], 'PIEGAMANUALE' => [0.00, 200],
+        'FASCETTATURA' => [0.30, 2000],
+        'STAMPA.OFFSET11.EST' => [0.50, 3000], 'AVVIAMENTISTAMPA.EST1.1' => [0.50, 1000],
         'BRT1' => [0.00, 99999], 'BRT' => [0.00, 99999],
     ],
 

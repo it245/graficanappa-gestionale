@@ -102,8 +102,9 @@ class SchedulerService
             $seq = $this->seqMap[$faseNome] ?? 999;
             $comm = $ordine->commessa;
 
-            $qtaCarta = $ordine->qta_carta ?: ($ordine->qta_richiesta ?: 0);
-            $ore = $this->oreLavorazione($qtaCarta, $faseNome);
+            // Usa qta_fase specifica se disponibile, altrimenti fallback a qta_carta/qta_richiesta
+            $qtaLavoro = $row->qta_fase ?: ($ordine->qta_carta ?: ($ordine->qta_richiesta ?: 0));
+            $ore = $this->oreLavorazione($qtaLavoro, $faseNome);
 
             $consegna = $ordine->data_prevista_consegna
                 ? Carbon::parse($ordine->data_prevista_consegna)
@@ -127,7 +128,7 @@ class SchedulerService
                 'stato_orig' => $stato,
                 'consegna' => $consegna,
                 'gg' => $gg,
-                'qta_carta' => $qtaCarta,
+                'qta_carta' => $qtaLavoro,
                 'ore' => $ore,
                 'fs' => $fs,
                 'formato_carta' => $formatoCarta,
