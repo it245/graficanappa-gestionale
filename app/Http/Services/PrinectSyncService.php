@@ -608,16 +608,10 @@ class PrinectSyncService
 
                 if ($worksteps->isEmpty()) continue;
 
+                // Auto-termina solo quando TUTTI i workstep Prinect sono COMPLETED
+                // (rimosso check fogli_buoni >= qta_carta perché commesse con montaggi multipli
+                // possono avere fogli > qta_carta del primo montaggio ma non aver finito il secondo)
                 $allCompleted = $worksteps->every(fn($ws) => ($ws['status'] ?? '') === 'COMPLETED');
-
-                // Anche se WAITING: se fogli prodotti >= qta_carta → stampa completata
-                if (!$allCompleted) {
-                    $qtaCarta = $fasi->first()->ordine->qta_carta ?? 0;
-                    if ($qtaCarta > 0) {
-                        $totaleProdotti = $fasi->sum('fogli_buoni');
-                        $allCompleted = $totaleProdotti >= $qtaCarta;
-                    }
-                }
 
                 if ($allCompleted) {
                     // Prendi data_fine dall'ultimo workstep completato
