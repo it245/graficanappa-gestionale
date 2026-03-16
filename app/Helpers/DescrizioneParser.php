@@ -150,6 +150,16 @@ class DescrizioneParser
                     $codes[] = preg_replace('/\s+/', ' ', strtoupper(trim($etiCode)));
                 }
             }
+
+            // Pattern "Fustella KS singola" / "fustella KS sing" → "KS SING"
+            if (preg_match('/\bfustella\s+(KS\s*sing(?:ola)?)\b/i', $testo, $m)) {
+                $codes[] = strtoupper(preg_replace('/\s+/', ' ', trim($m[1])));
+            }
+
+            // Pattern "Fustella Bobst" senza codice → "BOBST"
+            if (preg_match('/\bfustella\s+bobst\b/i', $testo) && empty($codes)) {
+                // Non aggiungere se c'è già un codice FS/KS
+            }
         }
 
         if (!empty($codes)) {
