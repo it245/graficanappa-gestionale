@@ -107,7 +107,7 @@
     <h1>ROADMAP SVILUPPO</h1>
     <h2>Sistema Gestionale MES &mdash; Grafica Nappa srl</h2>
     <div class="piano">Piano biennale (AI-Assisted): Febbraio 2026 &mdash; Febbraio 2028</div>
-    <div class="date">Aggiornata al 9 Marzo 2026</div>
+    <div class="date">Aggiornata al 16 Marzo 2026</div>
     <div class="author">Giovanni Pietropaolo &mdash; Tirocinante Sistemi Informativi</div>
 </div>
 
@@ -157,13 +157,13 @@
             <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
         </tr>
         <tr>
-            <td class="version-col">v1.1 Miglioramenti Operativi</td>
+            <td class="version-col">v1.1 Miglioramenti + Presenze + Notifiche</td>
             <td><div class="bar bar-done">&nbsp;</div></td>
             <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
         </tr>
         <tr>
-            <td class="version-col">v2.0 Notifiche &amp; Mobilit&agrave;</td>
-            <td></td>
+            <td class="version-col">v2.0 Scheduler Mossa 37</td>
+            <td><div class="bar bar-current">&nbsp;</div></td>
             <td><div class="bar bar-next">&nbsp;</div></td>
             <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
         </tr>
@@ -382,10 +382,70 @@
     <li class="done">Script diagnostici: <code>check_brt_consegnato.php</code>, <code>check_ddt_brt.php</code>, <code>check_onda_ddt.php</code></li>
 </ul>
 
-<!-- ========== v2.0 ========== -->
-<h3><span class="version-badge badge-next">v2.0</span> Notifiche &amp; Mobilit&agrave; <span class="timeline-badge">Apr-Giu 2026</span></h3>
-<p>Sistema di notifiche real-time e accesso mobile per operatori e titolare. L'obiettivo &egrave; eliminare la carta dal reparto.</p>
+<h4>Presenze &amp; Badge (16 marzo 2026)</h4>
+<ul class="checklist">
+    <li class="done">Lettura diretta timbrature da NetTime (.34) via share UNC &mdash; 54.000+ timbrature storiche importate</li>
+    <li class="done">Pagina presenze con intervalli lavoro/pausa, badge verde/giallo, ore nette</li>
+    <li class="done">Anagrafica badge completa (29 dipendenti) con mappatura confermata da Marco</li>
+    <li class="done">Gestione E+E consecutive: &lt;2h = errore badge, &ge;2h = rientro pausa</li>
+    <li class="done">Sync presenze ogni minuto (lun-ven 5:00-23:00) con auto net use</li>
+</ul>
 
+<h4>Notifiche &amp; Invii Esterni (16 marzo 2026)</h4>
+<ul class="checklist">
+    <li class="done">Notifiche spedizione: toast + beep quando fase inviata a esterno (&ldquo;Inviato a: XXX&rdquo;)</li>
+    <li class="done">Flag esterno automatico + avvio fase (stato 2) su &ldquo;Inviato a:&rdquo;</li>
+    <li class="done">Polling notifiche ogni 15s nella dashboard spedizione</li>
+</ul>
+
+<h4>Sync Onda &amp; Quantit&agrave; (16 marzo 2026)</h4>
+<ul class="checklist">
+    <li class="done">Qta Carta mostra fogli o pezzi reali per fase da Onda (QtaDaLavorare + CodUnMis)</li>
+    <li class="done">UM Carta: colonna fg/pz con colori (verde fogli, blu pezzi)</li>
+    <li class="done">Raggruppamento sync per IdDoc: documenti multipli nella stessa commessa creano ordini separati</li>
+    <li class="done">Dedup corretta per reparto: stampa/JOH/fustella/taglio/BRT per commessa, piega/fin/legatoria per ordine</li>
+    <li class="done">Fix auto-terminazione Prinect: solo stato COMPLETED, non fogli &ge; qta_carta</li>
+    <li class="done">Parser fustella migliorato: FS/KS + underscore (_273-1097) + &ldquo;KS singola&rdquo;</li>
+</ul>
+
+<h4>Sicurezza (audit 16 marzo 2026)</h4>
+<ul class="checklist">
+    <li class="todo">CRITICO: spostare credenziali share NetTime in .env</li>
+    <li class="todo">ALTO: autenticazione endpoint tracking BRT pubblici</li>
+    <li class="todo">ALTO: messaggi errore generici (no $e-&gt;getMessage())</li>
+    <li class="todo">MEDIO: XSS in blade templates, IDOR su eliminaFase, SSL BRT</li>
+    <li class="todo">BASSO: scadenza token operatore, limite upload file</li>
+</ul>
+
+<!-- ========== v2.0 ========== -->
+<h3><span class="version-badge badge-next">v2.0</span> Scheduler Mossa 37 &amp; Ottimizzazione Produzione <span class="timeline-badge">Apr-Giu 2026</span></h3>
+<p>Algoritmo di schedulazione produzione con simulazione a eventi discreti, batching intelligente per minimizzare i tempi di setup, e propagazione automatica delle fasi. In attesa di approvazione per il deploy in produzione.</p>
+
+<h4>Scheduler Mossa 37 (pronto, in attesa approvazione)</h4>
+<ul class="checklist">
+    <li class="done">SchedulerService: simulazione a eventi discreti completa (~580 righe PHP)</li>
+    <li class="done">Propagazione: sblocca fasi a stato 0 quando predecessori completati (75% delle fasi = 540 propagate)</li>
+    <li class="done">Batching per fustella: BOBST, JOH, PIEGA, FIN raggruppano per codice fustella (setup ridotto 10 min vs pieno 25 min)</li>
+    <li class="done">Batching XL106: raggruppamento per tipo lavaggio (DRIP OFF, Pantone, Standard)</li>
+    <li class="done">Batching plastificatrice: raggruppamento per tipo plastica + formato carta</li>
+    <li class="done">BOBST blocchi: prima tutti i rilievi, cambio config 1h, poi tutte le fustelle (2-3 cambi vs 40+)</li>
+    <li class="done">Piegaincolla blocchi: PI01/PI02/PI03 con cambio config 1h</li>
+    <li class="done">Piega: ordinamento per cod_art dentro il batch (articoli uguali consecutivi)</li>
+    <li class="done">11 macchine configurate con turni specifici (XL106 24h, altre 6-22)</li>
+    <li class="done">Parametri avviamento/copie_ora per 50+ fasi</li>
+    <li class="done">Risparmio stimato: 85-93 ore/mese di setup</li>
+    <li class="done">Tempo calcolo: &lt;3 secondi per 900+ fasi</li>
+    <li class="done">Migration: 15 campi scheduler su ordine_fasi</li>
+    <li class="done">PhaseCompleted event + PropagateAvailability listener (propagazione istantanea)</li>
+    <li class="done">Export Excel piano produzione con foglio per macchina</li>
+    <li class="done">Email serale con piano produzione allegato</li>
+    <li class="done">Comando artisan: <code>php artisan scheduler:run [--email] [--to=email]</code></li>
+    <li class="todo">Fallback 3 livelli dashboard: scheduler &rarr; fascia urgenza &rarr; priorit&agrave; legacy (pronto, disabilitato)</li>
+    <li class="todo">Priorit&agrave; manuale sempre rispettata nello scheduler (pronto, disabilitato)</li>
+    <li class="todo">Cron ogni 15 min + email serale (pronto, disabilitato)</li>
+</ul>
+
+<h4>Mobilit&agrave; &amp; Notifiche (da sviluppare)</h4>
 <ul class="checklist">
     <li class="todo">Progressive Web App (PWA): installabile su tablet e smartphone operatori</li>
     <li class="todo">Scansione barcode/QR per avvio/termine fase da dispositivo mobile</li>
