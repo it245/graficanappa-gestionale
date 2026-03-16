@@ -36,6 +36,7 @@ class OndaSyncService
         $righeOnda = DB::connection('onda')->select("
             SELECT
                 t.CodCommessa,
+                p.IdDoc AS PrdIdDoc,
                 p.CodArt,
                 p.OC_Descrizione,
                 COALESCE(NULLIF(p.NCPRagioneSociale, ''), a.RagioneSociale) AS ClienteNome,
@@ -355,10 +356,10 @@ class OndaSyncService
             Log::info("OndaSync: eliminati $fasiEliminate duplicati");
         }
 
-        // 2. Raggruppa per (CodCommessa, CodArt, OC_Descrizione) — normalizzato
+        // 2. Raggruppa per PrdIdDoc (documento di produzione Onda)
+        // Ogni IdDoc è un articolo separato nella stessa commessa (es. copertina + interno)
         $gruppi = collect($righeOnda)->groupBy(function ($riga) {
-            $desc = preg_replace('/\s+/', ' ', trim($riga->OC_Descrizione ?? ''));
-            return $riga->CodCommessa . '|' . $riga->CodArt . '|' . $desc;
+            return $riga->CodCommessa . '|' . ($riga->PrdIdDoc ?? $riga->CodArt);
         });
 
         // Track fasi deduplicate per commessa (1 sola per commessa per fustella, digitale, finitura digitale)
@@ -829,6 +830,7 @@ class OndaSyncService
         $righeOnda = DB::connection('onda')->select("
             SELECT
                 t.CodCommessa,
+                p.IdDoc AS PrdIdDoc,
                 p.CodArt,
                 p.OC_Descrizione,
                 COALESCE(NULLIF(p.NCPRagioneSociale, ''), a.RagioneSociale) AS ClienteNome,
