@@ -83,7 +83,8 @@ class DashboardOwnerController extends Controller
                     'fasi_catalogo.nome as fase_catalogo_nome',
                 ])
                 ->orderByRaw("
-                    CASE
+                    CASE WHEN ordine_fasi.priorita_manuale = 1 THEN 0 ELSE 1 END ASC,
+                    CASE WHEN ordine_fasi.priorita_manuale = 1 THEN COALESCE(ordine_fasi.priorita, 9999)
                         WHEN ordine_fasi.sched_posizione IS NOT NULL AND ordine_fasi.sched_calcolato_at > DATE_SUB(NOW(), INTERVAL 2 HOUR)
                             THEN ordine_fasi.sched_posizione
                         WHEN ordine_fasi.fascia_urgenza IS NOT NULL
@@ -119,6 +120,8 @@ class DashboardOwnerController extends Controller
                     'ore_previste' => round($orePreviste, 1),
                 ];
             })->sortBy(function ($item) {
+                $manuale = ($item->priorita_manuale ?? false) ? -1000000 + ($item->priorita ?? 0) : 0;
+                if ($manuale < 0) return $manuale;
                 if ($item->sched_posizione && $item->sched_calcolato_at
                     && \Carbon\Carbon::parse($item->sched_calcolato_at)->diffInHours(now()) < 2) {
                     return $item->sched_posizione;
@@ -366,6 +369,8 @@ public function calcolaOreEPriorita($fase)
                 return $fase;
             })
             ->sortBy(function ($f) {
+                $manuale = ($f->priorita_manuale ?? false) ? -1000000 + ($f->priorita ?? 0) : 0;
+                if ($manuale < 0) return $manuale;
                 if ($f->sched_posizione && $f->sched_calcolato_at
                     && \Carbon\Carbon::parse($f->sched_calcolato_at)->diffInHours(now()) < 2) {
                     return $f->sched_posizione;
@@ -769,6 +774,8 @@ public function calcolaOreEPriorita($fase)
             return $fase;
         })
         ->sortBy(function ($f) {
+                $manuale = ($f->priorita_manuale ?? false) ? -1000000 + ($f->priorita ?? 0) : 0;
+                if ($manuale < 0) return $manuale;
                 if ($f->sched_posizione && $f->sched_calcolato_at
                     && \Carbon\Carbon::parse($f->sched_calcolato_at)->diffInHours(now()) < 2) {
                     return $f->sched_posizione;
@@ -1101,6 +1108,8 @@ public function calcolaOreEPriorita($fase)
                 return $this->calcolaOreEPriorita($fase);
             })
             ->sortBy(function ($f) {
+                $manuale = ($f->priorita_manuale ?? false) ? -1000000 + ($f->priorita ?? 0) : 0;
+                if ($manuale < 0) return $manuale;
                 if ($f->sched_posizione && $f->sched_calcolato_at
                     && \Carbon\Carbon::parse($f->sched_calcolato_at)->diffInHours(now()) < 2) {
                     return $f->sched_posizione;

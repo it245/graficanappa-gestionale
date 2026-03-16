@@ -91,6 +91,9 @@ class DashboardOperatoreController extends Controller
                 return $fase;
             })
             ->sortBy(function ($fase) {
+                // Priorità manuale sempre in cima
+                $manuale = ($fase->priorita_manuale ?? false) ? -1000000 + ($fase->priorita ?? 0) : 0;
+                if ($manuale < 0) return $manuale;
                 // Mossa 37 — Fallback a 3 livelli (sezione 8.3 spec)
                 // 1. Se sched_posizione esiste e piano < 2h → usa posizione scheduler
                 if ($fase->sched_posizione && $fase->sched_calcolato_at
