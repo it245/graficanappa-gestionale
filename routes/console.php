@@ -31,8 +31,8 @@ Schedule::command('fiery:sync')->everyMinute()->withoutOverlapping();
 // Sync attivita Prinect XL106 ogni 5 minuti (storico 7gg)
 Schedule::command('prinect:sync-attivita')->everyFiveMinutes()->withoutOverlapping();
 
-// Controllo consegne BRT in ritardo (ogni giorno alle 9:00)
-Schedule::command('brt:check-ritardi')->dailyAt('09:00');
+// Controllo consegne BRT in ritardo — DISABILITATO
+// Schedule::command('brt:check-ritardi')->dailyAt('09:00');
 
 // Snapshot contatori Canon iPR V900 via SNMP (ogni lunedì alle 8:00)
 Schedule::command('fiery:snapshot-contatori')->weeklyOn(1, '08:00');
