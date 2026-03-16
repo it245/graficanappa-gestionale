@@ -52,32 +52,42 @@ $merge = [
 echo PHP_EOL . "=== MERGE TIMBRATURE DOPPIO BADGE ===" . PHP_EOL;
 
 // CRISANTI: merge 000016 → 000664
-$count = DB::table('nettime_timbrature')
-    ->where('matricola', '000016')
-    ->whereNotExists(function ($q) {
-        $q->select(DB::raw(1))
-          ->from('nettime_timbrature as t2')
-          ->whereColumn('t2.matricola', '=', DB::raw("'000664'"))
-          ->whereColumn('t2.data_ora', '=', 'nettime_timbrature.data_ora')
-          ->whereColumn('t2.verso', '=', 'nettime_timbrature.verso');
-    })
-    ->update(['matricola' => '000664']);
-echo "  CRISANTI: $count timbrature spostate da 000016 → 000664" . PHP_EOL;
+// Prima trova le timbrature da spostare (quelle che non hanno duplicato)
+$daSpostare = DB::select("
+    SELECT t1.id FROM nettime_timbrature t1
+    WHERE t1.matricola = '000016'
+    AND NOT EXISTS (
+        SELECT 1 FROM (SELECT data_ora, verso FROM nettime_timbrature WHERE matricola = '000664') t2
+        WHERE t2.data_ora = t1.data_ora AND t2.verso = t1.verso
+    )
+");
+$ids = array_map(fn($r) => $r->id, $daSpostare);
+$count = 0;
+if (!empty($ids)) {
+    $count = DB::table('nettime_timbrature')->whereIn('id', $ids)->update(['matricola' => '000664']);
+}
+// Elimina le rimanenti (duplicati)
+$deleted = DB::table('nettime_timbrature')->where('matricola', '000016')->delete();
+echo "  CRISANTI: $count spostate + $deleted duplicate eliminate (000016 → 000664)" . PHP_EOL;
 DB::table('nettime_anagrafica')->where('matricola', '000016')->delete();
 echo "  Rimosso 000016 dall'anagrafica" . PHP_EOL;
 
 // PAGANO: 000024 ha più timbrature, teniamo quello. Merge 000662 → 000024
-$count = DB::table('nettime_timbrature')
-    ->where('matricola', '000662')
-    ->whereNotExists(function ($q) {
-        $q->select(DB::raw(1))
-          ->from('nettime_timbrature as t2')
-          ->whereColumn('t2.matricola', '=', DB::raw("'000024'"))
-          ->whereColumn('t2.data_ora', '=', 'nettime_timbrature.data_ora')
-          ->whereColumn('t2.verso', '=', 'nettime_timbrature.verso');
-    })
-    ->update(['matricola' => '000024']);
-echo "  PAGANO: $count timbrature spostate da 000662 → 000024" . PHP_EOL;
+$daSpostare = DB::select("
+    SELECT t1.id FROM nettime_timbrature t1
+    WHERE t1.matricola = '000662'
+    AND NOT EXISTS (
+        SELECT 1 FROM (SELECT data_ora, verso FROM nettime_timbrature WHERE matricola = '000024') t2
+        WHERE t2.data_ora = t1.data_ora AND t2.verso = t1.verso
+    )
+");
+$ids = array_map(fn($r) => $r->id, $daSpostare);
+$count = 0;
+if (!empty($ids)) {
+    $count = DB::table('nettime_timbrature')->whereIn('id', $ids)->update(['matricola' => '000024']);
+}
+$deleted = DB::table('nettime_timbrature')->where('matricola', '000662')->delete();
+echo "  PAGANO: $count spostate + $deleted duplicate eliminate (000662 → 000024)" . PHP_EOL;
 DB::table('nettime_anagrafica')->where('matricola', '000662')->delete();
 echo "  Rimosso 000662 dall'anagrafica" . PHP_EOL;
 
