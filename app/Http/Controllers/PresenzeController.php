@@ -65,14 +65,18 @@ class PresenzeController extends Controller
             $ultimaTimb = end($timb);
             $dip['presente'] = $ultimaTimb && $ultimaTimb->verso === 'E';
 
-            // Pulisci timbrature: rimuovi E duplicate consecutive (tieni l'ultima)
+            // Pulisci timbrature: rimuovi E duplicate consecutive ravvicinate (< 2h = errore)
+            // Se distanti (>= 2h) la seconda è rientro pausa → tieni entrambe
             $timbPulite = [];
             for ($i = 0; $i < count($timb); $i++) {
                 $curr = $timb[$i];
                 $next = $timb[$i + 1] ?? null;
-                // Se E seguita da E, ignora la prima (doppio badge o errore)
                 if ($curr->verso === 'E' && $next && $next->verso === 'E') {
-                    continue;
+                    $diffMin = Carbon::parse($curr->data_ora)->diffInMinutes(Carbon::parse($next->data_ora));
+                    if ($diffMin < 120) {
+                        continue; // < 2h: doppio badge, ignora la prima
+                    }
+                    // >= 2h: rientro pausa, tieni (manca la U)
                 }
                 $timbPulite[] = $curr;
             }
