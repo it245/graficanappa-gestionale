@@ -69,8 +69,8 @@ thead th {
 }
 
 table {
-    width: 2560px;
-    max-width: 2560px;
+    width: 2700px;
+    max-width: 2700px;
     border-collapse: collapse;
     table-layout: fixed;
     font-size: 12px;
