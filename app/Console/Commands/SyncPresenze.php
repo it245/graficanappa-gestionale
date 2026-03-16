@@ -77,6 +77,13 @@ class SyncPresenze extends Command
 
     protected function syncAnagrafica()
     {
+        // Anagrafica gestita manualmente (aggiorna_anagrafica_completa.php)
+        // Non sovrascrivere con i dati vecchi di presenze.txt
+        if (DB::table('nettime_anagrafica')->count() > 0) {
+            $this->info("Anagrafica: già popolata, skip (gestione manuale).");
+            return;
+        }
+
         $path = self::PRESENZE_PATH;
         if (!file_exists($path)) {
             $this->warn("File anagrafica non trovato: $path");
