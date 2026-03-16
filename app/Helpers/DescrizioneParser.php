@@ -139,8 +139,8 @@ class DescrizioneParser
         $testi = array_filter([$descrizione, $notePrestampa]);
 
         foreach ($testi as $testo) {
-            // Pattern FS#### (codici fustella standard)
-            if (preg_match_all('/\b(FS\d{3,5})\b/', $testo, $m)) {
+            // Pattern FS#### (codici fustella standard, anche con suffisso _273-1097)
+            if (preg_match_all('/\b(FS\d{3,5})(?:[_\-\s]|$|\b)/', $testo, $m)) {
                 $codes = array_merge($codes, $m[1]);
             }
 
