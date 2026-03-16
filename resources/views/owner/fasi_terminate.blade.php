@@ -59,7 +59,13 @@ h2 {
     max-width: 100%;
     overflow: auto;
     margin: 0 1px;
-    max-height: calc(100vh - 230px);
+    max-height: calc(100vh - 280px);
+}
+thead th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #343a40;
 }
 
 table {
@@ -285,9 +291,37 @@ th:nth-child(23), td:nth-child(23) {
     </div>
 </div>
 
-<!-- Ricerca -->
-<div id="searchBox" style="margin: 6px 4px;">
-    <input type="text" id="searchInput" class="form-control form-control-sm" placeholder="Cerca commessa o cliente...">
+<!-- Filtri -->
+<div id="searchBox" style="margin: 6px 4px; display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+    <input type="text" id="searchInput" class="form-control form-control-sm" style="max-width:250px;" placeholder="Cerca commessa o cliente...">
+    <select id="filterReparto" class="form-control form-control-sm" style="max-width:180px;" onchange="filtraTabella()">
+        <option value="">Tutti i reparti</option>
+        @php
+            $repartiUnici = $fasiTerminate->pluck('reparto_nome')->filter()->unique()->sort();
+        @endphp
+        @foreach($repartiUnici as $rep)
+            <option value="{{ $rep }}">{{ ucfirst($rep) }}</option>
+        @endforeach
+    </select>
+    <select id="filterFase" class="form-control form-control-sm" style="max-width:200px;" onchange="filtraTabella()">
+        <option value="">Tutte le fasi</option>
+        @php
+            $fasiUniche = $fasiTerminate->map(fn($f) => $f->faseCatalogo->nome_display ?? $f->fase ?? '')->filter()->unique()->sort();
+        @endphp
+        @foreach($fasiUniche as $fase)
+            <option value="{{ $fase }}">{{ $fase }}</option>
+        @endforeach
+    </select>
+    <select id="filterOperatore" class="form-control form-control-sm" style="max-width:180px;" onchange="filtraTabella()">
+        <option value="">Tutti gli operatori</option>
+        @php
+            $operatoriUnici = $fasiTerminate->flatMap(fn($f) => $f->operatori->map(fn($op) => $op->nome . ' ' . $op->cognome))->filter()->unique()->sort();
+        @endphp
+        @foreach($operatoriUnici as $op)
+            <option value="{{ $op }}">{{ $op }}</option>
+        @endforeach
+    </select>
+    <button class="btn btn-sm btn-outline-secondary" onclick="resetFiltri()">Reset</button>
 </div>
 
 <!-- Tabella -->
@@ -335,7 +369,7 @@ th:nth-child(23), td:nth-child(23) {
                         elseif ($diff <= 5) $rowClass = 'warning-light';
                     }
                 @endphp
-                <tr class="{{ $rowClass }}">
+                <tr class="{{ $rowClass }}" data-reparto="{{ strtolower($fase->reparto_nome ?? '') }}" data-fase="{{ strtolower($fase->faseCatalogo->nome_display ?? $fase->fase ?? '') }}" data-operatori="{{ strtolower($fase->operatori->map(fn($op) => $op->nome . ' ' . $op->cognome)->implode(', ')) }}">
                     <td><strong>{{ $fase->ordine->commessa ?? '-' }}</strong></td>
                     <td>{{ $fase->ordine->cliente_nome ?? '-' }}</td>
                     <td>{{ $fase->ordine->cod_art ?? '-' }}</td>
@@ -464,13 +498,37 @@ function aggiornaStato(faseId, testo) {
     .catch(e => alert('Errore di rete'));
 }
 
-document.getElementById('searchInput').addEventListener('keyup', function() {
-    const filtro = this.value.toLowerCase();
+document.getElementById('searchInput').addEventListener('keyup', filtraTabella);
+
+function filtraTabella() {
+    const testo = document.getElementById('searchInput').value.toLowerCase();
+    const reparto = document.getElementById('filterReparto').value.toLowerCase();
+    const fase = document.getElementById('filterFase').value.toLowerCase();
+    const operatore = document.getElementById('filterOperatore').value.toLowerCase();
+
     document.querySelectorAll('tbody tr').forEach(riga => {
         const commessa = riga.cells[0]?.innerText.toLowerCase() || '';
         const cliente = riga.cells[1]?.innerText.toLowerCase() || '';
-        riga.style.display = (commessa.includes(filtro) || cliente.includes(filtro)) ? '' : 'none';
+        const desc = riga.cells[3]?.innerText.toLowerCase() || '';
+        const repartoRiga = riga.dataset.reparto || '';
+        const faseRiga = riga.dataset.fase || '';
+        const opRiga = riga.dataset.operatori || '';
+
+        const matchTesto = !testo || commessa.includes(testo) || cliente.includes(testo) || desc.includes(testo);
+        const matchReparto = !reparto || repartoRiga === reparto;
+        const matchFase = !fase || faseRiga === fase;
+        const matchOp = !operatore || opRiga.includes(operatore);
+
+        riga.style.display = (matchTesto && matchReparto && matchFase && matchOp) ? '' : 'none';
     });
-});
+}
+
+function resetFiltri() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('filterReparto').value = '';
+    document.getElementById('filterFase').value = '';
+    document.getElementById('filterOperatore').value = '';
+    filtraTabella();
+}
 </script>
 @endsection
