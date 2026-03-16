@@ -352,7 +352,8 @@ th:nth-child(23), td:nth-child(23) {
                 <th>Data Inizio</th>
                 <th>Data Fine</th>
                 <th>Pausa</th>
-                <th>Ore Lavorate</th>
+                <th>Ore Prev.</th>
+                <th>Ore Lav.</th>
                 <th>Stato</th>
             </tr>
         </thead>
@@ -435,6 +436,13 @@ th:nth-child(23), td:nth-child(23) {
                         $pausaM = floor(($totSecondiPausa % 3600) / 60);
                     @endphp
                     <td>{{ $totSecondiPausa > 0 ? sprintf('%dh %02dm', $pausaH, $pausaM) : '-' }}</td>
+                    @php
+                        $infoFaseOre = config('fasi_ore')[$fase->fase ?? ''] ?? ['avviamento' => 0.5, 'copieh' => 1000];
+                        $copiehFase = $infoFaseOre['copieh'] ?? 1000;
+                        $qtaCartaPrev = $fase->qta_fase ?: ($fase->ordine->qta_carta ?? 0);
+                        $orePrev = $copiehFase > 0 ? round(($infoFaseOre['avviamento'] ?? 0.5) + ($qtaCartaPrev / $copiehFase), 1) : 0;
+                    @endphp
+                    <td style="color:#6b7280;">{{ $orePrev > 0 ? $orePrev . 'h' : '-' }}</td>
                     <td>
                         @if($secLordo > 0)
                             @if($oreNette >= 1)

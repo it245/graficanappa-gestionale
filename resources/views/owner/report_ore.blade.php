@@ -239,10 +239,56 @@
             </div>
         </div>
 
+        {{-- Commesse di oggi --}}
+        @if($commesseOggi->isNotEmpty())
+        <div class="ro-section" style="border-left:4px solid #059669;">
+            <div class="ro-section-header">
+                <span class="ro-section-title" style="color:#059669;">Commesse Oggi</span>
+                <span style="font-size:11px; color:#9ca3af;">{{ $commesseOggi->count() }} commesse con fasi terminate oggi</span>
+            </div>
+            <div style="overflow-x:auto;">
+                <table class="ro-table">
+                    <thead>
+                        <tr>
+                            <th>Commessa</th>
+                            <th>Descrizione</th>
+                            <th>Cliente</th>
+                            <th>Consegna</th>
+                            <th class="text-center">Fasi oggi</th>
+                            <th class="text-right">Ore Prev.</th>
+                            <th class="text-right">Ore Lav.</th>
+                            <th class="text-right">Scostamento</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($commesseOggi as $c)
+                        @php
+                            $fasiOggi = $c->fasi->filter(fn($f) => $f->data_fine && \Carbon\Carbon::parse($f->data_fine)->isToday());
+                            $orePrevOggi = round($fasiOggi->sum('ore_previste'), 1);
+                            $oreLavOggi = round($fasiOggi->sum('ore_lavorate'), 1);
+                            $delta = round($oreLavOggi - $orePrevOggi, 1);
+                        @endphp
+                        <tr>
+                            <td><strong>{{ $c->commessa }}</strong></td>
+                            <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ Str::limit($c->descrizione, 50) }}</td>
+                            <td>{{ Str::limit($c->cliente, 25) }}</td>
+                            <td>{{ $c->data_consegna ? \Carbon\Carbon::parse($c->data_consegna)->format('d/m') : '-' }}</td>
+                            <td class="text-center">{{ $fasiOggi->count() }}</td>
+                            <td class="text-right">{{ $orePrevOggi }}h</td>
+                            <td class="text-right" style="font-weight:600;">{{ $oreLavOggi }}h</td>
+                            <td class="text-right" style="color:{{ $delta > 0 ? '#dc2626' : '#059669' }}; font-weight:600;">{{ $delta > 0 ? '+' : '' }}{{ $delta }}h</td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        @endif
+
         {{-- Tabella commesse --}}
         <div class="ro-section">
             <div class="ro-section-header">
-                <span class="ro-section-title">Dettaglio Commesse</span>
+                <span class="ro-section-title">Dettaglio Commesse (tutte)</span>
                 <span style="font-size:11px; color:#9ca3af;">{{ $commesse->count() }} commesse</span>
             </div>
             <div style="overflow-x:auto;">

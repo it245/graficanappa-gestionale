@@ -996,7 +996,20 @@ public function calcolaOreEPriorita($fase)
 
         $reparti = Reparto::where('nome', '!=', 'spedizione')->orderBy('nome')->pluck('nome', 'id');
 
-        return view('owner.report_ore', compact('commesse', 'reparti', 'filtroCommessa', 'filtroReparto', 'orePerReparto'));
+        // Commesse con fasi terminate oggi
+        $oggi = Carbon::today();
+        $commesseOggi = $commesse->filter(function ($c) use ($oggi) {
+            return $c->fasi->contains(function ($f) use ($oggi) {
+                if (!$f->data_fine) return false;
+                try {
+                    return Carbon::parse($f->data_fine)->isToday();
+                } catch (\Exception $e) {
+                    return false;
+                }
+            });
+        });
+
+        return view('owner.report_ore', compact('commesse', 'commesseOggi', 'reparti', 'filtroCommessa', 'filtroReparto', 'orePerReparto'));
     }
 
     public function scheduling(PrinectService $prinect, PrinectSyncService $syncService)
