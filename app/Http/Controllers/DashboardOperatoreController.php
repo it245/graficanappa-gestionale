@@ -90,25 +90,7 @@ class DashboardOperatoreController extends Controller
 
                 return $fase;
             })
-            ->sortBy(function ($fase) {
-                // Priorità manuale sempre in cima
-                $manuale = ($fase->priorita_manuale ?? false) ? -1000000 + ($fase->priorita ?? 0) : 0;
-                if ($manuale < 0) return $manuale;
-                // Mossa 37 — Fallback a 3 livelli (sezione 8.3 spec)
-                // 1. Se sched_posizione esiste e piano < 2h → usa posizione scheduler
-                if ($fase->sched_posizione && $fase->sched_calcolato_at
-                    && \Carbon\Carbon::parse($fase->sched_calcolato_at)->diffInHours(now()) < 2) {
-                    return $fase->sched_posizione;
-                }
-                // 2. Se fascia_urgenza calcolata → ordina per fascia → urgenza_reale → sequenza
-                if ($fase->fascia_urgenza !== null) {
-                    return ($fase->fascia_urgenza * 10000)
-                         + (($fase->urgenza_reale ?? 999) * 100)
-                         + ($fase->sequenza_m37 ?? 999);
-                }
-                // 3. Fallback: priorità vecchia del gestionale
-                return $fase->priorita ?? 9999;
-            });
+            ->sortBy('priorita');
 
         // Flag per colonne condizionali
         $nomiReparti = $operatore->reparti->pluck('nome')->map(fn($n) => strtolower($n))->toArray();

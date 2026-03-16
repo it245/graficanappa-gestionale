@@ -82,16 +82,7 @@ class DashboardOwnerController extends Controller
                     'ordine_fasi.operatore_id',
                     'fasi_catalogo.nome as fase_catalogo_nome',
                 ])
-                ->orderByRaw("
-                    CASE WHEN ordine_fasi.priorita_manuale = 1 THEN 0 ELSE 1 END ASC,
-                    CASE WHEN ordine_fasi.priorita_manuale = 1 THEN COALESCE(ordine_fasi.priorita, 9999)
-                        WHEN ordine_fasi.sched_posizione IS NOT NULL AND ordine_fasi.sched_calcolato_at > DATE_SUB(NOW(), INTERVAL 2 HOUR)
-                            THEN ordine_fasi.sched_posizione
-                        WHEN ordine_fasi.fascia_urgenza IS NOT NULL
-                            THEN (ordine_fasi.fascia_urgenza * 10000) + (COALESCE(ordine_fasi.urgenza_reale, 999) * 100) + COALESCE(ordine_fasi.sequenza_m37, 999)
-                        ELSE COALESCE(ordine_fasi.priorita, 9999)
-                    END ASC
-                ")
+                ->orderBy('ordine_fasi.priorita')
                 ->get();
 
             // Raggruppa per commessa
@@ -119,18 +110,7 @@ class DashboardOwnerController extends Controller
                     'fasi'        => $group->pluck('fase_catalogo_nome')->unique()->values()->all(),
                     'ore_previste' => round($orePreviste, 1),
                 ];
-            })->sortBy(function ($item) {
-                $manuale = ($item->priorita_manuale ?? false) ? -1000000 + ($item->priorita ?? 0) : 0;
-                if ($manuale < 0) return $manuale;
-                if ($item->sched_posizione && $item->sched_calcolato_at
-                    && \Carbon\Carbon::parse($item->sched_calcolato_at)->diffInHours(now()) < 2) {
-                    return $item->sched_posizione;
-                }
-                if ($item->fascia_urgenza !== null) {
-                    return ($item->fascia_urgenza * 10000) + (($item->urgenza_reale ?? 999) * 100) + ($item->sequenza_m37 ?? 999);
-                }
-                return $item->priorita ?? 9999;
-            })->values();
+            })->sortBy('priorita')->values();
 
             $data[] = (object)[
                 'reparto'  => $reparto,
@@ -368,18 +348,7 @@ public function calcolaOreEPriorita($fase)
 
                 return $fase;
             })
-            ->sortBy(function ($f) {
-                $manuale = ($f->priorita_manuale ?? false) ? -1000000 + ($f->priorita ?? 0) : 0;
-                if ($manuale < 0) return $manuale;
-                if ($f->sched_posizione && $f->sched_calcolato_at
-                    && \Carbon\Carbon::parse($f->sched_calcolato_at)->diffInHours(now()) < 2) {
-                    return $f->sched_posizione;
-                }
-                if ($f->fascia_urgenza !== null) {
-                    return ($f->fascia_urgenza * 10000) + (($f->urgenza_reale ?? 999) * 100) + ($f->sequenza_m37 ?? 999);
-                }
-                return $f->priorita ?? 9999;
-            });
+            ->sortBy('priorita');
 
         $reparti = Reparto::orderBy('nome')->pluck('nome', 'id');
         $fasiCatalogo = FasiCatalogo::all();
@@ -773,18 +742,7 @@ public function calcolaOreEPriorita($fase)
 
             return $fase;
         })
-        ->sortBy(function ($f) {
-                $manuale = ($f->priorita_manuale ?? false) ? -1000000 + ($f->priorita ?? 0) : 0;
-                if ($manuale < 0) return $manuale;
-                if ($f->sched_posizione && $f->sched_calcolato_at
-                    && \Carbon\Carbon::parse($f->sched_calcolato_at)->diffInHours(now()) < 2) {
-                    return $f->sched_posizione;
-                }
-                if ($f->fascia_urgenza !== null) {
-                    return ($f->fascia_urgenza * 10000) + (($f->urgenza_reale ?? 999) * 100) + ($f->sequenza_m37 ?? 999);
-                }
-                return $f->priorita ?? 9999;
-            });
+        ->sortBy('priorita');
 
     return view('owner.fasi_terminate', compact('fasiTerminate', 'soloOggi'));
 }
@@ -1107,18 +1065,7 @@ public function calcolaOreEPriorita($fase)
             ->map(function ($fase) {
                 return $this->calcolaOreEPriorita($fase);
             })
-            ->sortBy(function ($f) {
-                $manuale = ($f->priorita_manuale ?? false) ? -1000000 + ($f->priorita ?? 0) : 0;
-                if ($manuale < 0) return $manuale;
-                if ($f->sched_posizione && $f->sched_calcolato_at
-                    && \Carbon\Carbon::parse($f->sched_calcolato_at)->diffInHours(now()) < 2) {
-                    return $f->sched_posizione;
-                }
-                if ($f->fascia_urgenza !== null) {
-                    return ($f->fascia_urgenza * 10000) + (($f->urgenza_reale ?? 999) * 100) + ($f->sequenza_m37 ?? 999);
-                }
-                return $f->priorita ?? 9999;
-            });
+            ->sortBy('priorita');
 
         $dataScheduling = $fasi->map(function ($fase) use ($tempiMedi) {
             // Data inizio: dalla pivot operatore, fallback dal campo ordine_fasi
