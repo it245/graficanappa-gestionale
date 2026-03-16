@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\FasiCatalogo;
+use App\Events\PhaseCompleted;
 
 class OrdineFase extends Model
 {
@@ -142,6 +143,9 @@ public function termina()
         'stato' => 2,
         'data_fine' => now(),
     ]);
+
+    // Mossa 37: propaga disponibilità ai successori
+    PhaseCompleted::dispatch($this);
 }
 }
 
