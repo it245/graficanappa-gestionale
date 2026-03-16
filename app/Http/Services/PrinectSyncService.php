@@ -610,6 +610,15 @@ class PrinectSyncService
 
                 $allCompleted = $worksteps->every(fn($ws) => ($ws['status'] ?? '') === 'COMPLETED');
 
+                // Anche se WAITING: se fogli prodotti >= qta_carta → stampa completata
+                if (!$allCompleted) {
+                    $qtaCarta = $fasi->first()->ordine->qta_carta ?? 0;
+                    if ($qtaCarta > 0) {
+                        $totaleProdotti = $fasi->sum('fogli_buoni');
+                        $allCompleted = $totaleProdotti >= $qtaCarta;
+                    }
+                }
+
                 if ($allCompleted) {
                     // Prendi data_fine dall'ultimo workstep completato
                     $lastEnd = $worksteps->map(fn($ws) => $ws['actualEndDate'] ?? null)
