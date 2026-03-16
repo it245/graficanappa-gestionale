@@ -199,9 +199,8 @@ class ProduzioneController extends Controller
 
         $operatoreId = $request->attributes->get('operatore_id') ?? session('operatore_id');
 
-        // Trova pausa aperta per questo operatore/ordine/fase
-        $pausa = PausaOperatore::where('operatore_id', $operatoreId)
-            ->where('ordine_id', $fase->ordine_id)
+        // Trova pausa aperta per questa fase (qualsiasi operatore — es. A mette in pausa, B riprende)
+        $pausa = PausaOperatore::where('ordine_id', $fase->ordine_id)
             ->where('fase', $fase->fase)
             ->whereNull('fine')
             ->latest('data_ora')
