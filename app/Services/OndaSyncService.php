@@ -1048,6 +1048,15 @@ class OndaSyncService
                     $dedupPerCommessa[$chiaveDedup]++;
                 }
 
+                if ($repartoNome === 'stampa a caldo') {
+                    $chiaveDedup = $commessa . '|stampa_caldo|' . $faseNome;
+                    if (isset($dedupPerCommessa[$chiaveDedup])) continue;
+                    $existsInCommessa = OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
+                        ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))->exists();
+                    $dedupPerCommessa[$chiaveDedup] = true;
+                    if ($existsInCommessa) continue;
+                }
+
                 if ($repartoNome === 'spedizione') {
                     $chiaveDedup = $commessa . '|spedizione|' . $faseNome;
                     if (isset($dedupPerCommessa[$chiaveDedup])) continue;
