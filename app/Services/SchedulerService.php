@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\OrdineFase;
 use App\Models\Ordine;
+use App\Helpers\DescrizioneParser;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
@@ -114,7 +115,8 @@ class SchedulerService
             // Estrai fustella dal campo della fase o dall'ordine
             $fs = $this->estraiFustella($row, $ordine);
             $formatoCarta = $this->estraiFormato($ordine->carta ?? '');
-            $tipoOffset = $mac === 'XL106' ? $this->classificaOffset($ordine->colori ?? '') : null;
+            $colori = DescrizioneParser::parseColori($ordine->descrizione ?? '', $ordine->cliente_nome ?? '');
+            $tipoOffset = $mac === 'XL106' ? $this->classificaOffset($colori) : null;
 
             $fid = $row->id;
             $fasi[$fid] = [
@@ -539,11 +541,11 @@ class SchedulerService
 
     protected function estraiFustella($row, $ordine): ?string
     {
-        $fs = $row->fustella_codice ?? null;
-        if ($fs && trim($fs) !== '') return trim($fs);
-        // Cerca nella commessa
-        if ($ordine && $ordine->fustella_codice ?? null) return trim($ordine->fustella_codice);
-        return null;
+        $desc = $ordine->descrizione ?? '';
+        $cliente = $ordine->cliente_nome ?? '';
+        $notePre = $ordine->note_prestampa ?? '';
+
+        return DescrizioneParser::parseFustella($desc, $cliente, $notePre);
     }
 
     protected function estraiFormato(string $carta): string
