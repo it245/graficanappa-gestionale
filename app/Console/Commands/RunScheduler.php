@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Mail;
 
 class RunScheduler extends Command
 {
-    protected $signature = 'scheduler:run {--email : Genera Excel e invia email con piano produzione}';
+    protected $signature = 'scheduler:run {--email : Genera Excel e invia email con piano produzione} {--to= : Indirizzo email destinatario (default: anappa@graficanappa.com)}';
     protected $description = 'Esegue lo scheduler Mossa 37 — simulazione a eventi discreti';
 
     public function handle()
@@ -50,8 +50,9 @@ class RunScheduler extends Command
                 SchedulerExportService::export($path);
                 $this->info("Excel generato: $path");
 
-                Mail::to('anappa@graficanappa.com')->send(new PianoProduzione($path, $result));
-                $this->info("Email inviata a anappa@graficanappa.com");
+                $to = $this->option('to') ?: 'anappa@graficanappa.com';
+                Mail::to($to)->send(new PianoProduzione($path, $result));
+                $this->info("Email inviata a $to");
             } catch (\Throwable $e) {
                 $this->error("Errore export/email: {$e->getMessage()}");
             }
