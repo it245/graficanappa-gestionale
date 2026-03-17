@@ -26,5 +26,7 @@ foreach ($fasi as $f) {
     $stati = ['Non iniziata', 'Pronto', 'Avviato', 'Terminato', 'Consegnato'];
     $reparto = $f->faseCatalogo->reparto->nome ?? '-';
     $desc = substr($f->ordine->descrizione ?? '-', 0, 40);
-    echo "  ID:{$f->id} | {$f->fase} | Reparto: {$reparto} | Stato: {$f->stato} ({$stati[$f->stato] ?? '?'}) | Esterno: " . ($f->esterno ? 'SI' : 'no') . " | Desc: {$desc}\n";
+    $statoLabel = isset($stati[$f->stato]) ? $stati[$f->stato] : '?';
+    $ext = $f->esterno ? 'SI' : 'no';
+    echo "  ID:{$f->id} | {$f->fase} | Reparto: {$reparto} | Stato: {$f->stato} ({$statoLabel}) | Esterno: {$ext} | Desc: {$desc}\n";
 }
