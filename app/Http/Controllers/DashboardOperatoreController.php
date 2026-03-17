@@ -176,4 +176,83 @@ class DashboardOperatoreController extends Controller
 
         return view('operatore.fustelle', compact('operatore', 'fustelleMap'));
     }
+
+    /**
+     * Dashboard Prestampa: lista commesse attive con commessa + descrizione cliccabili.
+     */
+    public function prestampa(Request $request)
+    {
+        $operatore = $request->attributes->get('operatore') ?? auth()->guard('operatore')->user();
+        if (!$operatore) abort(403, 'Accesso negato');
+
+        // Commesse con almeno una fase attiva (stato < 3), ordinate per data consegna
+        $commesse = \App\Models\Ordine::whereHas('fasi', fn($q) => $q->where('stato', '<', 3))
+            ->select('commessa', 'cliente_nome', 'descrizione', 'data_prevista_consegna', 'data_registrazione',
+                     'note_prestampa', 'responsabile', 'qta_richiesta', 'um')
+            ->groupBy('commessa', 'cliente_nome', 'descrizione', 'data_prevista_consegna', 'data_registrazione',
+                      'note_prestampa', 'responsabile', 'qta_richiesta', 'um')
+            ->orderBy('data_prevista_consegna')
+            ->get();
+
+        return view('operatore.prestampa', compact('operatore', 'commesse'));
+    }
+
+    /**
+     * Dettaglio commessa prestampa: stessa vista owner ma con campi editabili per prestampa.
+     */
+    public function prestampaDettaglio(Request $request, $commessa)
+    {
+        $operatore = $request->attributes->get('operatore') ?? auth()->guard('operatore')->user();
+        if (!$operatore) abort(403, 'Accesso negato');
+
+        $ordini = \App\Models\Ordine::where('commessa', $commessa)
+            ->with('fasi.faseCatalogo.reparto', 'fasi.operatori')
+            ->get();
+
+        if ($ordini->isEmpty()) abort(404, 'Commessa non trovata');
+
+        $ordine = $ordini->first();
+
+        $fasi = $ordini->flatMap(function ($ordine) {
+            return $ordine->fasi->map(function ($fase) use ($ordine) {
+                $fase->ordine = $ordine;
+                $fase->reparto_nome = $fase->faseCatalogo->reparto->nome ?? '-';
+                return $fase;
+            });
+        })->sortBy(function ($fase) {
+            $ordine = config('fasi_ordine');
+            $nome = $fase->faseCatalogo->nome ?? '';
+            return $ordine[$nome] ?? $ordine[strtolower($nome)] ?? 999;
+        });
+
+        return view('operatore.prestampa_dettaglio', compact('operatore', 'ordine', 'ordini', 'commessa', 'fasi'));
+    }
+
+    /**
+     * Aggiorna campo ordine da prestampa (note_prestampa, responsabile, commento_produzione).
+     */
+    public function prestampaAggiornaCampo(Request $request)
+    {
+        $operatore = $request->attributes->get('operatore') ?? auth()->guard('operatore')->user();
+        if (!$operatore) return response()->json(['success' => false, 'messaggio' => 'Non autorizzato'], 403);
+
+        $campiConsentiti = ['note_prestampa', 'responsabile', 'commento_produzione'];
+        $campo = $request->input('campo');
+        $valore = $request->input('valore');
+        $ordineId = $request->input('ordine_id');
+
+        if (!in_array($campo, $campiConsentiti)) {
+            return response()->json(['success' => false, 'messaggio' => 'Campo non consentito']);
+        }
+
+        $ordine = \App\Models\Ordine::find($ordineId);
+        if (!$ordine) {
+            return response()->json(['success' => false, 'messaggio' => 'Ordine non trovato']);
+        }
+
+        // Aggiorna su tutti gli ordini della stessa commessa
+        \App\Models\Ordine::where('commessa', $ordine->commessa)->update([$campo => $valore]);
+
+        return response()->json(['success' => true]);
+    }
 }

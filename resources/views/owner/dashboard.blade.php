@@ -836,7 +836,6 @@ tr:hover td {
                     <th>Reparto</th>
                     <th>Carta</th>
                     <th>Qta Carta</th>
-                    <th>Data Registrazione</th>
                     <th>Data Prevista Consegna</th>
                     <th>Cod Carta</th>
                     <th>UM Carta</th>
@@ -848,6 +847,7 @@ tr:hover td {
                     <th>Data Fine</th>
                     <th>Ore Prev.</th>
                     <th>Ore Lav.</th>
+                    <th>Data Reg.</th>
                     <th>Progresso</th>
                 </tr>
             </thead>
@@ -900,7 +900,6 @@ tr:hover td {
                         }
                     @endphp
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'qta_fase', this.innerText)">{{ $qtaFaseVal ? number_format($qtaFaseVal, 0, ',', '.') : '-' }}</td>
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_registrazione', this.innerText)">{{ formatItalianDate($fase->ordine->data_registrazione) }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_prevista_consegna', this.innerText)">{{ formatItalianDate($fase->ordine->data_prevista_consegna) }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'cod_carta', this.innerText)">{{ $fase->ordine->cod_carta ?? '-' }}</td>
                     <td style="font-weight:600;color:{{ $isPezzi ? '#2563eb' : '#059669' }}">{{ $umLabel }}</td>
@@ -990,6 +989,7 @@ tr:hover td {
                             -
                         @endif
                     </td>
+                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_registrazione', this.innerText)">{{ formatItalianDate($fase->ordine->data_registrazione) }}</td>
                     @php
                         $prog = $progressoCommesse[$fase->ordine->commessa ?? ''] ?? ['totale'=>0,'terminate'=>0,'avviate'=>0,'percentuale'=>0];
                         $progPerc = $prog['percentuale'];

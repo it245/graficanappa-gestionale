@@ -27,6 +27,11 @@ Route::prefix('operatore')->group(function() {
         // Fustelle (per operatori fustella piana/cilindrica)
         Route::get('/fustelle', [DashboardOperatoreController::class, 'fustelle'])->name('operatore.fustelle');
 
+        // Prestampa
+        Route::get('/prestampa', [DashboardOperatoreController::class, 'prestampa'])->name('operatore.prestampa');
+        Route::get('/prestampa/{commessa}', [DashboardOperatoreController::class, 'prestampaDettaglio'])->name('operatore.prestampa.dettaglio');
+        Route::post('/prestampa/aggiorna-campo', [DashboardOperatoreController::class, 'prestampaAggiornaCampo'])->name('operatore.prestampa.aggiornaCampo');
+
         // Etichette EAN
         Route::get('/etichetta/search-ean', [EtichettaController::class, 'searchEan'])->name('operatore.etichetta.searchEan');
         Route::post('/etichetta/salva-ean', [EtichettaController::class, 'salvaEan'])->name('operatore.etichetta.salvaEan');
