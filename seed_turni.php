@@ -46,9 +46,9 @@ $turni = [
     ['VINCENZO MARRONE',          ['1','1','2','2','1','R']],   // orario S2 12:00-20:00 quando turno 2
     ['BARBATO RAFFAELE',          ['R','F','1','F','2','R']],
 
-    // Stampa a caldo
-    ['GARGIULO VINCENZO',         ['1','1','1','1','1',null]],  // orario 1 06:00-14:00
-    ['PAGANO DIEGO',              ['2','2','2','2','2',null]],  // orario 2 14:00-22:00
+    // Stampa a caldo (scambio turno Pagano ↔ Gargiulo per tutta la settimana)
+    ['GARGIULO VINCENZO',         ['2','2','2','2','2',null]],  // orario 2 14:00-22:00 (scambiato)
+    ['PAGANO DIEGO',              ['1','1','1','1','1',null]],  // orario 1 06:00-14:00 (scambiato)
 
     // Altri reparti con turni
     ['MENALE FRANCESCO',          ['1','1','1','1','1',null]],  // orario 1 06:00-14:00
