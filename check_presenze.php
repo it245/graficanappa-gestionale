@@ -1,67 +1,54 @@
 <?php
-/**
- * Debug presenze: controlla anagrafica e matricole mancanti
- * Eseguire sul server: php check_presenze.php
- */
 require __DIR__ . '/vendor/autoload.php';
 $app = require_once __DIR__ . '/bootstrap/app.php';
 $app->make('Illuminate\Contracts\Console\Kernel')->bootstrap();
 
 use Illuminate\Support\Facades\DB;
 
-// 0. Forza re-sync anagrafica
-echo "=== FORZA RE-SYNC ANAGRAFICA ===" . PHP_EOL;
-Artisan::call('presenze:sync');
-echo Artisan::output();
+$oggi = date('Y-m-d');
+echo "=== DEBUG PRESENZE - $oggi ===\n\n";
 
-// 1. Anagrafiche presenti
-$anag = DB::table('nettime_anagrafica')->orderBy('cognome')->get();
-echo PHP_EOL . "=== ANAGRAFICHE ({$anag->count()}) ===" . PHP_EOL;
-foreach ($anag as $a) {
-    echo "  [{$a->matricola}] {$a->cognome} {$a->nome}" . PHP_EOL;
+// Timbrature di oggi
+$oggi_count = DB::table('nettime_timbrature')->whereDate('data_ora', $oggi)->count();
+echo "Timbrature oggi: $oggi_count\n";
+
+if ($oggi_count > 0) {
+    echo "\nTimbrature di oggi:\n";
+    $timb = DB::table('nettime_timbrature')->whereDate('data_ora', $oggi)->orderBy('data_ora')->get();
+    foreach ($timb as $t) {
+        $anag = DB::table('nettime_anagrafica')->where('matricola', $t->matricola)->first();
+        $nome = $anag ? "{$anag->cognome} {$anag->nome}" : "Matr. {$t->matricola}";
+        echo "  {$t->data_ora} | {$t->verso} | {$nome}\n";
+    }
 }
 
-// 2. Matricole senza anagrafica
-$missing = DB::select('
-    SELECT DISTINCT t.matricola
-    FROM nettime_timbrature t
-    LEFT JOIN nettime_anagrafica a ON t.matricola = a.matricola
-    WHERE a.id IS NULL
-    ORDER BY t.matricola
-');
-echo PHP_EOL . "=== MATRICOLE SENZA ANAGRAFICA (" . count($missing) . ") ===" . PHP_EOL;
-foreach ($missing as $m) {
-    echo "  {$m->matricola}" . PHP_EOL;
+// Ultime 10 timbrature in assoluto
+echo "\nUltime 10 timbrature nel DB:\n";
+$ultime = DB::table('nettime_timbrature')->orderByDesc('data_ora')->limit(10)->get();
+foreach ($ultime as $t) {
+    $anag = DB::table('nettime_anagrafica')->where('matricola', $t->matricola)->first();
+    $nome = $anag ? "{$anag->cognome} {$anag->nome}" : "Matr. {$t->matricola}";
+    echo "  {$t->data_ora} | {$t->verso} | {$nome}\n";
 }
 
-// 3. Debug primi 3 record del file presenze per verificare larghezze campi
-$path = '\\\\192.168.1.253\\timbrature\\presenze.txt';
+// Totale e range
+$stats = DB::table('nettime_timbrature')->selectRaw('COUNT(*) as tot, MIN(data_ora) as prima, MAX(data_ora) as ultima')->first();
+echo "\nTotale timbrature: {$stats->tot}\n";
+echo "Range: {$stats->prima} -> {$stats->ultima}\n";
+
+// Anagrafica
+$anag_count = DB::table('nettime_anagrafica')->count();
+echo "Dipendenti in anagrafica: $anag_count\n";
+
+// Ultime 3 righe del file raw per vedere se oggi c'è
+$path = '\\\\192.168.1.34\\NetTime\\TIMBRA\\TIMBRACP.BKP';
 if (file_exists($path)) {
-    $content = file_get_contents($path);
-    echo PHP_EOL . "=== DEBUG CAMPI FILE PRESENZE ===" . PHP_EOL;
-
-    // Trova primi 3 record
-    $count = 0;
-    $offset = 0;
-    while ($count < 3 && ($pos = strpos($content, 'RP', $offset)) !== false) {
-        if ($pos >= 4) {
-            $header = substr($content, $pos - 4, 8);
-            if (preg_match('/^011[09](?:00|PR)RP$/', $header)) {
-                $raw = substr($content, $pos + 4, 100);
-                // Mostra hex dei primi 80 byte dopo header per capire le posizioni
-                echo "  Record " . ($count + 1) . " (pos $pos):" . PHP_EOL;
-                echo "    Raw (80 chars): |" . substr($raw, 0, 80) . "|" . PHP_EOL;
-                // Hex dei primi 50 byte per trovare padding
-                echo "    Hex (50 byte): ";
-                for ($i = 0; $i < 50 && $i < strlen($raw); $i++) {
-                    echo sprintf('%02X ', ord($raw[$i]));
-                }
-                echo PHP_EOL;
-                $count++;
-            }
-        }
-        $offset = $pos + 2;
+    $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    $last5 = array_slice($lines, -5);
+    echo "\nUltime 5 righe del file TIMBRACP.BKP:\n";
+    foreach ($last5 as $l) {
+        echo "  $l\n";
     }
 } else {
-    echo PHP_EOL . "File presenze NON trovato: $path" . PHP_EOL;
+    echo "\nFile TIMBRACP.BKP non raggiungibile\n";
 }
