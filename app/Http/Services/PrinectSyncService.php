@@ -129,6 +129,9 @@ class PrinectSyncService
         // Auto-terminazione via stato workstep Prinect (COMPLETED)
         $this->controllaCompletamentoPrinect();
 
+        // Termina fasi stampa "abbandonate": stato 2 ma nessuna attività recente
+        $this->terminaFasiAbbandonate();
+
         return $importate;
     }
 
@@ -614,6 +617,15 @@ class PrinectSyncService
                 $allCompleted = $worksteps->every(fn($ws) => ($ws['status'] ?? '') === 'COMPLETED');
 
                 if ($allCompleted) {
+                    // Safety: se ci sono attività Prinect recenti (ultima ora), la macchina
+                    // sta ancora lavorando → non terminare (evita falsi positivi da workstep
+                    // COMPLETED di un run precedente mentre la commessa è in ristampa)
+                    $ultimaAttivita = PrinectAttivita::where('commessa_gestionale', $commessa)
+                        ->orderByDesc('start_time')
+                        ->value('start_time');
+                    if ($ultimaAttivita && Carbon::parse($ultimaAttivita)->diffInMinutes(now()) < 60) {
+                        continue; // Attività recente → skip auto-terminazione
+                    }
                     // Prendi data_fine dall'ultimo workstep completato
                     $lastEnd = $worksteps->map(fn($ws) => $ws['actualEndDate'] ?? null)
                         ->filter()
@@ -633,6 +645,48 @@ class PrinectSyncService
                 }
             } catch (\Exception $e) {
                 // Skip se API Prinect non disponibile
+            }
+        }
+    }
+
+    /**
+     * Termina fasi stampa offset "abbandonate": stato 2 (avviato) con produzione,
+     * ma la cui ultima attività Prinect è > 4 ore fa E in un giorno diverso da oggi.
+     * Questo cattura commesse completate ieri sera che non vengono mai auto-terminate
+     * perché non appaiono nelle attività live di oggi.
+     */
+    protected function terminaFasiAbbandonate(): void
+    {
+        $fasiAvviate = OrdineFase::with('ordine')
+            ->where('fogli_buoni', '>', 0)
+            ->where('stato', 2)
+            ->where(function ($q) {
+                $q->where('fase', 'LIKE', 'STAMPAXL106%')
+                  ->orWhere('fase', 'STAMPA');
+            })
+            ->get();
+
+        foreach ($fasiAvviate as $fase) {
+            $commessa = $fase->ordine->commessa ?? '';
+            if (!$commessa) continue;
+
+            $ultimaAttivita = PrinectAttivita::where('commessa_gestionale', $commessa)
+                ->orderByDesc('start_time')
+                ->first();
+
+            if (!$ultimaAttivita || !$ultimaAttivita->start_time) continue;
+
+            $ultimoTempo = Carbon::parse($ultimaAttivita->end_time ?? $ultimaAttivita->start_time);
+            $orePassate = $ultimoTempo->diffInHours(now());
+            $giornoAttivita = $ultimoTempo->toDateString();
+            $oggi = Carbon::today()->toDateString();
+
+            // Termina solo se: > 4 ore fa E giorno diverso da oggi
+            if ($orePassate >= 4 && $giornoAttivita !== $oggi) {
+                $fase->stato = 3;
+                $fase->data_fine = $ultimoTempo->format('Y-m-d H:i:s');
+                $fase->save();
+                FaseStatoService::ricalcolaStati($fase->ordine_id);
             }
         }
     }
