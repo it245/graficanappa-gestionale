@@ -195,9 +195,9 @@ thead th {
    LARGHEZZA COLONNE (27 colonne) — ordine attuale:
    1=Commessa 2=Stato 3=Cliente 4=CodArt 5=Colori 6=Fustella
    7=Descrizione 8=Qta 9=UM 10=Priorità 11=Fase 12=Reparto
-   13=Carta 14=QtaCarta 15=DataReg 16=DataConsegna 17=CodCarta
-   18=UMCarta 19=Operatori 20=QtaProd
-   21=Esterno 22=Note 23=DataInizio 24=DataFine 25=OrePrev 26=OreLav 27=Progresso
+   13=Carta 14=QtaCarta 15=DataConsegna 16=CodCarta
+   17=UMCarta 18=Operatori 19=QtaProd
+   20=Esterno 21=Note 22=DataInizio 23=DataFine 24=OrePrev 25=OreLav 26=DataReg 27=Progresso
    ========================= */
 
 /* 1. Commessa */
@@ -242,51 +242,51 @@ th:nth-child(13), td:nth-child(13) { width: 190px; white-space: normal; }
 /* 14. Qta Carta */
 th:nth-child(14), td:nth-child(14) { width: 50px; text-align: center; }
 
-/* 15. Data Registrazione / 16. Data Prevista Consegna */
-th:nth-child(15), td:nth-child(15),
-th:nth-child(16), td:nth-child(16) {
-    width: 100px;
-}
+/* 15. Data Prevista Consegna */
+th:nth-child(15), td:nth-child(15) { width: 100px; }
 
-/* 17. Cod Carta */
-th:nth-child(17), td:nth-child(17) { width: 170px; white-space: normal; }
+/* 16. Cod Carta */
+th:nth-child(16), td:nth-child(16) { width: 170px; white-space: normal; }
 
-/* 18. UM Carta */
-th:nth-child(18), td:nth-child(18) { width: 40px; text-align: center; }
+/* 17. UM Carta */
+th:nth-child(17), td:nth-child(17) { width: 30px; text-align: center; font-size: 11px; }
 
-/* 19. Operatori */
-th:nth-child(19), td:nth-child(19) {
-    width: 80px;
+/* 18. Operatori */
+th:nth-child(18), td:nth-child(18) {
+    width: 110px;
     white-space: normal;
     font-size: 11px;
 }
 
-/* 20. Qta Prod. */
-th:nth-child(20), td:nth-child(20) {
+/* 19. Qta Prod. */
+th:nth-child(19), td:nth-child(19) {
     width: 60px;
     text-align: center;
 }
 
-/* 21. Esterno */
-th:nth-child(21), td:nth-child(21) { width: 90px; }
+/* 20. Esterno */
+th:nth-child(20), td:nth-child(20) { width: 90px; }
 
-/* 22. Note */
-th:nth-child(22), td:nth-child(22) {
+/* 21. Note */
+th:nth-child(21), td:nth-child(21) {
     width: 170px;
     white-space: normal;
 }
 
-/* 23. Data Inizio / 24. Data Fine */
-th:nth-child(23), td:nth-child(23),
-th:nth-child(24), td:nth-child(24) {
+/* 22. Data Inizio / 23. Data Fine */
+th:nth-child(22), td:nth-child(22),
+th:nth-child(23), td:nth-child(23) {
     width: 110px;
 }
 
-/* 25. Ore Prev. */
+/* 24. Ore Prev. */
+th:nth-child(24), td:nth-child(24) { width: 70px; text-align: center; }
+
+/* 25. Ore Lav. */
 th:nth-child(25), td:nth-child(25) { width: 70px; text-align: center; }
 
-/* 26. Ore Lav. */
-th:nth-child(26), td:nth-child(26) { width: 70px; text-align: center; }
+/* 26. Data Reg. */
+th:nth-child(26), td:nth-child(26) { width: 100px; }
 
 /* 27. Progresso */
 th:nth-child(27), td:nth-child(27) { width: 100px; }
