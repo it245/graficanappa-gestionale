@@ -53,17 +53,28 @@ if (!empty($teste)) {
     $idDocs = array_map(fn($t) => $t->IDDoc, $teste);
     $placeholders = implode(',', array_fill(0, count($idDocs), '?'));
 
+    // Scopri colonne disponibili in ATTDocRighe
+    $colonne = DB::connection('onda')->select(
+        "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'ATTDocRighe' ORDER BY ORDINAL_POSITION"
+    );
+    echo "\nColonne ATTDocRighe: ";
+    $nomiCol = array_map(fn($c) => $c->COLUMN_NAME, $colonne);
+    echo implode(', ', $nomiCol) . "\n";
+
     $righe = DB::connection('onda')->select(
-        "SELECT r.IDDoc, r.NumRiga, r.CodArticolo, r.Descrizione, r.Qta, r.UM, r.PrezzoUnitario
-         FROM ATTDocRighe r
-         WHERE r.IDDoc IN ($placeholders)
-         ORDER BY r.IDDoc, r.NumRiga",
+        "SELECT * FROM ATTDocRighe r WHERE r.IDDoc IN ($placeholders) ORDER BY r.IDDoc",
         $idDocs
     );
 
     echo "\nRighe Onda: " . count($righe) . "\n";
     foreach ($righe as $r) {
-        $desc = substr($r->Descrizione ?? '-', 0, 60);
-        echo "  IDDoc:{$r->IDDoc} Riga:{$r->NumRiga} | {$r->CodArticolo} | {$desc} | Qta:{$r->Qta} {$r->UM}\n";
+        $arr = (array) $r;
+        // Mostra le prime colonne utili
+        $idDoc = $arr['IDDoc'] ?? '-';
+        $codArt = $arr['CodArticolo'] ?? ($arr['Codice'] ?? '-');
+        $desc = substr($arr['Descrizione'] ?? ($arr['DescrArticolo'] ?? '-'), 0, 60);
+        $qta = $arr['Qta'] ?? ($arr['Quantita'] ?? '-');
+        $um = $arr['UM'] ?? ($arr['UnitaMisura'] ?? '-');
+        echo "  IDDoc:{$idDoc} | {$codArt} | {$desc} | Qta:{$qta} {$um}\n";
     }
 }
