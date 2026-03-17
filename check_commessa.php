@@ -37,7 +37,7 @@ echo "\n--- ONDA (SQL Server) ---\n";
 
 // Teste (commessa)
 $teste = DB::connection('onda')->select(
-    "SELECT t.IDDoc, t.CodCommessa, t.DataRegistrazione, t.TipoDocumento, t.CodCliFor, t.RagioneSociale
+    "SELECT t.IDDoc, t.CodCommessa, t.DataRegistrazione, t.TipoDocumento
      FROM ATTDocTeste t
      WHERE t.CodCommessa LIKE ?
      ORDER BY t.IDDoc",
@@ -45,7 +45,7 @@ $teste = DB::connection('onda')->select(
 );
 echo "Documenti Onda: " . count($teste) . "\n";
 foreach ($teste as $t) {
-    echo "  IDDoc: {$t->IDDoc} | {$t->CodCommessa} | {$t->RagioneSociale} | Tipo: {$t->TipoDocumento} | Data: {$t->DataRegistrazione}\n";
+    echo "  IDDoc: {$t->IDDoc} | {$t->CodCommessa} | Tipo: {$t->TipoDocumento} | Data: {$t->DataRegistrazione}\n";
 }
 
 // Righe (ordini/articoli della commessa)
