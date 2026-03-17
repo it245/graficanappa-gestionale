@@ -306,10 +306,10 @@
     <div class="articolo-row" id="print-articolo"></div>
     @endif
     @if($isSimpleLabel)
-    <div class="info-top" style="font-size: 12pt; font-weight: 700; margin-bottom: 2mm;">
+    <div style="font-size: 16pt; font-weight: 700; text-align: left; padding-bottom: 3mm;">
         <span id="print-cliente-simple">{{ $cliente }}</span>
     </div>
-    <div class="articolo-row" id="print-descrizione-simple" style="font-size: 14pt; text-align: center;">{{ $ordine->descrizione ?? '' }}</div>
+    <div class="articolo-row" id="print-descrizione-simple" style="font-size: 22pt; text-align: center; flex: 1; display: flex; align-items: center; justify-content: center; padding: 0;">{{ $ordine->descrizione ?? '' }}</div>
     @endif
     @if($isTifataPlastica ?? false)
     {{-- TIFATA PLASTICA: descrizione sopra, lotto/qta/data affiancati, no EAN/DataMatrix --}}
@@ -320,8 +320,8 @@
         <div><span class="label">Data:</span> <span id="print-data">{{ $data }}</span></div>
     </div>
     @else
-    <div class="info-bottom" @if($isSimpleLabel) style="flex-direction: column; align-items: flex-start; font-size: 16pt;" @endif>
-        <div class="fields-left" @if($isSimpleLabel) style="font-size: 16pt;" @endif>
+    <div class="info-bottom" @if($isSimpleLabel) style="flex-direction: row; justify-content: space-between; align-items: flex-end; width: 100%; font-size: 18pt; padding-top: 3mm;" @endif>
+        <div class="fields-left" @if($isSimpleLabel) style="font-size: 18pt; line-height: 1.8;" @endif>
             <div><span class="label">Pz x cassa:</span> <span id="print-pzcassa"></span></div>
             <div><span class="label">Lotto:</span> <span id="print-lotto">{{ $lotto }}</span></div>
             <div><span class="label">Data:</span> <span id="print-data">{{ $data }}</span></div>
