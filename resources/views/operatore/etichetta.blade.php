@@ -210,9 +210,13 @@
     @endif
 
     @if($isSimpleLabel)
-        {{-- CLIENTI SEMPLICI: descrizione + campi base --}}
+        {{-- CLIENTI SEMPLICI: cliente + descrizione + campi base --}}
         <div class="alert alert-info py-2 px-3 mb-3" style="font-size:13px;">
-            Etichetta semplificata: Descrizione, Pz x cassa, Lotto, Data
+            Etichetta semplificata: Cliente, Descrizione, Pz x cassa, Lotto, Data
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Cliente</label>
+            <input type="text" id="campo-cliente-simple" class="form-control" value="{{ $cliente }}">
         </div>
         <div class="mb-3">
             <label class="form-label">Descrizione articolo</label>
@@ -297,12 +301,15 @@
         <img src="{{ asset('images/logo_graficanappa.png') }}" alt="Grafica Nappa">
     </div>
     <div class="info-top">
-        <div class="field"><span id="print-cliente">{{ $cliente }}</span></div>
+        <div class="field"><span class="label">Cliente:</span> <span id="print-cliente">{{ $cliente }}</span></div>
     </div>
-    <div class="articolo-row" id="print-articolo" style="text-align:center;"></div>
+    <div class="articolo-row" id="print-articolo"></div>
     @endif
     @if($isSimpleLabel)
-    <div class="articolo-row" id="print-descrizione-simple" style="font-size: 14pt;">{{ $ordine->descrizione ?? '' }}</div>
+    <div class="info-top" style="font-size: 12pt; font-weight: 700; margin-bottom: 2mm;">
+        <span id="print-cliente-simple">{{ $cliente }}</span>
+    </div>
+    <div class="articolo-row" id="print-descrizione-simple" style="font-size: 14pt; text-align: center;">{{ $ordine->descrizione ?? '' }}</div>
     @endif
     @if($isTifataPlastica ?? false)
     {{-- TIFATA PLASTICA: descrizione sopra, lotto/qta/data affiancati, no EAN/DataMatrix --}}
@@ -509,9 +516,10 @@ function aggiornaAnteprima() {
     var cliente, articolo, ean;
 
     @if($isSimpleLabel)
-        cliente = '';
+        cliente = document.getElementById('campo-cliente-simple').value;
         articolo = '';
         ean = '';
+        document.getElementById('print-cliente-simple').textContent = cliente;
         var desc = document.getElementById('campo-descrizione-simple').value;
         var descEl = document.getElementById('print-descrizione-simple');
         descEl.textContent = desc;
