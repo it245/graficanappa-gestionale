@@ -298,11 +298,8 @@ class PresenzeController extends Controller
 
             // Controlla se ha timbrato entrata
             $entrate = $timbrature->get($matricola, collect());
-            $haEntrata = $entrate->contains(function ($t) use ($inizioTurno, $tolleranza) {
-                $oraTimbr = Carbon::parse($t->data_ora);
-                // Entrata valida: da 1h prima del turno fino a qualsiasi ora dopo
-                return $oraTimbr->gte($inizioTurno->copy()->subHour());
-            });
+            // Ha timbrato entrata oggi = è presente (anche se ore prima del turno)
+            $haEntrata = $entrate->isNotEmpty();
 
             if (!$haEntrata) {
                 $minutiRitardo = (int) abs($ora->diffInMinutes($inizioTurno));
