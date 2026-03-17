@@ -126,6 +126,9 @@ class PrinectSyncService
             FaseStatoService::controllaCompletamento($faseId);
         }
 
+        // Ripristina fasi erroneamente terminate che hanno attività recenti
+        $this->ripristinaFasiAttive();
+
         // Auto-terminazione via stato workstep Prinect (COMPLETED)
         $this->controllaCompletamentoPrinect();
 
@@ -645,6 +648,43 @@ class PrinectSyncService
                 }
             } catch (\Exception $e) {
                 // Skip se API Prinect non disponibile
+            }
+        }
+    }
+
+    /**
+     * Ripristina a stato 2 (avviato) le fasi stampa offset che sono state erroneamente
+     * terminate (stato 3) ma hanno attività Prinect recenti (ultima ora).
+     * Significa che la macchina sta ancora lavorando su quella commessa.
+     */
+    protected function ripristinaFasiAttive(): void
+    {
+        $fasiTerminate = OrdineFase::with('ordine')
+            ->where('fogli_buoni', '>', 0)
+            ->where('stato', 3)
+            ->where(function ($q) {
+                $q->where('fase', 'LIKE', 'STAMPAXL106%')
+                  ->orWhere('fase', 'STAMPA');
+            })
+            ->get();
+
+        foreach ($fasiTerminate as $fase) {
+            $commessa = $fase->ordine->commessa ?? '';
+            if (!$commessa) continue;
+
+            $ultimaAttivita = PrinectAttivita::where('commessa_gestionale', $commessa)
+                ->orderByDesc('start_time')
+                ->first();
+
+            if (!$ultimaAttivita || !$ultimaAttivita->start_time) continue;
+
+            $ultimoTempo = Carbon::parse($ultimaAttivita->end_time ?? $ultimaAttivita->start_time);
+
+            // Se l'ultima attività è nell'ultima ora, la macchina sta ancora stampando
+            if ($ultimoTempo->diffInMinutes(now()) < 60) {
+                $fase->stato = 2;
+                $fase->data_fine = null;
+                $fase->save();
             }
         }
     }
