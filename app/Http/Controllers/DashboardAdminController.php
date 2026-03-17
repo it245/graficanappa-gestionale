@@ -1551,4 +1551,76 @@ class DashboardAdminController extends Controller
 
         return back()->with('success', 'Codice EAN eliminato.');
     }
+
+    /**
+     * Griglia turni settimanali — visualizza e modifica.
+     */
+    public function turni(Request $request)
+    {
+        // Settimana selezionata (default: settimana corrente dal lunedì)
+        $lunedi = $request->get('settimana')
+            ? Carbon::parse($request->get('settimana'))->startOfWeek()
+            : Carbon::now()->startOfWeek();
+
+        $giorni = [];
+        for ($i = 0; $i < 7; $i++) {
+            $giorni[] = $lunedi->copy()->addDays($i)->format('Y-m-d');
+        }
+
+        // Dipendenti dalla tabella turni (o anagrafica NetTime)
+        $dipendenti = DB::table('turni')
+            ->select('cognome_nome')
+            ->distinct()
+            ->orderBy('cognome_nome')
+            ->pluck('cognome_nome');
+
+        // Se vuota, prendi dall'anagrafica NetTime
+        if ($dipendenti->isEmpty()) {
+            $dipendenti = DB::table('nettime_anagrafica')
+                ->orderBy('cognome')
+                ->get()
+                ->map(fn($a) => strtoupper($a->cognome . ' ' . $a->nome));
+        }
+
+        // Turni della settimana
+        $turni = DB::table('turni')
+            ->whereBetween('data', [$giorni[0], end($giorni)])
+            ->get()
+            ->groupBy('cognome_nome');
+
+        return view('admin.turni', compact('giorni', 'dipendenti', 'turni', 'lunedi'));
+    }
+
+    /**
+     * Salva/aggiorna un singolo turno (chiamata AJAX).
+     */
+    public function salvaTurno(Request $request)
+    {
+        $nome = $request->input('cognome_nome');
+        $data = $request->input('data');
+        $turno = strtoupper(trim($request->input('turno', '')));
+
+        if (!$nome || !$data) {
+            return response()->json(['success' => false, 'messaggio' => 'Dati mancanti']);
+        }
+
+        // Valori consentiti
+        $validi = ['T', '1', '2', '3', 'F', 'R', ''];
+
+        if (!in_array($turno, $validi)) {
+            return response()->json(['success' => false, 'messaggio' => 'Turno non valido. Usa: T, 1, 2, 3, F, R']);
+        }
+
+        if ($turno === '') {
+            // Cancella il turno
+            DB::table('turni')->where('cognome_nome', $nome)->where('data', $data)->delete();
+        } else {
+            DB::table('turni')->updateOrInsert(
+                ['cognome_nome' => $nome, 'data' => $data],
+                ['turno' => $turno, 'updated_at' => now(), 'created_at' => now()]
+            );
+        }
+
+        return response()->json(['success' => true]);
+    }
 }

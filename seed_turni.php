@@ -16,6 +16,10 @@ if (!Schema::hasTable('turni')) {
 // Settimana 16-21 marzo 2026
 $giorni = ['2026-03-16', '2026-03-17', '2026-03-18', '2026-03-19', '2026-03-20', '2026-03-21'];
 
+// Pulisci turni di questa settimana prima di reinserire
+DB::table('turni')->whereBetween('data', [$giorni[0], end($giorni)])->delete();
+echo "Turni settimana puliti.\n";
+
 // Formato: [cognome_nome, [lun, mar, mer, gio, ven, sab], ora_inizio_override, ora_fine_override]
 $turni = [
     // Turno unico (T = 08:00-17:00)

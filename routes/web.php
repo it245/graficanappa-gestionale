@@ -86,6 +86,8 @@ Route::middleware(['admin'])->prefix('admin')->group(function() {
     Route::get('/commessa/{commessa}/report', [DashboardAdminController::class, 'reportCommessa'])->name('admin.reportCommessa');
     Route::get('/report-produzione', [DashboardAdminController::class, 'reportProduzione'])->name('admin.reportProduzione');
     Route::get('/cruscotto', [DashboardAdminController::class, 'cruscotto'])->name('admin.cruscotto');
+    Route::get('/turni', [DashboardAdminController::class, 'turni'])->name('admin.turni');
+    Route::post('/turni/salva', [DashboardAdminController::class, 'salvaTurno'])->name('admin.salvaTurno');
     Route::get('/report-direzione', [DashboardAdminController::class, 'reportDirezione'])->name('admin.reportDirezione');
     Route::get('/report-direzione/excel', [DashboardAdminController::class, 'reportDirezioneExcel'])->name('admin.reportDirezioneExcel');
     Route::get('/report-prinect', [DashboardAdminController::class, 'reportPrinect'])->name('admin.reportPrinect');
