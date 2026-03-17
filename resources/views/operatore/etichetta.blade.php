@@ -297,9 +297,9 @@
         <img src="{{ asset('images/logo_graficanappa.png') }}" alt="Grafica Nappa">
     </div>
     <div class="info-top">
-        <div class="field"><span class="label">Cliente:</span> <span id="print-cliente">{{ $cliente }}</span></div>
+        <div class="field"><span id="print-cliente">{{ $cliente }}</span></div>
     </div>
-    <div class="articolo-row" id="print-articolo"></div>
+    <div class="articolo-row" id="print-articolo" style="text-align:center;"></div>
     @endif
     @if($isSimpleLabel)
     <div class="articolo-row" id="print-descrizione-simple" style="font-size: 14pt;">{{ $ordine->descrizione ?? '' }}</div>
