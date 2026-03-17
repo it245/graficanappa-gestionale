@@ -245,4 +245,113 @@ class PresenzeController extends Controller
             'ultimo_sync' => now()->format('H:i:s'),
         ]);
     }
+
+    /**
+     * API: alert ritardi — chi doveva arrivare ma non ha timbrato entro 15 min.
+     */
+    public function alertRitardi()
+    {
+        $oggi = Carbon::today()->format('Y-m-d');
+        $ora = Carbon::now();
+        $tolleranza = config('turni.tolleranza_minuti', 15);
+        $orari = config('turni.orari', []);
+
+        // Turni di oggi
+        $turniOggi = DB::table('turni')
+            ->where('data', $oggi)
+            ->whereNotIn('turno', ['F', 'R']) // escludi ferie e riposo
+            ->get();
+
+        if ($turniOggi->isEmpty()) {
+            return response()->json(['ritardi' => [], 'messaggio' => 'Nessun turno programmato oggi']);
+        }
+
+        // Timbrature di oggi (entrate)
+        $timbrature = DB::table('nettime_timbrature')
+            ->whereDate('data_ora', $oggi)
+            ->where('verso', 'E')
+            ->get()
+            ->groupBy('matricola');
+
+        // Anagrafica per match nome → matricola
+        $anagrafica = DB::table('nettime_anagrafica')->get();
+
+        $ritardi = [];
+
+        foreach ($turniOggi as $turno) {
+            // Determina orario inizio turno
+            $oraInizio = $turno->ora_inizio;
+            if (!$oraInizio && isset($orari[$turno->turno])) {
+                $oraInizio = $orari[$turno->turno]['inizio'];
+            }
+            if (!$oraInizio) continue;
+
+            $inizioTurno = Carbon::parse($oggi . ' ' . $oraInizio);
+            $scadenza = $inizioTurno->copy()->addMinutes($tolleranza);
+
+            // Il turno deve essere già iniziato E la scadenza passata
+            if ($ora->lt($scadenza)) continue;
+
+            // Trova matricola dal cognome_nome
+            $matricola = $this->trovaMatricola($turno->cognome_nome, $anagrafica);
+            if (!$matricola) continue;
+
+            // Controlla se ha timbrato entrata
+            $entrate = $timbrature->get($matricola, collect());
+            $haEntrata = $entrate->contains(function ($t) use ($inizioTurno, $tolleranza) {
+                $oraTimbr = Carbon::parse($t->data_ora);
+                // Entrata valida: da 1h prima del turno fino a qualsiasi ora dopo
+                return $oraTimbr->gte($inizioTurno->copy()->subHour());
+            });
+
+            if (!$haEntrata) {
+                $minutiRitardo = $ora->diffInMinutes($inizioTurno);
+                $ritardi[] = [
+                    'nome' => $turno->cognome_nome,
+                    'turno' => $turno->turno,
+                    'ora_prevista' => $oraInizio,
+                    'minuti_ritardo' => $minutiRitardo,
+                    'ritardo_label' => $minutiRitardo >= 60
+                        ? floor($minutiRitardo / 60) . 'h ' . ($minutiRitardo % 60) . 'm'
+                        : $minutiRitardo . ' min',
+                ];
+            }
+        }
+
+        // Ordina per ritardo decrescente
+        usort($ritardi, fn($a, $b) => $b['minuti_ritardo'] <=> $a['minuti_ritardo']);
+
+        return response()->json([
+            'ritardi' => $ritardi,
+            'totale' => count($ritardi),
+            'ora_check' => $ora->format('H:i'),
+            'tolleranza' => $tolleranza,
+        ]);
+    }
+
+    /**
+     * Match cognome_nome dalla tabella turni → matricola in nettime_anagrafica.
+     */
+    protected function trovaMatricola(string $cognomeNome, $anagrafica): ?string
+    {
+        $parti = explode(' ', trim($cognomeNome), 2);
+        $cognome = strtolower(trim($parti[0] ?? ''));
+        $nome = strtolower(trim($parti[1] ?? ''));
+
+        // Match esatto cognome + nome
+        foreach ($anagrafica as $a) {
+            if (strtolower(trim($a->cognome)) === $cognome && strtolower(trim($a->nome)) === $nome) {
+                return $a->matricola;
+            }
+        }
+
+        // Fallback: solo cognome
+        foreach ($anagrafica as $a) {
+            if (strtolower(trim($a->cognome)) === $cognome) {
+                return $a->matricola;
+            }
+        }
+
+        return null;
+    }
 }
