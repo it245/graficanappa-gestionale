@@ -459,7 +459,9 @@ public function calcolaOreEPriorita($fase)
         $operatore = $request->attributes->get('operatore') ?? auth()->guard('operatore')->user();
         $isReadonly = $this->isReadonly();
 
-        return view('owner.dashboard', compact(
+        $viewName = $request->has('proto') ? 'proto.owner_full' : 'owner.dashboard';
+
+        return view($viewName, compact(
             'fasi', 'reparti', 'fasiCatalogo', 'spedizioniOggi', 'storicoConsegne',
             'fasiCompletateOggi', 'oreLavorateOggi', 'commesseSpediteOggi', 'fasiAttive', 'spedizioniBRT', 'operatore', 'isReadonly',
             'progressoCommesse'
