@@ -38,24 +38,31 @@
     </div>
 </div>
 
-{{-- Info Commessa --}}
+{{-- Info Commessa (editabili tranne date) --}}
+@php
+    $coloriCalc = \App\Helpers\DescrizioneParser::parseColori($ordine->descrizione ?? '', $ordine->cliente_nome ?? '');
+    $fustellaCalc = \App\Helpers\DescrizioneParser::parseFustella($ordine->descrizione ?? '', $ordine->cliente_nome ?? '', $ordine->note_prestampa ?? '');
+@endphp
 <div class="row g-2 mb-2" style="font-size:13px;">
     <div class="col-md-4">
-        <div class="border rounded p-2 h-100" style="background:#e8f4fd">
+        <div class="border rounded p-2 h-100" style="background:#fff3cd">
             <strong class="d-block mb-1">Descrizione</strong>
-            <span>{{ $ordine->descrizione ?: '-' }}</span>
+            <div contenteditable class="campo-editabile" data-campo="descrizione" data-ordine="{{ $ordine->id }}"
+                 onblur="salvaCampoPrestampa(this)" style="min-height:40px;">{{ $ordine->descrizione ?: '' }}</div>
         </div>
     </div>
     <div class="col-md-2">
-        <div class="border rounded p-2 h-100" style="background:#e8f4fd">
+        <div class="border rounded p-2 h-100" style="background:#fff3cd">
             <strong class="d-block mb-1">Cliente</strong>
-            <span>{{ $ordine->cliente_nome ?: '-' }}</span>
+            <div contenteditable class="campo-editabile" data-campo="cliente_nome" data-ordine="{{ $ordine->id }}"
+                 onblur="salvaCampoPrestampa(this)">{{ $ordine->cliente_nome ?: '' }}</div>
         </div>
     </div>
     <div class="col-md-1">
-        <div class="border rounded p-2 h-100" style="background:#e8f4fd">
+        <div class="border rounded p-2 h-100" style="background:#fff3cd">
             <strong class="d-block mb-1">Qta</strong>
-            <span>{{ $ordine->qta_richiesta ? number_format($ordine->qta_richiesta, 0, ',', '.') : '-' }} {{ $ordine->um }}</span>
+            <div contenteditable class="campo-editabile" data-campo="qta_richiesta" data-ordine="{{ $ordine->id }}"
+                 onblur="salvaCampoPrestampa(this)">{{ $ordine->qta_richiesta ? number_format($ordine->qta_richiesta, 0, ',', '.') : '' }}</div>
         </div>
     </div>
     <div class="col-md-1">
@@ -70,20 +77,18 @@
             <span>{{ $ordine->data_prevista_consegna ? \Carbon\Carbon::parse($ordine->data_prevista_consegna)->format('d/m/Y') : '-' }}</span>
         </div>
     </div>
-    @php
-        $coloriCalc = \App\Helpers\DescrizioneParser::parseColori($ordine->descrizione ?? '', $ordine->cliente_nome ?? '');
-        $fustellaCalc = \App\Helpers\DescrizioneParser::parseFustella($ordine->descrizione ?? '', $ordine->cliente_nome ?? '', $ordine->note_prestampa ?? '');
-    @endphp
     <div class="col-md-1">
-        <div class="border rounded p-2 h-100" style="background:#e8f4fd">
+        <div class="border rounded p-2 h-100" style="background:#fff3cd">
             <strong class="d-block mb-1">Colori</strong>
-            <span>{{ $coloriCalc ?: '-' }}</span>
+            <div contenteditable class="campo-editabile" data-campo="colori" data-ordine="{{ $ordine->id }}"
+                 onblur="salvaCampoPrestampa(this)">{{ $coloriCalc ?: '' }}</div>
         </div>
     </div>
     <div class="col-md-2">
-        <div class="border rounded p-2 h-100" style="background:#e8f4fd">
+        <div class="border rounded p-2 h-100" style="background:#fff3cd">
             <strong class="d-block mb-1">Fustella</strong>
-            <span>{{ $fustellaCalc ?: '-' }}</span>
+            <div contenteditable class="campo-editabile" data-campo="fustella_codice" data-ordine="{{ $ordine->id }}"
+                 onblur="salvaCampoPrestampa(this)">{{ $fustellaCalc ?: '' }}</div>
         </div>
     </div>
 </div>

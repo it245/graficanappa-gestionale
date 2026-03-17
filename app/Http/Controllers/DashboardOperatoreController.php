@@ -242,7 +242,8 @@ class DashboardOperatoreController extends Controller
         $operatore = $request->attributes->get('operatore') ?? auth()->guard('operatore')->user();
         if (!$operatore) return response()->json(['success' => false, 'messaggio' => 'Non autorizzato'], 403);
 
-        $campiConsentiti = ['note_prestampa', 'responsabile', 'commento_produzione'];
+        $campiConsentiti = ['note_prestampa', 'responsabile', 'commento_produzione',
+                           'descrizione', 'cliente_nome', 'qta_richiesta', 'colori', 'fustella_codice'];
         $campo = $request->input('campo');
         $valore = $request->input('valore');
         $ordineId = $request->input('ordine_id');
@@ -254,6 +255,11 @@ class DashboardOperatoreController extends Controller
         $ordine = \App\Models\Ordine::find($ordineId);
         if (!$ordine) {
             return response()->json(['success' => false, 'messaggio' => 'Ordine non trovato']);
+        }
+
+        // Pulizia valori numerici
+        if ($campo === 'qta_richiesta') {
+            $valore = (int) str_replace(['.', ','], ['', ''], $valore);
         }
 
         // Aggiorna su tutti gli ordini della stessa commessa
