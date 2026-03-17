@@ -129,7 +129,29 @@
             </div>
             <div class="col-md-4">
                 <label class="form-label" style="font-size:12px; font-weight:600;">Fornitore esterno</label>
-                <input type="text" id="esternoFornitore" class="form-control form-control-sm" placeholder="Es: Tipografia Rossi, Plastificatura XYZ...">
+                <select id="esternoFornitoreSelect" class="form-select form-select-sm" onchange="document.getElementById('esternoFornitoreAltro').style.display=this.value==='__altro__'?'':'none';">
+                    <option value="">-- Seleziona --</option>
+                    <option>4GRAPH S.R.L.</option>
+                    <option>CARD S.R.L.</option>
+                    <option>CLEVEX S.R.L.</option>
+                    <option>KRESIA SRL</option>
+                    <option>LASER LINE FUSTELLE S.R.L.</option>
+                    <option>LEGATORIA SALVATORE TONTI SRL</option>
+                    <option>LEGOKART S.A.S.</option>
+                    <option>LEGRAF S.R.L.</option>
+                    <option>LP FUSTELLE S.R.L.</option>
+                    <option>PACKINGRAF SRL</option>
+                    <option>POLYEDRA S.P.A.</option>
+                    <option>SAE SRL</option>
+                    <option>SOL GROUP SRL</option>
+                    <option>SOLUZIONI IMBALLAGGI SRL</option>
+                    <option>TECNOCART S.R.L.</option>
+                    <option>TIPOGRAFIA BIANCO S.R.L.</option>
+                    <option>TIPOGRAFIA EFFEGI SRL</option>
+                    <option>TIPOLITOGRAFIA NEO PRINT SERVICE</option>
+                    <option value="__altro__">Altro...</option>
+                </select>
+                <input type="text" id="esternoFornitoreAltro" class="form-control form-control-sm mt-1" style="display:none;" placeholder="Nome fornitore...">
             </div>
             <div class="col-md-4 d-flex align-items-end">
                 <button class="btn btn-info btn-sm text-white" onclick="inviaEsterno()">Conferma invio esterno</button>
@@ -415,9 +437,12 @@ function aggiornaStato(faseId, testo) {
 
 function inviaEsterno() {
     var faseId = document.getElementById('esternoFaseId').value;
-    var fornitore = document.getElementById('esternoFornitore').value.trim();
+    var sel = document.getElementById('esternoFornitoreSelect').value;
+    var fornitore = sel === '__altro__'
+        ? document.getElementById('esternoFornitoreAltro').value.trim()
+        : sel;
     if (!faseId) { alert('Seleziona una fase'); return; }
-    if (!fornitore) { alert('Inserisci il nome del fornitore esterno'); return; }
+    if (!fornitore) { alert('Seleziona un fornitore esterno'); return; }
 
     if (!confirm('Confermi invio all\'esterno a "' + fornitore + '"?')) return;
 
