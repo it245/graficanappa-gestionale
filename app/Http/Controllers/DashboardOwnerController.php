@@ -1199,13 +1199,20 @@ public function calcolaOreEPriorita($fase)
     public function esterne()
     {
         $repartoEsterno = Reparto::where('nome', 'esterno')->first();
-        $commesseEsterne = collect();
 
-        if ($repartoEsterno) {
-            $fasiEsterne = OrdineFase::where('stato', '<', 3)
-                ->whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', $repartoEsterno->id))
-                ->with(['ordine', 'faseCatalogo'])
-                ->get();
+        // Fasi esterne: reparto "esterno" OPPURE flag esterno=1 (inviate dal owner)
+        $fasiEsterne = OrdineFase::where('stato', '<', 3)
+            ->where(function ($q) use ($repartoEsterno) {
+                if ($repartoEsterno) {
+                    $q->whereHas('faseCatalogo', fn($q2) => $q2->where('reparto_id', $repartoEsterno->id));
+                }
+                $q->orWhere('esterno', 1);
+            })
+            ->with(['ordine', 'faseCatalogo'])
+            ->get();
+
+        $commesseEsterne = collect();
+        if ($fasiEsterne->isNotEmpty()) {
 
             // Raggruppa per commessa, solo quelle con fornitore (DDT sincronizzata)
             $commesseEsterne = $fasiEsterne->groupBy('ordine_id')->map(function ($fasi) {
@@ -1246,8 +1253,7 @@ public function calcolaOreEPriorita($fase)
                     'data_invio'    => $dataInvio,
                     'note'          => $fasi->pluck('note')->filter()->unique()->implode(' | '),
                 ];
-            })->filter(fn($c) => $c->stato == 2)
-              ->sortBy(fn($c) => $c->ordine->data_prevista_consegna ?? '9999-12-31')->values();
+            })->sortBy(fn($c) => $c->ordine->data_prevista_consegna ?? '9999-12-31')->values();
         }
 
         return view('owner.esterne', compact('commesseEsterne'));
