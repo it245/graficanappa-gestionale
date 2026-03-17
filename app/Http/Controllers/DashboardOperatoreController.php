@@ -17,6 +17,12 @@ class DashboardOperatoreController extends Controller
 
         // Recupera gli ID dei reparti dell'operatore (molti-a-molti)
         $reparti = $operatore->reparti->pluck('id')->toArray();
+        $nomiReparti = $operatore->reparti->pluck('nome')->map(fn($n) => strtolower($n))->toArray();
+
+        // Operatori prestampa → redirect alla dashboard prestampa
+        if (in_array('prestampa', $nomiReparti)) {
+            return redirect()->route('operatore.prestampa', ['op_token' => $request->get('op_token')]);
+        }
 
         // Sicurezza: se nessun reparto
         if (empty($reparti)) {
