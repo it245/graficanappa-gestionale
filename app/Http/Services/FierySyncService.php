@@ -50,7 +50,7 @@ class FierySyncService
         }
 
         // === FASE 2: Sync job completati (API v5 - storico) ===
-        $this->syncJobCompletati($operatore);
+        $this->syncJobCompletati($operatore, $commessaCode);
 
         return $risultato;
     }
@@ -110,9 +110,17 @@ class FierySyncService
                 // Fase già in corso: aggiorna qta_prod
                 if ($copieFatte > 0) {
                     $fase->qta_prod = $copieFatte;
-                    $this->autoTerminaSeCompletata($fase, $operatore);
+                    // NON auto-terminare mentre il job è ancora in stampa sulla Fiery
                     $fase->save();
                 }
+            } elseif ($fase->stato == 3) {
+                // Fase terminata ma job ancora in stampa → ripristina a stato 2
+                $fase->stato = 2;
+                $fase->data_fine = null;
+                if ($copieFatte > 0) {
+                    $fase->qta_prod = $copieFatte;
+                }
+                $fase->save();
             }
         }
 
@@ -130,7 +138,7 @@ class FierySyncService
      * Per fasi in stato 0/1: se il job Fiery è completato, avvia e termina direttamente
      * (recupera i job che si completano tra due polling).
      */
-    protected function syncJobCompletati(Operatore $operatore): void
+    protected function syncJobCompletati(Operatore $operatore, ?string $commessaInStampa = null): void
     {
         // Usa Accounting API per fogli totali storici (tutti i run aggregati)
         $accounting = $this->fiery->getAccountingPerCommessa();
@@ -185,6 +193,9 @@ class FierySyncService
             $commessaCode = $fase->ordine->commessa ?? null;
             if (!$commessaCode) continue;
             if (!isset($accounting[$commessaCode])) continue;
+
+            // Non auto-terminare la commessa attualmente in stampa sulla Fiery
+            if ($commessaCode === $commessaInStampa) continue;
 
             $acc = $accounting[$commessaCode];
             $fogliTotali = (int) ($acc['fogli'] ?? 0);
