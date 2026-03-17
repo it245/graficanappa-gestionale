@@ -1012,6 +1012,63 @@ public function calcolaOreEPriorita($fase)
         return view('owner.report_ore', compact('commesse', 'commesseOggi', 'reparti', 'filtroCommessa', 'filtroReparto', 'orePerReparto'));
     }
 
+    /**
+     * Prototipo nuova UI owner — dati reali, layout nuovo.
+     */
+    public function prototipo()
+    {
+        $fasi = OrdineFase::with(['ordine', 'faseCatalogo.reparto', 'operatori' => fn($q) => $q->select('operatori.id', 'nome')])
+            ->where('stato', '<', 4)
+            ->get()
+            ->map(function ($fase) {
+                $fase = $this->calcolaOreEPriorita($fase);
+                $fase->reparto_nome = $fase->faseCatalogo->reparto->nome ?? '-';
+                return $fase;
+            })
+            ->sortBy('priorita');
+
+        $reparti = Reparto::orderBy('nome')->pluck('nome', 'id');
+
+        // KPI
+        $oggi = Carbon::today();
+        $fasiOggi = OrdineFase::where('stato', 3)->whereDate('data_fine', $oggi)->count();
+        $fasiAvviate = OrdineFase::where('stato', 2)->count();
+        $spedizioniOggi = OrdineFase::whereIn('fase', ['BRT1','brt1','BRT'])->where('stato', 4)->whereDate('data_fine', $oggi)->count();
+
+        // Ore lavorate oggi (approssimato)
+        $oreLavOggi = OrdineFase::where('stato', '>=', 2)
+            ->where(function($q) use ($oggi) {
+                $q->whereDate('data_fine', $oggi)->orWhere(function($q2) use ($oggi) {
+                    $q2->where('stato', 2)->whereDate('data_inizio', '<=', $oggi);
+                });
+            })
+            ->sum(\DB::raw('COALESCE(tempo_avviamento_sec,0) + COALESCE(tempo_esecuzione_sec,0)')) / 3600;
+
+        // Reparti overview
+        $repartiOverview = [];
+        foreach ($reparti as $id => $nome) {
+            $fasiReparto = $fasi->filter(fn($f) => ($f->faseCatalogo->reparto->id ?? null) == $id);
+            if ($fasiReparto->isEmpty()) continue;
+            $repartiOverview[] = [
+                'nome' => $nome,
+                'attive' => $fasiReparto->where('stato', 2)->count(),
+                'pronte' => $fasiReparto->where('stato', 1)->count(),
+                'totale' => $fasiReparto->count(),
+            ];
+        }
+
+        // Commesse urgenti (prossime 10 per consegna)
+        $commesseUrgenti = $fasi->filter(fn($f) => $f->stato < 3)
+            ->sortBy(fn($f) => $f->ordine->data_prevista_consegna ?? '9999')
+            ->unique(fn($f) => $f->ordine->commessa)
+            ->take(15);
+
+        return view('proto.owner', compact(
+            'fasi', 'reparti', 'fasiOggi', 'fasiAvviate', 'spedizioniOggi',
+            'oreLavOggi', 'repartiOverview', 'commesseUrgenti'
+        ));
+    }
+
     public function scheduling(PrinectService $prinect, PrinectSyncService $syncService)
     {
         // Sync live Prinect

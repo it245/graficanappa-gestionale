@@ -160,6 +160,9 @@ Route::prefix('spedizione')->middleware(['operatore.auth'])->group(function() {
 Route::get('/spedizione/tracking-test', [DashboardSpedizioneController::class, 'trackingTest'])->name('spedizione.trackingTest');
 Route::get('/spedizione/tracking-json/{segnacollo}', [DashboardSpedizioneController::class, 'trackingJson'])->name('spedizione.trackingJson');
 
+// Prototipo nuova UI
+Route::get('/proto/owner', [DashboardOwnerController::class, 'prototipo'])->name('proto.owner');
+
 // Health check
 Route::get('/health', fn() => 'MES OK');
 Route::get('/commesse/{commessa}', [App\Http\Controllers\CommessaController::class, 'show'])
