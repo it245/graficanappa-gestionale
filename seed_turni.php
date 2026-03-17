@@ -21,8 +21,7 @@ $turni = [
     // Turno unico (T = 08:00-17:00)
     ['MENALE FIORE',              ['T','T','T','T','T',null]],
     ['SCOTTI FRANCESCO',          ['T','T','T','T','T',null]],
-    ['CARDILLO ANTONIO',          ['T','T','T','T','T',null]],
-    ['CARDILLO MARCO',            ['T','T','T','T','T',null]],
+    // CARDILLO ANTONIO e MARCO esclusi: non timbrano
     ['PECORARO MARCO',            ['T','T','T','T','T',null]],
     ['CRISANTI LORENZO',          ['T','T','T','T','T',null], '09:00', '18:00'], // 9-13 14-18
     ['SCARANO GIANGIUSEPPE',      ['T','T','T','T','T',null], '08:00', '17:00'], // 8-13 14-17
