@@ -451,7 +451,8 @@ class PrinectSyncService
             ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
             ->where(function ($q) {
                 $q->where('fase', 'LIKE', 'STAMPAXL106%')
-                  ->orWhere('fase', 'STAMPA');
+                  ->orWhere('fase', 'STAMPA')
+                  ->orWhere('fase', 'LIKE', 'STAMPA XL%');
             })
             ->get();
     }
@@ -598,7 +599,8 @@ class PrinectSyncService
             ->where('stato', '<', 3)
             ->where(function ($q) {
                 $q->where('fase', 'LIKE', 'STAMPAXL106%')
-                  ->orWhere('fase', 'STAMPA');
+                  ->orWhere('fase', 'STAMPA')
+                  ->orWhere('fase', 'LIKE', 'STAMPA XL%');
             })
             ->get()
             ->groupBy(fn($f) => $f->ordine->commessa ?? '');
@@ -664,7 +666,8 @@ class PrinectSyncService
             ->where('stato', 3)
             ->where(function ($q) {
                 $q->where('fase', 'LIKE', 'STAMPAXL106%')
-                  ->orWhere('fase', 'STAMPA');
+                  ->orWhere('fase', 'STAMPA')
+                  ->orWhere('fase', 'LIKE', 'STAMPA XL%');
             })
             ->get();
 
@@ -702,7 +705,8 @@ class PrinectSyncService
             ->where('stato', 2)
             ->where(function ($q) {
                 $q->where('fase', 'LIKE', 'STAMPAXL106%')
-                  ->orWhere('fase', 'STAMPA');
+                  ->orWhere('fase', 'STAMPA')
+                  ->orWhere('fase', 'LIKE', 'STAMPA XL%');
             })
             ->get();
 

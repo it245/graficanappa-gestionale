@@ -25,7 +25,7 @@ class FaseStatoService
             if ($fase->stato >= 2) continue;
 
             // STAMPA XL (offset) non viene MAI promossa automaticamente a stato 1
-            if (str_starts_with($fase->fase, 'STAMPAXL106')) continue;
+            if (str_starts_with($fase->fase, 'STAMPAXL106') || str_starts_with($fase->fase, 'STAMPA XL')) continue;
 
             // Predecessori basati sul flusso produttivo reale (config)
             $mioOrdine = $flusso[$fase->fase] ?? 500;
@@ -89,7 +89,7 @@ class FaseStatoService
         // Per fasi stampa offset: non auto-terminare basandosi solo sui fogli
         // perché commesse con montaggi multipli possono avere fogli > qta_fase
         // ma non aver finito tutti i montaggi. Lasciare che Prinect (stato COMPLETED) termini.
-        $isStampaOffset = str_starts_with($fase->fase ?? '', 'STAMPAXL106') || ($fase->fase ?? '') === 'STAMPA';
+        $isStampaOffset = str_starts_with($fase->fase ?? '', 'STAMPAXL106') || str_starts_with($fase->fase ?? '', 'STAMPA XL') || ($fase->fase ?? '') === 'STAMPA';
         if ($isStampaOffset && $fase->fogli_buoni > 0) {
             $completata = false; // Prinect gestisce la terminazione della stampa
         }
@@ -142,7 +142,7 @@ class FaseStatoService
             if ($fase->stato >= 2) continue;
 
             // STAMPA XL (offset) non viene MAI promossa automaticamente a stato 1
-            if (str_starts_with($fase->fase, 'STAMPAXL106')) continue;
+            if (str_starts_with($fase->fase, 'STAMPAXL106') || str_starts_with($fase->fase, 'STAMPA XL')) continue;
 
             // Ordine nel flusso produttivo reale (dalla config)
             $mioOrdine = $flusso[$fase->fase] ?? 500;
