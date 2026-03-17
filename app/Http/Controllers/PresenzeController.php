@@ -305,7 +305,7 @@ class PresenzeController extends Controller
             });
 
             if (!$haEntrata) {
-                $minutiRitardo = $ora->diffInMinutes($inizioTurno);
+                $minutiRitardo = (int) abs($ora->diffInMinutes($inizioTurno));
                 $ritardi[] = [
                     'nome' => $turno->cognome_nome,
                     'turno' => $turno->turno,
