@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>Calcolo Ore Previste — MES Grafica Nappa</title>
+<style>
+    @page { margin: 1.5cm; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, sans-serif; color: #222; line-height: 1.7; padding: 30px; max-width: 900px; margin: 0 auto; font-size: 13px; }
+
+    .header { text-align: center; border-bottom: 3px solid #d11317; padding-bottom: 16px; margin-bottom: 24px; }
+    .header h1 { color: #d11317; font-size: 20px; }
+    .header h2 { color: #333; font-size: 14px; font-weight: 400; margin-top: 4px; }
+    .header .date { color: #888; font-size: 12px; margin-top: 6px; }
+
+    h3 { color: #d11317; font-size: 15px; margin-top: 28px; margin-bottom: 10px; border-left: 4px solid #d11317; padding-left: 10px; }
+
+    p { margin-bottom: 8px; }
+
+    .formula-box {
+        background: #1e293b; color: #f1f5f9; border-radius: 8px;
+        padding: 16px 24px; margin: 14px 0; font-size: 16px; font-weight: 600;
+        text-align: center; letter-spacing: 0.5px;
+    }
+    .formula-box .highlight { color: #60a5fa; }
+    .formula-box .operator { color: #fbbf24; }
+
+    .box { background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px; padding: 14px 18px; margin: 12px 0; }
+
+    table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 12px; }
+    th { background: #d11317; color: #fff; padding: 8px 10px; text-align: left; font-size: 11px; }
+    td { padding: 8px 10px; border-bottom: 1px solid #dee2e6; }
+    tr:nth-child(even) { background: #f8f9fa; }
+    td.num { text-align: right; font-weight: 600; }
+    td.result { text-align: right; font-weight: 700; color: #d11317; }
+
+    .example { background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 14px 18px; margin: 14px 0; }
+    .example strong { color: #856404; }
+    .example .calc { font-family: monospace; font-size: 13px; background: #fff; padding: 4px 8px; border-radius: 4px; display: inline-block; margin-top: 4px; }
+
+    .footer { margin-top: 30px; padding-top: 12px; border-top: 2px solid #dee2e6; text-align: center; font-size: 11px; color: #888; }
+
+    @media print {
+        body { padding: 0; font-size: 11px; }
+        .formula-box { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+</style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Come vengono calcolate le Ore Previste</h1>
+    <h2>Sistema MES — Grafica Nappa S.r.l.</h2>
+    <div class="date">Documento per la Direzione — Marzo 2026</div>
+</div>
+
+<!-- FORMULA -->
+<h3>La Formula</h3>
+
+<p>Per ogni fase di lavorazione, il sistema calcola le <strong>ore previste</strong> usando due parametri configurati per ogni macchina/fase:</p>
+
+<ul style="margin: 10px 0 10px 20px;">
+    <li><strong>Avviamento</strong> — tempo fisso di preparazione macchina (in ore)</li>
+    <li><strong>Copie/ora</strong> — velocità della macchina (fogli lavorati per ora)</li>
+</ul>
+
+<div class="formula-box">
+    <span class="highlight">Ore Previste</span> <span class="operator">=</span> Avviamento <span class="operator">+</span> ( Quantità Carta <span class="operator">÷</span> Copie/ora )
+</div>
+
+<div class="box">
+    <strong>Quantità Carta</strong> = il numero di fogli da lavorare per quella commessa (dal campo "Qta Carta" importato da Onda).
+</div>
+
+<!-- ESEMPI REALI -->
+<h3>Esempi Reali</h3>
+
+<div class="example">
+    <strong>Esempio 1 — Stampa Offset XL106</strong><br>
+    Commessa con 2.000 fogli di carta<br>
+    <span class="calc">Ore = 0,65h (avviamento) + (2.000 ÷ 3.900 fogli/h) = 0,65 + 0,51 = <strong>1h 10min</strong></span>
+</div>
+
+<div class="example">
+    <strong>Esempio 2 — Fustellatura BOBST 75x106</strong><br>
+    Commessa con 5.000 fogli<br>
+    <span class="calc">Ore = 0,5h (avviamento) + (5.000 ÷ 3.000 fogli/h) = 0,5 + 1,67 = <strong>2h 10min</strong></span>
+</div>
+
+<div class="example">
+    <strong>Esempio 3 — Piegaincolla PI01</strong><br>
+    Commessa con 12.000 pezzi<br>
+    <span class="calc">Ore = 0,5h (avviamento) + (12.000 ÷ 6.000 pezzi/h) = 0,5 + 2,0 = <strong>2h 30min</strong></span>
+</div>
+
+<div class="example">
+    <strong>Esempio 4 — Plastificazione opaca 1 lato</strong><br>
+    Commessa con 3.000 fogli<br>
+    <span class="calc">Ore = 0,5h (avviamento) + (3.000 ÷ 1.500 fogli/h) = 0,5 + 2,0 = <strong>2h 30min</strong></span>
+</div>
+
+<div class="example">
+    <strong>Esempio 5 — Stampa a caldo JOH</strong><br>
+    Commessa con 4.400 fogli<br>
+    <span class="calc">Ore = 1h (avviamento) + (4.400 ÷ 2.200 fogli/h) = 1 + 2,0 = <strong>3h 00min</strong></span>
+</div>
+
+<!-- TABELLA COMPLETA -->
+<h3>Parametri per Macchina/Fase</h3>
+
+<p>Questa è la configurazione attuale nel sistema. I valori possono essere modificati in qualsiasi momento.</p>
+
+<h4 style="margin-top:14px; color:#333;">Stampa</h4>
+<table>
+    <tr><th>Fase</th><th>Macchina</th><th>Avviamento (ore)</th><th>Copie/ora</th></tr>
+    <tr><td>STAMPAXL106.1 — .7</td><td>Heidelberg XL106</td><td class="num">0,65</td><td class="num">3.900</td></tr>
+    <tr><td>STAMPAINDIGO</td><td>Canon Fiery V900</td><td class="num">0,50</td><td class="num">1.000</td></tr>
+    <tr><td>STAMPACALDOJOH</td><td>JOH stampa a caldo</td><td class="num">1,00</td><td class="num">2.200</td></tr>
+</table>
+
+<h4 style="margin-top:14px; color:#333;">Plastificazione</h4>
+<table>
+    <tr><th>Fase</th><th>Avviamento (ore)</th><th>Copie/ora</th></tr>
+    <tr><td>PLAOPA1LATO (opaca 1 lato)</td><td class="num">0,50</td><td class="num">1.500</td></tr>
+    <tr><td>PLAOPABV (opaca B/V)</td><td class="num">0,50</td><td class="num">1.500</td></tr>
+    <tr><td>PLALUX1LATO (lucida 1 lato)</td><td class="num">0,50</td><td class="num">1.500</td></tr>
+    <tr><td>PLALUXBV (lucida B/V)</td><td class="num">0,50</td><td class="num">1.500</td></tr>
+    <tr><td>PLASOFTTOUCH1 (soft touch)</td><td class="num">0,50</td><td class="num">1.500</td></tr>
+</table>
+
+<h4 style="margin-top:14px; color:#333;">Fustellatura</h4>
+<table>
+    <tr><th>Fase</th><th>Macchina</th><th>Avviamento (ore)</th><th>Copie/ora</th></tr>
+    <tr><td>FUSTBOBST75X106</td><td>BOBST 75x106</td><td class="num">0,50</td><td class="num">3.000</td></tr>
+    <tr><td>FUSTBOBSTRILIEVI</td><td>BOBST (rilievi)</td><td class="num">0,50</td><td class="num">3.000</td></tr>
+    <tr><td>FUSTBIML75X106</td><td>BIML 75x106</td><td class="num">0,50</td><td class="num">1.600</td></tr>
+    <tr><td>FUSTSTELG33.44</td><td>Stellare 33x44</td><td class="num">0,50</td><td class="num">1.500</td></tr>
+    <tr><td>FUSTSTELP25.35</td><td>Stellare 25x35</td><td class="num">0,50</td><td class="num">1.500</td></tr>
+</table>
+
+<h4 style="margin-top:14px; color:#333;">Piegaincolla</h4>
+<table>
+    <tr><th>Fase</th><th>Configurazione</th><th>Avviamento (ore)</th><th>Copie/ora</th></tr>
+    <tr><td>PI01</td><td>Visionfold config 1</td><td class="num">0,50</td><td class="num">6.000</td></tr>
+    <tr><td>PI02</td><td>Visionfold config 2</td><td class="num">1,00</td><td class="num">5.000</td></tr>
+    <tr><td>PI03</td><td>Visionfold config 3</td><td class="num">1,00</td><td class="num">4.000</td></tr>
+</table>
+
+<h4 style="margin-top:14px; color:#333;">Finestratura</h4>
+<table>
+    <tr><th>Fase</th><th>Avviamento (ore)</th><th>Copie/ora</th></tr>
+    <tr><td>FIN01</td><td class="num">0,50</td><td class="num">4.000</td></tr>
+    <tr><td>FIN03</td><td class="num">1,00</td><td class="num">4.000</td></tr>
+    <tr><td>FIN04</td><td class="num">1,00</td><td class="num">4.000</td></tr>
+</table>
+
+<h4 style="margin-top:14px; color:#333;">Legatoria / Piega</h4>
+<table>
+    <tr><th>Fase</th><th>Avviamento (ore)</th><th>Copie/ora</th></tr>
+    <tr><td>PIEGA2ANTECORDONE</td><td class="num">0,50</td><td class="num">500</td></tr>
+    <tr><td>PIEGA3ANTESINGOLO</td><td class="num">0,50</td><td class="num">500</td></tr>
+    <tr><td>PUNTOMETALLICO</td><td class="num">72,00</td><td class="num">1.500</td></tr>
+</table>
+
+<h4 style="margin-top:14px; color:#333;">Taglio</h4>
+<table>
+    <tr><th>Fase</th><th>Avviamento (ore)</th><th>Copie/ora</th></tr>
+    <tr><td>TAGLIACARTE</td><td class="num">0,50</td><td class="num">4.000</td></tr>
+    <tr><td>TAGLIOINDIGO</td><td class="num">0,50</td><td class="num">4.000</td></tr>
+</table>
+
+<h4 style="margin-top:14px; color:#333;">Finitura Digitale</h4>
+<table>
+    <tr><th>Fase</th><th>Avviamento (ore)</th><th>Copie/ora</th></tr>
+    <tr><td>FOIL.MGI.30M</td><td class="num">0,50</td><td class="num">200</td></tr>
+    <tr><td>UVSPOT.MGI.30M</td><td class="num">0,50</td><td class="num">200</td></tr>
+    <tr><td>ZUND</td><td class="num">0,50</td><td class="num">50</td></tr>
+    <tr><td>RILIEVOASECCOJOH</td><td class="num">0,50</td><td class="num">2.000</td></tr>
+</table>
+
+<!-- CONFRONTO -->
+<h3>Come si usa nel MES</h3>
+
+<p>Nella dashboard owner e nel Report Ore, le <strong>Ore Previste</strong> vengono confrontate con le <strong>Ore Lavorate</strong> (reali):</p>
+
+<table>
+    <tr><th>Dato</th><th>Fonte</th><th>Descrizione</th></tr>
+    <tr><td><strong>Ore Previste</strong></td><td>Formula sopra</td><td>Stima teorica basata sui parametri macchina</td></tr>
+    <tr><td><strong>Ore Lavorate (Prinect)</strong></td><td>Prinect API</td><td>Tempo reale misurato dalla XL106 (avviamento + produzione)</td></tr>
+    <tr><td><strong>Ore Lavorate (operatore)</strong></td><td>Dashboard MES</td><td>Tempo tra Avvia e Termina, meno le pause</td></tr>
+</table>
+
+<div class="box">
+    <strong>Se Ore Lavorate > Ore Previste</strong> → la commessa ha "sforato". Le cause possono essere: avviamento più lungo del previsto, scarti elevati, problemi macchina, velocità ridotta.<br><br>
+    <strong>Se Ore Lavorate < Ore Previste</strong> → la fase è stata completata in anticipo. I parametri potrebbero essere troppo conservativi.
+</div>
+
+<!-- NOTA -->
+<h3>Come aggiornare i parametri</h3>
+
+<p>I parametri (avviamento e copie/ora) sono nel file <code>config/fasi_ore.php</code>. Se i tempi reali risultano sistematicamente diversi dalle previsioni, i valori possono essere aggiornati per riflettere le prestazioni reali delle macchine.</p>
+
+<p><strong>Esempio:</strong> Se la BOBST fa costantemente 3.500 fogli/ora invece di 3.000, basta cambiare il parametro da 3.000 a 3.500 e le previsioni saranno più accurate.</p>
+
+<div class="footer">
+    <p>MES Grafica Nappa S.r.l. — Aversa (CE)</p>
+    <p>Documento generato dal sistema MES — Marzo 2026</p>
+</div>
+
+</body>
+</html>
