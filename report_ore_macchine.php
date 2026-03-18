@@ -76,12 +76,41 @@ $reparti = DB::table('ordine_fasi')
     ->orderBy('reparti.nome')
     ->get();
 
+// Ore dalla pivot operatore per reparto (per reparti senza Prinect)
+$orePivotPerReparto = DB::table('fase_operatore')
+    ->join('ordine_fasi', 'fase_operatore.fase_id', '=', 'ordine_fasi.id')
+    ->join('fasi_catalogo', 'ordine_fasi.fase_catalogo_id', '=', 'fasi_catalogo.id')
+    ->join('reparti', 'fasi_catalogo.reparto_id', '=', 'reparti.id')
+    ->whereNotNull('fase_operatore.data_fine')
+    ->where(function ($q) use ($dataInizio, $dataFine) {
+        $q->whereBetween('fase_operatore.data_fine', [$dataInizio, $dataFine . ' 23:59:59']);
+    })
+    ->select(
+        'reparti.nome as reparto',
+        DB::raw('SUM(TIMESTAMPDIFF(SECOND, fase_operatore.data_inizio, fase_operatore.data_fine)) as sec_lordo'),
+        DB::raw('SUM(COALESCE(fase_operatore.secondi_pausa, 0)) as sec_pausa')
+    )
+    ->groupBy('reparti.nome')
+    ->get()
+    ->keyBy('reparto');
+
 $row = 2;
-$totFasi = 0; $totAvv = 0; $totProd = 0; $totBuoni = 0; $totScarto = 0;
+$totFasi = 0; $totOre = 0; $totBuoni = 0; $totScarto = 0;
 foreach ($reparti as $r) {
+    // Ore Prinect (avviamento + produzione)
+    $secPrinect = $r->sec_avviamento + $r->sec_produzione;
+
+    // Se non ci sono ore Prinect, usa la pivot operatore
+    if ($secPrinect <= 0) {
+        $pivot = $orePivotPerReparto->get($r->reparto);
+        $secNetto = $pivot ? max($pivot->sec_lordo - $pivot->sec_pausa, 0) : 0;
+    } else {
+        $secNetto = $secPrinect;
+    }
+
     $oreAvv = round($r->sec_avviamento / 3600, 1);
     $oreProd = round($r->sec_produzione / 3600, 1);
-    $oreTot = round(($r->sec_avviamento + $r->sec_produzione) / 3600, 1);
+    $oreTot = round($secNetto / 3600, 1);
     $pctScarto = ($r->fogli_buoni + $r->fogli_scarto) > 0
         ? round($r->fogli_scarto / ($r->fogli_buoni + $r->fogli_scarto) * 100, 1)
         : 0;
@@ -96,8 +125,7 @@ foreach ($reparti as $r) {
     $sheet->setCellValue("H$row", $pctScarto . '%');
 
     $totFasi += $r->fasi_count;
-    $totAvv += $r->sec_avviamento;
-    $totProd += $r->sec_produzione;
+    $totOre += $secNetto;
     $totBuoni += $r->fogli_buoni;
     $totScarto += $r->fogli_scarto;
     $row++;
@@ -106,9 +134,9 @@ foreach ($reparti as $r) {
 // Riga totale
 $sheet->setCellValue("A$row", 'TOTALE');
 $sheet->setCellValue("B$row", $totFasi);
-$sheet->setCellValue("C$row", round($totAvv / 3600, 1));
-$sheet->setCellValue("D$row", round($totProd / 3600, 1));
-$sheet->setCellValue("E$row", round(($totAvv + $totProd) / 3600, 1));
+$sheet->setCellValue("C$row", '-');
+$sheet->setCellValue("D$row", '-');
+$sheet->setCellValue("E$row", round($totOre / 3600, 1));
 $sheet->setCellValue("F$row", $totBuoni);
 $sheet->setCellValue("G$row", $totScarto);
 $pctTot = ($totBuoni + $totScarto) > 0 ? round($totScarto / ($totBuoni + $totScarto) * 100, 1) : 0;
