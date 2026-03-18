@@ -279,7 +279,8 @@ foreach ($fasiDettaglio as $f) {
     $ops = DB::table('fase_operatore')
         ->join('operatori', 'fase_operatore.operatore_id', '=', 'operatori.id')
         ->where('fase_operatore.fase_id', $f->fase_id)
-        ->pluck(DB::raw("CONCAT(operatori.nome, ' ', operatori.cognome)"))
+        ->select(DB::raw("CONCAT(operatori.nome, ' ', operatori.cognome) as nome_completo"))
+        ->pluck('nome_completo')
         ->implode(', ');
 
     $sheetComm->setCellValue("A$row", $f->commessa);
