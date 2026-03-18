@@ -22,7 +22,6 @@
                     <th>Cliente</th>
                     <th>Descrizione</th>
                     <th style="width:70px;">Qta</th>
-                    <th style="width:100px;">Consegna</th>
                     <th style="width:100px;">Etichetta</th>
                 </tr>
             </thead>
@@ -33,7 +32,6 @@
                     <td>{{ $c->cliente_nome ?? '-' }}</td>
                     <td style="max-width:350px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ $c->descrizione ?? '-' }}</td>
                     <td>{{ $c->qta_richiesta ? number_format($c->qta_richiesta, 0, ',', '.') : '-' }}</td>
-                    <td>{{ $c->data_prevista_consegna ? \Carbon\Carbon::parse($c->data_prevista_consegna)->format('d/m/Y') : '-' }}</td>
                     <td>
                         @if($c->ordini->count() > 1)
                             <div class="dropdown">
@@ -53,7 +51,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="6" class="text-center text-muted py-3">Nessuna commessa trovata</td>
+                    <td colspan="5" class="text-center text-muted py-3">Nessuna commessa trovata</td>
                 </tr>
                 @endforelse
             </tbody>
