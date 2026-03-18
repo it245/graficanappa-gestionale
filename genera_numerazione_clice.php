@@ -44,15 +44,23 @@ $sheet->getStyle("A2:E$row")->applyFromArray([
     'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
 ]);
 
-$sheet->getColumnDimension('A')->setWidth(14);
-$sheet->getColumnDimension('B')->setWidth(14);
-$sheet->getColumnDimension('C')->setWidth(40);
-$sheet->getColumnDimension('D')->setWidth(14);
-$sheet->getColumnDimension('E')->setWidth(50);
+$sheet->getColumnDimension('A')->setWidth(18);
+$sheet->getColumnDimension('B')->setWidth(18);
+$sheet->getColumnDimension('C')->setWidth(55);
+$sheet->getColumnDimension('D')->setWidth(18);
+$sheet->getColumnDimension('E')->setWidth(65);
 
+// Altezza righe: più spazio per scrivere a penna
+for ($r = 2; $r < $row; $r++) {
+    $sheet->getRowDimension($r)->setRowHeight(35);
+}
+$sheet->getRowDimension(1)->setRowHeight(25);
+
+$sheet->getStyle("A2:E$row")->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
 $sheet->getStyle("A2:A$row")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 $sheet->getStyle("B2:B$row")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 $sheet->getStyle("D2:D$row")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+$sheet->getStyle("A2:A$row")->getFont()->setSize(14)->setBold(true);
 
 $percorso = __DIR__ . '/storage/Numerazione_Clice_2000_2300.xlsx';
 $writer = new Xlsx($spreadsheet);
