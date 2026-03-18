@@ -554,9 +554,16 @@ function aggiornaAnteprima() {
     var data = document.getElementById('campo-data').value;
 
     @if($isTifataPlastica ?? false)
-    // Tifata: articolo aggiorna la descrizione nell'anteprima
+    // Tifata: articolo aggiorna la descrizione nell'anteprima + auto-resize
     var descTifata = document.getElementById('campo-articolo-manuale').value;
-    document.getElementById('print-descrizione-tifata').textContent = descTifata;
+    var descElTifata = document.getElementById('print-descrizione-tifata');
+    descElTifata.textContent = descTifata;
+    var etichettaTifata = document.getElementById('etichetta');
+    var sizesTifata = [20, 18, 16, 14, 12, 11, 10, 9];
+    for (var st = 0; st < sizesTifata.length; st++) {
+        descElTifata.style.fontSize = sizesTifata[st] + 'pt';
+        if (etichettaTifata.scrollHeight <= etichettaTifata.clientHeight) break;
+    }
     @elseif(!$isSimpleLabel)
     document.getElementById('print-cliente').textContent = cliente;
     document.getElementById('print-articolo').textContent = articolo;
