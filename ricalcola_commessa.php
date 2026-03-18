@@ -1,23 +1,37 @@
 <?php
-// Uso: php ricalcola_commessa.php 66760
+// Ricalcola tutte le commesse con fasi in pausa
 require __DIR__ . '/vendor/autoload.php';
 $app = require_once __DIR__ . '/bootstrap/app.php';
 $app->make('Illuminate\Contracts\Console\Kernel')->bootstrap();
 
-$cerca = $argv[1] ?? '66760';
-$commessa = '00' . $cerca . '-26';
+use App\Models\OrdineFase;
+use App\Services\FaseStatoService;
 
-echo "Ricalcolo stati per $commessa...\n";
-App\Services\FaseStatoService::ricalcolaCommessa($commessa);
-echo "Fatto.\n";
-
-// Verifica
-$fasi = App\Models\OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
-    ->with('faseCatalogo.reparto')
-    ->orderBy('priorita')
+// Trova tutte le fasi in pausa (stato non numerico, non 0-4)
+$fasiInPausa = OrdineFase::with('ordine')
+    ->where('stato', 'NOT REGEXP', '^[0-4]$')
+    ->whereNotNull('stato')
+    ->where('stato', '!=', '')
     ->get();
 
-foreach ($fasi as $f) {
-    $reparto = $f->faseCatalogo->reparto->nome ?? '-';
-    echo "  {$f->fase} | {$reparto} | Stato: {$f->stato}\n";
+$commesse = $fasiInPausa->pluck('ordine.commessa')->unique()->filter();
+
+echo "Commesse con fasi in pausa: " . $commesse->count() . "\n\n";
+
+foreach ($commesse as $commessa) {
+    echo "Ricalcolo $commessa...\n";
+    FaseStatoService::ricalcolaCommessa($commessa);
+
+    $fasi = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
+        ->orderBy('priorita')
+        ->get();
+
+    foreach ($fasi as $f) {
+        $marker = '';
+        if (!is_numeric($f->stato)) $marker = ' *** PAUSA';
+        echo "  {$f->fase} | Stato: {$f->stato}{$marker}\n";
+    }
+    echo "\n";
 }
+
+echo "Fatto.\n";
