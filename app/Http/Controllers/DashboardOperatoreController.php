@@ -200,6 +200,28 @@ class DashboardOperatoreController extends Controller
             ->orderBy('data_prevista_consegna')
             ->get();
 
+        // Mirko D'Orazio: mostra solo commesse senza FS o con 2+ FS
+        $isMirko = strtolower(trim($operatore->cognome ?? '')) === "d'orazio"
+                || strtolower(trim($operatore->cognome ?? '')) === 'dorazio'
+                || strtolower(trim($operatore->cognome ?? '')) === 'd orazio';
+
+        if ($isMirko) {
+            $commesse = $commesse->filter(function ($c) {
+                $desc = $c->descrizione ?? '';
+                $cliente = $c->cliente_nome ?? '';
+                $notePre = $c->note_prestampa ?? '';
+                $fs = \App\Helpers\DescrizioneParser::parseFustella($desc, $cliente, $notePre);
+
+                // Nessuna fustella trovata
+                if (!$fs || $fs === '-') return true;
+
+                // Due o più fustelle (contiene "/" o ",")
+                if (str_contains($fs, '/') || str_contains($fs, ',')) return true;
+
+                return false;
+            })->values();
+        }
+
         return view('operatore.prestampa', compact('operatore', 'commesse'));
     }
 
