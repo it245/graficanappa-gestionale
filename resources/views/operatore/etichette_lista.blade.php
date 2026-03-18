@@ -6,16 +6,12 @@
         <h2>Stampa Etichette</h2>
     </div>
 
-    <form method="GET" action="{{ route('etichette.lista') }}" class="mb-3 d-flex gap-2" style="max-width:500px;">
-        <input type="text" name="q" class="form-control" placeholder="Cerca commessa, cliente o descrizione..." value="{{ $filtro }}" autofocus>
-        <button type="submit" class="btn btn-primary" style="white-space:nowrap;">Cerca</button>
-        @if($filtro)
-        <a href="{{ route('etichette.lista') }}" class="btn btn-outline-secondary" style="white-space:nowrap;">Reset</a>
-        @endif
-    </form>
+    <div class="mb-3" style="max-width:500px;">
+        <input type="text" id="filtroEtichette" class="form-control" placeholder="Cerca commessa, cliente o descrizione..." autofocus>
+    </div>
 
     <div style="overflow-x:auto;">
-        <table class="table table-bordered table-hover table-sm" style="font-size:13px;">
+        <table class="table table-bordered table-hover table-sm" style="font-size:13px;" id="tabellaEtichette">
             <thead class="table-dark">
                 <tr>
                     <th style="width:110px;">Commessa</th>
@@ -58,8 +54,22 @@
         </table>
     </div>
 
-    <div class="text-muted mt-2" style="font-size:12px;">
+    <div class="text-muted mt-2" style="font-size:12px;" id="contatore">
         {{ $commesse->count() }} commesse
     </div>
 </div>
+
+<script>
+document.getElementById('filtroEtichette').addEventListener('input', function() {
+    var q = this.value.toLowerCase().trim();
+    var visibili = 0;
+    document.querySelectorAll('#tabellaEtichette tbody tr').forEach(function(row) {
+        if (row.querySelector('.text-muted')) return; // skip riga vuota
+        var match = !q || row.textContent.toLowerCase().includes(q);
+        row.style.display = match ? '' : 'none';
+        if (match) visibili++;
+    });
+    document.getElementById('contatore').textContent = visibili + ' commesse';
+});
+</script>
 @endsection
