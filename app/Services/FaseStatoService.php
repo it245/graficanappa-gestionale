@@ -36,11 +36,14 @@ class FaseStatoService
             if ($fasiPrecedenti->isEmpty()) {
                 // Nessuna fase precedente: non toccare lo stato (rispetta modifiche manuali)
             } else {
-                $tuttTerminate = $fasiPrecedenti->every(fn($f) => $f->stato >= 3);
-                if ($tuttTerminate && $fase->stato == 0) {
+                // Fase precedente in pausa (stato stringa non numerica) = NON terminata
+                $tuttTerminate = $fasiPrecedenti->every(fn($f) => is_numeric($f->stato) && $f->stato >= 3);
+                $qualcunaInPausa = $fasiPrecedenti->contains(fn($f) => !is_numeric($f->stato));
+
+                if ($tuttTerminate && !$qualcunaInPausa && $fase->stato == 0) {
                     $fase->stato = 1;
                     $fase->save();
-                } elseif (!$tuttTerminate && $fase->stato == 1) {
+                } elseif ((!$tuttTerminate || $qualcunaInPausa) && $fase->stato == 1) {
                     $fase->stato = 0;
                     $fase->save();
                 }
@@ -155,11 +158,13 @@ class FaseStatoService
             if ($fasiPrecedenti->isEmpty()) {
                 // Nessuna fase precedente: non toccare lo stato (rispetta modifiche manuali)
             } else {
-                $tuttTerminate = $fasiPrecedenti->every(fn($f) => $f->stato >= 3);
-                if ($tuttTerminate && $fase->stato == 0) {
+                $tuttTerminate = $fasiPrecedenti->every(fn($f) => is_numeric($f->stato) && $f->stato >= 3);
+                $qualcunaInPausa = $fasiPrecedenti->contains(fn($f) => !is_numeric($f->stato));
+
+                if ($tuttTerminate && !$qualcunaInPausa && $fase->stato == 0) {
                     $fase->stato = 1;
                     $fase->save();
-                } elseif (!$tuttTerminate && $fase->stato == 1) {
+                } elseif ((!$tuttTerminate || $qualcunaInPausa) && $fase->stato == 1) {
                     $fase->stato = 0;
                     $fase->save();
                 }
