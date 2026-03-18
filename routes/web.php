@@ -168,6 +168,9 @@ Route::get('/spedizione/tracking-json/{segnacollo}', [DashboardSpedizioneControl
 // Prototipo nuova UI
 Route::get('/proto/owner', [DashboardOwnerController::class, 'prototipo'])->name('proto.owner');
 
+// Etichette — lista commesse (accesso libero)
+Route::get('/etichette', [EtichettaController::class, 'lista'])->name('etichette.lista');
+
 // Health check
 Route::get('/health', fn() => 'MES OK');
 Route::get('/commesse/{commessa}', [App\Http\Controllers\CommessaController::class, 'show'])

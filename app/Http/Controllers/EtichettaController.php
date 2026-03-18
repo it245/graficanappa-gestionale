@@ -79,6 +79,38 @@ class EtichettaController extends Controller
         ));
     }
 
+    /**
+     * Lista commesse per stampa etichette (accesso libero).
+     */
+    public function lista(Request $request)
+    {
+        $filtro = $request->get('q', '');
+
+        $query = Ordine::whereHas('fasi', fn($q) => $q->where('stato', '<', 4));
+
+        if ($filtro) {
+            $query->where(function ($q) use ($filtro) {
+                $q->where('commessa', 'like', "%{$filtro}%")
+                  ->orWhere('cliente_nome', 'like', "%{$filtro}%")
+                  ->orWhere('descrizione', 'like', "%{$filtro}%");
+            });
+        }
+
+        $commesse = $query->orderByDesc('data_registrazione')
+            ->get()
+            ->groupBy('commessa')
+            ->map(fn($ordini) => (object)[
+                'commessa' => $ordini->first()->commessa,
+                'cliente_nome' => $ordini->first()->cliente_nome,
+                'descrizione' => $ordini->first()->descrizione,
+                'qta_richiesta' => $ordini->sum('qta_richiesta'),
+                'data_prevista_consegna' => $ordini->first()->data_prevista_consegna,
+                'ordini' => $ordini,
+            ]);
+
+        return view('operatore.etichette_lista', compact('commesse', 'filtro'));
+    }
+
     public function searchEan(Request $request)
     {
         $q = $request->input('q', '');
