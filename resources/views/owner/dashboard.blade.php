@@ -2189,10 +2189,12 @@ fetch('{{ route("owner.presenti") }}')
 
 @if($isReadonly ?? false)
 <script>
-// Owner readonly: rimuovi contenteditable e nascondi azioni
+// Owner readonly: rimuovi contenteditable tranne data consegna
 document.addEventListener('DOMContentLoaded', function() {
-    // Rimuovi contenteditable da tutte le celle
+    // Rimuovi contenteditable da tutte le celle TRANNE data prevista consegna
     document.querySelectorAll('[contenteditable]').forEach(function(el) {
+        var onblur = el.getAttribute('onblur') || '';
+        if (onblur.indexOf('data_prevista_consegna') !== -1) return; // mantieni editabile
         el.removeAttribute('contenteditable');
         el.removeAttribute('onblur');
         el.style.cursor = 'default';
