@@ -429,8 +429,14 @@ public function calcolaOreEPriorita($fase)
         }
 
         // Spedizioni BRT: dalla tabella ddt_spedizioni (supporta più DDT per commessa)
+        // Escludi DDT consegnati da più di 5 giorni
+        $limiteConsegna = Carbon::today()->subDays(5)->format('Y-m-d');
         $spedizioniBRT = DdtSpedizione::with('ordine:id,descrizione')
             ->where('vettore', 'LIKE', '%BRT%')
+            ->where(function ($q) use ($limiteConsegna) {
+                $q->whereNull('brt_data_consegna')
+                  ->orWhere('brt_data_consegna', '>=', $limiteConsegna);
+            })
             ->orderByDesc('onda_id_doc')
             ->get()
             ->groupBy('numero_ddt');
