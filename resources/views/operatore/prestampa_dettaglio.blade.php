@@ -52,10 +52,9 @@
         </div>
     </div>
     <div class="col-md-2">
-        <div class="border rounded p-2 h-100" style="background:#fff3cd">
+        <div class="border rounded p-2 h-100" style="background:#e8f4fd">
             <strong class="d-block mb-1">Cliente</strong>
-            <div contenteditable class="campo-editabile" data-campo="cliente_nome" data-ordine="{{ $ordine->id }}"
-                 onblur="salvaCampoPrestampa(this)">{{ $ordine->cliente_nome ?: '' }}</div>
+            <span>{{ $ordine->cliente_nome ?: '-' }}</span>
         </div>
     </div>
     <div class="col-md-1">
