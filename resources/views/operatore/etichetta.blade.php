@@ -192,8 +192,12 @@
 {{-- ===== FORM (nascosto in stampa) ===== --}}
 <div class="etichetta-form no-print">
     <div class="d-flex align-items-center mb-3">
-        <a href="{{ route('operatore.dashboard') }}" class="btn btn-outline-secondary btn-sm me-2">&larr; Dashboard</a>
-        <a href="/commesse/{{ $ordine->commessa }}?op_token={{ request('op_token') }}" class="btn btn-outline-primary btn-sm me-3">&larr; Commessa</a>
+        @if(request('from') === 'etichette')
+            <a href="{{ route('etichette.lista') }}" class="btn btn-outline-secondary btn-sm me-2">&larr; Lista Etichette</a>
+        @else
+            <a href="{{ route('operatore.dashboard') }}" class="btn btn-outline-secondary btn-sm me-2">&larr; Dashboard</a>
+            <a href="/commesse/{{ $ordine->commessa }}?op_token={{ request('op_token') }}" class="btn btn-outline-primary btn-sm me-3">&larr; Commessa</a>
+        @endif
         <h4 class="mb-0">Stampa Etichetta</h4>
     </div>
 

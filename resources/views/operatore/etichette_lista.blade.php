@@ -40,12 +40,12 @@
                                 </button>
                                 <ul class="dropdown-menu">
                                     @foreach($c->ordini as $ord)
-                                    <li><a class="dropdown-item" href="{{ route('operatore.etichetta', $ord->id) }}" style="font-size:12px;">{{ Str::limit($ord->descrizione, 45) }}</a></li>
+                                    <li><a class="dropdown-item" href="{{ route('operatore.etichetta', $ord->id) }}?from=etichette" style="font-size:12px;">{{ Str::limit($ord->descrizione, 45) }}</a></li>
                                     @endforeach
                                 </ul>
                             </div>
                         @else
-                            <a href="{{ route('operatore.etichetta', $c->ordini->first()->id) }}" class="btn btn-sm btn-primary" style="font-size:12px;">Stampa</a>
+                            <a href="{{ route('operatore.etichetta', $c->ordini->first()->id) }}?from=etichette" class="btn btn-sm btn-primary" style="font-size:12px;">Stampa</a>
                         @endif
                     </td>
                 </tr>
