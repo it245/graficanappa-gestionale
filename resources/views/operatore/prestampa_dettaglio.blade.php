@@ -31,7 +31,19 @@
     }
 </style>
 
-<div class="d-flex justify-content-between align-items-center mb-2 mt-2">
+{{-- Header con logo, nome operatore e logout --}}
+<div class="d-flex justify-content-between align-items-center mb-3 mt-2 px-2" style="border-bottom:1px solid #dee2e6; padding-bottom:10px;">
+    <div class="d-flex align-items-center gap-3">
+        <img src="{{ asset('images/logo_graficanappa.png') }}" alt="Logo" style="height:36px;">
+        <span style="font-size:14px; font-weight:600; color:#333;">Prestampa</span>
+    </div>
+    <div class="d-flex align-items-center gap-3">
+        <span style="font-size:13px; color:#555;">{{ $operatore->nome ?? '' }} {{ $operatore->cognome ?? '' }}</span>
+        <a href="{{ route('operatore.logout', ['op_token' => request('op_token')]) }}" class="btn btn-outline-secondary btn-sm">Logout</a>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-2">
     <div>
         <a href="{{ route('operatore.prestampa', ['op_token' => request('op_token')]) }}" class="btn-back">&larr; Lista Commesse</a>
         <h2 class="d-inline ms-3">Commessa: <strong>{{ $commessa }}</strong></h2>
@@ -117,32 +129,6 @@
     </div>
 </div>
 
-{{-- Informazioni generali / per fasi successive --}}
-@php
-    $noteFS = $ordine->note_fasi_successive ?? '';
-    $righeFS = $noteFS ? json_decode($noteFS, true) : [];
-    if (!is_array($righeFS)) $righeFS = [];
-@endphp
-<div class="border rounded p-2 mb-3" style="background:#f8f9fa; font-size:13px;">
-    <strong class="d-block mb-1">Informazioni generali / per fasi successive</strong>
-    @if(!empty($righeFS))
-        <div class="mb-2" style="max-height:150px; overflow-y:auto; padding:8px;">
-            @foreach($righeFS as $riga)
-                <div class="mb-1">
-                    <small class="text-muted">{{ $riga['data'] ?? '' }}</small>
-                    <strong>{{ $riga['reparto'] ?? '' }} - {{ $riga['nome'] ?? '' }}:</strong>
-                    {{ $riga['testo'] ?? '' }}
-                </div>
-            @endforeach
-        </div>
-    @else
-        <div class="mb-2 text-muted">Nessuna nota</div>
-    @endif
-    <div class="d-flex gap-2">
-        <textarea id="nuova-nota-fs" class="form-control form-control-sm" rows="1" placeholder="Scrivi una nota..."></textarea>
-        <button type="button" class="btn btn-sm btn-outline-primary" style="white-space:nowrap" onclick="inviaNotaFS()">Invia</button>
-    </div>
-</div>
 
 {{-- Barra progresso fasi --}}
 @php
@@ -256,35 +242,5 @@ function salvaCampoPrestampa(el) {
     .catch(function() { alert('Errore di connessione'); });
 }
 
-function inviaNotaFS() {
-    var textarea = document.getElementById('nuova-nota-fs');
-    var testo = textarea.value.trim();
-    if (!testo) { alert('Scrivi una nota prima di inviare'); return; }
-
-    var noteEsistenti = @json($righeFS ?? []);
-    noteEsistenti.push({
-        data: new Date().toLocaleString('it-IT'),
-        reparto: 'Prestampa',
-        nome: @json(trim(($operatore->nome ?? '') . ' ' . ($operatore->cognome ?? ''))),
-        testo: testo
-    });
-
-    fetch('{{ route("produzione.aggiornaOrdineCampo") }}', {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}',
-            'X-Op-Token': new URLSearchParams(window.location.search).get('op_token') || '',
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        },
-        body: JSON.stringify({ordine_id: {{ $ordine->id }}, campo: 'note_fasi_successive', valore: JSON.stringify(noteEsistenti)})
-    })
-    .then(function(r) { return r.json(); })
-    .then(function(d) {
-        if (d.success) { location.reload(); }
-        else { alert('Errore: ' + (d.messaggio || '')); }
-    })
-    .catch(function() { alert('Errore di connessione'); });
-}
 </script>
 @endsection

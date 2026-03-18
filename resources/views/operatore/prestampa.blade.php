@@ -2,12 +2,16 @@
 
 @section('content')
 <div class="container-fluid px-3">
-    <div class="d-flex justify-content-between align-items-center mb-3 mt-2">
-        <h2>Prestampa</h2>
-        <a href="{{ route('operatore.dashboard') }}" class="btn btn-primary btn-sm">
-            <img src="{{ asset('images/turn-left_15441589.png') }}" alt="" style="width:16px; height:16px; margin-right:4px;">
-            Dashboard
-        </a>
+    {{-- Header con logo, nome operatore e logout --}}
+    <div class="d-flex justify-content-between align-items-center mb-3 mt-2" style="border-bottom:1px solid #dee2e6; padding-bottom:10px;">
+        <div class="d-flex align-items-center gap-3">
+            <img src="{{ asset('images/logo_graficanappa.png') }}" alt="Logo" style="height:36px;">
+            <h2 class="mb-0">Prestampa</h2>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+            <span style="font-size:13px; color:#555;">{{ $operatore->nome ?? '' }} {{ $operatore->cognome ?? '' }}</span>
+            <a href="{{ route('operatore.logout', ['op_token' => request('op_token')]) }}" class="btn btn-outline-secondary btn-sm">Logout</a>
+        </div>
     </div>
 
     <div class="mb-3">
