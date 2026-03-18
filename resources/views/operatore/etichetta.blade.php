@@ -103,7 +103,7 @@
 
     /* --- Corpo info --- */
     .etichetta-preview .info-top {
-        font-size: 11pt;
+        font-size: 14pt;
         font-weight: 700;
         line-height: 1.5;
         color: #111;
