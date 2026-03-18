@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>Report Sviluppo MES — 17 Marzo 2026</title>
+<style>
+    @page { margin: 1.5cm; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, sans-serif; color: #222; line-height: 1.6; padding: 30px; max-width: 900px; margin: 0 auto; font-size: 13px; }
+
+    .header { text-align: center; border-bottom: 3px solid #d11317; padding-bottom: 16px; margin-bottom: 24px; }
+    .header h1 { color: #d11317; font-size: 20px; margin-bottom: 2px; }
+    .header h2 { color: #333; font-size: 14px; font-weight: 400; }
+    .header .date { color: #888; font-size: 12px; margin-top: 6px; }
+
+    h3 { color: #d11317; font-size: 15px; margin-top: 28px; margin-bottom: 10px; border-left: 4px solid #d11317; padding-left: 10px; }
+    h4 { color: #333; font-size: 13px; margin-top: 14px; margin-bottom: 6px; }
+
+    p, li { font-size: 13px; margin-bottom: 6px; }
+    ul { margin-left: 20px; margin-bottom: 10px; }
+
+    .box { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 14px 18px; margin: 10px 0; }
+    .box-green { background: #d4edda; border-color: #28a745; }
+    .box-yellow { background: #fff3cd; border-color: #ffc107; }
+    .box-blue { background: #d1ecf1; border-color: #17a2b8; }
+    .box-red { background: #f8d7da; border-color: #dc3545; }
+
+    table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 12px; }
+    th { background: #d11317; color: #fff; padding: 8px 10px; text-align: left; }
+    td { padding: 8px 10px; border-bottom: 1px solid #dee2e6; }
+    tr:nth-child(even) { background: #f8f9fa; }
+
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; color: #fff; }
+    .badge-done { background: #28a745; }
+    .badge-new { background: #0d6efd; }
+    .badge-fix { background: #fd7e14; }
+    .badge-next { background: #6c757d; }
+
+    .footer { margin-top: 30px; padding-top: 12px; border-top: 2px solid #dee2e6; text-align: center; font-size: 11px; color: #888; }
+
+    @media print {
+        body { padding: 0; }
+        .box { page-break-inside: avoid; }
+    }
+</style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Report Sviluppo MES</h1>
+    <h2>Sessione del 17 Marzo 2026</h2>
+    <div class="date">Grafica Nappa S.r.l. — Sistema Gestionale MES</div>
+</div>
+
+<!-- RIEPILOGO -->
+<div class="box box-green">
+    <strong>Riepilogo sessione:</strong> 12 interventi completati tra fix produzione, nuove funzionalità e strumenti di reportistica.
+</div>
+
+<!-- 1. FIX PRINECT -->
+<h3>1. Fix Auto-Terminazione Stampa Offset (Prinect)</h3>
+
+<p><strong>Problema riscontrato:</strong> La commessa 0066725-26 risultava terminata (stato 3) nella dashboard operatore, ma era ancora in stampa sulla XL106. Contemporaneamente, la commessa 0066785-26 (copertina catalogo Oceano) era stata completata il giorno prima ma risultava ancora "avviata".</p>
+
+<div class="box">
+    <strong>Causa:</strong> Il sistema verificava lo stato dei workstep Prinect e terminava le fasi quando risultavano "COMPLETED", senza controllare se la macchina stesse effettivamente ancora lavorando (ristampe). Inoltre, le commesse finite il giorno prima non venivano mai auto-terminate perché non apparivano nelle attività live del giorno successivo.
+</div>
+
+<p><strong>Soluzione implementata (3 meccanismi):</strong></p>
+<ul>
+    <li><span class="badge badge-fix">Fix</span> <strong>Protezione fasi attive:</strong> Prima di terminare, il sistema verifica se ci sono attività Prinect nell'ultima ora. Se sì, la macchina sta ancora stampando → non termina.</li>
+    <li><span class="badge badge-new">Nuovo</span> <strong>Terminazione fasi abbandonate:</strong> Fasi a stato "avviato" con ultima attività > 4 ore fa e giorno diverso → vengono terminate automaticamente con data_fine dall'ultima attività.</li>
+    <li><span class="badge badge-new">Nuovo</span> <strong>Ripristino fasi erroneamente terminate:</strong> Se una fase è a stato 3 ma ha attività Prinect nell'ultima ora → viene riportata a stato 2 (avviato).</li>
+</ul>
+
+<table>
+    <tr><th>Commessa</th><th>Prima</th><th>Dopo</th><th>Risultato</th></tr>
+    <tr><td>0066725-26</td><td>Stato 3 (terminata)</td><td>Stato 2 (avviata)</td><td>Corretto — ancora in macchina</td></tr>
+    <tr><td>0066785-26 (copertina)</td><td>Stato 2 (avviata)</td><td>Stato 3 (terminata)</td><td>Corretto — fatta ieri</td></tr>
+    <tr><td>0066785-26 (catalogo)</td><td>Stato 1 (pronto)</td><td>Stato 1 (pronto)</td><td>Corretto — non ancora stampato</td></tr>
+</table>
+
+<!-- 2. FIX FIERY -->
+<h3>2. Fix Auto-Terminazione Stampa Digitale (Fiery)</h3>
+
+<p><strong>Problema:</strong> La commessa 0066705-26 (pieghevole EKRE BEATIFIX) risultava terminata ma era ancora in stampa sulla Fiery V900 (145/330 copie, 44%).</p>
+
+<div class="box">
+    <strong>Soluzione:</strong> Stessa logica del Prinect applicata alla Fiery:
+    <ul>
+        <li>Se un job è in stampa, la fase non viene mai terminata automaticamente</li>
+        <li>Se una fase è già terminata ma il job torna in stampa → ripristinata a stato 2</li>
+        <li>I dati accounting storici non possono terminare il job attualmente in stampa</li>
+    </ul>
+</div>
+
+<!-- 3. DASHBOARD PRESTAMPA -->
+<h3>3. Nuova Dashboard Prestampa</h3>
+
+<div class="box box-blue">
+    <strong>Nuova funzionalità per il reparto prestampa.</strong>
+</div>
+
+<p>Creata una dashboard dedicata per gli operatori del reparto prestampa, accessibile automaticamente al login.</p>
+
+<h4>Lista Commesse (/operatore/prestampa)</h4>
+<ul>
+    <li>Mostra <strong>tutte le commesse attive</strong> (non filtrate per reparto)</li>
+    <li>Colonne: Commessa, Cliente, Descrizione, Qta, Data Registrazione, Consegna, Operatore Prestampa, Note</li>
+    <li>Filtro ricerca in tempo reale</li>
+</ul>
+
+<h4>Dettaglio Commessa (click sulla commessa)</h4>
+<p>Stessa vista del dettaglio owner con <strong>tutti i campi editabili</strong>:</p>
+<ul>
+    <li>Descrizione, Cliente, Quantità, Colori, Fustella</li>
+    <li>Operatore Prestampa, Note Prestampa, Commento Produzione</li>
+    <li>Note per fasi successive (con possibilità di aggiungere)</li>
+    <li>Barra progresso fasi + tabella fasi in sola lettura</li>
+</ul>
+
+<p><strong>Redirect automatico:</strong> Gli operatori del reparto "prestampa" vengono reindirizzati automaticamente alla dashboard prestampa al login.</p>
+
+<!-- 4. LAVORAZIONI ESTERNE -->
+<h3>4. Miglioramenti Lavorazioni Esterne</h3>
+
+<ul>
+    <li><span class="badge badge-fix">Fix</span> La pagina Lavorazioni Esterne ora mostra anche le fasi con flag <code>esterno=1</code> (inviate dal owner), non solo quelle nel reparto "esterno"</li>
+    <li><span class="badge badge-fix">Fix</span> Rimosso filtro che mostrava solo fasi in stato 2 — ora visibili tutti gli stati (0, 1, 2)</li>
+    <li><span class="badge badge-new">Nuovo</span> Dropdown fornitori nel dettaglio commessa (stessa lista della logistica): 4GRAPH, CARD, CLEVEX, KRESIA, ecc. + opzione "Altro"</li>
+</ul>
+
+<!-- 5. ALERT RITARDI -->
+<h3>5. Sistema Alert Ritardi Presenze</h3>
+
+<div class="box box-yellow">
+    <strong>Nuovo sistema di monitoraggio ritardi basato sui turni settimanali.</strong>
+</div>
+
+<p><strong>Componenti creati:</strong></p>
+<ul>
+    <li><strong>Tabella turni</strong> nel database — associa ogni dipendente al turno del giorno (T, 1, 2, 3, F, R)</li>
+    <li><strong>Griglia turni nell'admin</strong> (/admin/turni) — compilazione settimanale con navigazione tra settimane, colori per tipo turno, salvataggio automatico</li>
+    <li><strong>API alert ritardi</strong> (/owner/alert-ritardi) — confronta turni programmati con timbrature NetTime, segnala chi non ha timbrato entro 15 minuti dall'inizio turno</li>
+</ul>
+
+<h4>Configurazione turni</h4>
+<table>
+    <tr><th>Codice</th><th>Orario</th><th>Reparti</th></tr>
+    <tr><td><strong>T</strong></td><td>08:00 — 17:00</td><td>Tutti i reparti (turno unico)</td></tr>
+    <tr><td><strong>1</strong></td><td>06:00 — 14:00</td><td>Stampa offset, stampa a caldo, finestratura, legatoria</td></tr>
+    <tr><td><strong>2</strong></td><td>14:00 — 22:00</td><td>Stampa offset, stampa a caldo, finestratura, legatoria</td></tr>
+    <tr><td><strong>3</strong></td><td>22:00 — 06:00</td><td>Stampa offset</td></tr>
+    <tr><td><strong>F</strong></td><td>Ferie</td><td>—</td></tr>
+    <tr><td><strong>R</strong></td><td>Riposo</td><td>—</td></tr>
+</table>
+
+<p>Turni caricati per la settimana 16-21 marzo 2026. Orari personalizzati per: Crisanti (9-18), Scarano (8-17), Iuliano (12-20).</p>
+
+<p><strong>Nota:</strong> Il servizio NetTime sul PC .34 era crashato dal 16/03 (errore ADODB Recordset 3219). Dopo il riavvio le timbrature sono riprese regolarmente.</p>
+
+<!-- 6. REPORT ORE -->
+<h3>6. Report Ore Macchine (Excel)</h3>
+
+<p>Script per generare un report Excel con 4 fogli:</p>
+<table>
+    <tr><th>Foglio</th><th>Contenuto</th></tr>
+    <tr><td><strong>Riepilogo Reparti</strong></td><td>Ore avviamento, produzione, totali, fogli buoni/scarto, % scarto per reparto</td></tr>
+    <tr><td><strong>Prinect XL106</strong></td><td>Dettaglio per commessa/operatore con tempi setup e produzione</td></tr>
+    <tr><td><strong>Ore Operatori</strong></td><td>Ore lorde, pause, nette per ogni operatore</td></tr>
+    <tr><td><strong>Dettaglio Commesse</strong></td><td>Ogni fase con reparto, stato, operatori, tempi, fogli</td></tr>
+</table>
+
+<div class="box">
+    <strong>Comando:</strong> <code>php report_ore_macchine.php 2026-03-10 2026-03-17</code><br>
+    Genera il file in <code>storage/Report_Ore_Macchine_[date].xlsx</code>
+</div>
+
+<!-- 7. ALTRE MODIFICHE -->
+<h3>7. Altre Modifiche</h3>
+
+<table>
+    <tr><th>Modifica</th><th>Dettaglio</th></tr>
+    <tr><td><span class="badge badge-fix">Fix</span> Fase "STAMPA XL"</td><td>Il sync Prinect ora riconosce anche fasi con codice "STAMPA XL" (oltre a STAMPAXL106). Fix per commessa 0066648-26.</td></tr>
+    <tr><td><span class="badge badge-new">Nuovo</span> Pagina Etichette</td><td>/etichette — lista tutte le commesse con pulsante stampa diretto. Ricerca live. Nessun login richiesto.</td></tr>
+    <tr><td><span class="badge badge-new">Nuovo</span> Etichetta semplificata</td><td>Aggiunto campo Cliente in alto a sinistra + descrizione centrata. Aggiunto Nicola & C. S.r.l. ai clienti semplificati.</td></tr>
+    <tr><td><span class="badge badge-fix">Fix</span> Dashboard Owner</td><td>Colonna "Data Registrazione" spostata prima di "Progresso". Larghezze colonne riallineate (Operatori 110px, Data Reg 100px).</td></tr>
+    <tr><td><span class="badge badge-new">Nuovo</span> Riferimenti Marco</td><td>Aggiunti CAPOBIANCO e VILLA RAIANO alla lista clienti.</td></tr>
+    <tr><td><span class="badge badge-fix">Fix</span> Spedizioni BRT</td><td>DDT consegnati da più di 5 giorni nascosti automaticamente dalla tab.</td></tr>
+</table>
+
+<!-- PROSSIMI PASSI -->
+<h3>8. Prossimi Passi</h3>
+
+<ul>
+    <li><span class="badge badge-next">Prossimo</span> Integrazione alert ritardi nella dashboard owner (badge rosso con polling)</li>
+    <li><span class="badge badge-next">Prossimo</span> Griglia turni: OCR da foto (Claude Vision API) per compilazione automatica</li>
+    <li><span class="badge badge-next">Prossimo</span> Modulo magazzino con QR code per tracciamento carta</li>
+    <li><span class="badge badge-next">Prossimo</span> Redesign UI professionale (ricerca MES/ERP completata)</li>
+    <li><span class="badge badge-next">Prossimo</span> Fix sync Onda: commesse multi-riga (es. 66475 con 4 varianti)</li>
+</ul>
+
+<div class="footer">
+    <p>MES Grafica Nappa S.r.l. — Aversa (CE)</p>
+    <p>Sviluppo: Giovanni Pietropaolo (Tirocinante) con supporto Claude Code (Anthropic AI)</p>
+</div>
+
+</body>
+</html>
