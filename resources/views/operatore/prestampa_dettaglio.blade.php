@@ -50,17 +50,22 @@
     </div>
 </div>
 
-{{-- Info Commessa (editabili tranne date) --}}
+{{-- Info Commessa --}}
 @php
     $coloriCalc = \App\Helpers\DescrizioneParser::parseColori($ordine->descrizione ?? '', $ordine->cliente_nome ?? '');
     $fustellaCalc = \App\Helpers\DescrizioneParser::parseFustella($ordine->descrizione ?? '', $ordine->cliente_nome ?? '', $ordine->note_prestampa ?? '');
+    $mirko = $isMirko ?? false;
 @endphp
 <div class="row g-2 mb-2" style="font-size:13px;">
     <div class="col-md-4">
-        <div class="border rounded p-2 h-100" style="background:#fff3cd">
+        <div class="border rounded p-2 h-100" style="background:{{ $mirko ? '#e8f4fd' : '#fff3cd' }}">
             <strong class="d-block mb-1">Descrizione</strong>
-            <div contenteditable class="campo-editabile" data-campo="descrizione" data-ordine="{{ $ordine->id }}"
-                 onblur="salvaCampoPrestampa(this)" style="min-height:40px;">{{ $ordine->descrizione ?: '' }}</div>
+            @if($mirko)
+                <span>{{ $ordine->descrizione ?: '-' }}</span>
+            @else
+                <div contenteditable class="campo-editabile" data-campo="descrizione" data-ordine="{{ $ordine->id }}"
+                     onblur="salvaCampoPrestampa(this)" style="min-height:40px;">{{ $ordine->descrizione ?: '' }}</div>
+            @endif
         </div>
     </div>
     <div class="col-md-2">
@@ -70,10 +75,14 @@
         </div>
     </div>
     <div class="col-md-1">
-        <div class="border rounded p-2 h-100" style="background:#fff3cd">
+        <div class="border rounded p-2 h-100" style="background:{{ $mirko ? '#e8f4fd' : '#fff3cd' }}">
             <strong class="d-block mb-1">Qta</strong>
-            <div contenteditable class="campo-editabile" data-campo="qta_richiesta" data-ordine="{{ $ordine->id }}"
-                 onblur="salvaCampoPrestampa(this)">{{ $ordine->qta_richiesta ? number_format($ordine->qta_richiesta, 0, ',', '.') : '' }}</div>
+            @if($mirko)
+                <span>{{ $ordine->qta_richiesta ? number_format($ordine->qta_richiesta, 0, ',', '.') : '-' }}</span>
+            @else
+                <div contenteditable class="campo-editabile" data-campo="qta_richiesta" data-ordine="{{ $ordine->id }}"
+                     onblur="salvaCampoPrestampa(this)">{{ $ordine->qta_richiesta ? number_format($ordine->qta_richiesta, 0, ',', '.') : '' }}</div>
+            @endif
         </div>
     </div>
     <div class="col-md-1">
@@ -89,10 +98,14 @@
         </div>
     </div>
     <div class="col-md-1">
-        <div class="border rounded p-2 h-100" style="background:#fff3cd">
+        <div class="border rounded p-2 h-100" style="background:{{ $mirko ? '#e8f4fd' : '#fff3cd' }}">
             <strong class="d-block mb-1">Colori</strong>
-            <div contenteditable class="campo-editabile" data-campo="colori" data-ordine="{{ $ordine->id }}"
-                 onblur="salvaCampoPrestampa(this)">{{ $coloriCalc ?: '' }}</div>
+            @if($mirko)
+                <span>{{ $coloriCalc ?: '-' }}</span>
+            @else
+                <div contenteditable class="campo-editabile" data-campo="colori" data-ordine="{{ $ordine->id }}"
+                     onblur="salvaCampoPrestampa(this)">{{ $coloriCalc ?: '' }}</div>
+            @endif
         </div>
     </div>
     <div class="col-md-2">
@@ -104,7 +117,8 @@
     </div>
 </div>
 
-{{-- Campi editabili prestampa --}}
+{{-- Campi editabili prestampa (nascosti per Mirko) --}}
+@if(!$mirko)
 <div class="row g-2 mb-3" style="font-size:13px;">
     <div class="col-md-4">
         <div class="border rounded p-2 h-100" style="background:#fff3cd">
@@ -128,6 +142,7 @@
         </div>
     </div>
 </div>
+@endif
 
 
 {{-- Barra progresso fasi --}}

@@ -253,7 +253,11 @@ class DashboardOperatoreController extends Controller
             return $ordine[$nome] ?? $ordine[strtolower($nome)] ?? 999;
         });
 
-        return view('operatore.prestampa_dettaglio', compact('operatore', 'ordine', 'ordini', 'commessa', 'fasi'));
+        $isMirko = strtolower(trim($operatore->cognome ?? '')) === "d'orazio"
+                || strtolower(trim($operatore->cognome ?? '')) === 'dorazio'
+                || strtolower(trim($operatore->cognome ?? '')) === 'd orazio';
+
+        return view('operatore.prestampa_dettaglio', compact('operatore', 'ordine', 'ordini', 'commessa', 'fasi', 'isMirko'));
     }
 
     /**
