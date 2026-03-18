@@ -192,7 +192,7 @@ $sheetOp->getStyle('A1:G1')->applyFromArray($headerStyle);
 
 $operatori = DB::table('fase_operatore')
     ->join('operatori', 'fase_operatore.operatore_id', '=', 'operatori.id')
-    ->leftJoin('ordine_fasi', 'fase_operatore.ordine_fase_id', '=', 'ordine_fasi.id')
+    ->leftJoin('ordine_fasi', 'fase_operatore.fase_id', '=', 'ordine_fasi.id')
     ->where(function ($q) use ($dataInizio, $dataFine) {
         $q->whereBetween('fase_operatore.data_fine', [$dataInizio, $dataFine . ' 23:59:59'])
           ->orWhere(function ($q2) use ($dataInizio, $dataFine) {
@@ -203,7 +203,7 @@ $operatori = DB::table('fase_operatore')
     ->select(
         'operatori.nome',
         'operatori.cognome',
-        DB::raw('COUNT(DISTINCT fase_operatore.ordine_fase_id) as fasi_count'),
+        DB::raw('COUNT(DISTINCT fase_operatore.fase_id) as fasi_count'),
         DB::raw('SUM(CASE WHEN fase_operatore.data_fine IS NOT NULL THEN TIMESTAMPDIFF(SECOND, fase_operatore.data_inizio, fase_operatore.data_fine) ELSE 0 END) as sec_lordo'),
         DB::raw('SUM(COALESCE(fase_operatore.secondi_pausa, 0)) as sec_pausa'),
         DB::raw('SUM(COALESCE(ordine_fasi.tempo_avviamento_sec, 0) + COALESCE(ordine_fasi.tempo_esecuzione_sec, 0)) as sec_prinect')
@@ -278,7 +278,7 @@ foreach ($fasiDettaglio as $f) {
     // Operatori dalla pivot
     $ops = DB::table('fase_operatore')
         ->join('operatori', 'fase_operatore.operatore_id', '=', 'operatori.id')
-        ->where('fase_operatore.ordine_fase_id', $f->fase_id)
+        ->where('fase_operatore.fase_id', $f->fase_id)
         ->pluck(DB::raw("CONCAT(operatori.nome, ' ', operatori.cognome)"))
         ->implode(', ');
 
