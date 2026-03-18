@@ -493,6 +493,7 @@
                         <option>Attesa materiale</option>
                         <option>Problema macchina</option>
                         <option>Pranzo</option>
+                        <option>Fine turno</option>
                         <option value="__altro__">Altro...</option>
                     </select>
                 </div>

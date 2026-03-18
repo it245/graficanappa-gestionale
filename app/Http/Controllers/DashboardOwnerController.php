@@ -854,7 +854,10 @@ public function calcolaOreEPriorita($fase)
 
     public function syncOnda()
     {
-        if ($deny = $this->denyIfReadonly()) return $deny;
+        // Permetti sync da prestampa (hanno redirect)
+        if (!request('redirect')) {
+            if ($deny = $this->denyIfReadonly()) return $deny;
+        }
         try {
             // Prima pulisci eventuali duplicati
             $duplicatiRimossi = $this->pulisciDuplicati();
@@ -865,8 +868,16 @@ public function calcolaOreEPriorita($fase)
             if ($duplicatiRimossi > 0) {
                 $msg .= " ($duplicatiRimossi ordini duplicati rimossi)";
             }
+            $redirectUrl = request('redirect');
+            if ($redirectUrl) {
+                return redirect($redirectUrl)->with('success', $msg);
+            }
             return redirect()->route('owner.dashboard')->with('success', $msg);
         } catch (\Exception $e) {
+            $redirectUrl = request('redirect');
+            if ($redirectUrl) {
+                return redirect($redirectUrl)->with('error', 'Errore sync Onda: ' . $e->getMessage());
+            }
             return redirect()->route('owner.dashboard')->with('error', 'Errore sync Onda: ' . $e->getMessage());
         }
     }
