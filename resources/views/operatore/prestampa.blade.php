@@ -16,9 +16,8 @@
 
     <div class="d-flex align-items-center gap-3 mb-3 flex-wrap">
         <input type="text" id="filtroCommessa" class="form-control form-control-sm" placeholder="Filtra per commessa, cliente o descrizione..." style="max-width:400px;">
-        <form method="POST" action="{{ route('owner.syncOnda') }}" style="margin:0;" onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').textContent='Sincronizzando...';">
+        <form method="POST" action="{{ route('operatore.prestampa.syncOnda') }}" style="margin:0;" onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').textContent='Sincronizzando...';">
             @csrf
-            <input type="hidden" name="redirect" value="{{ route('operatore.prestampa', ['op_token' => request('op_token')]) }}">
             <button type="submit" class="btn btn-outline-dark btn-sm d-flex align-items-center gap-1">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6"/><path d="M2.5 22v-6h6"/><path d="M2.5 11.5a10 10 0 0 1 18.8-4.3"/><path d="M21.5 12.5a10 10 0 0 1-18.8 4.2"/></svg>
                 Sincronizza Onda

@@ -31,6 +31,7 @@ Route::prefix('operatore')->group(function() {
         Route::get('/prestampa', [DashboardOperatoreController::class, 'prestampa'])->name('operatore.prestampa');
         Route::get('/prestampa/{commessa}', [DashboardOperatoreController::class, 'prestampaDettaglio'])->name('operatore.prestampa.dettaglio');
         Route::post('/prestampa/aggiorna-campo', [DashboardOperatoreController::class, 'prestampaAggiornaCampo'])->name('operatore.prestampa.aggiornaCampo');
+        Route::post('/prestampa/sync-onda', [DashboardOperatoreController::class, 'prestampaSyncOnda'])->name('operatore.prestampa.syncOnda');
 
         // Etichette EAN
         Route::get('/etichetta/search-ean', [EtichettaController::class, 'searchEan'])->name('operatore.etichetta.searchEan');

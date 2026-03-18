@@ -293,4 +293,21 @@ class DashboardOperatoreController extends Controller
 
         return response()->json(['success' => true]);
     }
+
+    /**
+     * Sync Onda dalla prestampa.
+     */
+    public function prestampaSyncOnda(Request $request)
+    {
+        $operatore = $request->attributes->get('operatore') ?? auth()->guard('operatore')->user();
+        if (!$operatore) abort(403);
+
+        try {
+            $risultato = \App\Services\OndaSyncService::sincronizza();
+            $msg = "Sync Onda: {$risultato['ordini_creati']} creati, {$risultato['ordini_aggiornati']} aggiornati, {$risultato['fasi_create']} fasi.";
+            return redirect()->route('operatore.prestampa', ['op_token' => $request->get('op_token')])->with('success', $msg);
+        } catch (\Exception $e) {
+            return redirect()->route('operatore.prestampa', ['op_token' => $request->get('op_token')])->with('error', 'Errore sync: ' . $e->getMessage());
+        }
+    }
 }
