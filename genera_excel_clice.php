@@ -9,6 +9,7 @@ $app->make('Illuminate\Contracts\Console\Kernel')->bootstrap();
 
 use App\Models\Ordine;
 use App\Models\OrdineFase;
+use App\Models\EanProdotto;
 use App\Helpers\DescrizioneParser;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -133,14 +134,34 @@ $sheetIstr->getColumnDimension('A')->setWidth(100);
 $sheetCliente = $spreadsheet->createSheet();
 $sheetCliente->setTitle('Inventario per Cliente');
 
-$headers = ['Cliente', 'Codice FS', 'Variante / Descrizione', 'Commessa', 'N. Cliché (pennarello)', 'Posizione Scaffale', 'Stato'];
+$headers = ['Cliente', 'Codice FS', 'Variante / Descrizione', 'Codice EAN', 'Commessa', 'N. Cliché (pennarello)', 'Posizione Scaffale', 'Stato'];
+
+// Carica tutti gli EAN per match con descrizioni Italiana Confetti
+$eanProdotti = EanProdotto::all();
+function trovaEan($descrizione, $eanProdotti) {
+    $descLower = strtolower($descrizione);
+    foreach ($eanProdotti as $ean) {
+        $artLower = strtolower($ean->articolo);
+        // Match: l'articolo EAN è contenuto nella descrizione o viceversa
+        if (strlen($artLower) > 5 && (str_contains($descLower, $artLower) || str_contains($artLower, $descLower))) {
+            return $ean->codice_ean;
+        }
+        // Match parziale: prime 20 lettere
+        $descShort = substr($descLower, 0, 25);
+        $artShort = substr($artLower, 0, 25);
+        if (strlen($artShort) > 10 && $descShort === $artShort) {
+            return $ean->codice_ean;
+        }
+    }
+    return '';
+}
 $col = 'A';
 foreach ($headers as $h) {
     $sheetCliente->setCellValue($col . '1', $h);
     $col++;
 }
-$sheetCliente->getStyle('A1:G1')->applyFromArray($headerStyle);
-$sheetCliente->setAutoFilter('A1:G1');
+$sheetCliente->getStyle('A1:H1')->applyFromArray($headerStyle);
+$sheetCliente->setAutoFilter('A1:H1');
 
 // Raggruppa per cliente
 $perCliente = [];
@@ -165,23 +186,27 @@ foreach ($perCliente as $cliente => $varianti) {
         if (isset($visti[$key])) continue;
         $visti[$key] = true;
 
+        $eanCode = trovaEan($v['variante'], $eanProdotti);
+        if (!$eanCode) $eanCode = trovaEan($v['descrizione'], $eanProdotti);
+
         $sheetCliente->setCellValue("A$row", $cliente);
         $sheetCliente->setCellValue("B$row", $v['codice_fs']);
         $sheetCliente->setCellValue("C$row", substr($v['variante'], 0, 60));
-        $sheetCliente->setCellValue("D$row", $v['commessa']);
-        $sheetCliente->setCellValue("E$row", ''); // Da compilare
+        $sheetCliente->setCellValue("D$row", $eanCode);
+        $sheetCliente->setCellValue("E$row", $v['commessa']);
         $sheetCliente->setCellValue("F$row", ''); // Da compilare
         $sheetCliente->setCellValue("G$row", ''); // Da compilare
+        $sheetCliente->setCellValue("H$row", ''); // Da compilare
 
         // Sfondo giallo sulle celle da compilare
-        $sheetCliente->getStyle("E$row:G$row")->applyFromArray([
+        $sheetCliente->getStyle("F$row:H$row")->applyFromArray([
             'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'FFFFCC']],
         ]);
         $row++;
     }
 }
-$sheetCliente->getStyle("A2:G$row")->applyFromArray($cellBorder);
-foreach (['A' => 30, 'B' => 12, 'C' => 50, 'D' => 14, 'E' => 22, 'F' => 18, 'G' => 15] as $c => $w) {
+$sheetCliente->getStyle("A2:H$row")->applyFromArray($cellBorder);
+foreach (['A' => 30, 'B' => 12, 'C' => 50, 'D' => 16, 'E' => 14, 'F' => 22, 'G' => 18, 'H' => 15] as $c => $w) {
     $sheetCliente->getColumnDimension($c)->setWidth($w);
 }
 
@@ -196,8 +221,8 @@ foreach ($headers as $h) {
     $sheetFS->setCellValue($col . '1', $h);
     $col++;
 }
-$sheetFS->getStyle('A1:G1')->applyFromArray($headerStyle);
-$sheetFS->setAutoFilter('A1:G1');
+$sheetFS->getStyle('A1:H1')->applyFromArray($headerStyle);
+$sheetFS->setAutoFilter('A1:H1');
 
 $row = 2;
 foreach ($fustelleMap as $fs) {
@@ -207,22 +232,26 @@ foreach ($fustelleMap as $fs) {
         if (isset($visti[$key])) continue;
         $visti[$key] = true;
 
+        $eanCode = trovaEan($v['variante'], $eanProdotti);
+        if (!$eanCode) $eanCode = trovaEan($v['descrizione'], $eanProdotti);
+
         $sheetFS->setCellValue("A$row", $v['cliente']);
         $sheetFS->setCellValue("B$row", $fs['codice_fs']);
         $sheetFS->setCellValue("C$row", substr($v['variante'], 0, 60));
-        $sheetFS->setCellValue("D$row", $v['commessa']);
-        $sheetFS->setCellValue("E$row", '');
+        $sheetFS->setCellValue("D$row", $eanCode);
+        $sheetFS->setCellValue("E$row", $v['commessa']);
         $sheetFS->setCellValue("F$row", '');
         $sheetFS->setCellValue("G$row", '');
+        $sheetFS->setCellValue("H$row", '');
 
-        $sheetFS->getStyle("E$row:G$row")->applyFromArray([
+        $sheetFS->getStyle("F$row:H$row")->applyFromArray([
             'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'FFFFCC']],
         ]);
         $row++;
     }
 }
-$sheetFS->getStyle("A2:G$row")->applyFromArray($cellBorder);
-foreach (['A' => 30, 'B' => 12, 'C' => 50, 'D' => 14, 'E' => 22, 'F' => 18, 'G' => 15] as $c => $w) {
+$sheetFS->getStyle("A2:H$row")->applyFromArray($cellBorder);
+foreach (['A' => 30, 'B' => 12, 'C' => 50, 'D' => 16, 'E' => 14, 'F' => 22, 'G' => 18, 'H' => 15] as $c => $w) {
     $sheetFS->getColumnDimension($c)->setWidth($w);
 }
 
