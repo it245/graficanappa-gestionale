@@ -127,6 +127,14 @@
                     @endforeach
                 </select>
             </div>
+            <div>
+                <label>Dal</label>
+                <input type="date" name="dal" value="{{ $filtroDal ?? '' }}">
+            </div>
+            <div>
+                <label>Al</label>
+                <input type="date" name="al" value="{{ $filtroAl ?? '' }}">
+            </div>
             <button type="submit" class="ro-btn-primary">Filtra</button>
             <a href="{{ route('owner.reportOre', ['op_token' => request()->query('op_token')]) }}" class="ro-btn-ghost">Reset</a>
         </form>

@@ -916,6 +916,8 @@ public function calcolaOreEPriorita($fase)
     {
         $filtroCommessa = $request->query('commessa');
         $filtroReparto = $request->query('reparto');
+        $filtroDal = $request->query('dal');
+        $filtroAl = $request->query('al');
 
         // Escludi reparto spedizione
         $repartoSpedizione = Reparto::where('nome', 'spedizione')->first();
@@ -937,6 +939,14 @@ public function calcolaOreEPriorita($fase)
         }
         if ($filtroReparto) {
             $query->whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', $filtroReparto));
+        }
+
+        // Filtro date
+        if ($filtroDal) {
+            $query->where('data_fine', '>=', Carbon::parse($filtroDal)->startOfDay());
+        }
+        if ($filtroAl) {
+            $query->where('data_fine', '<=', Carbon::parse($filtroAl)->endOfDay());
         }
 
         // Solo fasi terminate o consegnate (stato 3/4)
@@ -1015,7 +1025,7 @@ public function calcolaOreEPriorita($fase)
             });
         });
 
-        return view('owner.report_ore', compact('commesse', 'commesseOggi', 'reparti', 'filtroCommessa', 'filtroReparto', 'orePerReparto'));
+        return view('owner.report_ore', compact('commesse', 'commesseOggi', 'reparti', 'filtroCommessa', 'filtroReparto', 'filtroDal', 'filtroAl', 'orePerReparto'));
     }
 
     /**
