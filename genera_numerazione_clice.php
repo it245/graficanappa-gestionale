@@ -34,9 +34,6 @@ for ($i = 2000; $i <= 2300; $i++) {
     $sheet->setCellValue("C$row", '');
     $sheet->setCellValue("D$row", '');
 
-    $sheet->getStyle("B$row:D$row")->applyFromArray([
-        'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'FFFFCC']],
-    ]);
     $row++;
 }
 
