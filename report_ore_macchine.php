@@ -77,18 +77,25 @@ $reparti = DB::table('ordine_fasi')
     ->get();
 
 // Ore dalla pivot operatore per reparto (per reparti senza Prinect)
+// Usa lo stesso filtro date della query principale (ordine_fasi.data_fine nel range O stato 2)
 $orePivotPerReparto = DB::table('fase_operatore')
     ->join('ordine_fasi', 'fase_operatore.fase_id', '=', 'ordine_fasi.id')
     ->join('fasi_catalogo', 'ordine_fasi.fase_catalogo_id', '=', 'fasi_catalogo.id')
     ->join('reparti', 'fasi_catalogo.reparto_id', '=', 'reparti.id')
+    ->whereNotNull('fase_operatore.data_inizio')
     ->whereNotNull('fase_operatore.data_fine')
+    ->where('ordine_fasi.stato', '>=', 2)
     ->where(function ($q) use ($dataInizio, $dataFine) {
-        $q->whereBetween('fase_operatore.data_fine', [$dataInizio, $dataFine . ' 23:59:59']);
+        $q->whereBetween('ordine_fasi.data_fine', [$dataInizio, $dataFine . ' 23:59:59'])
+          ->orWhere(function ($q2) use ($dataInizio, $dataFine) {
+              $q2->where('ordine_fasi.stato', 2)
+                 ->where('ordine_fasi.data_inizio', '<=', $dataFine . ' 23:59:59');
+          });
     })
     ->select(
         'reparti.nome as reparto',
-        DB::raw('SUM(TIMESTAMPDIFF(SECOND, fase_operatore.data_inizio, fase_operatore.data_fine)) as sec_lordo'),
-        DB::raw('SUM(COALESCE(fase_operatore.secondi_pausa, 0)) as sec_pausa')
+        DB::raw('SUM(GREATEST(TIMESTAMPDIFF(SECOND, fase_operatore.data_inizio, fase_operatore.data_fine), 0)) as sec_lordo'),
+        DB::raw('SUM(LEAST(COALESCE(fase_operatore.secondi_pausa, 0), TIMESTAMPDIFF(SECOND, fase_operatore.data_inizio, fase_operatore.data_fine))) as sec_pausa')
     )
     ->groupBy('reparti.nome')
     ->get()
