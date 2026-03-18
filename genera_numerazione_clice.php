@@ -15,10 +15,11 @@ $sheet->setTitle('Numerazione Cliché');
 
 // Header
 $sheet->setCellValue('A1', 'N° Cliché');
-$sheet->setCellValue('B1', 'Articolo');
-$sheet->setCellValue('C1', 'Qta Cliché');
+$sheet->setCellValue('B1', 'Codice FS');
+$sheet->setCellValue('C1', 'Articolo');
+$sheet->setCellValue('D1', 'Qta Cliché');
 
-$sheet->getStyle('A1:C1')->applyFromArray([
+$sheet->getStyle('A1:D1')->applyFromArray([
     'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 12],
     'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'D11317']],
     'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
@@ -31,27 +32,27 @@ for ($i = 2000; $i <= 2300; $i++) {
     $sheet->setCellValue("A$row", $i);
     $sheet->setCellValue("B$row", '');
     $sheet->setCellValue("C$row", '');
+    $sheet->setCellValue("D$row", '');
 
-    // Sfondo giallo sulle celle da compilare
-    $sheet->getStyle("B$row:C$row")->applyFromArray([
+    $sheet->getStyle("B$row:D$row")->applyFromArray([
         'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'FFFFCC']],
     ]);
     $row++;
 }
 
 // Bordi
-$sheet->getStyle("A2:C$row")->applyFromArray([
+$sheet->getStyle("A2:D$row")->applyFromArray([
     'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
 ]);
 
-// Larghezze colonne
 $sheet->getColumnDimension('A')->setWidth(14);
-$sheet->getColumnDimension('B')->setWidth(50);
-$sheet->getColumnDimension('C')->setWidth(14);
+$sheet->getColumnDimension('B')->setWidth(14);
+$sheet->getColumnDimension('C')->setWidth(50);
+$sheet->getColumnDimension('D')->setWidth(14);
 
-// Allineamento numeri
 $sheet->getStyle("A2:A$row")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-$sheet->getStyle("C2:C$row")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+$sheet->getStyle("B2:B$row")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+$sheet->getStyle("D2:D$row")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
 $percorso = __DIR__ . '/storage/Numerazione_Clice_2000_2300.xlsx';
 $writer = new Xlsx($spreadsheet);
