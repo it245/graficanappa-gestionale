@@ -18,8 +18,9 @@ $sheet->setCellValue('A1', 'N° Cliché');
 $sheet->setCellValue('B1', 'Codice FS');
 $sheet->setCellValue('C1', 'Articolo');
 $sheet->setCellValue('D1', 'Qta Cliché');
+$sheet->setCellValue('E1', 'Articoli ulteriori (stesso cliché)');
 
-$sheet->getStyle('A1:D1')->applyFromArray([
+$sheet->getStyle('A1:E1')->applyFromArray([
     'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 12],
     'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'D11317']],
     'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
@@ -33,19 +34,21 @@ for ($i = 2000; $i <= 2300; $i++) {
     $sheet->setCellValue("B$row", '');
     $sheet->setCellValue("C$row", '');
     $sheet->setCellValue("D$row", '');
+    $sheet->setCellValue("E$row", '');
 
     $row++;
 }
 
 // Bordi
-$sheet->getStyle("A2:D$row")->applyFromArray([
+$sheet->getStyle("A2:E$row")->applyFromArray([
     'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
 ]);
 
 $sheet->getColumnDimension('A')->setWidth(14);
 $sheet->getColumnDimension('B')->setWidth(14);
-$sheet->getColumnDimension('C')->setWidth(50);
+$sheet->getColumnDimension('C')->setWidth(40);
 $sheet->getColumnDimension('D')->setWidth(14);
+$sheet->getColumnDimension('E')->setWidth(50);
 
 $sheet->getStyle("A2:A$row")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 $sheet->getStyle("B2:B$row")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
