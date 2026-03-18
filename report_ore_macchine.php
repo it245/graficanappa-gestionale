@@ -54,7 +54,7 @@ $sheet->getStyle('A1:H1')->applyFromArray($headerStyle);
 // Dati per reparto
 $reparti = DB::table('ordine_fasi')
     ->join('ordini', 'ordine_fasi.ordine_id', '=', 'ordini.id')
-    ->join('fasi_catalogo', 'ordine_fasi.fase', '=', 'fasi_catalogo.codice')
+    ->join('fasi_catalogo', 'ordine_fasi.fase_catalogo_id', '=', 'fasi_catalogo.id')
     ->join('reparti', 'fasi_catalogo.reparto_id', '=', 'reparti.id')
     ->where('ordine_fasi.stato', '>=', 2)
     ->where(function ($q) use ($dataInizio, $dataFine) {
@@ -243,7 +243,7 @@ $sheetComm->getStyle('A1:L1')->applyFromArray($headerStyle);
 
 $fasiDettaglio = DB::table('ordine_fasi')
     ->join('ordini', 'ordine_fasi.ordine_id', '=', 'ordini.id')
-    ->leftJoin('fasi_catalogo', 'ordine_fasi.fase', '=', 'fasi_catalogo.codice')
+    ->leftJoin('fasi_catalogo', 'ordine_fasi.fase_catalogo_id', '=', 'fasi_catalogo.id')
     ->leftJoin('reparti', 'fasi_catalogo.reparto_id', '=', 'reparti.id')
     ->where('ordine_fasi.stato', '>=', 2)
     ->where(function ($q) use ($dataInizio, $dataFine) {
