@@ -617,9 +617,17 @@ class PrinectSyncService
 
                 if ($worksteps->isEmpty()) continue;
 
+                // Protezione: se nessun workstep ha actualStartDate, la stampa non è mai partita
+                $wsConStart = $worksteps->filter(fn($ws) => !empty($ws['actualStartDate']));
+                if ($wsConStart->isEmpty()) continue;
+
                 // Aggiorna fogli_buoni/scarto dal totale workstep (più affidabile delle singole attività)
                 $totaleBuoniWs = $worksteps->sum(fn($ws) => $ws['amountProduced'] ?? 0);
                 $totaleScartaWs = $worksteps->sum(fn($ws) => $ws['wasteProduced'] ?? 0);
+
+                // Protezione: se 0 attività nel DB E il workstep non ha date, skip
+                $attivitaCount = PrinectAttivita::where('commessa_gestionale', $commessa)->count();
+                if ($attivitaCount == 0 && $wsConStart->isEmpty()) continue;
 
                 if ($totaleBuoniWs > 0) {
                     foreach ($fasi as $fase) {
@@ -657,9 +665,11 @@ class PrinectSyncService
                 // Regola 1: TUTTI workstep COMPLETED
                 if ($allCompleted) $deveTerminare = true;
 
-                // Regole 2 e 6 si applicano SOLO se nessun workstep è WAITING
-                // Se un workstep è WAITING, Prinect potrebbe dover fare un altro passaggio
-                if (!$anyWaiting) {
+                // Regole 2 e 6 si applicano SOLO se:
+                // - Nessun workstep è WAITING
+                // - Almeno un workstep ha actualStartDate E actualEndDate (stampa effettivamente terminata)
+                $wsTerminati = $worksteps->filter(fn($ws) => !empty($ws['actualStartDate']) && !empty($ws['actualEndDate']));
+                if (!$anyWaiting && $wsTerminati->isNotEmpty()) {
                     // Regola 2: amountProduced >= qta_carta (fogli buoni bastano)
                     if (!$deveTerminare && $qtaCarta > 0 && $totaleBuoniWs >= $qtaCarta) $deveTerminare = true;
 
