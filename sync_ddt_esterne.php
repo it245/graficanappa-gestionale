@@ -127,12 +127,14 @@ foreach ($righeDDT as $riga) {
     if (empty($lavorazioniTrovate)) continue;
 
     // Per ogni lavorazione trovata, cerca la fase corrispondente nella commessa
+    $fasiGiaMatchate = []; // Evita duplicati sulla stessa fase
     foreach ($lavorazioniTrovate as $lav) {
         // Cerca la prima fase matchante non ancora esterna
         $fase = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $numCommessa))
             ->whereIn('fase', $lav['fasi'])
             ->where(fn($q) => $q->where('esterno', false)->orWhereNull('esterno'))
             ->whereNull('ddt_fornitore_id')
+            ->where('stato', '<', 3)
             ->orderBy('id')
             ->first();
 
@@ -143,6 +145,7 @@ foreach ($righeDDT as $riga) {
                     ->where('fase', 'LIKE', $nomeFase . '%')
                     ->where(fn($q) => $q->where('esterno', false)->orWhereNull('esterno'))
                     ->whereNull('ddt_fornitore_id')
+                    ->where('stato', '<', 3)
                     ->orderBy('id')
                     ->first();
                 if ($fase) break;
@@ -168,6 +171,10 @@ foreach ($righeDDT as $riga) {
             }
             continue;
         }
+
+        // Deduplicazione: skip se questa fase è già stata matchata
+        if (in_array($fase->id, $fasiGiaMatchate)) continue;
+        $fasiGiaMatchate[] = $fase->id;
 
         // Controlla se già esterna
         if ($fase->esterno && $fase->ddt_fornitore_id) {
