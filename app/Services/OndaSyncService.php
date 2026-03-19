@@ -352,23 +352,23 @@ class OndaSyncService
             }
         }
 
-        // Pulizia duplicati PLASTIFICAZIONE per ordine: 1 sola per ordine_id per fase_catalogo
-        // (articoli diversi nella stessa commessa possono avere plastificazione diversa)
+        // Pulizia duplicati PLASTIFICAZIONE per commessa: 1 sola per commessa per fase_catalogo
         $repartiPlast = Reparto::where('nome', 'plastificazione')->pluck('id');
         if ($repartiPlast->isNotEmpty()) {
             $dupPlast = DB::table('ordine_fasi')
+                ->join('ordini', 'ordini.id', '=', 'ordine_fasi.ordine_id')
                 ->join('fasi_catalogo', 'fasi_catalogo.id', '=', 'ordine_fasi.fase_catalogo_id')
-                ->select('ordine_fasi.ordine_id', 'ordine_fasi.fase_catalogo_id', DB::raw('COUNT(*) as cnt'))
+                ->select('ordini.commessa', 'ordine_fasi.fase_catalogo_id', DB::raw('COUNT(*) as cnt'))
                 ->whereIn('fasi_catalogo.reparto_id', $repartiPlast)
                 ->whereNull('ordine_fasi.deleted_at')
                 ->where('ordine_fasi.manuale', false)
-                ->groupBy('ordine_fasi.ordine_id', 'ordine_fasi.fase_catalogo_id')
+                ->groupBy('ordini.commessa', 'ordine_fasi.fase_catalogo_id')
                 ->having('cnt', '>', 1)
                 ->get();
 
             foreach ($dupPlast as $dup) {
                 $keepIds = OrdineFase::where('fase_catalogo_id', $dup->fase_catalogo_id)
-                    ->where('ordine_id', $dup->ordine_id)
+                    ->whereHas('ordine', fn($q) => $q->where('commessa', $dup->commessa))
                     ->orderBy('id')
                     ->pluck('id');
                 if ($keepIds->count() <= 1) continue;
@@ -739,10 +739,10 @@ class OndaSyncService
                     }
                 }
 
-                // Dedup plastificazione per ordine: 1 sola per ordine_id per fase_catalogo
-                // (articoli diversi nella stessa commessa possono avere plastificazione diversa)
+                // Dedup plastificazione per commessa: 1 sola per commessa per fase_catalogo
+                // (stessa plastificazione su articoli diversi = unico passaggio macchina)
                 if ($repartoNome === 'plastificazione') {
-                    $chiaveDedup = $ordine->id . '|plast|' . $faseNome;
+                    $chiaveDedup = $commessa . '|plast|' . $faseNome;
                     $qtaRiga = (int)($riga->QtaDaLavorare ?? 0);
 
                     if (isset($dedupPerCommessa[$chiaveDedup])) {
