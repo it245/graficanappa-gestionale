@@ -89,7 +89,8 @@ foreach ($righeDDT as $riga) {
     $dataDoc = $riga->DataDocumento ? date('Y-m-d H:i:s', strtotime($riga->DataDocumento)) : now();
 
     // Estrai numero commessa — formati: "Commessa n° 66018", "Commessa n°66018", "Commessa 66018"
-    if (!preg_match('/Commessa\s*n?[°º.]?\s*(\d{5,7})/i', $descrizione, $m)) {
+    // Il ° è UTF-8 (C2 B0), serve flag /u
+    if (!preg_match('/Commessa\s*n?[°º.]?\s*(\d{5,7})/iu', $descrizione, $m)) {
         // Debug: mostra le prime 5 righe senza commessa
         static $noCommCount = 0;
         if ($dryRun && $noCommCount < 5) {
