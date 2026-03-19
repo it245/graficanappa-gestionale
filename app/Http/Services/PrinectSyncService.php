@@ -629,42 +629,40 @@ class PrinectSyncService
                             if ($totaleScartaWs > ($fase->fogli_scarto ?? 0)) {
                                 $fase->fogli_scarto = $totaleScartaWs;
                             }
-                            // Se era stato 0/1, avvia
-                            if (in_array($fase->stato, [0, '0', 1, '1'])) {
-                                $fase->stato = 2;
-                            }
+                            // NON cambiare stato qui — l'avvio lo fa sincronizzaDaLive o l'operatore
+                            // Aggiorna solo fogli per fasi già avviate (stato >= 2)
                             $fase->save();
                         }
                     }
                 }
 
-                // Auto-termina quando:
-                // A) TUTTI i workstep sono COMPLETED, oppure
-                // B) amountProduced >= qta_carta E ultima attività > 1h fa (anche se SUSPENDED)
-                $allCompleted = $worksteps->every(fn($ws) => ($ws['status'] ?? '') === 'COMPLETED');
+                // === REGOLE TERMINAZIONE AUTOMATICA ===
+                // Protezione A: attività recente (<1h) → NON terminare
+                $ultimaAttivita = PrinectAttivita::where('commessa_gestionale', $commessa)
+                    ->orderByDesc('start_time')
+                    ->value('start_time');
+                $attivitaRecente = $ultimaAttivita && Carbon::parse($ultimaAttivita)->diffInMinutes(now()) < 60;
+                if ($attivitaRecente) continue;
 
-                // Check B: fogli prodotti >= fogli richiesti E nessuna attività recente
+                // Protezione B/C: nessun foglio o qta_carta mancante → NON terminare
                 $qtaCarta = $fasi->first()->ordine->qta_carta ?? 0;
-                $produzioneCompletata = false;
-                if (!$allCompleted && $totaleBuoniWs > 0 && $qtaCarta > 0 && $totaleBuoniWs >= $qtaCarta) {
-                    $ultimaAtt = PrinectAttivita::where('commessa_gestionale', $commessa)
-                        ->orderByDesc('start_time')
-                        ->value('start_time');
-                    if ($ultimaAtt && Carbon::parse($ultimaAtt)->diffInMinutes(now()) >= 60) {
-                        $produzioneCompletata = true;
-                    }
-                }
+                if ($totaleBuoniWs <= 0) continue;
 
-                if ($allCompleted || $produzioneCompletata) {
-                    // Safety: se ci sono attività Prinect recenti (ultima ora), la macchina
-                    // sta ancora lavorando → non terminare (evita falsi positivi da workstep
-                    // COMPLETED di un run precedente mentre la commessa è in ristampa)
-                    $ultimaAttivita = PrinectAttivita::where('commessa_gestionale', $commessa)
-                        ->orderByDesc('start_time')
-                        ->value('start_time');
-                    if ($ultimaAttivita && Carbon::parse($ultimaAttivita)->diffInMinutes(now()) < 60) {
-                        continue; // Attività recente → skip auto-terminazione
-                    }
+                $allCompleted = $worksteps->every(fn($ws) => ($ws['status'] ?? '') === 'COMPLETED');
+                $totaleFogliWs = $totaleBuoniWs + $totaleScartaWs; // buoni + scarti
+
+                $deveTerminare = false;
+
+                // Regola 1: TUTTI workstep COMPLETED
+                if ($allCompleted) $deveTerminare = true;
+
+                // Regola 2: amountProduced >= qta_carta (fogli buoni bastano)
+                if (!$deveTerminare && $qtaCarta > 0 && $totaleBuoniWs >= $qtaCarta) $deveTerminare = true;
+
+                // Regola 6: amountProduced + wasteProduced >= qta_carta (buoni+scarti coprono)
+                if (!$deveTerminare && $qtaCarta > 0 && $totaleFogliWs >= $qtaCarta) $deveTerminare = true;
+
+                if (!$deveTerminare) continue;
                     // Prendi data_fine dall'ultimo workstep completato
                     $lastEnd = $worksteps->map(fn($ws) => $ws['actualEndDate'] ?? null)
                         ->filter()
@@ -681,7 +679,6 @@ class PrinectSyncService
                         }
                     }
                     FaseStatoService::ricalcolaStati($fasi->first()->ordine_id);
-                }
             } catch (\Exception $e) {
                 // Skip se API Prinect non disponibile
             }
