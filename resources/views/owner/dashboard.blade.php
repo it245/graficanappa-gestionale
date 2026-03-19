@@ -483,7 +483,7 @@ tr:hover td {
                 <div style="font-size:22px; font-weight:700; color:#198754; line-height:1;">{{ $fasiCompletateOggi }}</div>
             </div>
         </a>
-        <div class="d-flex align-items-center p-2 rounded flex-fill" style="background:#cfe2ff; height:56px; min-width:200px;">
+        <div class="d-flex align-items-center p-2 rounded flex-fill" style="background:#cfe2ff; height:56px; min-width:200px; cursor:pointer;" data-bs-toggle="modal" data-bs-target="#modalOreOggi">
             <div>
                 <div style="font-size:11px; color:#555; line-height:1.2;">Ore lavorate oggi</div>
                 <div style="font-size:22px; font-weight:700; color:#0d6efd; line-height:1;">{{ $oreLavorateOggi }}h</div>
@@ -1011,6 +1011,48 @@ tr:hover td {
     </div>
 
 </div>
+{{-- MODALE ORE LAVORATE OGGI PER OPERATORE --}}
+<div class="modal fade" id="modalOreOggi" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Ore Lavorate Oggi — Dettaglio per Operatore ({{ $oreLavorateOggi }}h)</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="padding:16px 20px;">
+                <table class="table table-sm table-bordered table-striped" style="font-size:13px;">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Operatore</th>
+                            <th style="text-align:center;">Fasi</th>
+                            <th style="text-align:center;">Ore Nette</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($orePerOperatoreOggi as $op)
+                        <tr>
+                            <td><strong>{{ $op->nome }} {{ $op->cognome }}</strong></td>
+                            <td style="text-align:center;">{{ $op->fasi_count }}</td>
+                            <td style="text-align:center; font-weight:700; color:#0d6efd;">{{ $op->ore_nette }}h</td>
+                        </tr>
+                        @endforeach
+                        @if($orePerOperatoreOggi->isEmpty())
+                        <tr><td colspan="3" class="text-center text-muted">Nessun dato</td></tr>
+                        @endif
+                    </tbody>
+                    <tfoot>
+                        <tr style="font-weight:700; background:#e8f4fd;">
+                            <td>TOTALE</td>
+                            <td style="text-align:center;">{{ $orePerOperatoreOggi->sum('fasi_count') }}</td>
+                            <td style="text-align:center; color:#0d6efd;">{{ $orePerOperatoreOggi->sum('ore_nette') }}h</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
 {{-- MODALE SPEDIZIONI OGGI --}}
 <div class="modal fade" id="modalSpedizioniOggi" tabindex="-1">
     <div class="modal-dialog modal-xl">

@@ -407,6 +407,26 @@ public function calcolaOreEPriorita($fase)
 
         $oreLavorateOggi = round($orePivot + $orePrinect, 1);
 
+        // Breakdown ore per operatore (per modal dettaglio)
+        $orePerOperatoreOggi = DB::table('fase_operatore')
+            ->join('operatori', 'fase_operatore.operatore_id', '=', 'operatori.id')
+            ->whereDate('fase_operatore.data_fine', $oggi)
+            ->whereNotNull('fase_operatore.data_inizio')
+            ->select(
+                'operatori.nome', 'operatori.cognome',
+                DB::raw('COUNT(*) as fasi_count'),
+                DB::raw('SUM(TIMESTAMPDIFF(SECOND, fase_operatore.data_inizio, fase_operatore.data_fine)) as sec_lordo'),
+                DB::raw('SUM(COALESCE(fase_operatore.secondi_pausa, 0)) as sec_pausa')
+            )
+            ->groupBy('operatori.nome', 'operatori.cognome')
+            ->orderByDesc('sec_lordo')
+            ->get()
+            ->map(function ($op) {
+                $secNetto = max($op->sec_lordo - $op->sec_pausa, 0);
+                $op->ore_nette = round(min($secNetto / 3600, $op->fasi_count * 24), 1);
+                return $op;
+            });
+
         $commesseSpediteOggi = OrdineFase::where('stato', 4)
             ->where(function ($q) use ($oggi) {
                 $q->whereHas('operatori', fn($q2) => $q2->whereDate('fase_operatore.data_fine', $oggi))
@@ -473,7 +493,7 @@ public function calcolaOreEPriorita($fase)
 
         return view('owner.dashboard', compact(
             'fasi', 'reparti', 'fasiCatalogo', 'spedizioniOggi', 'storicoConsegne',
-            'fasiCompletateOggi', 'oreLavorateOggi', 'commesseSpediteOggi', 'fasiAttive', 'spedizioniBRT', 'operatore', 'isReadonly',
+            'fasiCompletateOggi', 'oreLavorateOggi', 'orePerOperatoreOggi', 'commesseSpediteOggi', 'fasiAttive', 'spedizioniBRT', 'operatore', 'isReadonly',
             'progressoCommesse'
         ));
     }
