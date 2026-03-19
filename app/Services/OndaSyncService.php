@@ -1310,19 +1310,12 @@ class OndaSyncService
                 if ($fase->esterno && $fase->ddt_fornitore_id) continue;
                 $fasiGiaMatchate[] = $fase->id;
 
-                $faseCatEsterno = FasiCatalogo::firstOrCreate(
-                    ['nome' => 'EXT' . $fase->fase, 'reparto_id' => $repartoEsterno->id],
-                    ['nome_display' => $fase->fase . ' (Esterno)']
-                );
-
                 $fase->update([
                     'esterno' => 1,
                     'stato' => 2,
                     'data_inizio' => $dataDoc,
                     'note' => 'Inviato a: ' . $fornitore,
                     'ddt_fornitore_id' => $idDoc,
-                    'fase_catalogo_id_originale' => $fase->fase_catalogo_id_originale ?: $fase->fase_catalogo_id,
-                    'fase_catalogo_id' => $faseCatEsterno->id,
                 ]);
 
                 $aggiornate++;
