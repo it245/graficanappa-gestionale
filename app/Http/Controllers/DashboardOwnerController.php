@@ -378,17 +378,21 @@ public function calcolaOreEPriorita($fase)
             })
             ->count();
 
-        // Ore lavorate oggi: dalla pivot operatore (con cap a 12h per record)
+        // Ore lavorate oggi: dalla pivot operatore
+        // Solo record con data_inizio E data_fine nello stesso giorno, OPPURE data_fine oggi
         $pivotOggi = DB::table('fase_operatore')
             ->whereDate('data_fine', $oggi)
             ->whereNotNull('data_inizio')
             ->select('data_inizio', 'data_fine', 'secondi_pausa')
             ->get();
-        $orePivot = $pivotOggi->sum(function ($row) {
-            $secLordo = abs(Carbon::parse($row->data_fine)->diffInSeconds(Carbon::parse($row->data_inizio)));
-            $secPausa = min($row->secondi_pausa ?? 0, $secLordo); // pausa non può superare il lordo
+        $orePivot = $pivotOggi->sum(function ($row) use ($oggi) {
+            $inizio = Carbon::parse($row->data_inizio);
+            $fine = Carbon::parse($row->data_fine);
+            $secLordo = abs($fine->diffInSeconds($inizio));
+            $secPausa = min($row->secondi_pausa ?? 0, $secLordo);
             $secNetto = max($secLordo - $secPausa, 0);
-            return min($secNetto, 43200) / 3600; // cap a 12h per record
+            // Se le ore nette sono > 24h, qualcosa non torna — limita a 24h
+            return min($secNetto / 3600, 24);
         });
 
         // Ore da fasi Prinect terminate oggi (usa tempo_avviamento + esecuzione, NON date)
