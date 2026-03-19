@@ -69,8 +69,7 @@ thead th {
 }
 
 table {
-    width: 2700px;
-    max-width: 2700px;
+    width: 3200px;
     border-collapse: collapse;
     table-layout: fixed;
     font-size: 12px;
@@ -194,25 +193,31 @@ th:nth-child(18), td:nth-child(18) {
 /* Data Inizio / Data Fine */
 th:nth-child(19), td:nth-child(19),
 th:nth-child(20), td:nth-child(20) {
-    width: 130px;
+    width: 150px;
 }
 
 /* Pausa */
 th:nth-child(21), td:nth-child(21) {
-    width: 80px;
+    width: 100px;
+    text-align: center;
+}
+
+/* Ore Previste */
+th:nth-child(22), td:nth-child(22) {
+    width: 100px;
     text-align: center;
 }
 
 /* Ore Lavorate */
-th:nth-child(22), td:nth-child(22) {
-    width: 90px;
+th:nth-child(23), td:nth-child(23) {
+    width: 100px;
     text-align: center;
     font-weight: bold;
 }
 
 /* Stato */
-th:nth-child(23), td:nth-child(23) {
-    width: 60px;
+th:nth-child(24), td:nth-child(24) {
+    width: 70px;
     text-align: center;
 }
 
