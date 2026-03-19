@@ -305,7 +305,15 @@ class FierySyncService
             return null;
         }
 
-        return '00' . $matches[1] . '-26';
+        // Cerca la commessa nel DB per determinare l'anno corretto
+        $numPadded = str_pad($matches[1], 7, '0', STR_PAD_LEFT);
+        $ordine = \App\Models\Ordine::where('commessa', 'LIKE', $numPadded . '-%')->first();
+        if ($ordine) {
+            return $ordine->commessa;
+        }
+
+        // Fallback: anno corrente
+        return '00' . $matches[1] . '-' . date('y');
     }
 
     /**

@@ -100,52 +100,59 @@ class OrdineFase extends Model
 
     
 
+    /**
+     * Avvia la fase (stato 0/1 → 2).
+     * Stati: 0=caricato, 1=pronto, 2=avviato, 3=terminato, 4=consegnato
+     */
     public function avvia(Operatore $operatore)
-{
-    if ($this->stato === 1) {
-        throw new \Exception('Fase già in lavorazione');
+    {
+        if ($this->stato >= 2) {
+            throw new \Exception('Fase già in lavorazione o terminata');
+        }
+
+        $this->update([
+            'operatore_id' => $operatore->id,
+            'stato' => 2,
+            'data_inizio' => now(),
+        ]);
     }
 
-    $this->update([
-        'operatore_id' => $operatore->id,
-        'stato' => 1,
-        'data_inizio' => now(),
-    ]);
-}
+    public function aggiungiProduzione(int $quantita)
+    {
+        if ($this->stato !== 2) {
+            throw new \Exception('La fase non è in lavorazione');
+        }
 
-public function aggiungiProduzione(int $quantita)
-{
-    if ($this->stato !== 1) {
-        throw new \Exception('La fase non è in lavorazione');
+        $totale = $this->ordine->fasi()->sum('qta_prod');
+        $richiesta = $this->ordine->qta_richiesta;
+
+        if ($totale + $quantita > $richiesta) {
+            throw new \Exception('Superata quantità ordine');
+        }
+
+        $this->increment('qta_prod', $quantita);
+
+        $this->ordine->update([
+            'qta_prodotta' => $this->ordine->fasi()->sum('qta_prod')
+        ]);
     }
 
-    $totale = $this->ordine->fasi()->sum('qta_prod');
-    $richiesta = $this->ordine->qta_richiesta;
+    /**
+     * Termina la fase (stato 2 → 3).
+     */
+    public function termina()
+    {
+        if ($this->stato !== 2 && !is_string($this->stato)) {
+            throw new \Exception('La fase non è in lavorazione');
+        }
 
-    if ($totale + $quantita > $richiesta) {
-        throw new \Exception('Superata quantità ordine');
+        $this->update([
+            'stato' => 3,
+            'data_fine' => now(),
+        ]);
+
+        // Mossa 37: propaga disponibilità ai successori
+        PhaseCompleted::dispatch($this);
     }
-
-    $this->increment('qta_prod', $quantita);
-
-    $this->ordine->update([
-        'qta_prodotta' => $this->ordine->fasi()->sum('qta_prod')
-    ]);
-}
-
-public function termina()
-{
-    if ($this->stato !== 1) {
-        throw new \Exception('La fase non è in lavorazione');
-    }
-
-    $this->update([
-        'stato' => 2,
-        'data_fine' => now(),
-    ]);
-
-    // Mossa 37: propaga disponibilità ai successori
-    PhaseCompleted::dispatch($this);
-}
 }
 
