@@ -79,6 +79,9 @@ class SyncOnda extends Command
             $ddtAvviate = OndaSyncService::sincronizzaDDTFornitore();
             $this->info("Fasi esterne avviate da DDT fornitore: {$ddtAvviate}");
 
+            $ddtLavorazioni = OndaSyncService::sincronizzaDDTFornitureLavorazioni();
+            $this->info("Fasi esterne da descrizione DDT: {$ddtLavorazioni}");
+
             $ddtVendita = OndaSyncService::sincronizzaDDTVendita();
             $this->info("Ordini aggiornati con DDT vendita: {$ddtVendita}");
 

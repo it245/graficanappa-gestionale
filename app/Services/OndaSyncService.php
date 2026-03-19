@@ -1226,6 +1226,114 @@ class OndaSyncService
     }
 
     /**
+     * Interpreta le descrizioni DDT fornitore per mandare fasi all'esterno.
+     * Legge parole chiave (plastificare, fustellare, stampa a caldo, ecc.)
+     * e marca le fasi corrispondenti come esterne.
+     */
+    public static function sincronizzaDDTFornitureLavorazioni(): int
+    {
+        $mappingLavorazioni = [
+            ['pattern' => '/uv\s*spot\s*spessorat/iu', 'fasi' => ['UVSPOTSPESSEST', 'UVSPOTEST', 'UVSPOT.MGI.30M', 'UVSPOT.MGI.9M']],
+            ['pattern' => '/uv\s*spot/iu', 'fasi' => ['UVSPOTEST', 'UVSPOT.MGI.30M', 'UVSPOT.MGI.9M', 'UVSPOTSPESSEST']],
+            ['pattern' => '/verniciare\s*uv/iu', 'fasi' => ['UVSPOTEST', 'UVSPOTSPESSEST', 'UVSPOT.MGI.30M']],
+            ['pattern' => '/plastificare\s*opac/iu', 'fasi' => ['PLAOPA1LATO', 'PLAOPABV']],
+            ['pattern' => '/plastificare\s*lucid/iu', 'fasi' => ['PLALUX1LATO', 'PLALUXBV']],
+            ['pattern' => '/plastificar/iu', 'fasi' => ['PLAOPA1LATO', 'PLAOPABV', 'PLALUX1LATO', 'PLALUXBV', 'PLASOFTTOUCH1']],
+            ['pattern' => '/stamp\w*\s*a\s*caldo/iu', 'fasi' => ['STAMPACALDOJOHEST', 'STAMPACALDOJOH', 'stampalaminaoro', 'STAMPALAMINAORO']],
+            ['pattern' => '/oro\s*a\s*caldo/iu', 'fasi' => ['STAMPACALDOJOHEST', 'STAMPACALDOJOH', 'stampalaminaoro']],
+            ['pattern' => '/fustellatura|fustellare|da\s*fustellare/iu', 'fasi' => ['FUSTBOBST75X106', 'FUSTBIML75X106', 'FUSTSTELG33.44', 'FUSTSTELP25.35', 'FUST.STARPACK.74X104']],
+            ['pattern' => '/brossura\s*filo\s*refe/iu', 'fasi' => ['BROSSFILOREFE/A4EST', 'BROSSFILOREFE/A5EST', 'BROSSCOPEST']],
+            ['pattern' => '/brossura\s*fresat/iu', 'fasi' => ['BROSSFRESATA/A5EST', 'BROSSFRESATA/A4EST']],
+            ['pattern' => '/punt[io]\s*metallic/iu', 'fasi' => ['PUNTOMETALLICOEST', 'PUNTOMETALLICO']],
+            ['pattern' => '/incollare|incollaggio|piega\s*incolla/iu', 'fasi' => ['PI01', 'PI02', 'PI03']],
+            ['pattern' => '/accoppiar/iu', 'fasi' => ['ACCOPPIATURA.FOGLI', 'ACCOPPIATURA.FOG.33.48INT']],
+            ['pattern' => '/allestimento|allestire/iu', 'fasi' => ['Allest.Manuale', 'ALLEST.SHOPPER', 'ALLESTIMENTO.ESPOSITORI']],
+        ];
+
+        $righeDDT = DB::connection('onda')->select("
+            SELECT t.IdDoc, t.DataDocumento, t.IdAnagrafica, a.RagioneSociale, r.Descrizione
+            FROM ATTDocTeste t
+            JOIN ATTDocRighe r ON t.IdDoc = r.IdDoc
+            LEFT JOIN STDAnagrafiche a ON t.IdAnagrafica = a.IdAnagrafica
+            WHERE t.TipoDocumento = 7
+              AND t.DataRegistrazione >= DATEADD(day, -60, GETDATE())
+        ");
+
+        if (empty($righeDDT)) return 0;
+
+        $repartoEsterno = Reparto::firstOrCreate(['nome' => 'esterno']);
+        $aggiornate = 0;
+
+        foreach ($righeDDT as $riga) {
+            $descrizione = $riga->Descrizione ?? '';
+            if (!preg_match('/Commessa\s*n?[°º.]?\s*(\d{5,7})/iu', $descrizione, $m)) continue;
+
+            $numGrezzo = $m[1];
+            $fornitore = trim($riga->RagioneSociale ?? '');
+            $idDoc = $riga->IdDoc;
+            $dataDoc = $riga->DataDocumento ? date('Y-m-d H:i:s', strtotime($riga->DataDocumento)) : now();
+            $anno = $riga->DataDocumento ? date('y', strtotime($riga->DataDocumento)) : date('y');
+            $numCommessa = str_pad($numGrezzo, 7, '0', STR_PAD_LEFT) . '-' . $anno;
+
+            $lavorazioniTrovate = [];
+            foreach ($mappingLavorazioni as $map) {
+                if (preg_match($map['pattern'], $descrizione)) {
+                    $lavorazioniTrovate[] = $map;
+                }
+            }
+            if (empty($lavorazioniTrovate)) continue;
+
+            $fasiGiaMatchate = [];
+            foreach ($lavorazioniTrovate as $lav) {
+                $fase = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $numCommessa))
+                    ->whereIn('fase', $lav['fasi'])
+                    ->where(fn($q) => $q->where('esterno', false)->orWhereNull('esterno'))
+                    ->whereNull('ddt_fornitore_id')
+                    ->where('stato', '<', 3)
+                    ->orderBy('id')
+                    ->first();
+
+                if (!$fase) {
+                    foreach ($lav['fasi'] as $nomeFase) {
+                        $fase = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $numCommessa))
+                            ->where('fase', 'LIKE', $nomeFase . '%')
+                            ->where(fn($q) => $q->where('esterno', false)->orWhereNull('esterno'))
+                            ->whereNull('ddt_fornitore_id')
+                            ->where('stato', '<', 3)
+                            ->orderBy('id')
+                            ->first();
+                        if ($fase) break;
+                    }
+                }
+
+                if (!$fase || in_array($fase->id, $fasiGiaMatchate)) continue;
+                if ($fase->esterno && $fase->ddt_fornitore_id) continue;
+                $fasiGiaMatchate[] = $fase->id;
+
+                $faseCatEsterno = FasiCatalogo::firstOrCreate(
+                    ['nome' => 'EXT' . $fase->fase, 'reparto_id' => $repartoEsterno->id],
+                    ['nome_display' => $fase->fase . ' (Esterno)']
+                );
+
+                $fase->update([
+                    'esterno' => 1,
+                    'stato' => 2,
+                    'data_inizio' => $dataDoc,
+                    'note' => 'Inviato a: ' . $fornitore,
+                    'ddt_fornitore_id' => $idDoc,
+                    'fase_catalogo_id_originale' => $fase->fase_catalogo_id_originale ?: $fase->fase_catalogo_id,
+                    'fase_catalogo_id' => $faseCatEsterno->id,
+                ]);
+
+                $aggiornate++;
+                Log::info("DDT Fornitore lavorazione: fase {$fase->fase} (#{$fase->id}) → esterno per commessa {$numCommessa} (DDT {$idDoc}, fornitore: {$fornitore})");
+            }
+        }
+
+        return $aggiornate;
+    }
+
+    /**
      * Sincronizza DDT vendita (TipoDocumento=3) da Onda:
      * segna sull'ordine MES che è stata emessa una DDT vendita,
      * così la dashboard spedizione può mostrare le consegne da confermare.
