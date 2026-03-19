@@ -352,6 +352,37 @@ class OndaSyncService
             }
         }
 
+        // Pulizia duplicati PLASTIFICAZIONE per commessa: 1 sola per commessa per fase_catalogo
+        $repartiPlast = Reparto::where('nome', 'plastificazione')->pluck('id');
+        if ($repartiPlast->isNotEmpty()) {
+            $dupPlast = DB::table('ordine_fasi')
+                ->join('ordini', 'ordini.id', '=', 'ordine_fasi.ordine_id')
+                ->join('fasi_catalogo', 'fasi_catalogo.id', '=', 'ordine_fasi.fase_catalogo_id')
+                ->select('ordini.commessa', 'ordine_fasi.fase_catalogo_id', DB::raw('COUNT(*) as cnt'))
+                ->whereIn('fasi_catalogo.reparto_id', $repartiPlast)
+                ->whereNull('ordine_fasi.deleted_at')
+                ->where('ordine_fasi.manuale', false)
+                ->groupBy('ordini.commessa', 'ordine_fasi.fase_catalogo_id')
+                ->having('cnt', '>', 1)
+                ->get();
+
+            foreach ($dupPlast as $dup) {
+                $keepIds = OrdineFase::where('fase_catalogo_id', $dup->fase_catalogo_id)
+                    ->whereHas('ordine', fn($q) => $q->where('commessa', $dup->commessa))
+                    ->orderBy('id')
+                    ->pluck('id');
+                if ($keepIds->count() <= 1) continue;
+                $deleteIds = $keepIds->slice(1)->values();
+                if ($deleteIds->isNotEmpty()) {
+                    $deleted = OrdineFase::whereIn('id', $deleteIds)
+                        ->where('stato', '<=', 1)
+                        ->where('manuale', false)
+                        ->delete();
+                    $fasiEliminate += $deleted;
+                }
+            }
+        }
+
         if ($fasiEliminate > 0) {
             Log::info("OndaSync: eliminati $fasiEliminate duplicati");
         }
@@ -684,6 +715,33 @@ class OndaSyncService
                 // Dedup TAGLIACARTE per ordine: 1 sola per ordine_id per fase_catalogo
                 if ($repartoNome === 'tagliacarte') {
                     $chiaveDedup = $ordine->id . '|tagliacarte|' . $faseNome;
+                    $qtaRiga = (int)($riga->QtaDaLavorare ?? 0);
+
+                    if (isset($dedupPerCommessa[$chiaveDedup])) {
+                        if ($qtaRiga > 0 && !in_array($qtaRiga, $dedupQta[$chiaveDedup] ?? [])) {
+                            $dedupQta[$chiaveDedup][] = $qtaRiga;
+                            $nuovaQta = array_sum($dedupQta[$chiaveDedup]);
+                            OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
+                                ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
+                                ->update(['qta_fase' => $nuovaQta]);
+                        }
+                        continue;
+                    }
+
+                    $existsInCommessa = OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
+                        ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
+                        ->exists();
+
+                    $dedupPerCommessa[$chiaveDedup] = true;
+                    $dedupQta[$chiaveDedup] = $qtaRiga > 0 ? [$qtaRiga] : [];
+                    if ($existsInCommessa) {
+                        continue;
+                    }
+                }
+
+                // Dedup plastificazione per commessa: 1 sola per commessa per fase_catalogo
+                if ($repartoNome === 'plastificazione') {
+                    $chiaveDedup = $commessa . '|plast|' . $faseNome;
                     $qtaRiga = (int)($riga->QtaDaLavorare ?? 0);
 
                     if (isset($dedupPerCommessa[$chiaveDedup])) {
