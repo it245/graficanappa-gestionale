@@ -638,12 +638,24 @@ class PrinectSyncService
                     }
                 }
 
-                // Auto-termina solo quando TUTTI i workstep Prinect sono COMPLETED
-                // (rimosso check fogli_buoni >= qta_carta perché commesse con montaggi multipli
-                // possono avere fogli > qta_carta del primo montaggio ma non aver finito il secondo)
+                // Auto-termina quando:
+                // A) TUTTI i workstep sono COMPLETED, oppure
+                // B) amountProduced >= qta_carta E ultima attività > 1h fa (anche se SUSPENDED)
                 $allCompleted = $worksteps->every(fn($ws) => ($ws['status'] ?? '') === 'COMPLETED');
 
-                if ($allCompleted) {
+                // Check B: fogli prodotti >= fogli richiesti E nessuna attività recente
+                $qtaCarta = $fasi->first()->ordine->qta_carta ?? 0;
+                $produzioneCompletata = false;
+                if (!$allCompleted && $totaleBuoniWs > 0 && $qtaCarta > 0 && $totaleBuoniWs >= $qtaCarta) {
+                    $ultimaAtt = PrinectAttivita::where('commessa_gestionale', $commessa)
+                        ->orderByDesc('start_time')
+                        ->value('start_time');
+                    if ($ultimaAtt && Carbon::parse($ultimaAtt)->diffInMinutes(now()) >= 60) {
+                        $produzioneCompletata = true;
+                    }
+                }
+
+                if ($allCompleted || $produzioneCompletata) {
                     // Safety: se ci sono attività Prinect recenti (ultima ora), la macchina
                     // sta ancora lavorando → non terminare (evita falsi positivi da workstep
                     // COMPLETED di un run precedente mentre la commessa è in ristampa)
