@@ -116,12 +116,14 @@ foreach ($righeDDT as $riga) {
         }
     }
 
-    if ($dryRun) {
+    if ($dryRun && !empty($lavorazioniTrovate)) {
         $commessaEsiste = Ordine::where('commessa', $numCommessa)->exists();
-        $nFasi = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $numCommessa))->count();
-        $lavStr = empty($lavorazioniTrovate) ? 'NESSUNA' : implode(', ', array_map(fn($l) => $l['pattern'], $lavorazioniTrovate));
-        echo "DDT #{$idDoc} | {$numCommessa} | Forn: {$fornitore} | MES: " . ($commessaEsiste ? "SI ({$nFasi} fasi)" : "NO") . " | Lav: {$lavStr}\n";
-        echo "  Desc: " . substr($descrizione, 0, 100) . "\n";
+        if ($commessaEsiste) {
+            $nFasi = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $numCommessa))->count();
+            $lavStr = implode(', ', array_map(fn($l) => $l['pattern'], $lavorazioniTrovate));
+            echo "DDT #{$idDoc} | {$numCommessa} | Forn: {$fornitore} | Fasi: {$nFasi} | Lav: {$lavStr}\n";
+            echo "  Desc: " . substr($descrizione, 0, 100) . "\n";
+        }
     }
 
     if (empty($lavorazioniTrovate)) continue;
