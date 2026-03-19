@@ -545,9 +545,6 @@ public function calcolaOreEPriorita($fase)
                 $fase->priorita_manuale = true;
             }
 
-            // Se inviato all'esterno, setta solo il flag esterno
-            // La fase resta nel suo reparto originale, appare nelle lav. esterne tramite esterno=1
-
             $fase->save();
 
             // Se aggiornata qta_prod, controlla completamento automatico
