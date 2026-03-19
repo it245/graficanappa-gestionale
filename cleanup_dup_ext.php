@@ -26,10 +26,9 @@ foreach ($fasiExt as $faseExt) {
     $nomeOriginale = preg_replace('/^EXT/', '', $faseExt->faseCatalogo->nome);
     $ordineId = $faseExt->ordine_id;
 
-    // Cerca la vecchia fase rinominata (stesso ordine, nome originale, reparto NON esterno)
+    // Cerca la vecchia fase rinominata (stesso ordine, nome originale, qualsiasi reparto)
     $vecchia = OrdineFase::where('ordine_id', $ordineId)
         ->where('fase', $nomeOriginale)
-        ->whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', '!=', $repartoEsterno->id))
         ->where('id', '!=', $faseExt->id)
         ->first();
 
