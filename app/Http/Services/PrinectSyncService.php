@@ -649,6 +649,7 @@ class PrinectSyncService
                 if ($totaleBuoniWs <= 0) continue;
 
                 $allCompleted = $worksteps->every(fn($ws) => ($ws['status'] ?? '') === 'COMPLETED');
+                $anyWaiting = $worksteps->contains(fn($ws) => ($ws['status'] ?? '') === 'WAITING');
                 $totaleFogliWs = $totaleBuoniWs + $totaleScartaWs; // buoni + scarti
 
                 $deveTerminare = false;
@@ -656,11 +657,15 @@ class PrinectSyncService
                 // Regola 1: TUTTI workstep COMPLETED
                 if ($allCompleted) $deveTerminare = true;
 
-                // Regola 2: amountProduced >= qta_carta (fogli buoni bastano)
-                if (!$deveTerminare && $qtaCarta > 0 && $totaleBuoniWs >= $qtaCarta) $deveTerminare = true;
+                // Regole 2 e 6 si applicano SOLO se nessun workstep è WAITING
+                // Se un workstep è WAITING, Prinect potrebbe dover fare un altro passaggio
+                if (!$anyWaiting) {
+                    // Regola 2: amountProduced >= qta_carta (fogli buoni bastano)
+                    if (!$deveTerminare && $qtaCarta > 0 && $totaleBuoniWs >= $qtaCarta) $deveTerminare = true;
 
-                // Regola 6: amountProduced + wasteProduced >= qta_carta (buoni+scarti coprono)
-                if (!$deveTerminare && $qtaCarta > 0 && $totaleFogliWs >= $qtaCarta) $deveTerminare = true;
+                    // Regola 6: amountProduced + wasteProduced >= qta_carta (buoni+scarti coprono)
+                    if (!$deveTerminare && $qtaCarta > 0 && $totaleFogliWs >= $qtaCarta) $deveTerminare = true;
+                }
 
                 if (!$deveTerminare) continue;
                     // Prendi data_fine dall'ultimo workstep completato
