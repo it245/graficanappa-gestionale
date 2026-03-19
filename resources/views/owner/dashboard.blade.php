@@ -1,169 +1,121 @@
-@extends('layouts.app')
+@extends('layouts.mes')
 
-@section('viewport')
-{{-- Nessun viewport: il browser mobile usa il default ~980px, la pagina è scrollabile --}}
+@section('viewport')@endsection
+
+@section('topbar-title', 'Dashboard Produzione')
+
+@section('sidebar-items')
+<div class="mes-sidebar-section">
+    <div class="mes-sidebar-section-label">Produzione</div>
+    <a href="{{ route('owner.dashboard') }}?op_token={{ request('op_token') }}" class="mes-sidebar-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Dashboard
+    </a>
+    <a href="{{ route('owner.repartiOverview') }}?op_token={{ request('op_token') }}" class="mes-sidebar-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 20h20"/><rect x="4" y="8" width="4" height="12"/><rect x="10" y="4" width="4" height="16"/><rect x="16" y="11" width="4" height="9"/></svg>
+        Panoramica Reparti
+    </a>
+    <a href="{{ route('owner.scheduling') }}?op_token={{ request('op_token') }}" class="mes-sidebar-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Scheduling
+    </a>
+    <a href="{{ route('owner.esterne') }}?op_token={{ request('op_token') }}" class="mes-sidebar-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+        Lav. Esterne
+    </a>
+    <a href="{{ route('owner.fustelle') }}?op_token={{ request('op_token') }}" class="mes-sidebar-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+        Fustelle
+    </a>
+</div>
+
+<div class="mes-sidebar-section">
+    <div class="mes-sidebar-section-label">Analisi</div>
+    <a href="{{ route('owner.reportOre') }}?op_token={{ request('op_token') }}" class="mes-sidebar-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Report Ore
+    </a>
+    <a href="{{ route('owner.fasiTerminate') }}?op_token={{ request('op_token') }}" class="mes-sidebar-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        Fasi Terminate
+        @if($fasiCompletateOggi > 0)<span class="badge bg-success ms-auto" style="font-size:10px">{{ $fasiCompletateOggi }}</span>@endif
+    </a>
+    <button type="button" class="mes-sidebar-item" data-bs-toggle="modal" data-bs-target="#modalStorico">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/><path d="M4.93 4.93l4.24 4.24"/></svg>
+        Storico Consegne
+    </button>
+</div>
+
+<div class="mes-sidebar-section">
+    <div class="mes-sidebar-section-label">Strumenti</div>
+    <button type="button" class="mes-sidebar-item" data-bs-toggle="modal" data-bs-target="#modalSpedizioniOggi">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+        Consegnati Oggi
+        @if($commesseSpediteOggi > 0)<span class="badge bg-info ms-auto" style="font-size:10px">{{ $commesseSpediteOggi }}</span>@endif
+    </button>
+    <button type="button" class="mes-sidebar-item" data-bs-toggle="modal" data-bs-target="#modalBRT">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+        BRT Tracking
+        @if($spedizioniBRT->count() > 0)<span class="badge bg-warning text-dark ms-auto" style="font-size:10px">{{ $spedizioniBRT->count() }}</span>@endif
+    </button>
+    <button type="button" class="mes-sidebar-item" data-bs-toggle="modal" data-bs-target="#modalNoteSpedizione" id="sidebarNoteBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Note Consegne
+        <span class="badge bg-danger ms-auto" style="font-size:10px; display:none" id="noteConsegneBadge">!</span>
+    </button>
+    <button type="button" class="mes-sidebar-item" data-bs-toggle="modal" data-bs-target="#modalPresenti">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Presenti
+        <span class="badge bg-success ms-auto" style="font-size:10px" id="presentiCount">...</span>
+    </button>
+    <a href="{{ route('owner.presenze') }}?op_token={{ request('op_token') }}" class="mes-sidebar-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/></svg>
+        Storico Presenze
+    </a>
+    @if(!($isReadonly ?? false))
+    <button type="button" class="mes-sidebar-item" onclick="document.getElementById('formSyncOnda').submit()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6"/><path d="M2.5 22v-6h6"/><path d="M2.5 11.5a10 10 0 0 1 18.8-4.3"/><path d="M21.5 12.5a10 10 0 0 1-18.8 4.2"/></svg>
+        Sincronizza Onda
+    </button>
+    <button type="button" class="mes-sidebar-item" data-bs-toggle="modal" data-bs-target="#aggiungiRigaModal">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        Aggiungi Riga
+    </button>
+    @endif
+    @if($isReadonly ?? false)
+    <button type="button" class="mes-sidebar-item" onclick="filtraRiferimentiMarco()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Rif. Marco
+    </button>
+    <button type="button" class="mes-sidebar-item" onclick="resetRiferimentiMarco()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        Mostra tutte
+    </button>
+    @endif
+</div>
 @endsection
 
-@section('content')
-<div class="container-fluid px-0">
+@section('styles')
 <style>
-* {
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-}
+/* ============================================
+   Owner Dashboard — Table Styles
+   ============================================ */
 
-html, body {
-    margin: 0 !important;
-    padding: 0 !important;
-    width: 100%;
-    height: 100%;
-}
-
-/* Rimuovi padding del container Bootstrap */
-.container-fluid {
-    padding-left: 1px !important;
-    padding-right: 1px !important;
-    margin-left: 0 !important;
-}
-
-/* Titoli */
-h2, p {
-    margin: 4px 1px !important;
-
-}
-
-/* Icone */
-.action-icons {
-    margin-left: 1px !important;
-    padding-left: 0 !important;
-}
-
-.action-icons {
-    gap: 14px;
-}
-.action-icons img,
-.action-icons svg,
-.action-icons a,
-.action-icons button,
-.action-icons form {
-    margin: 0 !important;
-}
-.action-icons img {
-    height: 35px;
-    cursor: pointer;
-    transition: transform 0.15s ease;
-    touch-action: manipulation;
-}
-.action-icons a, .action-icons button, .sidebar-menu a {
-    touch-action: manipulation;
-}
-.action-icons img:hover {
-    transform: scale(1.15);
-}
-
-/* Hamburger */
-.hamburger-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    transition: transform 0.15s ease;
-    z-index: 100;
-    position: relative;
-    min-width: 44px;
-    min-height: 44px;
-    align-items: center;
-    justify-content: center;
-    touch-action: manipulation;
-}
-.hamburger-btn:hover { transform: scale(1.1); }
-.hamburger-btn span {
-    display: block;
-    width: 28px;
-    height: 3px;
-    background: #333;
-    border-radius: 2px;
-}
-
-/* Sidebar */
-.sidebar-overlay {
-    display: none;
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.4);
-    z-index: 9998;
-}
-.sidebar-overlay.open { display: block; }
-
-.sidebar-menu {
-    position: fixed;
-    top: 0; left: -300px;
-    width: 280px;
-    height: 100%;
-    background: #fff;
-    z-index: 9999;
-    box-shadow: 2px 0 12px rgba(0,0,0,0.2);
-    transition: left 0.25s ease;
-    overflow-y: auto;
-    padding-top: 15px;
-}
-.sidebar-menu.open { left: 0; }
-
-.sidebar-menu .sidebar-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 18px 15px;
-    border-bottom: 1px solid #dee2e6;
-    margin-bottom: 5px;
-}
-.sidebar-menu .sidebar-header h5 { margin: 0; font-size: 16px; font-weight: 700; }
-.sidebar-close {
-    background: none; border: none; font-size: 22px; cursor: pointer; color: #666;
-}
-.sidebar-close:hover { color: #000; }
-
-.sidebar-menu .sidebar-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 18px;
-    text-decoration: none;
-    color: #333;
-    font-size: 14px;
-    font-weight: 500;
-    border-bottom: 1px solid #f0f0f0;
-    cursor: pointer;
-    transition: background 0.15s;
-}
-.sidebar-menu .sidebar-item:hover {
-    background: #f5f5f5;
-    color: #000;
-}
-.sidebar-menu .sidebar-item img { height: 28px; width: 28px; object-fit: contain; }
-.sidebar-menu .sidebar-item svg { width: 28px; height: 28px; flex-shrink: 0; }
-
-/* =========================
-   TABELLA (EXCEL STYLE)
-   ========================= */
-
-table {
+/* Tabella (Excel style) */
+#tabellaOrdini {
     width: 2970px;
     max-width: 2970px;
     border-collapse: collapse;
-    table-layout: fixed;        /* FONDAMENTALE */
+    table-layout: fixed;
     font-size: 12px;
 }
 
-thead, tbody, tr {
+#tabellaOrdini thead, #tabellaOrdini tbody, #tabellaOrdini tr {
     width: 100%;
 }
 
-th, td {
-    border: 1px solid #dee2e6;
+#tabellaOrdini th, #tabellaOrdini td {
+    border: 1px solid var(--border-color);
     padding: 3px 6px;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -174,7 +126,7 @@ th, td {
 }
 
 /* Cella cliccata: mostra testo intero */
-td:focus, td[contenteditable]:focus {
+#tabellaOrdini td:focus, #tabellaOrdini td[contenteditable]:focus {
     white-space: normal !important;
     overflow: visible !important;
     text-overflow: clip !important;
@@ -185,116 +137,84 @@ td:focus, td[contenteditable]:focus {
     box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 
-thead th {
-    background: #000000;
-    color: #ffffff;
-    font-size: 11.5px;
+#tabellaOrdini thead th {
+    background: var(--bg-sidebar);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    border: none;
+    border-bottom: 2px solid var(--accent);
+    padding: 8px 6px;
 }
 
 /* =========================
-   LARGHEZZA COLONNE (27 colonne) — ordine attuale:
+   LARGHEZZA COLONNE (27 colonne)
    1=Commessa 2=Stato 3=Cliente 4=CodArt 5=Colori 6=Fustella
-   7=Descrizione 8=Qta 9=UM 10=Priorità 11=Fase 12=Reparto
+   7=Descrizione 8=Qta 9=UM 10=Priorita 11=Fase 12=Reparto
    13=Carta 14=QtaCarta 15=DataConsegna 16=CodCarta
    17=UMCarta 18=Operatori 19=QtaProd
    20=Esterno 21=Note 22=DataInizio 23=DataFine 24=OrePrev 25=OreLav 26=DataReg 27=Progresso
    ========================= */
 
 /* 1. Commessa */
-th:nth-child(1), td:nth-child(1) { width: 100px; }
-
+#tabellaOrdini th:nth-child(1), #tabellaOrdini td:nth-child(1) { width: 100px; }
 /* 2. Stato */
-th:nth-child(2), td:nth-child(2) { width: 50px; text-align: center; }
-
+#tabellaOrdini th:nth-child(2), #tabellaOrdini td:nth-child(2) { width: 50px; text-align: center; }
 /* 3. Cliente */
-th:nth-child(3), td:nth-child(3) { width: 170px; white-space: normal; }
-
+#tabellaOrdini th:nth-child(3), #tabellaOrdini td:nth-child(3) { width: 170px; white-space: normal; }
 /* 4. Codice Articolo */
-th:nth-child(4), td:nth-child(4) { width: 95px; }
-
+#tabellaOrdini th:nth-child(4), #tabellaOrdini td:nth-child(4) { width: 95px; }
 /* 5. Colori */
-th:nth-child(5), td:nth-child(5) { width: 180px; white-space: normal; }
-
+#tabellaOrdini th:nth-child(5), #tabellaOrdini td:nth-child(5) { width: 180px; white-space: normal; }
 /* 6. Fustella */
-th:nth-child(6), td:nth-child(6) { width: 75px; }
-
-/* 7. Descrizione — troncata con ... */
-th:nth-child(7), td:nth-child(7) { width: 250px; max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
+#tabellaOrdini th:nth-child(6), #tabellaOrdini td:nth-child(6) { width: 75px; }
+/* 7. Descrizione */
+#tabellaOrdini th:nth-child(7), #tabellaOrdini td:nth-child(7) { width: 250px; max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* 8. Qta */
-th:nth-child(8), td:nth-child(8) { width: 55px; text-align: center; }
-
+#tabellaOrdini th:nth-child(8), #tabellaOrdini td:nth-child(8) { width: 55px; text-align: center; }
 /* 9. UM */
-th:nth-child(9), td:nth-child(9) { width: 40px; text-align: center; }
-
-/* 10. Priorità */
-th:nth-child(10), td:nth-child(10) { width: 65px; text-align: center; }
-
+#tabellaOrdini th:nth-child(9), #tabellaOrdini td:nth-child(9) { width: 40px; text-align: center; }
+/* 10. Priorita */
+#tabellaOrdini th:nth-child(10), #tabellaOrdini td:nth-child(10) { width: 65px; text-align: center; }
 /* 11. Fase */
-th:nth-child(11), td:nth-child(11) { width: 125px; }
-
+#tabellaOrdini th:nth-child(11), #tabellaOrdini td:nth-child(11) { width: 125px; }
 /* 12. Reparto */
-th:nth-child(12), td:nth-child(12) { width: 110px; }
-
+#tabellaOrdini th:nth-child(12), #tabellaOrdini td:nth-child(12) { width: 110px; }
 /* 13. Carta */
-th:nth-child(13), td:nth-child(13) { width: 190px; white-space: normal; }
-
+#tabellaOrdini th:nth-child(13), #tabellaOrdini td:nth-child(13) { width: 190px; white-space: normal; }
 /* 14. Qta Carta */
-th:nth-child(14), td:nth-child(14) { width: 50px; text-align: center; }
-
+#tabellaOrdini th:nth-child(14), #tabellaOrdini td:nth-child(14) { width: 50px; text-align: center; }
 /* 15. Data Prevista Consegna */
-th:nth-child(15), td:nth-child(15) { width: 100px; }
-
+#tabellaOrdini th:nth-child(15), #tabellaOrdini td:nth-child(15) { width: 100px; }
 /* 16. Cod Carta */
-th:nth-child(16), td:nth-child(16) { width: 170px; white-space: normal; }
-
+#tabellaOrdini th:nth-child(16), #tabellaOrdini td:nth-child(16) { width: 170px; white-space: normal; }
 /* 17. UM Carta */
-th:nth-child(17), td:nth-child(17) { width: 30px; text-align: center; font-size: 11px; }
-
+#tabellaOrdini th:nth-child(17), #tabellaOrdini td:nth-child(17) { width: 30px; text-align: center; font-size: 11px; }
 /* 18. Operatori */
-th:nth-child(18), td:nth-child(18) {
-    width: 110px;
-    white-space: normal;
-    font-size: 11px;
-}
-
+#tabellaOrdini th:nth-child(18), #tabellaOrdini td:nth-child(18) { width: 110px; white-space: normal; font-size: 11px; }
 /* 19. Qta Prod. */
-th:nth-child(19), td:nth-child(19) {
-    width: 60px;
-    text-align: center;
-}
-
+#tabellaOrdini th:nth-child(19), #tabellaOrdini td:nth-child(19) { width: 60px; text-align: center; }
 /* 20. Esterno */
-th:nth-child(20), td:nth-child(20) { width: 90px; }
-
+#tabellaOrdini th:nth-child(20), #tabellaOrdini td:nth-child(20) { width: 90px; }
 /* 21. Note */
-th:nth-child(21), td:nth-child(21) {
-    width: 170px;
-    white-space: normal;
-}
-
+#tabellaOrdini th:nth-child(21), #tabellaOrdini td:nth-child(21) { width: 170px; white-space: normal; }
 /* 22. Data Inizio / 23. Data Fine */
-th:nth-child(22), td:nth-child(22),
-th:nth-child(23), td:nth-child(23) {
-    width: 110px;
-}
-
+#tabellaOrdini th:nth-child(22), #tabellaOrdini td:nth-child(22),
+#tabellaOrdini th:nth-child(23), #tabellaOrdini td:nth-child(23) { width: 110px; }
 /* 24. Ore Prev. */
-th:nth-child(24), td:nth-child(24) { width: 70px; text-align: center; }
-
+#tabellaOrdini th:nth-child(24), #tabellaOrdini td:nth-child(24) { width: 70px; text-align: center; }
 /* 25. Ore Lav. */
-th:nth-child(25), td:nth-child(25) { width: 70px; text-align: center; }
-
+#tabellaOrdini th:nth-child(25), #tabellaOrdini td:nth-child(25) { width: 70px; text-align: center; }
 /* 26. Data Reg. */
-th:nth-child(26), td:nth-child(26) { width: 100px; }
-
+#tabellaOrdini th:nth-child(26), #tabellaOrdini td:nth-child(26) { width: 100px; }
 /* 27. Progresso */
-th:nth-child(27), td:nth-child(27) { width: 100px; }
+#tabellaOrdini th:nth-child(27), #tabellaOrdini td:nth-child(27) { width: 100px; }
 
 /* =========================
    SELEZIONE EXCEL
    ========================= */
-
 td.selected {
     outline: 1px solid #000000;
     background: rgba(0, 0, 0, 0.12) !important;
@@ -302,8 +222,6 @@ td.selected {
 th.selected {
     outline: 1px solid #ffffff;
 }
-
-/* Box selezione */
 .selection-box {
     position: absolute;
     border: 2px dashed #000000;
@@ -316,15 +234,12 @@ th.selected {
 /* =========================
    FILTRI
    ========================= */
-/* Filtri */
 #filterBox {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
     align-items: flex-start;
-    margin: 5px 1px !important;
-    padding-left: 0 !important;
-    margin-left:1px !important;
+    margin-bottom: 12px;
 }
 
 #filterBox input,
@@ -374,7 +289,7 @@ th.selected {
     align-items: center;
     padding: 3px 10px;
     font-size: 12px;
-    background: #333;
+    background: var(--bg-sidebar);
     color: #fff;
     border-radius: 12px;
     margin: 1px 0;
@@ -392,43 +307,79 @@ th.selected {
 }
 
 .btn-reset-filters {
-    background: #dc3545;
+    background: var(--danger);
     color: #fff;
     border: none;
     padding: 6px 14px;
-    border-radius: 4px;
+    border-radius: 6px;
     font-size: 12px;
     font-weight: bold;
     cursor: pointer;
     height: 38px;
     white-space: nowrap;
+    transition: background 0.15s;
 }
 .btn-reset-filters:hover {
-    background: #c82333;
+    background: #b91c1c;
+}
+
+.btn-marco-filter {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    height: 38px;
+    white-space: nowrap;
+    transition: background 0.15s;
+}
+.btn-marco-filter:hover {
+    background: #1d4ed8;
 }
 
 /* =========================
-   PERFORMANCE
+   PERFORMANCE & CONTENTEDITABLE
    ========================= */
-
-td[contenteditable] {
+#tabellaOrdini td[contenteditable] {
     user-select: text;
     cursor: text;
 }
 
-td[contenteditable]:focus {
-    outline: 2px solid #0d6efd;
+#tabellaOrdini td[contenteditable]:focus {
+    outline: 2px solid var(--accent);
     outline-offset: -2px;
     background: #f0f7ff !important;
 }
 
-tr:hover td {
-    background: rgba(0, 0, 0, 0.03);
+#tabellaOrdini tbody tr:hover td {
+    background: rgba(37, 99, 235, 0.04);
 }
 
-/* Animazione filtri */
-#filterBox {
-    transition: opacity 0.25s ease, transform 0.25s ease;
+#tabellaOrdini tbody tr:nth-child(even) td {
+    background: rgba(0,0,0,0.015);
+}
+#tabellaOrdini tbody tr:nth-child(even):hover td {
+    background: rgba(37, 99, 235, 0.04);
+}
+
+/* Row highlight classes */
+tr.scaduta td {
+    background-color: #e8747a !important;
+    color: #000 !important;
+    font-weight: 700;
+}
+tr.warning-strong td {
+    background-color: #f96f2a !important;
+    color: #000 !important;
+    font-weight: 700;
+}
+tr.warning-light td {
+    background-color: #ffd07a !important;
+    color: #000 !important;
+    font-weight: 700;
 }
 
 /* Modal fluido */
@@ -436,373 +387,97 @@ tr:hover td {
     transition: transform 0.2s ease;
 }
 
+/* Print button */
+#printButton {
+    background: none;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 5px 10px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    transition: background 0.15s, color 0.15s;
+}
+#printButton:hover {
+    background: var(--border-color);
+    color: var(--text-primary);
+}
 
+/* Sticky scrollbar: account for sidebar on desktop */
+@media (min-width: 1024px) {
+    #stickyScroll { left: var(--sidebar-width); }
+}
+
+/* KPI clickable ore */
+#kpiOreLavorate { cursor: pointer; }
+#kpiOreLavorate:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.12);
+}
+
+/* Toast animation */
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
 </style>
-    <div class="d-flex align-items-center justify-content-between mb-2 mx-2">
-        <div style="display:flex; align-items:center; gap:10px;">
-            <img src="{{ asset('images/logo_gn.png') }}" alt="Logo" style="height:40px;">
-            <div class="operatore-info" id="operatoreInfo" style="position:relative; display:flex; align-items:center; gap:10px; cursor:pointer;">
-                <img src="{{ asset('images/icons8-utente-uomo-cerchiato-50.png') }}" alt="Operatore" style="width:40px; height:40px; border-radius:50%;">
-                <div class="operatore-popup" id="operatorePopup" style="position:absolute; top:50px; left:0; background:#fff; border:1px solid #ccc; padding:10px; border-radius:5px; box-shadow:0 2px 10px rgba(0,0,0,0.2); display:none; z-index:1000; min-width:200px;">
-                    <div><strong>{{ $operatore->nome ?? '' }} {{ $operatore->cognome ?? '' }}</strong></div>
-                    <div><p class="mb-1">Ruolo: <strong>Owner</strong></p></div>
-                    <a href="{{ route('operatore.logout') }}" class="btn btn-secondary btn-sm mt-2">Logout</a>
-                </div>
-            </div>
-        </div>
-        {{-- LEGENDA --}}
-        <div style="background:#fff; border:1px solid #dee2e6; border-radius:8px; padding:8px 14px; box-shadow:0 1px 4px rgba(0,0,0,0.08);">
-            <div class="d-flex gap-4" style="font-size:11px;">
-                <div>
-                    <div style="font-weight:700; font-size:10px; color:#666; text-transform:uppercase; margin-bottom:4px;">Stati Fase</div>
-                    <div class="d-flex flex-column gap-1">
-                        <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#e9ecef;border:1px solid #ccc;border-radius:2px;"></span> 0 Caricato</div>
-                        <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#cfe2ff;border:1px solid #9ec5fe;border-radius:2px;"></span> 1 Pronto</div>
-                        <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#fff3cd;border:1px solid #ffc107;border-radius:2px;"></span> 2 Avviato</div>
-                        <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#d1e7dd;border:1px solid #198754;border-radius:2px;"></span> 3 Terminato</div>
-                        <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#c3c3c3;border:1px solid #999;border-radius:2px;"></span> 4 Consegnato</div>
-                    </div>
-                </div>
-                <div style="border-left:1px solid #dee2e6; padding-left:12px;">
-                    <div style="font-weight:700; font-size:10px; color:#666; text-transform:uppercase; margin-bottom:4px;">Barra Progresso</div>
-                    <div class="d-flex flex-column gap-1">
-                        <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#0d6efd;border-radius:2px;"></span> Completate</div>
-                        <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#fd7e14;border-radius:2px;"></span> In corso</div>
-                        <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#198754;border-radius:2px;"></span> Tutte completate</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+@endsection
 
-    {{-- KPI GIORNALIERI --}}
-    <div class="d-flex gap-2 mb-2 mx-0" style="max-width:920px;">
-        <a href="{{ route('owner.fasiTerminate', ['oggi' => 1]) }}" class="d-flex align-items-center p-2 rounded flex-fill text-decoration-none" style="background:#d1e7dd; height:56px; min-width:200px; cursor:pointer;" title="Visualizza fasi completate oggi">
-            <div>
-                <div style="font-size:11px; color:#555; line-height:1.2;">Fasi completate oggi</div>
-                <div style="font-size:22px; font-weight:700; color:#198754; line-height:1;">{{ $fasiCompletateOggi }}</div>
-            </div>
-        </a>
-        <div class="d-flex align-items-center p-2 rounded flex-fill" style="background:#cfe2ff; height:56px; min-width:200px;">
-            <div>
-                <div style="font-size:11px; color:#555; line-height:1.2;">Ore lavorate oggi</div>
-                <div style="font-size:22px; font-weight:700; color:#0d6efd; line-height:1;">{{ $oreLavorateOggi }}h</div>
-            </div>
-        </div>
-        <div class="d-flex align-items-center p-2 rounded flex-fill" style="background:#d5d5d5; height:56px; min-width:200px;">
-            <div>
-                <div style="font-size:11px; color:#555; line-height:1.2;">Consegnate oggi</div>
-                <div style="font-size:22px; font-weight:700; color:#333; line-height:1;">{{ $commesseSpediteOggi }}</div>
-            </div>
-        </div>
-        <div class="d-flex align-items-center p-2 rounded flex-fill" style="background:#fff3cd; height:56px; min-width:200px;">
-            <div>
-                <div style="font-size:11px; color:#555; line-height:1.2;">Fasi in lavorazione</div>
-                <div style="font-size:22px; font-weight:700; color:#e67e22; line-height:1;">{{ $fasiAttive }}</div>
-            </div>
-        </div>
-    </div>
+@section('content')
 
-    {{-- ICONE AZIONI --}}
-    <div class="mb-3 d-flex align-items-center action-icons">
-
-        {{-- HAMBURGER --}}
-        <button class="hamburger-btn" id="hamburgerBtn" title="Menu">
-            <span></span><span></span><span></span>
-        </button>
-
-        {{-- ICONA FILTRO --}}
-        <img
-            src="{{ asset('images/icons8-filtro-50.png') }}"
-            id="toggleFilter"
-            title="Mostra / Nascondi filtri"
-            alt="Filtri"
-        >
-
-        {{-- Stampa celle selezionate --}}
-        <button id="printButton" class="btn p-0" style="background:none; border:none;" title="Stampa celle selezionate">
-            <img src="{{ asset('images/printer.png') }}" alt="Stampa">
-        </button>
-    </div>
-
-    {{-- SIDEBAR OVERLAY --}}
-    <div class="sidebar-overlay" id="sidebarOverlay"></div>
-
-    {{-- SIDEBAR MENU --}}
-    <div class="sidebar-menu" id="sidebarMenu">
-        <div class="sidebar-header">
-            <h5>Menu</h5>
-            <button class="sidebar-close" id="sidebarClose">&times;</button>
-        </div>
-
-        {{-- Fustelle --}}
-        <a href="{{ route('owner.fustelle', ['op_token' => $opToken ?? request()->query('op_token')]) }}" class="sidebar-item">
-            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#6f42c1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 3v18"/>
-            </svg>
-            <span>Fustelle</span>
-        </a>
-
-        {{-- Panoramica Reparti --}}
-        <a href="{{ route('owner.repartiOverview', ['op_token' => $opToken ?? request()->query('op_token')]) }}" class="sidebar-item">
-            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
-            </svg>
-            <span>Panoramica Reparti</span>
-        </a>
-
-        {{-- Visualizza fasi terminate --}}
-        <a href="{{ route('owner.fasiTerminate') }}" class="sidebar-item">
-            <img src="{{ asset('images/out-of-the-box.png') }}" alt="">
-            <span>Fasi terminate</span>
-        </a>
-
-        {{-- Scheduling Produzione --}}
-        <a href="{{ route('owner.scheduling') }}" class="sidebar-item">
-            <img src="{{ asset('images/icons8-report-grafico-a-torta-50.png') }}" alt="">
-            <span>Scheduling Produzione</span>
-        </a>
-
-        {{-- Report Ore --}}
-        <a href="{{ route('owner.reportOre', ['op_token' => $opToken ?? request()->query('op_token')]) }}" class="sidebar-item">
-            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0d6efd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-            </svg>
-            <span>Report Ore</span>
-        </a>
-
-        {{-- Lavorazioni Esterne --}}
-        <a href="{{ route('owner.esterne') }}" class="sidebar-item">
-            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#17a2b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="7.5 4.21 12 6.81 16.5 4.21"/><polyline points="7.5 19.79 7.5 14.6 3 12"/><polyline points="21 12 16.5 14.6 16.5 19.79"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>
-            </svg>
-            <span>Lavorazioni Esterne</span>
-        </a>
-
-        {{-- Prinect Live --}}
-        <a href="{{ route('mes.prinect') }}" class="sidebar-item">
-            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="6" y="2" width="12" height="6" rx="1"/><rect x="2" y="8" width="20" height="8" rx="1"/><rect x="6" y="16" width="12" height="6" rx="1"/><line x1="6" y1="12" x2="2" y2="12"/><line x1="22" y1="12" x2="18" y2="12"/>
-            </svg>
-            <span>Prinect Live (Offset)</span>
-        </a>
-
-        {{-- Fiery V900 --}}
-        <a href="{{ route('mes.fiery') }}" class="sidebar-item">
-            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#e65100" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="2" y="6" width="20" height="12" rx="2"/><line x1="6" y1="10" x2="6" y2="14"/><line x1="10" y1="10" x2="10" y2="14"/><line x1="14" y1="10" x2="14" y2="14"/><line x1="18" y1="10" x2="18" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/>
-            </svg>
-            <span>Fiery V900 (Digitale)</span>
-        </a>
-
-        {{-- Apri Excel --}}
-        @if(!($isReadonly ?? false))
-        <a href="#" class="sidebar-item" onclick="alert('Apri da Esplora Risorse:\n\n\\\\gestionale\\mes\\dashboard_mes.xlsx'); closeSidebar(); return false;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#198754" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><polyline points="10 9 9 9 8 9"/>
-            </svg>
-            <span>Apri Excel Dashboard</span>
-        </a>
-        @endif
-
-        {{-- Aggiungi riga --}}
-        @if(!($isReadonly ?? false))
-        <a href="#" class="sidebar-item" data-bs-toggle="modal" data-bs-target="#aggiungiRigaModal" onclick="closeSidebar()">
-            <img src="{{ asset('images/icons8-ddt-64 (1).png') }}" alt="">
-            <span>Aggiungi riga</span>
-        </a>
-        @endif
-
-        {{-- Consegnati oggi --}}
-        <a href="#" class="sidebar-item" data-bs-toggle="modal" data-bs-target="#modalSpedizioniOggi" onclick="closeSidebar()" id="btnConsegnati">
-            <img src="{{ asset('images/icons8-consegnato-50.png') }}" alt="">
-            <span>Consegnati oggi
-                @if($spedizioniOggi->count() > 0)
-                    <span class="badge rounded-pill bg-danger" style="font-size:11px; vertical-align:middle;">{{ $spedizioniOggi->count() }}</span>
-                @endif
-            </span>
-        </a>
-
-        {{-- Spedizioni BRT --}}
-        <a href="#" class="sidebar-item" data-bs-toggle="modal" data-bs-target="#modalBRT" onclick="closeSidebar()">
-            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#d4380d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
-            </svg>
-            <span>Spedizioni BRT
-                @if($spedizioniBRT->count() > 0)
-                    <span class="badge rounded-pill bg-danger" style="font-size:11px; vertical-align:middle;">{{ $spedizioniBRT->count() }}</span>
-                @endif
-            </span>
-        </a>
-
-        {{-- Storico consegne --}}
-        <a href="#" class="sidebar-item" data-bs-toggle="modal" data-bs-target="#modalStorico" onclick="closeSidebar()">
-            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#6c757d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-            </svg>
-            <span>Storico consegne
-                @if($storicoConsegne->count() > 0)
-                    <span class="badge rounded-pill bg-secondary" style="font-size:11px; vertical-align:middle;">{{ $storicoConsegne->count() }}</span>
-                @endif
-            </span>
-        </a>
-
-        {{-- Note Consegne --}}
-        <a href="#" class="sidebar-item" data-bs-toggle="modal" data-bs-target="#modalNoteSpedizione" onclick="closeSidebar(); caricaNoteSpedizione();">
-            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0d6efd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
-            </svg>
-            <span>Note Consegne</span>
-            <span id="noteConsegneBadge" style="display:none; background:#dc3545; color:#fff; border-radius:50%; width:20px; height:20px; font-size:11px; font-weight:bold; text-align:center; line-height:20px; margin-left:6px;">!</span>
-        </a>
-
-        {{-- Presenti in azienda (modal rapido) --}}
-        <a href="#" class="sidebar-item" data-bs-toggle="modal" data-bs-target="#modalPresenti" onclick="closeSidebar(); caricaPresenti();">
-            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#198754" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-            </svg>
-            <span>Presenti in azienda</span>
-            <span id="presentiCount" class="badge rounded-pill bg-success" style="font-size:11px; vertical-align:middle;"></span>
-        </a>
-
-        {{-- Presenze (pagina completa con storico) --}}
-        <a href="{{ route('owner.presenze') }}" class="sidebar-item" onclick="closeSidebar();">
-            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-            </svg>
-            <span>Storico Presenze</span>
-        </a>
-
-        {{-- Riferimenti Marco (solo readonly) --}}
-        @if($isReadonly ?? false)
-        <a href="#" class="sidebar-item" onclick="filtraRiferimentiMarco(); closeSidebar(); return false;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#198754" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-            </svg>
-            <span>Riferimenti Marco</span>
-        </a>
-        <a href="#" class="sidebar-item" onclick="resetRiferimentiMarco(); closeSidebar(); return false;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#6c757d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
-            <span>Mostra tutte le commesse</span>
-        </a>
-        @endif
-
-        {{-- Sync Onda --}}
-        @if(!($isReadonly ?? false))
-        <form method="POST" action="{{ route('owner.syncOnda') }}" style="margin:0;" onsubmit="this.querySelector('button').disabled=true;">
-            @csrf
-            <button type="submit" class="sidebar-item" style="width:100%; background:none; border:none; border-bottom:1px solid #f0f0f0; text-align:left; font-size:14px; font-weight:500; color:#333;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21.5 2v6h-6"/><path d="M2.5 22v-6h6"/><path d="M2.5 11.5a10 10 0 0 1 18.8-4.3"/><path d="M21.5 12.5a10 10 0 0 1-18.8 4.2"/>
-                </svg>
-                <span>Sincronizza Onda</span>
-            </button>
-        </form>
-        @endif
-    </div>
-    
-        {{-- FILTRI --}}
-<div class="mb-3" id="filterBox" style="display:none;">
-    <!-- Filtri multi-valore (virgola) -->
-    <input type="text" id="filterCommessa" class="form-control form-control-sm" placeholder="Filtra Commessa (più valori ,)" style="max-width:200px;">
-    <input type="text" id="filterCliente" class="form-control form-control-sm" placeholder="Filtra Cliente (più valori ,)" style="max-width:200px;">
-    <input type="text" id="filterDescrizione" class="form-control form-control-sm" placeholder="Filtra Descrizione (più valori ,)" style="max-width:300px;">
-
-    <!-- Filtri multi-selezione -->
-   <select id="filterStato" multiple>
-    <option value="0">0</option>
-    <option value="1">1</option>
-    <option value="2">2</option>
-    <option value="3">3</option>
-</select>
-
-<select id="filterFase" multiple>
-    @php
-        $fasiNomi = $fasiCatalogo->pluck('nome_display')->map(function($n) {
-            if ($n === 'STAMPA') return null;
-            return $n;
-        })->filter()->unique()->sort()->values();
-    @endphp
-    @foreach($fasiNomi as $nome)
-        <option value="{{ strtolower($nome) }}">{{ $nome }}</option>
-    @endforeach
-</select>
-
-<select id="filterReparto" multiple>
-    @foreach($reparti as $id => $rep)
-        @if($rep !== 'fustella')
-        <option value="{{ $rep }}">{{ $rep }}</option>
-        @endif
-    @endforeach
-</select>
-<button type="button" class="btn-reset-filters" id="btnResetFilters">Rimuovi filtri</button>
+{{-- KPI GIORNALIERI --}}
+<div class="d-flex gap-3 mb-4 flex-wrap">
+    <x-mes.kpi-card value="{{ $fasiCompletateOggi }}" label="Fasi completate oggi" color="success" />
+    <x-mes.kpi-card value="{{ $oreLavorateOggi }}h" label="Ore lavorate oggi" color="accent" id="kpiOreLavorate" subtitle="click per dettaglio" />
+    <x-mes.kpi-card value="{{ $commesseSpediteOggi }}" label="Spedite oggi" color="info" />
+    <x-mes.kpi-card value="{{ $fasiAttive }}" label="Fasi in lavorazione" color="warning" />
 </div>
 
-    {{-- MODALE AGGIUNGI RIGA --}}
-    <div class="modal fade" id="aggiungiRigaModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
-            <form method="POST" action="{{ route('owner.aggiungiRiga') }}{{ request('op_token') ? '?op_token='.request('op_token') : '' }}">
-                @csrf
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Aggiungi Riga</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="row g-2">
-                            <div class="col-6">
-                                <label class="form-label">Commessa *</label>
-                                <input type="text" name="commessa" class="form-control">
-                            </div>
-                            <div class="col-6">
-                                <label class="form-label">Cliente</label>
-                                <input type="text" name="cliente_nome" class="form-control">
-                            </div>
-                            <div class="col-6">
-                                <label class="form-label">Codice Articolo</label>
-                                <input type="text" name="cod_art" class="form-control">
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label">Descrizione</label>
-                                <input type="text" name="descrizione" class="form-control">
-                            </div>
-                            <div class="col-4">
-                                <label class="form-label">Quantita</label>
-                                <input type="number" name="qta_richiesta" class="form-control" value="0">
-                            </div>
-                            <div class="col-4">
-                                <label class="form-label">UM</label>
-                                <input type="text" name="um" class="form-control" value="FG">
-                            </div>
-                            <div class="col-4">
-                                <label class="form-label">Data Consegna</label>
-                                <input type="date" name="data_prevista_consegna" class="form-control">
-                            </div>
-                            <div class="col-4">
-                                <label class="form-label">Priorità</label>
-                                <input type="number" name="priorita" class="form-control" step="0.01" value="0">
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label">Fase *</label>
-                                <select name="fase_catalogo_id" class="form-select">
-                                    <option value="">-- Seleziona fase --</option>
-                                    @foreach(\App\Models\FasiCatalogo::with('reparto')->orderBy('nome')->get() as $fc)
-                                        <option value="{{ $fc->id }}">{{ $fc->nome }} ({{ $fc->reparto->nome ?? '-' }})</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="submit" class="btn btn-success">Aggiungi</button>
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
+{{-- FILTRI (always visible) --}}
+<div id="filterBox">
+    <input type="text" id="filterCommessa" class="form-control form-control-sm" placeholder="Filtra Commessa (piu valori ,)" style="max-width:200px;">
+    <input type="text" id="filterCliente" class="form-control form-control-sm" placeholder="Filtra Cliente (piu valori ,)" style="max-width:200px;">
+    <input type="text" id="filterDescrizione" class="form-control form-control-sm" placeholder="Filtra Descrizione (piu valori ,)" style="max-width:300px;">
+
+    <select id="filterStato" multiple>
+        <option value="0">0</option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+    </select>
+
+    <select id="filterFase" multiple>
+        @php
+            $fasiNomi = $fasiCatalogo->pluck('nome_display')->map(function($n) {
+                if ($n === 'STAMPA') return null;
+                return $n;
+            })->filter()->unique()->sort()->values();
+        @endphp
+        @foreach($fasiNomi as $nome)
+            <option value="{{ strtolower($nome) }}">{{ $nome }}</option>
+        @endforeach
+    </select>
+
+    <select id="filterReparto" multiple>
+        @foreach($reparti as $id => $rep)
+            @if($rep !== 'fustella')
+            <option value="{{ $rep }}">{{ $rep }}</option>
+            @endif
+        @endforeach
+    </select>
+
+    <button type="button" class="btn-reset-filters" id="btnResetFilters">Rimuovi filtri</button>
+    @if($isReadonly ?? false)
+    <button type="button" class="btn-marco-filter" onclick="filtraRiferimentiMarco()">Rif. Marco</button>
+    @endif
+    <button id="printButton" title="Stampa celle selezionate">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Stampa
+    </button>
+</div>
 
 @php
     /* Helper date italiane */
@@ -817,205 +492,272 @@ tr:hover td {
     }
 @endphp
 
-    {{-- TABELLA --}}
-    <div id="tableScroll" style="width:100%; overflow-x:auto;">
-        <table id="tabellaOrdini" class="table table-bordered table-sm table-striped" style="white-space:nowrap;">
-            <thead class="table-dark">
-                <tr>
-                    <th>Commessa</th>
-                    <th>Stato</th>
-                    <th>Cliente</th>
-                    <th>Codice Articolo</th>
-                    <th>Colori</th>
-                    <th>Fustella</th>
-                    <th>Descrizione</th>
-                    <th>Qta</th>
-                    <th>UM</th>
-                    <th>Priorità</th>
-                    <th>Fase</th>
-                    <th>Reparto</th>
-                    <th>Carta</th>
-                    <th>Qta Carta</th>
-                    <th>Data Prevista Consegna</th>
-                    <th>Cod Carta</th>
-                    <th>UM Carta</th>
-                    <th>Operatori</th>
-                    <th>Qta Prod.</th>
-                    <th>Esterno</th>
-                    <th>Note</th>
-                    <th>Data Inizio</th>
-                    <th>Data Fine</th>
-                    <th>Ore Prev.</th>
-                    <th>Ore Lav.</th>
-                    <th>Data Reg.</th>
-                    <th>Progresso</th>
-                </tr>
-            </thead>
-            <tbody>
-            @foreach($fasi as $fase)
+{{-- TABELLA --}}
+<div id="tableScroll" style="width:100%; overflow-x:auto;">
+    <table id="tabellaOrdini" style="white-space:nowrap;">
+        <thead>
+            <tr>
+                <th>Commessa</th>
+                <th>Stato</th>
+                <th>Cliente</th>
+                <th>Codice Articolo</th>
+                <th>Colori</th>
+                <th>Fustella</th>
+                <th>Descrizione</th>
+                <th>Qta</th>
+                <th>UM</th>
+                <th>Priorita</th>
+                <th>Fase</th>
+                <th>Reparto</th>
+                <th>Carta</th>
+                <th>Qta Carta</th>
+                <th>Data Prevista Consegna</th>
+                <th>Cod Carta</th>
+                <th>UM Carta</th>
+                <th>Operatori</th>
+                <th>Qta Prod.</th>
+                <th>Esterno</th>
+                <th>Note</th>
+                <th>Data Inizio</th>
+                <th>Data Fine</th>
+                <th>Ore Prev.</th>
+                <th>Ore Lav.</th>
+                <th>Data Reg.</th>
+                <th>Progresso</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach($fasi as $fase)
+            @php
+                $rowClass = '';
+                if ($fase->ordine->data_prevista_consegna) {
+                    $dataPrevista = \Carbon\Carbon::parse($fase->ordine->data_prevista_consegna)->startOfDay();
+                    $oggi = \Carbon\Carbon::today();
+                    $diffGiorni = $oggi->diffInDays($dataPrevista, false);
+                    if ($diffGiorni <= -5) $rowClass = 'scaduta';
+                    elseif ($diffGiorni <= 3) $rowClass = 'warning-strong';
+                    elseif ($diffGiorni <= 5) $rowClass = 'warning-light';
+                }
+            @endphp
+            @php
+                $statiLabel = [0 => 'Caricato', 1 => 'Pronto', 2 => 'Avviato', 3 => 'Terminato', 4 => 'Consegnato'];
+                $statoBg = [0 => '#e9ecef', 1 => '#cfe2ff', 2 => '#fff3cd', 3 => '#d1e7dd', 4 => '#c3c3c3'];
+            @endphp
+            <tr class="{{ $rowClass }}" data-id="{{ $fase->id }}">
+                <td><a href="{{ route('owner.dettaglioCommessa', $fase->ordine->commessa ?? '-') }}" style="color:var(--text-primary);font-weight:bold;text-decoration:underline;">{{ $fase->ordine->commessa ?? '-' }}</a></td>
+                <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)" style="background:{{ $statoBg[$fase->stato] ?? '#e9ecef' }} !important;font-weight:bold;text-align:center;">{{ $fase->stato }}</td>
+                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'cliente_nome', this.innerText)">{{ $fase->ordine->cliente_nome ?? '-' }}</td>
+                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'cod_art', this.innerText)">{{ $fase->ordine->cod_art ?? '-' }}</td>
                 @php
-                    $rowClass = '';
-                    if ($fase->ordine->data_prevista_consegna) {
-                        $dataPrevista = \Carbon\Carbon::parse($fase->ordine->data_prevista_consegna)->startOfDay();
-                        $oggi = \Carbon\Carbon::today();
-                        $diffGiorni = $oggi->diffInDays($dataPrevista, false);
-                        if ($diffGiorni <= -5) $rowClass = 'scaduta';
-                        elseif ($diffGiorni <= 3) $rowClass = 'warning-strong';
-                        elseif ($diffGiorni <= 5) $rowClass = 'warning-light';
+                    $descOwner = $fase->ordine->descrizione ?? '';
+                    $clienteOwner = $fase->ordine->cliente_nome ?? '';
+                    $repartoOwner = strtolower($fase->faseCatalogo->reparto->nome ?? '');
+                    $coloriOwner = \App\Helpers\DescrizioneParser::parseColori($descOwner, $clienteOwner, $repartoOwner);
+                    $fustellaOwner = \App\Helpers\DescrizioneParser::parseFustella($descOwner, $clienteOwner, $fase->ordine->note_prestampa ?? '');
+                @endphp
+                <td>{{ $coloriOwner ?: '-' }}</td>
+                <td>{{ $fustellaOwner ?: '-' }}</td>
+                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'descrizione', this.innerText)">{{ $fase->ordine->descrizione ?? '-' }}</td>
+                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'qta_richiesta', this.innerText)">{{ $fase->ordine->qta_richiesta ?? '-' }}</td>
+                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'um', this.innerText)">{{ $fase->ordine->um ?? '-' }}</td>
+                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'priorita', this.innerText)">{{ $fase->priorita !== null ? number_format($fase->priorita, 2) : '-' }}</td>
+                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'fase', this.innerText)">{{ $fase->faseCatalogo->nome_display ?? '-' }}</td>
+                <td>{{ $fase->faseCatalogo->reparto->nome ?? '-' }}</td>
+                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'carta', this.innerText)">{{ $fase->ordine->carta ?? '-' }}</td>
+                @php
+                    $umFase = strtoupper(trim($fase->um ?? 'FG'));
+                    $isPezzi = in_array($umFase, ['TR', 'PZ', 'KG']);
+                    $umLabel = $isPezzi ? 'pz' : 'fg';
+                    if ($umFase === 'KG') {
+                        $qtaFaseVal = $fase->ordine->qta_richiesta ?? 0;
+                    } else {
+                        $qtaFaseVal = $fase->qta_fase ?: ($isPezzi ? ($fase->ordine->qta_richiesta ?? 0) : ($fase->ordine->qta_carta ?? 0));
                     }
                 @endphp
+                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'qta_fase', this.innerText)">{{ $qtaFaseVal ? number_format($qtaFaseVal, 0, ',', '.') : '-' }}</td>
+                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_prevista_consegna', this.innerText)">{{ formatItalianDate($fase->ordine->data_prevista_consegna) }}</td>
+                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'cod_carta', this.innerText)">{{ $fase->ordine->cod_carta ?? '-' }}</td>
+                <td style="font-weight:600;color:{{ $isPezzi ? '#2563eb' : '#059669' }}">{{ $umLabel }}</td>
+                <td>
+                    @forelse($fase->operatori as $op)
+                        {{ $op->nome }}<br>
+                    @empty
+                        -
+                    @endforelse
+                </td>
+                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'qta_prod', this.innerText)">{{ $fase->qta_prod ?? '-' }}</td>
                 @php
-                    $statiLabel = [0 => 'Caricato', 1 => 'Pronto', 2 => 'Avviato', 3 => 'Terminato', 4 => 'Consegnato'];
-                    $statoBg = [0 => '#e9ecef', 1 => '#cfe2ff', 2 => '#fff3cd', 3 => '#d1e7dd', 4 => '#c3c3c3'];
+                    $fornitoreEsterno = preg_match('/Inviato a:\s*(.+)/i', $fase->note ?? '', $mEst) ? trim($mEst[1]) : null;
+                    $notePulitaOwner = preg_replace('/,?\s*Inviato a:\s*.+/i', '', $fase->note ?? '');
+                    $notePulitaOwner = trim($notePulitaOwner, ", \t\n\r") ?: null;
                 @endphp
-                <tr class="{{ $rowClass }}" data-id="{{ $fase->id }}">
-                    <td><a href="{{ route('owner.dettaglioCommessa', $fase->ordine->commessa ?? '-') }}" style="color:#000;font-weight:bold;text-decoration:underline;">{{ $fase->ordine->commessa ?? '-' }}</a></td>
-                    <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)" style="background:{{ $statoBg[$fase->stato] ?? '#e9ecef' }} !important;font-weight:bold;text-align:center;">{{ $fase->stato }}</td>
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'cliente_nome', this.innerText)">{{ $fase->ordine->cliente_nome ?? '-' }}</td>
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'cod_art', this.innerText)">{{ $fase->ordine->cod_art ?? '-' }}</td>
+                <td>{{ $fornitoreEsterno ?? '-' }}</td>
+                <td>
                     @php
-                        $descOwner = $fase->ordine->descrizione ?? '';
-                        $clienteOwner = $fase->ordine->cliente_nome ?? '';
-                        $repartoOwner = strtolower($fase->faseCatalogo->reparto->nome ?? '');
-                        $coloriOwner = \App\Helpers\DescrizioneParser::parseColori($descOwner, $clienteOwner, $repartoOwner);
-                        $fustellaOwner = \App\Helpers\DescrizioneParser::parseFustella($descOwner, $clienteOwner, $fase->ordine->note_prestampa ?? '');
+                        $nfsOwner = $fase->ordine->note_fasi_successive ?? '';
+                        $righeNfsOwner = $nfsOwner ? json_decode($nfsOwner, true) : [];
                     @endphp
-                    <td>{{ $coloriOwner ?: '-' }}</td>
-                    <td>{{ $fustellaOwner ?: '-' }}</td>
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'descrizione', this.innerText)">{{ $fase->ordine->descrizione ?? '-' }}</td>
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'qta_richiesta', this.innerText)">{{ $fase->ordine->qta_richiesta ?? '-' }}</td>
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'um', this.innerText)">{{ $fase->ordine->um ?? '-' }}</td>
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'priorita', this.innerText)">{{ $fase->priorita !== null ? number_format($fase->priorita, 2) : '-' }}</td>
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'fase', this.innerText)">{{ $fase->faseCatalogo->nome_display ?? '-' }}</td>
-                    <td>{{ $fase->faseCatalogo->reparto->nome ?? '-' }}</td>
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'carta', this.innerText)">{{ $fase->ordine->carta ?? '-' }}</td>
-                    @php
-                        $umFase = strtoupper(trim($fase->um ?? 'FG'));
-                        $isPezzi = in_array($umFase, ['TR', 'PZ', 'KG']);
-                        $umLabel = $isPezzi ? 'pz' : 'fg';
-                        if ($umFase === 'KG') {
-                            $qtaFaseVal = $fase->ordine->qta_richiesta ?? 0;
-                        } else {
-                            $qtaFaseVal = $fase->qta_fase ?: ($isPezzi ? ($fase->ordine->qta_richiesta ?? 0) : ($fase->ordine->qta_carta ?? 0));
-                        }
-                    @endphp
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'qta_fase', this.innerText)">{{ $qtaFaseVal ? number_format($qtaFaseVal, 0, ',', '.') : '-' }}</td>
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_prevista_consegna', this.innerText)">{{ formatItalianDate($fase->ordine->data_prevista_consegna) }}</td>
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'cod_carta', this.innerText)">{{ $fase->ordine->cod_carta ?? '-' }}</td>
-                    <td style="font-weight:600;color:{{ $isPezzi ? '#2563eb' : '#059669' }}">{{ $umLabel }}</td>
-                    <td>
-                        @forelse($fase->operatori as $op)
-                            {{ $op->nome }}<br>
-                        @empty
-                            -
-                        @endforelse
-                    </td>
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'qta_prod', this.innerText)">{{ $fase->qta_prod ?? '-' }}</td>
-                    @php
-                        $fornitoreEsterno = preg_match('/Inviato a:\s*(.+)/i', $fase->note ?? '', $mEst) ? trim($mEst[1]) : null;
-                        $notePulitaOwner = preg_replace('/,?\s*Inviato a:\s*.+/i', '', $fase->note ?? '');
-                        $notePulitaOwner = trim($notePulitaOwner, ", \t\n\r") ?: null;
-                    @endphp
-                    <td>{{ $fornitoreEsterno ?? '-' }}</td>
-                    <td>
-                        @php
-                            $nfsOwner = $fase->ordine->note_fasi_successive ?? '';
-                            $righeNfsOwner = $nfsOwner ? json_decode($nfsOwner, true) : [];
-                        @endphp
-                        @if(!empty($righeNfsOwner) && is_array($righeNfsOwner))
-                            @foreach($righeNfsOwner as $r)
-                                <strong>{{ $r['nome'] ?? '' }}</strong>: {{ $r['testo'] ?? '' }}@if(!$loop->last) — @endif
-                            @endforeach
-                            @if($notePulitaOwner)<br>@endif
-                        @endif
-                        <span contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'note', this.innerText)">{{ $notePulitaOwner ?? '-' }}</span>
-                    </td>
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_inizio', this.innerText)">{{ formatItalianDate($fase->data_inizio, true) }}</td>
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_fine', this.innerText)">{{ formatItalianDate($fase->data_fine, true) }}</td>
-                    @php
-                        // Ore previste: avviamento + qta_carta / copieh
-                        $fasiInfoOw = config('fasi_ore');
-                        $infoFaseOw = $fasiInfoOw[$fase->fase] ?? null;
-                        $orePreviste = null;
-                        if ($infoFaseOw) {
-                            $qtaCartaOw = $fase->ordine->qta_carta ?? 0;
-                            $copiehOw = $infoFaseOw['copieh'] ?: 1;
-                            $orePreviste = round($infoFaseOw['avviamento'] + ($qtaCartaOw / $copiehOw), 1);
-                        }
-                    @endphp
-                    <td>
-                        @if($orePreviste !== null)
-                            @if($orePreviste >= 1)
-                                {{ floor($orePreviste) }}h {{ round(($orePreviste - floor($orePreviste)) * 60) }}m
-                            @else
-                                {{ round($orePreviste * 60) }}m
-                            @endif
+                    @if(!empty($righeNfsOwner) && is_array($righeNfsOwner))
+                        @foreach($righeNfsOwner as $r)
+                            <strong>{{ $r['nome'] ?? '' }}</strong>: {{ $r['testo'] ?? '' }}@if(!$loop->last) — @endif
+                        @endforeach
+                        @if($notePulitaOwner)<br>@endif
+                    @endif
+                    <span contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'note', this.innerText)">{{ $notePulitaOwner ?? '-' }}</span>
+                </td>
+                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_inizio', this.innerText)">{{ formatItalianDate($fase->data_inizio, true) }}</td>
+                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_fine', this.innerText)">{{ formatItalianDate($fase->data_fine, true) }}</td>
+                @php
+                    // Ore previste: avviamento + qta_carta / copieh
+                    $fasiInfoOw = config('fasi_ore');
+                    $infoFaseOw = $fasiInfoOw[$fase->fase] ?? null;
+                    $orePreviste = null;
+                    if ($infoFaseOw) {
+                        $qtaCartaOw = $fase->ordine->qta_carta ?? 0;
+                        $copiehOw = $infoFaseOw['copieh'] ?: 1;
+                        $orePreviste = round($infoFaseOw['avviamento'] + ($qtaCartaOw / $copiehOw), 1);
+                    }
+                @endphp
+                <td>
+                    @if($orePreviste !== null)
+                        @if($orePreviste >= 1)
+                            {{ floor($orePreviste) }}h {{ round(($orePreviste - floor($orePreviste)) * 60) }}m
                         @else
-                            -
+                            {{ round($orePreviste * 60) }}m
                         @endif
-                    </td>
-                    @php
-                        // Prinect (stampa XL): tempo_avviamento_sec + tempo_esecuzione_sec
-                        $secPrinect = ($fase->tempo_avviamento_sec ?? 0) + ($fase->tempo_esecuzione_sec ?? 0);
-                        if ($secPrinect > 0) {
-                            $oreNetteOw = $secPrinect / 3600;
-                            $secNettoOw = $secPrinect;
-                            $fonteTempo = 'P';
-                        } else {
-                            // Fallback: pivot operatore (data_fine - data_inizio - pause)
-                            $totSecPausa = $fase->operatori->sum(fn($op) => $op->pivot->secondi_pausa ?? 0);
-                            $secLordoOw = 0;
-                            $diOw = $fase->operatori->whereNotNull('pivot.data_inizio')->sortBy('pivot.data_inizio')->first()?->pivot->data_inizio;
-                            $dfOw = $fase->operatori->whereNotNull('pivot.data_fine')->sortByDesc('pivot.data_fine')->first()?->pivot->data_fine;
-                            if ($diOw && $dfOw) {
-                                $secLordoOw = abs(\Carbon\Carbon::parse($dfOw)->getTimestamp() - \Carbon\Carbon::parse($diOw)->getTimestamp());
-                            }
-                            $secNettoOw = max($secLordoOw - $totSecPausa, 0);
-                            $oreNetteOw = $secNettoOw / 3600;
-                            $fonteTempo = '';
+                    @else
+                        -
+                    @endif
+                </td>
+                @php
+                    // Prinect (stampa XL): tempo_avviamento_sec + tempo_esecuzione_sec
+                    $secPrinect = ($fase->tempo_avviamento_sec ?? 0) + ($fase->tempo_esecuzione_sec ?? 0);
+                    if ($secPrinect > 0) {
+                        $oreNetteOw = $secPrinect / 3600;
+                        $secNettoOw = $secPrinect;
+                        $fonteTempo = 'P';
+                    } else {
+                        // Fallback: pivot operatore (data_fine - data_inizio - pause)
+                        $totSecPausa = $fase->operatori->sum(fn($op) => $op->pivot->secondi_pausa ?? 0);
+                        $secLordoOw = 0;
+                        $diOw = $fase->operatori->whereNotNull('pivot.data_inizio')->sortBy('pivot.data_inizio')->first()?->pivot->data_inizio;
+                        $dfOw = $fase->operatori->whereNotNull('pivot.data_fine')->sortByDesc('pivot.data_fine')->first()?->pivot->data_fine;
+                        if ($diOw && $dfOw) {
+                            $secLordoOw = abs(\Carbon\Carbon::parse($dfOw)->getTimestamp() - \Carbon\Carbon::parse($diOw)->getTimestamp());
                         }
-                    @endphp
-                    <td>
-                        @if($secNettoOw > 0)
-                            @if($secNettoOw >= 3600)
-                                {{ floor($secNettoOw / 3600) }}h {{ floor(($secNettoOw % 3600) / 60) }}m
-                            @elseif($secNettoOw >= 60)
-                                {{ floor($secNettoOw / 60) }}m
-                            @else
-                                {{ $secNettoOw }}s
-                            @endif
-                            @if($fonteTempo)<small class="text-muted">{{ $fonteTempo }}</small>@endif
+                        $secNettoOw = max($secLordoOw - $totSecPausa, 0);
+                        $oreNetteOw = $secNettoOw / 3600;
+                        $fonteTempo = '';
+                    }
+                @endphp
+                <td>
+                    @if($secNettoOw > 0)
+                        @if($secNettoOw >= 3600)
+                            {{ floor($secNettoOw / 3600) }}h {{ floor(($secNettoOw % 3600) / 60) }}m
+                        @elseif($secNettoOw >= 60)
+                            {{ floor($secNettoOw / 60) }}m
                         @else
-                            -
+                            {{ $secNettoOw }}s
                         @endif
-                    </td>
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_registrazione', this.innerText)">{{ formatItalianDate($fase->ordine->data_registrazione) }}</td>
-                    @php
-                        $prog = $progressoCommesse[$fase->ordine->commessa ?? ''] ?? ['totale'=>0,'terminate'=>0,'avviate'=>0,'percentuale'=>0];
-                        $progPerc = $prog['percentuale'];
-                        $progAvv = $prog['totale'] > 0 ? round(($prog['avviate'] / $prog['totale']) * 100) : 0;
-                    @endphp
-                    <td style="padding:2px 4px; vertical-align:middle;">
-                        <div style="position:relative; background:#e9ecef; border-radius:4px; height:16px; min-width:60px;" title="{{ $prog['terminate'] }}/{{ $prog['totale'] }} terminate{{ $prog['avviate'] > 0 ? ', '.$prog['avviate'].' in corso' : '' }}">
-                            @if($prog['avviate'] > 0 && $progPerc < 100)
-                            <div style="position:absolute; top:0; left:0; height:100%; width:{{ min($progPerc + $progAvv, 100) }}%; background:#fd7e14; border-radius:4px;"></div>
-                            @endif
-                            <div style="position:absolute; top:0; left:0; height:100%; width:{{ $progPerc }}%; background:{{ $progPerc >= 100 ? '#198754' : '#0d6efd' }}; border-radius:4px;"></div>
-                            <span style="position:relative; z-index:1; font-size:10px; font-weight:bold; color:{{ $progPerc >= 40 ? '#fff' : '#333' }}; line-height:16px; padding-left:4px;">{{ $prog['terminate'] }}/{{ $prog['totale'] }}</span>
-                        </div>
-                    </td>
-                </tr>
-            @endforeach
-            </tbody>
-        </table>
-    </div>
-
+                        @if($fonteTempo)<small class="text-muted-mes">{{ $fonteTempo }}</small>@endif
+                    @else
+                        -
+                    @endif
+                </td>
+                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_registrazione', this.innerText)">{{ formatItalianDate($fase->ordine->data_registrazione) }}</td>
+                @php
+                    $prog = $progressoCommesse[$fase->ordine->commessa ?? ''] ?? ['totale'=>0,'terminate'=>0,'avviate'=>0,'percentuale'=>0];
+                    $progPerc = $prog['percentuale'];
+                    $progAvv = $prog['totale'] > 0 ? round(($prog['avviate'] / $prog['totale']) * 100) : 0;
+                @endphp
+                <td style="padding:2px 4px; vertical-align:middle;">
+                    <x-mes.progress-bar
+                        :percentuale="$progPerc"
+                        :avviate="$progAvv"
+                        :totale="$prog['totale']"
+                        :terminate="$prog['terminate']"
+                    />
+                </td>
+            </tr>
+        @endforeach
+        </tbody>
+    </table>
 </div>
+
+{{-- HIDDEN FORMS --}}
+<form method="POST" action="{{ route('owner.syncOnda') }}" id="formSyncOnda" style="display:none;">
+    @csrf
+</form>
+
+{{-- MODALE AGGIUNGI RIGA --}}
+<div class="modal fade" id="aggiungiRigaModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="POST" action="{{ route('owner.aggiungiRiga') }}{{ request('op_token') ? '?op_token='.request('op_token') : '' }}">
+            @csrf
+            <div class="modal-content">
+                <div class="modal-header" style="background:var(--bg-sidebar);color:#fff;">
+                    <h5 class="modal-title">Aggiungi Riga</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <label class="form-label">Commessa *</label>
+                            <input type="text" name="commessa" class="form-control">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Cliente</label>
+                            <input type="text" name="cliente_nome" class="form-control">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Codice Articolo</label>
+                            <input type="text" name="cod_art" class="form-control">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Descrizione</label>
+                            <input type="text" name="descrizione" class="form-control">
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label">Quantita</label>
+                            <input type="number" name="qta_richiesta" class="form-control" value="0">
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label">UM</label>
+                            <input type="text" name="um" class="form-control" value="FG">
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label">Data Consegna</label>
+                            <input type="date" name="data_prevista_consegna" class="form-control">
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label">Priorita</label>
+                            <input type="number" name="priorita" class="form-control" step="0.01" value="0">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Fase *</label>
+                            <select name="fase_catalogo_id" class="form-select">
+                                <option value="">-- Seleziona fase --</option>
+                                @foreach(\App\Models\FasiCatalogo::with('reparto')->orderBy('nome')->get() as $fc)
+                                    <option value="{{ $fc->id }}">{{ $fc->nome }} ({{ $fc->reparto->nome ?? '-' }})</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success">Aggiungi</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
 {{-- MODALE SPEDIZIONI OGGI --}}
 <div class="modal fade" id="modalSpedizioniOggi" tabindex="-1">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
-            <div class="modal-header bg-success text-white">
+            <div class="modal-header" style="background:var(--bg-sidebar);color:#fff;">
                 <h5 class="modal-title">Consegnati oggi ({{ $spedizioniOggi->count() }})</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
@@ -1063,7 +805,7 @@ tr:hover td {
 <div class="modal fade" id="modalBRT" tabindex="-1">
     <div class="modal-dialog modal-fullscreen">
         <div class="modal-content">
-            <div class="modal-header" style="background:#d4380d; color:#fff; padding:18px 24px;">
+            <div class="modal-header" style="background:#b91c1c; color:#fff; padding:18px 24px;">
                 <h5 class="modal-title" style="font-size:22px; font-weight:700;">Spedizioni BRT ({{ $spedizioniBRT->count() }} DDT)</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
@@ -1077,7 +819,7 @@ tr:hover td {
                     <span id="brtProgressLabel" class="ms-2 text-muted" style="font-size:14px;"></span>
                 </div>
                 <table class="table table-bordered" style="white-space:nowrap; font-size:15px;">
-                    <thead style="background:#d4380d; color:#fff;">
+                    <thead style="background:#b91c1c; color:#fff;">
                         <tr>
                             <th style="padding:12px 14px;">DDT</th>
                             <th style="padding:12px 14px;">Commesse</th>
@@ -1144,7 +886,7 @@ tr:hover td {
 <div class="modal fade" id="modalStorico" tabindex="-1">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
-            <div class="modal-header" style="background:#6c757d; color:#fff;">
+            <div class="modal-header" style="background:var(--bg-sidebar);color:#fff;">
                 <h5 class="modal-title">Storico consegne (ultimi 30 giorni)</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
@@ -1154,7 +896,7 @@ tr:hover td {
                 </div>
                 @if($storicoConsegne->count() > 0)
                 @foreach($storicoConsegne->groupBy(fn($f) => \Carbon\Carbon::parse($f->data_fine)->format('Y-m-d')) as $dataStorico => $fasiGiorno)
-                <h6 class="mt-3 mb-2 fw-bold" style="color:#333;">
+                <h6 class="mt-3 mb-2 fw-bold" style="color:var(--text-primary);">
                     {{ \Carbon\Carbon::parse($dataStorico)->format('d/m/Y') }}
                     <span class="badge bg-secondary ms-1">{{ $fasiGiorno->count() }}</span>
                 </h6>
@@ -1209,7 +951,7 @@ tr:hover td {
 <div class="modal fade" id="modalTracking" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header" style="background:#d4380d; color:#fff;">
+            <div class="modal-header" style="background:#b91c1c; color:#fff;">
                 <h5 class="modal-title">Tracking BRT - <span id="trackingSegnacollo"></span></h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
@@ -1269,18 +1011,76 @@ tr:hover td {
     </div>
 </div>
 
+<!-- Modale Note Consegne -->
+<div class="modal fade" id="modalNoteSpedizione" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background:var(--bg-sidebar);color:#fff;">
+                <h5 class="modal-title">Note Consegne - {{ now()->format('d/m/Y') }}</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <textarea id="ownerNotaContenuto" rows="10" class="form-control" style="font-size:14px;" placeholder="Note consegne..."></textarea>
+            </div>
+            <div class="modal-footer" style="justify-content:space-between;">
+                <span id="ownerNoteSaveStatus" style="font-size:12px; color:var(--text-secondary);"></span>
+                <button onclick="salvaNoteSped()" class="btn btn-primary btn-sm">Salva</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Modal Presenti in azienda --}}
+<div class="modal fade" id="modalPresenti" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background:var(--bg-sidebar);color:#fff;">
+                <h5 class="modal-title">Presenti in azienda - <span id="presentiData">{{ now()->format('d/m/Y') }}</span></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="max-height:70vh; overflow-y:auto;">
+                <div id="presentiLoading" class="text-center py-3"><div class="spinner-border text-success"></div></div>
+                <div id="presentiContent" style="display:none;">
+                    <h6 style="color:var(--success); margin-bottom:8px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="var(--success)" stroke="none"><circle cx="12" cy="12" r="6"/></svg>
+                        Presenti (<span id="presentiTotale">0</span>)
+                    </h6>
+                    <table class="table table-sm table-striped" style="font-size:13px;">
+                        <thead><tr><th>Nome</th><th>Entrata</th><th>Ultima</th></tr></thead>
+                        <tbody id="presentiBody"></tbody>
+                    </table>
+                    <h6 style="color:var(--text-secondary); margin-top:16px; margin-bottom:8px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="var(--text-secondary)" stroke="none"><circle cx="12" cy="12" r="6"/></svg>
+                        Usciti (<span id="uscitiTotale">0</span>)
+                    </h6>
+                    <table class="table table-sm" style="font-size:13px; opacity:0.7;">
+                        <thead><tr><th>Nome</th><th>Entrata</th><th>Uscita</th></tr></thead>
+                        <tbody id="uscitiBody"></tbody>
+                    </table>
+                    <div class="text-end" style="font-size:11px; color:var(--text-secondary);">Ultimo aggiornamento: <span id="presentiSync">-</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Scrollbar orizzontale sticky in fondo alla viewport --}}
+<div id="stickyScroll" style="position:fixed;bottom:0;left:0;right:0;overflow-x:auto;overflow-y:hidden;z-index:1000;height:16px;background:var(--bg-page);border-top:1px solid var(--border-color);">
+    <div id="stickyScrollInner" style="height:1px;"></div>
+</div>
+
+@endsection
+
+@section('scripts')
 <script>
-// Sidebar menu
-function openSidebar() {
-    document.getElementById('sidebarMenu').classList.add('open');
-    document.getElementById('sidebarOverlay').classList.add('open');
-}
-function closeSidebar() {
-    document.getElementById('sidebarMenu').classList.remove('open');
-    document.getElementById('sidebarOverlay').classList.remove('open');
+// === Token per fetch autenticate ===
+var _opToken = '{{ $opToken ?? request()->query("op_token", "") }}';
+function urlToken(url) {
+    if (!_opToken) return url;
+    return url + (url.indexOf('?') >= 0 ? '&' : '?') + 'op_token=' + encodeURIComponent(_opToken);
 }
 
-// Filtro storico consegne
+// === Filtro storico consegne ===
 document.getElementById('filtro-storico')?.addEventListener('input', function() {
     var q = this.value.toLowerCase().trim();
     var modal = document.getElementById('modalStorico');
@@ -1301,23 +1101,6 @@ document.getElementById('filtro-storico')?.addEventListener('input', function() 
         table.style.display = visibili > 0 ? '' : 'none';
     });
 });
-document.getElementById('hamburgerBtn').addEventListener('click', openSidebar);
-document.getElementById('sidebarOverlay').addEventListener('click', closeSidebar);
-document.getElementById('sidebarClose').addEventListener('click', closeSidebar);
-document.querySelectorAll('.sidebar-menu a.sidebar-item').forEach(function(el) {
-    el.addEventListener('click', function() { setTimeout(closeSidebar, 100); });
-});
-
-// === Token per fetch autenticate ===
-var _opToken = '{{ $opToken ?? request()->query("op_token", "") }}';
-function urlToken(url) {
-    if (!_opToken) return url;
-    return url + (url.indexOf('?') >= 0 ? '&' : '?') + 'op_token=' + encodeURIComponent(_opToken);
-}
-function csrfToken() {
-    var meta = document.querySelector('meta[name="csrf-token"]');
-    return meta ? meta.getAttribute('content') : '';
-}
 
 // === BRT Tracking ===
 function getBrtHdrs() {
@@ -1338,6 +1121,7 @@ function caricaTuttiTrackingBRT() {
     var btnAll = document.getElementById('btnCaricaTuttiBRT');
     var spinnerAll = document.getElementById('spinnerTuttiBRT');
     var labelProgress = document.getElementById('brtProgressLabel');
+    if (!btnAll) return;
     btnAll.disabled = true;
     spinnerAll.classList.remove('d-none');
 
@@ -1472,40 +1256,18 @@ function apriTrackingDDT(numeroDDT, btn) {
 
 // Auto-carica tracking BRT quando il modal viene aperto
 var brtModalCaricato = false;
-document.getElementById('modalBRT').addEventListener('shown.bs.modal', function() {
+document.getElementById('modalBRT')?.addEventListener('shown.bs.modal', function() {
     if (!brtModalCaricato && brtDDTList.length > 0) {
         brtModalCaricato = true;
         caricaTuttiTrackingBRT();
     }
 });
-</script>
 
-<script>
-document.addEventListener('DOMContentLoaded', function(){
-    // Rendi tutte le td focusabili (per espandere testo troncato al click)
-    document.querySelectorAll('#tabellaOrdini td:not([contenteditable])').forEach(function(td){
-        td.setAttribute('tabindex', '0');
-    });
-
-    // Badge consegnati
-    var modal = document.getElementById('modalSpedizioniOggi');
-    if(modal){
-        modal.addEventListener('show.bs.modal', function(){
-            var badge = document.getElementById('badgeConsegnati');
-            if(badge) badge.style.display = 'none';
-        });
-    }
-
-});
-</script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
-<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
-{{-- JS --}}
-<script>
+// === aggiornaCampo / aggiornaStato ===
 function aggiornaCampo(faseId, campo, valore){
     valore = valore.trim();
 
-    // Se il campo è numerico o priorità, sostituisci la virgola con punto
+    // Se il campo e' numerico o priorita, sostituisci la virgola con punto
     const campiNumerici = ['qta_richiesta','qta_prod','priorita','qta_carta','ore'];
     if(campiNumerici.includes(campo)){
         valore = valore.replace(',', '.');
@@ -1561,8 +1323,25 @@ function aggiornaStato(faseId, testo) {
     })
     .catch(err => { console.error(err); alert('Errore di connessione'); });
 }
-</script>
-<script>
+
+// === DOMContentLoaded init ===
+document.addEventListener('DOMContentLoaded', function(){
+    // Rendi tutte le td focusabili (per espandere testo troncato al click)
+    document.querySelectorAll('#tabellaOrdini td:not([contenteditable])').forEach(function(td){
+        td.setAttribute('tabindex', '0');
+    });
+
+    // Badge consegnati
+    var modal = document.getElementById('modalSpedizioniOggi');
+    if(modal){
+        modal.addEventListener('show.bs.modal', function(){
+            var badge = document.getElementById('badgeConsegnati');
+            if(badge) badge.style.display = 'none';
+        });
+    }
+});
+
+// === Excel-style Cell Selection ===
 document.addEventListener('DOMContentLoaded', () => {
     const table = document.getElementById('tabellaOrdini');
     const allCells = Array.from(table.querySelectorAll('td, th'));
@@ -1573,7 +1352,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let mouseClientX = 0, mouseClientY = 0;
     let selectionBox = null;
     let pollTimer = null;
-    let cachedRects = []; // coordinate pagina (costanti)
+    let cachedRects = [];
 
     function cacheRects() {
         const sx = window.scrollX, sy = window.scrollY;
@@ -1586,21 +1365,17 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateSelection() {
         if (!selectionBox) return;
 
-        // Posizione attuale del mouse in coordinate pagina
         const curX = mouseClientX + window.scrollX;
         const curY = mouseClientY + window.scrollY;
 
-        // Box selezione in coordinate pagina
         const boxL = Math.min(startX, curX), boxT = Math.min(startY, curY);
         const boxR = Math.max(startX, curX), boxB = Math.max(startY, curY);
 
-        // Disegna il box (position:absolute → coordinate pagina)
         selectionBox.style.left = boxL + 'px';
         selectionBox.style.top = boxT + 'px';
         selectionBox.style.width = (boxR - boxL) + 'px';
         selectionBox.style.height = (boxB - boxT) + 'px';
 
-        // Confronta rect cachati (coordinate pagina) con il box (coordinate pagina)
         selectedCells.forEach(c => c.classList.remove('selected'));
         selectedCells.clear();
 
@@ -1629,7 +1404,6 @@ document.addEventListener('DOMContentLoaded', () => {
         selectionBox.className = 'selection-box';
         document.body.appendChild(selectionBox);
 
-        // Polling ogni 50ms per catturare scroll rotellina
         pollTimer = setInterval(updateSelection, 50);
     }
 
@@ -1725,13 +1499,11 @@ document.addEventListener('DOMContentLoaded', () => {
         win.document.close();
         win.print();
 
-        // Deseleziona dopo che la finestra di stampa viene chiusa
         win.onafterprint = function() {
             selectedCells.forEach(c => c.classList.remove('selected'));
             selectedCells.clear();
             win.close();
         };
-        // Fallback: deseleziona quando la finestra viene chiusa
         var checkClosed = setInterval(function() {
             if (win.closed) {
                 clearInterval(checkClosed);
@@ -1741,10 +1513,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 300);
     });
 });
-</script>
-<script>
+
+// === Filter System (Choices.js) ===
 document.addEventListener('DOMContentLoaded', () => {
-    // Inizializza Choices.js
     const choicesOptions = {
         removeItemButton: true,
         searchEnabled: true,
@@ -1754,9 +1525,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const choiceStato = new Choices('#filterStato',{...choicesOptions,placeholderValue:'Seleziona Stato'});
     const choiceFase = new Choices('#filterFase',{...choicesOptions,placeholderValue:'Seleziona Fase'})
     const choiceReparto = new Choices('#filterReparto',{...choicesOptions,placeholderValue:'Seleziona Reparto'})
-
-    const toggleFilter = document.getElementById('toggleFilter');
-    const filterBox = document.getElementById('filterBox');
 
     const fCommessa = document.getElementById('filterCommessa');
     const fCliente = document.getElementById('filterCliente');
@@ -1806,6 +1574,8 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
     }
+    // Expose filtra globally for Marco filter
+    window.filtra = filtra;
 
     function debounce(func, delay) {
         let timeout;
@@ -1817,7 +1587,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const filtraDebounced = debounce(filtra, 100);
 
-    // Salva filtri in sessionStorage dopo ogni modifica
     function salvaFiltri() {
         sessionStorage.setItem('ownerFilters', JSON.stringify({
             commessa: fCommessa.value,
@@ -1860,41 +1629,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (saved.fase && saved.fase.length) { saved.fase.forEach(v => choiceFase.setChoiceByValue(v)); hasFilter = true; }
             if (saved.reparto && saved.reparto.length) { saved.reparto.forEach(v => choiceReparto.setChoiceByValue(v)); hasFilter = true; }
             if (hasFilter) {
-                filterBox.style.display = 'flex';
                 filtra();
             }
         }
     } catch(e) {}
-
-    if (toggleFilter) {
-        toggleFilter.addEventListener('click', () => {
-            if (filterBox.style.display === 'none') {
-                filterBox.style.display = 'flex';
-                filterBox.style.opacity = 0;
-                filterBox.style.transform = 'translateY(-10px)';
-                setTimeout(() => {
-                    filterBox.style.opacity = 1;
-                    filterBox.style.transform = 'translateY(0)';
-                }, 10);
-            } else {
-                filterBox.style.opacity = 0;
-                filterBox.style.transform = 'translateY(-10px)';
-                setTimeout(() => {
-                    filterBox.style.display = 'none';
-                    fCommessa.value = '';
-                    fCliente.value = '';
-                    fDescrizione.value = '';
-                    choiceStato.removeActiveItems();
-                    choiceFase.removeActiveItems();
-                    choiceReparto.removeActiveItems();
-                    rowData.forEach(data => data.row.style.display = '');
-                }, 300);
-            }
-        });
-    }
 });
 
-// Riferimenti Marco: filtra per clienti specifici
+// === Riferimenti Marco ===
 const CLIENTI_MARCO = [
     'WYCON', 'ARMATORE', 'FARMARICCI', 'ELLEBI', 'FEUDI DI SAN GREGORIO',
     'DE NIGRIS', 'VOYAGE PITTORESQUE', 'ANTIMO CAPUTO', 'DI MARTINO AIR',
@@ -1912,12 +1653,6 @@ const CLIENTI_MARCO = [
 
 function filtraRiferimentiMarco() {
     const fCliente = document.getElementById('filterCliente');
-    const filterBox = document.getElementById('filterBox');
-    if (filterBox.style.display === 'none') {
-        filterBox.style.display = 'flex';
-        filterBox.style.opacity = 1;
-        filterBox.style.transform = 'translateY(0)';
-    }
     fCliente.value = CLIENTI_MARCO.join(', ');
     fCliente.dispatchEvent(new Event('input'));
 }
@@ -1928,22 +1663,10 @@ function resetRiferimentiMarco() {
     fCliente.dispatchEvent(new Event('input'));
 }
 
-// Popup operatore
-document.getElementById('operatoreInfo').addEventListener('click', function(){
-    var popup = document.getElementById('operatorePopup');
-    popup.style.display = popup.style.display === 'block' ? 'none' : 'block';
-});
-document.addEventListener('click', function(e){
-    if(!document.getElementById('operatoreInfo').contains(e.target)){
-        document.getElementById('operatorePopup').style.display='none';
-    }
-});
-
 // === Notifiche Note Consegne ===
 var _noteLastUpdate = localStorage.getItem('noteConsegne_lastUpdate') || '';
-var _noteCheckInterval = 15000; // 15 secondi
+var _noteCheckInterval = 15000;
 
-// Sblocca AudioContext al primo click (richiesto dai browser)
 var _audioCtx = null;
 document.addEventListener('click', function() {
     if (!_audioCtx) {
@@ -1951,7 +1674,6 @@ document.addEventListener('click', function() {
     }
 }, {once: true});
 
-// Chiedi permesso notifiche browser
 if ('Notification' in window && Notification.permission === 'default') {
     Notification.requestPermission();
 }
@@ -1964,11 +1686,8 @@ function checkNoteConsegne() {
     .then(d => {
         if (d.updated_at && d.updated_at !== _noteLastUpdate) {
             if (_noteLastUpdate !== '') {
-                // Nuova modifica: mostra tutte le notifiche
-                // 1. Badge rosso
                 document.getElementById('noteConsegneBadge').style.display = 'inline-block';
 
-                // 2. Suono
                 try {
                     if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                     if (_audioCtx.state === 'suspended') _audioCtx.resume();
@@ -1982,7 +1701,6 @@ function checkNoteConsegne() {
                     osc.stop(_audioCtx.currentTime + 0.3);
                 } catch(e) {}
 
-                // 3. Notifica browser
                 if ('Notification' in window && Notification.permission === 'granted') {
                     var preview = (d.contenuto || '').substring(0, 100);
                     new Notification('Note Consegne aggiornate', {
@@ -1991,7 +1709,6 @@ function checkNoteConsegne() {
                     });
                 }
 
-                // 4. Toast popup
                 showNoteToast('La logistica ha aggiornato le note consegne');
             }
             _noteLastUpdate = d.updated_at;
@@ -2004,11 +1721,10 @@ function checkNoteConsegne() {
 function showNoteToast(msg) {
     var toast = document.createElement('div');
     toast.innerHTML = '<strong>Note Consegne</strong><br>' + msg;
-    toast.style.cssText = 'position:fixed; top:20px; right:20px; z-index:9999; background:#0d6efd; color:#fff; padding:15px 20px; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.3); font-size:14px; cursor:pointer; max-width:350px; animation:slideIn 0.3s ease;';
+    toast.style.cssText = 'position:fixed; top:20px; right:20px; z-index:9999; background:var(--accent, #2563eb); color:#fff; padding:15px 20px; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.3); font-size:14px; cursor:pointer; max-width:350px; animation:slideIn 0.3s ease;';
     toast.onclick = function() {
         toast.remove();
         document.getElementById('noteConsegneBadge').style.display = 'none';
-        // Apri modale note
         var modal = new bootstrap.Modal(document.getElementById('modalNoteSpedizione'));
         modal.show();
         caricaNoteSpedizione();
@@ -2032,7 +1748,6 @@ if (_modalNote) {
     });
 }
 
-// Avvia polling
 checkNoteConsegne();
 setInterval(checkNoteConsegne, _noteCheckInterval);
 
@@ -2048,7 +1763,7 @@ function caricaNoteSpedizione() {
     })
     .catch(() => {
         document.getElementById('ownerNoteSaveStatus').textContent = 'Errore caricamento';
-        document.getElementById('ownerNoteSaveStatus').style.color = '#dc3545';
+        document.getElementById('ownerNoteSaveStatus').style.color = 'var(--danger)';
     });
 }
 
@@ -2071,8 +1786,7 @@ function salvaNoteSped() {
     .then(d => {
         if (d.success) {
             document.getElementById('ownerNoteSaveStatus').textContent = 'Salvato alle ' + new Date().toLocaleTimeString('it-IT');
-            document.getElementById('ownerNoteSaveStatus').style.color = '#198754';
-            // Aggiorna timestamp per non auto-notificarsi
+            document.getElementById('ownerNoteSaveStatus').style.color = 'var(--success)';
             fetch(urlToken('{{ route("owner.noteSpedizioneCheck") }}'), {headers:{'Accept':'application/json'}})
                 .then(function(r){return r.json();})
                 .then(function(dd){ if(dd.updated_at){ _noteLastUpdate=dd.updated_at; localStorage.setItem('noteConsegne_lastUpdate',_noteLastUpdate); } });
@@ -2080,64 +1794,12 @@ function salvaNoteSped() {
     })
     .catch(() => {
         document.getElementById('ownerNoteSaveStatus').textContent = 'Errore salvataggio';
-        document.getElementById('ownerNoteSaveStatus').style.color = '#dc3545';
+        document.getElementById('ownerNoteSaveStatus').style.color = 'var(--danger)';
     })
     .finally(() => { btn.disabled = false; });
 }
-</script>
 
-<!-- Modale Note Consegne -->
-<div class="modal fade" id="modalNoteSpedizione" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header" style="background:#0d6efd; color:#fff;">
-                <h5 class="modal-title">Note Consegne - {{ now()->format('d/m/Y') }}</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <textarea id="ownerNotaContenuto" rows="10" class="form-control" style="font-size:14px;" placeholder="Note consegne..."></textarea>
-            </div>
-            <div class="modal-footer" style="justify-content:space-between;">
-                <span id="ownerNoteSaveStatus" style="font-size:12px; color:#6c757d;"></span>
-                <button onclick="salvaNoteSped()" class="btn btn-primary btn-sm">Salva</button>
-            </div>
-        </div>
-    </div>
-</div>
-{{-- Modal Presenti in azienda --}}
-<div class="modal fade" id="modalPresenti" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header" style="background:#198754; color:#fff;">
-                <h5 class="modal-title">Presenti in azienda - <span id="presentiData">{{ now()->format('d/m/Y') }}</span></h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body" style="max-height:70vh; overflow-y:auto;">
-                <div id="presentiLoading" class="text-center py-3"><div class="spinner-border text-success"></div></div>
-                <div id="presentiContent" style="display:none;">
-                    <h6 style="color:#198754; margin-bottom:8px;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#198754" stroke="none"><circle cx="12" cy="12" r="6"/></svg>
-                        Presenti (<span id="presentiTotale">0</span>)
-                    </h6>
-                    <table class="table table-sm table-striped" style="font-size:13px;">
-                        <thead><tr><th>Nome</th><th>Entrata</th><th>Ultima</th></tr></thead>
-                        <tbody id="presentiBody"></tbody>
-                    </table>
-                    <h6 style="color:#6c757d; margin-top:16px; margin-bottom:8px;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#6c757d" stroke="none"><circle cx="12" cy="12" r="6"/></svg>
-                        Usciti (<span id="uscitiTotale">0</span>)
-                    </h6>
-                    <table class="table table-sm" style="font-size:13px; opacity:0.7;">
-                        <thead><tr><th>Nome</th><th>Entrata</th><th>Uscita</th></tr></thead>
-                        <tbody id="uscitiBody"></tbody>
-                    </table>
-                    <div class="text-end" style="font-size:11px; color:#999;">Ultimo aggiornamento: <span id="presentiSync">-</span></div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-<script>
+// === Presenti in azienda ===
 var _presentiInterval = null;
 function caricaPresenti() {
     document.getElementById('presentiLoading').style.display = 'block';
@@ -2155,7 +1817,6 @@ function fetchPresenti() {
             document.getElementById('presentiTotale').textContent = d.totale_presenti;
             document.getElementById('uscitiTotale').textContent = d.totale_usciti;
             document.getElementById('presentiSync').textContent = d.ultimo_sync;
-            // Badge sidebar
             var badge = document.getElementById('presentiCount');
             if (badge) badge.textContent = d.totale_presenti;
 
@@ -2174,8 +1835,7 @@ function fetchPresenti() {
             if (d.usciti.length === 0) ub.innerHTML = '<tr><td colspan="3" class="text-muted">-</td></tr>';
         }).catch(function() {});
 }
-// Stop polling quando modal chiuso
-document.getElementById('modalPresenti').addEventListener('hidden.bs.modal', function() {
+document.getElementById('modalPresenti')?.addEventListener('hidden.bs.modal', function() {
     if (_presentiInterval) { clearInterval(_presentiInterval); _presentiInterval = null; }
 });
 // Carica badge presenti al load della pagina
@@ -2185,36 +1845,40 @@ fetch('{{ route("owner.presenti") }}')
         var badge = document.getElementById('presentiCount');
         if (badge) badge.textContent = d.totale_presenti;
     }).catch(function() {});
-</script>
 
+// === Load notes on sidebar button and modal open ===
+document.getElementById('sidebarNoteBtn')?.addEventListener('click', function() {
+    caricaNoteSpedizione();
+});
+document.getElementById('modalNoteSpedizione')?.addEventListener('show.bs.modal', function() {
+    caricaNoteSpedizione();
+});
+
+// === Load presenti on sidebar button click ===
+document.getElementById('modalPresenti')?.addEventListener('show.bs.modal', function() {
+    caricaPresenti();
+});
+
+// === Readonly Mode ===
 @if($isReadonly ?? false)
-<script>
-// Owner readonly: rimuovi contenteditable tranne data consegna
 document.addEventListener('DOMContentLoaded', function() {
-    // Rimuovi contenteditable da tutte le celle TRANNE data prevista consegna
     document.querySelectorAll('[contenteditable]').forEach(function(el) {
         var onblur = el.getAttribute('onblur') || '';
-        if (onblur.indexOf('data_prevista_consegna') !== -1) return; // mantieni editabile
+        if (onblur.indexOf('data_prevista_consegna') !== -1) return;
         el.removeAttribute('contenteditable');
         el.removeAttribute('onblur');
         el.style.cursor = 'default';
     });
-    // Nascondi bottoni di azione nel sidebar
     document.querySelectorAll('form[action*="sync"], form[action*="import"], [data-bs-target="#aggiungiRigaModal"]').forEach(function(el) {
         el.style.display = 'none';
     });
-    // Nascondi bottoni elimina fase
     document.querySelectorAll('.btn-elimina-fase, [onclick*="eliminaFase"]').forEach(function(el) {
         el.style.display = 'none';
     });
 });
-</script>
 @endif
-{{-- Scrollbar orizzontale sticky in fondo alla viewport --}}
-<div id="stickyScroll" style="position:fixed;bottom:0;left:0;right:0;overflow-x:auto;overflow-y:hidden;z-index:1000;height:16px;background:#f8f8f8;border-top:1px solid #ddd;">
-    <div id="stickyScrollInner" style="height:1px;"></div>
-</div>
-<script>
+
+// === Sticky Scrollbar ===
 (function(){
     var ts = document.getElementById('tableScroll');
     var sb = document.getElementById('stickyScroll');
@@ -2235,5 +1899,11 @@ document.addEventListener('DOMContentLoaded', function() {
     window.addEventListener('scroll',vis);
     window.addEventListener('resize',vis);
 })();
+
+// === KPI Ore Lavorate click ===
+document.getElementById('kpiOreLavorate')?.addEventListener('click', function() {
+    // Scroll to report ore for detailed breakdown
+    window.location.href = '{{ route("owner.reportOre") }}?op_token=' + encodeURIComponent(_opToken);
+});
 </script>
 @endsection
