@@ -1,5 +1,8 @@
 @extends('layouts.app')
 
+@php $operatore = request()->attributes->get('operatore') ?? auth('operatore')->user(); @endphp
+@section('title'){{ ($operatore->nome ?? '') . ' ' . ($operatore->cognome ?? '') }}@endsection
+
 @section('content')
 <style>
 .azioni-cerchi {

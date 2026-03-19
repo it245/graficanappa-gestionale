@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title'){{ ($operatore->nome ?? '') . ' ' . ($operatore->cognome ?? '') }}@endsection
+
 @section('content')
 <div class="container-fluid px-3">
     {{-- Header con logo, nome operatore e logout --}}
