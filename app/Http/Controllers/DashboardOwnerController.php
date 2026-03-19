@@ -545,6 +545,22 @@ public function calcolaOreEPriorita($fase)
                 $fase->priorita_manuale = true;
             }
 
+            // Se inviato all'esterno, cambia reparto a "esterno"
+            if ($campo === 'esterno' && $valore == 1) {
+                $repartoEsterno = Reparto::firstOrCreate(['nome' => 'esterno']);
+                // Crea/trova un FasiCatalogo con stesso nome fase ma reparto esterno
+                $faseNome = $fase->fase ?: '-';
+                $faseCatEsterno = FasiCatalogo::firstOrCreate(
+                    ['nome' => 'EXT' . $faseNome, 'reparto_id' => $repartoEsterno->id],
+                    ['nome_display' => $faseNome . ' (Esterno)']
+                );
+                // Salva il catalogo originale per eventuale ripristino
+                if (!$fase->fase_catalogo_id_originale) {
+                    $fase->fase_catalogo_id_originale = $fase->fase_catalogo_id;
+                }
+                $fase->fase_catalogo_id = $faseCatEsterno->id;
+            }
+
             $fase->save();
 
             // Se aggiornata qta_prod, controlla completamento automatico
