@@ -378,27 +378,29 @@ public function calcolaOreEPriorita($fase)
             })
             ->count();
 
-        // Ore lavorate oggi: dalla pivot + dal campo ordine_fasi per fasi Prinect
+        // Ore lavorate oggi: dalla pivot operatore (con cap a 12h per record)
         $pivotOggi = DB::table('fase_operatore')
             ->whereDate('data_fine', $oggi)
             ->whereNotNull('data_inizio')
             ->select('data_inizio', 'data_fine', 'secondi_pausa')
             ->get();
         $orePivot = $pivotOggi->sum(function ($row) {
-            return max(abs(Carbon::parse($row->data_fine)->diffInSeconds(Carbon::parse($row->data_inizio))) - ($row->secondi_pausa ?? 0), 0) / 3600;
+            $secLordo = abs(Carbon::parse($row->data_fine)->diffInSeconds(Carbon::parse($row->data_inizio)));
+            $secPausa = min($row->secondi_pausa ?? 0, $secLordo); // pausa non può superare il lordo
+            $secNetto = max($secLordo - $secPausa, 0);
+            return min($secNetto, 43200) / 3600; // cap a 12h per record
         });
 
-        // Aggiungi ore da fasi Prinect (ordine_fasi.data_fine oggi, senza pivot data_fine)
-        $fasiPrinectOggi = OrdineFase::where('stato', '>=', 3)
+        // Ore da fasi Prinect terminate oggi (usa tempo_avviamento + esecuzione, NON date)
+        $orePrinect = OrdineFase::where('stato', '>=', 3)
             ->whereDate('data_fine', $oggi)
-            ->whereNotNull('data_inizio')
+            ->where(function ($q) {
+                $q->where('tempo_avviamento_sec', '>', 0)
+                  ->orWhere('tempo_esecuzione_sec', '>', 0);
+            })
             ->whereDoesntHave('operatori', fn($q) => $q->whereDate('fase_operatore.data_fine', $oggi))
-            ->get();
-        $orePrinect = $fasiPrinectOggi->sum(function ($fase) {
-            $inizio = Carbon::parse($fase->getAttributes()['data_inizio']);
-            $fine = Carbon::parse($fase->getAttributes()['data_fine']);
-            return abs($fine->diffInSeconds($inizio)) / 3600;
-        });
+            ->sum(DB::raw('COALESCE(tempo_avviamento_sec, 0) + COALESCE(tempo_esecuzione_sec, 0)')) / 3600;
+
         $oreLavorateOggi = round($orePivot + $orePrinect, 1);
 
         $commesseSpediteOggi = OrdineFase::where('stato', 4)
