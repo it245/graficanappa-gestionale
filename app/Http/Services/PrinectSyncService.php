@@ -618,8 +618,8 @@ class PrinectSyncService
                 if ($worksteps->isEmpty()) continue;
 
                 // Aggiorna fogli_buoni/scarto dal totale workstep (più affidabile delle singole attività)
-                $totaleBuoniWs = $worksteps->sum(fn($ws) => $ws['produced'] ?? $ws['goodSheets'] ?? 0);
-                $totaleScartaWs = $worksteps->sum(fn($ws) => $ws['waste'] ?? $ws['wasteSheets'] ?? 0);
+                $totaleBuoniWs = $worksteps->sum(fn($ws) => $ws['amountProduced'] ?? 0);
+                $totaleScartaWs = $worksteps->sum(fn($ws) => $ws['wasteProduced'] ?? 0);
 
                 if ($totaleBuoniWs > 0) {
                     foreach ($fasi as $fase) {
