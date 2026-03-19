@@ -88,8 +88,18 @@ foreach ($righeDDT as $riga) {
     $idDoc = $riga->IdDoc;
     $dataDoc = $riga->DataDocumento ? date('Y-m-d H:i:s', strtotime($riga->DataDocumento)) : now();
 
-    // Estrai numero commessa
-    if (!preg_match('/Commessa\s*n[°º]?\s*(\d+)/i', $descrizione, $m)) {
+    // Estrai numero commessa — formati: "Commessa n° 66018", "Commessa n°66018", "Commessa 66018"
+    if (!preg_match('/Commessa\s*n?[°º.]?\s*(\d{5,7})/i', $descrizione, $m)) {
+        // Debug: mostra le prime 5 righe senza commessa
+        static $noCommCount = 0;
+        if ($dryRun && $noCommCount < 5) {
+            echo "[NO COMM] DDT #{$idDoc} | Desc: " . substr($descrizione, 0, 80) . "\n";
+            // Mostra hex dei primi 30 char per trovare caratteri speciali
+            echo "  HEX: ";
+            for ($h = 0; $h < min(50, strlen($descrizione)); $h++) echo sprintf('%02X ', ord($descrizione[$h]));
+            echo "\n";
+            $noCommCount++;
+        }
         continue;
     }
 
