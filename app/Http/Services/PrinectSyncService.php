@@ -594,9 +594,10 @@ class PrinectSyncService
      */
     protected function controllaCompletamentoPrinect(): void
     {
+        // Include anche fasi con fogli_buoni=0 (il workstep potrebbe avere dati che le attività non hanno)
         $fasiNonTerminate = OrdineFase::with('ordine')
-            ->where('fogli_buoni', '>', 0)
             ->where('stato', '<', 3)
+            ->where('stato', '>=', 0)
             ->where(function ($q) {
                 $q->where('fase', 'LIKE', 'STAMPAXL106%')
                   ->orWhere('fase', 'STAMPA')
@@ -615,6 +616,27 @@ class PrinectSyncService
                     ->filter(fn($ws) => in_array('ConventionalPrinting', $ws['types'] ?? []));
 
                 if ($worksteps->isEmpty()) continue;
+
+                // Aggiorna fogli_buoni/scarto dal totale workstep (più affidabile delle singole attività)
+                $totaleBuoniWs = $worksteps->sum(fn($ws) => $ws['produced'] ?? $ws['goodSheets'] ?? 0);
+                $totaleScartaWs = $worksteps->sum(fn($ws) => $ws['waste'] ?? $ws['wasteSheets'] ?? 0);
+
+                if ($totaleBuoniWs > 0) {
+                    foreach ($fasi as $fase) {
+                        if ($totaleBuoniWs > ($fase->fogli_buoni ?? 0)) {
+                            $fase->fogli_buoni = $totaleBuoniWs;
+                            $fase->qta_prod = $totaleBuoniWs;
+                            if ($totaleScartaWs > ($fase->fogli_scarto ?? 0)) {
+                                $fase->fogli_scarto = $totaleScartaWs;
+                            }
+                            // Se era stato 0/1, avvia
+                            if (in_array($fase->stato, [0, '0', 1, '1'])) {
+                                $fase->stato = 2;
+                            }
+                            $fase->save();
+                        }
+                    }
+                }
 
                 // Auto-termina solo quando TUTTI i workstep Prinect sono COMPLETED
                 // (rimosso check fogli_buoni >= qta_carta perché commesse con montaggi multipli
