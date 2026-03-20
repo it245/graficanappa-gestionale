@@ -18,6 +18,7 @@
 
     <div class="d-flex align-items-center gap-3 mb-3 flex-wrap">
         <input type="text" id="filtroCommessa" class="form-control form-control-sm" placeholder="Filtra per commessa, cliente o descrizione..." style="max-width:400px;">
+        <input type="text" id="filtroFustella" class="form-control form-control-sm" placeholder="Filtra per fustella (es. FS2236)" style="max-width:200px;">
         <form method="POST" action="{{ route('operatore.prestampa.syncOnda') }}" style="margin:0;" onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').textContent='Sincronizzando...';">
             @csrf
             <button type="submit" class="btn btn-outline-dark btn-sm d-flex align-items-center gap-1">
@@ -34,6 +35,7 @@
                     <th style="width:120px;">Commessa</th>
                     <th>Cliente</th>
                     <th>Descrizione</th>
+                    <th style="width:110px;">Fustella</th>
                     <th style="width:80px;">Qta</th>
                     <th style="width:110px;">Data Reg.</th>
                     <th style="width:110px;">Consegna</th>
@@ -47,6 +49,10 @@
                     <td><a href="{{ route('operatore.prestampa.dettaglio', $c->commessa) }}?op_token={{ request('op_token') }}" class="fw-bold text-decoration-none">{{ $c->commessa }}</a></td>
                     <td>{{ $c->cliente_nome ?? '-' }}</td>
                     <td style="max-width:300px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ $c->descrizione ?? '-' }}</td>
+                    @php
+                        $fustPre = \App\Helpers\DescrizioneParser::parseFustella($c->descrizione ?? '', $c->cliente_nome ?? '', $c->note_prestampa ?? '');
+                    @endphp
+                    <td class="fustella-cell" style="font-weight:600;">{{ $fustPre ?: '-' }}</td>
                     <td>{{ $c->qta_richiesta ? number_format($c->qta_richiesta, 0, ',', '.') : '-' }}</td>
                     <td>{{ $c->data_registrazione ? \Carbon\Carbon::parse($c->data_registrazione)->format('d/m/Y') : '-' }}</td>
                     <td>{{ $c->data_prevista_consegna ? \Carbon\Carbon::parse($c->data_prevista_consegna)->format('d/m/Y') : '-' }}</td>
@@ -76,11 +82,18 @@
 </div>
 
 <script>
-document.getElementById('filtroCommessa').addEventListener('input', function() {
-    var filtro = this.value.toLowerCase();
+function filtraPrestampa() {
+    var filtro = document.getElementById('filtroCommessa').value.toLowerCase();
+    var filtroFs = document.getElementById('filtroFustella').value.toLowerCase();
     document.querySelectorAll('.riga-commessa').forEach(function(row) {
-        row.style.display = row.textContent.toLowerCase().includes(filtro) ? '' : 'none';
+        var testo = row.textContent.toLowerCase();
+        var fustella = row.querySelector('.fustella-cell')?.textContent?.toLowerCase() || '';
+        var matchTesto = !filtro || testo.includes(filtro);
+        var matchFs = !filtroFs || fustella.includes(filtroFs);
+        row.style.display = (matchTesto && matchFs) ? '' : 'none';
     });
-});
+}
+document.getElementById('filtroCommessa').addEventListener('input', filtraPrestampa);
+document.getElementById('filtroFustella').addEventListener('input', filtraPrestampa);
 </script>
 @endsection
