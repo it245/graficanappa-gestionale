@@ -56,11 +56,18 @@ class OndaSyncService
                 f.CodFase,
                 f.CodMacchina,
                 f.QtaDaLavorare,
-                f.CodUnMis AS UMFase
+                f.CodUnMis AS UMFase,
+                rigaAtt.CodArt AS CodFaseRiga
             FROM ATTDocTeste t
             INNER JOIN PRDDocTeste p ON t.CodCommessa = p.CodCommessa
             LEFT JOIN STDAnagrafiche a ON t.IdAnagrafica = a.IdAnagrafica
             LEFT JOIN PRDDocFasi f ON p.IdDoc = f.IdDoc
+            OUTER APPLY (
+                SELECT TOP 1 r.CodArt
+                FROM ATTDocRighe r
+                WHERE r.IdDoc = t.IdDoc
+                  AND (r.CodArt = f.CodFase OR r.CodArt = SUBSTRING(f.CodFase, 4, LEN(f.CodFase)))
+            ) rigaAtt
             OUTER APPLY (
                 SELECT TOP 1 r.CodArt, r.Descrizione, r.Qta, r.CodUnMis
                 FROM PRDDocRighe r WHERE r.IdDoc = p.IdDoc
@@ -488,6 +495,12 @@ class OndaSyncService
                 $faseNome = trim($riga->CodFase ?? '');
                 if (!$faseNome) continue;
 
+                // Se ATTDocRighe ha un nome diverso (senza EXT), usa quello
+                $codFaseRiga = trim($riga->CodFaseRiga ?? '');
+                if ($codFaseRiga && $codFaseRiga !== $faseNome && isset($mappaReparti[$codFaseRiga])) {
+                    $faseNome = $codFaseRiga;
+                }
+
                 // Rimappa STAMPA generico in base alla macchina assegnata in Onda
                 if ($faseNome === 'STAMPA') {
                     $macchina = trim($riga->CodMacchina ?? '');
@@ -908,11 +921,18 @@ class OndaSyncService
                 f.CodFase,
                 f.CodMacchina,
                 f.QtaDaLavorare,
-                f.CodUnMis AS UMFase
+                f.CodUnMis AS UMFase,
+                rigaAtt.CodArt AS CodFaseRiga
             FROM ATTDocTeste t
             INNER JOIN PRDDocTeste p ON t.CodCommessa = p.CodCommessa
             LEFT JOIN STDAnagrafiche a ON t.IdAnagrafica = a.IdAnagrafica
             LEFT JOIN PRDDocFasi f ON p.IdDoc = f.IdDoc
+            OUTER APPLY (
+                SELECT TOP 1 r.CodArt
+                FROM ATTDocRighe r
+                WHERE r.IdDoc = t.IdDoc
+                  AND (r.CodArt = f.CodFase OR r.CodArt = SUBSTRING(f.CodFase, 4, LEN(f.CodFase)))
+            ) rigaAtt
             OUTER APPLY (
                 SELECT TOP 1 r.CodArt, r.Descrizione, r.Qta, r.CodUnMis
                 FROM PRDDocRighe r WHERE r.IdDoc = p.IdDoc
@@ -1046,6 +1066,12 @@ class OndaSyncService
             foreach ($righe as $riga) {
                 $faseNome = trim($riga->CodFase ?? '');
                 if (!$faseNome) continue;
+
+                // Se ATTDocRighe ha un nome diverso (senza EXT), usa quello
+                $codFaseRiga = trim($riga->CodFaseRiga ?? '');
+                if ($codFaseRiga && $codFaseRiga !== $faseNome && isset($mappaReparti[$codFaseRiga])) {
+                    $faseNome = $codFaseRiga;
+                }
 
                 if ($faseNome === 'STAMPA') {
                     $macchina = trim($riga->CodMacchina ?? '');
