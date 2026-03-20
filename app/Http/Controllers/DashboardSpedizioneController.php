@@ -181,6 +181,7 @@ class DashboardSpedizioneController extends Controller
             $commessa = $fase->ordine->commessa ?? null;
 
             // Tutte le fasi non-spedizione non terminate della stessa commessa
+            // Escludi fasi in pausa (stato = stringa non numerica, es. motivo pausa)
             $altreFasiNonTerminate = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
                 ->where(function ($q) use ($repartoSpedizione) {
                     if ($repartoSpedizione) {
@@ -191,6 +192,7 @@ class DashboardSpedizioneController extends Controller
                     }
                 })
                 ->where('stato', '<', 3)
+                ->whereRaw("stato REGEXP '^[0-9]+$'") // solo stati numerici, ignora fasi in pausa
                 ->get();
 
             if ($altreFasiNonTerminate->count() > 0 && !$forza) {
