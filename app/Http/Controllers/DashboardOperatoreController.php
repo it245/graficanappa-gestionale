@@ -283,6 +283,11 @@ class DashboardOperatoreController extends Controller
         if ($faseId && $campo === 'note') {
             $fase = \App\Models\OrdineFase::find($faseId);
             if (!$fase) return response()->json(['success' => false, 'messaggio' => 'Fase non trovata']);
+            // Prefissa con nome operatore se non già presente
+            $nomeOp = trim(($operatore->nome ?? '') . ' ' . ($operatore->cognome ?? ''));
+            if ($valore && $nomeOp && !str_starts_with($valore, $nomeOp . ':')) {
+                $valore = $nomeOp . ': ' . $valore;
+            }
             $fase->note = $valore ?: null;
             $fase->save();
             return response()->json(['success' => true]);
