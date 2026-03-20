@@ -8,7 +8,10 @@ use App\Models\OrdineFase;
 $commessa = '0066667-26';
 
 $fasi = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
-    ->where('esterno', 1)
+    ->where(function($q) {
+        $q->where('esterno', 1)
+          ->orWhere('note', 'LIKE', '%Inviato a:%');
+    })
     ->get();
 
 echo "=== RIPRISTINO 66667: tutte interne ===" . PHP_EOL;
