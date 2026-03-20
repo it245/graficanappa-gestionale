@@ -57,6 +57,7 @@ class OndaSyncService
                 f.CodMacchina,
                 f.QtaDaLavorare,
                 f.CodUnMis AS UMFase,
+                f.TipoRiga AS TipoRigaFase,
                 rigaAtt.CodArt AS CodFaseRiga
             FROM ATTDocTeste t
             INNER JOIN PRDDocTeste p ON t.CodCommessa = p.CodCommessa
@@ -528,7 +529,16 @@ class OndaSyncService
                 if (isset($fasiViste[$chiaveFase])) continue;
                 $fasiViste[$chiaveFase] = true;
 
-                $repartoNome = $mappaReparti[$faseNome] ?? 'legatoria';
+                // TipoRiga da Onda: 1=interna, 2=esterna
+                $tipoRigaOnda = (int)($riga->TipoRigaFase ?? 1);
+                $faseEsterna = ($tipoRigaOnda === 2);
+
+                // Reparto: se esterna (TipoRiga=2) → esterno, altrimenti dalla mappa
+                if ($faseEsterna) {
+                    $repartoNome = 'esterno';
+                } else {
+                    $repartoNome = $mappaReparti[$faseNome] ?? 'legatoria';
+                }
                 $tipo = $tipiFase[$faseNome] ?? 'monofase';
                 $prioritaFase = $mappaPriorita[$faseNome] ?? 500;
 
@@ -921,6 +931,7 @@ class OndaSyncService
                 f.CodMacchina,
                 f.QtaDaLavorare,
                 f.CodUnMis AS UMFase,
+                f.TipoRiga AS TipoRigaFase,
                 rigaAtt.CodArt AS CodFaseRiga
             FROM ATTDocTeste t
             INNER JOIN PRDDocTeste p ON t.CodCommessa = p.CodCommessa
@@ -1088,7 +1099,15 @@ class OndaSyncService
                 if (isset($fasiViste[$chiaveFase])) continue;
                 $fasiViste[$chiaveFase] = true;
 
-                $repartoNome = $mappaReparti[$faseNome] ?? 'legatoria';
+                // TipoRiga da Onda: 1=interna, 2=esterna
+                $tipoRigaOnda = (int)($riga->TipoRigaFase ?? 1);
+                $faseEsterna = ($tipoRigaOnda === 2);
+
+                if ($faseEsterna) {
+                    $repartoNome = 'esterno';
+                } else {
+                    $repartoNome = $mappaReparti[$faseNome] ?? 'legatoria';
+                }
                 $tipo = $tipiFase[$faseNome] ?? 'monofase';
                 $prioritaFase = $mappaPriorita[$faseNome] ?? 500;
 
