@@ -528,8 +528,7 @@ class OndaSyncService
                 if (isset($fasiViste[$chiaveFase])) continue;
                 $fasiViste[$chiaveFase] = true;
 
-                $repartoNome = $mappaReparti[$faseNome]
-                    ?? (str_starts_with(strtoupper($faseNome), 'EXT') ? 'esterno' : 'legatoria');
+                $repartoNome = $mappaReparti[$faseNome] ?? 'legatoria';
                 $tipo = $tipiFase[$faseNome] ?? 'monofase';
                 $prioritaFase = $mappaPriorita[$faseNome] ?? 500;
 
@@ -1089,8 +1088,7 @@ class OndaSyncService
                 if (isset($fasiViste[$chiaveFase])) continue;
                 $fasiViste[$chiaveFase] = true;
 
-                $repartoNome = $mappaReparti[$faseNome]
-                    ?? (str_starts_with(strtoupper($faseNome), 'EXT') ? 'esterno' : 'legatoria');
+                $repartoNome = $mappaReparti[$faseNome] ?? 'legatoria';
                 $tipo = $tipiFase[$faseNome] ?? 'monofase';
                 $prioritaFase = $mappaPriorita[$faseNome] ?? 500;
 
