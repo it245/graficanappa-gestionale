@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\OrdineFase;
 use App\Models\Ordine;
+use App\Events\PhaseCompleted;
 
 class FaseStatoService
 {
@@ -102,6 +103,9 @@ class FaseStatoService
             $fase->data_fine = now()->format('Y-m-d H:i:s');
             $fase->save();
             self::ricalcolaCommessa($fase->ordine->commessa ?? null);
+
+            // Mossa 37: propaga disponibilità alle fasi successive
+            PhaseCompleted::dispatch($fase);
         }
     }
 

@@ -776,6 +776,7 @@ class OndaSyncService
                     'priorita'         => $prioritaFase,
                     'stato'            => 0,
                     'scarti_previsti'   => $scartiMacchine[trim($riga->CodMacchina ?? '')] ?? null,
+                    'sequenza'         => config('sequenza_fasi')[$faseNome] ?? 500,
                     'esterno'          => $repartoNome === 'esterno',
                 ];
 

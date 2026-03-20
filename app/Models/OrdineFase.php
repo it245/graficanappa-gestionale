@@ -37,7 +37,9 @@ class OrdineFase extends Model
         'ddt_fornitore_id',
         'segnacollo_brt',
         'scarti_previsti',
-        // Scheduler Mossa 37
+        // Mossa 37 — Scheduler
+        'sequenza',
+        'disponibile',
         'disponibile_m37',
         'urgenza_reale',
         'fascia_urgenza',
@@ -53,6 +55,16 @@ class OrdineFase extends Model
         'sched_setup_tipo',
         'sched_batch_group',
         'sched_calcolato_at',
+    ];
+
+    protected $casts = [
+        'disponibile' => 'boolean',
+        'disponibile_m37' => 'boolean',
+        'urgenza_reale' => 'decimal:2',
+        'giorni_lavoro_residuo' => 'decimal:2',
+        'sequenza' => 'integer',
+        'sequenza_m37' => 'integer',
+        'fascia_urgenza' => 'integer',
     ];
 
     protected $hidden = ['scarti_previsti'];
@@ -98,7 +110,7 @@ class OrdineFase extends Model
 }
     /* ===================== LOGICA ===================== */
 
-    
+
 
     /**
      * Avvia la fase (stato 0/1 → 2).
@@ -155,4 +167,3 @@ class OrdineFase extends Model
         PhaseCompleted::dispatch($this);
     }
 }
-

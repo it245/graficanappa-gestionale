@@ -29,8 +29,8 @@ class DashboardOperatoreController extends Controller
             $reparti = [];
         }
 
-        // Mappa fasi → ore avviamento e copieh (da config condiviso)
-        $fasiInfo = config('fasi_ore');
+        // Mappa fasi → ore avviamento e copieh (da config centralizzato)
+        $fasiInfo = config('fasi_ore', []);
 
         // Recupera le fasi visibili per i reparti dell'operatore
         $fasiVisibili = OrdineFase::where(function ($q) use ($reparti) {

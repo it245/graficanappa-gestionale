@@ -1,11 +1,10 @@
 <?php
 
 /**
- * Sequenza fasi di produzione per Mossa 37 — Scheduler
- * Mappa fase → sequenza nel flusso fisico ASSOLUTO
- * Una fase può partire SOLO quando TUTTE le fasi con sequenza inferiore
- * nella stessa commessa sono completate.
+ * Mossa 37: Sequenza fasi nel ciclo produttivo
+ * Usato per determinare disponibilità fisica (predecessori) e posizione nel flusso
  *
+ * Gruppi macro:
  * Seq 10  → Stampa offset (XL106)
  * Seq 11  → Stampa digitale (Indigo)
  * Seq 20  → Plastificazione
@@ -16,88 +15,199 @@
  * Seq 38  → Accoppiatura
  * Seq 39  → Rilievi (BOBST config RILIEVI)
  * Seq 40  → Fustellatura (BOBST config FUSTELLE, STEL)
+ * Seq 46  → Finitura / Numerazione
  * Seq 100 → Finestratura
  * Seq 110 → Piega-incolla
- * Seq 120 → Legatoria
- * Seq 500 → Numerazione
- * Seq 700 → Allestimento / Lavorazioni esterne
+ * Seq 120 → Legatoria / Piega
+ * Seq 130 → Brossura / Cartonato
+ * Seq 500 → Numerazione / Perforazione
+ * Seq 700 → Allestimento
+ * Seq 800 → Esterno
  * Seq 999 → Spedizione (BRT)
  */
 
 return [
-    // Stampa offset
-    'AVVIAMENTISTAMPA.EST1.1' => 1,
-    'STAMPA' => 10, 'STAMPA.OFFSET11.EST' => 10, 'STAMPABUSTE.EST' => 10, 'STAMPA.ESTERNA' => 10,
-    'STAMPAXL106' => 10, 'STAMPAXL106.1' => 10, 'STAMPAXL106.2' => 10, 'STAMPAXL106.3' => 10,
-    'STAMPAXL106.4' => 10, 'STAMPAXL106.5' => 10, 'STAMPAXL106.6' => 10, 'STAMPAXL106.7' => 10,
+    // === STAMPA OFFSET (seq 10) ===
+    'STAMPA' => 10,
+    'STAMPAXL106' => 10,
+    'STAMPAXL106.1' => 10,
+    'STAMPAXL106.2' => 10,
+    'STAMPAXL106.3' => 10,
+    'STAMPAXL106.4' => 10,
+    'STAMPAXL106.5' => 10,
+    'STAMPAXL106.6' => 10,
+    'STAMPAXL106.7' => 10,
+    'STAMPA.OFFSET11.EST' => 10,
+    'STAMPA.ESTERNA' => 10,
+    'STAMPABUSTE.EST' => 10,
+    'AVVIAMENTISTAMPA.EST1.1' => 10,
 
-    // Stampa digitale
-    'STAMPAINDIGO' => 11, 'STAMPAINDIGOBN' => 11,
+    // === STAMPA DIGITALE (seq 11) ===
+    'STAMPAINDIGO' => 11,
+    'STAMPAINDIGOBN' => 11,
+    'STAMPAINDIGOBIANCO' => 11,
 
-    // Plastificazione
-    'PLAOPA1LATO' => 20, 'PLAOPABV' => 20, 'PLAPOLIESARG1LATO' => 20, 'PLASAB1LATO' => 20,
-    'PLASABBIA1LATO' => 20, 'PLASOFTBV' => 20, 'PLASOFTBVEST' => 20, 'PLASOFTTOUCH1' => 20,
+    // === PLASTIFICAZIONE (seq 20) ===
+    'PLAOPA1LATO' => 20,
+    'PLAOPABV' => 20,
+    'PLAPOLIESARG1LATO' => 20,
+    'PLASAB1LATO' => 20,
+    'PLASABBIA1LATO' => 20,
+    'PLASOFTBV' => 20,
+    'PLASOFTBVEST' => 20,
+    'PLASOFTTOUCH1' => 20,
 
-    // Stampa a caldo
-    'STAMPACALDOJOH' => 30, 'STAMPACALDOJOH0,1' => 30, 'STAMPACALDOJOH0,2' => 30,
-    'STAMPACALDO04' => 30, 'STAMPACALDOBR' => 30, 'STAMPALAMINAORO' => 30, 'CLICHESTAMPACALDO1' => 30,
+    // === STAMPA A CALDO (seq 30) ===
+    'STAMPACALDOJOH' => 30,
+    'STAMPACALDOJOH0,1' => 30,
+    'STAMPACALDOJOH0,2' => 30,
+    'STAMPACALDO04' => 30,
+    'STAMPACALDOBR' => 30,
+    'stampalaminaoro' => 30,
+    'STAMPALAMINAORO' => 30,
+    'STAMPACALDOJOHEST' => 30,
+    'STAMPASECCO' => 30,
+    'RILIEVOASECCOJOH' => 30,
+    'CLICHESTAMPACALDO1' => 30,
 
-    // Plastificazione lux
-    'PLALUX1LATO' => 31, 'PLALUXBV' => 31,
+    // === PLASTIFICAZIONE LUX (seq 31) ===
+    'PLALUX1LATO' => 31,
+    'PLALUXBV' => 31,
 
-    // Finitura digitale
-    'FOIL.MGI.30M' => 35, 'FOILMGI' => 35, 'UVSERIGRAFICOEST' => 35, 'UVSPOT.MGI.30M' => 35,
-    'UVSPOT.MGI.9M' => 35, 'UVSPOTEST' => 35, 'UVSPOTSPESSEST' => 35, 'DEKIA-semplice' => 35,
+    // === FINITURA DIGITALE / UV / FOIL (seq 35) ===
+    'FOIL.MGI.30M' => 35,
+    'FOILMGI' => 35,
+    'UVSERIGRAFICOEST' => 35,
+    'UVSPOT.MGI.30M' => 35,
+    'UVSPOT.MGI.9M' => 35,
+    'UVSPOTEST' => 35,
+    'UVSPOTSPESSEST' => 35,
+    'DEKIA-Difficile' => 35,
+    'DEKIA-semplice' => 35,
 
-    // Taglio
-    'TAGLIACARTE' => 37, 'TAGLIACARTE.IML' => 37, 'TAGLIOINDIGO' => 37,
+    // === TAGLIO (seq 37) ===
+    'TAGLIACARTE' => 37,
+    'TAGLIACARTE.IML' => 37,
+    'TAGLIOINDIGO' => 37,
 
-    // Accoppiatura
+    // === ACCOPPIATURA (seq 38) ===
     'ACCOPPIATURA.FOG.33.48INT' => 38,
 
-    // Rilievi
-    'FUSTBOBSTRILIEVI' => 39, 'RILIEVOASECCOJOH' => 39,
+    // === RILIEVI BOBST (seq 39) ===
+    'FUSTBOBSTRILIEVI' => 39,
 
-    // Fustellatura
-    'FUST.STARPACK.74X104' => 40, 'FUSTBIML75X106' => 40, 'FUSTbIML75X106' => 40,
-    'FUSTBOBST75X106' => 40, 'FUSTIML75X106' => 40, 'FUSTSTELG33.44' => 40, 'FUSTSTELP25.35' => 40,
+    // === FUSTELLATURA (seq 40) ===
+    'FUST.STARPACK.74X104' => 40,
+    'FUSTBIML75X106' => 40,
+    'FUSTbIML75X106' => 40,
+    'FUSTBOBST75X106' => 40,
+    'FUSTIML75X106' => 40,
+    'FUSTELLATURA72X51' => 40,
+    'FUSTSTELG33.44' => 40,
+    'FUSTSTELP25.35' => 40,
 
-    // Finestratura
-    'FIN01' => 100, 'FIN03' => 100, 'FIN04' => 100, 'FINESTRATURA.MANUALE' => 100,
+    // === FINITURA / NUMERAZIONE (seq 46) ===
+    'FIN01' => 46,
+    'FIN03' => 46,
+    'FIN04' => 46,
+    'NUM33.44' => 46,
 
-    // Piega-incolla
-    'NUM33.44' => 110, 'PI01' => 110, 'PI02' => 110, 'PI03' => 110,
+    // === FINESTRATURA (seq 100) ===
+    'FINESTRATURA.INT' => 100,
+    'FINESTRATURA.MANUALE' => 100,
 
-    // Legatoria
-    'BROSSCOPBANDELLAEST' => 120, 'BROSSCOPEST' => 120, 'BROSSFILOREFE/A4EST' => 120,
-    'BROSSFILOREFE/A5EST' => 120, 'BROSSPUR' => 120, 'CARTONATO.GEN' => 120,
-    'CORDONATURAPETRATTO' => 120, 'DEKIA-Difficile' => 120,
-    'PIEGA2ANTECORDONE' => 120, 'PIEGA2ANTESINGOLO' => 120, 'PIEGA3ANTESINGOLO' => 120,
-    'PIEGA4ANTESINGOLO' => 120, 'PIEGA6ANTESINGOLO' => 120, 'PIEGA8ANTESINGOLO' => 120,
-    'PIEGAMANUALE' => 120, 'PUNTOMETALLICO' => 120, 'PUNTOMETALLICOEST' => 120,
-    'PUNTOMETALLICOESTCOPERT.' => 120, 'PUNTOMETAMANUALE' => 120,
-    'SPIRBLOCCOLIBROA3' => 120, 'SPIRBLOCCOLIBROA4' => 120, 'SPIRBLOCCOLIBROA5' => 120,
+    // === PIEGA-INCOLLA (seq 110) ===
+    'PI01' => 110,
+    'PI02' => 110,
+    'PI03' => 110,
 
-    // Numerazione/perforazione
-    'NUM.PROGR.' => 500, 'PERF.BUC' => 500,
+    // === LEGATORIA / PIEGA (seq 120) ===
+    'CORDONATURAPETRATTO' => 120,
+    'PIEGA2ANTECORDONE' => 120,
+    'PIEGA2ANTESINGOLO' => 120,
+    'PIEGA3ANTESINGOLO' => 120,
+    'PIEGA4ANTESINGOLO' => 120,
+    'PIEGA6ANTESINGOLO' => 120,
+    'PIEGA8ANTESINGOLO' => 120,
+    'PIEGA8TTAVO' => 120,
+    'PIEGAMANUALE' => 120,
+    'PUNTOMETALLICO' => 120,
+    'PUNTOMETALLICOEST' => 120,
+    'PUNTOMETALLICOESTCOPERT.' => 120,
+    'PUNTOMETAMANUALE' => 120,
+    'SPIRBLOCCOLIBROA3' => 120,
+    'SPIRBLOCCOLIBROA4' => 120,
+    'SPIRBLOCCOLIBROA5' => 120,
+    'NUM.PROGR.' => 120,
+    'PERF.BUC' => 120,
 
-    // Allestimento / lavorazioni esterne
-    'accopp+fust' => 700, 'ACCOPPIATURA.FOGLI' => 700, 'ACCOPP.FUST.INCOLL.FOGLI' => 700,
-    'Allest.Manuale' => 700, 'ALLEST.SHOPPER' => 700, 'ALLEST.SHOPPER030' => 700,
-    'ALL.COFANETTO.LEGOKART' => 700, 'ALLESTIMENTO.ESPOSITORI' => 700,
-    'APPL.BIADESIVO30' => 700, 'APPL.CORDONCINO0,035' => 700, 'appl.laccetto' => 700,
-    'ARROT2ANGOLI' => 700, 'ARROT4ANGOLI' => 700, 'blocchi.manuale' => 700,
-    'INCOLLAGGIO.PATTINA' => 700, 'INCOLLAGGIOBLOCCHI' => 700, 'LAVGEN' => 700,
-    'SFUST' => 700, 'SFUST.IML.FUSTELLATO' => 700, 'ZUND' => 700,
+    // === BROSSURA / CARTONATO (seq 130) ===
+    'BROSSCOPBANDELLAEST' => 130,
+    'BROSSCOPEST' => 130,
+    'BROSSFILOREFE/A4EST' => 130,
+    'BROSSFILOREFE/A5EST' => 130,
+    'BROSSFRESATA/A5EST' => 130,
+    'BROSSFRESATA/A4EST' => 130,
+    'BROSSPUR' => 130,
+    'CARTONATO.GEN' => 130,
+
+    // === ALLESTIMENTO (seq 700) ===
+    'accopp+fust' => 700,
+    'ACCOPPIATURA.FOGLI' => 700,
+    'ACCOPP.FUST.INCOLL.FOGLI' => 700,
+    'Allest.Manuale' => 700,
+    'ALLEST.SHOPPER' => 700,
+    'ALLEST.SHOPPER030' => 700,
+    'ALL.COFANETTO.LEGOKART' => 700,
+    'ALLESTIMENTO.ESPOSITORI' => 700,
+    'APPL.BIADESIVO30' => 700,
+    'APPL.CORDONCINO0,035' => 700,
+    'appl.laccetto' => 700,
+    'ARROT2ANGOLI' => 700,
+    'ARROT4ANGOLI' => 700,
+    'blocchi.manuale' => 700,
     'FASCETTATURA' => 700,
-    'EXTALLEST.SHOPPER' => 700, 'EXTALLESTIMENTO.ESPOSITOR' => 700,
-    'EXTAllest.Manuale' => 700, 'EXTBROSSFILOREFE/A5EST' => 700,
-    'EXTPUNTOMETALLICOEST' => 700, 'EXTPUNTOMETALLICOESTCOPER' => 700,
-    'EXTUVSPOTEST' => 700, '4graph' => 700, 'esterno' => 700,
-    'EXTACCOPPIATURA.FOG.33.48' => 700, 'EXTALLEST.SHOPPER024' => 700,
-    'EXTBROSSFILOREFE/A4EST' => 700, 'EXTCARTONATO.GEN' => 700,
-    'EXTSTAMPABUSTE.EST' => 700, 'PMDUPLO40AUTO' => 700,
+    'INCOLLAGGIO.PATTINA' => 700,
+    'INCOLLAGGIOBLOCCHI' => 700,
+    'LAVGEN' => 700,
+    'SFUST' => 700,
+    'SFUST.IML.FUSTELLATO' => 700,
+    'ZUND' => 700,
 
-    // Spedizione
-    'BRT1' => 999, 'brt1' => 999, 'BRT' => 999,
+    // === ESTERNO (seq 800) ===
+    '4graph' => 800,
+    'esterno' => 800,
+    'ALL.COFANETTO.ISMAsrl' => 800,
+    'PMDUPLO36COP' => 800,
+    'PMDUPLO40AUTO' => 800,
+    'EXTALL.COFANETTO.LEGOKART' => 800,
+    'EXTAllest.Manuale' => 800,
+    'EXTALLEST.SHOPPER' => 800,
+    'EXTALLEST.SHOPPER024' => 800,
+    'EXTALLESTIMENTO.ESPOSITOR' => 800,
+    'EXTAPPL.CORDONCINO0,035' => 800,
+    'EXTAVVIAMENTISTAMPA.EST1.' => 800,
+    'EXTBROSSCOPEST' => 800,
+    'EXTBROSSFILOREFE/A4EST' => 800,
+    'EXTBROSSFILOREFE/A5EST' => 800,
+    'EXTBROSSFRESATA/A4EST' => 800,
+    'EXTBROSSFRESATA/A5EST' => 800,
+    'EXTCARTONATO' => 800,
+    'EXTCARTONATO.GEN' => 800,
+    'EXTFUSTELLATURA72X51' => 800,
+    'EXTPUNTOMETALLICOEST' => 800,
+    'EXTPUNTOMETALLICOESTCOPER' => 800,
+    'EXTSTAMPA.OFFSET11.EST' => 800,
+    'EXTSTAMPABUSTE.EST' => 800,
+    'EXTSTAMPASECCO' => 800,
+    'EXTUVSPOTEST' => 800,
+    'EXTUVSPOTSPESSEST' => 800,
+    'est STAMPACALDOJOH' => 800,
+    'est FUSTSTELG33.44' => 800,
+    'est FUSTBOBST75X106' => 800,
+
+    // === SPEDIZIONE (seq 999) ===
+    'BRT' => 999,
+    'BRT1' => 999,
+    'brt1' => 999,
 ];

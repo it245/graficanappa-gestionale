@@ -273,10 +273,11 @@ class DashboardOwnerController extends Controller
         'STAMPAINDIGOBIANCO' => ['avviamento' => 0.5, 'copieh' => 1000], // come STAMPAINDIGO
     ];
 
-public function calcolaOreEPriorita($fase)
+    public function calcolaOreEPriorita($fase)
     {
         $qta_carta = $fase->ordine->qta_carta ?: 0;
-        $infoFase = $this->fasiInfo[$fase->fase] ?? ['avviamento' => 0.5, 'copieh' => 1000];
+        $fasiOre = config('fasi_ore', []);
+        $infoFase = $fasiOre[$fase->fase] ?? ['avviamento' => 0.5, 'copieh' => 1000];
         $copieh = $infoFase['copieh'] ?: 1000;
 
         // ore = avviamento + qtaCarta / copieh (pezzi da fare / pezzi all'ora)
@@ -992,7 +993,7 @@ public function calcolaOreEPriorita($fase)
             ->map(function ($fase) {
                 // Ore previste
                 $qta_carta = $fase->ordine->qta_carta ?? 0;
-                $infoFase = $this->fasiInfo[$fase->fase] ?? ['avviamento' => 0.5, 'copieh' => 1000];
+                $infoFase = config('fasi_ore')[$fase->fase] ?? ['avviamento' => 0.5, 'copieh' => 1000];
                 $copieh = $infoFase['copieh'] ?: 1000;
                 $fase->ore_previste = round($infoFase['avviamento'] + ($qta_carta / $copieh), 2);
 

@@ -3,9 +3,9 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
-use Illuminate\Support\Facades\Event;
 use App\Events\PhaseCompleted;
 use App\Listeners\PropagateAvailability;
 
@@ -24,7 +24,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Mossa 37: propagazione istantanea quando una fase viene completata
+        // Mossa 37: propaga disponibilità quando una fase viene completata
         Event::listen(PhaseCompleted::class, PropagateAvailability::class);
 
         // Forza HTTPS quando si accede da tunnel (tnnl.in non manda X-Forwarded-Proto)
