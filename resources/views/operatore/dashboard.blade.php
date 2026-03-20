@@ -151,6 +151,103 @@
         cursor: pointer;
     }
     .filtri-bar .btn-reset-filtri:hover { background: #e9ecef; }
+
+    /* ===== RESPONSIVE MOBILE ===== */
+    @media (max-width: 768px) {
+        h2 { font-size: 18px; }
+        .top-bar {
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 4px 8px;
+        }
+        .operatore-info img {
+            width: 40px; height: 40px;
+        }
+        .action-icons img {
+            height: 44px;
+            padding: 6px;
+            margin-right: 4px;
+        }
+        .table-wrapper {
+            max-height: calc(100vh - 280px);
+            margin: 0;
+            -webkit-overflow-scrolling: touch;
+        }
+        table { font-size: 12px; }
+        table th, table td { padding: 4px 6px; }
+        td.descrizione { min-width: 200px; }
+        td.td-cliente { max-width: 100px; }
+
+        /* Hide less important columns on mobile */
+        table th:nth-child(6),  table td:nth-child(6),  /* Fustella */
+        table th:nth-child(7),  table td:nth-child(7),  /* Codice Articolo */
+        table th:nth-child(12), table td:nth-child(12), /* UM */
+        table th:nth-child(16), table td:nth-child(16), /* Codice Carta */
+        table th:nth-child(17), table td:nth-child(17), /* Carta */
+        table th:nth-child(18), table td:nth-child(18), /* Qta Carta */
+        table th:nth-child(19), table td:nth-child(19)  /* UM Carta */
+        {
+            display: none;
+        }
+
+        /* Filtri bar: stack vertically */
+        .filtri-bar {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 6px;
+            padding: 8px 10px;
+        }
+        .filtri-bar label {
+            font-size: 12px;
+        }
+        .filtri-bar select,
+        .filtri-bar input {
+            width: 100% !important;
+            height: 40px;
+            font-size: 14px;
+            min-height: 44px;
+        }
+        .filtri-bar .btn-reset-filtri {
+            min-height: 44px;
+            font-size: 14px;
+            padding: 8px 16px;
+        }
+
+        /* Reparto section headers */
+        .reparto-section h3 {
+            font-size: 15px;
+            padding: 8px 10px;
+            margin: 0 2px;
+        }
+
+        /* Search box */
+        #searchBox input {
+            font-size: 16px;
+            min-height: 44px;
+        }
+
+        /* Buttons in table rows */
+        table .btn, table button, table a.btn {
+            min-height: 44px;
+            min-width: 44px;
+            font-size: 12px;
+            padding: 6px 10px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        h2 { font-size: 16px; }
+        table { font-size: 11px; }
+        td.descrizione { min-width: 150px; }
+        .reparto-section h3 { font-size: 14px; }
+
+        /* Hide even more columns on very small screens */
+        table th:nth-child(13), table td:nth-child(13), /* Data Registrazione */
+        table th:nth-child(21), table td:nth-child(21)  /* Timeout */
+        {
+            display: none;
+        }
+    }
 </style>
 
 <div class="top-bar">

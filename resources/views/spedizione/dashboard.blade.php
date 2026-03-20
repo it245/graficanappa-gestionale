@@ -214,6 +214,126 @@
         font-size: 20px; font-weight: 700; min-width: 28px; text-align: center;
     }
 
+    /* ===== RESPONSIVE MOBILE ===== */
+    @media (max-width: 768px) {
+        h2, h4, p { margin-left: 4px; margin-right: 4px; }
+        h2 { font-size: 16px; }
+        h4 { font-size: 15px; }
+
+        /* Top bar */
+        .top-bar {
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 4px 8px;
+        }
+        .top-bar img[alt="Logo"] { height: 32px !important; }
+        .operatore-info img { width: 40px; height: 40px; }
+
+        /* Hamburger touch target */
+        .hamburger-btn {
+            padding: 12px;
+            min-width: 44px;
+            min-height: 44px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Search bar area */
+        .search-box {
+            font-size: 16px !important;
+            padding: 10px 14px !important;
+            min-height: 44px;
+            max-width: 100% !important;
+        }
+
+        /* Notes panel: stack below search on mobile */
+        #notePanel {
+            flex: 1 1 100% !important;
+            white-space: normal !important;
+        }
+        #notePanel > div {
+            flex-direction: column !important;
+            gap: 8px !important;
+        }
+        #notePanel textarea {
+            width: 100% !important;
+            min-height: 200px !important;
+            font-size: 14px !important;
+        }
+        #notePanel .btn {
+            min-height: 44px;
+            width: 100%;
+        }
+
+        /* Table wrapper */
+        .table-wrapper {
+            margin: 0 2px;
+            -webkit-overflow-scrolling: touch;
+        }
+        table { font-size: 12px; }
+        table th, table td { padding: 4px 6px; }
+
+        /* Consegna buttons */
+        .btn-consegna {
+            padding: 10px 14px;
+            font-size: 13px;
+            min-height: 44px;
+            min-width: 44px;
+        }
+
+        /* Progress bars */
+        .progress-bar-custom { min-width: 60px; }
+
+        /* Description column */
+        td.desc-col, td:nth-child(7) {
+            max-width: 140px;
+            min-width: 100px;
+        }
+
+        /* Hide less important columns on main tables */
+        #tabDaSpedire th:nth-child(5), #tabDaSpedire td:nth-child(5), /* Cod. Articolo */
+        #tabDDT th:nth-child(4), #tabDDT td:nth-child(4),             /* Cod. Articolo */
+        #tabInAttesa th:nth-child(5), #tabInAttesa td:nth-child(5),   /* Qta */
+        #tabParziali th:nth-child(4), #tabParziali td:nth-child(4)     /* Cod. Articolo */
+        {
+            display: none;
+        }
+
+        /* Notes input in table */
+        .table-wrapper input.form-control {
+            min-height: 44px;
+            font-size: 14px;
+            min-width: 120px;
+        }
+
+        /* KPI boxes */
+        .kpi-box { padding: 10px; }
+        .kpi-box h3 { font-size: 22px; }
+
+        /* Search + notes wrapper: stack */
+        div[style*="display:flex"][style*="flex-wrap:nowrap"] {
+            flex-wrap: wrap !important;
+        }
+    }
+
+    @media (max-width: 480px) {
+        h2 { font-size: 14px; }
+        table { font-size: 11px; }
+        .btn-consegna {
+            padding: 8px 10px;
+            font-size: 12px;
+        }
+
+        /* Hide even more columns */
+        #tabDaSpedire th:nth-child(6), #tabDaSpedire td:nth-child(6),  /* Qta */
+        #tabDDT th:nth-child(6), #tabDDT td:nth-child(6),              /* Qta Ordine */
+        #tabDDT th:nth-child(7), #tabDDT td:nth-child(7),              /* Qta DDT */
+        #tabInAttesa th:nth-child(4), #tabInAttesa td:nth-child(4)      /* Cod. Articolo */
+        {
+            display: none;
+        }
+    }
+
 </style>
 
 @php

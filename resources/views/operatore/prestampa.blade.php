@@ -28,6 +28,69 @@
         </form>
     </div>
 
+    <style>
+        /* ===== RESPONSIVE MOBILE ===== */
+        @media (max-width: 768px) {
+            .container-fluid { padding-left: 8px !important; padding-right: 8px !important; }
+
+            /* Header: stack vertically */
+            .d-flex.justify-content-between.align-items-center.mb-3.mt-2 {
+                flex-direction: column;
+                align-items: flex-start !important;
+                gap: 8px;
+            }
+            .d-flex.justify-content-between.align-items-center.mb-3.mt-2 > .d-flex:last-child {
+                align-self: flex-end;
+            }
+            .d-flex.justify-content-between.align-items-center.mb-3.mt-2 h2 {
+                font-size: 18px;
+            }
+
+            /* Filters: full width */
+            .d-flex.align-items-center.gap-3.mb-3.flex-wrap {
+                flex-direction: column;
+                align-items: stretch !important;
+                gap: 8px !important;
+            }
+            #filtroCommessa, #filtroFustella {
+                max-width: 100% !important;
+                width: 100% !important;
+                min-height: 44px;
+                font-size: 16px !important;
+            }
+            .btn-outline-dark.btn-sm {
+                min-height: 44px;
+                font-size: 14px !important;
+                justify-content: center;
+                width: 100%;
+            }
+
+            /* Table */
+            #tabellaCommesse { font-size: 12px !important; }
+            #tabellaCommesse th, #tabellaCommesse td { padding: 6px 8px; }
+
+            /* Hide less important columns */
+            #tabellaCommesse th:nth-child(5), #tabellaCommesse td:nth-child(5), /* Qta */
+            #tabellaCommesse th:nth-child(6), #tabellaCommesse td:nth-child(6), /* Data Reg */
+            #tabellaCommesse th:nth-child(8), #tabellaCommesse td:nth-child(8)  /* Op. Prestampa */
+            {
+                display: none;
+            }
+
+            /* Make rows touch-friendly */
+            .riga-commessa td { padding: 10px 8px !important; }
+        }
+
+        @media (max-width: 480px) {
+            #tabellaCommesse { font-size: 11px !important; }
+            /* Hide even more */
+            #tabellaCommesse th:nth-child(4), #tabellaCommesse td:nth-child(4) /* Fustella */
+            {
+                display: none;
+            }
+        }
+    </style>
+
     <div style="overflow-x:auto;">
         <table class="table table-bordered table-hover table-sm" style="font-size:13px;" id="tabellaCommesse">
             <thead class="table-dark">

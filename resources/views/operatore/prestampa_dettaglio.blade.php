@@ -31,6 +31,94 @@
         display: inline-block; padding: 3px 10px; border-radius: 12px;
         font-size: 12px; font-weight: bold;
     }
+
+    /* ===== RESPONSIVE MOBILE ===== */
+    @media (max-width: 768px) {
+        .container-fluid { padding-left: 8px !important; padding-right: 8px !important; }
+
+        /* Header: stack vertically */
+        .d-flex.justify-content-between.align-items-center.mb-3.mt-2.px-2 {
+            flex-direction: column;
+            align-items: flex-start !important;
+            gap: 8px;
+        }
+        .d-flex.justify-content-between.align-items-center.mb-3.mt-2.px-2 > .d-flex:last-child {
+            align-self: flex-end;
+        }
+
+        /* Back button + title */
+        .d-flex.justify-content-between.align-items-center.mb-2 {
+            flex-direction: column;
+            align-items: flex-start !important;
+            gap: 6px;
+        }
+        .btn-back {
+            min-height: 44px;
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 16px !important;
+            font-size: 14px !important;
+        }
+        h2 { font-size: 18px; }
+        h2.d-inline { display: block !important; margin-left: 0 !important; margin-top: 4px; }
+
+        /* Info cards: full width columns */
+        .row.g-2.mb-2 > [class*="col-md-"] {
+            flex: 0 0 100%;
+            max-width: 100%;
+        }
+        .row.g-2.mb-3 > [class*="col-md-"] {
+            flex: 0 0 100%;
+            max-width: 100%;
+        }
+
+        /* Editable fields */
+        .campo-editabile {
+            min-height: 44px;
+            font-size: 14px;
+            padding: 8px 10px;
+        }
+
+        /* Progress bar section */
+        .border.rounded.p-3.mb-3 {
+            padding: 10px !important;
+        }
+        .border.rounded.p-3.mb-3 .d-flex {
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        /* Table */
+        table { font-size: 12px; }
+        thead th { padding: 6px; font-size: 11px; }
+        td { padding: 6px; }
+
+        /* Hide less important columns on mobile */
+        table th:nth-child(4), table td:nth-child(4), /* Qta Carta */
+        table th:nth-child(8), table td:nth-child(8), /* Descrizione */
+        table th:nth-child(9), table td:nth-child(9), /* Data Inizio */
+        table th:nth-child(10), table td:nth-child(10) /* Data Fine */
+        {
+            display: none;
+        }
+
+        /* Logout button */
+        .btn-outline-secondary.btn-sm {
+            min-height: 44px;
+            min-width: 44px;
+            font-size: 14px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        table { font-size: 11px; }
+        /* Hide even more columns */
+        table th:nth-child(3), table td:nth-child(3), /* Reparto */
+        table th:nth-child(6), table td:nth-child(6)  /* Operatori */
+        {
+            display: none;
+        }
+    }
 </style>
 
 {{-- Header con logo, nome operatore e logout --}}
