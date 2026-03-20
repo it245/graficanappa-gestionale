@@ -101,6 +101,17 @@ class PrinectService
         return $response->successful() ? $response->json() : null;
     }
 
+    /**
+     * Attività per singolo workstep — prova certa di stampa.
+     */
+    public function getWorkstepActivities($jobId, $workstepId)
+    {
+        $response = $this->api()->timeout(15)->get(
+            "{$this->baseUrl}/rest/job/{$jobId}/workstep/{$workstepId}/activity"
+        );
+        return $response->successful() ? $response->json() : null;
+    }
+
     public function getWorkstepPreview($jobId, $workstepId)
     {
         $response = $this->api()->get(

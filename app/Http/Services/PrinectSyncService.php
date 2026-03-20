@@ -617,14 +617,36 @@ class PrinectSyncService
 
                 if ($worksteps->isEmpty()) continue;
 
-                // Protezione: se nessun workstep ha actualStartDate, la stampa non è mai partita
-                // Eccezione: se tutti COMPLETED con fogli > 0 E ci sono attività nel MES, Prinect non ha le date ma la stampa è avvenuta
+                // Protezione: verifica che la stampa sia effettivamente avvenuta
+                // Usa workstep activities (endpoint più affidabile) come prova certa
                 $wsConStart = $worksteps->filter(fn($ws) => !empty($ws['actualStartDate']));
-                $attivitaCount = PrinectAttivita::where('commessa_gestionale', $commessa)->count();
                 $totaleBuoniCheck = $worksteps->sum(fn($ws) => $ws['amountProduced'] ?? 0);
                 $allCompletedCheck = $worksteps->every(fn($ws) => ($ws['status'] ?? '') === 'COMPLETED');
-                // Senza actualStartDate: richiede COMPLETED + fogli > 0 + almeno 1 attività nel MES
-                if ($wsConStart->isEmpty() && !($allCompletedCheck && $totaleBuoniCheck > 0 && $attivitaCount > 0)) continue;
+
+                // Se nessun actualStartDate, verifica tramite workstep activities API
+                $stampaConfermata = $wsConStart->isNotEmpty();
+                if (!$stampaConfermata && $allCompletedCheck && $totaleBuoniCheck > 0) {
+                    // Chiedi a Prinect: il workstep ha attività reali?
+                    foreach ($worksteps as $ws) {
+                        try {
+                            $wsAct = $this->prinect->getWorkstepActivities($jobId, $ws['id']);
+                            $attivitaWs = collect($wsAct['activities'] ?? []);
+                            // Se almeno un'attività ha goodCycles > 0 o è di tipo "Tempo di esecuzione"
+                            $haStampato = $attivitaWs->contains(function ($a) {
+                                return ($a['goodCycles'] ?? 0) > 0
+                                    || str_contains($a['timeTypeName'] ?? '', 'esecuzione');
+                            });
+                            if ($haStampato) {
+                                $stampaConfermata = true;
+                                break;
+                            }
+                        } catch (\Exception $e) {
+                            // API non disponibile, non confermare
+                        }
+                    }
+                }
+
+                if (!$stampaConfermata) continue;
 
                 // Aggiorna fogli_buoni/scarto dal totale workstep (più affidabile delle singole attività)
                 $totaleBuoniWs = $worksteps->sum(fn($ws) => $ws['amountProduced'] ?? 0);
