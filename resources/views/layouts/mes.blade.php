@@ -619,6 +619,9 @@
     <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
+    {{-- Laravel Echo (WebSocket real-time) --}}
+    @include('partials.echo-client')
+
     <script>
     /* ===========================================
        CSRF + Op Token + Fetch Interceptor

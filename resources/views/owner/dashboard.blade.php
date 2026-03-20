@@ -1748,8 +1748,26 @@ if (_modalNote) {
     });
 }
 
-checkNoteConsegne();
-setInterval(checkNoteConsegne, _noteCheckInterval);
+// WebSocket con fallback a polling per Note Consegne
+if (window.listenOrPoll) {
+    window.listenOrPoll('note-consegne', 'aggiornate', function(data) {
+        // Ricevuto via WebSocket — stessa logica di checkNoteConsegne ma con dati push
+        var lastKnown = localStorage.getItem('noteConsegne_lastUpdate') || '';
+        if (data.updated_at && data.updated_at !== lastKnown) {
+            localStorage.setItem('noteConsegne_lastUpdate', data.updated_at);
+            _beep();
+            if (Notification.permission === 'granted') {
+                new Notification('Note Consegne aggiornate', { body: data.aggiornato_da || 'Spedizione' });
+            }
+            var badge = document.getElementById('noteConsegneBadge');
+            if (badge) badge.style.display = 'inline-block';
+            caricaNoteSpedizione();
+        }
+    }, checkNoteConsegne, _noteCheckInterval);
+} else {
+    checkNoteConsegne();
+    setInterval(checkNoteConsegne, _noteCheckInterval);
+}
 
 // === Note Consegne (readonly per owner) ===
 function caricaNoteSpedizione() {
@@ -1806,7 +1824,16 @@ function caricaPresenti() {
     document.getElementById('presentiContent').style.display = 'none';
     fetchPresenti();
     if (_presentiInterval) clearInterval(_presentiInterval);
-    _presentiInterval = setInterval(fetchPresenti, 60000);
+    // Se Echo connesso, ascolta via WebSocket; altrimenti polling 60s
+    if (window.echoConnected) {
+        window.Echo.channel('presenze').listen('.aggiornati', function(data) {
+            var badge = document.getElementById('presentiCount');
+            if (badge) badge.textContent = data.totale_presenti;
+            fetchPresenti(); // ricarica dettaglio
+        });
+    } else {
+        _presentiInterval = setInterval(fetchPresenti, 60000);
+    }
 }
 function fetchPresenti() {
     fetch('{{ route("owner.presenti") }}')

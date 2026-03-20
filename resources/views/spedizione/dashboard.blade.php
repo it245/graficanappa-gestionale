@@ -1448,8 +1448,20 @@ function showNoteToast(msg) {
     setTimeout(function() { if (toast.parentNode) toast.remove(); }, 30000);
 }
 
-checkNoteConsegne();
-setInterval(checkNoteConsegne, 15000);
+// WebSocket con fallback per Note Consegne
+if (window.listenOrPoll) {
+    window.listenOrPoll('note-consegne', 'aggiornate', function(data) {
+        var lastKnown = localStorage.getItem('noteConsegne_lastUpdate_sped') || '';
+        if (data.updated_at && data.updated_at !== lastKnown) {
+            localStorage.setItem('noteConsegne_lastUpdate_sped', data.updated_at);
+            _beepNote();
+            mostraToastNote('Note aggiornate da ' + (data.aggiornato_da || 'Owner'));
+        }
+    }, checkNoteConsegne, 15000);
+} else {
+    checkNoteConsegne();
+    setInterval(checkNoteConsegne, 15000);
+}
 
 // === NOTIFICHE INVII ESTERNI ===
 var _notifIdsViste = JSON.parse(localStorage.getItem('notifiche_sped_viste') || '[]');
@@ -1496,7 +1508,19 @@ function showNotificaEsterna(n) {
     setTimeout(function() { if (toast.parentNode) toast.remove(); }, 30000);
 }
 
-checkNotificheEsterne();
-setInterval(checkNotificheEsterne, 15000);
+// WebSocket con fallback per Notifiche Esterne
+if (window.listenOrPoll) {
+    window.listenOrPoll('notifiche-esterne', 'nuova', function(data) {
+        mostraToastEsterna({
+            id: Date.now(),
+            commessa: data.commessa,
+            fase: data.fase,
+            fornitore: data.fornitore
+        });
+    }, checkNotificheEsterne, 15000);
+} else {
+    checkNotificheEsterne();
+    setInterval(checkNotificheEsterne, 15000);
+}
 </script>
 @endsection
