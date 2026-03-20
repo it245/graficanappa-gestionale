@@ -101,7 +101,7 @@
             <p class="error-message">{{ $errors->first() }}</p>
         @endif
 
-        <form method="POST" action="{{ route('operatore.login.post') }}">
+        <form method="POST" action="{{ route('operatore.login.post') }}" onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').textContent='Caricamento...';">
             @csrf
             <input type="text" name="codice_operatore" placeholder="Inserisci codice operatore" required autofocus>
             <button type="submit">Accedi</button>

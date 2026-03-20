@@ -104,7 +104,7 @@
             <p class="error-message">{{ $errors->first() }}</p>
         @endif
 
-        <form method="POST" action="{{ route('admin.login.post') }}">
+        <form method="POST" action="{{ route('admin.login.post') }}" onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').textContent='Caricamento...';">
             @csrf
             <input type="text" name="codice_operatore" placeholder="Codice operatore" required autofocus>
             <input type="password" name="password" placeholder="Password" required>
