@@ -260,6 +260,17 @@ class DashboardSpedizioneController extends Controller
                 }
             }
 
+            // Notifica push all'owner: commessa spedita
+            if ($tipoConsegna === 'totale') {
+                $clienteNome = $fase->ordine->cliente_nome ?? 'N/D';
+                \App\Services\WebPushService::notificaPerRuolo('owner', [
+                    'title' => "Spedita: {$commessa}",
+                    'body' => "{$clienteNome} — consegna completata",
+                    'tag' => "spedita-{$commessa}",
+                    'url' => "/owner/commessa/{$commessa}",
+                ]);
+            }
+
             return response()->json([
                 'success' => true,
                 'messaggio' => ($tipoConsegna === 'parziale' ? 'Consegna parziale' : 'Consegnato') . ' - commessa ' . $commessa

@@ -14,6 +14,7 @@ use App\Http\Controllers\DashboardAdminController;
 use App\Http\Controllers\FieryController;
 use App\Http\Controllers\EtichettaController;
 use App\Http\Controllers\PresenzeController;
+use App\Http\Controllers\PushController;
 use App\Http\Controllers\ChatController;
 
 // Operatori
@@ -181,6 +182,11 @@ Route::middleware('operatore.auth')->prefix('chat')->group(function () {
 });
 
 // Health check
+// Push notifications
+Route::post('/push/subscribe', [PushController::class, 'subscribe'])->name('push.subscribe');
+Route::post('/push/unsubscribe', [PushController::class, 'unsubscribe'])->name('push.unsubscribe');
+Route::get('/push/vapid-key', [PushController::class, 'vapidKey'])->name('push.vapidKey');
+
 Route::get('/health', fn() => 'MES OK');
 Route::get('/commesse/{commessa}', [App\Http\Controllers\CommessaController::class, 'show'])
 ->middleware('operatore.auth')

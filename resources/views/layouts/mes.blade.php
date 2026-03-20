@@ -748,9 +748,66 @@
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw.js').then(function(reg) {
             console.log('SW registrato:', reg.scope);
+            // Auto-subscribe push notifications dopo 3s
+            setTimeout(function() { initPushNotifications(reg); }, 3000);
         }).catch(function(err) {
             console.log('SW errore:', err);
         });
+    }
+
+    function initPushNotifications(swReg) {
+        if (!('PushManager' in window)) return;
+        if (Notification.permission === 'denied') return;
+
+        // Chiedi permesso se non ancora concesso
+        if (Notification.permission === 'default') {
+            Notification.requestPermission().then(function(perm) {
+                if (perm === 'granted') subscribePush(swReg);
+            });
+        } else if (Notification.permission === 'granted') {
+            subscribePush(swReg);
+        }
+    }
+
+    function subscribePush(swReg) {
+        fetch('/push/vapid-key').then(r => r.json()).then(function(data) {
+            if (!data.publicKey) return;
+            var vapidKey = urlBase64ToUint8Array(data.publicKey);
+            swReg.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: vapidKey
+            }).then(function(subscription) {
+                var key = subscription.getKey('p256dh');
+                var auth = subscription.getKey('auth');
+                fetch('/push/subscribe', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken()
+                    },
+                    body: JSON.stringify({
+                        endpoint: subscription.endpoint,
+                        keys: {
+                            p256dh: btoa(String.fromCharCode.apply(null, new Uint8Array(key))),
+                            auth: btoa(String.fromCharCode.apply(null, new Uint8Array(auth)))
+                        }
+                    })
+                });
+            }).catch(function(err) {
+                console.log('Push subscribe errore:', err);
+            });
+        });
+    }
+
+    function urlBase64ToUint8Array(base64String) {
+        var padding = '='.repeat((4 - base64String.length % 4) % 4);
+        var base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+        var rawData = window.atob(base64);
+        var outputArray = new Uint8Array(rawData.length);
+        for (var i = 0; i < rawData.length; ++i) {
+            outputArray[i] = rawData.charCodeAt(i);
+        }
+        return outputArray;
     }
     </script>
 
