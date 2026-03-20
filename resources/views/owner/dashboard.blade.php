@@ -872,7 +872,7 @@ tr:hover td {
                 <tr class="{{ $rowClass }}" data-id="{{ $fase->id }}">
                     <td><a href="{{ route('owner.dettaglioCommessa', $fase->ordine->commessa ?? '-') }}" style="color:#000;font-weight:bold;text-decoration:underline;">{{ $fase->ordine->commessa ?? '-' }}</a></td>
                     @if($fase->esterno)
-                    <td style="background:#ede9fe !important;font-weight:bold;text-align:center;color:#7c3aed;font-size:10px;">EXT</td>
+                    <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)" style="background:#ede9fe !important;font-weight:bold;text-align:center;color:#7c3aed;font-size:10px;">EXT</td>
                     @else
                     <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)" style="background:{{ $statoBg[$fase->stato] ?? '#e9ecef' }} !important;font-weight:bold;text-align:center;">{{ $fase->stato }}</td>
                     @endif
@@ -1582,7 +1582,10 @@ function aggiornaCampo(faseId, campo, valore){
 }
 
 function aggiornaStato(faseId, testo) {
-    const nuovoStato = parseInt(testo.trim());
+    var val = testo.trim().toUpperCase();
+    // Se riscrive EXT, non fare nulla
+    if (val === 'EXT') return;
+    const nuovoStato = parseInt(val);
     if (isNaN(nuovoStato) || nuovoStato < 0 || nuovoStato > 3) {
         alert('Stato non valido. Usa: 0, 1, 2, 3');
         return;
@@ -1602,6 +1605,8 @@ function aggiornaStato(faseId, testo) {
             if (row) {
                 const statoCell = row.cells[1];
                 statoCell.style.setProperty('background', bgMap[nuovoStato], 'important');
+                statoCell.style.color = '#000';
+                statoCell.style.fontSize = '';
                 statoCell.innerText = nuovoStato;
             }
         }
