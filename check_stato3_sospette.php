@@ -41,7 +41,7 @@ foreach ($fasi as $f) {
 
     // Attività Prinect
     $attivitaCount = PrinectAttivita::where('commessa_gestionale', $commessa)->count();
-    $attivitaBuoni = PrinectAttivita::where('commessa_gestionale', $commessa)->sum('fogli_buoni');
+    $attivitaBuoni = PrinectAttivita::where('commessa_gestionale', $commessa)->sum('good_cycles');
 
     $problemi = [];
 
