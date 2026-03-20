@@ -54,8 +54,9 @@
 
 {{-- Info Commessa --}}
 @php
-    $coloriCalc = \App\Helpers\DescrizioneParser::parseColori($ordine->descrizione ?? '', $ordine->cliente_nome ?? '');
-    $fustellaCalc = \App\Helpers\DescrizioneParser::parseFustella($ordine->descrizione ?? '', $ordine->cliente_nome ?? '', $ordine->note_prestampa ?? '');
+    $tutteDesc = $ordini->pluck('descrizione')->filter()->unique()->implode(' | ');
+    $coloriCalc = \App\Helpers\DescrizioneParser::parseColori($tutteDesc, $ordine->cliente_nome ?? '');
+    $fustellaCalc = \App\Helpers\DescrizioneParser::parseFustella($tutteDesc, $ordine->cliente_nome ?? '', $ordine->note_prestampa ?? '');
     $mirko = $isMirko ?? false;
 @endphp
 <div class="row g-2 mb-2" style="font-size:13px;">
