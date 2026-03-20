@@ -94,10 +94,10 @@
     <div class="card mb-3">
         <div class="card-body">
             @php
-                $desc = $ordine->descrizione ?? '';
+                $tutteDescOp = $ordini->pluck('descrizione')->filter()->unique()->implode(' | ');
                 $cliente = $ordine->cliente_nome ?? '';
-                $coloriCalc = \App\Helpers\DescrizioneParser::parseColori($desc, $cliente);
-                $fustellaCalc = \App\Helpers\DescrizioneParser::parseFustella($desc, $cliente, $ordine->note_prestampa ?? '');
+                $coloriCalc = \App\Helpers\DescrizioneParser::parseColori($tutteDescOp, $cliente);
+                $fustellaCalc = \App\Helpers\DescrizioneParser::parseFustella($tutteDescOp, $cliente, $ordine->note_prestampa ?? '');
             @endphp
             <p><strong>Cliente:</strong> {{ $ordine->cliente_nome }}</p>
             <p><strong>Descrizione:</strong> {{ $ordine->descrizione }}</p>
@@ -128,6 +128,25 @@
                     </div>
                 </div>
             </div>
+
+            {{-- Note Fustelle (note inserite da Mirko/prestampa sulle singole fasi) --}}
+            @php
+                $noteFasiOp = $ordini->flatMap(fn($o) => $o->fasi)->filter(fn($f) => !empty($f->note))->values();
+            @endphp
+            @if($noteFasiOp->isNotEmpty())
+            <div class="row g-2 mt-2">
+                <div class="col-12">
+                    <div class="border rounded p-2" style="background:#ede9fe; border-color:#c4b5fd !important;">
+                        <strong class="d-block mb-1" style="color:#7c3aed;">Note Fustelle</strong>
+                        @foreach($noteFasiOp as $nf)
+                            <div style="font-size:13px; padding:2px 0; {{ !$loop->last ? 'border-bottom:1px solid #ddd6fe;' : '' }}">
+                                <strong>{{ $nf->faseCatalogo->nome_display ?? $nf->fase }}</strong>: {{ $nf->note }}
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+            @endif
         </div>
     </div>
 
