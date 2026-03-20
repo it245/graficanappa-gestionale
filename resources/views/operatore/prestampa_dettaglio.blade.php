@@ -187,8 +187,8 @@
                 <th style="width:70px;">Qta Carta</th>
                 <th style="width:70px;">Qta Prod.</th>
                 <th style="width:120px;">Operatori</th>
-                <th>Note</th>
-                <th style="width:180px;">Descrizione</th>
+                <th style="width:200px;">Note</th>
+                <th>Descrizione</th>
                 <th style="width:110px;">Data Inizio</th>
                 <th style="width:110px;">Data Fine</th>
             </tr>
