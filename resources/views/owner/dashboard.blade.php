@@ -870,7 +870,11 @@ tr:hover td {
                 @endphp
                 <tr class="{{ $rowClass }}" data-id="{{ $fase->id }}">
                     <td><a href="{{ route('owner.dettaglioCommessa', $fase->ordine->commessa ?? '-') }}" style="color:#000;font-weight:bold;text-decoration:underline;">{{ $fase->ordine->commessa ?? '-' }}</a></td>
+                    @if($fase->esterno)
+                    <td style="background:#ede9fe !important;font-weight:bold;text-align:center;color:#7c3aed;font-size:10px;">EXT</td>
+                    @else
                     <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)" style="background:{{ $statoBg[$fase->stato] ?? '#e9ecef' }} !important;font-weight:bold;text-align:center;">{{ $fase->stato }}</td>
+                    @endif
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'cliente_nome', this.innerText)">{{ $fase->ordine->cliente_nome ?? '-' }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'cod_art', this.innerText)">{{ $fase->ordine->cod_art ?? '-' }}</td>
                     @php
