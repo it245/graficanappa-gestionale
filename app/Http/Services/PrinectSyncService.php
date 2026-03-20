@@ -618,8 +618,11 @@ class PrinectSyncService
                 if ($worksteps->isEmpty()) continue;
 
                 // Protezione: se nessun workstep ha actualStartDate, la stampa non è mai partita
+                // Eccezione: se tutti COMPLETED con fogli > 0, Prinect non ha le date ma la stampa è avvenuta
                 $wsConStart = $worksteps->filter(fn($ws) => !empty($ws['actualStartDate']));
-                if ($wsConStart->isEmpty()) continue;
+                $totaleBuoniCheck = $worksteps->sum(fn($ws) => $ws['amountProduced'] ?? 0);
+                $allCompletedCheck = $worksteps->every(fn($ws) => ($ws['status'] ?? '') === 'COMPLETED');
+                if ($wsConStart->isEmpty() && !($allCompletedCheck && $totaleBuoniCheck > 0)) continue;
 
                 // Aggiorna fogli_buoni/scarto dal totale workstep (più affidabile delle singole attività)
                 $totaleBuoniWs = $worksteps->sum(fn($ws) => $ws['amountProduced'] ?? 0);
