@@ -175,6 +175,9 @@ Route::get('/etichette', [EtichettaController::class, 'lista'])->name('etichette
 // CSRF token refresh (mantiene sessione viva)
 Route::get('/csrf-refresh', fn() => response()->json(['token' => csrf_token()]));
 
+// Prinect API Explorer
+Route::get('/prinect-explorer', fn() => view('prinect_explorer'));
+
 // Health check
 Route::get('/health', fn() => 'MES OK');
 Route::get('/commesse/{commessa}', [App\Http\Controllers\CommessaController::class, 'show'])
