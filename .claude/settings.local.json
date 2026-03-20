@@ -21,28 +21,7 @@
       "WebFetch(domain:communities.efi.com)",
       "WebFetch(domain:raw.githubusercontent.com)",
       "WebFetch(domain:efi.my.site.com)",
-      "WebFetch(domain:plex.rockwellautomation.com)",
-      "WebFetch(domain:www.aveva.com)",
-      "WebFetch(domain:medium.com)",
-      "WebFetch(domain:www.siemens.com)",
-      "WebFetch(domain:www.netsuite.com)",
-      "WebFetch(domain:tulip.co)",
-      "WebFetch(domain:www.katana.com)",
-      "WebFetch(domain:www.datapine.com)",
-      "WebFetch(domain:www.figma.com)",
-      "WebFetch(domain:www.scnsoft.com)",
-      "WebFetch(domain:www.manufacturingtomorrow.com)",
-      "WebFetch(domain:www.creativebloq.com)",
-      "WebFetch(domain:ant.design)",
-      "WebFetch(domain:mui.com)",
-      "WebFetch(domain:www.telerik.com)",
-      "WebFetch(domain:www.sisense.com)",
-      "WebFetch(domain:www.sap.com)",
-      "WebFetch(domain:uxplanet.org)",
-      "WebFetch(domain:www.interaction-design.org)",
-      "WebFetch(domain:tailwindui.com)",
-      "WebFetch(domain:www.opcenter.com)",
-      "WebFetch(domain:www.elucidat.com)"
+      "Bash(git checkout:*)"
     ]
   }
 }

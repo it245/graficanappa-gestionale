@@ -138,6 +138,7 @@ class SchedulerService
                 'tipo_offset' => $tipoOffset,
                 'mac' => $mac,
                 'priorita_db' => $row->priorita ?? 999,
+                'priorita_manuale' => (bool) ($row->priorita_manuale ?? false),
                 'disponibile' => false,
                 'in_corso' => $stato == 2,
                 'completata' => false,
@@ -273,8 +274,15 @@ class SchedulerService
                     if (empty($disponibili)) continue;
                 }
 
-                // Ordina per urgenza (gg crescente)
-                usort($disponibili, fn($a, $b) => $a['gg'] <=> $b['gg']);
+                // Ordina: priorità manuale prima di tutto, poi per urgenza (gg crescente)
+                usort($disponibili, function ($a, $b) {
+                    $aManuale = $a['priorita_manuale'] ?? false;
+                    $bManuale = $b['priorita_manuale'] ?? false;
+                    if ($aManuale && !$bManuale) return -1;
+                    if (!$aManuale && $bManuale) return 1;
+                    if ($aManuale && $bManuale) return ($a['priorita_db'] ?? 0) <=> ($b['priorita_db'] ?? 0);
+                    return $a['gg'] <=> $b['gg'];
+                });
 
                 // Batching intelligente
                 $piuUrgente = $disponibili[0];
