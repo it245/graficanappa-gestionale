@@ -274,11 +274,23 @@ class DashboardOperatoreController extends Controller
         $operatore = $request->attributes->get('operatore') ?? auth()->guard('operatore')->user();
         if (!$operatore) return response()->json(['success' => false, 'messaggio' => 'Non autorizzato'], 403);
 
-        $campiConsentiti = ['note_prestampa', 'responsabile', 'commento_produzione',
-                           'descrizione', 'cliente_nome', 'qta_richiesta', 'colori', 'fustella_codice'];
         $campo = $request->input('campo');
         $valore = $request->input('valore');
+        $faseId = $request->input('fase_id');
         $ordineId = $request->input('ordine_id');
+
+        // Aggiornamento nota su singola fase (usato da Mirko)
+        if ($faseId && $campo === 'note') {
+            $fase = \App\Models\OrdineFase::find($faseId);
+            if (!$fase) return response()->json(['success' => false, 'messaggio' => 'Fase non trovata']);
+            $fase->note = $valore ?: null;
+            $fase->save();
+            return response()->json(['success' => true]);
+        }
+
+        // Aggiornamento campo su ordine
+        $campiConsentiti = ['note_prestampa', 'responsabile', 'commento_produzione',
+                           'descrizione', 'cliente_nome', 'qta_richiesta', 'colori', 'fustella_codice'];
 
         if (!in_array($campo, $campiConsentiti)) {
             return response()->json(['success' => false, 'messaggio' => 'Campo non consentito']);
@@ -289,12 +301,10 @@ class DashboardOperatoreController extends Controller
             return response()->json(['success' => false, 'messaggio' => 'Ordine non trovato']);
         }
 
-        // Pulizia valori numerici
         if ($campo === 'qta_richiesta') {
             $valore = (int) str_replace(['.', ','], ['', ''], $valore);
         }
 
-        // Aggiorna su tutti gli ordini della stessa commessa
         \App\Models\Ordine::where('commessa', $ordine->commessa)->update([$campo => $valore]);
 
         return response()->json(['success' => true]);
