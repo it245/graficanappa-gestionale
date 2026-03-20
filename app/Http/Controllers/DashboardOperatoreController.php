@@ -191,12 +191,17 @@ class DashboardOperatoreController extends Controller
         $operatore = $request->attributes->get('operatore') ?? auth()->guard('operatore')->user();
         if (!$operatore) abort(403, 'Accesso negato');
 
-        // Commesse con almeno una fase attiva (stato < 3), ordinate per data consegna
+        // Commesse con almeno una fase attiva (stato < 3), raggruppate per commessa (1 riga per commessa)
         $commesse = \App\Models\Ordine::whereHas('fasi', fn($q) => $q->where('stato', '<', 3))
-            ->select('commessa', 'cliente_nome', 'descrizione', 'data_prevista_consegna', 'data_registrazione',
-                     'note_prestampa', 'responsabile', 'qta_richiesta', 'um')
-            ->groupBy('commessa', 'cliente_nome', 'descrizione', 'data_prevista_consegna', 'data_registrazione',
-                      'note_prestampa', 'responsabile', 'qta_richiesta', 'um')
+            ->select('commessa',
+                \Illuminate\Support\Facades\DB::raw('MIN(cliente_nome) as cliente_nome'),
+                \Illuminate\Support\Facades\DB::raw('MIN(descrizione) as descrizione'),
+                \Illuminate\Support\Facades\DB::raw('MIN(data_prevista_consegna) as data_prevista_consegna'),
+                \Illuminate\Support\Facades\DB::raw('MIN(data_registrazione) as data_registrazione'),
+                \Illuminate\Support\Facades\DB::raw('MAX(note_prestampa) as note_prestampa'),
+                \Illuminate\Support\Facades\DB::raw('MAX(responsabile) as responsabile'),
+                \Illuminate\Support\Facades\DB::raw('SUM(qta_richiesta) as qta_richiesta'))
+            ->groupBy('commessa')
             ->orderBy('data_prevista_consegna')
             ->get();
 
