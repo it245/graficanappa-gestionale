@@ -11,6 +11,15 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="op-token" content="{{ $opToken ?? '' }}">
     <title>@hasSection('title')@yield('title') — @endif MES GRAFICA NAPPA</title>
+
+    {{-- PWA --}}
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="MES">
+    <link rel="apple-touch-icon" href="/images/icons/icon-192x192.png">
+
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         tr.scaduta td{
@@ -150,5 +159,14 @@
     })();
     </script>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js').then(function(reg) {
+            console.log('SW registrato:', reg.scope);
+        }).catch(function(err) {
+            console.log('SW errore:', err);
+        });
+    }
+    </script>
     </body>
 </html>

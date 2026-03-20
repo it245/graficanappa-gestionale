@@ -11,6 +11,14 @@
     <meta name="op-token" content="{{ $opToken ?? '' }}">
     <title>@yield('page-title', 'MES Grafica Nappa')</title>
 
+    {{-- PWA --}}
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="MES">
+    <link rel="apple-touch-icon" href="/images/icons/icon-192x192.png">
+
     {{-- Fonts --}}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -733,6 +741,17 @@
     }
     updateClock();
     setInterval(updateClock, 1000);
+
+    /* ===========================================
+       Service Worker Registration (PWA)
+       =========================================== */
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js').then(function(reg) {
+            console.log('SW registrato:', reg.scope);
+        }).catch(function(err) {
+            console.log('SW errore:', err);
+        });
+    }
     </script>
 
     @yield('scripts')
