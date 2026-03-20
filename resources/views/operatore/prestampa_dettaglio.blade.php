@@ -222,8 +222,8 @@
                     @endforelse
                 </td>
                 @if($mirko)
-                <td contenteditable class="campo-editabile" data-campo="note_fase" data-fase="{{ $fase->id }}"
-                    onblur="salvaNotaFase(this)" style="min-width:120px;cursor:text;">{{ $fase->note ?? '' }}</td>
+                <td contenteditable data-campo="note_fase" data-fase="{{ $fase->id }}"
+                    onblur="salvaNotaFase(this)" style="cursor:text;">{{ $fase->note ?? '' }}</td>
                 @else
                 <td>{{ $fase->note ?? '-' }}</td>
                 @endif
