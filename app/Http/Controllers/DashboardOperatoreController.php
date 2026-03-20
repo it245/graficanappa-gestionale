@@ -196,6 +196,7 @@ class DashboardOperatoreController extends Controller
             ->select('commessa',
                 \Illuminate\Support\Facades\DB::raw('MIN(cliente_nome) as cliente_nome'),
                 \Illuminate\Support\Facades\DB::raw('MIN(descrizione) as descrizione'),
+                \Illuminate\Support\Facades\DB::raw('GROUP_CONCAT(DISTINCT descrizione SEPARATOR " | ") as tutte_descrizioni'),
                 \Illuminate\Support\Facades\DB::raw('MIN(data_prevista_consegna) as data_prevista_consegna'),
                 \Illuminate\Support\Facades\DB::raw('MIN(data_registrazione) as data_registrazione'),
                 \Illuminate\Support\Facades\DB::raw('MAX(note_prestampa) as note_prestampa'),
@@ -212,7 +213,7 @@ class DashboardOperatoreController extends Controller
 
         if ($isMirko) {
             $commesse = $commesse->filter(function ($c) {
-                $desc = $c->descrizione ?? '';
+                $desc = $c->tutte_descrizioni ?? $c->descrizione ?? '';
                 $cliente = $c->cliente_nome ?? '';
                 $notePre = $c->note_prestampa ?? '';
                 $fs = \App\Helpers\DescrizioneParser::parseFustella($desc, $cliente, $notePre);
