@@ -76,16 +76,13 @@
                     <td>{{ $riga->ordine->cliente_nome ?? '-' }}</td>
                     <td><strong>{{ $riga->fornitore }}</strong></td>
                     <td class="fasi-col">{{ $riga->fasi }} @if($riga->num_fasi > 1)<span class="badge bg-secondary">{{ $riga->num_fasi }}</span>@endif</td>
-                    <td class="fasi-col" style="font-size:12px;">
+                    <td style="font-size:12px; width:60px; text-align:center;">
                         @foreach($riga->fasi_dettaglio as $fd)
-                            <div style="display:flex; align-items:center; gap:4px; {{ !$loop->last ? 'border-bottom:1px solid #eee; padding-bottom:2px; margin-bottom:2px;' : '' }}">
-                                <span style="color:#666; min-width:100px;">{{ $fd['nome'] }}</span>
-                                <span contenteditable
-                                      style="font-weight:bold; min-width:50px; padding:1px 4px; border:1px solid transparent; border-radius:3px; cursor:text;"
-                                      onfocus="this.style.borderColor='#17a2b8'"
-                                      onblur="this.style.borderColor='transparent'; aggiornaQtaEsterna({{ $fd['id'] }}, this.innerText)"
-                                >{{ $fd['qta'] ? number_format($fd['qta'], 0, ',', '.') : '-' }}</span>
-                            </div>
+                            <div contenteditable
+                                 style="font-weight:bold; padding:1px 2px; border:1px solid transparent; cursor:text; {{ !$loop->last ? 'border-bottom:1px solid #eee;' : '' }}"
+                                 onfocus="this.style.borderColor='#17a2b8'"
+                                 onblur="this.style.borderColor='transparent'; aggiornaQtaEsterna({{ $fd['id'] }}, this.innerText)"
+                            >{{ $fd['qta'] ? number_format($fd['qta'], 0, ',', '.') : '-' }}</div>
                         @endforeach
                     </td>
                     <td>{{ $riga->ordine->cod_art ?? '-' }}</td>
