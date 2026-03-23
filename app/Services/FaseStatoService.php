@@ -25,7 +25,9 @@ class FaseStatoService
         $tutteFasiCommessa = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $ordine->commessa))
             ->get();
 
-        $flusso = config('fasi_priorita', []);
+        $flussoRaw = config('fasi_priorita', []);
+        // Lookup case-insensitive: chiavi uppercase
+        $flusso = array_change_key_case($flussoRaw, CASE_UPPER);
 
         foreach ($fasi as $fase) {
             // Se già avviato (2) o terminato (3), non toccare
@@ -36,9 +38,9 @@ class FaseStatoService
 
             // Predecessori basati sul flusso produttivo reale (config)
             // Cerca in tutta la commessa per trovare fasi su altri ordini
-            $mioOrdine = $flusso[$fase->fase] ?? 500;
+            $mioOrdine = $flusso[strtoupper($fase->fase)] ?? 500;
             $fasiPrecedenti = $tutteFasiCommessa->filter(fn($f) =>
-                $f->id !== $fase->id && ($flusso[$f->fase] ?? 500) < $mioOrdine
+                $f->id !== $fase->id && ($flusso[strtoupper($f->fase)] ?? 500) < $mioOrdine
             );
 
             if ($fasiPrecedenti->isEmpty()) {
@@ -147,7 +149,8 @@ class FaseStatoService
         if ($fasi->isEmpty()) return;
 
         // Usa la config fasi_priorita per determinare il flusso produttivo reale
-        $flusso = config('fasi_priorita', []);
+        $flussoRaw = config('fasi_priorita', []);
+        $flusso = array_change_key_case($flussoRaw, CASE_UPPER);
 
         foreach ($fasi as $fase) {
             if ($fase->stato >= 2) continue;
@@ -156,11 +159,11 @@ class FaseStatoService
             if (str_starts_with($fase->fase, 'STAMPAXL106') || str_starts_with($fase->fase, 'STAMPA XL')) continue;
 
             // Ordine nel flusso produttivo reale (dalla config)
-            $mioOrdine = $flusso[$fase->fase] ?? 500;
+            $mioOrdine = $flusso[strtoupper($fase->fase)] ?? 500;
 
             // Predecessori: fasi con ordine di flusso inferiore (vengono prima nel ciclo)
             $fasiPrecedenti = $fasi->filter(fn($f) =>
-                $f->id !== $fase->id && ($flusso[$f->fase] ?? 500) < $mioOrdine
+                $f->id !== $fase->id && ($flusso[strtoupper($f->fase)] ?? 500) < $mioOrdine
             );
 
             if ($fasiPrecedenti->isEmpty()) {
