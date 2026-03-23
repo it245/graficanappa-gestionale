@@ -39,6 +39,7 @@
                 <th>Cliente</th>
                 <th>Fornitore</th>
                 <th>Fasi ({{ $commesseEsterne->sum('num_fasi') }})</th>
+                <th>Qta</th>
                 <th>Cod. Articolo</th>
                 <th>Descrizione</th>
                 <th>Data Consegna</th>
@@ -75,6 +76,18 @@
                     <td>{{ $riga->ordine->cliente_nome ?? '-' }}</td>
                     <td><strong>{{ $riga->fornitore }}</strong></td>
                     <td class="fasi-col">{{ $riga->fasi }} @if($riga->num_fasi > 1)<span class="badge bg-secondary">{{ $riga->num_fasi }}</span>@endif</td>
+                    <td class="fasi-col" style="font-size:12px;">
+                        @foreach($riga->fasi_dettaglio as $fd)
+                            <div style="display:flex; align-items:center; gap:4px; {{ !$loop->last ? 'border-bottom:1px solid #eee; padding-bottom:2px; margin-bottom:2px;' : '' }}">
+                                <span style="color:#666; min-width:100px;">{{ $fd['nome'] }}</span>
+                                <span contenteditable
+                                      style="font-weight:bold; min-width:50px; padding:1px 4px; border:1px solid transparent; border-radius:3px; cursor:text;"
+                                      onfocus="this.style.borderColor='#17a2b8'"
+                                      onblur="this.style.borderColor='transparent'; aggiornaQtaEsterna({{ $fd['id'] }}, this.innerText)"
+                                >{{ $fd['qta'] ? number_format($fd['qta'], 0, ',', '.') : '-' }}</span>
+                            </div>
+                        @endforeach
+                    </td>
                     <td>{{ $riga->ordine->cod_art ?? '-' }}</td>
                     <td class="desc-col">{{ $riga->ordine->descrizione ?? '-' }}</td>
                     <td>{{ $riga->ordine->data_prevista_consegna ? \Carbon\Carbon::parse($riga->ordine->data_prevista_consegna)->format('d/m/Y') : '-' }}</td>
@@ -82,7 +95,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="9" class="text-center text-muted py-3">Nessuna lavorazione esterna</td>
+                    <td colspan="10" class="text-center text-muted py-3">Nessuna lavorazione esterna</td>
                 </tr>
             @endforelse
         </tbody>
@@ -92,6 +105,25 @@
 </div>
 
 <script>
+function aggiornaQtaEsterna(faseId, valore) {
+    valore = valore.trim().replace(/\./g, '').replace(',', '.');
+    if (valore === '-' || valore === '') return;
+    fetch('{{ route("owner.aggiornaCampo") }}', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}',
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({ fase_id: faseId, campo: 'qta_fase', valore: valore })
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (!d.success) alert('Errore: ' + (d.messaggio || ''));
+    })
+    .catch(() => alert('Errore di connessione'));
+}
+
 document.getElementById('searchBox').addEventListener('input', function() {
     const query = this.value.toLowerCase().trim();
     document.querySelectorAll('tr.searchable').forEach(function(row) {

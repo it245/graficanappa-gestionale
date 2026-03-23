@@ -1302,6 +1302,11 @@ public function calcolaOreEPriorita($fase)
                     'fornitore'     => $fornitore,
                     'stato'         => $stato,
                     'fasi'          => $fasi->pluck('faseCatalogo.nome_display', 'id')->filter()->values()->implode(', ') ?: $fasi->pluck('fase')->implode(', '),
+                    'fasi_dettaglio' => $fasi->map(fn($f) => [
+                        'id' => $f->id,
+                        'nome' => $f->faseCatalogo->nome_display ?? $f->fase,
+                        'qta' => $f->qta_fase ?? $f->ordine->qta_richiesta ?? 0,
+                    ])->values()->toArray(),
                     'num_fasi'      => $fasi->count(),
                     'data_invio'    => $dataInvio,
                     'note'          => $fasi->pluck('note')->filter()->unique()->implode(' | '),
