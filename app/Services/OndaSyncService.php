@@ -525,7 +525,8 @@ class OndaSyncService
                     }
                 }
 
-                $chiaveFase = $faseNome . '|' . ($riga->QtaDaLavorare ?? 0);
+                // Chiave dedup: include PrdIdDoc per non bloccare fasi tra ordini diversi
+                $chiaveFase = $riga->PrdIdDoc . '|' . $faseNome . '|' . ($riga->QtaDaLavorare ?? 0);
                 if (isset($fasiViste[$chiaveFase])) continue;
                 $fasiViste[$chiaveFase] = true;
 
@@ -1095,7 +1096,8 @@ class OndaSyncService
                     }
                 }
 
-                $chiaveFase = $faseNome . '|' . ($riga->QtaDaLavorare ?? 0);
+                // Chiave dedup: include PrdIdDoc per non bloccare fasi tra ordini diversi
+                $chiaveFase = $riga->PrdIdDoc . '|' . $faseNome . '|' . ($riga->QtaDaLavorare ?? 0);
                 if (isset($fasiViste[$chiaveFase])) continue;
                 $fasiViste[$chiaveFase] = true;
 
