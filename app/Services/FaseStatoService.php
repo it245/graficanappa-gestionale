@@ -14,9 +14,16 @@ class FaseStatoService
      */
     public static function ricalcolaStati($ordineId)
     {
-        $fasi = OrdineFase::where('ordine_id', $ordineId)->orderBy('priorita')->orderBy('id')->get();
+        $ordine = Ordine::find($ordineId);
+        if (!$ordine) return;
 
+        $fasi = OrdineFase::where('ordine_id', $ordineId)->orderBy('priorita')->orderBy('id')->get();
         if ($fasi->isEmpty()) return;
+
+        // Predecessori: cerca in TUTTA la commessa (non solo stesso ordine)
+        // Commesse multi-ordine hanno fasi su ordini diversi (es. copertina + interno)
+        $tutteFasiCommessa = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $ordine->commessa))
+            ->get();
 
         $flusso = config('fasi_priorita', []);
 
@@ -28,8 +35,9 @@ class FaseStatoService
             if (str_starts_with($fase->fase, 'STAMPAXL106') || str_starts_with($fase->fase, 'STAMPA XL')) continue;
 
             // Predecessori basati sul flusso produttivo reale (config)
+            // Cerca in tutta la commessa per trovare fasi su altri ordini
             $mioOrdine = $flusso[$fase->fase] ?? 500;
-            $fasiPrecedenti = $fasi->filter(fn($f) =>
+            $fasiPrecedenti = $tutteFasiCommessa->filter(fn($f) =>
                 $f->id !== $fase->id && ($flusso[$f->fase] ?? 500) < $mioOrdine
             );
 
