@@ -14,6 +14,7 @@ use App\Http\Controllers\DashboardAdminController;
 use App\Http\Controllers\FieryController;
 use App\Http\Controllers\EtichettaController;
 use App\Http\Controllers\PresenzeController;
+use App\Http\Controllers\CrmController;
 
 // Operatori
 Route::prefix('operatore')->group(function() {
@@ -184,6 +185,17 @@ Route::get('/commesse/{commessa}', [App\Http\Controllers\CommessaController::cla
 ->middleware('operatore.auth')
     ->name('commesse.show');
 
+
+// CRM — Rete contatti personale
+Route::middleware(['owner'])->prefix('crm')->group(function() {
+    Route::get('/', [CrmController::class, 'index'])->name('crm.index');
+    Route::post('/salva', [CrmController::class, 'salva'])->name('crm.salva');
+    Route::get('/{contatto}', [CrmController::class, 'dettaglio'])->name('crm.dettaglio');
+    Route::post('/{contatto}/aggiorna', [CrmController::class, 'aggiorna'])->name('crm.aggiorna');
+    Route::delete('/{contatto}', [CrmController::class, 'elimina'])->name('crm.elimina');
+    Route::post('/{contatto}/interazione', [CrmController::class, 'salvaInterazione'])->name('crm.salvaInterazione');
+    Route::delete('/{contatto}/interazione/{interazione}', [CrmController::class, 'eliminaInterazione'])->name('crm.eliminaInterazione');
+});
 
 // Homepage
 Route::get('/', fn() => view('welcome'));
