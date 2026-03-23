@@ -56,11 +56,19 @@ class OndaSyncService
                 f.CodFase,
                 f.CodMacchina,
                 f.QtaDaLavorare,
-                f.CodUnMis AS UMFase
+                f.CodUnMis AS UMFase,
+                f.TipoRiga AS TipoRigaFase,
+                rigaAtt.CodArt AS CodFaseRiga
             FROM ATTDocTeste t
             INNER JOIN PRDDocTeste p ON t.CodCommessa = p.CodCommessa
             LEFT JOIN STDAnagrafiche a ON t.IdAnagrafica = a.IdAnagrafica
             LEFT JOIN PRDDocFasi f ON p.IdDoc = f.IdDoc
+            OUTER APPLY (
+                SELECT TOP 1 r.CodArt
+                FROM ATTDocRighe r
+                WHERE r.IdDoc = t.IdDoc
+                  AND (r.CodArt = f.CodFase OR r.CodArt = SUBSTRING(f.CodFase, 4, LEN(f.CodFase)))
+            ) rigaAtt
             OUTER APPLY (
                 SELECT TOP 1 r.CodArt, r.Descrizione, r.Qta, r.CodUnMis
                 FROM PRDDocRighe r WHERE r.IdDoc = p.IdDoc
@@ -488,6 +496,12 @@ class OndaSyncService
                 $faseNome = trim($riga->CodFase ?? '');
                 if (!$faseNome) continue;
 
+                // Se ATTDocRighe ha un nome diverso (senza EXT), usa quello
+                $codFaseRiga = trim($riga->CodFaseRiga ?? '');
+                if ($codFaseRiga && $codFaseRiga !== $faseNome && isset($mappaReparti[$codFaseRiga])) {
+                    $faseNome = $codFaseRiga;
+                }
+
                 // Rimappa STAMPA generico in base alla macchina assegnata in Onda
                 if ($faseNome === 'STAMPA') {
                     $macchina = trim($riga->CodMacchina ?? '');
@@ -515,8 +529,16 @@ class OndaSyncService
                 if (isset($fasiViste[$chiaveFase])) continue;
                 $fasiViste[$chiaveFase] = true;
 
-                $repartoNome = $mappaReparti[$faseNome]
-                    ?? (str_starts_with(strtoupper($faseNome), 'EXT') ? 'esterno' : 'legatoria');
+                // TipoRiga da Onda: 1=interna, 2=esterna
+                $tipoRigaOnda = (int)($riga->TipoRigaFase ?? 1);
+                $faseEsterna = ($tipoRigaOnda === 2);
+
+                // Reparto: se esterna (TipoRiga=2) → esterno, altrimenti dalla mappa
+                if ($faseEsterna) {
+                    $repartoNome = 'esterno';
+                } else {
+                    $repartoNome = $mappaReparti[$faseNome] ?? 'legatoria';
+                }
                 $tipo = $tipiFase[$faseNome] ?? 'monofase';
                 $prioritaFase = $mappaPriorita[$faseNome] ?? 500;
 
@@ -909,11 +931,19 @@ class OndaSyncService
                 f.CodFase,
                 f.CodMacchina,
                 f.QtaDaLavorare,
-                f.CodUnMis AS UMFase
+                f.CodUnMis AS UMFase,
+                f.TipoRiga AS TipoRigaFase,
+                rigaAtt.CodArt AS CodFaseRiga
             FROM ATTDocTeste t
             INNER JOIN PRDDocTeste p ON t.CodCommessa = p.CodCommessa
             LEFT JOIN STDAnagrafiche a ON t.IdAnagrafica = a.IdAnagrafica
             LEFT JOIN PRDDocFasi f ON p.IdDoc = f.IdDoc
+            OUTER APPLY (
+                SELECT TOP 1 r.CodArt
+                FROM ATTDocRighe r
+                WHERE r.IdDoc = t.IdDoc
+                  AND (r.CodArt = f.CodFase OR r.CodArt = SUBSTRING(f.CodFase, 4, LEN(f.CodFase)))
+            ) rigaAtt
             OUTER APPLY (
                 SELECT TOP 1 r.CodArt, r.Descrizione, r.Qta, r.CodUnMis
                 FROM PRDDocRighe r WHERE r.IdDoc = p.IdDoc
@@ -1048,6 +1078,12 @@ class OndaSyncService
                 $faseNome = trim($riga->CodFase ?? '');
                 if (!$faseNome) continue;
 
+                // Se ATTDocRighe ha un nome diverso (senza EXT), usa quello
+                $codFaseRiga = trim($riga->CodFaseRiga ?? '');
+                if ($codFaseRiga && $codFaseRiga !== $faseNome && isset($mappaReparti[$codFaseRiga])) {
+                    $faseNome = $codFaseRiga;
+                }
+
                 if ($faseNome === 'STAMPA') {
                     $macchina = trim($riga->CodMacchina ?? '');
                     if (stripos($macchina, 'INDIGO') !== false) {
@@ -1064,8 +1100,15 @@ class OndaSyncService
                 if (isset($fasiViste[$chiaveFase])) continue;
                 $fasiViste[$chiaveFase] = true;
 
-                $repartoNome = $mappaReparti[$faseNome]
-                    ?? (str_starts_with(strtoupper($faseNome), 'EXT') ? 'esterno' : 'legatoria');
+                // TipoRiga da Onda: 1=interna, 2=esterna
+                $tipoRigaOnda = (int)($riga->TipoRigaFase ?? 1);
+                $faseEsterna = ($tipoRigaOnda === 2);
+
+                if ($faseEsterna) {
+                    $repartoNome = 'esterno';
+                } else {
+                    $repartoNome = $mappaReparti[$faseNome] ?? 'legatoria';
+                }
                 $tipo = $tipiFase[$faseNome] ?? 'monofase';
                 $prioritaFase = $mappaPriorita[$faseNome] ?? 500;
 
@@ -1468,10 +1511,14 @@ class OndaSyncService
             'accopp+fust' => 'esterno',
             'ACCOPPIATURA.FOG.33.48INT' => 'esterno',
             'ACCOPPIATURA.FOGLI' => 'esterno',
-            'Allest.Manuale' => 'esterno',
-            'ALLEST.SHOPPER' => 'esterno',
-            'ALLEST.SHOPPER030' => 'esterno',
+            'Allest.Manuale' => 'legatoria',
+            'Allest.Manuale0,2' => 'legatoria',
+            'ALLEST.SHOPPER' => 'legatoria',
+            'ALLEST.SHOPPER024' => 'legatoria',
+            'ALLEST.SHOPPER030' => 'legatoria',
+            'ALLESTIMENTO.CALENDARI' => 'legatoria',
             'ALLESTIMENTO.ESPOSITORI' => 'esterno',
+            'CARTONATO.GEN' => 'legatoria',
             'APPL.BIADESIVO30' => 'esterno',
             'appl.laccetto' => 'esterno',
             'ARROT2ANGOLI' => 'esterno',
@@ -1556,8 +1603,9 @@ class OndaSyncService
             'TAGLIACARTE.IML' => 'tagliacarte',
             'TAGLIOINDIGO' => 'tagliacarte',
             'UVSERIGRAFICOEST' => 'esterno',
-            'UVSPOT.MGI.30M' => 'esterno',
-            'UVSPOT.MGI.9M' => 'esterno',
+            'UVSPOT.MGI.30M' => 'finitura digitale',
+            'UVSPOT.MGI.30M.10' => 'finitura digitale',
+            'UVSPOT.MGI.9M' => 'finitura digitale',
             'UVSPOTEST' => 'esterno',
             'UVSPOTSPESSEST' => 'esterno',
             'ZUND' => 'finitura digitale',
@@ -1566,7 +1614,7 @@ class OndaSyncService
             'stampalaminaoro' => 'stampa a caldo',
             'STAMPALAMINAORO' => 'stampa a caldo',
             'ALL.COFANETTO.ISMAsrl' => 'esterno',
-            'PMDUPLO36COP' => 'esterno',
+            'PMDUPLO36COP' => 'legatoria',
             'FINESTRATURA.MANUALE' => 'finestratura',
             'STAMPACALDOJOHEST' => 'esterno',
             'BROSSFRESATA/A5EST' => 'esterno',

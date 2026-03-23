@@ -617,17 +617,40 @@ class PrinectSyncService
 
                 if ($worksteps->isEmpty()) continue;
 
-                // Protezione: se nessun workstep ha actualStartDate, la stampa non è mai partita
+                // Protezione: verifica che la stampa sia effettivamente avvenuta
+                // Usa workstep activities (endpoint più affidabile) come prova certa
                 $wsConStart = $worksteps->filter(fn($ws) => !empty($ws['actualStartDate']));
-                if ($wsConStart->isEmpty()) continue;
+                $totaleBuoniCheck = $worksteps->sum(fn($ws) => $ws['amountProduced'] ?? 0);
+                $allCompletedCheck = $worksteps->every(fn($ws) => ($ws['status'] ?? '') === 'COMPLETED');
+
+                // Se nessun actualStartDate, verifica tramite workstep activities API
+                $stampaConfermata = $wsConStart->isNotEmpty();
+                if (!$stampaConfermata && $allCompletedCheck && $totaleBuoniCheck > 0) {
+                    // Chiedi a Prinect: il workstep ha attività reali?
+                    foreach ($worksteps as $ws) {
+                        try {
+                            $wsAct = $this->prinect->getWorkstepActivities($jobId, $ws['id']);
+                            $attivitaWs = collect($wsAct['activities'] ?? []);
+                            // Se almeno un'attività ha goodCycles > 0 o è di tipo "Tempo di esecuzione"
+                            $haStampato = $attivitaWs->contains(function ($a) {
+                                return ($a['goodCycles'] ?? 0) > 0
+                                    || str_contains($a['timeTypeName'] ?? '', 'esecuzione');
+                            });
+                            if ($haStampato) {
+                                $stampaConfermata = true;
+                                break;
+                            }
+                        } catch (\Exception $e) {
+                            // API non disponibile, non confermare
+                        }
+                    }
+                }
+
+                if (!$stampaConfermata) continue;
 
                 // Aggiorna fogli_buoni/scarto dal totale workstep (più affidabile delle singole attività)
                 $totaleBuoniWs = $worksteps->sum(fn($ws) => $ws['amountProduced'] ?? 0);
                 $totaleScartaWs = $worksteps->sum(fn($ws) => $ws['wasteProduced'] ?? 0);
-
-                // Protezione: se 0 attività nel DB E il workstep non ha date, skip
-                $attivitaCount = PrinectAttivita::where('commessa_gestionale', $commessa)->count();
-                if ($attivitaCount == 0 && $wsConStart->isEmpty()) continue;
 
                 if ($totaleBuoniWs > 0) {
                     foreach ($fasi as $fase) {
@@ -652,48 +675,74 @@ class PrinectSyncService
                 $attivitaRecente = $ultimaAttivita && Carbon::parse($ultimaAttivita)->diffInMinutes(now()) < 60;
                 if ($attivitaRecente) continue;
 
-                // Protezione B/C: nessun foglio o qta_carta mancante → NON terminare
-                $qtaCarta = $fasi->first()->ordine->qta_carta ?? 0;
                 if ($totaleBuoniWs <= 0) continue;
 
                 $allCompleted = $worksteps->every(fn($ws) => ($ws['status'] ?? '') === 'COMPLETED');
                 $anyWaiting = $worksteps->contains(fn($ws) => ($ws['status'] ?? '') === 'WAITING');
-                $totaleFogliWs = $totaleBuoniWs + $totaleScartaWs; // buoni + scarti
+                $totaleFogliWs = $totaleBuoniWs + $totaleScartaWs;
 
+                // === TERMINAZIONE PER SINGOLO WORKSTEP ===
+                // Se N fasi STAMPAXL = N workstep, termina individualmente ogni fase
+                // quando il suo workstep corrispondente è COMPLETED
+                $wsValues = $worksteps->values();
+                $fasiValues = $fasi->values();
+
+                if ($fasiValues->count() > 1 && $fasiValues->count() === $wsValues->count()) {
+                    // Corrispondenza 1:1 (ordinati per indice)
+                    foreach ($fasiValues as $i => $fase) {
+                        $ws = $wsValues[$i] ?? null;
+                        if (!$ws || $fase->stato >= 3) continue;
+
+                        if (($ws['status'] ?? '') === 'COMPLETED' && ($ws['amountProduced'] ?? 0) > 0) {
+                            $wsBuoni = $ws['amountProduced'] ?? 0;
+                            $wsScarto = $ws['wasteProduced'] ?? 0;
+                            $wsEnd = $ws['actualEndDate'] ?? null;
+
+                            $fase->stato = 3;
+                            $fase->data_fine = $wsEnd
+                                ? Carbon::parse($wsEnd)->format('Y-m-d H:i:s')
+                                : now()->format('Y-m-d H:i:s');
+                            $fase->fogli_buoni = $wsBuoni;
+                            $fase->qta_prod = $wsBuoni;
+                            $fase->fogli_scarto = $wsScarto;
+                            $fase->save();
+                            FaseStatoService::ricalcolaStati($fase->ordine_id);
+                        }
+                    }
+                    continue; // Gestito individualmente, skip logica globale
+                }
+
+                // === TERMINAZIONE GLOBALE (commesse con 1 fase STAMPAXL) ===
                 $deveTerminare = false;
+                $qtaCarta = $fasi->first()->ordine->qta_carta ?? 0;
 
                 // Regola 1: TUTTI workstep COMPLETED
                 if ($allCompleted) $deveTerminare = true;
 
-                // Regole 2 e 6 si applicano SOLO se:
-                // - Nessun workstep è WAITING
-                // - Almeno un workstep ha actualStartDate E actualEndDate (stampa effettivamente terminata)
+                // Regole 2 e 6: fogli >= qta_carta (solo se no WAITING e con actualEndDate)
                 $wsTerminati = $worksteps->filter(fn($ws) => !empty($ws['actualStartDate']) && !empty($ws['actualEndDate']));
                 if (!$anyWaiting && $wsTerminati->isNotEmpty()) {
-                    // Regola 2: amountProduced >= qta_carta (fogli buoni bastano)
                     if (!$deveTerminare && $qtaCarta > 0 && $totaleBuoniWs >= $qtaCarta) $deveTerminare = true;
-
-                    // Regola 6: amountProduced + wasteProduced >= qta_carta (buoni+scarti coprono)
                     if (!$deveTerminare && $qtaCarta > 0 && $totaleFogliWs >= $qtaCarta) $deveTerminare = true;
                 }
 
                 if (!$deveTerminare) continue;
-                    // Prendi data_fine dall'ultimo workstep completato
-                    $lastEnd = $worksteps->map(fn($ws) => $ws['actualEndDate'] ?? null)
-                        ->filter()
-                        ->sort()
-                        ->last();
 
-                    foreach ($fasi as $fase) {
-                        if ($fase->stato < 3) {
-                            $fase->stato = 3;
-                            $fase->data_fine = $lastEnd
-                                ? Carbon::parse($lastEnd)->format('Y-m-d H:i:s')
-                                : now()->format('Y-m-d H:i:s');
-                            $fase->save();
-                        }
+                $lastEnd = $worksteps->map(fn($ws) => $ws['actualEndDate'] ?? null)
+                    ->filter()
+                    ->sort()
+                    ->last();
+
+                foreach ($fasi as $fase) {
+                    if ($fase->stato < 3) {
+                        $fase->stato = 3;
+                        $fase->data_fine = $lastEnd
+                            ? Carbon::parse($lastEnd)->format('Y-m-d H:i:s')
+                            : now()->format('Y-m-d H:i:s');
+                        $fase->save();
                     }
-                    FaseStatoService::ricalcolaStati($fasi->first()->ordine_id);
+                }
+                FaseStatoService::ricalcolaStati($fasi->first()->ordine_id);
             } catch (\Exception $e) {
                 // Skip se API Prinect non disponibile
             }

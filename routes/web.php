@@ -181,6 +181,12 @@ Route::middleware('operatore.auth')->prefix('chat')->group(function () {
     Route::get('/messaggi', [ChatController::class, 'messaggi'])->name('chat.messaggi');
 });
 
+// CSRF token refresh (mantiene sessione viva)
+Route::get('/csrf-refresh', fn() => response()->json(['token' => csrf_token()]));
+
+// Prinect API Explorer
+Route::get('/prinect-explorer', fn() => view('prinect_explorer'));
+
 // Health check
 // Push notifications
 Route::post('/push/subscribe', [PushController::class, 'subscribe'])->name('push.subscribe');

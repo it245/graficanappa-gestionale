@@ -175,8 +175,9 @@
 {{-- Colori e Fustella --}}
 @if($ordine)
 @php
-    $coloriDett = \App\Helpers\DescrizioneParser::parseColori($ordine->descrizione ?? '', $ordine->cliente_nome ?? '');
-    $fustellaDett = \App\Helpers\DescrizioneParser::parseFustella($ordine->descrizione ?? '', $ordine->cliente_nome ?? '', $ordine->note_prestampa ?? '');
+    $tutteDescDett = $ordini->pluck('descrizione')->filter()->unique()->implode(' | ');
+    $coloriDett = \App\Helpers\DescrizioneParser::parseColori($tutteDescDett, $ordine->cliente_nome ?? '');
+    $fustellaDett = \App\Helpers\DescrizioneParser::parseFustella($tutteDescDett, $ordine->cliente_nome ?? '', $ordine->note_prestampa ?? '');
 @endphp
 <div class="row g-2 mb-2" style="font-size:13px;">
     <div class="col-auto">
@@ -246,6 +247,25 @@
         </div>
     </div>
 </div>
+
+{{-- Note Fustelle (note inserite da Mirko/prestampa sulle singole fasi) --}}
+@php
+    $noteFasi = $fasi->filter(fn($f) => !empty($f->note))->values();
+@endphp
+@if($noteFasi->isNotEmpty())
+<div class="row g-2 mb-3">
+    <div class="col-12">
+        <div class="border rounded p-2" style="background:#ede9fe; border-color:#c4b5fd !important;">
+            <strong class="d-block mb-1" style="color:#7c3aed;">Note Fustelle</strong>
+            @foreach($noteFasi as $nf)
+                <div style="font-size:13px; padding:2px 0; {{ !$loop->last ? 'border-bottom:1px solid #ddd6fe;' : '' }}">
+                    <strong>{{ $nf->faseCatalogo->nome_display ?? $nf->fase }}</strong>: {{ $nf->note }}
+                </div>
+            @endforeach
+        </div>
+    </div>
+</div>
+@endif
 @endif
 
 @php

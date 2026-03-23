@@ -142,8 +142,9 @@
 
 {{-- Info Commessa --}}
 @php
-    $coloriCalc = \App\Helpers\DescrizioneParser::parseColori($ordine->descrizione ?? '', $ordine->cliente_nome ?? '');
-    $fustellaCalc = \App\Helpers\DescrizioneParser::parseFustella($ordine->descrizione ?? '', $ordine->cliente_nome ?? '', $ordine->note_prestampa ?? '');
+    $tutteDesc = $ordini->pluck('descrizione')->filter()->unique()->implode(' | ');
+    $coloriCalc = \App\Helpers\DescrizioneParser::parseColori($tutteDesc, $ordine->cliente_nome ?? '');
+    $fustellaCalc = \App\Helpers\DescrizioneParser::parseFustella($tutteDesc, $ordine->cliente_nome ?? '', $ordine->note_prestampa ?? '');
     $mirko = $isMirko ?? false;
 @endphp
 <div class="row g-2 mb-2" style="font-size:13px;">
@@ -274,8 +275,8 @@
                 <th style="width:70px;">Qta Carta</th>
                 <th style="width:70px;">Qta Prod.</th>
                 <th style="width:120px;">Operatori</th>
-                <th>Note</th>
-                <th style="width:180px;">Descrizione</th>
+                <th style="width:200px;">Note</th>
+                <th>Descrizione</th>
                 <th style="width:110px;">Data Inizio</th>
                 <th style="width:110px;">Data Fine</th>
             </tr>
@@ -308,7 +309,12 @@
                         -
                     @endforelse
                 </td>
+                @if($mirko)
+                <td contenteditable data-campo="note_fase" data-fase="{{ $fase->id }}"
+                    onblur="salvaNotaFase(this)" style="cursor:text;">{{ $fase->note ?? '' }}</td>
+                @else
                 <td>{{ $fase->note ?? '-' }}</td>
+                @endif
                 <td style="max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ $fase->ordine->descrizione ?? '-' }}</td>
                 <td>{{ $fase->data_inizio ?? '-' }}</td>
                 <td>{{ $fase->data_fine ?? '-' }}</td>
@@ -334,6 +340,32 @@ function salvaCampoPrestampa(el) {
             'Accept': 'application/json'
         },
         body: JSON.stringify({ ordine_id: ordineId, campo: campo, valore: valore })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+        if (d.success) {
+            el.classList.add('campo-salvato');
+            setTimeout(function() { el.classList.remove('campo-salvato'); }, 1500);
+        } else {
+            alert('Errore: ' + (d.messaggio || 'salvataggio fallito'));
+        }
+    })
+    .catch(function() { alert('Errore di connessione'); });
+}
+
+function salvaNotaFase(el) {
+    var faseId = el.getAttribute('data-fase');
+    var valore = el.innerText.trim();
+
+    fetch('{{ route("operatore.prestampa.aggiornaCampo") }}', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}',
+            'X-Op-Token': new URLSearchParams(window.location.search).get('op_token') || '',
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({ fase_id: faseId, campo: 'note', valore: valore })
     })
     .then(function(r) { return r.json(); })
     .then(function(d) {

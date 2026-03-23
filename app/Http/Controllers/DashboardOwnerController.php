@@ -835,7 +835,7 @@ class DashboardOwnerController extends Controller
         }
 
         $ordine = $ordini->first();
-        return view('owner.dettaglio_commessa', compact('commessa', 'fasi', 'preview', 'ordine'));
+        return view('owner.dettaglio_commessa', compact('commessa', 'fasi', 'preview', 'ordine', 'ordini'));
     }
 
     public function eliminaFase(Request $request)

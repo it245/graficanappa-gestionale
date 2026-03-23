@@ -157,6 +157,28 @@
             });
         };
     })();
+
+    // Se la pagina viene caricata dalla cache (frecce avanti/indietro), ricarica per avere CSRF fresco
+    window.addEventListener('pageshow', function(e) {
+        if (e.persisted) {
+            fetch('/csrf-refresh').then(function(r) { return r.json(); }).then(function(d) {
+                if (d.token) {
+                    var meta = document.querySelector('meta[name="csrf-token"]');
+                    if (meta) meta.setAttribute('content', d.token);
+                }
+            });
+        }
+    });
+
+    // Refresh CSRF token ogni 30 minuti per evitare "Sessione scaduta"
+    setInterval(function() {
+        fetch('/csrf-refresh').then(function(r) { return r.json(); }).then(function(d) {
+            if (d.token) {
+                var meta = document.querySelector('meta[name="csrf-token"]');
+                if (meta) meta.setAttribute('content', d.token);
+            }
+        }).catch(function() {});
+    }, 30 * 60 * 1000);
     </script>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     @include('partials.echo-client')

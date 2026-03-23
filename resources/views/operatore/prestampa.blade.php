@@ -113,7 +113,7 @@
                     <td>{{ $c->cliente_nome ?? '-' }}</td>
                     <td style="max-width:300px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ $c->descrizione ?? '-' }}</td>
                     @php
-                        $fustPre = \App\Helpers\DescrizioneParser::parseFustella($c->descrizione ?? '', $c->cliente_nome ?? '', $c->note_prestampa ?? '');
+                        $fustPre = \App\Helpers\DescrizioneParser::parseFustella($c->tutte_descrizioni ?? $c->descrizione ?? '', $c->cliente_nome ?? '', $c->note_prestampa ?? '');
                     @endphp
                     <td class="fustella-cell" style="font-weight:600;">{{ $fustPre ?: '-' }}</td>
                     <td>{{ $c->qta_richiesta ? number_format($c->qta_richiesta, 0, ',', '.') : '-' }}</td>

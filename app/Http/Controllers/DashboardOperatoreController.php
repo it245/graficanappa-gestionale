@@ -196,6 +196,7 @@ class DashboardOperatoreController extends Controller
             ->select('commessa',
                 \Illuminate\Support\Facades\DB::raw('MIN(cliente_nome) as cliente_nome'),
                 \Illuminate\Support\Facades\DB::raw('MIN(descrizione) as descrizione'),
+                \Illuminate\Support\Facades\DB::raw('GROUP_CONCAT(DISTINCT descrizione SEPARATOR " | ") as tutte_descrizioni'),
                 \Illuminate\Support\Facades\DB::raw('MIN(data_prevista_consegna) as data_prevista_consegna'),
                 \Illuminate\Support\Facades\DB::raw('MIN(data_registrazione) as data_registrazione'),
                 \Illuminate\Support\Facades\DB::raw('MAX(note_prestampa) as note_prestampa'),
@@ -212,7 +213,7 @@ class DashboardOperatoreController extends Controller
 
         if ($isMirko) {
             $commesse = $commesse->filter(function ($c) {
-                $desc = $c->descrizione ?? '';
+                $desc = $c->tutte_descrizioni ?? $c->descrizione ?? '';
                 $cliente = $c->cliente_nome ?? '';
                 $notePre = $c->note_prestampa ?? '';
                 $fs = \App\Helpers\DescrizioneParser::parseFustella($desc, $cliente, $notePre);
@@ -273,11 +274,28 @@ class DashboardOperatoreController extends Controller
         $operatore = $request->attributes->get('operatore') ?? auth()->guard('operatore')->user();
         if (!$operatore) return response()->json(['success' => false, 'messaggio' => 'Non autorizzato'], 403);
 
-        $campiConsentiti = ['note_prestampa', 'responsabile', 'commento_produzione',
-                           'descrizione', 'cliente_nome', 'qta_richiesta', 'colori', 'fustella_codice'];
         $campo = $request->input('campo');
         $valore = $request->input('valore');
+        $faseId = $request->input('fase_id');
         $ordineId = $request->input('ordine_id');
+
+        // Aggiornamento nota su singola fase (usato da Mirko)
+        if ($faseId && $campo === 'note') {
+            $fase = \App\Models\OrdineFase::find($faseId);
+            if (!$fase) return response()->json(['success' => false, 'messaggio' => 'Fase non trovata']);
+            // Prefissa con nome operatore se non già presente
+            $nomeOp = trim(($operatore->nome ?? '') . ' ' . ($operatore->cognome ?? ''));
+            if ($valore && $nomeOp && !str_starts_with($valore, $nomeOp . ':')) {
+                $valore = $nomeOp . ': ' . $valore;
+            }
+            $fase->note = $valore ?: null;
+            $fase->save();
+            return response()->json(['success' => true]);
+        }
+
+        // Aggiornamento campo su ordine
+        $campiConsentiti = ['note_prestampa', 'responsabile', 'commento_produzione',
+                           'descrizione', 'cliente_nome', 'qta_richiesta', 'colori', 'fustella_codice'];
 
         if (!in_array($campo, $campiConsentiti)) {
             return response()->json(['success' => false, 'messaggio' => 'Campo non consentito']);
@@ -288,12 +306,10 @@ class DashboardOperatoreController extends Controller
             return response()->json(['success' => false, 'messaggio' => 'Ordine non trovato']);
         }
 
-        // Pulizia valori numerici
         if ($campo === 'qta_richiesta') {
             $valore = (int) str_replace(['.', ','], ['', ''], $valore);
         }
 
-        // Aggiorna su tutti gli ordini della stessa commessa
         \App\Models\Ordine::where('commessa', $ordine->commessa)->update([$campo => $valore]);
 
         return response()->json(['success' => true]);
