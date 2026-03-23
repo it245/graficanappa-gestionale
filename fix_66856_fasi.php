@@ -30,22 +30,7 @@ if ($catStampa && !OrdineFase::where('ordine_id', $ordineId)->where('fase_catalo
     echo "STAMPAXL106.1 già esiste o catalogo mancante" . PHP_EOL;
 }
 
-// BRT1
-$catBrt = FasiCatalogo::where('nome', 'BRT1')->first();
-if ($catBrt && !OrdineFase::where('ordine_id', $ordineId)->where('fase_catalogo_id', $catBrt->id)->exists()) {
-    OrdineFase::create([
-        'ordine_id' => $ordineId,
-        'fase' => 'BRT1',
-        'fase_catalogo_id' => $catBrt->id,
-        'qta_fase' => 447,
-        'um' => 'KG',
-        'priorita' => config('fasi_priorita')['BRT1'] ?? 96,
-        'stato' => 0,
-    ]);
-    echo "CREATA: BRT1 | qta:447" . PHP_EOL;
-} else {
-    echo "BRT1 già esiste o catalogo mancante" . PHP_EOL;
-}
+// BRT1 — dedup per commessa, non per ordine (1 sola per commessa)
 
 \App\Services\FaseStatoService::ricalcolaCommessa('0066856-26');
 echo PHP_EOL . "DONE — ricalcolato" . PHP_EOL;
