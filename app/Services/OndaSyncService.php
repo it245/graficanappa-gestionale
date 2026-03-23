@@ -496,12 +496,6 @@ class OndaSyncService
                 $faseNome = trim($riga->CodFase ?? '');
                 if (!$faseNome) continue;
 
-                // Se ATTDocRighe ha un nome diverso (senza EXT), usa quello
-                $codFaseRiga = trim($riga->CodFaseRiga ?? '');
-                if ($codFaseRiga && $codFaseRiga !== $faseNome && isset($mappaReparti[$codFaseRiga])) {
-                    $faseNome = $codFaseRiga;
-                }
-
                 // Rimappa STAMPA generico in base alla macchina assegnata in Onda
                 if ($faseNome === 'STAMPA') {
                     $macchina = trim($riga->CodMacchina ?? '');
@@ -1077,12 +1071,6 @@ class OndaSyncService
             foreach ($righe as $riga) {
                 $faseNome = trim($riga->CodFase ?? '');
                 if (!$faseNome) continue;
-
-                // Se ATTDocRighe ha un nome diverso (senza EXT), usa quello
-                $codFaseRiga = trim($riga->CodFaseRiga ?? '');
-                if ($codFaseRiga && $codFaseRiga !== $faseNome && isset($mappaReparti[$codFaseRiga])) {
-                    $faseNome = $codFaseRiga;
-                }
 
                 if ($faseNome === 'STAMPA') {
                     $macchina = trim($riga->CodMacchina ?? '');
