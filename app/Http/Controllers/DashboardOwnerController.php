@@ -647,8 +647,15 @@ public function calcolaOreEPriorita($fase)
             ? FasiCatalogo::with('reparto')->find($request->fase_catalogo_id)
             : null;
 
+        // Auto-append anno (-26, -27, ecc.) se mancante
+        $commessa = trim($request->commessa);
+        $suffissoAnno = '-' . date('y');
+        if (!preg_match('/-\d{2}$/', $commessa)) {
+            $commessa .= $suffissoAnno;
+        }
+
         $ordine = Ordine::create([
-            'commessa' => trim($request->commessa),
+            'commessa' => $commessa,
             'cliente_nome' => trim($request->cliente_nome ?? ''),
             'cod_art' => trim($request->cod_art ?? ''),
             'descrizione' => trim($request->descrizione ?? ''),
