@@ -232,5 +232,4 @@ class KioskController extends Controller
         }
         return response()->json(['nota' => $nota]);
     }
-    }
 }
