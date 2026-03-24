@@ -82,6 +82,7 @@ class KioskController extends Controller
             ['nome' => 'Finestratrice', 'reparti' => ['finestratura']],
             ['nome' => 'Fustella Cilindrica', 'reparti' => ['fustella cilindrica']],
             ['nome' => 'Canon V900', 'reparti' => ['digitale']],
+            ['nome' => 'Finitura Digitale', 'reparti' => ['finitura digitale']],
             ['nome' => 'Tagliacarte', 'reparti' => ['tagliacarte']],
             ['nome' => 'Legatoria', 'reparti' => ['legatoria']],
         ];
@@ -164,6 +165,7 @@ class KioskController extends Controller
         // === ZONA 2: PROSSIMI LAVORI ===
         $prossimi = [];
         foreach ($macchineConfig as $mc) {
+            // Prima cerca stato 1 (pronto), se non ce ne sono cerca stato 0 (caricato)
             $fasiCoda = OrdineFase::with('ordine')
                 ->where('stato', 1)
                 ->where(fn($q) => $q->where('esterno', 0)->orWhereNull('esterno'))
@@ -173,6 +175,18 @@ class KioskController extends Controller
                 ->orderBy('priorita')
                 ->limit(3)
                 ->get();
+
+            if ($fasiCoda->isEmpty()) {
+                $fasiCoda = OrdineFase::with('ordine')
+                    ->where('stato', 0)
+                    ->where(fn($q) => $q->where('esterno', 0)->orWhereNull('esterno'))
+                    ->whereHas('faseCatalogo', fn($q) =>
+                        $q->whereHas('reparto', fn($q2) => $q2->whereIn('nome', $mc['reparti']))
+                    )
+                    ->orderBy('priorita')
+                    ->limit(3)
+                    ->get();
+            }
 
             if ($fasiCoda->isNotEmpty()) {
                 $items = [];
@@ -212,7 +226,7 @@ class KioskController extends Controller
             ['nome' => 'Piegaincolla', 'reparti' => ['piegaincolla'], 'ore_disp' => 14],  // 6-20
             ['nome' => 'Finestratrice', 'reparti' => ['finestratura'], 'ore_disp' => 14], // 6-20
             ['nome' => 'Fustella Cilindrica', 'reparti' => ['fustella cilindrica'], 'ore_disp' => 8], // 8-17 (1h pausa)
-            ['nome' => 'Canon V900', 'reparti' => ['digitale'], 'ore_disp' => 8],         // 8-17 (1h pausa)
+            ['nome' => 'Canon V900', 'reparti' => ['digitale', 'finitura digitale'], 'ore_disp' => 8], // 8-17 (1h pausa)
             ['nome' => 'Tagliacarte', 'reparti' => ['tagliacarte'], 'ore_disp' => 8],     // 8-17 (1h pausa)
             ['nome' => 'Legatoria', 'reparti' => ['legatoria'], 'ore_disp' => 14],        // 6-20
         ];

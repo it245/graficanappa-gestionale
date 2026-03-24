@@ -112,11 +112,11 @@ html { font-size: 22px; }
 .m-info-right { text-align: right; }
 
 /* Prossimi lavori */
-.coda-macchina { font-size: 0.55rem; font-weight: 700; color: #64748b; text-transform: uppercase; margin: 0.3rem 0 0.1rem; }
-.coda-item { display: flex; align-items: center; padding: 0.12rem 0.3rem; font-size: 0.48rem; }
+.coda-macchina { font-size: 0.6rem; font-weight: 700; color: #64748b; text-transform: uppercase; margin: 0.35rem 0 0.12rem; }
+.coda-item { display: flex; align-items: center; padding: 0.14rem 0.3rem; font-size: 0.52rem; }
 .coda-num { color: #475569; min-width: 0.8rem; font-weight: 600; }
 .coda-desc { flex: 1; color: #cbd5e1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.coda-badge { font-size: 0.44rem; font-weight: 700; padding: 0.1rem 0.4rem; border-radius: 0.3rem; margin-left: 0.3rem; white-space: nowrap; }
+.coda-badge { font-size: 0.5rem; font-weight: 700; padding: 0.12rem 0.45rem; border-radius: 0.3rem; margin-left: 0.3rem; white-space: nowrap; }
 .coda-badge.verde { background: #065f46; color: #6ee7b7; }
 
 /* Fasi completate + Ore segnate side by side */
