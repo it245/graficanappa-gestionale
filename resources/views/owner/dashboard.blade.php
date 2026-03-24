@@ -703,13 +703,10 @@ tr:hover td {
         @endif
 
         {{-- NOTA TV --}}
-        <div style="padding:8px 18px; border-bottom:1px solid #f0f0f0;">
-            <label style="font-size:11px; font-weight:600; color:#666; display:block; margin-bottom:4px;">📢 Nota TV (ticker)</label>
-            <div style="display:flex; gap:4px;">
-                <input type="text" id="notaTvInput" class="form-control form-control-sm" placeholder="Scrivi nota per la TV..." style="flex:1; font-size:12px;">
-                <button onclick="salvaNotaTv()" class="btn btn-sm btn-warning" style="font-size:11px; white-space:nowrap;">Salva</button>
-            </div>
-        </div>
+        <button type="button" class="sidebar-item" data-bs-toggle="modal" data-bs-target="#modalNotaTv" style="width:100%; background:none; border:none; border-bottom:1px solid #f0f0f0; text-align:left; font-size:14px; font-weight:500; color:#333; display:flex; align-items:center; gap:12px; padding:12px 18px; cursor:pointer;">
+            <span style="font-size:20px;">📢</span>
+            <span>Nota TV (ticker)</span>
+        </button>
     </div>
 
         {{-- FILTRI --}}
@@ -2186,6 +2183,27 @@ function salvaNoteSped() {
         </div>
     </div>
 </div>
+{{-- Modal Nota TV --}}
+<div class="modal fade" id="modalNotaTv" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#dc2626; color:#fff;">
+                <h5 class="modal-title">📢 Nota TV (ticker)</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size:13px; color:#666; margin-bottom:10px;">Il testo apparirà come ticker scorrevole sulla TV del reparto.</p>
+                <input type="text" id="notaTvInput" class="form-control" placeholder="Es: Consegna urgente TRENITALIA ore 15:00" style="font-size:15px;">
+                <div style="margin-top:10px; font-size:12px; color:#999;">Lascia vuoto per rimuovere la nota. Dura 24 ore.</div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Chiudi</button>
+                <button onclick="salvaNotaTv()" class="btn btn-danger btn-sm">Salva e pubblica</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {{-- Modal Presenti in azienda --}}
 <div class="modal fade" id="modalPresenti" tabindex="-1">
     <div class="modal-dialog modal-lg">

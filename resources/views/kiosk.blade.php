@@ -224,12 +224,12 @@ html { font-size: 22px; }
 .obj-bar { width: 80%; max-width: 12rem; height: 0.3rem; background: #1e293b; border-radius: 0.15rem; margin: 0.4rem 0; overflow: hidden; }
 .obj-bar-fill { height: 100%; border-radius: 0.15rem; background: linear-gradient(90deg, #4ade80, #22d3ee); }
 
-.obj-stats { display: flex; gap: 1.5rem; margin-top: 0.4rem; }
+.obj-stats { display: flex; gap: 2.5rem; margin-top: 0.6rem; }
 .obj-stat { text-align: center; }
 .obj-stat-val { font-size: 0.8rem; font-weight: 800; color: #f1f5f9; }
 .obj-stat-val.green { color: #4ade80; }
 .obj-stat-val.blue { color: #38bdf8; }
-.obj-stat-lbl { font-size: 0.26rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.08em; }
+.obj-stat-lbl { font-size: 0.26rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 0.1rem; }
 
 /* === ZONA 4: ORE SEGNATE OGGI === */
 .z4 .zone-title { color: #38bdf8; }
