@@ -185,36 +185,53 @@ Route::get('/commesse/{commessa}', [App\Http\Controllers\CommessaController::cla
     ->name('commesse.show');
 
 
-// TV Kiosk (no auth)
+// TV Kiosk (no auth) — dati demo, in produzione usa KioskController
 Route::get('/kiosk', function() {
     return view('kiosk', [
+        'kpi' => ['completate' => 19, 'in_corso' => 8, 'in_coda' => 23, 'fustelle' => 73],
         'macchine' => [
-            ['nome' => 'XL106 Offset', 'attiva' => true, 'commessa' => '0066849-26', 'cliente' => 'TIFATA PLASTICA', 'descrizione' => 'ETI N 161 MAKTEM161 MAKO - IDROPITTURA A TEMPERA', 'fase' => 'STAMPA XL', 'operatore' => 'Cosimo', 'progresso' => 61],
-            ['nome' => 'Fiery V900 Digitale', 'attiva' => true, 'commessa' => '0066839-26', 'cliente' => 'TRENITALIA S.p.A.', 'descrizione' => 'Display Leaflet Calendario TfB', 'fase' => 'STAMPAINDIGO', 'operatore' => 'Francesco', 'progresso' => 40],
-            ['nome' => 'JOH Stampa a caldo', 'attiva' => true, 'commessa' => '0066646-26', 'cliente' => 'LIGUORI PASTIFICIO', 'descrizione' => 'Astucci pasta corta Paccheri Le Tradizionali', 'fase' => 'STAMPACALDOJOH', 'operatore' => 'Vincenzo', 'progresso' => 35],
-            ['nome' => 'BOBST Fustella', 'attiva' => false, 'commessa' => '', 'cliente' => '', 'descrizione' => '', 'fase' => '', 'operatore' => '', 'progresso' => 0],
-            ['nome' => 'Piegaincolla', 'attiva' => true, 'commessa' => '0066624-26', 'cliente' => 'ARMATORE SRL', 'descrizione' => 'BOX COLATURA DI ALICI GRANDE 100 ML', 'fase' => 'PI02', 'operatore' => 'Pasquale', 'progresso' => 85],
+            ['nome' => 'XL 106', 'attiva' => true, 'commessa' => '0066853-26', 'cliente' => 'ITALIANA CONFETTI', 'descrizione' => 'Astuccio Allegra 30gr FS0045', 'ore_lav' => 3.2, 'ore_prev' => 5.0],
+            ['nome' => 'BOBST', 'attiva' => true, 'commessa' => '0066660-26', 'cliente' => 'ITALIANA CONFETTI', 'descrizione' => 'Ast. 1kg Maxtris Mix Delice', 'ore_lav' => 1.8, 'ore_prev' => 4.5],
+            ['nome' => 'JOH Caldo', 'attiva' => true, 'commessa' => '0066821-26', 'cliente' => 'ITALIANA CONFETTI', 'descrizione' => 'AST 1 KG Castelli', 'ore_lav' => 2.4, 'ore_prev' => 3.0],
+            ['nome' => 'Plastificatrice', 'attiva' => true, 'commessa' => '0066844-26', 'cliente' => 'MAGLUXURY SRL', 'descrizione' => 'Scheda porta fiale Riviera', 'ore_lav' => 0.5, 'ore_prev' => 1.5],
+            ['nome' => 'Piegaincolla', 'attiva' => true, 'commessa' => '0066616-26', 'cliente' => 'ITALIANA CONFETTI', 'descrizione' => 'Ast. 500gr Praline Assortite', 'ore_lav' => 1.5, 'ore_prev' => 2.7],
+            ['nome' => 'Finestratrice', 'attiva' => true, 'commessa' => '0066686-26', 'cliente' => 'ITALIANA CONFETTI', 'descrizione' => 'Ast. 1kg Maxtris Classici', 'ore_lav' => 0.6, 'ore_prev' => 3.0],
+            ['nome' => 'STEL', 'attiva' => true, 'commessa' => '0066873-26', 'cliente' => 'TIFATA PLASTICA', 'descrizione' => 'ETI CIL. Casalplastik', 'ore_lav' => 1.1, 'ore_prev' => 1.6],
+            ['nome' => 'HP Indigo', 'attiva' => false, 'commessa' => '', 'cliente' => '', 'descrizione' => '', 'ore_lav' => 0, 'ore_prev' => 0],
         ],
         'prossimi' => [
-            ['macchina' => 'XL106', 'commessa' => '0066878-26', 'cliente' => 'ITALIANA CONFETTI SRL', 'consegna' => '28/03'],
-            ['macchina' => 'XL106', 'commessa' => '0066856-26', 'cliente' => 'DIREZIONE IMPRESA SRL', 'consegna' => '25/03'],
-            ['macchina' => 'Digitale', 'commessa' => '0066835-26', 'cliente' => 'NICOLA & C. S.r.l.', 'consegna' => '24/03'],
-            ['macchina' => 'JOH', 'commessa' => '0066535-26', 'cliente' => 'ITALIANA CONFETTI SRL', 'consegna' => '03/04'],
-            ['macchina' => 'BOBST', 'commessa' => '0066822-26', 'cliente' => 'PRINTING SRL', 'consegna' => '27/03'],
-            ['macchina' => 'Piega', 'commessa' => '0066622-26', 'cliente' => 'ARMATORE SRL', 'consegna' => '30/03'],
+            'XL 106' => [
+                ['desc' => 'ETI N 161 Mako Quarzoplast', 'badge' => 'NO CALDO', 'badge_cls' => 'arancio'],
+                ['desc' => 'ETI N 171 Lavernova Midi', 'badge' => 'NO CALDO', 'badge_cls' => 'arancio'],
+                ['desc' => 'Scheda porta fiale Polignano', 'badge' => 'NO RILIEVI', 'badge_cls' => 'rosso'],
+            ],
+            'BOBST' => [
+                ['desc' => 'Ast. 500gr Sfumati Rosa FS0898', 'badge' => 'FS0898', 'badge_cls' => 'verde'],
+                ['desc' => 'Ast. 1kg Yogurt Frutti FS0898', 'badge' => 'FS0898', 'badge_cls' => 'verde'],
+                ['desc' => 'Ast. Celebrate Napolitains FS2053', 'badge' => 'FS2053', 'badge_cls' => 'verde'],
+            ],
+            'JOH CALDO' => [
+                ['desc' => 'Ast. Les Noisettes 500gr', 'badge' => 'FS0044', 'badge_cls' => 'verde'],
+                ['desc' => 'Ast. 1kg Enzo Miccio Lilla', 'badge' => 'FS0898', 'badge_cls' => 'verde'],
+            ],
+            'PIEGAINCOLLA' => [
+                ['desc' => 'Ast. 1kg Mix Delice FS0898', 'badge' => 'PI01', 'badge_cls' => 'blu'],
+                ['desc' => 'Ast. Vassoio Confetti FS0157', 'badge' => 'PI01', 'badge_cls' => 'blu'],
+                ['desc' => 'Libro cartonato Connie n.2', 'badge' => 'NO CALDO', 'badge_cls' => 'arancio'],
+            ],
         ],
-        'fasiCompletate' => 43,
-        'obiettivo' => 60,
-        'oreLavorate' => 64.3,
-        'spedite' => 10,
-        'inRitardo' => 3,
+        'obiettivo' => ['completate' => 19, 'target' => 20, 'pct' => 95, 'ultima_ora' => 3, 'ore' => 45.2],
         'utilizzo' => [
-            ['nome' => 'XL106 Offset', 'pct' => 72],
-            ['nome' => 'Fiery V900', 'pct' => 45],
-            ['nome' => 'JOH Caldo', 'pct' => 28],
-            ['nome' => 'BOBST Fustella', 'pct' => 0],
-            ['nome' => 'Piegaincolla', 'pct' => 65],
+            ['nome' => 'XL 106 (24h)', 'pct' => 45],
+            ['nome' => 'BOBST', 'pct' => 62],
+            ['nome' => 'JOH Caldo', 'pct' => 55],
             ['nome' => 'Plastificatrice', 'pct' => 38],
+            ['nome' => 'Piegaincolla', 'pct' => 30],
+            ['nome' => 'Finestratrice', 'pct' => 48],
+            ['nome' => 'STEL', 'pct' => 25],
+            ['nome' => 'HP Indigo', 'pct' => 72],
+            ['nome' => 'Tagliacarte', 'pct' => 12],
+            ['nome' => 'Legatoria', 'pct' => 35],
         ],
     ]);
 });
