@@ -160,10 +160,15 @@ html { font-size: 22px; }
 
 /* === TICKER NOTA TV === */
 .ticker {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 9999;
     background: #dc2626;
     overflow: hidden;
     white-space: nowrap;
-    padding: 0.15rem 0;
+    padding: 0.2rem 0;
 }
 .ticker-inner {
     display: inline-block;
