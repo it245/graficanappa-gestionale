@@ -185,5 +185,39 @@ Route::get('/commesse/{commessa}', [App\Http\Controllers\CommessaController::cla
     ->name('commesse.show');
 
 
+// TV Kiosk (no auth)
+Route::get('/kiosk', function() {
+    return view('kiosk', [
+        'macchine' => [
+            ['nome' => 'XL106 Offset', 'attiva' => true, 'commessa' => '0066849-26', 'cliente' => 'TIFATA PLASTICA', 'descrizione' => 'ETI N 161 MAKTEM161 MAKO - IDROPITTURA A TEMPERA', 'fase' => 'STAMPA XL', 'operatore' => 'Cosimo', 'progresso' => 61],
+            ['nome' => 'Fiery V900 Digitale', 'attiva' => true, 'commessa' => '0066839-26', 'cliente' => 'TRENITALIA S.p.A.', 'descrizione' => 'Display Leaflet Calendario TfB', 'fase' => 'STAMPAINDIGO', 'operatore' => 'Francesco', 'progresso' => 40],
+            ['nome' => 'JOH Stampa a caldo', 'attiva' => true, 'commessa' => '0066646-26', 'cliente' => 'LIGUORI PASTIFICIO', 'descrizione' => 'Astucci pasta corta Paccheri Le Tradizionali', 'fase' => 'STAMPACALDOJOH', 'operatore' => 'Vincenzo', 'progresso' => 35],
+            ['nome' => 'BOBST Fustella', 'attiva' => false, 'commessa' => '', 'cliente' => '', 'descrizione' => '', 'fase' => '', 'operatore' => '', 'progresso' => 0],
+            ['nome' => 'Piegaincolla', 'attiva' => true, 'commessa' => '0066624-26', 'cliente' => 'ARMATORE SRL', 'descrizione' => 'BOX COLATURA DI ALICI GRANDE 100 ML', 'fase' => 'PI02', 'operatore' => 'Pasquale', 'progresso' => 85],
+        ],
+        'prossimi' => [
+            ['macchina' => 'XL106', 'commessa' => '0066878-26', 'cliente' => 'ITALIANA CONFETTI SRL', 'consegna' => '28/03'],
+            ['macchina' => 'XL106', 'commessa' => '0066856-26', 'cliente' => 'DIREZIONE IMPRESA SRL', 'consegna' => '25/03'],
+            ['macchina' => 'Digitale', 'commessa' => '0066835-26', 'cliente' => 'NICOLA & C. S.r.l.', 'consegna' => '24/03'],
+            ['macchina' => 'JOH', 'commessa' => '0066535-26', 'cliente' => 'ITALIANA CONFETTI SRL', 'consegna' => '03/04'],
+            ['macchina' => 'BOBST', 'commessa' => '0066822-26', 'cliente' => 'PRINTING SRL', 'consegna' => '27/03'],
+            ['macchina' => 'Piega', 'commessa' => '0066622-26', 'cliente' => 'ARMATORE SRL', 'consegna' => '30/03'],
+        ],
+        'fasiCompletate' => 43,
+        'obiettivo' => 60,
+        'oreLavorate' => 64.3,
+        'spedite' => 10,
+        'inRitardo' => 3,
+        'utilizzo' => [
+            ['nome' => 'XL106 Offset', 'pct' => 72],
+            ['nome' => 'Fiery V900', 'pct' => 45],
+            ['nome' => 'JOH Caldo', 'pct' => 28],
+            ['nome' => 'BOBST Fustella', 'pct' => 0],
+            ['nome' => 'Piegaincolla', 'pct' => 65],
+            ['nome' => 'Plastificatrice', 'pct' => 38],
+        ],
+    ]);
+});
+
 // Homepage
 Route::get('/', fn() => view('welcome'));
