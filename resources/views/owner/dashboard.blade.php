@@ -1331,7 +1331,7 @@ function salvaNotaTv() {
         headers: {'X-CSRF-TOKEN': csrfToken(), 'Content-Type': 'application/json'},
         body: JSON.stringify({nota: nota})
     }).then(r => r.json()).then(d => {
-        if (d.success) { alert('Nota TV salvata!'); } else { alert('Errore'); }
+        if (d.success) { bootstrap.Modal.getInstance(document.getElementById('modalNotaTv')).hide(); } else { alert('Errore'); }
     });
 }
 // Carica nota TV corrente
