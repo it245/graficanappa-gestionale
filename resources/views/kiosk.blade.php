@@ -286,20 +286,15 @@ body {
     @endforeach
 </div>
 
-<!-- Z3: OBIETTIVO GIORNALIERO -->
+<!-- Z3: FASI COMPLETATE OGGI -->
 <div class="zone z3">
     <div class="zone-header">
-        <div class="zone-title">🎯 Obiettivo giornaliero</div>
-        <span class="obj-pct">{{ $obiettivo['pct'] }}%</span>
+        <div class="zone-title">⚡ Fasi completate oggi</div>
     </div>
     <div class="obiettivo-wrap">
-        <div class="obj-label">Fasi completate oggi</div>
         <div class="obj-big">
             <span class="obj-num">{{ $obiettivo['completate'] }}</span>
-            <span class="obj-slash">/</span>
-            <span class="obj-target">{{ $obiettivo['target'] }}</span>
         </div>
-        <div class="obj-bar"><div class="obj-bar-fill" style="width:{{ $obiettivo['pct'] }}%"></div></div>
         <div class="obj-stats">
             <div class="obj-stat"><div class="obj-stat-val green">+{{ $obiettivo['ultima_ora'] }}</div><div class="obj-stat-lbl">Ultima ora</div></div>
             <div class="obj-stat"><div class="obj-stat-val blue">{{ $kpi['in_corso'] }}</div><div class="obj-stat-lbl">In corso</div></div>
