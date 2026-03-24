@@ -233,6 +233,26 @@ Route::get('/kiosk', function() {
             ['nome' => 'Tagliacarte', 'pct' => 12],
             ['nome' => 'Legatoria', 'pct' => 35],
         ],
+        'solar' => [
+            'ok' => true,
+            'impianto_kwp' => 180.0,
+            'oggi_kwh' => 104.2,
+            'ieri_kwh' => 414.0,
+            'settimana_kwh' => 2662.2,
+            'mese_kwh' => 11700.0,
+            'inverter_online' => 6,
+            'inverter_totali' => 7,
+            'ultimo_aggiornamento' => date('H:i'),
+            'inverter' => [
+                ['nome' => 'INV 1', 'tipo' => 'PVI-TRIO 27k', 'kwp' => 26.40, 'oggi_kwh_kwp' => 0.63, 'oggi_kwh' => 16.6, 'online' => true],
+                ['nome' => 'INV 2', 'tipo' => 'PVI-TRIO 27k', 'kwp' => 26.40, 'oggi_kwh_kwp' => 0.76, 'oggi_kwh' => 20.1, 'online' => true],
+                ['nome' => 'INV 3', 'tipo' => 'PVI-TRIO 27k', 'kwp' => 26.40, 'oggi_kwh_kwp' => 0.76, 'oggi_kwh' => 20.1, 'online' => true],
+                ['nome' => 'INV 4', 'tipo' => 'PVI-TRIO 27k', 'kwp' => 26.40, 'oggi_kwh_kwp' => 0.77, 'oggi_kwh' => 20.3, 'online' => true],
+                ['nome' => 'INV 5', 'tipo' => 'PVI-TRIO 20k', 'kwp' => 21.12, 'oggi_kwh_kwp' => 0.55, 'oggi_kwh' => 11.6, 'online' => true],
+                ['nome' => 'INV 6', 'tipo' => 'PVI-TRIO 27k', 'kwp' => 26.40, 'oggi_kwh_kwp' => 0.00, 'oggi_kwh' => 0.0, 'online' => false],
+                ['nome' => 'INV 7', 'tipo' => 'PVI-TRIO 27k', 'kwp' => 26.88, 'oggi_kwh_kwp' => 0.62, 'oggi_kwh' => 16.7, 'online' => true],
+            ],
+        ],
     ]);
 });
 

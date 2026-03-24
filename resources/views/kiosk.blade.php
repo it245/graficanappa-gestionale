@@ -52,6 +52,20 @@ body {
 .hkpi-amber .hkpi-val { color: #fbbf24; }
 .hkpi-purple .hkpi-val { color: #a78bfa; }
 
+.header-solar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #111827;
+    padding: 0.2rem 0.6rem;
+    border-radius: 0.3rem;
+    border: 1px solid #1e293b;
+}
+.solar-icon { font-size: 0.7rem; }
+.solar-val { font-size: 0.6rem; font-weight: 800; color: #fbbf24; }
+.solar-lbl { font-size: 0.26rem; color: #64748b; }
+.solar-inv { font-size: 0.26rem; color: #4ade80; }
+
 .header-clock { text-align: right; min-width: 7rem; }
 .clock-time { font-size: 1.2rem; font-weight: 800; color: #f1f5f9; }
 .clock-date { font-size: 0.35rem; color: #64748b; }
@@ -205,6 +219,34 @@ body {
 .ore-pct.red { color: #f87171; }
 .ore-pct.orange { color: #fbbf24; }
 .ore-pct.green { color: #4ade80; }
+
+/* === PAGINA SOLAR === */
+.solar-page { padding: 1rem 1.5rem; height: calc(100vh - 4rem); display: flex; flex-direction: column; background: #000; }
+.solar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem; }
+.solar-title { font-size: 0.6rem; font-weight: 800; color: #fbbf24; }
+.solar-status { display: flex; gap: 0.5rem; align-items: center; }
+.solar-inv-badge { font-size: 0.32rem; background: #065f46; color: #6ee7b7; padding: 0.1rem 0.4rem; border-radius: 0.3rem; font-weight: 700; }
+.solar-update { font-size: 0.3rem; color: #64748b; }
+
+.solar-kpis { display: flex; justify-content: center; gap: 2rem; margin-bottom: 1rem; }
+.solar-kpi { text-align: center; background: #111827; padding: 0.6rem 1rem; border-radius: 0.4rem; min-width: 6rem; }
+.solar-kpi-val { font-size: 1.8rem; font-weight: 900; line-height: 1; }
+.solar-kpi-unit { font-size: 0.4rem; color: #64748b; font-weight: 600; }
+.solar-kpi-lbl { font-size: 0.3rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.15rem; }
+
+.solar-inverters { flex: 1; }
+.solar-inv-title { font-size: 0.4rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.3rem; }
+.solar-inv-row { display: flex; align-items: center; gap: 0.4rem; padding: 0.2rem 0.3rem; margin-bottom: 0.15rem; background: #111827; border-radius: 0.2rem; }
+.solar-inv-row.offline { opacity: 0.35; }
+.solar-inv-name { font-size: 0.4rem; font-weight: 700; color: #f1f5f9; min-width: 2.5rem; }
+.solar-inv-tipo { font-size: 0.32rem; color: #64748b; min-width: 4rem; }
+.solar-inv-kwp { font-size: 0.34rem; color: #94a3b8; min-width: 3rem; text-align: right; }
+.solar-inv-bar { flex: 1; height: 0.4rem; background: #1e293b; border-radius: 0.2rem; overflow: hidden; margin: 0 0.3rem; }
+.solar-inv-fill { height: 100%; background: linear-gradient(90deg, #f59e0b, #fbbf24); border-radius: 0.2rem; }
+.solar-inv-kwh { font-size: 0.4rem; font-weight: 700; color: #fbbf24; min-width: 3rem; text-align: right; }
+.solar-inv-status { font-size: 0.35rem; min-width: 0.5rem; }
+.solar-inv-row:not(.offline) .solar-inv-status { color: #4ade80; }
+.solar-inv-row.offline .solar-inv-status { color: #ef4444; }
 </style>
 </head>
 <body>
@@ -229,8 +271,8 @@ body {
     </div>
 </div>
 
-<!-- 4 ZONE -->
-<div class="zones">
+<!-- PAGINA 1: PRODUZIONE -->
+<div class="zones kiosk-page" id="page-produzione">
 
 <!-- Z1: IN CORSO ORA -->
 <div class="zone z1">
@@ -329,6 +371,58 @@ body {
 </div>
 </div>
 
+<!-- PAGINA 2: SOLAR-LOG -->
+<div class="kiosk-page" id="page-solar" style="display:none; position:absolute; top:0; left:0; right:0; bottom:0; padding-top:inherit;">
+    <div class="solar-page">
+        <div class="solar-header">
+            <div class="solar-title">☀️ Impianto Fotovoltaico — {{ $solar['impianto_kwp'] ?? 180 }} kWp</div>
+            <div class="solar-status">
+                <span class="solar-inv-badge">{{ $solar['inverter_online'] ?? 0 }}/{{ $solar['inverter_totali'] ?? 7 }} inverter online</span>
+                <span class="solar-update">Agg. {{ $solar['ultimo_aggiornamento'] ?? '--:--' }}</span>
+            </div>
+        </div>
+
+        <div class="solar-kpis">
+            <div class="solar-kpi">
+                <div class="solar-kpi-val" style="color:#fbbf24">{{ $solar['oggi_kwh'] ?? 0 }}</div>
+                <div class="solar-kpi-unit">kWh</div>
+                <div class="solar-kpi-lbl">Produzione oggi</div>
+            </div>
+            <div class="solar-kpi">
+                <div class="solar-kpi-val" style="color:#94a3b8">{{ $solar['ieri_kwh'] ?? 0 }}</div>
+                <div class="solar-kpi-unit">kWh</div>
+                <div class="solar-kpi-lbl">Ieri</div>
+            </div>
+            <div class="solar-kpi">
+                <div class="solar-kpi-val" style="color:#38bdf8">{{ $solar['settimana_kwh'] ?? 0 }}</div>
+                <div class="solar-kpi-unit">kWh</div>
+                <div class="solar-kpi-lbl">Ultimi 7 giorni</div>
+            </div>
+            <div class="solar-kpi">
+                <div class="solar-kpi-val" style="color:#4ade80">{{ $solar['mese_kwh'] ?? 0 }}</div>
+                <div class="solar-kpi-unit">kWh</div>
+                <div class="solar-kpi-lbl">Ultimi 30 giorni</div>
+            </div>
+        </div>
+
+        <div class="solar-inverters">
+            <div class="solar-inv-title">Dettaglio Inverter</div>
+            @foreach(($solar['inverter'] ?? []) as $inv)
+            <div class="solar-inv-row {{ $inv['online'] ? '' : 'offline' }}">
+                <span class="solar-inv-name">{{ $inv['nome'] }}</span>
+                <span class="solar-inv-tipo">{{ $inv['tipo'] }}</span>
+                <span class="solar-inv-kwp">{{ $inv['kwp'] }} kWp</span>
+                <div class="solar-inv-bar">
+                    <div class="solar-inv-fill" style="width:{{ $inv['oggi_kwh_kwp'] > 0 ? min(($inv['oggi_kwh_kwp'] / 5) * 100, 100) : 0 }}%"></div>
+                </div>
+                <span class="solar-inv-kwh">{{ $inv['oggi_kwh'] }} kWh</span>
+                <span class="solar-inv-status">{{ $inv['online'] ? '●' : '○' }}</span>
+            </div>
+            @endforeach
+        </div>
+    </div>
+</div>
+
 <script>
 function updateClock() {
     var now = new Date();
@@ -341,7 +435,21 @@ function updateClock() {
 }
 updateClock();
 setInterval(updateClock, 1000);
-setTimeout(function() { location.reload(); }, 60000);
+
+// Alternanza pagine ogni 45 secondi
+var pages = document.querySelectorAll('.kiosk-page');
+var currentPage = 0;
+function switchPage() {
+    pages[currentPage].style.display = 'none';
+    currentPage = (currentPage + 1) % pages.length;
+    pages[currentPage].style.display = '';
+}
+if (pages.length > 1) {
+    setInterval(switchPage, 45000);
+}
+
+// Refresh dati ogni 5 minuti
+setTimeout(function() { location.reload(); }, 300000);
 </script>
 </body>
 </html>
