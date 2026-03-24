@@ -1331,7 +1331,12 @@ function salvaNotaTv() {
         headers: {'X-CSRF-TOKEN': csrfToken(), 'Content-Type': 'application/json'},
         body: JSON.stringify({nota: nota})
     }).then(r => r.json()).then(d => {
-        if (d.success) { bootstrap.Modal.getInstance(document.getElementById('modalNotaTv')).hide(); } else { alert('Errore'); }
+        if (d.success) {
+            var btn = document.querySelector('#modalNotaTv .btn-danger');
+            btn.textContent = '✓ Salvata!';
+            btn.classList.replace('btn-danger', 'btn-success');
+            setTimeout(function() { bootstrap.Modal.getInstance(document.getElementById('modalNotaTv')).hide(); btn.textContent = 'Salva e pubblica'; btn.classList.replace('btn-success', 'btn-danger'); }, 1000);
+        } else { alert('Errore'); }
     });
 }
 // Carica nota TV corrente
