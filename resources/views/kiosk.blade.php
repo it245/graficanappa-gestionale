@@ -142,6 +142,21 @@ html { font-size: 22px; }
 /* === ZONA 2: PROSSIMI LAVORI === */
 .z2 .zone-title { color: #94a3b8; }
 .z2 .zone-badge { background: #2563eb; color: #fff; }
+.z2-scroll {
+    overflow: hidden;
+    position: relative;
+    flex: 1;
+}
+.z2-scroll-inner {
+    animation: scrollUp 30s linear infinite;
+}
+@keyframes scrollUp {
+    0% { transform: translateY(0); }
+    45% { transform: translateY(0); }
+    50% { transform: translateY(-50%); }
+    95% { transform: translateY(-50%); }
+    100% { transform: translateY(0); }
+}
 
 .coda-macchina { font-size: 0.44rem; font-weight: 700; color: #64748b; text-transform: uppercase; margin: 0.2rem 0 0.06rem; letter-spacing: 0.05em; }
 .coda-macchina:first-child { margin-top: 0; }
@@ -309,21 +324,25 @@ html { font-size: 22px; }
 </div>
 
 <!-- Z2: PROSSIMI LAVORI -->
-<div class="zone z2">
+<div class="zone z2" style="display:flex; flex-direction:column;">
     <div class="zone-header">
         <div class="zone-title">📋 Prossimi lavori</div>
         <span class="zone-badge">CODA</span>
     </div>
-    @foreach($prossimi as $gruppo => $items)
-        <div class="coda-macchina">{{ $gruppo }}</div>
-        @foreach($items as $p)
-        <div class="coda-item">
-            <span class="coda-num">#{{ $loop->iteration }}</span>
-            <span class="coda-desc">{{ $p['desc'] }}</span>
-            <span class="coda-badge {{ $p['badge_cls'] }}">{{ $p['badge'] }}</span>
+    <div class="z2-scroll">
+        <div class="z2-scroll-inner">
+            @foreach($prossimi as $gruppo => $items)
+                <div class="coda-macchina">{{ $gruppo }}</div>
+                @foreach($items as $p)
+                <div class="coda-item">
+                    <span class="coda-num">#{{ $loop->iteration }}</span>
+                    <span class="coda-desc">{{ $p['desc'] }}</span>
+                    <span class="coda-badge {{ $p['badge_cls'] }}">{{ $p['badge'] }}</span>
+                </div>
+                @endforeach
+            @endforeach
         </div>
-        @endforeach
-    @endforeach
+    </div>
 </div>
 
 <!-- Z3: FASI COMPLETATE OGGI -->
