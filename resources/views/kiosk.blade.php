@@ -168,12 +168,12 @@ html { font-size: 22px; }
     background: #dc2626;
     overflow: hidden;
     white-space: nowrap;
-    padding: 0.2rem 0;
+    padding: 0.3rem 0;
 }
 .ticker-inner {
     display: inline-block;
     animation: tickerScroll 20s linear infinite;
-    font-size: 0.7rem;
+    font-size: 1.1rem;
     font-weight: 800;
     color: #fff;
     padding-left: 100%;
