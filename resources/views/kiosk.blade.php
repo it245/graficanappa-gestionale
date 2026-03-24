@@ -188,8 +188,8 @@ html { font-size: 22px; }
 <div class="scroll-area" id="scrollArea">
 <div class="scroll-inner" id="scrollInner">
 
-<!-- SEZIONE 1: IN CORSO ORA -->
-<div class="section" data-section="0">
+<!-- PAGINA 1: Z1 + Z2 affiancate -->
+<div class="section" data-section="0" style="display:flex; flex-direction:row; gap:0.5rem;"><div style="flex:1; overflow:hidden;">
     <div class="section-title" style="color:#fbbf24;">⚡ In corso ora <span class="section-badge" style="background:#16a34a;color:#fff;">LIVE</span></div>
     @foreach($macchine as $m)
     <div class="macchina {{ $m['attiva'] ? 'attiva' : 'attesa' }}">
@@ -213,10 +213,9 @@ html { font-size: 22px; }
         </div>
     </div>
     @endforeach
-</div>
-
-<!-- SEZIONE 2: PROSSIMI LAVORI -->
-<div class="section" data-section="1">
+</div><!-- fine z1 -->
+<div style="flex:1; overflow:hidden;">
+<!-- Z2: PROSSIMI LAVORI -->
     <div class="section-title" style="color:#94a3b8;">📋 Prossimi lavori <span class="section-badge" style="background:#2563eb;color:#fff;">CODA</span></div>
     @foreach($prossimi as $gruppo => $items)
         <div class="coda-macchina">{{ $gruppo }}</div>
@@ -228,10 +227,12 @@ html { font-size: 22px; }
         </div>
         @endforeach
     @endforeach
-</div>
+</div><!-- fine z2 -->
+</div><!-- fine pagina 1 -->
 
-<!-- SEZIONE 3: FASI COMPLETATE + ORE SEGNATE -->
-<div class="section" data-section="2">
+<!-- PAGINA 2: Z3 + Z4 affiancate -->
+<div class="section" data-section="1" style="display:flex; flex-direction:row; gap:0.5rem;">
+<div style="flex:1; overflow:hidden;">
     <div class="stats-row">
         <div class="stats-col">
             <div class="stats-col-title" style="color:#4ade80;">⚡ Fasi completate oggi</div>
@@ -256,10 +257,9 @@ html { font-size: 22px; }
             @endforeach
         </div>
     </div>
-</div>
-
-<!-- SEZIONE 4: SOLAR-LOG -->
-<div class="section" data-section="3">
+</div><!-- fine z3 -->
+<div style="flex:1; overflow:hidden;">
+<!-- Z4: SOLAR-LOG -->
     <div class="solar-page">
         <div class="solar-title">☀️ Impianto Fotovoltaico — {{ $solar['impianto_kwp'] ?? 180 }} kWp
             <span style="font-size:0.35rem; color:#64748b; margin-left:0.5rem;">{{ $solar['inverter_online'] ?? 0 }}/{{ $solar['inverter_totali'] ?? 7 }} online · Agg. {{ $solar['ultimo_aggiornamento'] ?? '--:--' }}</span>
@@ -281,7 +281,8 @@ html { font-size: 22px; }
         </div>
         @endforeach
     </div>
-</div>
+</div><!-- fine z4 -->
+</div><!-- fine pagina 2 -->
 
 </div>
 </div>
@@ -327,8 +328,8 @@ function nextSection() {
     scrollToSection();
 }
 
-// Ogni sezione visibile per 12 secondi
-setInterval(nextSection, 12000);
+// Ogni pagina visibile per 20 secondi
+setInterval(nextSection, 20000);
 </script>
 </body>
 </html>
