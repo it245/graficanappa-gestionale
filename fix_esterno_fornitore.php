@@ -16,7 +16,8 @@ echo "Fasi con fornitore ma esterno=0: " . $fasi->count() . PHP_EOL;
 foreach ($fasi as $f) {
     $f->esterno = 1;
     $f->save();
-    echo "FIX: {$f->ordine->commessa ?? '?'} | {$f->fase} → esterno:SI" . PHP_EOL;
+    $commessa = $f->ordine ? $f->ordine->commessa : '?';
+    echo "FIX: {$commessa} | {$f->fase} → esterno:SI" . PHP_EOL;
 }
 
 echo "DONE" . PHP_EOL;
