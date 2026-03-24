@@ -25,7 +25,7 @@ html { font-size: 22px; }
     html { font-size: 34px; }
 }
 
-.kiosk { display: grid; grid-template-rows: auto 1fr; height: 100vh; }
+.kiosk { display: grid; grid-template-rows: auto 1fr auto; height: 100vh; }
 
 /* === HEADER === */
 .header {
@@ -72,7 +72,7 @@ html { font-size: 22px; }
 .zones {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    grid-template-rows: 55% 45%;
+    grid-template-rows: 52% 48%;
     gap: 2px;
     background: #1e293b;
 }
@@ -158,6 +158,27 @@ html { font-size: 22px; }
     100% { transform: translateY(0); }
 }
 
+/* === TICKER NOTA TV === */
+.ticker {
+    background: #dc2626;
+    overflow: hidden;
+    white-space: nowrap;
+    padding: 0.15rem 0;
+}
+.ticker-inner {
+    display: inline-block;
+    animation: tickerScroll 25s linear infinite;
+    font-size: 0.5rem;
+    font-weight: 700;
+    color: #fff;
+    padding-left: 100%;
+}
+@keyframes tickerScroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-100%); }
+}
+.ticker-empty { display: none; }
+
 .coda-macchina { font-size: 0.44rem; font-weight: 700; color: #64748b; text-transform: uppercase; margin: 0.2rem 0 0.06rem; letter-spacing: 0.05em; }
 .coda-macchina:first-child { margin-top: 0; }
 
@@ -203,7 +224,7 @@ html { font-size: 22px; }
 .obj-bar { width: 80%; max-width: 12rem; height: 0.3rem; background: #1e293b; border-radius: 0.15rem; margin: 0.4rem 0; overflow: hidden; }
 .obj-bar-fill { height: 100%; border-radius: 0.15rem; background: linear-gradient(90deg, #4ade80, #22d3ee); }
 
-.obj-stats { display: flex; gap: 1rem; margin-top: 0.3rem; }
+.obj-stats { display: flex; gap: 1.5rem; margin-top: 0.4rem; }
 .obj-stat { text-align: center; }
 .obj-stat-val { font-size: 0.8rem; font-weight: 800; color: #f1f5f9; }
 .obj-stat-val.green { color: #4ade80; }
@@ -387,6 +408,13 @@ html { font-size: 22px; }
 
 </div>
 </div>
+
+<!-- TICKER NOTA TV -->
+@if(!empty($notaTv))
+<div class="ticker">
+    <div class="ticker-inner">📢 {{ $notaTv }} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 📢 {{ $notaTv }} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 📢 {{ $notaTv }}</div>
+</div>
+@endif
 
 <!-- PAGINA 2: SOLAR-LOG -->
 <div class="kiosk-page" id="page-solar" style="display:none; position:absolute; top:0; left:0; right:0; bottom:0; padding-top:inherit;">

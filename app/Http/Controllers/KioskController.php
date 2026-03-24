@@ -7,6 +7,8 @@ use App\Models\Ordine;
 use App\Models\Reparto;
 use App\Services\SolarLogService;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class KioskController extends Controller
@@ -181,6 +183,9 @@ class KioskController extends Controller
         // === SOLAR ===
         $solar = (new SolarLogService())->getDati();
 
+        // === NOTA TV ===
+        $notaTv = Cache::get('kiosk_nota_tv', '');
+
         return view('kiosk', [
             'kpi' => [
                 'completate' => $completateOggi,
@@ -197,6 +202,26 @@ class KioskController extends Controller
             ],
             'utilizzo' => $utilizzo,
             'solar' => $solar,
+            'notaTv' => $notaTv,
         ]);
+    }
+
+    /**
+     * Salva la nota TV (chiamata dall'owner)
+     */
+    public function salvaNota(Request $request)
+    {
+        $nota = trim($request->input('nota', ''));
+        Cache::put('kiosk_nota_tv', $nota, now()->addHours(24));
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Restituisce la nota TV corrente
+     */
+    public function getNota()
+    {
+        return response()->json(['nota' => Cache::get('kiosk_nota_tv', '')]);
+    }
     }
 }

@@ -187,6 +187,8 @@ Route::get('/commesse/{commessa}', [App\Http\Controllers\CommessaController::cla
 
 // TV Kiosk (no auth) — dati reali
 Route::get('/kiosk', [\App\Http\Controllers\KioskController::class, 'index']);
+Route::post('/kiosk/nota', [\App\Http\Controllers\KioskController::class, 'salvaNota'])->name('kiosk.salvaNota');
+Route::get('/kiosk/nota', [\App\Http\Controllers\KioskController::class, 'getNota'])->name('kiosk.getNota');
 
 // Kiosk demo (dati finti per test locale)
 Route::get('/kiosk-demo', function() {

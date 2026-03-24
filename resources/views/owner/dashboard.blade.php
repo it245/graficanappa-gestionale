@@ -701,8 +701,17 @@ tr:hover td {
             </button>
         </form>
         @endif
+
+        {{-- NOTA TV --}}
+        <div style="padding:8px 18px; border-bottom:1px solid #f0f0f0;">
+            <label style="font-size:11px; font-weight:600; color:#666; display:block; margin-bottom:4px;">📢 Nota TV (ticker)</label>
+            <div style="display:flex; gap:4px;">
+                <input type="text" id="notaTvInput" class="form-control form-control-sm" placeholder="Scrivi nota per la TV..." style="flex:1; font-size:12px;">
+                <button onclick="salvaNotaTv()" class="btn btn-sm btn-warning" style="font-size:11px; white-space:nowrap;">Salva</button>
+            </div>
+        </div>
     </div>
-    
+
         {{-- FILTRI --}}
 <div class="mb-3" id="filterBox" style="display:none;">
     <!-- Filtri multi-valore (virgola) -->
@@ -1318,6 +1327,21 @@ tr:hover td {
 
 <script>
 // Sidebar menu
+function salvaNotaTv() {
+    var nota = document.getElementById('notaTvInput').value.trim();
+    fetch('/kiosk/nota', {
+        method: 'POST',
+        headers: {'X-CSRF-TOKEN': csrfToken(), 'Content-Type': 'application/json'},
+        body: JSON.stringify({nota: nota})
+    }).then(r => r.json()).then(d => {
+        if (d.success) { alert('Nota TV salvata!'); } else { alert('Errore'); }
+    });
+}
+// Carica nota TV corrente
+fetch('/kiosk/nota').then(r => r.json()).then(d => {
+    if (d.nota) document.getElementById('notaTvInput').value = d.nota;
+});
+
 function openSidebar() {
     document.getElementById('sidebarMenu').classList.add('open');
     document.getElementById('sidebarOverlay').classList.add('open');
