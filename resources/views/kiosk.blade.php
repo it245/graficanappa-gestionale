@@ -338,9 +338,7 @@ html { font-size: 22px; }
         </div>
         <div class="m-info-right">
             @if($m['attiva'])
-                <div class="m-ore">{{ $m['ore_lav'] }}h / {{ $m['ore_prev'] }}h</div>
-                @php $pct = $m['ore_prev'] > 0 ? min(round(($m['ore_lav'] / $m['ore_prev']) * 100), 100) : 0; @endphp
-                <div class="m-bar"><div class="m-bar-fill" style="width:{{ $pct }}%"></div></div>
+                <div class="m-ore">{{ $m['ore_lav'] }}h</div>
             @else
                 <div class="m-ore">—</div>
                 <div class="m-bar"><div class="m-bar-fill" style="width:0%"></div></div>
