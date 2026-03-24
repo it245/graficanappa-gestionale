@@ -331,8 +331,8 @@ function nextSection() {
     scrollToSection();
 }
 
-// Ogni pagina visibile per 20 secondi
-setInterval(nextSection, 20000);
+// Ogni pagina visibile per 40 secondi
+setInterval(nextSection, 40000);
 </script>
 </body>
 </html>
