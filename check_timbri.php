@@ -5,46 +5,59 @@ $app->make('Illuminate\Contracts\Console\Kernel')->bootstrap();
 
 use Illuminate\Support\Facades\DB;
 
-$cognome = 'TORROMACCO';
-$data = $argv[1] ?? date('Y-m-d', strtotime('-1 day')); // ieri di default
+$cognome = $argv[1] ?? 'TORROMACCO';
+$data = $argv[2] ?? date('Y-m-d', strtotime('-1 day'));
 
-echo "=== TIMBRI {$cognome} — {$data} ===" . PHP_EOL;
+echo "=== TIMBRI {$cognome} ===" . PHP_EOL;
 
 // Cerca matricola
 $anagrafica = DB::table('nettime_anagrafica')
-    ->where('cognome_nome', 'LIKE', "%{$cognome}%")
+    ->where('cognome', 'LIKE', "%{$cognome}%")
     ->first();
 
 if (!$anagrafica) {
-    echo "Operatore non trovato in anagrafica" . PHP_EOL;
+    echo "Non trovato in anagrafica. Cerco per nome..." . PHP_EOL;
+    $anagrafica = DB::table('nettime_anagrafica')
+        ->where('nome', 'LIKE', "%{$cognome}%")
+        ->first();
+}
+
+if (!$anagrafica) {
+    echo "Operatore non trovato." . PHP_EOL;
+    echo PHP_EOL . "Anagrafica disponibile:" . PHP_EOL;
+    $tutti = DB::table('nettime_anagrafica')->get();
+    foreach ($tutti as $a) {
+        echo "  Matricola:{$a->matricola} | {$a->cognome} {$a->nome}" . PHP_EOL;
+    }
     exit;
 }
 
-echo "Matricola: {$anagrafica->badge_id} | {$anagrafica->cognome_nome}" . PHP_EOL . PHP_EOL;
+echo "Matricola: {$anagrafica->matricola} | {$anagrafica->cognome} {$anagrafica->nome}" . PHP_EOL;
 
-// Cerca timbrature del giorno
+// Ieri
+echo PHP_EOL . "=== {$data} (ieri) ===" . PHP_EOL;
 $timbri = DB::table('nettime_timbrature')
-    ->where('badge_id', $anagrafica->badge_id)
+    ->where('matricola', $anagrafica->matricola)
     ->whereDate('data_ora', $data)
     ->orderBy('data_ora')
     ->get();
 
-echo "Timbrature trovate: " . $timbri->count() . PHP_EOL;
+echo "Timbrature: " . $timbri->count() . PHP_EOL;
 foreach ($timbri as $t) {
-    $tipo = $t->tipo == 'E' ? 'ENTRATA' : 'USCITA';
+    $tipo = $t->verso == 'E' ? 'ENTRATA' : ($t->verso == 'U' ? 'USCITA' : $t->verso);
     echo "  {$t->data_ora} | {$tipo}" . PHP_EOL;
 }
 
-// Cerca anche oggi
-echo PHP_EOL . "=== OGGI (" . date('Y-m-d') . ") ===" . PHP_EOL;
-$timriOggi = DB::table('nettime_timbrature')
-    ->where('badge_id', $anagrafica->badge_id)
+// Oggi
+echo PHP_EOL . "=== " . date('Y-m-d') . " (oggi) ===" . PHP_EOL;
+$oggi = DB::table('nettime_timbrature')
+    ->where('matricola', $anagrafica->matricola)
     ->whereDate('data_ora', date('Y-m-d'))
     ->orderBy('data_ora')
     ->get();
 
-echo "Timbrature: " . $timriOggi->count() . PHP_EOL;
-foreach ($timriOggi as $t) {
-    $tipo = $t->tipo == 'E' ? 'ENTRATA' : 'USCITA';
+echo "Timbrature: " . $oggi->count() . PHP_EOL;
+foreach ($oggi as $t) {
+    $tipo = $t->verso == 'E' ? 'ENTRATA' : ($t->verso == 'U' ? 'USCITA' : $t->verso);
     echo "  {$t->data_ora} | {$tipo}" . PHP_EOL;
 }
