@@ -116,27 +116,27 @@ html { font-size: 22px; }
 .coda-badge.verde { background: #065f46; color: #6ee7b7; }
 
 /* Fasi completate + Ore segnate side by side */
-.stats-row { display: flex; gap: 1rem; flex: 1; }
-.stats-col { flex: 1; background: #111827; border-radius: 0.4rem; padding: 0.5rem 0.6rem; }
-.stats-col-title { font-size: 0.45rem; font-weight: 700; margin-bottom: 0.3rem; display: flex; align-items: center; gap: 0.3rem; }
+.stats-row { display: flex; gap: 1rem; flex: 1; height: 100%; }
+.stats-col { flex: 1; background: #111827; border-radius: 0.4rem; padding: 0.8rem 1rem; display: flex; flex-direction: column; justify-content: center; }
+.stats-col-title { font-size: 0.55rem; font-weight: 700; margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.3rem; }
 
-.big-num { font-size: 3rem; font-weight: 900; color: #4ade80; line-height: 1; text-align: center; }
-.obj-stats { display: flex; gap: 2rem; justify-content: center; margin-top: 0.4rem; }
+.big-num { font-size: 5rem; font-weight: 900; color: #4ade80; line-height: 1; text-align: center; margin: 0.5rem 0; }
+.obj-stats { display: flex; gap: 2.5rem; justify-content: center; margin-top: 0.6rem; }
 .obj-stat { text-align: center; }
-.obj-stat-val { font-size: 0.7rem; font-weight: 800; }
+.obj-stat-val { font-size: 1rem; font-weight: 800; }
 .obj-stat-val.green { color: #4ade80; }
 .obj-stat-val.blue { color: #38bdf8; }
-.obj-stat-lbl { font-size: 0.26rem; color: #64748b; text-transform: uppercase; }
+.obj-stat-lbl { font-size: 0.32rem; color: #64748b; text-transform: uppercase; }
 
 /* Ore segnate */
-.ore-row { display: flex; align-items: center; margin-bottom: 0.15rem; }
-.ore-nome { font-size: 0.42rem; font-weight: 600; color: #94a3b8; min-width: 5rem; }
-.ore-bar { flex: 1; height: 0.5rem; background: #1e293b; border-radius: 0.25rem; overflow: hidden; margin: 0 0.3rem; }
+.ore-row { display: flex; align-items: center; margin-bottom: 0.25rem; }
+.ore-nome { font-size: 0.5rem; font-weight: 600; color: #94a3b8; min-width: 5.5rem; }
+.ore-bar { flex: 1; height: 0.6rem; background: #1e293b; border-radius: 0.3rem; overflow: hidden; margin: 0 0.4rem; }
 .ore-fill { height: 100%; border-radius: 0.25rem; }
 .ore-fill.red { background: linear-gradient(90deg, #dc2626, #ef4444); }
 .ore-fill.orange { background: linear-gradient(90deg, #d97706, #f59e0b); }
 .ore-fill.green { background: linear-gradient(90deg, #16a34a, #4ade80); }
-.ore-pct { font-size: 0.48rem; font-weight: 700; min-width: 1.8rem; text-align: right; }
+.ore-pct { font-size: 0.55rem; font-weight: 700; min-width: 2rem; text-align: right; }
 .ore-pct.red { color: #f87171; }
 .ore-pct.orange { color: #fbbf24; }
 .ore-pct.green { color: #4ade80; }
