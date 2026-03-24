@@ -212,7 +212,12 @@ class KioskController extends Controller
     public function salvaNota(Request $request)
     {
         $nota = trim($request->input('nota', ''));
-        Cache::put('kiosk_nota_tv', $nota, now()->addHours(24));
+        try {
+            Cache::put('kiosk_nota_tv', $nota, now()->addHours(24));
+        } catch (\Throwable $e) {
+            // Fallback: salva in file
+            file_put_contents(storage_path('app/kiosk_nota.txt'), $nota);
+        }
         return response()->json(['success' => true]);
     }
 
@@ -221,7 +226,11 @@ class KioskController extends Controller
      */
     public function getNota()
     {
-        return response()->json(['nota' => Cache::get('kiosk_nota_tv', '')]);
+        $nota = Cache::get('kiosk_nota_tv', '');
+        if (!$nota && file_exists(storage_path('app/kiosk_nota.txt'))) {
+            $nota = file_get_contents(storage_path('app/kiosk_nota.txt'));
+        }
+        return response()->json(['nota' => $nota]);
     }
     }
 }
