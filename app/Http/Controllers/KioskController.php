@@ -42,6 +42,8 @@ class KioskController extends Controller
             ['nome' => 'Finestratrice', 'reparti' => ['finestratura']],
             ['nome' => 'Fustella Cilindrica', 'reparti' => ['fustella cilindrica']],
             ['nome' => 'Canon V900', 'reparti' => ['digitale']],
+            ['nome' => 'Tagliacarte', 'reparti' => ['tagliacarte']],
+            ['nome' => 'Legatoria', 'reparti' => ['legatoria']],
         ];
 
         $macchine = [];
@@ -109,10 +111,11 @@ class KioskController extends Controller
         $prossimi = [];
         foreach ($macchineConfig as $mc) {
             $fasiCoda = OrdineFase::with('ordine')
-                ->where('stato', 1)
+                ->whereIn('stato', [0, 1])
                 ->whereHas('faseCatalogo', fn($q) =>
                     $q->whereHas('reparto', fn($q2) => $q2->whereIn('nome', $mc['reparti']))
                 )
+                ->orderByRaw("FIELD(stato, 1, 0)")
                 ->orderBy('priorita')
                 ->limit(3)
                 ->get();
