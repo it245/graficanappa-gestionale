@@ -217,7 +217,8 @@ html { font-size: 22px; }
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
+    padding-top: 0.5rem;
     height: calc(100% - 30px);
 }
 .obj-pct { font-size: 0.5rem; font-weight: 800; color: #4ade80; }
