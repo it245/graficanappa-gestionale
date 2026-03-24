@@ -111,11 +111,10 @@ class KioskController extends Controller
         $prossimi = [];
         foreach ($macchineConfig as $mc) {
             $fasiCoda = OrdineFase::with('ordine')
-                ->whereIn('stato', [0, 1])
+                ->where('stato', 1)
                 ->whereHas('faseCatalogo', fn($q) =>
                     $q->whereHas('reparto', fn($q2) => $q2->whereIn('nome', $mc['reparti']))
                 )
-                ->orderByRaw("FIELD(stato, 1, 0)")
                 ->orderBy('priorita')
                 ->limit(3)
                 ->get();
