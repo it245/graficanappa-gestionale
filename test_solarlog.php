@@ -3,70 +3,79 @@ require 'vendor/autoload.php';
 $app = require_once 'bootstrap/app.php';
 $app->make('Illuminate\Contracts\Console\Kernel')->bootstrap();
 
-use Illuminate\Support\Facades\Http;
-
 $portalUrl = 'https://solarlog-portal.it';
 $user = 'vittorio81@katamail.com';
 $pass = 'nappa2017';
 
 echo "=== TEST SOLAR-LOG ===" . PHP_EOL;
 
-// 1. Login
-echo "1. Login..." . PHP_EOL;
-$loginResp = Http::withoutVerifying()->asForm()->post("{$portalUrl}/974821.html", [
-    'username' => $user,
-    'password' => $pass,
-    'action' => 'login',
+// Usa Guzzle direttamente con cookie jar
+$jar = new \GuzzleHttp\Cookie\CookieJar();
+$client = new \GuzzleHttp\Client([
+    'verify' => false,
+    'cookies' => $jar,
+    'timeout' => 15,
 ]);
 
-$cookies = $loginResp->cookies();
-echo "   Status: {$loginResp->status()}" . PHP_EOL;
-echo "   Cookies: " . count($cookies) . PHP_EOL;
-
-// Salva i cookie per le richieste successive
-$cookieJar = $loginResp->cookies();
+// 1. Login
+echo "1. Login..." . PHP_EOL;
+$loginResp = $client->post("{$portalUrl}/974821.html", [
+    'form_params' => [
+        'username' => $user,
+        'password' => $pass,
+        'action' => 'login',
+    ],
+]);
+echo "   Status: {$loginResp->getStatusCode()}" . PHP_EOL;
+echo "   Cookies: " . count($jar->toArray()) . PHP_EOL;
+foreach ($jar->toArray() as $c) {
+    echo "   - {$c['Name']}={$c['Value']}" . PHP_EOL;
+}
 
 // 2. Pagina rendimenti
-echo "2. Pagina rendimenti..." . PHP_EOL;
-$rendResp = Http::withoutVerifying()->withCookies($cookieJar->toArray(), 'solarlog-portal.it')
-    ->get("{$portalUrl}/emulated_yieldov_3650.html");
+echo PHP_EOL . "2. Pagina rendimenti..." . PHP_EOL;
+$rendResp = $client->get("{$portalUrl}/emulated_yieldov_3650.html");
+$body = (string)$rendResp->getBody();
+echo "   Status: {$rendResp->getStatusCode()}" . PHP_EOL;
+echo "   Lunghezza: " . strlen($body) . " byte" . PHP_EOL;
 
-echo "   Status: {$rendResp->status()}" . PHP_EOL;
-echo "   Lunghezza: " . strlen($rendResp->body()) . " byte" . PHP_EOL;
-
-// 3. Cerca dati nel body
-$body = $rendResp->body();
-
-// Cerca pattern per kWh, potenza, rendimento
-if (preg_match_all('/(\d+[\.,]\d+)\s*(kWh|kW|MWh)/i', $body, $matches)) {
-    echo "3. Dati trovati:" . PHP_EOL;
-    foreach ($matches[0] as $i => $m) {
+// 3. Cerca dati kWh nel body
+if (preg_match_all('/(\d+[\.,]?\d*)\s*(kWh|kW|MWh|Wh)/i', $body, $matches)) {
+    echo PHP_EOL . "3. Dati energia trovati:" . PHP_EOL;
+    foreach ($matches[0] as $m) {
         echo "   {$m}" . PHP_EOL;
     }
 }
 
-// Salva il body per analisi
-$htmlFile = 'solarlog_page.html';
-file_put_contents($htmlFile, $body);
-echo PHP_EOL . "Body salvato in {$htmlFile} (" . round(strlen($body)/1024) . " KB)" . PHP_EOL;
+// Cerca anche numeri grandi che potrebbero essere rendimenti
+if (preg_match_all('/yieldov[^"]*"[^"]*"|Pac|Pdc|Etoday|Etotal|power|yield/i', $body, $matches2)) {
+    echo PHP_EOL . "4. Keyword energia trovate:" . PHP_EOL;
+    foreach (array_unique($matches2[0]) as $m) {
+        echo "   {$m}" . PHP_EOL;
+    }
+}
 
-// 4. Prova anche l'API diretta (se disponibile)
-echo PHP_EOL . "4. Prova API..." . PHP_EOL;
-$apiUrls = [
-    "{$portalUrl}/974821/api/v1/current",
-    "{$portalUrl}/974821/api/current",
-    "{$portalUrl}/getjp",
+// Salva body per analisi
+file_put_contents('solarlog_page.html', $body);
+echo PHP_EOL . "Body salvato in solarlog_page.html (" . round(strlen($body)/1024) . " KB)" . PHP_EOL;
+
+// 5. Prova pagine alternative
+echo PHP_EOL . "5. Altre pagine..." . PHP_EOL;
+$pagine = [
+    '/974821.html',
+    '/emulated_min_cur_3650.html',
+    '/emulated_min_day_3650.html',
 ];
-
-foreach ($apiUrls as $url) {
+foreach ($pagine as $p) {
     try {
-        $r = Http::withoutVerifying()->withCookies($cookieJar->toArray(), 'solarlog-portal.it')
-            ->timeout(5)->get($url);
-        echo "   {$url} → {$r->status()} (" . strlen($r->body()) . " byte)" . PHP_EOL;
-        if ($r->status() === 200 && strlen($r->body()) < 5000) {
-            echo "   Body: " . substr($r->body(), 0, 200) . PHP_EOL;
+        $r = $client->get("{$portalUrl}{$p}");
+        $b = (string)$r->getBody();
+        echo "   {$p} → {$r->getStatusCode()} (" . round(strlen($b)/1024) . " KB)" . PHP_EOL;
+        // Cerca kWh
+        if (preg_match_all('/(\d+[\.,]?\d*)\s*(kWh|kW|MWh)/i', $b, $m3)) {
+            foreach (array_slice($m3[0], 0, 3) as $v) echo "     → {$v}" . PHP_EOL;
         }
     } catch (\Exception $e) {
-        echo "   {$url} → ERRORE: " . substr($e->getMessage(), 0, 60) . PHP_EOL;
+        echo "   {$p} → ERRORE" . PHP_EOL;
     }
 }
