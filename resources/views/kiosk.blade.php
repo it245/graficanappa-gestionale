@@ -16,15 +16,13 @@ body {
     font-feature-settings: 'tnum';
 }
 
-/* TV 4K scaling — ingrandito per leggibilità a 3-4m su 55" */
+/* TV scaling per leggibilità a 3-4m */
+html { font-size: 22px; }
+@media (min-width: 1920px) {
+    html { font-size: 26px; }
+}
 @media (min-width: 2560px) {
-    html { font-size: 40px; }
-}
-@media (min-width: 1920px) and (max-width: 2559px) {
-    html { font-size: 28px; }
-}
-@media (max-width: 1919px) {
-    html { font-size: 22px; }
+    html { font-size: 34px; }
 }
 
 .kiosk { display: grid; grid-template-rows: auto 1fr; height: 100vh; }
@@ -133,7 +131,7 @@ body {
 
 .m-info-center { flex: 1; padding: 0 0.4rem; }
 .m-commessa { font-size: 0.42rem; font-weight: 700; color: #38bdf8; }
-.m-desc { font-size: 0.34rem; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.m-desc { font-size: 0.34rem; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 12rem; display: block; }
 .m-cliente { font-size: 0.28rem; color: #64748b; }
 
 .m-info-right { text-align: right; min-width: 4rem; }

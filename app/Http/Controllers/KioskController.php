@@ -91,7 +91,7 @@ class KioskController extends Controller
                     'attiva' => true,
                     'commessa' => $fase->ordine->commessa ?? '-',
                     'cliente' => $fase->ordine->cliente_nome ?? '-',
-                    'descrizione' => $fase->ordine->descrizione ?? '-',
+                    'descrizione' => \Illuminate\Support\Str::limit($fase->ordine->descrizione ?? '-', 50),
                     'ore_lav' => $oreLav,
                     'ore_prev' => $orePrev ?: 1,
                 ];
