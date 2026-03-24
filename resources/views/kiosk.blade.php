@@ -72,7 +72,9 @@ html { font-size: 22px; }
 /* Sezioni */
 .section {
     padding: 0.6rem 1rem;
-    min-height: calc(100vh - 5rem);
+    height: calc(100vh - 5rem);
+    max-height: calc(100vh - 5rem);
+    overflow: hidden;
     display: flex;
     flex-direction: column;
 }
