@@ -465,8 +465,8 @@ if (pages.length > 1) {
     setInterval(switchPage, 45000);
 }
 
-// Refresh dati ogni 5 minuti
-setTimeout(function() { location.reload(); }, 300000);
+// Refresh dati ogni 30 secondi per dati live
+setTimeout(function() { location.reload(); }, 30000);
 </script>
 </body>
 </html>
