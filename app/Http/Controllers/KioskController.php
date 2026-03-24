@@ -127,8 +127,8 @@ class KioskController extends Controller
                     $fustella = \App\Helpers\DescrizioneParser::parseFustella(
                         $f->ordine->descrizione ?? '', $f->ordine->cliente_nome ?? '', ''
                     );
-                    $badge = $fustella ?: $f->fase;
-                    $items[] = ['desc' => $desc, 'badge' => $badge, 'badge_cls' => 'verde'];
+                    $commessa = $f->ordine->commessa ?? '-';
+                    $items[] = ['desc' => $desc, 'badge' => $commessa, 'badge_cls' => 'verde'];
                 }
                 $prossimi[strtoupper($mc['nome'])] = $items;
             }
