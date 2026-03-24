@@ -13,7 +13,7 @@ echo "=== TEST SOLAR-LOG ===" . PHP_EOL;
 
 // 1. Login
 echo "1. Login..." . PHP_EOL;
-$loginResp = Http::asForm()->post("{$portalUrl}/974821.html", [
+$loginResp = Http::withoutVerifying()->asForm()->post("{$portalUrl}/974821.html", [
     'username' => $user,
     'password' => $pass,
     'action' => 'login',
@@ -28,7 +28,7 @@ $cookieJar = $loginResp->cookies();
 
 // 2. Pagina rendimenti
 echo "2. Pagina rendimenti..." . PHP_EOL;
-$rendResp = Http::withCookies($cookieJar->toArray(), 'solarlog-portal.it')
+$rendResp = Http::withoutVerifying()->withCookies($cookieJar->toArray(), 'solarlog-portal.it')
     ->get("{$portalUrl}/emulated_yieldov_3650.html");
 
 echo "   Status: {$rendResp->status()}" . PHP_EOL;
@@ -60,7 +60,7 @@ $apiUrls = [
 
 foreach ($apiUrls as $url) {
     try {
-        $r = Http::withCookies($cookieJar->toArray(), 'solarlog-portal.it')
+        $r = Http::withoutVerifying()->withCookies($cookieJar->toArray(), 'solarlog-portal.it')
             ->timeout(5)->get($url);
         echo "   {$url} → {$r->status()} (" . strlen($r->body()) . " byte)" . PHP_EOL;
         if ($r->status() === 200 && strlen($r->body()) < 5000) {
