@@ -218,19 +218,23 @@ html { font-size: 22px; }
     </div>
     @endforeach
 </div><!-- fine z1 -->
-<div style="flex:1; overflow:hidden;">
+<div style="flex:1; display:flex; flex-direction:column; overflow:hidden;">
 <!-- Z2: PROSSIMI LAVORI -->
     <div class="section-title" style="color:#94a3b8;">📋 Prossimi lavori <span class="section-badge" style="background:#2563eb;color:#fff;">CODA</span></div>
-    @foreach($prossimi as $gruppo => $items)
-        <div class="coda-macchina">{{ $gruppo }}</div>
-        @foreach($items as $p)
-        <div class="coda-item">
-            <span class="coda-num">#{{ $loop->iteration }}</span>
-            <span class="coda-desc">{{ $p['desc'] }}</span>
-            <span class="coda-badge verde">{{ $p['badge'] }}</span>
+    <div id="z2-scroll" style="flex:1; overflow:hidden;">
+        <div id="z2-scroll-inner">
+            @foreach($prossimi as $gruppo => $items)
+                <div class="coda-macchina">{{ $gruppo }}</div>
+                @foreach($items as $p)
+                <div class="coda-item">
+                    <span class="coda-num">#{{ $loop->iteration }}</span>
+                    <span class="coda-desc">{{ $p['desc'] }}</span>
+                    <span class="coda-badge verde">{{ $p['badge'] }}</span>
+                </div>
+                @endforeach
+            @endforeach
         </div>
-        @endforeach
-    @endforeach
+    </div>
 </div><!-- fine z2 -->
 </div><!-- fine pagina 1 -->
 
@@ -333,6 +337,25 @@ function nextSection() {
 
 // Ogni pagina visibile per 40 secondi
 setInterval(nextSection, 40000);
+
+// Scroll verticale automatico per Z2 (Prossimi lavori)
+(function() {
+    var container = document.getElementById('z2-scroll');
+    var inner = document.getElementById('z2-scroll-inner');
+    if (!container || !inner) return;
+    var scrollPos = 0;
+    var speed = 0.5; // pixel per frame
+    function autoScroll() {
+        if (inner.scrollHeight <= container.clientHeight) return;
+        scrollPos += speed;
+        if (scrollPos >= inner.scrollHeight - container.clientHeight) {
+            scrollPos = 0; // ricomincia
+        }
+        inner.style.transform = 'translateY(-' + scrollPos + 'px)';
+        requestAnimationFrame(autoScroll);
+    }
+    requestAnimationFrame(autoScroll);
+})();
 </script>
 </body>
 </html>
