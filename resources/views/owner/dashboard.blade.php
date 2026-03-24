@@ -603,6 +603,12 @@ tr:hover td {
             </svg>
             <span>Apri Excel Dashboard</span>
         </a>
+
+        {{-- TV Kiosk --}}
+        <a href="/kiosk" target="_blank" class="sidebar-item" onclick="closeSidebar();">
+            <span style="font-size:20px;">📺</span>
+            <span>TV Kiosk</span>
+        </a>
         @endif
 
         {{-- Aggiungi riga --}}

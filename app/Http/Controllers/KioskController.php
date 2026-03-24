@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\OrdineFase;
 use App\Models\Ordine;
 use App\Models\Reparto;
+use App\Http\Services\PrinectService;
+use App\Http\Services\PrinectSyncService;
 use App\Services\SolarLogService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -34,6 +36,38 @@ class KioskController extends Controller
             $q->whereHas('reparto', fn($q2) => $q2->whereIn('nome', ['fustella piana', 'fustella cilindrica']))
         )->where('stato', '<', 3)->count();
 
+        // === PRINECT LIVE per XL106 ===
+        $prinectLive = null;
+        try {
+            $prinect = app(PrinectService::class);
+            $deviceData = $prinect->getDevices();
+            $device = $deviceData['devices'][0] ?? $deviceData ?? null;
+            if ($device && isset($device['deviceStatus'])) {
+                $status = $device['deviceStatus'];
+                $wsName = $status['workstepName'] ?? '';
+                $jobName = $status['jobName'] ?? '';
+                $employees = $status['employees'] ?? [];
+                $operatore = !empty($employees) ? ($employees[0]['name'] ?? '') : '';
+                // Estrai commessa dal jobName (es. "66849" → "0066849-26")
+                $jobIdNum = PrinectSyncService::estraiJobIdNumerico($status['jobId'] ?? $jobName);
+                $commessa = $jobIdNum ? str_pad($jobIdNum, 7, '0', STR_PAD_LEFT) . '-' . date('y') : '';
+                $ordine = $commessa ? Ordine::where('commessa', $commessa)->first() : null;
+
+                if ($commessa && $status['status'] ?? '' !== 'Idle') {
+                    $prinectLive = [
+                        'commessa' => $commessa,
+                        'cliente' => $ordine->cliente_nome ?? '-',
+                        'descrizione' => \Illuminate\Support\Str::limit($ordine->descrizione ?? $jobName, 50),
+                        'operatore' => $operatore,
+                        'job' => $jobName,
+                        'status' => $status['status'] ?? 'Idle',
+                    ];
+                }
+            }
+        } catch (\Throwable $e) {
+            // Prinect non disponibile
+        }
+
         // === ZONA 1: MACCHINE IN CORSO ===
         $macchineConfig = [
             ['nome' => 'XL 106', 'reparti' => ['stampa offset'], 'fasi' => ['STAMPAXL106%', 'STAMPA XL%']],
@@ -50,6 +84,19 @@ class KioskController extends Controller
 
         $macchine = [];
         foreach ($macchineConfig as $mc) {
+            // XL106: usa Prinect live se disponibile
+            if ($mc['nome'] === 'XL 106' && $prinectLive && $prinectLive['status'] !== 'Idle') {
+                $macchine[] = [
+                    'nome' => $mc['nome'],
+                    'attiva' => true,
+                    'commessa' => $prinectLive['commessa'],
+                    'cliente' => $prinectLive['cliente'],
+                    'descrizione' => $prinectLive['descrizione'],
+                    'ore_lav' => '', // Prinect non dà ore in tempo reale
+                ];
+                continue;
+            }
+
             $query = OrdineFase::with(['ordine', 'operatori', 'faseCatalogo.reparto'])
                 ->where('stato', 2)
                 ->whereHas('faseCatalogo', fn($q) =>
