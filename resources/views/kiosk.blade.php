@@ -35,14 +35,14 @@ body {
     border-bottom: 1px solid #1e293b;
     display: flex;
     align-items: center;
-    padding: 0.4rem 1.2rem;
-    gap: 1.5rem;
+    padding: 0.5rem 1.5rem;
+    gap: 2rem;
 }
 .header-brand { display: flex; flex-direction: column; min-width: 8rem; }
 .header-brand-name { font-size: 0.75rem; font-weight: 800; color: #38bdf8; letter-spacing: 1px; }
 .header-brand-sub { font-size: 0.35rem; color: #64748b; text-transform: uppercase; letter-spacing: 2px; }
 
-.header-kpis { display: flex; gap: 1.5rem; flex: 1; justify-content: center; }
+.header-kpis { display: flex; gap: 2.5rem; flex: 1; justify-content: center; }
 .hkpi { text-align: center; }
 .hkpi-val { font-size: 1.1rem; font-weight: 800; line-height: 1; }
 .hkpi-lbl { font-size: 0.32rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 0.1rem; }
