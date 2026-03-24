@@ -72,7 +72,7 @@ html { font-size: 22px; }
 .zones {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
+    grid-template-rows: 55% 45%;
     gap: 2px;
     background: #1e293b;
 }
@@ -87,7 +87,7 @@ html { font-size: 22px; }
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 0.4rem;
+    margin-bottom: 0.25rem;
 }
 .zone-title {
     font-size: 0.45rem;
@@ -114,9 +114,9 @@ html { font-size: 22px; }
 .macchina {
     display: flex;
     align-items: center;
-    padding: 0.25rem 0.4rem;
+    padding: 0.15rem 0.35rem;
     border-radius: 0.3rem;
-    margin-bottom: 0.15rem;
+    margin-bottom: 0.08rem;
     border-left: 3px solid #334155;
     background: #111827;
 }
@@ -143,14 +143,14 @@ html { font-size: 22px; }
 .z2 .zone-title { color: #94a3b8; }
 .z2 .zone-badge { background: #2563eb; color: #fff; }
 
-.coda-macchina { font-size: 0.48rem; font-weight: 700; color: #64748b; text-transform: uppercase; margin: 0.35rem 0 0.12rem; letter-spacing: 0.05em; }
+.coda-macchina { font-size: 0.44rem; font-weight: 700; color: #64748b; text-transform: uppercase; margin: 0.2rem 0 0.06rem; letter-spacing: 0.05em; }
 .coda-macchina:first-child { margin-top: 0; }
 
 .coda-item {
     display: flex;
     align-items: center;
-    padding: 0.12rem 0.3rem;
-    font-size: 0.44rem;
+    padding: 0.06rem 0.25rem;
+    font-size: 0.4rem;
 }
 .coda-num { color: #475569; min-width: 0.9rem; font-weight: 600; }
 .coda-desc { flex: 1; color: #cbd5e1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
