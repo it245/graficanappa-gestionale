@@ -205,16 +205,16 @@ class KioskController extends Controller
         // === ZONA 4: UTILIZZO MACCHINE ===
         $utilizzo = [];
         $repartiUtilizzo = [
-            ['nome' => 'XL 106 (24h)', 'reparti' => ['stampa offset'], 'ore_disp' => 24],
-            ['nome' => 'BOBST', 'reparti' => ['fustella piana'], 'ore_disp' => 16],
-            ['nome' => 'JOH Caldo', 'reparti' => ['stampa a caldo'], 'ore_disp' => 16],
-            ['nome' => 'Plastificatrice', 'reparti' => ['plastificazione'], 'ore_disp' => 16],
-            ['nome' => 'Piegaincolla', 'reparti' => ['piegaincolla'], 'ore_disp' => 16],
-            ['nome' => 'Finestratrice', 'reparti' => ['finestratura'], 'ore_disp' => 16],
-            ['nome' => 'Fustella Cilindrica', 'reparti' => ['fustella cilindrica'], 'ore_disp' => 16],
-            ['nome' => 'Canon V900', 'reparti' => ['digitale'], 'ore_disp' => 16],
-            ['nome' => 'Tagliacarte', 'reparti' => ['tagliacarte'], 'ore_disp' => 16],
-            ['nome' => 'Legatoria', 'reparti' => ['legatoria'], 'ore_disp' => 9],
+            ['nome' => 'XL 106 (24h)', 'reparti' => ['stampa offset'], 'ore_disp' => 24],  // 24h 3 turni
+            ['nome' => 'BOBST', 'reparti' => ['fustella piana'], 'ore_disp' => 16],       // 6-22
+            ['nome' => 'JOH Caldo', 'reparti' => ['stampa a caldo'], 'ore_disp' => 16],   // 6-22
+            ['nome' => 'Plastificatrice', 'reparti' => ['plastificazione'], 'ore_disp' => 9], // 8-17
+            ['nome' => 'Piegaincolla', 'reparti' => ['piegaincolla'], 'ore_disp' => 14],  // 6-20
+            ['nome' => 'Finestratrice', 'reparti' => ['finestratura'], 'ore_disp' => 14], // 6-20
+            ['nome' => 'Fustella Cilindrica', 'reparti' => ['fustella cilindrica'], 'ore_disp' => 9], // 8-17
+            ['nome' => 'Canon V900', 'reparti' => ['digitale'], 'ore_disp' => 9],         // 8-17
+            ['nome' => 'Tagliacarte', 'reparti' => ['tagliacarte'], 'ore_disp' => 9],     // 8-17
+            ['nome' => 'Legatoria', 'reparti' => ['legatoria'], 'ore_disp' => 14],        // 6-20
         ];
 
         foreach ($repartiUtilizzo as $ru) {
