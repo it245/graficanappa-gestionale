@@ -45,7 +45,8 @@ body {
 .header-kpis { display: flex; gap: 2.5rem; flex: 1; justify-content: center; }
 .hkpi { text-align: center; }
 .hkpi-val { font-size: 1.1rem; font-weight: 800; line-height: 1; }
-.hkpi-lbl { font-size: 0.32rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 0.1rem; }
+.hkpi-lbl { font-size: 0.32rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 0.15rem; }
+.hkpi { min-width: 5rem; }
 .hkpi-green .hkpi-val { color: #4ade80; }
 .hkpi-blue .hkpi-val { color: #38bdf8; }
 .hkpi-amber .hkpi-val { color: #fbbf24; }
