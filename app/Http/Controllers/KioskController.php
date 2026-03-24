@@ -27,10 +27,14 @@ class KioskController extends Controller
             })->count();
 
         $inCorso = OrdineFase::whereRaw("stato REGEXP '^[0-9]+$'")
-            ->where('stato', 2)->count();
+            ->where('stato', 2)
+            ->where(fn($q) => $q->where('esterno', 0)->orWhereNull('esterno'))
+            ->count();
 
         $inCoda = OrdineFase::whereRaw("stato REGEXP '^[0-9]+$'")
-            ->where('stato', 1)->count();
+            ->where('stato', 1)
+            ->where(fn($q) => $q->where('esterno', 0)->orWhereNull('esterno'))
+            ->count();
 
         $fustelleAttive = OrdineFase::whereHas('faseCatalogo', fn($q) =>
             $q->whereHas('reparto', fn($q2) => $q2->whereIn('nome', ['fustella piana', 'fustella cilindrica']))
@@ -99,6 +103,7 @@ class KioskController extends Controller
 
             $query = OrdineFase::with(['ordine', 'operatori', 'faseCatalogo.reparto'])
                 ->where('stato', 2)
+                ->where(fn($q) => $q->where('esterno', 0)->orWhereNull('esterno'))
                 ->whereHas('faseCatalogo', fn($q) =>
                     $q->whereHas('reparto', fn($q2) => $q2->whereIn('nome', $mc['reparti']))
                 );
@@ -161,6 +166,7 @@ class KioskController extends Controller
         foreach ($macchineConfig as $mc) {
             $fasiCoda = OrdineFase::with('ordine')
                 ->where('stato', 1)
+                ->where(fn($q) => $q->where('esterno', 0)->orWhereNull('esterno'))
                 ->whereHas('faseCatalogo', fn($q) =>
                     $q->whereHas('reparto', fn($q2) => $q2->whereIn('nome', $mc['reparti']))
                 )
