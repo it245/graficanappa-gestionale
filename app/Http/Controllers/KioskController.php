@@ -40,7 +40,7 @@ class KioskController extends Controller
             ['nome' => 'Plastificatrice', 'reparti' => ['plastificazione']],
             ['nome' => 'Piegaincolla', 'reparti' => ['piegaincolla']],
             ['nome' => 'Finestratrice', 'reparti' => ['finestratura']],
-            ['nome' => 'STEL', 'reparti' => ['fustella cilindrica']],
+            ['nome' => 'Fustella Cilindrica', 'reparti' => ['fustella cilindrica']],
             ['nome' => 'Canon V900', 'reparti' => ['digitale']],
         ];
 
@@ -154,7 +154,7 @@ class KioskController extends Controller
             ['nome' => 'Plastificatrice', 'reparti' => ['plastificazione'], 'ore_disp' => 16],
             ['nome' => 'Piegaincolla', 'reparti' => ['piegaincolla'], 'ore_disp' => 16],
             ['nome' => 'Finestratrice', 'reparti' => ['finestratura'], 'ore_disp' => 16],
-            ['nome' => 'STEL', 'reparti' => ['fustella cilindrica'], 'ore_disp' => 16],
+            ['nome' => 'Fustella Cilindrica', 'reparti' => ['fustella cilindrica'], 'ore_disp' => 16],
             ['nome' => 'Canon V900', 'reparti' => ['digitale'], 'ore_disp' => 16],
             ['nome' => 'Tagliacarte', 'reparti' => ['tagliacarte'], 'ore_disp' => 16],
             ['nome' => 'Legatoria', 'reparti' => ['legatoria'], 'ore_disp' => 9],
