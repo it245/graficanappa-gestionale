@@ -703,7 +703,7 @@ tr:hover td {
         @endif
 
         {{-- NOTA TV --}}
-        <button type="button" class="sidebar-item" data-bs-toggle="modal" data-bs-target="#modalNotaTv" style="width:100%; background:none; border:none; border-bottom:1px solid #f0f0f0; text-align:left; font-size:14px; font-weight:500; color:#333; display:flex; align-items:center; gap:12px; padding:12px 18px; cursor:pointer;">
+        <button type="button" class="sidebar-item" onclick="closeSidebar(); setTimeout(function(){ new bootstrap.Modal(document.getElementById('modalNotaTv')).show(); }, 300);" style="width:100%; background:none; border:none; border-bottom:1px solid #f0f0f0; text-align:left; font-size:14px; font-weight:500; color:#333; display:flex; align-items:center; gap:12px; padding:12px 18px; cursor:pointer;">
             <span style="font-size:20px;">📢</span>
             <span>Nota TV (ticker)</span>
         </button>
