@@ -344,14 +344,37 @@ setInterval(nextSection, 40000);
     var inner = document.getElementById('z2-scroll-inner');
     if (!container || !inner) return;
     var scrollPos = 0;
-    var speed = 0.5; // pixel per frame
+    var speed = 0.3; // pixel per frame (più lento)
+    var maxScroll = 0;
+    var pausing = true;
+    var pauseTimer = null;
+
+    function startPause(ms) {
+        pausing = true;
+        clearTimeout(pauseTimer);
+        pauseTimer = setTimeout(function() { pausing = false; }, ms);
+    }
+
+    // Pausa iniziale 5 secondi prima di partire
+    startPause(5000);
+
     function autoScroll() {
-        if (inner.scrollHeight <= container.clientHeight) return;
-        scrollPos += speed;
-        if (scrollPos >= inner.scrollHeight - container.clientHeight) {
-            scrollPos = 0; // ricomincia
+        maxScroll = inner.scrollHeight - container.clientHeight;
+        if (maxScroll <= 0) { requestAnimationFrame(autoScroll); return; }
+
+        if (!pausing) {
+            scrollPos += speed;
+            if (scrollPos >= maxScroll) {
+                scrollPos = maxScroll;
+                startPause(5000); // pausa 5s in fondo prima di risalire
+                setTimeout(function() {
+                    scrollPos = 0;
+                    inner.style.transform = 'translateY(0)';
+                    startPause(5000); // pausa 5s in cima prima di riscorrere
+                }, 5000);
+            }
+            inner.style.transform = 'translateY(-' + scrollPos + 'px)';
         }
-        inner.style.transform = 'translateY(-' + scrollPos + 'px)';
         requestAnimationFrame(autoScroll);
     }
     requestAnimationFrame(autoScroll);
