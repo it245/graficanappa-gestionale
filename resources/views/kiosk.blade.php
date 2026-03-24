@@ -95,13 +95,13 @@ html { font-size: 22px; }
 }
 .macchina.attiva { border-left-color: #4ade80; }
 .macchina.attesa { border-left-color: #334155; opacity: 0.4; }
-.m-nome { font-size: 0.48rem; font-weight: 700; color: #f1f5f9; min-width: 5.5rem; }
-.m-stato { font-size: 0.3rem; font-weight: 600; }
+.m-nome { font-size: 0.58rem; font-weight: 700; color: #f1f5f9; min-width: 6rem; }
+.m-stato { font-size: 0.34rem; font-weight: 600; }
 .m-stato.lav { color: #4ade80; }
 .m-stato.att { color: #475569; }
-.m-commessa { font-size: 0.48rem; font-weight: 700; color: #38bdf8; }
-.m-desc { font-size: 0.38rem; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 18rem; }
-.m-cliente { font-size: 0.32rem; color: #64748b; }
+.m-commessa { font-size: 0.55rem; font-weight: 700; color: #38bdf8; }
+.m-desc { font-size: 0.42rem; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 18rem; }
+.m-cliente { font-size: 0.38rem; color: #64748b; }
 .m-ore { font-size: 0.42rem; color: #94a3b8; font-weight: 600; min-width: 2.5rem; text-align: right; }
 .m-info-left { min-width: 5.5rem; }
 .m-info-center { flex: 1; padding: 0 0.4rem; }
@@ -230,9 +230,8 @@ html { font-size: 22px; }
 </div><!-- fine z2 -->
 </div><!-- fine pagina 1 -->
 
-<!-- PAGINA 2: Z3 + Z4 affiancate -->
-<div class="section" data-section="1" style="display:flex; flex-direction:row; gap:0.5rem;">
-<div style="flex:1; overflow:hidden;">
+<!-- PAGINA 2: FASI COMPLETATE + ORE SEGNATE -->
+<div class="section" data-section="1">
     <div class="stats-row">
         <div class="stats-col">
             <div class="stats-col-title" style="color:#4ade80;">⚡ Fasi completate oggi</div>
@@ -257,9 +256,10 @@ html { font-size: 22px; }
             @endforeach
         </div>
     </div>
-</div><!-- fine z3 -->
-<div style="flex:1; overflow:hidden;">
-<!-- Z4: SOLAR-LOG -->
+</div>
+
+<!-- PAGINA 3: SOLAR-LOG -->
+<div class="section" data-section="2">
     <div class="solar-page">
         <div class="solar-title">☀️ Impianto Fotovoltaico — {{ $solar['impianto_kwp'] ?? 180 }} kWp
             <span style="font-size:0.35rem; color:#64748b; margin-left:0.5rem;">{{ $solar['inverter_online'] ?? 0 }}/{{ $solar['inverter_totali'] ?? 7 }} online · Agg. {{ $solar['ultimo_aggiornamento'] ?? '--:--' }}</span>
@@ -281,8 +281,7 @@ html { font-size: 22px; }
         </div>
         @endforeach
     </div>
-</div><!-- fine z4 -->
-</div><!-- fine pagina 2 -->
+</div>
 
 </div>
 </div>
