@@ -16,15 +16,15 @@ body {
     font-feature-settings: 'tnum';
 }
 
-/* TV 4K scaling — base 1.8x per leggibilità a 3-4m su 55" */
+/* TV 4K scaling — ingrandito per leggibilità a 3-4m su 55" */
 @media (min-width: 2560px) {
-    html { font-size: 28px; }
+    html { font-size: 40px; }
 }
 @media (min-width: 1920px) and (max-width: 2559px) {
-    html { font-size: 20px; }
+    html { font-size: 28px; }
 }
 @media (max-width: 1919px) {
-    html { font-size: 16px; }
+    html { font-size: 22px; }
 }
 
 .kiosk { display: grid; grid-template-rows: auto 1fr; height: 100vh; }
