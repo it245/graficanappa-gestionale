@@ -221,30 +221,30 @@ body {
 .ore-pct.green { color: #4ade80; }
 
 /* === PAGINA SOLAR === */
-.solar-page { padding: 1rem 1.5rem; height: calc(100vh - 4rem); display: flex; flex-direction: column; background: #000; }
-.solar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem; }
-.solar-title { font-size: 0.6rem; font-weight: 800; color: #fbbf24; }
-.solar-status { display: flex; gap: 0.5rem; align-items: center; }
-.solar-inv-badge { font-size: 0.32rem; background: #065f46; color: #6ee7b7; padding: 0.1rem 0.4rem; border-radius: 0.3rem; font-weight: 700; }
-.solar-update { font-size: 0.3rem; color: #64748b; }
+.solar-page { padding: 1.2rem 2rem; height: calc(100vh - 4rem); display: flex; flex-direction: column; background: #000; }
+.solar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+.solar-title { font-size: 0.8rem; font-weight: 800; color: #fbbf24; }
+.solar-status { display: flex; gap: 0.6rem; align-items: center; }
+.solar-inv-badge { font-size: 0.4rem; background: #065f46; color: #6ee7b7; padding: 0.15rem 0.5rem; border-radius: 0.3rem; font-weight: 700; }
+.solar-update { font-size: 0.36rem; color: #64748b; }
 
-.solar-kpis { display: flex; justify-content: center; gap: 2rem; margin-bottom: 1rem; }
-.solar-kpi { text-align: center; background: #111827; padding: 0.6rem 1rem; border-radius: 0.4rem; min-width: 6rem; }
-.solar-kpi-val { font-size: 1.8rem; font-weight: 900; line-height: 1; }
-.solar-kpi-unit { font-size: 0.4rem; color: #64748b; font-weight: 600; }
-.solar-kpi-lbl { font-size: 0.3rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.15rem; }
+.solar-kpis { display: flex; justify-content: center; gap: 2.5rem; margin-bottom: 1.2rem; }
+.solar-kpi { text-align: center; background: #111827; padding: 0.8rem 1.5rem; border-radius: 0.5rem; min-width: 7rem; border: 1px solid #1e293b; }
+.solar-kpi-val { font-size: 2.2rem; font-weight: 900; line-height: 1; }
+.solar-kpi-unit { font-size: 0.5rem; color: #64748b; font-weight: 600; margin-top: 0.1rem; }
+.solar-kpi-lbl { font-size: 0.36rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.2rem; }
 
 .solar-inverters { flex: 1; }
-.solar-inv-title { font-size: 0.4rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.3rem; }
-.solar-inv-row { display: flex; align-items: center; gap: 0.4rem; padding: 0.2rem 0.3rem; margin-bottom: 0.15rem; background: #111827; border-radius: 0.2rem; }
+.solar-inv-title { font-size: 0.5rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.4rem; }
+.solar-inv-row { display: flex; align-items: center; gap: 0.5rem; padding: 0.3rem 0.5rem; margin-bottom: 0.2rem; background: #111827; border-radius: 0.3rem; }
 .solar-inv-row.offline { opacity: 0.35; }
-.solar-inv-name { font-size: 0.4rem; font-weight: 700; color: #f1f5f9; min-width: 2.5rem; }
-.solar-inv-tipo { font-size: 0.32rem; color: #64748b; min-width: 4rem; }
-.solar-inv-kwp { font-size: 0.34rem; color: #94a3b8; min-width: 3rem; text-align: right; }
-.solar-inv-bar { flex: 1; height: 0.4rem; background: #1e293b; border-radius: 0.2rem; overflow: hidden; margin: 0 0.3rem; }
-.solar-inv-fill { height: 100%; background: linear-gradient(90deg, #f59e0b, #fbbf24); border-radius: 0.2rem; }
-.solar-inv-kwh { font-size: 0.4rem; font-weight: 700; color: #fbbf24; min-width: 3rem; text-align: right; }
-.solar-inv-status { font-size: 0.35rem; min-width: 0.5rem; }
+.solar-inv-name { font-size: 0.5rem; font-weight: 700; color: #f1f5f9; min-width: 3rem; }
+.solar-inv-tipo { font-size: 0.4rem; color: #64748b; min-width: 5rem; }
+.solar-inv-kwp { font-size: 0.42rem; color: #94a3b8; min-width: 3.5rem; text-align: right; }
+.solar-inv-bar { flex: 1; height: 0.55rem; background: #1e293b; border-radius: 0.28rem; overflow: hidden; margin: 0 0.4rem; }
+.solar-inv-fill { height: 100%; background: linear-gradient(90deg, #f59e0b, #fbbf24); border-radius: 0.28rem; }
+.solar-inv-kwh { font-size: 0.5rem; font-weight: 700; color: #fbbf24; min-width: 3.5rem; text-align: right; }
+.solar-inv-status { font-size: 0.45rem; min-width: 0.6rem; }
 .solar-inv-row:not(.offline) .solar-inv-status { color: #4ade80; }
 .solar-inv-row.offline .solar-inv-status { color: #ef4444; }
 </style>
