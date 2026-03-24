@@ -105,6 +105,7 @@ class KioskController extends Controller
             $query = OrdineFase::with(['ordine', 'operatori', 'faseCatalogo.reparto'])
                 ->where('stato', 2)
                 ->where(fn($q) => $q->where('esterno', 0)->orWhereNull('esterno'))
+                ->where(fn($q) => $q->whereNull('note')->orWhere('note', 'NOT LIKE', '%Inviato a:%'))
                 ->whereHas('faseCatalogo', fn($q) =>
                     $q->whereHas('reparto', fn($q2) => $q2->whereIn('nome', $mc['reparti']))
                 );
