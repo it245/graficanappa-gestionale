@@ -207,13 +207,13 @@ html { font-size: 22px; }
     align-items: center;
     margin-bottom: 0.1rem;
 }
-.ore-nome { font-size: 0.38rem; font-weight: 600; color: #94a3b8; min-width: 4.5rem; }
-.ore-bar { flex: 1; height: 0.4rem; background: #1e293b; border-radius: 0.2rem; overflow: hidden; margin: 0 0.3rem; }
+.ore-nome { font-size: 0.46rem; font-weight: 600; color: #94a3b8; min-width: 5rem; }
+.ore-bar { flex: 1; height: 0.5rem; background: #1e293b; border-radius: 0.25rem; overflow: hidden; margin: 0 0.3rem; }
 .ore-fill { height: 100%; border-radius: 0.28rem; }
 .ore-fill.red { background: linear-gradient(90deg, #dc2626, #ef4444); }
 .ore-fill.orange { background: linear-gradient(90deg, #d97706, #f59e0b); }
 .ore-fill.green { background: linear-gradient(90deg, #16a34a, #4ade80); }
-.ore-pct { font-size: 0.42rem; font-weight: 700; min-width: 1.5rem; text-align: right; }
+.ore-pct { font-size: 0.5rem; font-weight: 700; min-width: 1.8rem; text-align: right; }
 .ore-pct.red { color: #f87171; }
 .ore-pct.orange { color: #fbbf24; }
 .ore-pct.green { color: #4ade80; }
