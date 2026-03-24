@@ -116,7 +116,7 @@ html { font-size: 22px; }
 .coda-item { display: flex; align-items: center; padding: 0.12rem 0.3rem; font-size: 0.48rem; }
 .coda-num { color: #475569; min-width: 0.8rem; font-weight: 600; }
 .coda-desc { flex: 1; color: #cbd5e1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.coda-badge { font-size: 0.36rem; font-weight: 700; padding: 0.08rem 0.35rem; border-radius: 0.3rem; margin-left: 0.3rem; white-space: nowrap; }
+.coda-badge { font-size: 0.44rem; font-weight: 700; padding: 0.1rem 0.4rem; border-radius: 0.3rem; margin-left: 0.3rem; white-space: nowrap; }
 .coda-badge.verde { background: #065f46; color: #6ee7b7; }
 
 /* Fasi completate + Ore segnate side by side */
