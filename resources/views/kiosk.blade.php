@@ -9,28 +9,50 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html, body { height: 100%; overflow: hidden; }
 :root {
-    --bg: #ffffff;
-    --bg-card: #f1f5f9;
+    --bg: #f8fafc;
+    --bg-card: #ffffff;
     --bg-header: #1e293b;
-    --bg-zone: #f8fafc;
-    --bg-macchina: #ffffff;
+    --bg-header-text: #ffffff;
+    --bg-zone: #ffffff;
+    --bg-macchina: #f1f5f9;
     --text: #1e293b;
     --text-muted: #64748b;
     --text-cliente: #475569;
+    --text-commessa: #2563eb;
+    --text-attivo: #16a34a;
+    --text-attesa: #94a3b8;
     --border: #e2e8f0;
     --bar-bg: #e2e8f0;
+    --zone-border: #e2e8f0;
+    --macchina-border-attiva: #16a34a;
+    --macchina-border-attesa: #d1d5db;
+    --ore-bar-bg: #e2e8f0;
+    --solar-kpi-bg: #f1f5f9;
+    --solar-inv-bg: #f1f5f9;
+    --ticker-bg: #dc2626;
 }
 body.dark {
     --bg: #000000;
     --bg-card: #1e293b;
     --bg-header: #000000;
+    --bg-header-text: #ffffff;
     --bg-zone: #0a0f1a;
     --bg-macchina: #111827;
     --text: #f1f5f9;
     --text-muted: #64748b;
     --text-cliente: #94a3b8;
+    --text-commessa: #38bdf8;
+    --text-attivo: #4ade80;
+    --text-attesa: #475569;
     --border: #334155;
     --bar-bg: #1e293b;
+    --zone-border: #1e293b;
+    --macchina-border-attiva: #4ade80;
+    --macchina-border-attesa: #475569;
+    --ore-bar-bg: #1e293b;
+    --solar-kpi-bg: #111827;
+    --solar-inv-bg: #111827;
+    --ticker-bg: #dc2626;
 }
 body {
     font-family: 'Inter', -apple-system, sans-serif;
@@ -61,7 +83,7 @@ html { font-size: 22px; }
     gap: 2rem;
 }
 .header-brand { display: flex; flex-direction: column; min-width: 8rem; }
-.header-brand-name { font-size: 0.75rem; font-weight: 800; color: #38bdf8; letter-spacing: 1px; }
+.header-brand-name { font-size: 0.75rem; font-weight: 800; color: var(--text-commessa); letter-spacing: 1px; }
 .header-brand-sub { font-size: 0.35rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; }
 
 .header-kpis { display: flex; gap: 2.5rem; flex: 1; justify-content: center; }
@@ -69,8 +91,8 @@ html { font-size: 22px; }
 .hkpi-val { font-size: 1.1rem; font-weight: 800; line-height: 1; }
 .hkpi-lbl { font-size: 0.32rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 0.15rem; }
 .hkpi { min-width: 5rem; }
-.hkpi-green .hkpi-val { color: #4ade80; }
-.hkpi-blue .hkpi-val { color: #38bdf8; }
+.hkpi-green .hkpi-val { color: var(--text-attivo); }
+.hkpi-blue .hkpi-val { color: var(--text-commessa); }
 .hkpi-amber .hkpi-val { color: #fbbf24; }
 .hkpi-purple .hkpi-val { color: #a78bfa; }
 
@@ -86,7 +108,7 @@ html { font-size: 22px; }
 .solar-icon { font-size: 0.7rem; }
 .solar-val { font-size: 0.6rem; font-weight: 800; color: #fbbf24; }
 .solar-lbl { font-size: 0.26rem; color: var(--text-muted); }
-.solar-inv { font-size: 0.26rem; color: #4ade80; }
+.solar-inv { font-size: 0.26rem; color: var(--text-attivo); }
 
 .header-clock { text-align: right; min-width: 7rem; }
 .clock-time { font-size: 1.2rem; font-weight: 800; color: var(--text); }
@@ -97,8 +119,8 @@ html { font-size: 22px; }
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-template-rows: 52% 48%;
-    gap: 2px;
-    background: var(--border);
+    gap: 1px;
+    background: var(--zone-border);
 }
 
 .zone {
@@ -141,20 +163,20 @@ html { font-size: 22px; }
     padding: 0.15rem 0.35rem;
     border-radius: 0.3rem;
     margin-bottom: 0.08rem;
-    border-left: 3px solid #334155;
+    border-left: 3px solid var(--macchina-border-attesa);
     background: var(--bg-macchina);
 }
-.macchina.attiva { border-left-color: #4ade80; }
-.macchina.attesa { border-left-color: #475569; opacity: 0.5; }
+.macchina.attiva { border-left-color: var(--text-attivo); }
+.macchina.attesa { border-left-color: var(--text-attesa); opacity: 0.5; }
 
 .m-info-left { min-width: 4.5rem; }
 .m-nome { font-size: 0.42rem; font-weight: 700; color: var(--text); }
 .m-stato { font-size: 0.28rem; font-weight: 600; }
-.m-stato.lav { color: #4ade80; }
-.m-stato.att { color: #475569; }
+.m-stato.lav { color: var(--text-attivo); }
+.m-stato.att { color: var(--text-attesa); }
 
 .m-info-center { flex: 1; padding: 0 0.4rem; }
-.m-commessa { font-size: 0.42rem; font-weight: 700; color: #38bdf8; }
+.m-commessa { font-size: 0.42rem; font-weight: 700; color: var(--text-commessa); }
 .m-desc { font-size: 0.34rem; color: var(--text-cliente); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 12rem; display: block; }
 .m-cliente { font-size: 0.28rem; color: var(--text-muted); }
 
@@ -189,7 +211,7 @@ html { font-size: 22px; }
     left: 0;
     right: 0;
     z-index: 9999;
-    background: #dc2626;
+    background: var(--ticker-bg);
     overflow: hidden;
     white-space: nowrap;
     padding: 0.3rem 0;
@@ -217,7 +239,7 @@ html { font-size: 22px; }
     padding: 0.06rem 0.25rem;
     font-size: 0.4rem;
 }
-.coda-num { color: #475569; min-width: 0.9rem; font-weight: 600; }
+.coda-num { color: var(--text-attesa); min-width: 0.9rem; font-weight: 600; }
 .coda-desc { flex: 1; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .coda-badge {
     font-size: 0.32rem;
@@ -245,24 +267,24 @@ html { font-size: 22px; }
     padding-top: 0.5rem;
     height: calc(100% - 30px);
 }
-.obj-pct { font-size: 0.5rem; font-weight: 800; color: #4ade80; }
+.obj-pct { font-size: 0.5rem; font-weight: 800; color: var(--text-attivo); }
 .obj-label { font-size: 0.38rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.3rem; }
 .obj-big { display: flex; align-items: baseline; gap: 0.15rem; }
-.obj-num { font-size: 2.5rem; font-weight: 900; color: #4ade80; line-height: 1; }
+.obj-num { font-size: 2.5rem; font-weight: 900; color: var(--text-attivo); line-height: 1; }
 .obj-slash { font-size: 1.4rem; color: #334155; font-weight: 300; }
-.obj-target { font-size: 1.4rem; color: #475569; font-weight: 300; }
+.obj-target { font-size: 1.4rem; color: var(--text-attesa); font-weight: 300; }
 .obj-bar { width: 80%; max-width: 12rem; height: 0.3rem; background: var(--border); border-radius: 0.15rem; margin: 0.4rem 0; overflow: hidden; }
 .obj-bar-fill { height: 100%; border-radius: 0.15rem; background: linear-gradient(90deg, #4ade80, #22d3ee); }
 
 .obj-stats { display: flex; gap: 3.5rem; margin-top: 0.8rem; }
 .obj-stat { text-align: center; min-width: 2.5rem; }
 .obj-stat-val { font-size: 0.9rem; font-weight: 800; color: var(--text); }
-.obj-stat-val.green { color: #4ade80; }
-.obj-stat-val.blue { color: #38bdf8; }
+.obj-stat-val.green { color: var(--text-attivo); }
+.obj-stat-val.blue { color: var(--text-commessa); }
 .obj-stat-lbl { font-size: 0.28rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 0.15rem; }
 
 /* === ZONA 4: ORE SEGNATE OGGI === */
-.z4 .zone-title { color: #38bdf8; }
+.z4 .zone-title { color: var(--text-commessa); }
 .z4 .zone-badge { border-radius: 10px; font-size: 9px; font-weight: 700; padding: 3px 10px; }
 .z4 .zone-badge.low { background: #7f1d1d; color: #fca5a5; }
 .z4 .zone-badge.mid { background: #92400e; color: #fcd34d; }
@@ -282,7 +304,7 @@ html { font-size: 22px; }
 .ore-pct { font-size: 0.58rem; font-weight: 700; min-width: 2rem; text-align: right; }
 .ore-pct.red { color: #f87171; }
 .ore-pct.orange { color: #fbbf24; }
-.ore-pct.green { color: #4ade80; }
+.ore-pct.green { color: var(--text-attivo); }
 
 /* === PAGINA SOLAR === */
 .solar-page { padding: 1.2rem 2rem; height: calc(100vh - 4rem); display: flex; flex-direction: column; background: var(--bg); }
@@ -309,7 +331,7 @@ html { font-size: 22px; }
 .solar-inv-fill { height: 100%; background: linear-gradient(90deg, #f59e0b, #fbbf24); border-radius: 0.28rem; }
 .solar-inv-kwh { font-size: 0.5rem; font-weight: 700; color: #fbbf24; min-width: 3.5rem; text-align: right; }
 .solar-inv-status { font-size: 0.45rem; min-width: 0.6rem; }
-.solar-inv-row:not(.offline) .solar-inv-status { color: #4ade80; }
+.solar-inv-row:not(.offline) .solar-inv-status { color: var(--text-attivo); }
 .solar-inv-row.offline .solar-inv-status { color: #ef4444; }
 </style>
 </head>
@@ -333,7 +355,7 @@ html { font-size: 22px; }
         <div class="clock-time" id="clock">--:--</div>
         <div class="clock-date" id="dateStr"></div>
     </div>
-    <button onclick="toggleTheme()" id="themeBtn" style="background:none;border:1px solid rgba(255,255,255,0.3);border-radius:0.2rem;padding:0.1rem 0.3rem;cursor:pointer;font-size:0.5rem;color:#fff;">🌙</button>
+    <button onclick="toggleTheme()" id="themeBtn" style="background:none;border:1px solid rgba(255,255,255,0.3);border-radius:0.2rem;padding:0.1rem 0.3rem;cursor:pointer;font-size:0.5rem;color:var(--bg-header-text);">🌙</button>
 </div>
 
 <!-- PAGINA 1: PRODUZIONE -->
