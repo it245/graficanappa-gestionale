@@ -130,19 +130,19 @@ body {
 .z2 .zone-title { color: #94a3b8; }
 .z2 .zone-badge { background: #2563eb; color: #fff; }
 
-.coda-macchina { font-size: 0.38rem; font-weight: 700; color: #64748b; text-transform: uppercase; margin: 0.3rem 0 0.1rem; letter-spacing: 0.05em; }
+.coda-macchina { font-size: 0.48rem; font-weight: 700; color: #64748b; text-transform: uppercase; margin: 0.35rem 0 0.12rem; letter-spacing: 0.05em; }
 .coda-macchina:first-child { margin-top: 0; }
 
 .coda-item {
     display: flex;
     align-items: center;
-    padding: 0.1rem 0.3rem;
-    font-size: 0.36rem;
+    padding: 0.12rem 0.3rem;
+    font-size: 0.44rem;
 }
-.coda-num { color: #475569; min-width: 0.8rem; font-weight: 600; }
+.coda-num { color: #475569; min-width: 0.9rem; font-weight: 600; }
 .coda-desc { flex: 1; color: #cbd5e1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .coda-badge {
-    font-size: 0.26rem;
+    font-size: 0.32rem;
     font-weight: 700;
     padding: 0.06rem 0.3rem;
     border-radius: 0.3rem;
