@@ -486,20 +486,25 @@ function updateClock() {
 updateClock();
 setInterval(updateClock, 1000);
 
-// Alternanza pagine ogni 45 secondi
+// Alternanza pagine: produzione (45s) → solar (45s) → refresh e ricomincia
 var pages = document.querySelectorAll('.kiosk-page');
 var currentPage = 0;
 function switchPage() {
     pages[currentPage].style.display = 'none';
     currentPage = (currentPage + 1) % pages.length;
     pages[currentPage].style.display = '';
+
+    // Quando torna alla pagina produzione (pagina 0), ricarica per dati freschi
+    if (currentPage === 0) {
+        setTimeout(function() { location.reload(); }, 1000);
+    }
 }
 if (pages.length > 1) {
     setInterval(switchPage, 45000);
+} else {
+    // Solo 1 pagina: refresh ogni 60s
+    setTimeout(function() { location.reload(); }, 60000);
 }
-
-// Refresh dati ogni 30 secondi per dati live
-setTimeout(function() { location.reload(); }, 30000);
 </script>
 </body>
 </html>

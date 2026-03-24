@@ -227,19 +227,43 @@
             <input type="text" id="campo-descrizione-simple" class="form-control" value="{{ $ordine->descrizione ?? '' }}">
         </div>
     @elseif($isItalianaConfetti)
-        {{-- ITALIANA CONFETTI: dropdown ricerca EAN --}}
+        {{-- ITALIANA CONFETTI: dropdown ricerca EAN + opzioni extra --}}
         <div class="mb-3">
-            <label class="form-label">Articolo <small class="text-muted">(cerca per nome o codice EAN)</small></label>
-            <div class="ean-search-wrapper">
-                <input type="text" id="ean-search" class="form-control" placeholder="Digita per cercare articolo..."
-                       autocomplete="off">
-                <div class="ean-dropdown" id="ean-dropdown"></div>
+            <div class="form-check mb-2">
+                <input type="checkbox" class="form-check-input" id="noEanCheck" onchange="toggleNoEan()">
+                <label class="form-check-label" for="noEanCheck" style="font-weight:600;">Senza codice EAN</label>
             </div>
-            <input type="hidden" id="campo-ean" value="">
-            <input type="hidden" id="campo-articolo" value="">
-            <div id="ean-selezionato" class="mt-2" style="display:none;">
-                <span class="badge bg-success fs-6" id="ean-badge"></span>
-                <button type="button" class="btn btn-sm btn-outline-danger ms-2" onclick="clearEan()">X</button>
+
+            <div id="ean-section">
+                <label class="form-label">Articolo <small class="text-muted">(cerca per nome o codice EAN)</small></label>
+                <div class="ean-search-wrapper">
+                    <input type="text" id="ean-search" class="form-control" placeholder="Digita per cercare articolo..."
+                           autocomplete="off">
+                    <div class="ean-dropdown" id="ean-dropdown"></div>
+                </div>
+                <input type="hidden" id="campo-ean" value="">
+                <input type="hidden" id="campo-articolo" value="">
+                <div id="ean-selezionato" class="mt-2" style="display:none;">
+                    <span class="badge bg-success fs-6" id="ean-badge"></span>
+                    <button type="button" class="btn btn-sm btn-outline-danger ms-2" onclick="clearEan()">X</button>
+                </div>
+
+                {{-- Inserimento manuale EAN nuovo --}}
+                <div class="mt-3 p-2 border rounded" style="background:#fff8e1;">
+                    <label class="form-label mb-1" style="font-size:13px; font-weight:600;">📝 Oppure inserisci nuovo EAN</label>
+                    <div class="row g-2">
+                        <div class="col-5">
+                            <input type="text" id="nuovo-articolo" class="form-control form-control-sm" placeholder="Nome articolo">
+                        </div>
+                        <div class="col-5">
+                            <input type="text" id="nuovo-ean" class="form-control form-control-sm" placeholder="Codice EAN">
+                        </div>
+                        <div class="col-2">
+                            <button type="button" class="btn btn-sm btn-warning w-100" onclick="salvaEusaNuovoEan()">Usa</button>
+                        </div>
+                    </div>
+                    <small class="text-muted">Il nuovo EAN verrà salvato per usi futuri.</small>
+                </div>
             </div>
         </div>
     @elseif($isTifataPlastica ?? false)
@@ -627,6 +651,52 @@ document.querySelectorAll('.etichetta-form input').forEach(function(el) {
     el.addEventListener('input', aggiornaAnteprima);
     el.addEventListener('change', aggiornaAnteprima);
 });
+
+// Toggle "Senza codice EAN"
+function toggleNoEan() {
+    var checked = document.getElementById('noEanCheck').checked;
+    var section = document.getElementById('ean-section');
+    if (section) section.style.display = checked ? 'none' : '';
+    if (checked) {
+        document.getElementById('campo-ean').value = '';
+        document.getElementById('campo-articolo').value = '';
+    }
+}
+
+// Salva nuovo EAN e usalo
+function salvaEusaNuovoEan() {
+    var articolo = document.getElementById('nuovo-articolo').value.trim();
+    var ean = document.getElementById('nuovo-ean').value.trim();
+    if (!articolo || !ean) { alert('Inserisci articolo e codice EAN'); return; }
+
+    // Salva nel DB
+    fetch('{{ route("operatore.etichetta.salvaEan") }}', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}',
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({articolo: articolo, codice_ean: ean})
+    }).then(r => r.json()).then(d => {
+        if (d.ok) {
+            // Usa immediatamente
+            document.getElementById('campo-ean').value = ean;
+            document.getElementById('campo-articolo').value = articolo;
+            document.getElementById('ean-selezionato').style.display = '';
+            document.getElementById('ean-badge').textContent = articolo + ' — ' + ean;
+            document.getElementById('nuovo-articolo').value = '';
+            document.getElementById('nuovo-ean').value = '';
+            // Aggiungi alla lista locale
+            if (typeof eanData !== 'undefined') {
+                eanData.push({articolo: articolo, codice_ean: ean});
+            }
+            alert('EAN salvato e selezionato!');
+        } else {
+            alert('Errore: ' + (d.msg || 'salvataggio fallito'));
+        }
+    }).catch(() => alert('Errore di connessione'));
+}
 
 @if($isItalianaConfetti)
 // ===== Dropdown ricerca EAN (Italiana Confetti) =====
