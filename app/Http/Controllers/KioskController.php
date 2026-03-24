@@ -208,12 +208,12 @@ class KioskController extends Controller
             ['nome' => 'XL 106 (24h)', 'reparti' => ['stampa offset'], 'ore_disp' => 24],  // 24h 3 turni
             ['nome' => 'BOBST', 'reparti' => ['fustella piana'], 'ore_disp' => 16],       // 6-22
             ['nome' => 'JOH Caldo', 'reparti' => ['stampa a caldo'], 'ore_disp' => 16],   // 6-22
-            ['nome' => 'Plastificatrice', 'reparti' => ['plastificazione'], 'ore_disp' => 9], // 8-17
+            ['nome' => 'Plastificatrice', 'reparti' => ['plastificazione'], 'ore_disp' => 8], // 8-17 (1h pausa)
             ['nome' => 'Piegaincolla', 'reparti' => ['piegaincolla'], 'ore_disp' => 14],  // 6-20
             ['nome' => 'Finestratrice', 'reparti' => ['finestratura'], 'ore_disp' => 14], // 6-20
-            ['nome' => 'Fustella Cilindrica', 'reparti' => ['fustella cilindrica'], 'ore_disp' => 9], // 8-17
-            ['nome' => 'Canon V900', 'reparti' => ['digitale'], 'ore_disp' => 9],         // 8-17
-            ['nome' => 'Tagliacarte', 'reparti' => ['tagliacarte'], 'ore_disp' => 9],     // 8-17
+            ['nome' => 'Fustella Cilindrica', 'reparti' => ['fustella cilindrica'], 'ore_disp' => 8], // 8-17 (1h pausa)
+            ['nome' => 'Canon V900', 'reparti' => ['digitale'], 'ore_disp' => 8],         // 8-17 (1h pausa)
+            ['nome' => 'Tagliacarte', 'reparti' => ['tagliacarte'], 'ore_disp' => 8],     // 8-17 (1h pausa)
             ['nome' => 'Legatoria', 'reparti' => ['legatoria'], 'ore_disp' => 14],        // 6-20
         ];
 
