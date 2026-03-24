@@ -507,7 +507,7 @@ tr:hover td {
     <div class="mb-3 d-flex align-items-center action-icons">
 
         {{-- HAMBURGER --}}
-        <button class="hamburger-btn" id="hamburgerBtn" title="Menu">
+        <button class="hamburger-btn" id="hamburgerBtn" title="Menu" tabindex="1">
             <span></span><span></span><span></span>
         </button>
 
@@ -1531,7 +1531,7 @@ document.getElementById('modalBRT').addEventListener('shown.bs.modal', function(
 document.addEventListener('DOMContentLoaded', function(){
     // Rendi tutte le td focusabili (per espandere testo troncato al click)
     document.querySelectorAll('#tabellaOrdini td:not([contenteditable])').forEach(function(td){
-        td.setAttribute('tabindex', '0');
+        td.setAttribute('tabindex', '-1');
     });
 
     // Badge consegnati
