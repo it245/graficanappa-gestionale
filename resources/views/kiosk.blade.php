@@ -81,7 +81,7 @@ body {
 
 .zone {
     background: #0a0f1a;
-    padding: 0.6rem 0.8rem;
+    padding: 0.4rem 0.6rem;
     overflow: hidden;
 }
 
@@ -184,13 +184,13 @@ body {
 .obj-pct { font-size: 0.5rem; font-weight: 800; color: #4ade80; }
 .obj-label { font-size: 0.38rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.3rem; }
 .obj-big { display: flex; align-items: baseline; gap: 0.15rem; }
-.obj-num { font-size: 3.5rem; font-weight: 900; color: #4ade80; line-height: 1; }
+.obj-num { font-size: 2.5rem; font-weight: 900; color: #4ade80; line-height: 1; }
 .obj-slash { font-size: 1.4rem; color: #334155; font-weight: 300; }
 .obj-target { font-size: 1.4rem; color: #475569; font-weight: 300; }
 .obj-bar { width: 80%; max-width: 12rem; height: 0.3rem; background: #1e293b; border-radius: 0.15rem; margin: 0.4rem 0; overflow: hidden; }
 .obj-bar-fill { height: 100%; border-radius: 0.15rem; background: linear-gradient(90deg, #4ade80, #22d3ee); }
 
-.obj-stats { display: flex; gap: 1rem; margin-top: 0.5rem; }
+.obj-stats { display: flex; gap: 1rem; margin-top: 0.3rem; }
 .obj-stat { text-align: center; }
 .obj-stat-val { font-size: 0.8rem; font-weight: 800; color: #f1f5f9; }
 .obj-stat-val.green { color: #4ade80; }
@@ -207,15 +207,15 @@ body {
 .ore-row {
     display: flex;
     align-items: center;
-    margin-bottom: 0.2rem;
+    margin-bottom: 0.1rem;
 }
-.ore-nome { font-size: 0.46rem; font-weight: 600; color: #94a3b8; min-width: 5rem; }
-.ore-bar { flex: 1; height: 0.55rem; background: #1e293b; border-radius: 0.28rem; overflow: hidden; margin: 0 0.4rem; }
+.ore-nome { font-size: 0.38rem; font-weight: 600; color: #94a3b8; min-width: 4.5rem; }
+.ore-bar { flex: 1; height: 0.4rem; background: #1e293b; border-radius: 0.2rem; overflow: hidden; margin: 0 0.3rem; }
 .ore-fill { height: 100%; border-radius: 0.28rem; }
 .ore-fill.red { background: linear-gradient(90deg, #dc2626, #ef4444); }
 .ore-fill.orange { background: linear-gradient(90deg, #d97706, #f59e0b); }
 .ore-fill.green { background: linear-gradient(90deg, #16a34a, #4ade80); }
-.ore-pct { font-size: 0.5rem; font-weight: 700; min-width: 1.8rem; text-align: right; }
+.ore-pct { font-size: 0.42rem; font-weight: 700; min-width: 1.5rem; text-align: right; }
 .ore-pct.red { color: #f87171; }
 .ore-pct.orange { color: #fbbf24; }
 .ore-pct.green { color: #4ade80; }
