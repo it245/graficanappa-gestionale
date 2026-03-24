@@ -163,7 +163,7 @@ class KioskController extends Controller
         foreach ($repartiUtilizzo as $ru) {
             $repartoIds = Reparto::whereIn('nome', $ru['reparti'])->pluck('id');
             $secOggi = DB::table('fase_operatore')
-                ->join('ordine_fasi', 'fase_operatore.ordine_fase_id', '=', 'ordine_fasi.id')
+                ->join('ordine_fasi', 'fase_operatore.fase_id', '=', 'ordine_fasi.id')
                 ->join('fasi_catalogo', 'ordine_fasi.fase_catalogo_id', '=', 'fasi_catalogo.id')
                 ->whereIn('fasi_catalogo.reparto_id', $repartoIds)
                 ->whereDate('fase_operatore.data_inizio', $oggi)
