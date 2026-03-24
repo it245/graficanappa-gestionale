@@ -60,9 +60,11 @@ html { font-size: 22px; }
 
 /* Area scorrimento verticale */
 .scroll-area {
-    margin-top: 3rem;
-    margin-bottom: 2rem;
-    height: calc(100vh - 5rem);
+    position: fixed;
+    top: 3rem;
+    left: 0;
+    right: 0;
+    bottom: 2rem;
     overflow: hidden;
 }
 .scroll-inner {
