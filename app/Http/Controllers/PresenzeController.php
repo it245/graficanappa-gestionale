@@ -27,6 +27,32 @@ class PresenzeController extends Controller
             ->orderBy('data_ora')
             ->get();
 
+        // Turno notturno: entrate del giorno prima dopo le 20:00
+        $ieri = Carbon::parse($data)->subDay()->format('Y-m-d');
+        $entrateNotturne = DB::table('nettime_timbrature')
+            ->where('verso', 'E')
+            ->where('data_ora', '>=', "{$ieri} 20:00:00")
+            ->where('data_ora', '<', "{$data} 00:00:00")
+            ->get();
+
+        // Per ogni entrata notturna, verifica che non abbia uscita prima di mezzanotte
+        foreach ($entrateNotturne as $en) {
+            $uscitaPrimaMezzanotte = DB::table('nettime_timbrature')
+                ->where('matricola', $en->matricola)
+                ->where('verso', 'U')
+                ->where('data_ora', '>', $en->data_ora)
+                ->where('data_ora', '<', "{$data} 00:00:00")
+                ->exists();
+
+            if (!$uscitaPrimaMezzanotte) {
+                // Turno notturno: aggiungi l'entrata di ieri alle timbrature di oggi
+                $timbrature->push($en);
+            }
+        }
+
+        // Riordina dopo aver aggiunto le notturne
+        $timbrature = $timbrature->sortBy('data_ora')->values();
+
         // Raggruppa timbrature per matricola
         $perDipendente = [];
         foreach ($timbrature as $t) {
@@ -54,7 +80,12 @@ class PresenzeController extends Controller
 
             if (!empty($entrate)) {
                 $prima = min(array_map(fn($t) => $t->data_ora, $entrate));
-                $dip['prima_entrata'] = Carbon::parse($prima)->format('H:i');
+                $primaCarbon = Carbon::parse($prima);
+                if ($primaCarbon->format('Y-m-d') < $data) {
+                    $dip['prima_entrata'] = $primaCarbon->format('H:i') . ' (ieri)';
+                } else {
+                    $dip['prima_entrata'] = $primaCarbon->format('H:i');
+                }
             }
             if (!empty($uscite)) {
                 $ultima = max(array_map(fn($t) => $t->data_ora, $uscite));
