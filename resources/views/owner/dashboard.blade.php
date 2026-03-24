@@ -1349,10 +1349,16 @@ document.getElementById('filtro-storico')?.addEventListener('input', function() 
     });
 });
 document.getElementById('hamburgerBtn').addEventListener('click', openSidebar);
+document.getElementById('hamburgerBtn').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' || e.keyCode === 13) { e.preventDefault(); openSidebar(); }
+});
 document.getElementById('sidebarOverlay').addEventListener('click', closeSidebar);
 document.getElementById('sidebarClose').addEventListener('click', closeSidebar);
 document.querySelectorAll('.sidebar-menu a.sidebar-item').forEach(function(el) {
     el.addEventListener('click', function() { setTimeout(closeSidebar, 100); });
+    el.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.keyCode === 13) { e.preventDefault(); this.click(); }
+    });
 });
 
 // === Token per fetch autenticate ===
