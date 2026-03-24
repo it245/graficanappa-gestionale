@@ -99,24 +99,24 @@ html { font-size: 22px; }
 }
 .macchina.attiva { border-left-color: #4ade80; }
 .macchina.attesa { border-left-color: #334155; opacity: 0.4; }
-.m-nome { font-size: 0.58rem; font-weight: 700; color: #f1f5f9; min-width: 6rem; }
-.m-stato { font-size: 0.34rem; font-weight: 600; }
+.m-nome { font-size: 0.65rem; font-weight: 700; color: #f1f5f9; min-width: 6.5rem; }
+.m-stato { font-size: 0.36rem; font-weight: 600; }
 .m-stato.lav { color: #4ade80; }
 .m-stato.att { color: #475569; }
-.m-commessa { font-size: 0.55rem; font-weight: 700; color: #38bdf8; }
-.m-desc { font-size: 0.42rem; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 18rem; }
-.m-cliente { font-size: 0.38rem; color: #64748b; }
+.m-commessa { font-size: 0.6rem; font-weight: 700; color: #38bdf8; }
+.m-desc { font-size: 0.46rem; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 18rem; }
+.m-cliente { font-size: 0.42rem; color: #64748b; }
 .m-ore { font-size: 0.42rem; color: #94a3b8; font-weight: 600; min-width: 2.5rem; text-align: right; }
 .m-info-left { min-width: 5.5rem; }
 .m-info-center { flex: 1; padding: 0 0.4rem; }
 .m-info-right { text-align: right; }
 
 /* Prossimi lavori */
-.coda-macchina { font-size: 0.48rem; font-weight: 700; color: #64748b; text-transform: uppercase; margin: 0.3rem 0 0.1rem; }
-.coda-item { display: flex; align-items: center; padding: 0.1rem 0.3rem; font-size: 0.42rem; }
+.coda-macchina { font-size: 0.55rem; font-weight: 700; color: #64748b; text-transform: uppercase; margin: 0.3rem 0 0.1rem; }
+.coda-item { display: flex; align-items: center; padding: 0.12rem 0.3rem; font-size: 0.48rem; }
 .coda-num { color: #475569; min-width: 0.8rem; font-weight: 600; }
 .coda-desc { flex: 1; color: #cbd5e1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.coda-badge { font-size: 0.3rem; font-weight: 700; padding: 0.06rem 0.3rem; border-radius: 0.3rem; margin-left: 0.3rem; white-space: nowrap; }
+.coda-badge { font-size: 0.36rem; font-weight: 700; padding: 0.08rem 0.35rem; border-radius: 0.3rem; margin-left: 0.3rem; white-space: nowrap; }
 .coda-badge.verde { background: #065f46; color: #6ee7b7; }
 
 /* Fasi completate + Ore segnate side by side */
@@ -147,21 +147,21 @@ html { font-size: 22px; }
 
 /* Solar */
 .solar-page { padding: 0.8rem 1.2rem; min-height: calc(100vh - 5rem); background: #000; }
-.solar-title { font-size: 0.65rem; font-weight: 800; color: #fbbf24; margin-bottom: 0.5rem; }
-.solar-kpis { display: flex; justify-content: center; gap: 2rem; margin-bottom: 0.8rem; }
-.solar-kpi { text-align: center; background: #111827; padding: 0.6rem 1.2rem; border-radius: 0.4rem; border: 1px solid #1e293b; }
-.solar-kpi-val { font-size: 1.8rem; font-weight: 900; }
-.solar-kpi-unit { font-size: 0.4rem; color: #64748b; }
-.solar-kpi-lbl { font-size: 0.32rem; color: #64748b; text-transform: uppercase; margin-top: 0.1rem; }
-.solar-inv-row { display: flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.4rem; margin-bottom: 0.15rem; background: #111827; border-radius: 0.25rem; }
+.solar-title { font-size: 0.8rem; font-weight: 800; color: #fbbf24; margin-bottom: 0.6rem; }
+.solar-kpis { display: flex; justify-content: center; gap: 2.5rem; margin-bottom: 1rem; }
+.solar-kpi { text-align: center; background: #111827; padding: 0.8rem 1.5rem; border-radius: 0.5rem; border: 1px solid #1e293b; }
+.solar-kpi-val { font-size: 2.2rem; font-weight: 900; }
+.solar-kpi-unit { font-size: 0.5rem; color: #64748b; }
+.solar-kpi-lbl { font-size: 0.38rem; color: #64748b; text-transform: uppercase; margin-top: 0.15rem; }
+.solar-inv-row { display: flex; align-items: center; gap: 0.5rem; padding: 0.35rem 0.5rem; margin-bottom: 0.2rem; background: #111827; border-radius: 0.3rem; }
 .solar-inv-row.offline { opacity: 0.3; }
-.solar-inv-name { font-size: 0.45rem; font-weight: 700; color: #f1f5f9; min-width: 2.5rem; }
-.solar-inv-tipo { font-size: 0.36rem; color: #64748b; min-width: 4rem; }
-.solar-inv-kwp { font-size: 0.38rem; color: #94a3b8; min-width: 3rem; text-align: right; }
-.solar-inv-bar { flex: 1; height: 0.45rem; background: #1e293b; border-radius: 0.22rem; overflow: hidden; margin: 0 0.3rem; }
-.solar-inv-fill { height: 100%; background: linear-gradient(90deg, #f59e0b, #fbbf24); border-radius: 0.22rem; }
-.solar-inv-kwh { font-size: 0.45rem; font-weight: 700; color: #fbbf24; min-width: 3rem; text-align: right; }
-.solar-inv-status { font-size: 0.4rem; }
+.solar-inv-name { font-size: 0.55rem; font-weight: 700; color: #f1f5f9; min-width: 3rem; }
+.solar-inv-tipo { font-size: 0.42rem; color: #64748b; min-width: 4.5rem; }
+.solar-inv-kwp { font-size: 0.45rem; color: #94a3b8; min-width: 3.5rem; text-align: right; }
+.solar-inv-bar { flex: 1; height: 0.55rem; background: #1e293b; border-radius: 0.28rem; overflow: hidden; margin: 0 0.4rem; }
+.solar-inv-fill { height: 100%; background: linear-gradient(90deg, #f59e0b, #fbbf24); border-radius: 0.28rem; }
+.solar-inv-kwh { font-size: 0.55rem; font-weight: 700; color: #fbbf24; min-width: 3.5rem; text-align: right; }
+.solar-inv-status { font-size: 0.5rem; }
 .solar-inv-row:not(.offline) .solar-inv-status { color: #4ade80; }
 .solar-inv-row.offline .solar-inv-status { color: #ef4444; }
 </style>
