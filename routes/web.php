@@ -185,8 +185,11 @@ Route::get('/commesse/{commessa}', [App\Http\Controllers\CommessaController::cla
     ->name('commesse.show');
 
 
-// TV Kiosk (no auth) — dati demo, in produzione usa KioskController
-Route::get('/kiosk', function() {
+// TV Kiosk (no auth) — dati reali
+Route::get('/kiosk', [\App\Http\Controllers\KioskController::class, 'index']);
+
+// Kiosk demo (dati finti per test locale)
+Route::get('/kiosk-demo', function() {
     return view('kiosk', [
         'kpi' => ['completate' => 19, 'in_corso' => 8, 'in_coda' => 23, 'fustelle' => 73],
         'macchine' => [
