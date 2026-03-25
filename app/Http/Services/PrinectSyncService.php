@@ -126,11 +126,11 @@ class PrinectSyncService
             FaseStatoService::controllaCompletamento($faseId);
         }
 
-        // Ripristina fasi erroneamente terminate che hanno attività recenti
-        $this->ripristinaFasiAttive();
-
         // Auto-terminazione via stato workstep Prinect (COMPLETED)
         $this->controllaCompletamentoPrinect();
+
+        // Ripristina fasi erroneamente terminate che hanno attività recenti o workstep non COMPLETED
+        $this->ripristinaFasiAttive();
 
         // Termina fasi stampa "abbandonate": stato 2 ma nessuna attività recente
         $this->terminaFasiAbbandonate();
@@ -770,16 +770,39 @@ class PrinectSyncService
             $commessa = $fase->ordine->commessa ?? '';
             if (!$commessa) continue;
 
+            $ripristina = false;
+
+            // Check 1: attività recente nella tabella prinect_attivita
             $ultimaAttivita = PrinectAttivita::where('commessa_gestionale', $commessa)
                 ->orderByDesc('start_time')
                 ->first();
 
-            if (!$ultimaAttivita || !$ultimaAttivita->start_time) continue;
+            if ($ultimaAttivita && $ultimaAttivita->start_time) {
+                $ultimoTempo = Carbon::parse($ultimaAttivita->end_time ?? $ultimaAttivita->start_time);
+                if ($ultimoTempo->diffInMinutes(now()) < 60) {
+                    $ripristina = true;
+                }
+            }
 
-            $ultimoTempo = Carbon::parse($ultimaAttivita->end_time ?? $ultimaAttivita->start_time);
+            // Check 2: workstep Prinect NON è COMPLETED (es. RUNNING, SETUP, ecc.)
+            if (!$ripristina) {
+                $jobId = ltrim(explode('-', $commessa)[0] ?? '', '0');
+                if ($jobId && is_numeric($jobId)) {
+                    try {
+                        $wsData = $this->prinect->getJobWorksteps($jobId);
+                        $worksteps = collect($wsData['worksteps'] ?? [])
+                            ->filter(fn($ws) => in_array('ConventionalPrinting', $ws['types'] ?? []));
+                        $anyNotCompleted = $worksteps->contains(fn($ws) => ($ws['status'] ?? '') !== 'COMPLETED');
+                        if ($anyNotCompleted && $worksteps->isNotEmpty()) {
+                            $ripristina = true;
+                        }
+                    } catch (\Exception $e) {
+                        // API non disponibile, non ripristinare
+                    }
+                }
+            }
 
-            // Se l'ultima attività è nell'ultima ora, la macchina sta ancora stampando
-            if ($ultimoTempo->diffInMinutes(now()) < 60) {
+            if ($ripristina) {
                 $fase->stato = 2;
                 $fase->data_fine = null;
                 $fase->save();
