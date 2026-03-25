@@ -883,10 +883,10 @@ tr:hover td {
                 @endphp
                 <tr class="{{ $rowClass }}" data-id="{{ $fase->id }}">
                     <td><a href="{{ route('owner.dettaglioCommessa', $fase->ordine->commessa ?? '-') }}" style="color:#000;font-weight:bold;text-decoration:underline;">{{ $fase->ordine->commessa ?? '-' }}</a></td>
-                    @if($fase->esterno && $fase->stato < 3 && $fase->ddt_fornitore_id)
-                    <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)" style="background:#d1fae5 !important;font-weight:bold;text-align:center;color:#065f46;font-size:10px;" title="DDT fornitore inviata">EXT</td>
+                    @if($fase->esterno && $fase->stato < 3 && ($fase->ddt_fornitore_id || $fase->stato == 2))
+                    <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)" style="background:#d1fae5 !important;font-weight:bold;text-align:center;color:#065f46;font-size:10px;" title="Inviato al fornitore">EXT</td>
                     @elseif($fase->esterno && $fase->stato < 3)
-                    <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)" style="background:#ede9fe !important;font-weight:bold;text-align:center;color:#7c3aed;font-size:10px;" title="Esterno - DDT non ancora inviata">EXT</td>
+                    <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)" style="background:#ede9fe !important;font-weight:bold;text-align:center;color:#7c3aed;font-size:10px;" title="Esterno - da inviare">EXT</td>
                     @else
                     <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)" style="background:{{ $statoBg[$fase->stato] ?? '#e9ecef' }} !important;font-weight:bold;text-align:center;">{{ $fase->stato }}</td>
                     @endif
