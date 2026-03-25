@@ -1262,12 +1262,12 @@ function salvaNote() {
     .then(r => r.json())
     .then(d => {
         if (d.success) {
-            document.getElementById('noteSaveStatus').textContent = 'Salvato alle ' + new Date().toLocaleTimeString('it-IT');
-            document.getElementById('noteSaveStatus').style.color = '#198754';
             // Aggiorna timestamp per non auto-notificarsi
             fetch(urlToken('{{ route("spedizione.noteCheck") }}'), {headers:{'Accept':'application/json'}})
                 .then(function(r){return r.json();})
                 .then(function(dd){ if(dd.updated_at){ _noteLastUpdate=dd.updated_at; localStorage.setItem('noteConsegne_lastUpdate_sped',_noteLastUpdate); } });
+            // Chiudi modale
+            bootstrap.Modal.getInstance(document.getElementById('modalNoteConsegne')).hide();
         }
     })
     .catch(() => {
