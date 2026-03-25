@@ -253,7 +253,7 @@ html { font-size: 22px; }
         </div>
         <div class="stats-col">
             @php $mediaPct = count($utilizzo) > 0 ? round(collect($utilizzo)->avg('pct')) : 0; @endphp
-            <div class="stats-col-title" style="color:#38bdf8;">📊 Ore segnate oggi <span style="margin-left:auto;font-size:0.35rem;color:{{ $mediaPct >= 60 ? '#4ade80' : ($mediaPct >= 35 ? '#fbbf24' : '#f87171') }}">{{ $mediaPct }}%</span></div>
+            <div class="stats-col-title" style="color:#38bdf8;">📊 Ore segnate oggi <span style="margin-left:auto;font-size:0.7rem;color:{{ $mediaPct >= 60 ? '#4ade80' : ($mediaPct >= 35 ? '#fbbf24' : '#f87171') }}">{{ $mediaPct }}%</span></div>
             @foreach($utilizzo as $u)
             @php $cls = $u['pct'] >= 60 ? 'green' : ($u['pct'] >= 35 ? 'orange' : 'red'); @endphp
             <div class="ore-row">
