@@ -162,7 +162,7 @@ class OndaSyncService
             $deleted = OrdineFase::where('ordine_id', $dup->ordine_id)
                 ->where('fase_catalogo_id', $dup->fase_catalogo_id)
                 ->whereNotIn('id', $keepIds)
-                ->where('stato', '<=', 1)
+                ->whereRaw("stato REGEXP '^[0-9]+$' AND stato <= 1")
                 ->where('manuale', false)
                 ->delete();
             $fasiEliminate += $deleted;
@@ -193,7 +193,7 @@ class OndaSyncService
                 $deleteIds = $faseIds->slice(1)->filter();
                 if ($deleteIds->isNotEmpty()) {
                     $deleted = OrdineFase::whereIn('id', $deleteIds)
-                        ->where('stato', '<=', 1)
+                        ->whereRaw("stato REGEXP '^[0-9]+$' AND stato <= 1")
                         ->where('manuale', false)
                         ->delete();
                     $fasiEliminate += $deleted;
@@ -250,7 +250,7 @@ class OndaSyncService
                 $deleteIds = $faseIds->slice($maxFasi)->filter();
                 if ($deleteIds->isNotEmpty()) {
                     $deleted = OrdineFase::whereIn('id', $deleteIds)
-                        ->where('stato', '<=', 1)
+                        ->whereRaw("stato REGEXP '^[0-9]+$' AND stato <= 1")
                         ->where('manuale', false)
                         ->delete();
                     $fasiEliminate += $deleted;
@@ -284,7 +284,7 @@ class OndaSyncService
                 $deleteIds = $faseIds->slice(1)->filter();
                 if ($deleteIds->isNotEmpty()) {
                     $deleted = OrdineFase::whereIn('id', $deleteIds)
-                        ->where('stato', '<=', 1)
+                        ->whereRaw("stato REGEXP '^[0-9]+$' AND stato <= 1")
                         ->where('manuale', false)
                         ->delete();
                     $fasiEliminate += $deleted;
@@ -318,7 +318,7 @@ class OndaSyncService
                 $deleteIds = $faseIds->slice(1)->filter();
                 if ($deleteIds->isNotEmpty()) {
                     $deleted = OrdineFase::whereIn('id', $deleteIds)
-                        ->where('stato', '<=', 1)
+                        ->whereRaw("stato REGEXP '^[0-9]+$' AND stato <= 1")
                         ->where('manuale', false)
                         ->delete();
                     $fasiEliminate += $deleted;
@@ -352,7 +352,7 @@ class OndaSyncService
                 $deleteIds = $faseIds->slice(1)->filter();
                 if ($deleteIds->isNotEmpty()) {
                     $deleted = OrdineFase::whereIn('id', $deleteIds)
-                        ->where('stato', '<=', 1)
+                        ->whereRaw("stato REGEXP '^[0-9]+$' AND stato <= 1")
                         ->where('manuale', false)
                         ->delete();
                     $fasiEliminate += $deleted;
@@ -383,7 +383,7 @@ class OndaSyncService
                 $deleteIds = $keepIds->slice(1)->values();
                 if ($deleteIds->isNotEmpty()) {
                     $deleted = OrdineFase::whereIn('id', $deleteIds)
-                        ->where('stato', '<=', 1)
+                        ->whereRaw("stato REGEXP '^[0-9]+$' AND stato <= 1")
                         ->where('manuale', false)
                         ->delete();
                     $fasiEliminate += $deleted;
