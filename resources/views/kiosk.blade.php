@@ -81,7 +81,7 @@ html { font-size: 22px; }
     flex-direction: column;
 }
 .section-title {
-    font-size: 0.55rem; font-weight: 700; text-transform: uppercase;
+    font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
     letter-spacing: 0.08em; margin-bottom: 0.4rem;
     display: flex; align-items: center; gap: 0.3rem;
 }
@@ -113,10 +113,10 @@ html { font-size: 22px; }
 
 /* Prossimi lavori */
 .coda-macchina { font-size: 0.7rem; font-weight: 700; color: #64748b; text-transform: uppercase; margin: 0.4rem 0 0.15rem; }
-.coda-item { display: flex; align-items: center; padding: 0.18rem 0.3rem; font-size: 0.6rem; }
+.coda-item { display: flex; align-items: center; padding: 0.18rem 0.3rem; font-size: 0.65rem; }
 .coda-num { color: #475569; min-width: 0.9rem; font-weight: 600; }
 .coda-desc { flex: 1; color: #cbd5e1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.coda-badge { font-size: 0.58rem; font-weight: 700; padding: 0.14rem 0.5rem; border-radius: 0.3rem; margin-left: 0.3rem; white-space: nowrap; }
+.coda-badge { font-size: 0.65rem; font-weight: 700; padding: 0.14rem 0.5rem; border-radius: 0.3rem; margin-left: 0.3rem; white-space: nowrap; }
 .coda-badge.verde { background: #065f46; color: #6ee7b7; }
 
 /* Fasi completate + Ore segnate side by side */
