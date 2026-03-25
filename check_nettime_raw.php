@@ -8,7 +8,9 @@ $paths = [
 
 $matricola = $argv[1] ?? '000666'; // TORROMACCO
 $data = $argv[2] ?? '2026-03-23';
-$dataCerca = str_replace('-', '', substr($data, 2)); // 260323
+// Formato file NetTime: DDMMYY (es. 230326 = 23/03/26)
+$parts = explode('-', $data); // 2026-03-23
+$dataCerca = $parts[2] . $parts[1] . substr($parts[0], 2); // 230326
 
 echo "=== RICERCA NEL FILE NETTIME ===" . PHP_EOL;
 echo "Matricola: {$matricola} | Data: {$data} ({$dataCerca})" . PHP_EOL . PHP_EOL;
