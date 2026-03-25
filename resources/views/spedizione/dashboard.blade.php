@@ -230,6 +230,16 @@
             <span></span><span></span><span></span>
         </button>
         <h2 class="mb-0">Dashboard Logistica</h2>
+        <form method="POST" action="{{ route('owner.syncOnda') }}" style="margin:0;" onsubmit="this.querySelector('button').disabled=true; this.querySelector('button span').textContent='Sync...';">
+            @csrf
+            <input type="hidden" name="redirect" value="{{ request()->fullUrl() }}">
+            <button type="submit" style="background:none; border:1px solid #ccc; border-radius:6px; padding:4px 12px; cursor:pointer; display:flex; align-items:center; gap:6px; font-size:13px; color:#333;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21.5 2v6h-6"/><path d="M2.5 22v-6h6"/><path d="M2.5 11.5a10 10 0 0 1 18.8-4.3"/><path d="M21.5 12.5a10 10 0 0 1-18.8 4.2"/>
+                </svg>
+                <span>Sync Onda</span>
+            </button>
+        </form>
     </div>
     <div class="operatore-info" id="operatoreInfo">
         <img src="{{ asset('images/icons8-utente-uomo-cerchiato-50.png') }}" alt="Operatore">
@@ -293,17 +303,6 @@
         <span class="kpi-inline" style="color:#0d6efd;">&#9998;</span>
         <span>Note consegne</span>
     </a>
-    <hr style="margin:4px 18px;">
-    <form method="POST" action="{{ route('owner.syncOnda') }}" style="margin:0;" onsubmit="this.querySelector('button').disabled=true;">
-        @csrf
-        <input type="hidden" name="redirect" value="{{ request()->fullUrl() }}">
-        <button type="submit" class="sidebar-item" style="width:100%; background:none; border:none; border-bottom:1px solid #f0f0f0; text-align:left; font-size:14px; font-weight:500; color:#333;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21.5 2v6h-6"/><path d="M2.5 22v-6h6"/><path d="M2.5 11.5a10 10 0 0 1 18.8-4.3"/><path d="M21.5 12.5a10 10 0 0 1-18.8 4.2"/>
-            </svg>
-            <span>Sincronizza Onda</span>
-        </button>
-    </form>
 </div>
 
 <!-- Ricerca + matita note -->
