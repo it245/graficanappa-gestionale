@@ -289,23 +289,44 @@
         <span>Storico consegne</span>
     </a>
     <hr style="margin:4px 18px;">
-    <a href="#" class="sidebar-item" onclick="toggleNotePanel(); closeSidebar(); return false;">
+    <a href="#" class="sidebar-item" data-bs-toggle="modal" data-bs-target="#modalNoteConsegne" onclick="closeSidebar(); caricaNote();">
         <span class="kpi-inline" style="color:#0d6efd;">&#9998;</span>
         <span>Note consegne</span>
     </a>
+    <hr style="margin:4px 18px;">
+    <form method="POST" action="{{ route('owner.syncOnda') }}" style="margin:0;" onsubmit="this.querySelector('button').disabled=true;">
+        @csrf
+        <input type="hidden" name="redirect" value="{{ request()->fullUrl() }}">
+        <button type="submit" class="sidebar-item" style="width:100%; background:none; border:none; border-bottom:1px solid #f0f0f0; text-align:left; font-size:14px; font-weight:500; color:#333;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21.5 2v6h-6"/><path d="M2.5 22v-6h6"/><path d="M2.5 11.5a10 10 0 0 1 18.8-4.3"/><path d="M21.5 12.5a10 10 0 0 1-18.8 4.2"/>
+            </svg>
+            <span>Sincronizza Onda</span>
+        </button>
+    </form>
 </div>
 
-<!-- Ricerca + matita note + pannello inline -->
+<!-- Ricerca + matita note -->
 <div style="display:flex; align-items:center; gap:8px; margin:12px 8px; flex-wrap:nowrap;">
     <input type="text" id="searchBox" class="form-control search-box" placeholder="Cerca commessa, cliente, descrizione..." style="margin:0; flex:1; min-width:200px;">
-    <button onclick="toggleNotePanel()" title="Note consegne" style="background:none; border:none; cursor:pointer; font-size:24px; color:#0d6efd; padding:4px 8px; position:relative;">&#9998;<span id="noteConsegneBadge" style="display:none; position:absolute; top:-2px; right:-2px; background:#dc3545; color:#fff; border-radius:50%; width:16px; height:16px; font-size:10px; font-weight:bold; text-align:center; line-height:16px;">!</span></button>
-    <div id="notePanel" style="display:none; padding:8px 14px; background:#fff; border:2px solid #0d6efd; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.1); flex:0 0 auto; white-space:nowrap;">
-        <div style="display:flex; align-items:center; gap:8px;">
-            <strong style="color:#0d6efd; font-size:13px; white-space:nowrap;">Note consegne</strong>
-            <textarea id="notaContenuto" rows="18" class="form-control" style="border-color:#0d6efd; font-size:14px; width:700px; min-height:400px; resize:vertical;" placeholder="Note consegne..."></textarea>
-            <button onclick="salvaNote()" class="btn btn-primary btn-sm" style="font-size:12px; padding:4px 14px; white-space:nowrap;">Salva</button>
-            <span id="noteSaveStatus" style="font-size:11px; color:#6c757d; white-space:nowrap;"></span>
-            <button onclick="toggleNotePanel()" style="background:none; border:none; font-size:16px; cursor:pointer; color:#666; line-height:1; padding:0 4px;">&times;</button>
+    <button data-bs-toggle="modal" data-bs-target="#modalNoteConsegne" onclick="caricaNote()" title="Note consegne" style="background:none; border:none; cursor:pointer; font-size:24px; color:#0d6efd; padding:4px 8px; position:relative;">&#9998;<span id="noteConsegneBadge" style="display:none; position:absolute; top:-2px; right:-2px; background:#dc3545; color:#fff; border-radius:50%; width:16px; height:16px; font-size:10px; font-weight:bold; text-align:center; line-height:16px;">!</span></button>
+</div>
+
+<!-- Modale Note Consegne -->
+<div class="modal fade" id="modalNoteConsegne" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#0d6efd; color:#fff; padding:12px 20px;">
+                <h5 class="modal-title" style="font-weight:700;">Note Consegne</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="padding:20px;">
+                <textarea id="notaContenuto" rows="18" class="form-control" style="border-color:#0d6efd; font-size:14px; min-height:400px; resize:vertical;" placeholder="Note consegne..."></textarea>
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-top:12px;">
+                    <span id="noteSaveStatus" style="font-size:12px; color:#6c757d;"></span>
+                    <button onclick="salvaNote()" class="btn btn-primary" style="padding:8px 28px;">Salva</button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -1205,18 +1226,9 @@ function csrfToken() {
 }
 
 // === Note giornaliere ===
-function toggleNotePanel() {
-    var panel = document.getElementById('notePanel');
-    if (panel.style.display === 'none') {
-        panel.style.display = 'block';
-        caricaNote();
-        document.getElementById('noteConsegneBadge').style.display = 'none';
-    } else {
-        panel.style.display = 'none';
-    }
-}
 
 function caricaNote() {
+    document.getElementById('noteConsegneBadge').style.display = 'none';
     fetch(urlToken('{{ route("spedizione.noteGiornaliere") }}?data={{ now()->toDateString() }}'), {
         headers: {'Accept': 'application/json'}
     })
@@ -1322,7 +1334,9 @@ function showNoteToast(msg) {
     toast.onclick = function() {
         toast.remove();
         document.getElementById('noteConsegneBadge').style.display = 'none';
-        if (document.getElementById('notePanel').style.display === 'none') toggleNotePanel();
+        var modal = new bootstrap.Modal(document.getElementById('modalNoteConsegne'));
+        modal.show();
+        caricaNote();
     };
     document.body.appendChild(toast);
     setTimeout(function() { if (toast.parentNode) toast.remove(); }, 30000);
