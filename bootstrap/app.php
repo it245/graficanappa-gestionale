@@ -26,6 +26,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'owner/import',
             'owner/aggiorna-campo',
             'operatore/prestampa/aggiorna-campo',
+            'spedizione/sync-onda',
         ]);
 
         $middleware->alias([

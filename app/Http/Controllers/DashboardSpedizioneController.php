@@ -515,4 +515,16 @@ class DashboardSpedizioneController extends Controller
         \DB::table('notifiche_spedizione')->where('letto', false)->update(['letto' => true]);
         return response()->json(['success' => true]);
     }
+
+    public function syncOnda(Request $request)
+    {
+        try {
+            $risultato = \App\Services\OndaSyncService::sincronizza();
+            $msg = "Sync Onda: {$risultato['ordini_creati']} creati, "
+                 . "{$risultato['ordini_aggiornati']} aggiornati, {$risultato['fasi_create']} fasi.";
+            return redirect()->back()->with('success', $msg);
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Errore sync Onda: ' . $e->getMessage());
+        }
+    }
 }

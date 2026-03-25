@@ -160,6 +160,7 @@ Route::prefix('spedizione')->middleware(['operatore.auth'])->group(function() {
     Route::get('/notifiche', [DashboardSpedizioneController::class, 'notifiche'])->name('spedizione.notifiche');
     Route::post('/notifiche/{id}/letta', [DashboardSpedizioneController::class, 'notificaLetta'])->name('spedizione.notificaLetta');
     Route::post('/notifiche/lette', [DashboardSpedizioneController::class, 'notificheLette'])->name('spedizione.notificheLette');
+    Route::post('/sync-onda', [DashboardSpedizioneController::class, 'syncOnda'])->name('spedizione.syncOnda');
 });
 
 // Tracking BRT test (accesso diretto)
