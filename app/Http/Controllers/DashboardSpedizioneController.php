@@ -520,8 +520,14 @@ class DashboardSpedizioneController extends Controller
     {
         try {
             $risultato = \App\Services\OndaSyncService::sincronizza();
+            $ddtFornitore = \App\Services\OndaSyncService::sincronizzaDDTFornitore();
+            $ddtLavorazioni = \App\Services\OndaSyncService::sincronizzaDDTFornitureLavorazioni();
+            $ddtVendita = \App\Services\OndaSyncService::sincronizzaDDTVendita();
             $msg = "Sync Onda: {$risultato['ordini_creati']} creati, "
                  . "{$risultato['ordini_aggiornati']} aggiornati, {$risultato['fasi_create']} fasi.";
+            $totDDT = $ddtFornitore + $ddtLavorazioni;
+            if ($totDDT > 0) $msg .= " DDT fornitore: {$totDDT} fasi esterne.";
+            if ($ddtVendita > 0) $msg .= " DDT vendita: {$ddtVendita}.";
             return redirect()->back()->with('success', $msg);
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Errore sync Onda: ' . $e->getMessage());

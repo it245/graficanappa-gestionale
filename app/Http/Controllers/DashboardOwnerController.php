@@ -896,8 +896,14 @@ public function calcolaOreEPriorita($fase)
             $duplicatiRimossi = $this->pulisciDuplicati();
 
             $risultato = OndaSyncService::sincronizza();
+            $ddtFornitore = OndaSyncService::sincronizzaDDTFornitore();
+            $ddtLavorazioni = OndaSyncService::sincronizzaDDTFornitureLavorazioni();
+            $ddtVendita = OndaSyncService::sincronizzaDDTVendita();
             $msg = "Sync Onda completato: {$risultato['ordini_creati']} ordini creati, "
                  . "{$risultato['ordini_aggiornati']} aggiornati, {$risultato['fasi_create']} fasi create.";
+            $totDDT = $ddtFornitore + $ddtLavorazioni;
+            if ($totDDT > 0) $msg .= " DDT fornitore: {$totDDT} fasi esterne.";
+            if ($ddtVendita > 0) $msg .= " DDT vendita: {$ddtVendita}.";
             if ($duplicatiRimossi > 0) {
                 $msg .= " ($duplicatiRimossi ordini duplicati rimossi)";
             }
