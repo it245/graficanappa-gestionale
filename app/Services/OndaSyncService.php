@@ -1303,6 +1303,7 @@ class OndaSyncService
             }
 
             $fase->update([
+                'esterno'          => 1,
                 'stato'            => 2,
                 'data_inizio'      => $dataDoc,
                 'note'             => 'Inviato a: ' . $fornitore,
