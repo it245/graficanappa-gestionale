@@ -729,7 +729,6 @@ tr:hover td {
     <option value="2">2</option>
     <option value="3">3</option>
     <option value="EXT">EXT</option>
-    <option value="EXT ✓">EXT ✓ (inviato)</option>
 </select>
 
 <select id="filterFase" multiple>
@@ -885,7 +884,7 @@ tr:hover td {
                 <tr class="{{ $rowClass }}" data-id="{{ $fase->id }}">
                     <td><a href="{{ route('owner.dettaglioCommessa', $fase->ordine->commessa ?? '-') }}" style="color:#000;font-weight:bold;text-decoration:underline;">{{ $fase->ordine->commessa ?? '-' }}</a></td>
                     @if($fase->esterno && $fase->ddt_fornitore_id)
-                    <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)" style="background:#d1fae5 !important;font-weight:bold;text-align:center;color:#065f46;font-size:10px;" title="DDT fornitore inviata">EXT ✓</td>
+                    <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)" style="background:#d1fae5 !important;font-weight:bold;text-align:center;color:#065f46;font-size:10px;" title="DDT fornitore inviata">EXT</td>
                     @elseif($fase->esterno)
                     <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)" style="background:#ede9fe !important;font-weight:bold;text-align:center;color:#7c3aed;font-size:10px;" title="Esterno - DDT non ancora inviata">EXT</td>
                     @else
