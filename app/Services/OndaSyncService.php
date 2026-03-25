@@ -1339,7 +1339,7 @@ class OndaSyncService
             ['pattern' => '/brossura\s*fresat/iu', 'fasi' => ['BROSSFRESATA/A5EST', 'BROSSFRESATA/A4EST']],
             ['pattern' => '/punt[io]\s*metallic/iu', 'fasi' => ['PUNTOMETALLICOEST', 'PUNTOMETALLICO']],
             ['pattern' => '/incollare|incollaggio|piega\s*incolla/iu', 'fasi' => ['PI01', 'PI02', 'PI03']],
-            ['pattern' => '/accoppiar/iu', 'fasi' => ['ACCOPPIATURA.FOGLI', 'ACCOPPIATURA.FOG.33.48INT']],
+            ['pattern' => '/accoppiar/iu', 'fasi' => ['accopp+fust', 'ACCOPPIATURA.FOGLI', 'ACCOPPIATURA.FOG.33.48INT']],
             ['pattern' => '/allestimento|allestire/iu', 'fasi' => ['Allest.Manuale', 'ALLEST.SHOPPER', 'ALLESTIMENTO.ESPOSITORI']],
         ];
 
