@@ -130,7 +130,7 @@ class FaseStatoService
 
         if ($brtConsegnato) {
             OrdineFase::whereIn('ordine_id', $ordineIds)
-                ->where('stato', '<', 4)
+                ->whereRaw("stato REGEXP '^[0-9]+$' AND stato < 4")
                 ->update(['stato' => 4, 'data_fine' => now()->format('Y-m-d H:i:s')]);
         }
     }

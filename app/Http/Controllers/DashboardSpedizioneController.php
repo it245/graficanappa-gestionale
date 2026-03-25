@@ -221,7 +221,7 @@ class DashboardSpedizioneController extends Controller
             } else {
                 // Consegna totale: tutte le fasi della commessa vanno a stato=4 (consegnato)
                 $tutteLeFasiCommessa = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
-                    ->where('stato', '<', 4)
+                    ->whereRaw("stato REGEXP '^[0-9]+$' AND stato < 4")
                     ->get();
 
                 foreach ($tutteLeFasiCommessa as $f) {

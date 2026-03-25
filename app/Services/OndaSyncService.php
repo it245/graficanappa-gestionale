@@ -1381,7 +1381,7 @@ class OndaSyncService
                     ->whereIn('fase', $lav['fasi'])
                     ->where(fn($q) => $q->where('esterno', false)->orWhereNull('esterno'))
                     ->whereNull('ddt_fornitore_id')
-                    ->where('stato', '<', 3)
+                    ->whereRaw("stato REGEXP '^[0-9]+$' AND stato < 3")
                     ->orderBy('id')
                     ->first();
 
@@ -1391,7 +1391,7 @@ class OndaSyncService
                             ->where('fase', 'LIKE', $nomeFase . '%')
                             ->where(fn($q) => $q->where('esterno', false)->orWhereNull('esterno'))
                             ->whereNull('ddt_fornitore_id')
-                            ->where('stato', '<', 3)
+                            ->whereRaw("stato REGEXP '^[0-9]+$' AND stato < 3")
                             ->orderBy('id')
                             ->first();
                         if ($fase) break;
