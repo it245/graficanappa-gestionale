@@ -124,13 +124,13 @@ html { font-size: 22px; }
 .stats-col { flex: 1; background: #111827; border-radius: 0.4rem; padding: 0.8rem 1rem; display: flex; flex-direction: column; justify-content: center; }
 .stats-col-title { font-size: 0.7rem; font-weight: 700; margin-bottom: 0.6rem; display: flex; align-items: center; gap: 0.3rem; }
 
-.big-num { font-size: 6rem; font-weight: 900; color: #4ade80; line-height: 1; text-align: center; margin: 0.8rem 0; }
-.obj-stats { display: flex; justify-content: space-around; margin-top: 1.5rem; width: 100%; }
-.obj-stat { text-align: center; padding: 0.5rem 1.5rem; }
-.obj-stat-val { font-size: 2.5rem; font-weight: 800; line-height: 1; }
+.big-num { font-size: 7rem; font-weight: 900; color: #4ade80; line-height: 1; text-align: center; margin: 1rem 0; }
+.obj-stats { display: flex; justify-content: space-around; margin-top: 2rem; width: 100%; }
+.obj-stat { text-align: center; padding: 0.8rem 2rem; }
+.obj-stat-val { font-size: 3.5rem; font-weight: 800; line-height: 1; }
 .obj-stat-val.green { color: #4ade80; }
 .obj-stat-val.blue { color: #38bdf8; }
-.obj-stat-lbl { font-size: 0.75rem; color: #64748b; text-transform: uppercase; margin-top: 0.5rem; }
+.obj-stat-lbl { font-size: 1rem; color: #94a3b8; text-transform: uppercase; margin-top: 0.6rem; font-weight: 600; }
 
 /* Ore segnate */
 .ore-row { display: flex; align-items: center; margin-bottom: 0.4rem; }
