@@ -250,7 +250,15 @@
 
 {{-- Note Fustelle (note inserite da Mirko/prestampa sulle singole fasi) --}}
 @php
-    $noteFasi = $fasi->filter(fn($f) => !empty($f->note))->values();
+    $noteFasi = $fasi->filter(function($f) {
+        if (empty($f->note)) return false;
+        $n = trim($f->note);
+        // Escludi note di sistema (DDT fornitore, colori, fustelle)
+        if (str_starts_with($n, 'Inviato a:')) return false;
+        if (str_starts_with($n, '[COL:')) return false;
+        if (str_starts_with($n, '[FS:')) return false;
+        return true;
+    })->values();
 @endphp
 @if($noteFasi->isNotEmpty())
 <div class="row g-2 mb-3">
