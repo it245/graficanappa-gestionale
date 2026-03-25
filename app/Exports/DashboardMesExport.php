@@ -22,7 +22,7 @@ class DashboardMesExport implements WithMultipleSheets
     public function sheets(): array
     {
         return [
-            new DashboardMesSheet('<', 4, 'tutto'),
+            new DashboardMesSheet('<', 3, 'tutto'),
             new DashboardMesSheet('=', 3, 'Terminate'),
         ];
     }
