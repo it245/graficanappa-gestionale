@@ -193,31 +193,35 @@ html { font-size: 22px; }
 <div class="scroll-inner" id="scrollInner">
 
 <!-- PAGINA 1: Z1 + Z2 affiancate -->
-<div class="section" data-section="0" style="display:flex; flex-direction:row; gap:0.5rem;"><div style="flex:1; overflow:hidden;">
+<div class="section" data-section="0" style="display:flex; flex-direction:row; gap:0.5rem;"><div style="flex:1; display:flex; flex-direction:column; overflow:hidden;">
     <div class="section-title" style="color:#fbbf24;">⚡ In corso ora <span class="section-badge" style="background:#16a34a;color:#fff;">LIVE</span></div>
-    @foreach($macchine as $m)
-    <div class="macchina {{ $m['attiva'] ? 'attiva' : 'attesa' }}">
-        <div class="m-info-left">
-            <div class="m-nome">{{ $m['nome'] }}</div>
-            <div class="m-stato {{ $m['attiva'] ? 'lav' : 'att' }}">● {{ $m['attiva'] ? 'IN LAVORAZIONE' : 'IN ATTESA' }}</div>
-        </div>
-        <div class="m-info-center">
-            @if($m['attiva'])
-                <div class="m-commessa">{{ $m['commessa'] }}</div>
-                <div class="m-desc">{{ $m['descrizione'] }}</div>
-                <div class="m-cliente">{{ $m['cliente'] }}</div>
-            @else
-                <div style="color:#475569; font-style:italic; font-size:0.38rem;">In attesa prossimo lavoro</div>
-            @endif
-        </div>
-        <div class="m-info-right">
-            @if($m['attiva'] && $m['ore_lav'])
-                @php $h = floor($m['ore_lav']); $min = round(($m['ore_lav'] - $h) * 60); @endphp
-                <div class="m-ore">{{ $h }}h {{ $min }}m</div>
-            @endif
+    <div id="z1-scroll" style="flex:1; overflow:hidden;">
+        <div id="z1-scroll-inner">
+            @foreach($macchine as $m)
+            <div class="macchina {{ $m['attiva'] ? 'attiva' : 'attesa' }}">
+                <div class="m-info-left">
+                    <div class="m-nome">{{ $m['nome'] }}</div>
+                    <div class="m-stato {{ $m['attiva'] ? 'lav' : 'att' }}">● {{ $m['attiva'] ? 'IN LAVORAZIONE' : 'IN ATTESA' }}</div>
+                </div>
+                <div class="m-info-center">
+                    @if($m['attiva'])
+                        <div class="m-commessa">{{ $m['commessa'] }}</div>
+                        <div class="m-desc">{{ $m['descrizione'] }}</div>
+                        <div class="m-cliente">{{ $m['cliente'] }}</div>
+                    @else
+                        <div style="color:#475569; font-style:italic; font-size:0.38rem;">In attesa prossimo lavoro</div>
+                    @endif
+                </div>
+                <div class="m-info-right">
+                    @if($m['attiva'] && $m['ore_lav'])
+                        @php $h = floor($m['ore_lav']); $min = round(($m['ore_lav'] - $h) * 60); @endphp
+                        <div class="m-ore">{{ $h }}h {{ $min }}m</div>
+                    @endif
+                </div>
+            </div>
+            @endforeach
         </div>
     </div>
-    @endforeach
 </div><!-- fine z1 -->
 <div style="flex:1; display:flex; flex-direction:column; overflow:hidden;">
 <!-- Z2: PROSSIMI LAVORI -->
@@ -339,13 +343,13 @@ function nextSection() {
 // Ogni pagina visibile per 40 secondi
 setInterval(nextSection, 40000);
 
-// Scroll verticale automatico per Z2 (Prossimi lavori)
-(function() {
-    var container = document.getElementById('z2-scroll');
-    var inner = document.getElementById('z2-scroll-inner');
+// Scroll verticale automatico per Z1 (In corso ora) e Z2 (Prossimi lavori)
+function initAutoScroll(containerId, innerId) {
+    var container = document.getElementById(containerId);
+    var inner = document.getElementById(innerId);
     if (!container || !inner) return;
     var scrollPos = 0;
-    var speed = 0.3; // pixel per frame (più lento)
+    var speed = 0.3;
     var maxScroll = 0;
     var pausing = true;
     var pauseTimer = null;
@@ -356,7 +360,6 @@ setInterval(nextSection, 40000);
         pauseTimer = setTimeout(function() { pausing = false; }, ms);
     }
 
-    // Pausa iniziale 5 secondi prima di partire
     startPause(5000);
 
     function autoScroll() {
@@ -367,11 +370,11 @@ setInterval(nextSection, 40000);
             scrollPos += speed;
             if (scrollPos >= maxScroll) {
                 scrollPos = maxScroll;
-                startPause(5000); // pausa 5s in fondo prima di risalire
+                startPause(5000);
                 setTimeout(function() {
                     scrollPos = 0;
                     inner.style.transform = 'translateY(0)';
-                    startPause(5000); // pausa 5s in cima prima di riscorrere
+                    startPause(5000);
                 }, 5000);
             }
             inner.style.transform = 'translateY(-' + scrollPos + 'px)';
@@ -379,7 +382,10 @@ setInterval(nextSection, 40000);
         requestAnimationFrame(autoScroll);
     }
     requestAnimationFrame(autoScroll);
-})();
+}
+
+initAutoScroll('z1-scroll', 'z1-scroll-inner');
+initAutoScroll('z2-scroll', 'z2-scroll-inner');
 </script>
 </body>
 </html>
