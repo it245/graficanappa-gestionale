@@ -239,16 +239,23 @@ class KioskController extends Controller
             $inizioTurno = $oggi . ' ' . str_pad($ru['inizio'], 2, '0', STR_PAD_LEFT) . ':00:00';
 
             // Ore lavorate oggi da ordine_fasi:
-            // - Fasi in corso (stato 2): da MAX(data_inizio, inizio_turno) a NOW
-            // - Fasi terminate oggi (stato 3, data_fine oggi): da MAX(data_inizio, inizio_turno) a data_fine
+            // - Fasi in corso (stato 2) avviate nelle ultime 48h (non abbandonate vecchie)
+            // - Fasi terminate oggi (stato 3) ma avviate da ieri (lavori reali, non chiusure sync)
+            $ieri = Carbon::yesterday()->format('Y-m-d');
             $secOggi = DB::table('ordine_fasi')
                 ->join('fasi_catalogo', 'ordine_fasi.fase_catalogo_id', '=', 'fasi_catalogo.id')
                 ->whereIn('fasi_catalogo.reparto_id', $repartoIds)
-                ->where(function ($q) use ($oggi) {
-                    $q->where('ordine_fasi.stato', 2)                            // in corso ora
-                      ->orWhere(function ($q2) use ($oggi) {
-                          $q2->where('ordine_fasi.stato', 3)                     // terminate oggi
-                             ->whereDate('ordine_fasi.data_fine', $oggi);
+                ->where(function ($q) use ($oggi, $ieri) {
+                    $q->where(function ($q2) use ($ieri) {
+                          // In corso: avviate da ieri in poi
+                          $q2->where('ordine_fasi.stato', 2)
+                             ->where('ordine_fasi.data_inizio', '>=', $ieri . ' 00:00:00');
+                      })
+                      ->orWhere(function ($q2) use ($oggi, $ieri) {
+                          // Terminate oggi: avviate da ieri in poi (lavori reali)
+                          $q2->where('ordine_fasi.stato', 3)
+                             ->whereDate('ordine_fasi.data_fine', $oggi)
+                             ->where('ordine_fasi.data_inizio', '>=', $ieri . ' 00:00:00');
                       });
                 })
                 ->selectRaw("SUM(TIMESTAMPDIFF(SECOND, GREATEST(COALESCE(ordine_fasi.data_inizio, ?), ?), COALESCE(ordine_fasi.data_fine, NOW()))) as sec", [$inizioTurno, $inizioTurno])
