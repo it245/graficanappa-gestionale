@@ -219,7 +219,7 @@ class KioskController extends Controller
         // === ZONA 4: UTILIZZO MACCHINE ===
         $utilizzo = [];
         $repartiUtilizzo = [
-            ['nome' => 'XL 106 (16h)', 'reparti' => ['stampa offset'], 'ore_disp' => 16, 'inizio' => 6],
+            ['nome' => 'XL 106', 'reparti' => ['stampa offset'], 'ore_disp' => 16, 'inizio' => 6],
             ['nome' => 'BOBST', 'reparti' => ['fustella piana'], 'ore_disp' => 16, 'inizio' => 6],
             ['nome' => 'JOH Caldo', 'reparti' => ['stampa a caldo'], 'ore_disp' => 16, 'inizio' => 6],
             ['nome' => 'Plastificatrice', 'reparti' => ['plastificazione'], 'ore_disp' => 8, 'inizio' => 8],
