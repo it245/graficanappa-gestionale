@@ -237,7 +237,7 @@ class KioskController extends Controller
         foreach ($repartiUtilizzo as $ru) {
             $repartoIds = Reparto::whereIn('nome', $ru['reparti'])->pluck('id');
             $inizioTurno = $oggi . ' ' . str_pad($ru['inizio'], 2, '0', STR_PAD_LEFT) . ':00:00';
-            \Log::debug("Kiosk ore: {$ru['nome']} repartoIds=" . $repartoIds->implode(',') . " inizioTurno={$inizioTurno}");
+            \Log::info("Kiosk ore: {$ru['nome']} repartoIds=" . $repartoIds->implode(',') . " inizioTurno={$inizioTurno}");
 
             // 1. Ore da fase_operatore: avviate oggi, finite oggi, o ancora in corso (da inizio turno)
             $secPivot = DB::table('fase_operatore')
@@ -267,7 +267,7 @@ class KioskController extends Controller
                 ->value('sec');
 
             $secOggi = ($secPivot ?? 0) + ($secFallback ?? 0);
-            \Log::debug("Kiosk ore: {$ru['nome']} pivot={$secPivot} fallback={$secFallback} totale={$secOggi}");
+            \Log::info("Kiosk ore: {$ru['nome']} pivot={$secPivot} fallback={$secFallback} totale={$secOggi}");
 
             $oreUsate = round(max($secOggi ?? 0, 0) / 3600, 1);
 
