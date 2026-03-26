@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>Preview — Riempimento Macchine</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: 'Inter', sans-serif;
+    background: #000;
+    color: #f1f5f9;
+    padding: 2rem;
+    min-height: 100vh;
+}
+
+.header {
+    background: #0f172a;
+    border-bottom: 2px solid #2563eb;
+    padding: 0.8rem 1.5rem;
+    display: flex; align-items: center; justify-content: space-between;
+    margin: -2rem -2rem 1.5rem -2rem;
+}
+.header-brand { font-size: 0.9rem; font-weight: 800; color: #38bdf8; }
+.header-sub { font-size: 0.5rem; color: #64748b; }
+
+.page-title {
+    font-size: 1.2rem; font-weight: 800; color: #a78bfa; margin-bottom: 1rem;
+}
+.page-title span { font-size: 0.6rem; color: #64748b; margin-left: 0.5rem; }
+
+.row {
+    display: flex; align-items: center; margin-bottom: 0.3rem;
+}
+.row-detail {
+    margin-bottom: 1rem;
+}
+.row-name {
+    font-size: 0.75rem; font-weight: 600; color: #94a3b8; min-width: 10rem;
+}
+.bar-container {
+    flex: 1; height: 1rem; background: #1e293b; border-radius: 0.4rem;
+    overflow: hidden; margin: 0 0.6rem; position: relative;
+}
+.bar-pronte {
+    height: 100%; background: linear-gradient(90deg, #16a34a, #4ade80);
+    display: inline-block; float: left;
+}
+.bar-coda {
+    height: 100%; background: linear-gradient(90deg, #475569, #64748b);
+    display: inline-block; float: left;
+}
+.cap-line {
+    position: absolute; top: 0; height: 100%; width: 2px;
+    background: #fbbf24; z-index: 2;
+}
+.row-ore {
+    font-size: 0.7rem; font-weight: 700; color: #f1f5f9; min-width: 3.5rem; text-align: right;
+}
+.row-detail {
+    margin-left: 10rem; margin-bottom: 0.3rem;
+    font-size: 0.5rem; color: #64748b; display: flex; gap: 1.5rem;
+}
+.row-detail .pronte { color: #4ade80; }
+.row-detail .coda { color: #64748b; }
+.row-detail .giorni { color: #fbbf24; }
+
+.legenda {
+    margin-top: 1rem; font-size: 0.5rem; color: #64748b; display: flex; gap: 2rem;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+    <div>
+        <div class="header-brand">GRAFICA NAPPA</div>
+        <div class="header-sub">DASHBOARD PRODUZIONE</div>
+    </div>
+    <div style="color:#64748b; font-size:0.6rem;">Pagina 3 — Riempimento Macchine</div>
+</div>
+
+<div class="page-title">🏭 Riempimento Macchine <span>Totale: 197h in coda</span></div>
+
+<script>
+var data = [
+    { nome: 'JOH Caldo',          ore_1: 15, fasi_1: 4,  ore_0: 27, fasi_0: 11, capacita: 16 },
+    { nome: 'XL 106',             ore_1: 12, fasi_1: 5,  ore_0: 20, fasi_0: 8,  capacita: 16 },
+    { nome: 'Legatoria',          ore_1: 12, fasi_1: 5,  ore_0: 18, fasi_0: 10, capacita: 14 },
+    { nome: 'Tagliacarte',        ore_1: 10, fasi_1: 6,  ore_0: 14, fasi_0: 12, capacita: 8  },
+    { nome: 'Piegaincolla',       ore_1: 8,  fasi_1: 4,  ore_0: 14, fasi_0: 9,  capacita: 14 },
+    { nome: 'BOBST',              ore_1: 6,  fasi_1: 3,  ore_0: 12, fasi_0: 7,  capacita: 16 },
+    { nome: 'Finestratrice',      ore_1: 4,  fasi_1: 2,  ore_0: 8,  fasi_0: 6,  capacita: 14 },
+    { nome: 'Fust. Cilindrica',   ore_1: 3,  fasi_1: 2,  ore_0: 5,  fasi_0: 4,  capacita: 8  },
+    { nome: 'Plastificatrice',    ore_1: 2,  fasi_1: 3,  ore_0: 4,  fasi_0: 5,  capacita: 8  },
+    { nome: 'Canon V900',         ore_1: 1,  fasi_1: 1,  ore_0: 2,  fasi_0: 3,  capacita: 8  },
+];
+
+var maxOre = Math.max(...data.map(d => d.ore_0 + d.ore_1));
+
+var container = document.body;
+
+data.forEach(function(r) {
+    var totale = r.ore_0 + r.ore_1;
+    var pctPronte = (r.ore_1 / maxOre) * 100;
+    var pctCoda = (r.ore_0 / maxOre) * 100;
+    var pctCap = Math.min((r.capacita / maxOre) * 100, 100);
+    // Row
+    var row = document.createElement('div');
+    row.className = 'row';
+    row.innerHTML =
+        '<span class="row-name">' + r.nome + '</span>' +
+        '<div class="bar-container">' +
+            '<div class="bar-pronte" style="width:' + pctPronte + '%"></div>' +
+            '<div class="bar-coda" style="width:' + pctCoda + '%"></div>' +
+        '</div>' +
+        '<span class="row-ore">' + totale + 'h</span>';
+    container.appendChild(row);
+
+    // Detail
+    var detail = document.createElement('div');
+    detail.className = 'row-detail';
+    detail.innerHTML =
+        '<span class="pronte">■ Pronte: ' + r.ore_1 + 'h (' + r.fasi_1 + ')</span>' +
+        '<span class="coda">□ In coda: ' + r.ore_0 + 'h (' + r.fasi_0 + ')</span>';
+    container.appendChild(detail);
+});
+
+// Legenda
+var leg = document.createElement('div');
+leg.className = 'legenda';
+leg.innerHTML =
+    '<span><span style="color:#4ade80">■</span> Pronte (stato 1)</span>' +
+    '<span><span style="color:#64748b">■</span> In coda (stato 0)</span>' +
+    '';
+container.appendChild(leg);
+</script>
+
+</body>
+</html>

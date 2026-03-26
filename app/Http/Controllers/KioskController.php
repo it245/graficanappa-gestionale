@@ -81,8 +81,7 @@ class KioskController extends Controller
             ['nome' => 'Piegaincolla', 'reparti' => ['piegaincolla']],
             ['nome' => 'Finestratrice', 'reparti' => ['finestratura']],
             ['nome' => 'Fustella Cilindrica', 'reparti' => ['fustella cilindrica']],
-            ['nome' => 'Canon V900', 'reparti' => ['digitale']],
-            ['nome' => 'Finitura Digitale', 'reparti' => ['finitura digitale']],
+            ['nome' => 'Digitale', 'reparti' => ['digitale', 'finitura digitale']],
             ['nome' => 'Tagliacarte', 'reparti' => ['tagliacarte']],
             ['nome' => 'Legatoria', 'reparti' => ['legatoria']],
         ];
@@ -226,7 +225,7 @@ class KioskController extends Controller
             ['nome' => 'Piegaincolla', 'reparti' => ['piegaincolla'], 'ore_disp' => 14, 'inizio' => 6],
             ['nome' => 'Finestratrice', 'reparti' => ['finestratura'], 'ore_disp' => 14, 'inizio' => 6],
             ['nome' => 'Fustella Cilindrica', 'reparti' => ['fustella cilindrica'], 'ore_disp' => 8, 'inizio' => 8],
-            ['nome' => 'Canon V900', 'reparti' => ['digitale', 'finitura digitale'], 'ore_disp' => 8, 'inizio' => 8],
+            ['nome' => 'Digitale', 'reparti' => ['digitale', 'finitura digitale'], 'ore_disp' => 8, 'inizio' => 8],
             ['nome' => 'Tagliacarte', 'reparti' => ['tagliacarte'], 'ore_disp' => 8, 'inizio' => 8],
             ['nome' => 'Legatoria', 'reparti' => ['legatoria'], 'ore_disp' => 14, 'inizio' => 6],
         ];
