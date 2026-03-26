@@ -28,22 +28,26 @@ foreach ($reparti as $ru) {
     $inizioTurno = $oggi . ' ' . str_pad($ru['inizio'], 2, '0', STR_PAD_LEFT) . ':00:00';
     $oreDispOra = max(min($oraCorrente - $ru['inizio'], $ru['ore_disp']), 0.5);
 
-    // Fasi in corso (stato 2)
+    $ieri = date('Y-m-d', strtotime('-1 day'));
+
+    // Fasi in corso (stato 2) avviate da ieri
     $aperte = DB::table('ordine_fasi as f')
         ->join('ordini as o', 'f.ordine_id', '=', 'o.id')
         ->join('fasi_catalogo as fc', 'f.fase_catalogo_id', '=', 'fc.id')
         ->whereIn('fc.reparto_id', $repartoIds)
         ->where('f.stato', 2)
+        ->where('f.data_inizio', '>=', $ieri . ' 00:00:00')
         ->select('f.id', 'f.fase', 'f.data_inizio', 'o.commessa')
         ->get();
 
-    // Fasi terminate oggi (stato 3, data_fine oggi)
+    // Fasi terminate oggi (stato 3, data_fine oggi) avviate da ieri
     $chiuse = DB::table('ordine_fasi as f')
         ->join('ordini as o', 'f.ordine_id', '=', 'o.id')
         ->join('fasi_catalogo as fc', 'f.fase_catalogo_id', '=', 'fc.id')
         ->whereIn('fc.reparto_id', $repartoIds)
         ->where('f.stato', 3)
         ->whereDate('f.data_fine', $oggi)
+        ->where('f.data_inizio', '>=', $ieri . ' 00:00:00')
         ->select('f.id', 'f.fase', 'f.data_inizio', 'f.data_fine', 'o.commessa')
         ->get();
 
