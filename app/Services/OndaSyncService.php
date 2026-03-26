@@ -1669,9 +1669,6 @@ class OndaSyncService
             'PI01' => 'multifase',
             'PI02' => 'multifase',
             'PI03' => 'multifase',
-            'TAGLIACARTE' => 'multifase',
-            'TAGLIACARTE.IML' => 'multifase',
-            'TAGLIOINDIGO' => 'multifase',
             'SFUST' => 'multifase',
             'SFUST.IML.FUSTELLATO' => 'multifase',
             // monofase
