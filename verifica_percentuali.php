@@ -30,16 +30,17 @@ foreach ($reparti as $ru) {
 
     $ieri = date('Y-m-d', strtotime('-1 day'));
 
-    // Fasi in corso (stato 2) — tutte, senza filtro data
+    // Fasi in corso (stato 2) — escluso soft deleted
     $aperte = DB::table('ordine_fasi as f')
         ->join('ordini as o', 'f.ordine_id', '=', 'o.id')
         ->join('fasi_catalogo as fc', 'f.fase_catalogo_id', '=', 'fc.id')
         ->whereIn('fc.reparto_id', $repartoIds)
         ->where('f.stato', 2)
+        ->whereNull('f.deleted_at')
         ->select('f.id', 'f.fase', 'f.data_inizio', 'o.commessa')
         ->get();
 
-    // Fasi terminate oggi (stato 3, data_fine oggi) avviate da ieri
+    // Fasi terminate oggi (stato 3, data_fine oggi) avviate da ieri — escluso soft deleted
     $chiuse = DB::table('ordine_fasi as f')
         ->join('ordini as o', 'f.ordine_id', '=', 'o.id')
         ->join('fasi_catalogo as fc', 'f.fase_catalogo_id', '=', 'fc.id')
@@ -47,6 +48,7 @@ foreach ($reparti as $ru) {
         ->where('f.stato', 3)
         ->whereDate('f.data_fine', $oggi)
         ->where('f.data_inizio', '>=', $ieri . ' 00:00:00')
+        ->whereNull('f.deleted_at')
         ->select('f.id', 'f.fase', 'f.data_inizio', 'f.data_fine', 'o.commessa')
         ->get();
 
