@@ -55,7 +55,7 @@ body {
     background: #fbbf24; z-index: 2;
 }
 .row-ore {
-    font-size: 0.7rem; font-weight: 700; color: #f1f5f9; min-width: 3.5rem; text-align: right;
+    display: none;
 }
 .row-detail {
     margin-left: 10rem; margin-bottom: 0.3rem;
@@ -108,13 +108,14 @@ data.forEach(function(r) {
     // Row
     var row = document.createElement('div');
     row.className = 'row';
+    var pctTotale = pctPronte + pctCoda;
     row.innerHTML =
         '<span class="row-name">' + r.nome + '</span>' +
         '<div class="bar-container">' +
             '<div class="bar-pronte" style="width:' + pctPronte + '%"></div>' +
             '<div class="bar-coda" style="width:' + pctCoda + '%"></div>' +
-        '</div>' +
-        '<span class="row-ore">' + totale + 'h</span>';
+            '<span style="position:absolute; left:' + Math.min(pctTotale + 1, 95) + '%; top:50%; transform:translateY(-50%); font-size:0.65rem; font-weight:700; color:#f1f5f9; white-space:nowrap;">' + totale + 'h</span>' +
+        '</div>';
     container.appendChild(row);
 
     // Detail

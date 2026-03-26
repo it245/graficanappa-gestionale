@@ -287,12 +287,13 @@ html { font-size: 22px; }
                 $pctPronte = ($r['ore_1'] / $maxOre) * 100;
                 $pctCoda = ($r['ore_0'] / $maxOre) * 100;
             @endphp
-            <div style="position:absolute; left:0; top:0; height:100%; width:{{ $pctPronte + $pctCoda }}%; display:flex;">
+            @php $pctTotale = $pctPronte + $pctCoda; @endphp
+            <div style="position:absolute; left:0; top:0; height:100%; width:{{ $pctTotale }}%; display:flex;">
                 <div style="width:{{ $pctPronte > 0 ? ($r['ore_1'] / ($r['ore_0'] + $r['ore_1'] ?: 1)) * 100 : 0 }}%; height:100%; background:linear-gradient(90deg, #16a34a, #4ade80); border-radius:0.3rem 0 0 0.3rem;"></div>
                 <div style="flex:1; height:100%; background:linear-gradient(90deg, #475569, #64748b); border-radius:0 0.3rem 0.3rem 0;"></div>
             </div>
+            <span style="position:absolute; left:{{ min($pctTotale + 1, 92) }}%; top:50%; transform:translateY(-50%); font-size:0.45rem; font-weight:700; color:#f1f5f9; white-space:nowrap;">{{ round($r['ore_totali'], 0) }}h</span>
         </div>
-        <span style="font-size:0.5rem; font-weight:700; color:#f1f5f9; min-width:2.5rem; text-align:right;">{{ round($r['ore_totali'], 0) }}h</span>
     </div>
     <div style="display:flex; margin-left:6.5rem; margin-bottom:1rem; font-size:0.35rem; color:#64748b; gap:1rem;">
         <span>■ Pronte: {{ $r['ore_1'] }}h ({{ $r['fasi_1'] }})</span>
