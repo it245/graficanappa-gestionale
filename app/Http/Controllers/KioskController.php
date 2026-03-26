@@ -246,6 +246,8 @@ class KioskController extends Controller
                 ->join('fasi_catalogo', 'ordine_fasi.fase_catalogo_id', '=', 'fasi_catalogo.id')
                 ->whereIn('fasi_catalogo.reparto_id', $repartoIds)
                 ->whereNull('ordine_fasi.deleted_at')
+                ->where(fn($q) => $q->where('ordine_fasi.esterno', 0)->orWhereNull('ordine_fasi.esterno'))
+                ->where(fn($q) => $q->whereNull('ordine_fasi.note')->orWhere('ordine_fasi.note', 'NOT LIKE', '%Inviato a:%'))
                 ->where(function ($q) use ($oggi, $ieri) {
                     $q->where('ordine_fasi.stato', 2)                            // in corso ora (qualsiasi data_inizio)
                       ->orWhere(function ($q2) use ($oggi, $ieri) {
