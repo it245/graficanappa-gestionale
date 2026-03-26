@@ -212,7 +212,8 @@ html { font-size: 22px; }
         </div>
         <div class="m-info-right">
             @if($m['attiva'] && $m['ore_lav'])
-                <div class="m-ore">{{ $m['ore_lav'] }}h</div>
+                @php $h = floor($m['ore_lav']); $min = round(($m['ore_lav'] - $h) * 60); @endphp
+                <div class="m-ore">{{ $h }}h {{ $min }}m</div>
             @endif
         </div>
     </div>
