@@ -255,28 +255,7 @@ class KioskController extends Controller
                 ->selectRaw("SUM(TIMESTAMPDIFF(SECOND, GREATEST(fase_operatore.data_inizio, ?), COALESCE(fase_operatore.data_fine, NOW())) - COALESCE(fase_operatore.secondi_pausa, 0)) as sec", [$inizioTurno])
                 ->value('sec');
 
-            // 2. Fallback: fasi a stato 2 senza pivot attivo oggi (conta da inizio turno)
-            $secFallback = DB::table('ordine_fasi')
-                ->join('fasi_catalogo', 'ordine_fasi.fase_catalogo_id', '=', 'fasi_catalogo.id')
-                ->whereIn('fasi_catalogo.reparto_id', $repartoIds)
-                ->where('ordine_fasi.stato', 2)
-                ->whereNotExists(function ($q) use ($oggi) {
-                    $q->select(DB::raw(1))
-                      ->from('fase_operatore')
-                      ->whereColumn('fase_operatore.fase_id', 'ordine_fasi.id')
-                      ->where(function ($q2) use ($oggi) {
-                          $q2->whereDate('fase_operatore.data_inizio', $oggi)
-                             ->orWhereDate('fase_operatore.data_fine', $oggi)
-                             ->orWhere(function ($q3) {
-                                 $q3->whereNull('fase_operatore.data_fine')
-                                    ->whereColumn('fase_operatore.fase_id', 'ordine_fasi.id');
-                             });
-                      });
-                })
-                ->selectRaw("SUM(TIMESTAMPDIFF(SECOND, ?, NOW())) as sec", [$inizioTurno])
-                ->value('sec');
-
-            $secOggi = ($secPivot ?? 0) + ($secFallback ?? 0);
+            $secOggi = $secPivot ?? 0;
             \Log::info("Kiosk ore: {$ru['nome']} pivot={$secPivot} fallback={$secFallback} totale={$secOggi}");
 
             $oreUsate = round(max($secOggi ?? 0, 0) / 3600, 1);
