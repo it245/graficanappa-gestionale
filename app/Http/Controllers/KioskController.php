@@ -315,7 +315,9 @@ class KioskController extends Controller
         // === RIEMPIMENTO MACCHINE ===
         $riempimento = [];
         $fasiOreConfig = config('fasi_ore');
+        $repartiEsclusiRiempimento = ['Legatoria'];
         foreach ($repartiUtilizzo as $ru) {
+            if (in_array($ru['nome'], $repartiEsclusiRiempimento)) continue;
             $repartoIds = Reparto::whereIn('nome', $ru['reparti'])->pluck('id');
 
             $orePreviste = function ($stato) use ($repartoIds, $fasiOreConfig) {
