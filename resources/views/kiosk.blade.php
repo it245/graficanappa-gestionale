@@ -273,18 +273,18 @@ html { font-size: 22px; }
 
 <!-- PAGINA 3: RIEMPIMENTO MACCHINE -->
 <div class="section" data-section="2" style="padding:0.8rem 1.2rem; display:flex; flex-direction:column;">
-    <div style="font-size:1rem; font-weight:800; color:#a78bfa; margin-bottom:0.8rem;">
+    <div style="font-size:1.3rem; font-weight:800; color:#a78bfa; margin-bottom:1rem;">
         🏭 Riempimento Macchine
         @php $totOre = collect($riempimento)->sum('ore_totali'); @endphp
-        <span style="font-size:0.55rem; color:#64748b; margin-left:0.5rem;">Totale: {{ round($totOre, 0) }}h in coda</span>
+        <span style="font-size:0.7rem; color:#64748b; margin-left:0.5rem;">Totale: {{ round($totOre, 0) }}h in coda</span>
     </div>
     <div id="z3-scroll" style="flex:1; overflow:hidden;">
         <div id="z3-scroll-inner">
             @php $maxOre = max(collect($riempimento)->max('ore_totali'), 1); @endphp
             @foreach($riempimento as $r)
-            <div style="display:flex; align-items:center; margin-bottom:0.4rem;">
-                <span style="font-size:0.75rem; font-weight:600; color:#94a3b8; min-width:8rem;">{{ $r['nome'] }}</span>
-                <div style="flex:1; height:1rem; background:#1e293b; border-radius:0.4rem; overflow:hidden; margin:0 0.5rem; position:relative;">
+            <div style="display:flex; align-items:center; margin-bottom:0.5rem;">
+                <span style="font-size:0.95rem; font-weight:600; color:#94a3b8; min-width:9.5rem;">{{ $r['nome'] }}</span>
+                <div style="flex:1; height:1.3rem; background:#1e293b; border-radius:0.4rem; overflow:hidden; margin:0 0.6rem; position:relative;">
                     @php
                         $pctPronte = ($r['ore_1'] / $maxOre) * 100;
                         $pctCoda = ($r['ore_0'] / $maxOre) * 100;
@@ -294,17 +294,17 @@ html { font-size: 22px; }
                         <div style="width:{{ $pctPronte > 0 ? ($r['ore_1'] / ($r['ore_0'] + $r['ore_1'] ?: 1)) * 100 : 0 }}%; height:100%; background:linear-gradient(90deg, #16a34a, #4ade80); border-radius:0.4rem 0 0 0.4rem;"></div>
                         <div style="flex:1; height:100%; background:linear-gradient(90deg, #475569, #64748b); border-radius:0 0.4rem 0.4rem 0;"></div>
                     </div>
-                    <span style="position:absolute; left:{{ min($pctTotale + 1, 90) }}%; top:50%; transform:translateY(-50%); font-size:0.6rem; font-weight:700; color:#f1f5f9; white-space:nowrap;">{{ round($r['ore_totali'], 0) }}h</span>
+                    <span style="position:absolute; left:{{ min($pctTotale + 1, 90) }}%; top:50%; transform:translateY(-50%); font-size:0.8rem; font-weight:700; color:#f1f5f9; white-space:nowrap;">{{ round($r['ore_totali'], 0) }}h</span>
                 </div>
             </div>
-            <div style="display:flex; margin-left:8rem; margin-bottom:1.2rem; font-size:0.65rem; color:#64748b; gap:2rem;">
+            <div style="display:flex; margin-left:9.5rem; margin-bottom:1.4rem; font-size:0.8rem; color:#64748b; gap:2.5rem;">
                 <span style="color:#4ade80;">■ Pronte: {{ $r['ore_1'] }}h ({{ $r['fasi_1'] }})</span>
                 <span style="color:#64748b;">□ In coda: {{ $r['ore_0'] }}h ({{ $r['fasi_0'] }})</span>
             </div>
             @endforeach
         </div>
     </div>
-    <div style="margin-top:0.4rem; font-size:0.45rem; color:#64748b; display:flex; gap:2rem;">
+    <div style="margin-top:0.4rem; font-size:0.6rem; color:#64748b; display:flex; gap:2.5rem;">
         <span><span style="color:#4ade80;">■</span> Pronte (stato 1)</span>
         <span><span style="color:#64748b;">■</span> In coda (stato 0)</span>
     </div>
