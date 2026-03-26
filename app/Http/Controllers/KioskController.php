@@ -219,16 +219,16 @@ class KioskController extends Controller
         // === ZONA 4: UTILIZZO MACCHINE ===
         $utilizzo = [];
         $repartiUtilizzo = [
-            ['nome' => 'XL 106 (16h)', 'reparti' => ['stampa offset'], 'ore_disp' => 16],  // 6-22
-            ['nome' => 'BOBST', 'reparti' => ['fustella piana'], 'ore_disp' => 16],       // 6-22
-            ['nome' => 'JOH Caldo', 'reparti' => ['stampa a caldo'], 'ore_disp' => 16],   // 6-22
-            ['nome' => 'Plastificatrice', 'reparti' => ['plastificazione'], 'ore_disp' => 8], // 8-17 (1h pausa)
-            ['nome' => 'Piegaincolla', 'reparti' => ['piegaincolla'], 'ore_disp' => 14],  // 6-20
-            ['nome' => 'Finestratrice', 'reparti' => ['finestratura'], 'ore_disp' => 14], // 6-20
-            ['nome' => 'Fustella Cilindrica', 'reparti' => ['fustella cilindrica'], 'ore_disp' => 8], // 8-17 (1h pausa)
-            ['nome' => 'Canon V900', 'reparti' => ['digitale', 'finitura digitale'], 'ore_disp' => 8], // 8-17 (1h pausa)
-            ['nome' => 'Tagliacarte', 'reparti' => ['tagliacarte'], 'ore_disp' => 8],     // 8-17 (1h pausa)
-            ['nome' => 'Legatoria', 'reparti' => ['legatoria'], 'ore_disp' => 14],        // 6-20
+            ['nome' => 'XL 106 (16h)', 'reparti' => ['stampa offset'], 'ore_disp' => 16, 'inizio' => 6],
+            ['nome' => 'BOBST', 'reparti' => ['fustella piana'], 'ore_disp' => 16, 'inizio' => 6],
+            ['nome' => 'JOH Caldo', 'reparti' => ['stampa a caldo'], 'ore_disp' => 16, 'inizio' => 6],
+            ['nome' => 'Plastificatrice', 'reparti' => ['plastificazione'], 'ore_disp' => 8, 'inizio' => 8],
+            ['nome' => 'Piegaincolla', 'reparti' => ['piegaincolla'], 'ore_disp' => 14, 'inizio' => 6],
+            ['nome' => 'Finestratrice', 'reparti' => ['finestratura'], 'ore_disp' => 14, 'inizio' => 6],
+            ['nome' => 'Fustella Cilindrica', 'reparti' => ['fustella cilindrica'], 'ore_disp' => 8, 'inizio' => 8],
+            ['nome' => 'Canon V900', 'reparti' => ['digitale', 'finitura digitale'], 'ore_disp' => 8, 'inizio' => 8],
+            ['nome' => 'Tagliacarte', 'reparti' => ['tagliacarte'], 'ore_disp' => 8, 'inizio' => 8],
+            ['nome' => 'Legatoria', 'reparti' => ['legatoria'], 'ore_disp' => 14, 'inizio' => 6],
         ];
 
         // Ore trascorse dall'inizio turno per calcolare % proporzionale
@@ -236,9 +236,9 @@ class KioskController extends Controller
 
         foreach ($repartiUtilizzo as $ru) {
             $repartoIds = Reparto::whereIn('nome', $ru['reparti'])->pluck('id');
-            $inizioOggi = $oggi . ' 00:00:00';
+            $inizioTurno = $oggi . ' ' . str_pad($ru['inizio'], 2, '0', STR_PAD_LEFT) . ':00:00';
 
-            // 1. Ore da fase_operatore: avviate oggi, finite oggi, o ancora in corso (da mezzanotte)
+            // 1. Ore da fase_operatore: avviate oggi, finite oggi, o ancora in corso (da inizio turno)
             $secPivot = DB::table('fase_operatore')
                 ->join('ordine_fasi', 'fase_operatore.fase_id', '=', 'ordine_fasi.id')
                 ->join('fasi_catalogo', 'ordine_fasi.fase_catalogo_id', '=', 'fasi_catalogo.id')
@@ -251,7 +251,7 @@ class KioskController extends Controller
                              ->where('ordine_fasi.stato', 2);
                       });
                 })
-                ->selectRaw("SUM(TIMESTAMPDIFF(SECOND, GREATEST(fase_operatore.data_inizio, ?), COALESCE(fase_operatore.data_fine, NOW())) - COALESCE(fase_operatore.secondi_pausa, 0)) as sec", [$inizioOggi])
+                ->selectRaw("SUM(TIMESTAMPDIFF(SECOND, GREATEST(fase_operatore.data_inizio, ?), COALESCE(fase_operatore.data_fine, NOW())) - COALESCE(fase_operatore.secondi_pausa, 0)) as sec", [$inizioTurno])
                 ->value('sec');
 
             // 2. Fallback: fasi a stato 2 avviate oggi SENZA fase_operatore (sync Onda/Prinect)
@@ -271,19 +271,8 @@ class KioskController extends Controller
 
             // Calcola ore disponibili proporzionali al momento della giornata
             $oreDisp = $ru['ore_disp'];
-            if ($oreDisp == 24) {
-                // 3 turni: disponibile da mezzanotte, proporzionale a ora corrente
-                $oreDispOra = max($oraCorrente, 1);
-            } elseif ($oreDisp == 16) {
-                // 6-22: disponibile dalle 6
-                $oreDispOra = max(min($oraCorrente - 6, 16), 1);
-            } elseif ($oreDisp == 14) {
-                // 6-20: disponibile dalle 6
-                $oreDispOra = max(min($oraCorrente - 6, 14), 1);
-            } else {
-                // 8-17 (8h con pausa): disponibile dalle 8
-                $oreDispOra = max(min($oraCorrente - 8, 8), 1);
-            }
+            $inizio = $ru['inizio'];
+            $oreDispOra = max(min($oraCorrente - $inizio, $oreDisp), 0.5);
 
             $pct = $oreDispOra > 0 ? min(round(($oreUsate / $oreDispOra) * 100), 100) : 0;
 
