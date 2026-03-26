@@ -282,7 +282,7 @@ class KioskController extends Controller
                     $q->whereDate('fase_operatore.data_inizio', $oggi)
                       ->orWhereDate('fase_operatore.data_fine', $oggi);
                 })
-                ->selectRaw("SUM(TIMESTAMPDIFF(SECOND, GREATEST(fase_operatore.data_inizio, ?), COALESCE(fase_operatore.data_fine, ordine_fasi.data_fine)) - COALESCE(fase_operatore.secondi_pausa, 0)) as sec", [$inizioTurno])
+                ->selectRaw("SUM(TIMESTAMPDIFF(SECOND, GREATEST(fase_operatore.data_inizio, ?), COALESCE(fase_operatore.data_fine, ordine_fasi.data_fine))) as sec", [$inizioTurno])
                 ->value('sec');
 
             $secOggi = max($secAperte ?? 0, 0) + max($secChiuseRecenti ?? 0, 0) + max($secChiuseVecchie ?? 0, 0);
