@@ -250,11 +250,10 @@ class KioskController extends Controller
                 ->where(fn($q) => $q->whereNull('ordine_fasi.note')->orWhere('ordine_fasi.note', 'NOT LIKE', '%Inviato a:%'))
                 ->where(function ($q) use ($oggi, $ieri) {
                     $q->where('ordine_fasi.stato', 2)                            // in corso ora (qualsiasi data_inizio)
-                      ->orWhere(function ($q2) use ($oggi, $ieri) {
-                          // Terminate oggi: solo se avviate da ieri (no chiusure sync vecchie)
+                      ->orWhere(function ($q2) use ($oggi) {
+                          // Terminate oggi: tutte (conta da inizio turno a data_fine)
                           $q2->where('ordine_fasi.stato', 3)
-                             ->whereDate('ordine_fasi.data_fine', $oggi)
-                             ->where('ordine_fasi.data_inizio', '>=', $ieri . ' 00:00:00');
+                             ->whereDate('ordine_fasi.data_fine', $oggi);
                       });
                 })
                 ->selectRaw("SUM(TIMESTAMPDIFF(SECOND, GREATEST(COALESCE(ordine_fasi.data_inizio, ?), ?), COALESCE(ordine_fasi.data_fine, NOW()))) as sec", [$inizioTurno, $inizioTurno])
