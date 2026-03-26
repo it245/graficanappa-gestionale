@@ -294,7 +294,7 @@ html { font-size: 22px; }
         </div>
         <span style="font-size:0.5rem; font-weight:700; color:#f1f5f9; min-width:2.5rem; text-align:right;">{{ round($r['ore_totali'], 0) }}h</span>
     </div>
-    <div style="display:flex; margin-left:6.5rem; margin-bottom:0.6rem; font-size:0.35rem; color:#64748b; gap:1rem;">
+    <div style="display:flex; margin-left:6.5rem; margin-bottom:1rem; font-size:0.35rem; color:#64748b; gap:1rem;">
         <span>■ Pronte: {{ $r['ore_1'] }}h ({{ $r['fasi_1'] }})</span>
         <span style="color:#475569;">□ In coda: {{ $r['ore_0'] }}h ({{ $r['fasi_0'] }})</span>
     </div>
