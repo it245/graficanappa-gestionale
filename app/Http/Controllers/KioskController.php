@@ -246,9 +246,9 @@ class KioskController extends Controller
                 ->where(function ($q) use ($oggi) {
                     $q->whereDate('fase_operatore.data_inizio', $oggi)           // avviate oggi
                       ->orWhereDate('fase_operatore.data_fine', $oggi)           // finite oggi
-                      ->orWhere(function ($q2) {                                 // ancora in corso (turno notturno ecc.)
+                      ->orWhere(function ($q2) {                                 // ancora in corso (fase attiva)
                           $q2->whereNull('fase_operatore.data_fine')
-                             ->where('fase_operatore.data_inizio', '>=', now()->subHours(24));
+                             ->where('ordine_fasi.stato', 2);
                       });
                 })
                 ->selectRaw("SUM(TIMESTAMPDIFF(SECOND, GREATEST(fase_operatore.data_inizio, ?), COALESCE(fase_operatore.data_fine, NOW())) - COALESCE(fase_operatore.secondi_pausa, 0)) as sec", [$inizioOggi])
