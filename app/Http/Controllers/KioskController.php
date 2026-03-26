@@ -237,8 +237,9 @@ class KioskController extends Controller
 
         foreach ($repartiUtilizzo as $ru) {
             $repartoIds = Reparto::whereIn('nome', $ru['reparti'])->pluck('id');
-            // Conta ore di oggi: fasi avviate oggi O ancora in corso (data_fine NULL) O finite oggi
-            // Per fasi avviate prima di oggi ma ancora in corso, conta solo da mezzanotte
+            // Ore di oggi: fasi avviate oggi (conta da data_inizio)
+            // + fasi avviate prima ma finite oggi (conta da mezzanotte a data_fine)
+            // Escluse: fasi vecchie mai terminate (abbandonate)
             $inizioOggi = $oggi . ' 00:00:00';
             $secOggi = DB::table('fase_operatore')
                 ->join('ordine_fasi', 'fase_operatore.fase_id', '=', 'ordine_fasi.id')
@@ -246,13 +247,7 @@ class KioskController extends Controller
                 ->whereIn('fasi_catalogo.reparto_id', $repartoIds)
                 ->where(function ($q) use ($oggi) {
                     $q->whereDate('fase_operatore.data_inizio', $oggi)           // avviate oggi
-                      ->orWhere(function ($q2) use ($oggi) {
-                          $q2->where('fase_operatore.data_inizio', '<', $oggi . ' 00:00:00')
-                             ->where(function ($q3) use ($oggi) {
-                                 $q3->whereNull('fase_operatore.data_fine')       // ancora in corso
-                                    ->orWhereDate('fase_operatore.data_fine', $oggi); // finite oggi
-                             });
-                      });
+                      ->orWhereDate('fase_operatore.data_fine', $oggi);          // finite oggi (avviate ieri)
                 })
                 ->selectRaw("SUM(TIMESTAMPDIFF(SECOND, GREATEST(fase_operatore.data_inizio, ?), COALESCE(fase_operatore.data_fine, NOW())) - COALESCE(fase_operatore.secondi_pausa, 0)) as sec", [$inizioOggi])
                 ->value('sec');
