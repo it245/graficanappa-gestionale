@@ -285,7 +285,21 @@ class KioskController extends Controller
                 ->selectRaw("SUM(TIMESTAMPDIFF(SECOND, GREATEST(fase_operatore.data_inizio, ?), COALESCE(fase_operatore.data_fine, ordine_fasi.data_fine))) as sec", [$inizioTurno])
                 ->value('sec');
 
-            $secOggi = max($secAperte ?? 0, 0) + max($secChiuseRecenti ?? 0, 0) + max($secChiuseVecchie ?? 0, 0);
+            // D. Pause di oggi per questo reparto (sottrarre dal totale)
+            $secPauseOggi = DB::table('pausa_operatores')
+                ->join('ordini', 'pausa_operatores.ordine_id', '=', 'ordini.id')
+                ->join('ordine_fasi', function ($j) {
+                    $j->on('ordine_fasi.ordine_id', '=', 'ordini.id')
+                      ->on('ordine_fasi.fase', '=', 'pausa_operatores.fase');
+                })
+                ->join('fasi_catalogo', 'ordine_fasi.fase_catalogo_id', '=', 'fasi_catalogo.id')
+                ->whereIn('fasi_catalogo.reparto_id', $repartoIds)
+                ->whereNull('ordine_fasi.deleted_at')
+                ->whereDate('pausa_operatores.data_ora', $oggi)
+                ->selectRaw("SUM(TIMESTAMPDIFF(SECOND, GREATEST(pausa_operatores.data_ora, ?), COALESCE(pausa_operatores.fine, NOW()))) as sec", [$inizioTurno])
+                ->value('sec');
+
+            $secOggi = max((max($secAperte ?? 0, 0) + max($secChiuseRecenti ?? 0, 0) + max($secChiuseVecchie ?? 0, 0)) - max($secPauseOggi ?? 0, 0), 0);
 
             $oreUsate = round(max($secOggi ?? 0, 0) / 3600, 1);
 
