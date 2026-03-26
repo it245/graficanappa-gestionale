@@ -298,14 +298,14 @@ html { font-size: 22px; }
                 </div>
             </div>
             <div style="display:flex; margin-left:9.5rem; margin-bottom:1.4rem; font-size:0.8rem; color:#64748b; gap:2.5rem;">
-                <span style="color:#4ade80;">■ Pronte: {{ $r['ore_1'] }}h ({{ $r['fasi_1'] }})</span>
+                <span style="color:#4ade80;">■ Pronte da lavorare: {{ $r['ore_1'] }}h ({{ $r['fasi_1'] }})</span>
                 <span style="color:#64748b;">□ In coda: {{ $r['ore_0'] }}h ({{ $r['fasi_0'] }})</span>
             </div>
             @endforeach
         </div>
     </div>
     <div style="margin-top:0.4rem; font-size:0.6rem; color:#64748b; display:flex; gap:2.5rem;">
-        <span><span style="color:#4ade80;">■</span> Pronte (stato 1)</span>
+        <span><span style="color:#4ade80;">■</span> Pronte da lavorare (stato 1)</span>
         <span><span style="color:#64748b;">■</span> In coda (stato 0)</span>
     </div>
 </div>
