@@ -30,13 +30,12 @@ foreach ($reparti as $ru) {
 
     $ieri = date('Y-m-d', strtotime('-1 day'));
 
-    // Fasi in corso (stato 2) avviate da ieri
+    // Fasi in corso (stato 2) — tutte, senza filtro data
     $aperte = DB::table('ordine_fasi as f')
         ->join('ordini as o', 'f.ordine_id', '=', 'o.id')
         ->join('fasi_catalogo as fc', 'f.fase_catalogo_id', '=', 'fc.id')
         ->whereIn('fc.reparto_id', $repartoIds)
         ->where('f.stato', 2)
-        ->where('f.data_inizio', '>=', $ieri . ' 00:00:00')
         ->select('f.id', 'f.fase', 'f.data_inizio', 'o.commessa')
         ->get();
 
