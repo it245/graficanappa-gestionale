@@ -425,7 +425,16 @@ function initAutoScroll(containerId, innerId) {
 
 initAutoScroll('z1-scroll', 'z1-scroll-inner');
 initAutoScroll('z2-scroll', 'z2-scroll-inner');
-initAutoScroll('z3-scroll', 'z3-scroll-inner');
+// Z3 parte solo quando pagina 3 è visibile (dopo 80s)
+var z3Started = false;
+var origNextSection = nextSection;
+nextSection = function() {
+    origNextSection();
+    if (currentSection === 2 && !z3Started) {
+        z3Started = true;
+        initAutoScroll('z3-scroll', 'z3-scroll-inner');
+    }
+};
 </script>
 </body>
 </html>
