@@ -628,9 +628,9 @@ class OndaSyncService
                     }
                 }
 
-                // Dedup stampa offset per ordine: 1 sola STAMPAXL106 per ordine (max 2 per cod_art multi-passaggio)
+                // Dedup stampa offset per commessa: 1 sola STAMPAXL106 per commessa (max 2 per cod_art multi-passaggio)
                 if ($repartoNome === 'stampa offset' && str_starts_with($faseNome, 'STAMPAXL106')) {
-                    $chiaveDedup = $ordine->id . '|stampa_offset';
+                    $chiaveDedup = $commessa . '|stampa_offset';
                     $maxStampa = in_array($codArt, $codArtMax2) ? 2 : 1;
                     $qtaRiga = (int)($riga->QtaDaLavorare ?? 0);
 
@@ -638,7 +638,7 @@ class OndaSyncService
                         $existCount = OrdineFase::whereHas('faseCatalogo', fn($q) =>
                                 $q->whereIn('reparto_id', $repartiStampaOffset)
                                   ->where('nome', 'like', 'STAMPAXL106%'))
-                            ->where('ordine_id', $ordine->id)
+                            ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
                             ->count();
                         $dedupPerCommessa[$chiaveDedup] = $existCount;
                         $dedupQta[$chiaveDedup] = $qtaRiga > 0 ? [$qtaRiga] : [];
@@ -651,22 +651,22 @@ class OndaSyncService
                             OrdineFase::whereHas('faseCatalogo', fn($q) =>
                                     $q->whereIn('reparto_id', $repartiStampaOffset)
                                       ->where('nome', 'like', 'STAMPAXL106%'))
-                                ->where('ordine_id', $ordine->id)
+                                ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
                                 ->update(['qta_fase' => $nuovaQta]);
                         }
                         continue;
                     }
 
-                    // Controlla se questa specifica variante esiste già per questo ordine
+                    // Controlla se questa specifica variante esiste già
                     $existsThisVariant = OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
-                        ->where('ordine_id', $ordine->id)
+                        ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
                         ->exists();
 
                     if ($existsThisVariant) {
                         $scartiValue = $scartiMacchine[trim($riga->CodMacchina ?? '')] ?? null;
                         if ($scartiValue !== null) {
                             OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
-                                ->where('ordine_id', $ordine->id)
+                                ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
                                 ->whereNull('scarti_previsti')
                                 ->update(['scarti_previsti' => $scartiValue]);
                         }
