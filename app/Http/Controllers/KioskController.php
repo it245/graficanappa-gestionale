@@ -232,6 +232,9 @@ class KioskController extends Controller
             ['nome' => 'Legatoria', 'reparti' => ['legatoria'], 'ore_disp' => 14],        // 6-20
         ];
 
+        // Ore trascorse dall'inizio turno per calcolare % proporzionale
+        $oraCorrente = (float) now()->format('H') + (float) now()->format('i') / 60;
+
         foreach ($repartiUtilizzo as $ru) {
             $repartoIds = Reparto::whereIn('nome', $ru['reparti'])->pluck('id');
             $secOggi = DB::table('fase_operatore')
@@ -243,7 +246,24 @@ class KioskController extends Controller
                 ->value('sec');
 
             $oreUsate = round(max($secOggi ?? 0, 0) / 3600, 1);
-            $pct = $ru['ore_disp'] > 0 ? min(round(($oreUsate / $ru['ore_disp']) * 100), 100) : 0;
+
+            // Calcola ore disponibili proporzionali al momento della giornata
+            $oreDisp = $ru['ore_disp'];
+            if ($oreDisp == 24) {
+                // 3 turni: disponibile da mezzanotte, proporzionale a ora corrente
+                $oreDispOra = max($oraCorrente, 1);
+            } elseif ($oreDisp == 16) {
+                // 6-22: disponibile dalle 6
+                $oreDispOra = max(min($oraCorrente - 6, 16), 1);
+            } elseif ($oreDisp == 14) {
+                // 6-20: disponibile dalle 6
+                $oreDispOra = max(min($oraCorrente - 6, 14), 1);
+            } else {
+                // 8-17 (8h con pausa): disponibile dalle 8
+                $oreDispOra = max(min($oraCorrente - 8, 8), 1);
+            }
+
+            $pct = $oreDispOra > 0 ? min(round(($oreUsate / $oreDispOra) * 100), 100) : 0;
 
             $utilizzo[] = ['nome' => $ru['nome'], 'pct' => $pct];
         }
