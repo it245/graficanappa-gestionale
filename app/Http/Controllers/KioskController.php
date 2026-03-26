@@ -236,20 +236,36 @@ class KioskController extends Controller
 
         foreach ($repartiUtilizzo as $ru) {
             $repartoIds = Reparto::whereIn('nome', $ru['reparti'])->pluck('id');
-            // Ore di oggi: fasi avviate oggi (conta da data_inizio)
-            // + fasi avviate prima ma finite oggi (conta da mezzanotte a data_fine)
-            // Escluse: fasi vecchie mai terminate (abbandonate)
             $inizioOggi = $oggi . ' 00:00:00';
-            $secOggi = DB::table('fase_operatore')
+
+            // 1. Ore da fase_operatore: avviate oggi, finite oggi, o ancora in corso (da mezzanotte)
+            $secPivot = DB::table('fase_operatore')
                 ->join('ordine_fasi', 'fase_operatore.fase_id', '=', 'ordine_fasi.id')
                 ->join('fasi_catalogo', 'ordine_fasi.fase_catalogo_id', '=', 'fasi_catalogo.id')
                 ->whereIn('fasi_catalogo.reparto_id', $repartoIds)
                 ->where(function ($q) use ($oggi) {
                     $q->whereDate('fase_operatore.data_inizio', $oggi)           // avviate oggi
-                      ->orWhereDate('fase_operatore.data_fine', $oggi);          // finite oggi (avviate ieri)
+                      ->orWhereDate('fase_operatore.data_fine', $oggi)           // finite oggi
+                      ->orWhere(function ($q2) {                                 // ancora in corso (turno notturno ecc.)
+                          $q2->whereNull('fase_operatore.data_fine')
+                             ->where('fase_operatore.data_inizio', '>=', now()->subHours(24));
+                      });
                 })
                 ->selectRaw("SUM(TIMESTAMPDIFF(SECOND, GREATEST(fase_operatore.data_inizio, ?), COALESCE(fase_operatore.data_fine, NOW())) - COALESCE(fase_operatore.secondi_pausa, 0)) as sec", [$inizioOggi])
                 ->value('sec');
+
+            // 2. Fallback: fasi a stato 2 avviate oggi SENZA fase_operatore (sync Onda/Prinect)
+            $secFallback = DB::table('ordine_fasi')
+                ->join('fasi_catalogo', 'ordine_fasi.fase_catalogo_id', '=', 'fasi_catalogo.id')
+                ->leftJoin('fase_operatore', 'fase_operatore.fase_id', '=', 'ordine_fasi.id')
+                ->whereIn('fasi_catalogo.reparto_id', $repartoIds)
+                ->where('ordine_fasi.stato', 2)
+                ->whereDate('ordine_fasi.data_inizio', $oggi)
+                ->whereNull('fase_operatore.id')
+                ->selectRaw("SUM(TIMESTAMPDIFF(SECOND, ordine_fasi.data_inizio, NOW())) as sec")
+                ->value('sec');
+
+            $secOggi = ($secPivot ?? 0) + ($secFallback ?? 0);
 
             $oreUsate = round(max($secOggi ?? 0, 0) / 3600, 1);
 
