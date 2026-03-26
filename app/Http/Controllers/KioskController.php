@@ -245,6 +245,7 @@ class KioskController extends Controller
             $secOggi = DB::table('ordine_fasi')
                 ->join('fasi_catalogo', 'ordine_fasi.fase_catalogo_id', '=', 'fasi_catalogo.id')
                 ->whereIn('fasi_catalogo.reparto_id', $repartoIds)
+                ->whereNull('ordine_fasi.deleted_at')
                 ->where(function ($q) use ($oggi, $ieri) {
                     $q->where('ordine_fasi.stato', 2)                            // in corso ora (qualsiasi data_inizio)
                       ->orWhere(function ($q2) use ($oggi, $ieri) {
