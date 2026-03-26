@@ -237,25 +237,24 @@ class KioskController extends Controller
         foreach ($repartiUtilizzo as $ru) {
             $repartoIds = Reparto::whereIn('nome', $ru['reparti'])->pluck('id');
             $inizioTurno = $oggi . ' ' . str_pad($ru['inizio'], 2, '0', STR_PAD_LEFT) . ':00:00';
-            \Log::info("Kiosk ore: {$ru['nome']} repartoIds=" . $repartoIds->implode(',') . " inizioTurno={$inizioTurno}");
 
-            // 1. Ore da fase_operatore: avviate oggi, finite oggi, o ancora in corso (da inizio turno)
-            $secPivot = DB::table('fase_operatore')
-                ->join('ordine_fasi', 'fase_operatore.fase_id', '=', 'ordine_fasi.id')
+            // Ore lavorate oggi da ordine_fasi:
+            // - Fasi in corso (stato 2): da MAX(data_inizio, inizio_turno) a NOW
+            // - Fasi terminate oggi (stato 3, data_fine oggi): da MAX(data_inizio, inizio_turno) a data_fine
+            $secOggi = DB::table('ordine_fasi')
                 ->join('fasi_catalogo', 'ordine_fasi.fase_catalogo_id', '=', 'fasi_catalogo.id')
                 ->whereIn('fasi_catalogo.reparto_id', $repartoIds)
                 ->where(function ($q) use ($oggi) {
-                    $q->whereDate('fase_operatore.data_inizio', $oggi)           // avviate oggi
-                      ->orWhereDate('fase_operatore.data_fine', $oggi)           // finite oggi
-                      ->orWhere(function ($q2) {                                 // ancora in corso (fase attiva)
-                          $q2->whereNull('fase_operatore.data_fine')
-                             ->where('ordine_fasi.stato', 2);
+                    $q->where('ordine_fasi.stato', 2)                            // in corso ora
+                      ->orWhere(function ($q2) use ($oggi) {
+                          $q2->where('ordine_fasi.stato', 3)                     // terminate oggi
+                             ->whereDate('ordine_fasi.data_fine', $oggi);
                       });
                 })
-                ->selectRaw("SUM(TIMESTAMPDIFF(SECOND, GREATEST(fase_operatore.data_inizio, ?), COALESCE(fase_operatore.data_fine, NOW())) - COALESCE(fase_operatore.secondi_pausa, 0)) as sec", [$inizioTurno])
+                ->selectRaw("SUM(TIMESTAMPDIFF(SECOND, GREATEST(COALESCE(ordine_fasi.data_inizio, ?), ?), COALESCE(ordine_fasi.data_fine, NOW()))) as sec", [$inizioTurno, $inizioTurno])
                 ->value('sec');
 
-            $secOggi = $secPivot ?? 0;
+            $secOggi = max($secOggi ?? 0, 0);
 
             $oreUsate = round(max($secOggi ?? 0, 0) / 3600, 1);
 
