@@ -271,8 +271,49 @@ html { font-size: 22px; }
     </div>
 </div>
 
-<!-- PAGINA 3: SOLAR-LOG -->
-<div class="section" data-section="2">
+<!-- PAGINA 3: RIEMPIMENTO MACCHINE -->
+<div class="section" data-section="2" style="padding:0.8rem 1.2rem;">
+    <div style="font-size:0.8rem; font-weight:800; color:#a78bfa; margin-bottom:0.6rem;">
+        🏭 Riempimento Macchine
+        @php $totOre = collect($riempimento)->sum('ore_totali'); @endphp
+        <span style="font-size:0.4rem; color:#64748b; margin-left:0.5rem;">Totale: {{ round($totOre, 0) }}h in coda</span>
+    </div>
+    @php $maxOre = max(collect($riempimento)->max('ore_totali'), 1); @endphp
+    @foreach($riempimento as $r)
+    <div style="display:flex; align-items:center; margin-bottom:0.35rem;">
+        <span style="font-size:0.55rem; font-weight:600; color:#94a3b8; min-width:6.5rem;">{{ $r['nome'] }}</span>
+        <div style="flex:1; height:0.7rem; background:#1e293b; border-radius:0.3rem; overflow:hidden; margin:0 0.4rem; position:relative;">
+            @php
+                $pctPronte = ($r['ore_1'] / $maxOre) * 100;
+                $pctCoda = ($r['ore_0'] / $maxOre) * 100;
+            @endphp
+            <div style="position:absolute; left:0; top:0; height:100%; width:{{ $pctPronte + $pctCoda }}%; display:flex;">
+                <div style="width:{{ $pctPronte > 0 ? ($r['ore_1'] / ($r['ore_0'] + $r['ore_1'] ?: 1)) * 100 : 0 }}%; height:100%; background:linear-gradient(90deg, #16a34a, #4ade80); border-radius:0.3rem 0 0 0.3rem;"></div>
+                <div style="flex:1; height:100%; background:linear-gradient(90deg, #475569, #64748b); border-radius:0 0.3rem 0.3rem 0;"></div>
+            </div>
+            @if($r['capacita'] > 0)
+            <div style="position:absolute; left:{{ min(($r['capacita'] / $maxOre) * 100, 100) }}%; top:0; height:100%; width:2px; background:#fbbf24; z-index:2;" title="Capacità giornaliera {{ $r['capacita'] }}h"></div>
+            @endif
+        </div>
+        <span style="font-size:0.5rem; font-weight:700; color:#f1f5f9; min-width:2.5rem; text-align:right;">{{ round($r['ore_totali'], 0) }}h</span>
+    </div>
+    <div style="display:flex; margin-left:6.5rem; margin-bottom:0.15rem; font-size:0.35rem; color:#64748b; gap:1rem;">
+        <span>■ Pronte: {{ $r['ore_1'] }}h ({{ $r['fasi_1'] }})</span>
+        <span style="color:#475569;">□ In coda: {{ $r['ore_0'] }}h ({{ $r['fasi_0'] }})</span>
+        @if($r['ore_totali'] > $r['capacita'] && $r['capacita'] > 0)
+        <span style="color:#fbbf24;">≈ {{ round($r['ore_totali'] / $r['capacita'], 1) }} giorni</span>
+        @endif
+    </div>
+    @endforeach
+    <div style="margin-top:0.4rem; font-size:0.32rem; color:#64748b; display:flex; gap:1.5rem;">
+        <span><span style="color:#4ade80;">■</span> Pronte (stato 1)</span>
+        <span><span style="color:#64748b;">■</span> In coda (stato 0)</span>
+        <span><span style="color:#fbbf24;">│</span> Capacità giornaliera</span>
+    </div>
+</div>
+
+<!-- PAGINA 4: SOLAR-LOG -->
+<div class="section" data-section="3">
     <div class="solar-page">
         <div class="solar-title">☀️ Impianto Fotovoltaico — {{ $solar['impianto_kwp'] ?? 180 }} kWp
             <span style="font-size:0.35rem; color:#64748b; margin-left:0.5rem;">{{ $solar['inverter_online'] ?? 0 }}/{{ $solar['inverter_totali'] ?? 7 }} online · Agg. {{ $solar['ultimo_aggiornamento'] ?? '--:--' }}</span>
