@@ -256,7 +256,6 @@ class KioskController extends Controller
                 ->value('sec');
 
             $secOggi = $secPivot ?? 0;
-            \Log::info("Kiosk ore: {$ru['nome']} pivot={$secPivot} fallback={$secFallback} totale={$secOggi}");
 
             $oreUsate = round(max($secOggi ?? 0, 0) / 3600, 1);
 
