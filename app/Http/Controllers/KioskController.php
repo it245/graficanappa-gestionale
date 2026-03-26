@@ -242,24 +242,50 @@ class KioskController extends Controller
             // - Fasi in corso (stato 2) avviate nelle ultime 48h (non abbandonate vecchie)
             // - Fasi terminate oggi (stato 3) ma avviate da ieri (lavori reali, non chiusure sync)
             $ieri = Carbon::yesterday()->format('Y-m-d');
-            $secOggi = DB::table('ordine_fasi')
+
+            // A. Fasi in corso (stato 2) — contano sempre
+            $secAperte = DB::table('ordine_fasi')
                 ->join('fasi_catalogo', 'ordine_fasi.fase_catalogo_id', '=', 'fasi_catalogo.id')
                 ->whereIn('fasi_catalogo.reparto_id', $repartoIds)
                 ->whereNull('ordine_fasi.deleted_at')
                 ->where(fn($q) => $q->where('ordine_fasi.esterno', 0)->orWhereNull('ordine_fasi.esterno'))
                 ->where(fn($q) => $q->whereNull('ordine_fasi.note')->orWhere('ordine_fasi.note', 'NOT LIKE', '%Inviato a:%'))
-                ->where(function ($q) use ($oggi, $ieri) {
-                    $q->where('ordine_fasi.stato', 2)                            // in corso ora (qualsiasi data_inizio)
-                      ->orWhere(function ($q2) use ($oggi) {
-                          // Terminate oggi: tutte (conta da inizio turno a data_fine)
-                          $q2->where('ordine_fasi.stato', 3)
-                             ->whereDate('ordine_fasi.data_fine', $oggi);
-                      });
-                })
-                ->selectRaw("SUM(TIMESTAMPDIFF(SECOND, GREATEST(COALESCE(ordine_fasi.data_inizio, ?), ?), COALESCE(ordine_fasi.data_fine, NOW()))) as sec", [$inizioTurno, $inizioTurno])
+                ->where('ordine_fasi.stato', 2)
+                ->selectRaw("SUM(TIMESTAMPDIFF(SECOND, GREATEST(COALESCE(ordine_fasi.data_inizio, ?), ?), NOW())) as sec", [$inizioTurno, $inizioTurno])
                 ->value('sec');
 
-            $secOggi = max($secOggi ?? 0, 0);
+            // B. Fasi chiuse oggi avviate da ieri (lavoro recente reale)
+            $secChiuseRecenti = DB::table('ordine_fasi')
+                ->join('fasi_catalogo', 'ordine_fasi.fase_catalogo_id', '=', 'fasi_catalogo.id')
+                ->whereIn('fasi_catalogo.reparto_id', $repartoIds)
+                ->whereNull('ordine_fasi.deleted_at')
+                ->where(fn($q) => $q->where('ordine_fasi.esterno', 0)->orWhereNull('ordine_fasi.esterno'))
+                ->where(fn($q) => $q->whereNull('ordine_fasi.note')->orWhere('ordine_fasi.note', 'NOT LIKE', '%Inviato a:%'))
+                ->where('ordine_fasi.stato', 3)
+                ->whereDate('ordine_fasi.data_fine', $oggi)
+                ->where('ordine_fasi.data_inizio', '>=', $ieri . ' 00:00:00')
+                ->selectRaw("SUM(TIMESTAMPDIFF(SECOND, GREATEST(ordine_fasi.data_inizio, ?), ordine_fasi.data_fine)) as sec", [$inizioTurno])
+                ->value('sec');
+
+            // C. Fasi chiuse oggi ma avviate prima di ieri (vecchie) — conta solo se hanno fase_operatore oggi
+            $secChiuseVecchie = DB::table('ordine_fasi')
+                ->join('fasi_catalogo', 'ordine_fasi.fase_catalogo_id', '=', 'fasi_catalogo.id')
+                ->join('fase_operatore', 'fase_operatore.fase_id', '=', 'ordine_fasi.id')
+                ->whereIn('fasi_catalogo.reparto_id', $repartoIds)
+                ->whereNull('ordine_fasi.deleted_at')
+                ->where(fn($q) => $q->where('ordine_fasi.esterno', 0)->orWhereNull('ordine_fasi.esterno'))
+                ->where(fn($q) => $q->whereNull('ordine_fasi.note')->orWhere('ordine_fasi.note', 'NOT LIKE', '%Inviato a:%'))
+                ->where('ordine_fasi.stato', 3)
+                ->whereDate('ordine_fasi.data_fine', $oggi)
+                ->where('ordine_fasi.data_inizio', '<', $ieri . ' 00:00:00')
+                ->where(function ($q) use ($oggi) {
+                    $q->whereDate('fase_operatore.data_inizio', $oggi)
+                      ->orWhereDate('fase_operatore.data_fine', $oggi);
+                })
+                ->selectRaw("SUM(TIMESTAMPDIFF(SECOND, GREATEST(fase_operatore.data_inizio, ?), COALESCE(fase_operatore.data_fine, ordine_fasi.data_fine)) - COALESCE(fase_operatore.secondi_pausa, 0)) as sec", [$inizioTurno])
+                ->value('sec');
+
+            $secOggi = max($secAperte ?? 0, 0) + max($secChiuseRecenti ?? 0, 0) + max($secChiuseVecchie ?? 0, 0);
 
             $oreUsate = round(max($secOggi ?? 0, 0) / 3600, 1);
 
