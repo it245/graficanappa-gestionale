@@ -246,13 +246,9 @@ class KioskController extends Controller
                 ->join('fasi_catalogo', 'ordine_fasi.fase_catalogo_id', '=', 'fasi_catalogo.id')
                 ->whereIn('fasi_catalogo.reparto_id', $repartoIds)
                 ->where(function ($q) use ($oggi, $ieri) {
-                    $q->where(function ($q2) use ($ieri) {
-                          // In corso: avviate da ieri in poi
-                          $q2->where('ordine_fasi.stato', 2)
-                             ->where('ordine_fasi.data_inizio', '>=', $ieri . ' 00:00:00');
-                      })
+                    $q->where('ordine_fasi.stato', 2)                            // in corso ora (qualsiasi data_inizio)
                       ->orWhere(function ($q2) use ($oggi, $ieri) {
-                          // Terminate oggi: avviate da ieri in poi (lavori reali)
+                          // Terminate oggi: solo se avviate da ieri (no chiusure sync vecchie)
                           $q2->where('ordine_fasi.stato', 3)
                              ->whereDate('ordine_fasi.data_fine', $oggi)
                              ->where('ordine_fasi.data_inizio', '>=', $ieri . ' 00:00:00');
