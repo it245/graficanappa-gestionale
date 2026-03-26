@@ -119,40 +119,39 @@ class KioskController extends Controller
                 });
             }
 
-            $fase = $query->orderBy('priorita')->first();
+            $fasiAttive = $query->orderBy('priorita')->get();
 
-            if ($fase) {
-                // Calcola ore previste e lavorate
-                $fasiOre = config('fasi_ore');
-                $infoFase = $fasiOre[$fase->fase] ?? null;
-                $orePrev = 0;
-                if ($infoFase) {
-                    $qtaCarta = $fase->ordine->qta_carta ?? 0;
-                    $copieh = $infoFase['copieh'] ?: 1000;
-                    $orePrev = round($infoFase['avviamento'] + ($qtaCarta / $copieh), 1);
+            if ($fasiAttive->isNotEmpty()) {
+                foreach ($fasiAttive as $fase) {
+                    $fasiOre = config('fasi_ore');
+                    $infoFase = $fasiOre[$fase->fase] ?? null;
+                    $orePrev = 0;
+                    if ($infoFase) {
+                        $qtaCarta = $fase->ordine->qta_carta ?? 0;
+                        $copieh = $infoFase['copieh'] ?: 1000;
+                        $orePrev = round($infoFase['avviamento'] + ($qtaCarta / $copieh), 1);
+                    }
+
+                    $secPrinect = ($fase->tempo_avviamento_sec ?? 0) + ($fase->tempo_esecuzione_sec ?? 0);
+                    if ($secPrinect > 0) {
+                        $oreLav = round($secPrinect / 3600, 1);
+                    } else {
+                        $totSecPausa = $fase->operatori->sum(fn($op) => $op->pivot->secondi_pausa ?? 0);
+                        $di = $fase->operatori->whereNotNull('pivot.data_inizio')->sortBy('pivot.data_inizio')->first()?->pivot->data_inizio;
+                        $secLordo = $di ? abs(now()->getTimestamp() - Carbon::parse($di)->getTimestamp()) : 0;
+                        $oreLav = round(max($secLordo - $totSecPausa, 0) / 3600, 1);
+                    }
+
+                    $macchine[] = [
+                        'nome' => $mc['nome'],
+                        'attiva' => true,
+                        'commessa' => $fase->ordine->commessa ?? '-',
+                        'cliente' => $fase->ordine->cliente_nome ?? '-',
+                        'descrizione' => \Illuminate\Support\Str::limit($fase->ordine->descrizione ?? '-', 50),
+                        'ore_lav' => $oreLav,
+                        'ore_prev' => $orePrev ?: 1,
+                    ];
                 }
-
-                $secPrinect = ($fase->tempo_avviamento_sec ?? 0) + ($fase->tempo_esecuzione_sec ?? 0);
-                if ($secPrinect > 0) {
-                    $oreLav = round($secPrinect / 3600, 1);
-                } else {
-                    $totSecPausa = $fase->operatori->sum(fn($op) => $op->pivot->secondi_pausa ?? 0);
-                    $di = $fase->operatori->whereNotNull('pivot.data_inizio')->sortBy('pivot.data_inizio')->first()?->pivot->data_inizio;
-                    $secLordo = $di ? abs(now()->getTimestamp() - Carbon::parse($di)->getTimestamp()) : 0;
-                    $oreLav = round(max($secLordo - $totSecPausa, 0) / 3600, 1);
-                }
-
-                $operatore = $fase->operatori->pluck('nome')->implode(', ') ?: '';
-
-                $macchine[] = [
-                    'nome' => $mc['nome'],
-                    'attiva' => true,
-                    'commessa' => $fase->ordine->commessa ?? '-',
-                    'cliente' => $fase->ordine->cliente_nome ?? '-',
-                    'descrizione' => \Illuminate\Support\Str::limit($fase->ordine->descrizione ?? '-', 50),
-                    'ore_lav' => $oreLav,
-                    'ore_prev' => $orePrev ?: 1,
-                ];
             } else {
                 $macchine[] = [
                     'nome' => $mc['nome'],
