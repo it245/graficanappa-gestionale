@@ -126,7 +126,7 @@
     <li>Matrice dei Rischi e Mitigazioni</li>
     <li>Piano di Evoluzione Sicurezza</li>
     <li>Registro delle Revisioni</li>
-    <li>Approvazione e Firma</li>
+    <li>Firma Digitale</li>
 </ol>
 
 <!-- 1. PREMESSA -->
@@ -490,7 +490,7 @@
 
 <!-- 13. FIRMA -->
 <div class="page-break"></div>
-<h2>13. Approvazione e Firma Digitale</h2>
+<h2>13. Firma Digitale</h2>
 
 <p style="font-size:9.5pt; color:#555; margin-bottom:15px;">Compilare i campi sottostanti e premere "Applica Firme" per generare le firme digitali stilizzate. Successivamente stampare il documento (Ctrl+P).</p>
 
@@ -506,17 +506,6 @@
     <div id="firma1-preview" class="firma-digitale" style="display:none;"></div>
 </div>
 
-<div class="firma-box no-print-hide">
-    <strong>Verificato e approvato da:</strong>
-    <div style="margin:10px 0;">
-        <label style="font-size:9pt; color:#555;">Nome e Cognome:</label>
-        <input type="text" id="firma2-nome" placeholder="Nome e cognome del Direttore" style="font-size:11pt; padding:4px 8px; border:1px solid #ccc; border-radius:3px; width:300px;">
-        <label style="font-size:9pt; color:#555; margin-left:15px;">Data:</label>
-        <input type="date" id="firma2-data" style="font-size:11pt; padding:4px 8px; border:1px solid #ccc; border-radius:3px;">
-    </div>
-    <div class="ruolo">Qualifica: Direzione Aziendale</div>
-    <div id="firma2-preview" class="firma-digitale" style="display:none;"></div>
-</div>
 
 <div style="text-align:center; margin:20px 0;" class="no-print">
     <button onclick="applicaFirme()" style="background:#28a745; color:#fff; border:none; padding:12px 40px; font-size:13pt; font-weight:700; border-radius:6px; cursor:pointer;">Applica Firme</button>
@@ -528,11 +517,6 @@
         <strong>Redatto da:</strong>
         <div id="firma1-stamp" class="firma-digitale-stamp"></div>
         <div class="ruolo">Qualifica: Analista e Progettista Basi Dati</div>
-    </div>
-    <div class="firma-box">
-        <strong>Verificato e approvato da:</strong>
-        <div id="firma2-stamp" class="firma-digitale-stamp"></div>
-        <div class="ruolo">Qualifica: Direzione Aziendale</div>
     </div>
     <div style="margin-top:15px; padding:10px; background:#f0f0f0; border:1px solid #ddd; border-radius:4px; font-size:8.5pt; color:#555;">
         <strong>Attestazione di firma digitale:</strong> Le firme apposte nel presente documento sono state generate digitalmente
@@ -583,19 +567,14 @@
 function applicaFirme() {
     var nome1 = document.getElementById('firma1-nome').value.trim();
     var data1 = document.getElementById('firma1-data').value;
-    var nome2 = document.getElementById('firma2-nome').value.trim();
-    var data2 = document.getElementById('firma2-data').value;
 
-    if (!nome1 || !data1) { alert('Compilare nome e data del redattore.'); return; }
-    if (!nome2 || !data2) { alert('Compilare nome e data del verificatore.'); return; }
+    if (!nome1 || !data1) { alert('Compilare nome e data.'); return; }
 
     var d1 = new Date(data1);
-    var d2 = new Date(data2);
     var dataFmt1 = d1.toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric'});
-    var dataFmt2 = d2.toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric'});
 
     // Genera hash di verifica
-    var payload = nome1 + data1 + nome2 + data2 + 'DOC-SEC-MES-001';
+    var payload = nome1 + data1 + 'DOC-SEC-MES-001';
     var hash = 0;
     for (var i = 0; i < payload.length; i++) {
         hash = ((hash << 5) - hash) + payload.charCodeAt(i);
@@ -603,17 +582,11 @@ function applicaFirme() {
     }
     var codice = 'GN-' + Math.abs(hash).toString(16).toUpperCase().substring(0, 8);
 
-    // Firma 1
+    // Firma
     document.getElementById('firma1-stamp').innerHTML =
         '<div>' + nome1 + '</div>' +
         '<div class="firma-data">Firmato digitalmente il ' + dataFmt1 + '</div>' +
-        '<div class="firma-hash">Hash: ' + codice + '-R</div>';
-
-    // Firma 2
-    document.getElementById('firma2-stamp').innerHTML =
-        '<div>' + nome2 + '</div>' +
-        '<div class="firma-data">Firmato digitalmente il ' + dataFmt2 + '</div>' +
-        '<div class="firma-hash">Hash: ' + codice + '-A</div>';
+        '<div class="firma-hash">Hash: ' + codice + '</div>';
 
     document.getElementById('codice-verifica').textContent = codice;
 
@@ -628,7 +601,6 @@ function applicaFirme() {
 // Precompila data odierna
 var oggi = new Date().toISOString().split('T')[0];
 document.getElementById('firma1-data').value = oggi;
-document.getElementById('firma2-data').value = oggi;
 </script>
 
 </body>
