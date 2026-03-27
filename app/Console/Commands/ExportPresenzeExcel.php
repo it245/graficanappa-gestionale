@@ -259,7 +259,20 @@ class ExportPresenzeExcel extends Command
 
     private function buildFoglioRiepilogo($sheet, $anagrafica, Carbon $dataInizio, Carbon $oggi)
     {
-        $sheet->mergeCells('A1:H1');
+        // Genera lista giorni lavorativi (lun-ven)
+        $giorni = [];
+        $cur = $dataInizio->copy();
+        while ($cur->lte($oggi)) {
+            if (!$cur->isWeekend()) {
+                $giorni[] = $cur->copy();
+            }
+            $cur->addDay();
+        }
+
+        $lastCol = chr(ord('B') + count($giorni)); // colonna dopo l'ultimo giorno
+
+        // Titolo
+        $sheet->mergeCells("A1:{$lastCol}1");
         $sheet->setCellValue('A1', 'RIEPILOGO PRESENZE — ' . $dataInizio->format('d/m/Y') . ' → ' . $oggi->format('d/m/Y'));
         $sheet->getStyle('A1')->applyFromArray([
             'font' => ['bold' => true, 'size' => 14, 'color' => ['rgb' => 'D11317']],
@@ -267,84 +280,118 @@ class ExportPresenzeExcel extends Command
         ]);
         $sheet->getRowDimension(1)->setRowHeight(35);
 
-        $sheet->mergeCells('A2:H2');
+        $sheet->mergeCells("A2:{$lastCol}2");
         $sheet->setCellValue('A2', 'Aggiornato: ' . now()->format('d/m/Y H:i'));
         $sheet->getStyle('A2')->applyFromArray([
             'font' => ['italic' => true, 'size' => 10, 'color' => ['rgb' => '666666']],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
         ]);
 
-        // Header
-        $headers = ['Dipendente', 'Matricola', 'Giorni Presenti', 'Ore Totali', 'Media Ore/Giorno', 'Media Entrata', 'Media Uscita', 'Ultimo Giorno'];
-        $col = 'A';
-        foreach ($headers as $h) {
-            $sheet->setCellValue($col . '3', $h);
+        // Header: Dipendente + un colonna per ogni giorno
+        $sheet->setCellValue('A3', 'Dipendente');
+        $col = 'B';
+        foreach ($giorni as $g) {
+            $sheet->setCellValue($col . '3', $g->format('d/m'));
+            $sheet->getColumnDimension($col)->setWidth(8);
             $col++;
         }
-        $sheet->getStyle('A3:H3')->applyFromArray([
-            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 11],
+        // Colonna totale ore
+        $sheet->setCellValue($col . '3', 'Tot Ore');
+        $colTot = $col;
+        $sheet->getColumnDimension($colTot)->setWidth(10);
+
+        $headerRange = "A3:{$colTot}3";
+        $sheet->getStyle($headerRange)->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 9],
             'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '1E40AF']],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
             'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
         ]);
-        $sheet->getRowDimension(3)->setRowHeight(30);
+        $sheet->getRowDimension(3)->setRowHeight(28);
+        $sheet->getColumnDimension('A')->setWidth(25);
 
-        // Dati riepilogo per dipendente
+        // Precalcola prima entrata per ogni dipendente per ogni giorno
+        $timbratureTutte = DB::table('nettime_timbrature')
+            ->where('verso', 'E')
+            ->where('data_ora', '>=', $dataInizio->format('Y-m-d'))
+            ->select('matricola', DB::raw('DATE(data_ora) as giorno'), DB::raw('MIN(data_ora) as prima_entrata'))
+            ->groupBy('matricola', DB::raw('DATE(data_ora)'))
+            ->get();
+
+        // Mappa: matricola → giorno → ora entrata
+        $mappa = [];
+        foreach ($timbratureTutte as $t) {
+            $mappa[$t->matricola][$t->giorno] = Carbon::parse($t->prima_entrata)->format('H:i');
+        }
+
+        // Ore lavorate per giorno: somma intervalli E→U
+        $orePerGiorno = [];
+        $timbratureFull = DB::table('nettime_timbrature')
+            ->where('data_ora', '>=', $dataInizio->format('Y-m-d'))
+            ->orderBy('matricola')
+            ->orderBy('data_ora')
+            ->get()
+            ->groupBy('matricola');
+
+        foreach ($timbratureFull as $matricola => $timbList) {
+            $perGiorno = $timbList->groupBy(fn($t) => Carbon::parse($t->data_ora)->format('Y-m-d'));
+            foreach ($perGiorno as $giorno => $timb) {
+                $minuti = 0;
+                $entr = null;
+                foreach ($timb->sortBy('data_ora') as $t) {
+                    if ($t->verso === 'E') {
+                        $entr = Carbon::parse($t->data_ora);
+                    } elseif ($t->verso === 'U' && $entr) {
+                        $minuti += $entr->diffInMinutes(Carbon::parse($t->data_ora));
+                        $entr = null;
+                    }
+                }
+                $orePerGiorno[$matricola][$giorno] = $minuti;
+            }
+        }
+
+        // Dati
         $row = 4;
         foreach ($anagrafica as $anag) {
-            // Giorni con almeno una timbratura E
-            $giorniPresente = DB::table('nettime_timbrature')
-                ->where('matricola', $anag->matricola)
-                ->where('verso', 'E')
-                ->where('data_ora', '>=', $dataInizio->format('Y-m-d'))
-                ->selectRaw('COUNT(DISTINCT DATE(data_ora)) as giorni')
-                ->value('giorni');
-
-            if ($giorniPresente == 0) continue;
-
-            // Ore totali: somma intervalli E→U
-            $timbrature = DB::table('nettime_timbrature')
-                ->where('matricola', $anag->matricola)
-                ->where('data_ora', '>=', $dataInizio->format('Y-m-d'))
-                ->orderBy('data_ora')
-                ->get();
-
-            $oreTotali = 0;
-            $entrateOre = [];
-            $usciteOre = [];
-            $entr = null;
-            foreach ($timbrature as $t) {
-                if ($t->verso === 'E') {
-                    $entr = Carbon::parse($t->data_ora);
-                    $entrateOre[] = (int) $entr->format('H') * 60 + (int) $entr->format('i');
-                } elseif ($t->verso === 'U' && $entr) {
-                    $usc = Carbon::parse($t->data_ora);
-                    $oreTotali += $entr->diffInMinutes($usc);
-                    $usciteOre[] = (int) $usc->format('H') * 60 + (int) $usc->format('i');
-                    $entr = null;
-                }
-            }
-
-            $mediaOre = $giorniPresente > 0 ? $oreTotali / $giorniPresente : 0;
-            $mediaEntrata = !empty($entrateOre) ? array_sum($entrateOre) / count($entrateOre) : 0;
-            $mediaUscita = !empty($usciteOre) ? array_sum($usciteOre) / count($usciteOre) : 0;
-
-            $ultimoGiorno = DB::table('nettime_timbrature')
-                ->where('matricola', $anag->matricola)
-                ->where('verso', 'E')
-                ->max('data_ora');
+            if (!isset($mappa[$anag->matricola])) continue;
 
             $sheet->setCellValue('A' . $row, "{$anag->cognome} {$anag->nome}");
-            $sheet->setCellValueExplicit('B' . $row, $anag->matricola, DataType::TYPE_STRING);
-            $sheet->setCellValue('C' . $row, $giorniPresente);
-            $sheet->setCellValue('D' . $row, sprintf('%dh %02dm', intdiv($oreTotali, 60), $oreTotali % 60));
-            $sheet->setCellValue('E' . $row, sprintf('%dh %02dm', intdiv((int)$mediaOre, 60), ((int)$mediaOre) % 60));
-            $sheet->setCellValue('F' . $row, sprintf('%d:%02d', intdiv((int)$mediaEntrata, 60), ((int)$mediaEntrata) % 60));
-            $sheet->setCellValue('G' . $row, !empty($usciteOre) ? sprintf('%d:%02d', intdiv((int)$mediaUscita, 60), ((int)$mediaUscita) % 60) : '-');
-            $sheet->setCellValue('H' . $row, $ultimoGiorno ? Carbon::parse($ultimoGiorno)->format('d/m/Y') : '-');
+
+            $col = 'B';
+            $totMinuti = 0;
+            foreach ($giorni as $g) {
+                $giornoStr = $g->format('Y-m-d');
+                $entrata = $mappa[$anag->matricola][$giornoStr] ?? null;
+                $minGiorno = $orePerGiorno[$anag->matricola][$giornoStr] ?? 0;
+                $totMinuti += $minGiorno;
+
+                if ($entrata) {
+                    $oreStr = $minGiorno > 0 ? sprintf('%dh%02d', intdiv($minGiorno, 60), $minGiorno % 60) : $entrata;
+                    $sheet->setCellValue($col . $row, $oreStr);
+
+                    // Colore: verde se >= 8h, giallo se >= 4h, rosso se < 4h
+                    if ($minGiorno >= 480) {
+                        $bgColor = 'DCFCE7'; // verde chiaro
+                    } elseif ($minGiorno >= 240) {
+                        $bgColor = 'FEF9C3'; // giallo chiaro
+                    } else {
+                        $bgColor = 'FEE2E2'; // rosso chiaro
+                    }
+                    $sheet->getStyle($col . $row)->getFill()
+                        ->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB($bgColor);
+                } else {
+                    $sheet->setCellValue($col . $row, '-');
+                    $sheet->getStyle($col . $row)->getFont()->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('CCCCCC'));
+                }
+                $col++;
+            }
+
+            // Totale ore
+            $sheet->setCellValue($colTot . $row, sprintf('%dh %02dm', intdiv($totMinuti, 60), $totMinuti % 60));
+            $sheet->getStyle($colTot . $row)->getFont()->setBold(true);
 
             if ($row % 2 === 0) {
-                $sheet->getStyle("A{$row}:H{$row}")->getFill()
+                $sheet->getStyle("A{$row}")->getFill()
                     ->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('F0F4FF');
             }
 
@@ -353,23 +400,13 @@ class ExportPresenzeExcel extends Command
 
         $lastRow = $row - 1;
         if ($lastRow >= 4) {
-            $sheet->getStyle("A4:H{$lastRow}")->applyFromArray([
+            $sheet->getStyle("A4:{$colTot}{$lastRow}")->applyFromArray([
                 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'CCCCCC']]],
-                'alignment' => ['vertical' => Alignment::VERTICAL_CENTER],
-                'font' => ['size' => 11],
+                'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+                'font' => ['size' => 9],
             ]);
-            $sheet->getStyle("C4:C{$lastRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-            $sheet->getStyle("D4:H{$lastRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle("A4:A{$lastRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
+            $sheet->getStyle("A4:A{$lastRow}")->getFont()->setSize(10);
         }
-
-        // Larghezze
-        $sheet->getColumnDimension('A')->setWidth(25);
-        $sheet->getColumnDimension('B')->setWidth(12);
-        $sheet->getColumnDimension('C')->setWidth(16);
-        $sheet->getColumnDimension('D')->setWidth(14);
-        $sheet->getColumnDimension('E')->setWidth(18);
-        $sheet->getColumnDimension('F')->setWidth(16);
-        $sheet->getColumnDimension('G')->setWidth(16);
-        $sheet->getColumnDimension('H')->setWidth(16);
     }
 }
