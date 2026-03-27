@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>DOC-SEC-MES-001 — Documento di Sicurezza Informatica</title>
+<style>
+    @page {
+        margin: 2cm 2cm 2.5cm 2cm;
+        @top-center { content: "GRAFICA NAPPA S.R.L. — DOC-SEC-MES-001 — RISERVATO"; font-size: 8pt; color: #888; }
+        @bottom-center { content: "Pagina " counter(page) " di " counter(pages); font-size: 8pt; color: #888; }
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Georgia, 'Times New Roman', serif; color: #222; line-height: 1.6; padding: 40px 50px; max-width: 210mm; margin: 0 auto; font-size: 11pt; }
+
+    .page-header {
+        text-align: center; border-bottom: 3px solid #D11317; padding-bottom: 20px; margin-bottom: 10px;
+    }
+    .page-header .azienda { color: #D11317; font-size: 16pt; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 2px; }
+    .page-header .indirizzo { font-size: 9pt; color: #555; }
+    .page-header .titolo { font-size: 20pt; font-weight: 700; color: #111; margin-top: 20px; }
+    .page-header .sottotitolo { font-size: 12pt; color: #333; margin-top: 4px; }
+
+    .meta-table { width: 100%; border-collapse: collapse; margin: 15px 0 25px 0; font-size: 9.5pt; }
+    .meta-table td { padding: 5px 10px; border: 1px solid #ccc; }
+    .meta-table td:first-child { font-weight: 700; width: 180px; background: #f5f5f5; }
+
+    .classificazione {
+        text-align: center; padding: 8px; background: #D11317; color: #fff;
+        font-weight: 700; font-size: 10pt; letter-spacing: 0.1em; margin-bottom: 30px;
+    }
+
+    h2 { color: #D11317; font-size: 14pt; margin-top: 30px; margin-bottom: 10px; border-bottom: 2px solid #D11317; padding-bottom: 4px; page-break-after: avoid; }
+    h3 { color: #333; font-size: 12pt; margin-top: 18px; margin-bottom: 8px; page-break-after: avoid; }
+    h4 { color: #555; font-size: 11pt; margin-top: 12px; margin-bottom: 6px; }
+
+    p { margin-bottom: 8px; text-align: justify; }
+    ul, ol { margin: 8px 0 8px 25px; }
+    li { margin-bottom: 4px; }
+
+    table.data { width: 100%; border-collapse: collapse; margin: 10px 0 15px 0; font-size: 9.5pt; font-family: 'Segoe UI', Tahoma, sans-serif; }
+    table.data th { background: #333; color: #fff; padding: 6px 8px; text-align: left; font-weight: 600; }
+    table.data td { padding: 5px 8px; border-bottom: 1px solid #ddd; vertical-align: top; }
+    table.data tr:nth-child(even) { background: #f9f9f9; }
+    table.data tr:hover { background: #f0f0f0; }
+
+    table.matrix { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 8.5pt; font-family: 'Segoe UI', Tahoma, sans-serif; }
+    table.matrix th { background: #333; color: #fff; padding: 4px 5px; text-align: center; font-weight: 600; }
+    table.matrix td { padding: 3px 5px; border: 1px solid #ddd; text-align: center; }
+    table.matrix td:first-child { text-align: left; font-weight: 600; }
+
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 8pt; font-weight: 700; color: #fff; font-family: 'Segoe UI', sans-serif; }
+    .badge-operativo { background: #28a745; }
+    .badge-implementazione { background: #0d6efd; }
+    .badge-pianificato { background: #e67e22; }
+
+    .protocollo-box {
+        border: 1px solid #ddd; border-left: 4px solid #D11317; padding: 12px 15px;
+        margin: 10px 0; background: #fafafa; page-break-inside: avoid;
+    }
+    .protocollo-box .codice { font-family: 'Courier New', monospace; font-size: 9pt; color: #D11317; font-weight: 700; }
+    .protocollo-box .nome { font-size: 11pt; font-weight: 700; color: #111; margin-left: 10px; }
+    .protocollo-box .desc { margin-top: 6px; font-size: 10pt; }
+    .protocollo-box .tech { margin-top: 6px; font-size: 9pt; color: #555; font-family: 'Segoe UI', sans-serif; }
+
+    .firma-box {
+        border: 1px solid #ccc; padding: 20px; margin: 15px 0; page-break-inside: avoid;
+    }
+    .firma-box .ruolo { font-size: 9pt; color: #555; margin-top: 4px; }
+    .firma-linea { border-bottom: 1px solid #333; width: 300px; height: 30px; margin-top: 15px; }
+
+    .indice { margin: 15px 0; }
+    .indice a { text-decoration: none; color: #333; }
+    .indice li { margin-bottom: 3px; font-size: 10pt; }
+
+    .risk-bassa { color: #28a745; font-weight: 700; }
+    .risk-media { color: #e67e22; font-weight: 700; }
+    .risk-alta { color: #dc3545; font-weight: 700; }
+
+    code { font-family: 'Courier New', monospace; font-size: 9pt; background: #f0f0f0; padding: 1px 4px; border-radius: 2px; }
+
+    @media print {
+        body { padding: 0; font-size: 10pt; }
+        .page-break { page-break-before: always; }
+        h2 { page-break-after: avoid; }
+        .protocollo-box { page-break-inside: avoid; }
+        .firma-box { page-break-inside: avoid; }
+        table.data { page-break-inside: auto; }
+        tr { page-break-inside: avoid; }
+    }
+</style>
+</head>
+<body>
+
+<!-- INTESTAZIONE -->
+<div class="page-header">
+    <div class="azienda">GRAFICA NAPPA S.R.L.</div>
+    <div class="indirizzo">Via Gramsci, 19 — 81031 Aversa (CE) — P.IVA 01234567890<br>Tel. +39 081 8906734</div>
+    <div class="titolo">DOCUMENTO DI SICUREZZA INFORMATICA</div>
+    <div class="sottotitolo">Protocolli di Sicurezza — Sistema MES (Manufacturing Execution System)</div>
+</div>
+
+<div class="classificazione">RISERVATO — USO INTERNO</div>
+
+<table class="meta-table">
+    <tr><td>Codice Documento</td><td>DOC-SEC-MES-001</td></tr>
+    <tr><td>Versione</td><td>1.0</td></tr>
+    <tr><td>Data Emissione</td><td>27 Marzo 2026</td></tr>
+    <tr><td>Classificazione</td><td>Riservato — Uso Interno</td></tr>
+    <tr><td>Redatto da</td><td>Giovanni Pietropaolo — Analista e Progettista Basi Dati / Responsabile Sistemi Informativi</td></tr>
+    <tr><td>Stato</td><td>Emesso</td></tr>
+    <tr><td>Prossima revisione</td><td>27 Settembre 2026</td></tr>
+</table>
+
+<!-- INDICE -->
+<h2>Indice</h2>
+<ol class="indice">
+    <li>Premessa e Ambito di Applicazione</li>
+    <li>Descrizione del Sistema</li>
+    <li>Protocolli di Sicurezza Attivi</li>
+    <li>Controllo Accessi e Autenticazione</li>
+    <li>Sistema RBAC (Role-Based Access Control)</li>
+    <li>Tracciabilit&agrave; e Audit</li>
+    <li>Protezione delle Comunicazioni</li>
+    <li>Protezione dei Dati</li>
+    <li>Controllo del Traffico</li>
+    <li>Matrice dei Rischi e Mitigazioni</li>
+    <li>Piano di Evoluzione Sicurezza</li>
+    <li>Registro delle Revisioni</li>
+    <li>Approvazione e Firma</li>
+</ol>
+
+<!-- 1. PREMESSA -->
+<div class="page-break"></div>
+<h2>1. Premessa e Ambito di Applicazione</h2>
+
+<h3>1.1 Finalit&agrave; del documento</h3>
+<p>Il presente documento definisce i protocolli di sicurezza informatica implementati nel Sistema MES (Manufacturing Execution System) in uso presso Grafica Nappa S.R.L. Il documento ha carattere ufficiale e costituisce riferimento per l'archiviazione aziendale delle misure di sicurezza adottate a protezione dei dati, delle infrastrutture e dei processi produttivi gestiti dal sistema.</p>
+
+<h3>1.2 Perimetro del sistema</h3>
+<p>Il perimetro di applicazione comprende:</p>
+<ul>
+    <li>Applicazione web MES (backend Laravel/PHP, frontend Blade/Bootstrap/jQuery)</li>
+    <li>Database MySQL su server dedicato (192.168.1.60)</li>
+    <li>Integrazioni con sistemi esterni: Onda IQ (ERP), Prinect (stampa offset), Fiery V900 (stampa digitale), BRT (spedizioni), NetTime (presenze)</li>
+    <li>Rete locale aziendale (non esposta a Internet)</li>
+    <li>Dispositivi client: PC operatore, tablet reparto, TV kiosk, smartphone</li>
+</ul>
+
+<h3>1.3 Riferimenti normativi</h3>
+<ul>
+    <li>ISO/IEC 27001:2022 — Sistema di gestione della sicurezza delle informazioni</li>
+    <li>OWASP Top 10 (2021) — Principali vulnerabilit&agrave; applicazioni web</li>
+    <li>Regolamento UE 2016/679 (GDPR) — Art. 32: Sicurezza del trattamento</li>
+    <li>OWASP Application Security Verification Standard (ASVS) v4.0</li>
+</ul>
+
+<h3>1.4 Destinatari</h3>
+<p>Direzione Aziendale, Responsabile Sistemi Informativi, consulenti esterni autorizzati.</p>
+
+<!-- 2. DESCRIZIONE DEL SISTEMA -->
+<div class="page-break"></div>
+<h2>2. Descrizione del Sistema</h2>
+
+<h3>2.1 Architettura applicativa</h3>
+<table class="data">
+    <tr><th>Componente</th><th>Tecnologia</th><th>Versione</th></tr>
+    <tr><td>Framework</td><td>Laravel (PHP)</td><td>12.x</td></tr>
+    <tr><td>Database</td><td>MySQL</td><td>8.x</td></tr>
+    <tr><td>Frontend</td><td>Blade Templates, Bootstrap 5, jQuery, Chart.js</td><td>-</td></tr>
+    <tr><td>Server</td><td>Windows Server / Apache</td><td>-</td></tr>
+    <tr><td>Autenticazione</td><td>Laravel Auth + Guard personalizzato "operatore"</td><td>-</td></tr>
+    <tr><td>RBAC</td><td>spatie/laravel-permission</td><td>7.2.x</td></tr>
+    <tr><td>2FA</td><td>pragmarx/google2fa (TOTP)</td><td>9.x</td></tr>
+</table>
+
+<h3>2.2 Infrastruttura</h3>
+<table class="data">
+    <tr><th>Risorsa</th><th>Indirizzo</th><th>Funzione</th></tr>
+    <tr><td>Server applicativo e DB</td><td>192.168.1.60</td><td>Hosting MES + MySQL</td></tr>
+    <tr><td>Onda IQ (ERP)</td><td>SQL Server su rete locale</td><td>Sincronizzazione ordini e fasi</td></tr>
+    <tr><td>Prinect (Heidelberg)</td><td>Rete locale</td><td>Dati stampa offset in tempo reale</td></tr>
+    <tr><td>Fiery V900 (EFI)</td><td>192.168.1.206</td><td>Dati stampa digitale</td></tr>
+    <tr><td>NetTime</td><td>192.168.1.34</td><td>Timbrature presenze</td></tr>
+    <tr><td>BRT</td><td>API esterna (bfresco.bfresco.com)</td><td>Tracking spedizioni</td></tr>
+</table>
+
+<h3>2.3 Utenti e ruoli operativi</h3>
+<p>Il sistema gestisce 37 operatori attivi suddivisi nei seguenti ruoli:</p>
+<table class="data">
+    <tr><th>Ruolo</th><th>Accesso</th><th>Autenticazione</th></tr>
+    <tr><td>Superadmin</td><td>Accesso completo a tutte le funzionalit&agrave;</td><td>Codice + Password + 2FA</td></tr>
+    <tr><td>Admin</td><td>Gestione utenti, turni, report, tariffe, audit log</td><td>Codice + Password + 2FA</td></tr>
+    <tr><td>Owner</td><td>Dashboard completa, scheduling, KPI, gestione ordini</td><td>Codice operatore</td></tr>
+    <tr><td>Owner Readonly</td><td>Visualizzazione dashboard e report</td><td>Codice operatore</td></tr>
+    <tr><td>Prestampa</td><td>Dashboard prestampa, note fustelle</td><td>Codice operatore</td></tr>
+    <tr><td>Operatore</td><td>Dashboard reparto, avvio/termine fasi</td><td>Codice operatore</td></tr>
+    <tr><td>Spedizione</td><td>Dashboard spedizione, note consegne, tracking BRT</td><td>Codice operatore</td></tr>
+    <tr><td>Fiery Contatori</td><td>Contatori stampa digitale</td><td>Codice operatore</td></tr>
+    <tr><td>Viewer</td><td>Visualizzazione base e report</td><td>Codice operatore</td></tr>
+</table>
+
+<!-- 3. PROTOCOLLI DI SICUREZZA ATTIVI -->
+<div class="page-break"></div>
+<h2>3. Protocolli di Sicurezza Attivi</h2>
+
+<div class="protocollo-box">
+    <span class="codice">SEC-AUTH-001</span> <span class="nome">Autenticazione multi-livello</span> <span class="badge badge-operativo">OPERATIVO</span>
+    <div class="desc">Sistema di autenticazione differenziato per ruolo. Gli operatori accedono tramite codice operatore univoco. Gli amministratori richiedono codice operatore e password con hash Bcrypt (12 round). L'autenticazione a due fattori (TOTP) &egrave; disponibile per il ruolo admin.</div>
+    <div class="tech">Componenti: <code>OperatoreLoginController</code>, <code>AdminLoginController</code>, Guard <code>operatore</code> — Rif. ISO 27001 A.9.4.2, OWASP A07:2021</div>
+</div>
+
+<div class="protocollo-box">
+    <span class="codice">SEC-AUTH-002</span> <span class="nome">Token per-tab con scadenza</span> <span class="badge badge-operativo">OPERATIVO</span>
+    <div class="desc">Ad ogni login viene generato un token crittograficamente sicuro di 64 caratteri random, memorizzato nel database con scadenza a 12 ore. Il token isola le sessioni per-tab e viene invalidato al logout. La validit&agrave; &egrave; verificata ad ogni richiesta tramite scope <code>valido()</code>.</div>
+    <div class="tech">Componenti: <code>OperatoreToken</code> model, tabella <code>operatore_tokens</code>, indice su <code>expires_at</code> — Rif. OWASP A07:2021</div>
+</div>
+
+<div class="protocollo-box">
+    <span class="codice">SEC-AUTH-003</span> <span class="nome">Autenticazione a due fattori (2FA TOTP)</span> <span class="badge badge-operativo">OPERATIVO</span>
+    <div class="desc">Autenticazione a due fattori basata su algoritmo TOTP (Time-based One-Time Password, RFC 6238) per utenti con ruolo admin. Il segreto 2FA &egrave; cifrato a riposo con AES-256-GCM. Implementa il meccanismo "dispositivo fidato": dopo la prima verifica, il dispositivo viene registrato con token SHA-256 e cookie persistente (10 anni). Sono disponibili 8 codici di recupero monouso.</div>
+    <div class="tech">Componenti: <code>TwoFactorService</code>, <code>TwoFactorController</code>, tabella <code>trusted_devices</code>, pacchetto <code>pragmarx/google2fa</code> — Rif. ISO 27001 A.9.4.2, NIST SP 800-63B</div>
+</div>
+
+<div class="protocollo-box">
+    <span class="codice">SEC-RBAC-001</span> <span class="nome">Controllo accessi basato su ruoli (RBAC)</span> <span class="badge badge-operativo">OPERATIVO</span>
+    <div class="desc">Sistema RBAC con 9 ruoli e 23 permessi granulari implementato tramite spatie/laravel-permission v7.2. I ruoli sono assegnati a livello di modello Operatore con guard dedicato. L'enforcement avviene tramite 4 middleware personalizzati sulle route. La matrice ruoli-permessi &egrave; definita nel seeder e verificabile in ogni momento.</div>
+    <div class="tech">Componenti: <code>HasRoles</code> trait, <code>RbacSeeder</code>, middleware <code>operatore.auth</code>, <code>owner</code>, <code>admin</code>, <code>owner.or.admin</code>, 5 tabelle permission — Rif. ISO 27001 A.9.1.2</div>
+</div>
+
+<div class="protocollo-box">
+    <span class="codice">SEC-AUDIT-001</span> <span class="nome">Audit trail centralizzato</span> <span class="badge badge-operativo">OPERATIVO</span>
+    <div class="desc">Sistema di tracciamento automatico degli eventi di sicurezza. Registra: login, logout, modifiche stato fasi di produzione, eliminazione record. Ogni entry include identificativo utente, azione, valori precedenti e successivi, indirizzo IP e user-agent. Retention: 90 giorni con pulizia automatica schedulata alle 03:00. Implementa graceful degradation: il fallimento del log non blocca l'operativit&agrave;.</div>
+    <div class="tech">Componenti: <code>AuditService</code>, <code>OrdineFaseObserver</code>, tabella <code>audit_logs</code> (5 indici), comando <code>audit:pulisci</code> — Rif. ISO 27001 A.12.4.1, GDPR Art. 5(2)</div>
+</div>
+
+<div class="protocollo-box">
+    <span class="codice">SEC-RATE-001</span> <span class="nome">Limitazione frequenza richieste (Rate Limiting)</span> <span class="badge badge-operativo">OPERATIVO</span>
+    <div class="desc">Protezione anti brute-force sugli endpoint di autenticazione. Login: massimo 5 tentativi in 15 minuti per indirizzo IP. API generiche: massimo 60 richieste al minuto per IP. Al superamento della soglia, il sistema risponde con codice HTTP 429 (Too Many Requests).</div>
+    <div class="tech">Componenti: <code>RateLimiter</code> in <code>AppServiceProvider</code>, middleware <code>throttle:login</code> su route POST login — Rif. OWASP A07:2021</div>
+</div>
+
+<div class="protocollo-box">
+    <span class="codice">SEC-HDR-001</span> <span class="nome">Security Headers HTTP</span> <span class="badge badge-operativo">OPERATIVO</span>
+    <div class="desc">Middleware globale che aggiunge header di sicurezza HTTP a tutte le risposte dell'applicazione: X-Frame-Options (protezione clickjacking), X-Content-Type-Options (prevenzione MIME sniffing), Referrer-Policy (controllo informazioni referrer), Permissions-Policy (disabilitazione accesso camera, microfono, geolocalizzazione).</div>
+    <div class="tech">Componenti: <code>SecurityHeaders</code> middleware, registrato in <code>bootstrap/app.php</code> — Rif. OWASP A05:2021</div>
+</div>
+
+<div class="protocollo-box">
+    <span class="codice">SEC-CSRF-001</span> <span class="nome">Protezione Cross-Site Request Forgery (CSRF)</span> <span class="badge badge-operativo">OPERATIVO</span>
+    <div class="desc">Protezione CSRF nativa Laravel con token sincronizzato. Il token viene rigenerato automaticamente ogni 30 minuti tramite endpoint dedicato (<code>/csrf-refresh</code>). Implementa intercettore fetch per auto-refresh e gestione navigazione browser (pageshow event). 6 endpoint esenti da CSRF utilizzano autenticazione alternativa tramite token operatore (op_token).</div>
+    <div class="tech">Componenti: middleware <code>ValidateCsrfToken</code>, endpoint <code>/csrf-refresh</code>, fetch interceptor JavaScript — Rif. OWASP A01:2021</div>
+</div>
+
+<div class="protocollo-box">
+    <span class="codice">SEC-SESS-001</span> <span class="nome">Gestione sessioni sicura</span> <span class="badge badge-operativo">OPERATIVO</span>
+    <div class="desc">Sessioni archiviate in database (non su filesystem). Cifratura sessioni abilitata (AES-256-GCM via APP_KEY). Cookie di sessione con flag HttpOnly (inaccessibile a JavaScript) e SameSite=Lax (protezione CSRF cross-site). Timeout sessione: 480 minuti (8 ore lavorative).</div>
+    <div class="tech">Componenti: <code>config/session.php</code>, driver <code>database</code>, tabella <code>sessions</code>, <code>SESSION_ENCRYPT=true</code> — Rif. ISO 27001 A.14.1.2, OWASP A07:2021</div>
+</div>
+
+<div class="protocollo-box">
+    <span class="codice">SEC-DATA-001</span> <span class="nome">Isolamento credenziali e segreti</span> <span class="badge badge-operativo">OPERATIVO</span>
+    <div class="desc">Tutte le credenziali di accesso ai sistemi esterni (Onda, Prinect, Fiery, BRT, NetTime, SMTP) sono archiviate nel file <code>.env</code>, escluso dal repository Git tramite <code>.gitignore</code>. La chiave di cifratura applicativa (APP_KEY) utilizza AES-256. Le password utente sono hashate con Bcrypt a 12 round. Il segreto 2FA &egrave; cifrato a riposo con <code>encrypt()</code>.</div>
+    <div class="tech">Componenti: <code>.env</code>, <code>.gitignore</code>, <code>Hash::make()</code> Bcrypt, <code>encrypt()</code> AES-256-GCM — Rif. ISO 27001 A.10.1.1, OWASP A02:2021</div>
+</div>
+
+<div class="protocollo-box">
+    <span class="codice">SEC-VAL-001</span> <span class="nome">Validazione e sanitizzazione input</span> <span class="badge badge-operativo">OPERATIVO</span>
+    <div class="desc">Validazione server-side su tutti gli endpoint che accettano dati utente tramite <code>$request->validate()</code>. Regole includono: vincoli di tipo (string, numeric, date), vincoli referenziali (exists:tabella), lunghezza massima, valori ammessi (in:lista). L'output &egrave; protetto tramite escape automatico Blade (<code>{{ }}</code>). Le istanze di output non-escaped (<code>{!! !!}</code>) sono limitate a 10 occorrenze verificate sicure (entit&agrave; HTML statiche, <code>json_encode()</code>, funzione <code>e()</code>).</div>
+    <div class="tech">Componenti: validazione Laravel su tutti i controller, Blade auto-escaping — Rif. OWASP A03:2021</div>
+</div>
+
+<!-- 4. CONTROLLO ACCESSI -->
+<div class="page-break"></div>
+<h2>4. Controllo Accessi e Autenticazione</h2>
+
+<h3>4.1 Flusso di autenticazione operatore</h3>
+<ol>
+    <li>L'operatore inserisce il proprio codice operatore univoco</li>
+    <li>Il sistema verifica l'esistenza e lo stato attivo dell'operatore</li>
+    <li>Viene creata la sessione con guard <code>operatore</code></li>
+    <li>Viene generato un token univoco di 64 caratteri (scadenza 12h)</li>
+    <li>L'operatore viene reindirizzato alla dashboard appropriata in base al ruolo</li>
+</ol>
+
+<h3>4.2 Flusso di autenticazione admin</h3>
+<ol>
+    <li>L'admin inserisce codice operatore e password</li>
+    <li>Il sistema verifica le credenziali (Bcrypt 12 round) e il ruolo admin</li>
+    <li>Viene creata la sessione</li>
+    <li>Se il 2FA &egrave; abilitato:
+        <ul>
+            <li>Se il dispositivo &egrave; gi&agrave; fidato (cookie SHA-256): accesso diretto</li>
+            <li>Se il dispositivo &egrave; nuovo: richiesta codice TOTP a 6 cifre</li>
+            <li>Dopo verifica: il dispositivo viene registrato come fidato (persistenza illimitata)</li>
+        </ul>
+    </li>
+    <li>Redirect alla dashboard admin</li>
+</ol>
+
+<h3>4.3 Politica credenziali</h3>
+<table class="data">
+    <tr><th>Parametro</th><th>Valore</th></tr>
+    <tr><td>Algoritmo hashing password</td><td>Bcrypt con 12 round</td></tr>
+    <tr><td>Lunghezza minima password admin</td><td>4 caratteri</td></tr>
+    <tr><td>Token autenticazione</td><td>64 caratteri random (Str::random)</td></tr>
+    <tr><td>Scadenza token</td><td>12 ore</td></tr>
+    <tr><td>Scadenza sessione</td><td>480 minuti (8 ore)</td></tr>
+    <tr><td>2FA: algoritmo</td><td>TOTP (RFC 6238)</td></tr>
+    <tr><td>2FA: codici recupero</td><td>8 codici monouso formato XXXX-XXXX</td></tr>
+    <tr><td>2FA: persistenza dispositivo</td><td>10 anni (cookie sicuro)</td></tr>
+</table>
+
+<!-- 5. RBAC -->
+<div class="page-break"></div>
+<h2>5. Sistema RBAC (Role-Based Access Control)</h2>
+
+<h3>5.1 Matrice Ruoli-Permessi</h3>
+<table class="matrix">
+    <tr>
+        <th style="text-align:left;">Permesso</th>
+        <th>Super<br>admin</th><th>Admin</th><th>Owner</th><th>Owner<br>R/O</th><th>Pre<br>stampa</th><th>Opera<br>tore</th><th>Spedi<br>zione</th><th>Fiery</th><th>Viewer</th>
+    </tr>
+    <tr><td>view-dashboard-owner</td><td>&check;</td><td>&check;</td><td>&check;</td><td>&check;</td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>view-dashboard-operatore</td><td>&check;</td><td></td><td></td><td></td><td>&check;</td><td>&check;</td><td>&check;</td><td>&check;</td><td>&check;</td></tr>
+    <tr><td>view-dashboard-spedizione</td><td>&check;</td><td></td><td></td><td></td><td></td><td></td><td>&check;</td><td></td><td></td></tr>
+    <tr><td>view-dashboard-prestampa</td><td>&check;</td><td></td><td></td><td></td><td>&check;</td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>view-dashboard-admin</td><td>&check;</td><td>&check;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>edit-ordine</td><td>&check;</td><td>&check;</td><td>&check;</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>edit-fase</td><td>&check;</td><td>&check;</td><td>&check;</td><td></td><td></td><td>&check;</td><td>&check;</td><td></td><td></td></tr>
+    <tr><td>delete-fase</td><td>&check;</td><td>&check;</td><td>&check;</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>edit-stato</td><td>&check;</td><td>&check;</td><td>&check;</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>view-report</td><td>&check;</td><td>&check;</td><td>&check;</td><td>&check;</td><td></td><td></td><td></td><td></td><td>&check;</td></tr>
+    <tr><td>view-audit-log</td><td>&check;</td><td>&check;</td><td>&check;</td><td>&check;</td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>manage-users</td><td>&check;</td><td>&check;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>sync-onda</td><td>&check;</td><td>&check;</td><td>&check;</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>export-data</td><td>&check;</td><td>&check;</td><td>&check;</td><td>&check;</td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>edit-note-consegne</td><td>&check;</td><td>&check;</td><td>&check;</td><td></td><td></td><td></td><td>&check;</td><td></td><td></td></tr>
+    <tr><td>edit-prestampa</td><td>&check;</td><td></td><td></td><td></td><td>&check;</td><td></td><td></td><td></td><td></td></tr>
+</table>
+<p style="font-size:9pt; color:#555;">Nota: tabella ridotta ai permessi principali. I 23 permessi completi sono definiti in <code>RbacSeeder.php</code>.</p>
+
+<h3>5.2 Protezione route per middleware</h3>
+<table class="data">
+    <tr><th>Middleware</th><th>Route protette</th><th>Ruoli ammessi</th></tr>
+    <tr><td><code>operatore.auth</code></td><td>/operatore/*, /produzione/*, /spedizione/*</td><td>Tutti gli operatori attivi</td></tr>
+    <tr><td><code>owner</code></td><td>/owner/*</td><td>owner, owner_readonly</td></tr>
+    <tr><td><code>admin</code></td><td>/admin/*</td><td>admin (+ verifica 2FA)</td></tr>
+    <tr><td><code>owner.or.admin</code></td><td>/mes/prinect/*, /mes/fiery/*</td><td>owner, owner_readonly, admin</td></tr>
+    <tr><td><code>throttle:login</code></td><td>POST /operatore/login, POST /admin/login</td><td>Pubblico (con rate limiting)</td></tr>
+</table>
+
+<!-- 6. TRACCIABILITA -->
+<div class="page-break"></div>
+<h2>6. Tracciabilit&agrave; e Audit</h2>
+
+<h3>6.1 Eventi tracciati</h3>
+<table class="data">
+    <tr><th>Evento</th><th>Trigger</th><th>Dati registrati</th></tr>
+    <tr><td>Login</td><td>Accesso operatore o admin</td><td>user_id, user_name, IP, user_agent</td></tr>
+    <tr><td>Logout</td><td>Disconnessione esplicita</td><td>user_id, user_name, IP</td></tr>
+    <tr><td>Cambio stato fase</td><td>Modifica campo <code>stato</code> su OrdineFase</td><td>fase_id, stato_precedente, stato_nuovo, commessa</td></tr>
+    <tr><td>Eliminazione fase</td><td>Soft-delete di OrdineFase</td><td>fase, stato, ordine_id</td></tr>
+</table>
+
+<h3>6.2 Struttura tabella audit_logs</h3>
+<table class="data">
+    <tr><th>Colonna</th><th>Tipo</th><th>Indice</th></tr>
+    <tr><td>id</td><td>BIGINT UNSIGNED PK</td><td>Primary</td></tr>
+    <tr><td>user_id</td><td>BIGINT UNSIGNED NULL</td><td>Indicizzato</td></tr>
+    <tr><td>user_name</td><td>VARCHAR(100)</td><td>-</td></tr>
+    <tr><td>action</td><td>VARCHAR(50)</td><td>Indicizzato</td></tr>
+    <tr><td>model</td><td>VARCHAR(100)</td><td>Indicizzato</td></tr>
+    <tr><td>model_id</td><td>BIGINT UNSIGNED</td><td>Composto (model, model_id)</td></tr>
+    <tr><td>old_values</td><td>JSON</td><td>-</td></tr>
+    <tr><td>new_values</td><td>JSON</td><td>-</td></tr>
+    <tr><td>ip</td><td>VARCHAR(45)</td><td>-</td></tr>
+    <tr><td>user_agent</td><td>VARCHAR(500)</td><td>-</td></tr>
+    <tr><td>created_at</td><td>TIMESTAMP</td><td>Indicizzato</td></tr>
+</table>
+
+<h3>6.3 Politica di conservazione</h3>
+<p>Retention: <strong>90 giorni</strong>. Pulizia automatica eseguita quotidianamente alle ore 03:00 tramite comando schedulato <code>audit:pulisci</code>. I record oltre la soglia di retention vengono eliminati definitivamente.</p>
+
+<h3>6.4 Consultazione</h3>
+<p>L'audit log &egrave; consultabile tramite le pagine <code>/owner/audit-log</code> e <code>/admin/audit-log</code> con filtri per azione, utente e data. Paginazione a 50 record per pagina.</p>
+
+<!-- 7. PROTEZIONE COMUNICAZIONI -->
+<div class="page-break"></div>
+<h2>7. Protezione delle Comunicazioni</h2>
+
+<h3>7.1 Security Headers HTTP</h3>
+<table class="data">
+    <tr><th>Header</th><th>Valore</th><th>Protezione</th></tr>
+    <tr><td>X-Frame-Options</td><td>SAMEORIGIN</td><td>Clickjacking</td></tr>
+    <tr><td>X-Content-Type-Options</td><td>nosniff</td><td>MIME sniffing</td></tr>
+    <tr><td>Referrer-Policy</td><td>strict-origin-when-cross-origin</td><td>Information leakage</td></tr>
+    <tr><td>Permissions-Policy</td><td>camera=(), microphone=(), geolocation=()</td><td>Feature abuse</td></tr>
+</table>
+
+<h3>7.2 Protezione CSRF</h3>
+<ul>
+    <li>Token CSRF sincronizzato su tutte le form POST (Laravel VerifyCsrfToken)</li>
+    <li>Refresh automatico ogni 30 minuti tramite endpoint <code>/csrf-refresh</code></li>
+    <li>Intercettore JavaScript per auto-refresh e gestione errore 419</li>
+    <li>Gestione navigazione back/forward browser (evento pageshow)</li>
+    <li>6 endpoint esenti con autenticazione alternativa (op_token)</li>
+</ul>
+
+<h3>7.3 Cookie Policy</h3>
+<table class="data">
+    <tr><th>Flag</th><th>Valore</th><th>Effetto</th></tr>
+    <tr><td>HttpOnly</td><td>true</td><td>Cookie inaccessibile a JavaScript</td></tr>
+    <tr><td>SameSite</td><td>Lax</td><td>Cookie inviato solo su richieste same-site e navigazione top-level</td></tr>
+    <tr><td>Secure</td><td>Configurabile via .env</td><td>Cookie inviato solo su HTTPS quando attivo</td></tr>
+</table>
+
+<!-- 8. PROTEZIONE DATI -->
+<h2>8. Protezione dei Dati</h2>
+
+<h3>8.1 Cifratura</h3>
+<table class="data">
+    <tr><th>Dato</th><th>Metodo</th><th>Algoritmo</th></tr>
+    <tr><td>Sessioni utente</td><td>Cifratura automatica Laravel</td><td>AES-256-GCM</td></tr>
+    <tr><td>Segreto 2FA</td><td><code>encrypt()</code> / <code>decrypt()</code></td><td>AES-256-GCM</td></tr>
+    <tr><td>Password utente</td><td><code>Hash::make()</code></td><td>Bcrypt 12 round</td></tr>
+    <tr><td>Token dispositivo fidato</td><td>Hash one-way</td><td>SHA-256</td></tr>
+</table>
+
+<h3>8.2 Isolamento credenziali</h3>
+<p>Tutte le credenziali di accesso ai sistemi esterni sono archiviate esclusivamente nel file <code>.env</code> sul server di produzione. Il file &egrave; escluso dal repository Git. Le credenziali non compaiono nel codice sorgente.</p>
+
+<h3>8.3 Output encoding</h3>
+<p>Il framework Blade applica escape automatico (<code>htmlspecialchars</code>) a tutto l'output tramite sintassi <code>{{ }}</code>. Le 10 istanze di output non-escaped (<code>{!! !!}</code>) sono state verificate e risultano sicure (entit&agrave; HTML statiche, <code>json_encode()</code>, funzione <code>e()</code>).</p>
+
+<!-- 9. CONTROLLO TRAFFICO -->
+<h2>9. Controllo del Traffico</h2>
+
+<h3>9.1 Rate Limiting</h3>
+<table class="data">
+    <tr><th>Endpoint</th><th>Limite</th><th>Finestra</th><th>Chiave</th></tr>
+    <tr><td>POST /operatore/login</td><td>5 tentativi</td><td>15 minuti</td><td>Indirizzo IP</td></tr>
+    <tr><td>POST /admin/login</td><td>5 tentativi</td><td>15 minuti</td><td>Indirizzo IP</td></tr>
+    <tr><td>API generiche</td><td>60 richieste</td><td>1 minuto</td><td>Indirizzo IP</td></tr>
+</table>
+
+<h3>9.2 Architettura di rete</h3>
+<p>Il sistema MES opera esclusivamente all'interno della rete locale aziendale (LAN). Non &egrave; esposto a Internet. L'accesso dall'esterno &egrave; possibile solo tramite tunnel VPN autorizzato (tnnl.in) con configurazione proxy trust.</p>
+
+<!-- 10. MATRICE RISCHI -->
+<div class="page-break"></div>
+<h2>10. Matrice dei Rischi e Mitigazioni</h2>
+
+<table class="data">
+    <tr><th>ID</th><th>Minaccia</th><th>Prob.</th><th>Impatto</th><th>Contromisura</th><th>Rischio residuo</th></tr>
+    <tr><td>R01</td><td>Accesso non autorizzato (brute force login)</td><td class="risk-bassa">B</td><td class="risk-media">M</td><td>Rate limiting 5/15min, 2FA admin, rete chiusa</td><td class="risk-bassa">B</td></tr>
+    <tr><td>R02</td><td>Escalation di privilegi</td><td class="risk-bassa">B</td><td class="risk-alta">A</td><td>RBAC 9 ruoli, middleware enforcement, guard separato</td><td class="risk-bassa">B</td></tr>
+    <tr><td>R03</td><td>Cross-Site Request Forgery (CSRF)</td><td class="risk-bassa">B</td><td class="risk-media">M</td><td>Token CSRF con refresh 30min, SameSite=Lax</td><td class="risk-bassa">B</td></tr>
+    <tr><td>R04</td><td>Cross-Site Scripting (XSS)</td><td class="risk-bassa">B</td><td class="risk-media">M</td><td>Blade auto-escaping, output verificato, X-Content-Type-Options</td><td class="risk-bassa">B</td></tr>
+    <tr><td>R05</td><td>Clickjacking</td><td class="risk-bassa">B</td><td class="risk-bassa">B</td><td>X-Frame-Options: SAMEORIGIN</td><td class="risk-bassa">B</td></tr>
+    <tr><td>R06</td><td>Session hijacking</td><td class="risk-bassa">B</td><td class="risk-alta">A</td><td>Session encryption, HttpOnly, SameSite, token per-tab</td><td class="risk-bassa">B</td></tr>
+    <tr><td>R07</td><td>Perdita credenziali</td><td class="risk-media">M</td><td class="risk-alta">A</td><td>Credenziali in .env (escluso da Git), Bcrypt password, encrypt() 2FA</td><td class="risk-bassa">B</td></tr>
+    <tr><td>R08</td><td>Manomissione dati produzione</td><td class="risk-bassa">B</td><td class="risk-alta">A</td><td>Audit trail completo, RBAC, validazione input</td><td class="risk-bassa">B</td></tr>
+    <tr><td>R09</td><td>Indisponibilit&agrave; servizio (DoS)</td><td class="risk-bassa">B</td><td class="risk-alta">A</td><td>Rate limiting, rete chiusa, nessuna esposizione Internet</td><td class="risk-bassa">B</td></tr>
+    <tr><td>R10</td><td>Accesso fisico non autorizzato al server</td><td class="risk-media">M</td><td class="risk-alta">A</td><td>Server in locale protetto, autenticazione Windows</td><td class="risk-media">M</td></tr>
+</table>
+
+<!-- 11. PIANO EVOLUZIONE -->
+<div class="page-break"></div>
+<h2>11. Piano di Evoluzione Sicurezza</h2>
+
+<table class="data">
+    <tr><th>Protocollo</th><th>Descrizione</th><th>Priorit&agrave;</th><th>Fase</th></tr>
+    <tr><td><span class="badge badge-pianificato">PIANIFICATO</span> SEC-API-001</td><td>API Authentication (Laravel Sanctum) — Token-based auth per integrazioni esterne con scope e scadenza</td><td>Media</td><td>Fase SaaS</td></tr>
+    <tr><td><span class="badge badge-pianificato">PIANIFICATO</span> SEC-MT-001</td><td>Multi-tenancy — Isolamento dati per cliente con tenant_id, query scope globale</td><td>Alta</td><td>Fase SaaS</td></tr>
+    <tr><td><span class="badge badge-pianificato">PIANIFICATO</span> SEC-GDPR-001</td><td>Conformit&agrave; GDPR completa — Diritto all'oblio, portabilit&agrave; dati, registro trattamenti</td><td>Alta</td><td>Fase SaaS</td></tr>
+    <tr><td><span class="badge badge-pianificato">PIANIFICATO</span> SEC-SSO-001</td><td>Single Sign-On (SAML 2.0 / OAuth2) — Integrazione Active Directory, Google Workspace</td><td>Media</td><td>Fase SaaS</td></tr>
+    <tr><td><span class="badge badge-pianificato">PIANIFICATO</span> SEC-IP-001</td><td>IP Whitelisting — Restrizione accesso per CIDR range su ruoli privilegiati</td><td>Bassa</td><td>Fase SaaS</td></tr>
+    <tr><td><span class="badge badge-pianificato">PIANIFICATO</span> SEC-SCAN-001</td><td>Vulnerability scanning automatizzato — composer audit, OWASP ZAP, dependency check</td><td>Media</td><td>Q3 2026</td></tr>
+    <tr><td><span class="badge badge-pianificato">PIANIFICATO</span> SEC-WAF-001</td><td>Web Application Firewall — Filtraggio traffico malevolo a livello applicativo</td><td>Bassa</td><td>Fase SaaS</td></tr>
+    <tr><td><span class="badge badge-pianificato">PIANIFICATO</span> SEC-PT-001</td><td>Penetration testing periodico — Test di sicurezza da consulente esterno</td><td>Media</td><td>Annuale</td></tr>
+</table>
+
+<!-- 12. REGISTRO REVISIONI -->
+<h2>12. Registro delle Revisioni</h2>
+
+<table class="data">
+    <tr><th>Versione</th><th>Data</th><th>Descrizione</th><th>Autore</th></tr>
+    <tr><td>1.0</td><td>27/03/2026</td><td>Emissione iniziale — Documentazione protocolli Livello 1 e Livello 2</td><td>Giovanni Pietropaolo</td></tr>
+</table>
+
+<!-- 13. FIRMA -->
+<div class="page-break"></div>
+<h2>13. Approvazione e Firma</h2>
+
+<div class="firma-box">
+    <strong>Redatto da:</strong>
+    <div class="firma-linea"></div>
+    <div><strong>Giovanni Pietropaolo</strong></div>
+    <div class="ruolo">Analista e Progettista Basi Dati / Responsabile Sistemi Informativi</div>
+    <br>
+    <div>Data: ____/____/________</div>
+</div>
+
+<div class="firma-box">
+    <strong>Verificato e approvato da:</strong>
+    <div class="firma-linea"></div>
+    <div><strong>___________________________________</strong></div>
+    <div class="ruolo">Direzione Aziendale</div>
+    <br>
+    <div>Data: ____/____/________</div>
+</div>
+
+<p style="margin-top: 30px; font-size: 9pt; color: #888; text-align: center;">
+    Prossima revisione prevista: <strong>27 Settembre 2026</strong><br>
+    DOC-SEC-MES-001 v1.0 — &copy; Grafica Nappa S.R.L. — Tutti i diritti riservati
+</p>
+
+</body>
+</html>
