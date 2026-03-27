@@ -269,7 +269,8 @@ class ExportPresenzeExcel extends Command
             $cur->addDay();
         }
 
-        $lastCol = chr(ord('B') + count($giorni)); // colonna dopo l'ultimo giorno
+        $lastColIndex = count($giorni) + 1; // 1-based: A=1, B=2, ...
+        $lastCol = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($lastColIndex);
 
         // Titolo
         $sheet->mergeCells("A1:{$lastCol}1");
@@ -289,9 +290,10 @@ class ExportPresenzeExcel extends Command
 
         // Header: Dipendente + un colonna per ogni giorno
         $sheet->setCellValue('A3', 'Dipendente');
-        $col = 'B';
+        $colIdx = 2; // B = indice 2
         $colonneSabato = [];
         foreach ($giorni as $g) {
+            $col = Coordinate::stringFromColumnIndex($colIdx);
             $sheet->setCellValue($col . '3', $g->format('d/m'));
             $sheet->getColumnDimension($col)->setWidth(8);
             if ($g->isSaturday()) {
@@ -300,11 +302,10 @@ class ExportPresenzeExcel extends Command
                     'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'F59E0B']],
                 ]);
             }
-            $col++;
+            $colIdx++;
         }
-        $colTot = chr(ord($col) - 1); // ultima colonna dati
 
-        $headerRange = "A3:{$col}3";
+        $headerRange = "A3:{$lastCol}3";
         $sheet->getStyle($headerRange)->applyFromArray([
             'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 9],
             'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '1E40AF']],
@@ -354,6 +355,24 @@ class ExportPresenzeExcel extends Command
             }
         }
 
+        // Carica turni per confronto ritardi
+        $turniDb = DB::table('turni')
+            ->where('data', '>=', $dataInizio->format('Y-m-d'))
+            ->get();
+        // Mappa: cognome_nome → data → turno
+        $turniMappa = [];
+        foreach ($turniDb as $t) {
+            $turniMappa[strtoupper($t->cognome_nome)][$t->data] = $t;
+        }
+        $orariTurni = config('turni.orari', []);
+        $tolleranza = config('turni.tolleranza_minuti', 5);
+
+        // Mappa matricola → cognome_nome (per lookup turni)
+        $matricolaNome = [];
+        foreach ($anagrafica as $a) {
+            $matricolaNome[$a->matricola] = strtoupper("{$a->cognome} {$a->nome}");
+        }
+
         // Dati
         $esclusi = ['CARDILLO MARCO'];
         $row = 4;
@@ -363,26 +382,44 @@ class ExportPresenzeExcel extends Command
             if (in_array(strtoupper($nomeCompleto), $esclusi)) continue;
 
             $sheet->setCellValue('A' . $row, $nomeCompleto);
+            $cognomeNome = strtoupper("{$anag->cognome} {$anag->nome}");
 
-            $col = 'B';
+            $ci = 2; // B
             foreach ($giorni as $g) {
+                $c = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($ci);
                 $giornoStr = $g->format('Y-m-d');
                 $entrata = $mappa[$anag->matricola][$giornoStr] ?? null;
 
                 if ($entrata) {
-                    $sheet->setCellValue($col . $row, $entrata);
+                    $sheet->setCellValue($c . $row, $entrata);
+
+                    // Ritardo: confronta con turno previsto
+                    $turno = $turniMappa[$cognomeNome][$giornoStr] ?? null;
+                    if ($turno) {
+                        $codTurno = $turno->turno;
+                        if (isset($orariTurni[$codTurno]) && !in_array($codTurno, ['F', 'R'])) {
+                            $oraInizio = $turno->ora_inizio ?? $orariTurni[$codTurno]['inizio'];
+                            $previsto = Carbon::parse($giornoStr . ' ' . $oraInizio);
+                            $effettivo = Carbon::parse($giornoStr . ' ' . $entrata);
+                            if ($effettivo->gt($previsto->copy()->addMinutes($tolleranza))) {
+                                $sheet->getStyle($c . $row)->getFont()
+                                    ->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF0000'))
+                                    ->setBold(true);
+                            }
+                        }
+                    }
                 } else {
-                    $sheet->setCellValue($col . $row, '-');
-                    $sheet->getStyle($col . $row)->getFont()->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('CCCCCC'));
+                    $sheet->setCellValue($c . $row, '-');
+                    $sheet->getStyle($c . $row)->getFont()->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('CCCCCC'));
                 }
 
                 // Sabato: sfondo arancione chiaro
-                if (in_array($col, $colonneSabato)) {
-                    $sheet->getStyle($col . $row)->getFill()
+                if (in_array($c, $colonneSabato)) {
+                    $sheet->getStyle($c . $row)->getFill()
                         ->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('FEF3C7');
                 }
 
-                $col++;
+                $ci++;
             }
 
             if ($row % 2 === 0) {
@@ -395,7 +432,7 @@ class ExportPresenzeExcel extends Command
 
         $lastRow = $row - 1;
         if ($lastRow >= 4) {
-            $sheet->getStyle("A4:{$colTot}{$lastRow}")->applyFromArray([
+            $sheet->getStyle("A4:{$lastCol}{$lastRow}")->applyFromArray([
                 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'CCCCCC']]],
                 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
                 'font' => ['size' => 9],
