@@ -1879,14 +1879,30 @@ document.addEventListener('DOMContentLoaded', () => {
         return input.split(',').map(v => v.trim().toLowerCase()).filter(v => v);
     }
 
+    // Separa valori positivi e negativi (con prefisso -)
+    function parseWithExclusion(input) {
+        var all = input.split(',').map(v => v.trim().toLowerCase()).filter(v => v);
+        var include = all.filter(v => !v.startsWith('-'));
+        var exclude = all.filter(v => v.startsWith('-')).map(v => v.substring(1).trim()).filter(v => v);
+        return { include, exclude };
+    }
+
+    function matchField(fieldValue, parsed) {
+        // Se ci sono esclusioni, verifica che nessuna matchi
+        if (parsed.exclude.length && parsed.exclude.some(v => fieldValue.includes(v))) return false;
+        // Se ci sono inclusioni, almeno una deve matchare
+        if (parsed.include.length && !parsed.include.some(v => fieldValue.includes(v))) return false;
+        return true;
+    }
+
     function getSelectedOptions(select) {
         return Array.from(select.selectedOptions).map(opt => opt.value.toLowerCase());
     }
 
     function filtra() {
-        const commesse = parseValues(fCommessa.value);
-        const clienti = parseValues(fCliente.value);
-        const descrizioni = parseValues(fDescrizione.value);
+        const commesse = parseWithExclusion(fCommessa.value);
+        const clienti = parseWithExclusion(fCliente.value);
+        const descrizioni = parseWithExclusion(fDescrizione.value);
         const stati = getSelectedOptions(fStato);
         const fasi = getSelectedOptions(fFase);
         const reparti = getSelectedOptions(fReparto);
@@ -1894,9 +1910,9 @@ document.addEventListener('DOMContentLoaded', () => {
         requestAnimationFrame(() => {
             rowData.forEach(data => {
                 let match = true;
-                if(commesse.length) match = match && commesse.some(v => data.commessa.includes(v));
-                if(clienti.length) match = match && clienti.some(v => data.cliente.includes(v));
-                if(descrizioni.length) match = match && descrizioni.some(v => data.descrizione.includes(v));
+                if(commesse.include.length || commesse.exclude.length) match = match && matchField(data.commessa, commesse);
+                if(clienti.include.length || clienti.exclude.length) match = match && matchField(data.cliente, clienti);
+                if(descrizioni.include.length || descrizioni.exclude.length) match = match && matchField(data.descrizione, descrizioni);
                 if(stati.length) match = match && stati.includes(data.stato);
                 if(fasi.length) match = match && fasi.some(f => data.fase.includes(f));
                 if(reparti.length) match = match && reparti.includes(data.reparto);
