@@ -14,16 +14,15 @@ use PhpOffice\PhpSpreadsheet\Cell\DataType;
 
 class ExportPresenzeExcel extends Command
 {
-    protected $signature = 'presenze:export-excel {--giorni=14 : Quanti giorni di storico}';
+    protected $signature = 'presenze:export-excel';
     protected $description = 'Esporta storico presenze su Excel condiviso (dashboard_mes_presenze.xlsx)';
 
     public function handle()
     {
-        $giorni = (int) $this->option('giorni');
-        $dataInizio = Carbon::today()->subDays($giorni - 1);
+        $dataInizio = Carbon::parse('2026-03-16');
         $oggi = Carbon::today();
 
-        $this->info("Export presenze: ultimi {$giorni} giorni ({$dataInizio->format('d/m/Y')} → {$oggi->format('d/m/Y')})");
+        $this->info("Export presenze: {$dataInizio->format('d/m/Y')} → {$oggi->format('d/m/Y')}");
 
         $anagrafica = DB::table('nettime_anagrafica')->orderBy('cognome')->get();
         if ($anagrafica->isEmpty()) {
