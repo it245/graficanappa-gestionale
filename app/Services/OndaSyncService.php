@@ -759,6 +759,19 @@ class OndaSyncService
                     }
                 }
 
+                // Dedup brossura esterna per commessa: 1 sola per commessa per fase_catalogo
+                if ($repartoNome === 'esterno' && str_starts_with($faseNome, 'EXTBROSS')) {
+                    $chiaveDedup = $commessa . '|extbross|' . $faseNome;
+                    if (isset($dedupPerCommessa[$chiaveDedup])) continue;
+
+                    $existsInCommessa = OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
+                        ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
+                        ->exists();
+
+                    $dedupPerCommessa[$chiaveDedup] = true;
+                    if ($existsInCommessa) continue;
+                }
+
                 // Dedup plastificazione per commessa: 1 sola per commessa per fase_catalogo
                 // (stessa plastificazione su articoli diversi = unico passaggio macchina)
                 if ($repartoNome === 'plastificazione') {
