@@ -18,7 +18,7 @@ use App\Http\Controllers\PresenzeController;
 // Operatori
 Route::prefix('operatore')->group(function() {
      Route::get('/login', [OperatoreLoginController::class, 'form'])->name('operatore.login');
-    Route::post('/login', [OperatoreLoginController::class, 'login'])->name('operatore.login.post');
+    Route::post('/login', [OperatoreLoginController::class, 'login'])->middleware('throttle:login')->name('operatore.login.post');
 
     Route::middleware(['operatore.auth'])->group(function() {
         Route::get('dashboard', [DashboardOperatoreController::class, 'index'])->name('operatore.dashboard');
@@ -64,6 +64,7 @@ Route::get('/owner/presenze', [PresenzeController::class, 'index'])->name('owner
 Route::get('/owner/note-spedizione', [DashboardSpedizioneController::class, 'noteGiornaliere'])->name('owner.noteSpedizione');
 Route::post('/owner/note-spedizione', [DashboardSpedizioneController::class, 'salvaNotaGiornaliera'])->name('owner.salvaNotaSpedizione');
 Route::get('/owner/note-spedizione-check', [DashboardSpedizioneController::class, 'noteUltimoAggiornamento'])->name('owner.noteSpedizioneCheck');
+Route::get('/owner/audit-log', [DashboardOwnerController::class, 'auditLog'])->name('owner.auditLog');
 });
 
 // Alert ritardi (API senza auth per polling dashboard)
@@ -71,7 +72,7 @@ Route::get('/owner/alert-ritardi', [PresenzeController::class, 'alertRitardi'])-
 
 // Admin — login pubblico
 Route::get('/admin/login', [AdminLoginController::class, 'form'])->name('admin.login');
-Route::post('/admin/login', [AdminLoginController::class, 'login'])->name('admin.login.post');
+Route::post('/admin/login', [AdminLoginController::class, 'login'])->middleware('throttle:login')->name('admin.login.post');
 
 // Admin — area protetta
 Route::middleware(['admin'])->prefix('admin')->group(function() {

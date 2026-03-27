@@ -7,6 +7,7 @@ use App\Models\Operatore;
 use App\Models\OperatoreToken;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use App\Services\AuditService;
 
 class OperatoreLoginController extends Controller
 {
@@ -51,6 +52,8 @@ class OperatoreLoginController extends Controller
             'expires_at' => now()->addHours(12),
         ]);
 
+        AuditService::login($operatore->id, $operatore->nome . ' ' . ($operatore->cognome ?? ''));
+
         if ($operatore->ruolo === 'fiery_contatori') {
             return redirect()->route('mes.fiery.contatori', ['op_token' => $token]);
         }
@@ -77,6 +80,7 @@ class OperatoreLoginController extends Controller
             OperatoreToken::where('token', $token)->delete();
         }
 
+        AuditService::logout();
         Auth::guard('operatore')->logout();
         $request->session()->flush();
         return redirect()->route('operatore.login');

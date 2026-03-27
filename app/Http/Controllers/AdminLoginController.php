@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Operatore;
 use Illuminate\Support\Facades\Hash;
+use App\Services\AuditService;
 
 class AdminLoginController extends Controller
 {
@@ -35,11 +36,14 @@ class AdminLoginController extends Controller
             'operatore_ruolo' => $operatore->ruolo,
         ]);
 
+        AuditService::login($operatore->id, $operatore->nome . ' ' . ($operatore->cognome ?? ''));
+
         return redirect('/admin/dashboard');
     }
 
     public function logout(Request $request)
     {
+        AuditService::logout();
         $request->session()->flush();
         return redirect('/admin/login');
     }

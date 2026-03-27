@@ -6,8 +6,13 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use App\Events\PhaseCompleted;
 use App\Listeners\PropagateAvailability;
+use App\Models\OrdineFase;
+use App\Observers\OrdineFaseObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -26,6 +31,21 @@ class AppServiceProvider extends ServiceProvider
     {
         // Mossa 37: propagazione istantanea quando una fase viene completata
         Event::listen(PhaseCompleted::class, PropagateAvailability::class);
+
+        // Audit Log: traccia automaticamente cambio stato e eliminazione fasi
+        OrdineFase::observe(OrdineFaseObserver::class);
+
+        // Rate Limiting
+        RateLimiter::for('login', function (Request $request) {
+            return Limit::perMinutes(15, 5)->by($request->ip())
+                ->response(function () {
+                    return response('Troppi tentativi di accesso. Riprova tra qualche minuto.', 429);
+                });
+        });
+
+        RateLimiter::for('api', function (Request $request) {
+            return Limit::perMinute(60)->by($request->ip());
+        });
 
         // Forza HTTPS quando si accede da tunnel (tnnl.in non manda X-Forwarded-Proto)
         if (str_contains(request()->getHost(), 'tnnl.in')) {
