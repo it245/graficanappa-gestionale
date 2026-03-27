@@ -234,6 +234,12 @@
                 <label class="form-check-label" for="noEanCheck" style="font-weight:600;">Senza codice EAN</label>
             </div>
 
+            {{-- Sezione senza EAN: descrizione editabile --}}
+            <div id="no-ean-section" style="display:none;">
+                <label class="form-label">Descrizione articolo</label>
+                <input type="text" id="campo-articolo-noean" class="form-control" value="{{ $articoloDefault }}" placeholder="Scrivi la descrizione...">
+            </div>
+
             <div id="ean-section">
                 <label class="form-label">Articolo <small class="text-muted">(cerca per nome o codice EAN)</small></label>
                 <div class="ean-search-wrapper">
@@ -562,8 +568,14 @@ function aggiornaAnteprima() {
         }
     @elseif($isItalianaConfetti)
         cliente = document.getElementById('campo-cliente').value;
-        articolo = document.getElementById('campo-articolo').value;
-        ean = document.getElementById('campo-ean').value;
+        var noEan = document.getElementById('noEanCheck').checked;
+        if (noEan) {
+            articolo = document.getElementById('campo-articolo-noean').value;
+            ean = '';
+        } else {
+            articolo = document.getElementById('campo-articolo').value;
+            ean = document.getElementById('campo-ean').value;
+        }
     @elseif($isTifataPlastica ?? false)
         cliente = document.getElementById('campo-cliente').value;
         articolo = document.getElementById('campo-articolo-manuale').value;
@@ -656,7 +668,9 @@ document.querySelectorAll('.etichetta-form input').forEach(function(el) {
 function toggleNoEan() {
     var checked = document.getElementById('noEanCheck').checked;
     var section = document.getElementById('ean-section');
+    var noEanSection = document.getElementById('no-ean-section');
     if (section) section.style.display = checked ? 'none' : '';
+    if (noEanSection) noEanSection.style.display = checked ? '' : 'none';
     if (checked) {
         document.getElementById('campo-ean').value = '';
         document.getElementById('campo-articolo').value = '';
@@ -855,8 +869,9 @@ function stampa() {
     }
     @else
     @if($isItalianaConfetti)
-    var ean = document.getElementById('campo-ean').value;
-    var articolo = document.getElementById('campo-articolo').value;
+    var noEanChecked = document.getElementById('noEanCheck').checked;
+    var ean = noEanChecked ? '' : document.getElementById('campo-ean').value;
+    var articolo = noEanChecked ? document.getElementById('campo-articolo-noean').value : document.getElementById('campo-articolo').value;
     @elseif($isTifataPlastica ?? false)
     var ean = '';
     var articolo = document.getElementById('campo-articolo-manuale').value;
@@ -866,8 +881,12 @@ function stampa() {
     @endif
 
     @if($isItalianaConfetti)
-    if (!ean) {
+    if (!noEanChecked && !ean) {
         alert('Inserisci o scansiona il codice EAN.');
+        return;
+    }
+    if (noEanChecked && !articolo) {
+        alert('Inserisci la descrizione articolo.');
         return;
     }
     @endif
