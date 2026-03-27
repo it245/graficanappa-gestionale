@@ -4,10 +4,13 @@ namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Spatie\Permission\Traits\HasRoles;
 
 class Operatore extends Authenticatable
 {
-    use Notifiable;
+    use Notifiable, HasRoles;
+
+    protected string $guard_name = 'operatore';
      
     protected $table = 'operatori'; 
 
