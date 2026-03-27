@@ -17,6 +17,7 @@
             <a href="{{ route('admin.reportPrinect') }}" class="btn btn-secondary me-2">Report Prinect</a>
             <a href="{{ route('admin.costi.report') }}" class="btn btn-outline-success me-2">Costi & Margini</a>
             <a href="{{ route('admin.turni') }}" class="btn btn-outline-info me-2">Turni Settimanali</a>
+            <a href="{{ route('admin.auditLog') }}" class="btn btn-outline-dark me-2">Audit Log</a>
             <a href="{{ route('mes.fiery') }}" class="btn btn-outline-warning me-2">Fiery V900</a>
             <a href="{{ route('admin.logout') }}" class="btn btn-outline-secondary" style="display:inline;">Logout</a>
         </div>

@@ -109,6 +109,9 @@ Route::middleware(['admin'])->prefix('admin')->group(function() {
     Route::delete('/costi/tariffe/{id}', [CostiMarginiController::class, 'eliminaTariffa'])->name('admin.costi.eliminaTariffa');
     Route::get('/costi/report', [CostiMarginiController::class, 'reportCosti'])->name('admin.costi.report');
     Route::get('/costi/report/excel', [CostiMarginiController::class, 'reportCostiExcel'])->name('admin.costi.reportExcel');
+
+    // Audit Log
+    Route::get('/audit-log', [DashboardAdminController::class, 'auditLog'])->name('admin.auditLog');
 });
 
 // Prinect — accessibile a owner e admin

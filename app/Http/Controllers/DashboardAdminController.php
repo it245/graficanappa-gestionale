@@ -1623,4 +1623,27 @@ class DashboardAdminController extends Controller
 
         return response()->json(['success' => true]);
     }
+
+    /**
+     * Audit Log
+     */
+    public function auditLog(Request $request)
+    {
+        $query = DB::table('audit_logs')->orderByDesc('created_at');
+
+        if ($request->filled('azione')) {
+            $query->where('action', $request->azione);
+        }
+        if ($request->filled('utente')) {
+            $query->where('user_name', 'like', '%' . $request->utente . '%');
+        }
+        if ($request->filled('data')) {
+            $query->whereDate('created_at', $request->data);
+        }
+
+        $logs = $query->paginate(50);
+        $azioni = DB::table('audit_logs')->distinct()->pluck('action');
+
+        return view('admin.audit_log', compact('logs', 'azioni'));
+    }
 }
