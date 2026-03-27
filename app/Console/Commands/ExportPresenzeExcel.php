@@ -293,7 +293,7 @@ class ExportPresenzeExcel extends Command
         $colIdx = 2; // B = indice 2
         $colonneSabato = [];
         foreach ($giorni as $g) {
-            $col = Coordinate::stringFromColumnIndex($colIdx);
+            $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIdx);
             $sheet->setCellValue($col . '3', $g->format('d/m'));
             $sheet->getColumnDimension($col)->setWidth(8);
             if ($g->isSaturday()) {
