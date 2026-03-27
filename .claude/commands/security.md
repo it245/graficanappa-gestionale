@@ -98,49 +98,8 @@ Ogni livello è indipendente e deployabile senza downtime. Chiedi all'utente qua
 
 ---
 
-### LIVELLO 3 — API & Integrazioni (Priorità MEDIA)
-
-#### 3.1 API Authentication (Sanctum)
-- Token-based auth per integrazioni esterne
-- Scoped tokens: `sync:onda`, `sync:prinect`, `sync:fiery`, `read:ordini`, `write:ordini`
-- Token rotation: scadenza 30 giorni
-- Dashboard admin per gestione token
-
-#### 3.2 Webhook Signing
-- Firma HMAC su webhook in uscita
-- Verifica firma su webhook in entrata
-- Protezione da replay attack (timestamp + nonce)
-
-#### 3.3 Logging Integrazioni
-- Log separato per ogni sync (Onda, Prinect, Fiery, BRT, NetTime)
-- Traccia: richieste, risposte, errori, tempi
-- Alerting su errori ripetuti (>3 fallimenti consecutivi)
-
----
-
-### LIVELLO 4 — Enterprise & Compliance (Priorità per SaaS)
-
-#### 4.1 Multi-Tenancy Security
-- Isolamento dati per cliente (tenant_id su ogni tabella)
-- Query scope globale per tenant
-- Middleware tenant resolution (subdomain)
-- Admin super-tenant per gestione
-
-#### 4.2 GDPR Compliance
-- Registro trattamenti dati (presenze, operatori, login)
-- Diritto all'oblio: anonimizzazione dati operatore su richiesta
-- Export dati personali (JSON/CSV)
-- Data retention policy configurabile per tabella
-
-#### 4.3 SSO (Single Sign-On)
-- SAML 2.0 / OAuth2 per Active Directory / Google Workspace / Microsoft 365
-- Fallback su login locale se SSO non configurato
-- Utile per clienti enterprise nella versione SaaS
-
-#### 4.4 IP Whitelisting
-- Tabella `allowed_ips`: CIDR range per tenant/ruolo
-- Middleware per ruoli sensibili (owner, admin)
-- Alert email se login da IP sconosciuto
+> **LIVELLI 3 e 4 (API Sanctum, Webhook, Multi-tenant, GDPR, SSO, IP Whitelist) rimandati alla fase di vendita SaaS.**
+> Per ora non servono: le sync girano sullo stesso server, il MES non è esposto a internet, non ci sono clienti esterni.
 
 ---
 
