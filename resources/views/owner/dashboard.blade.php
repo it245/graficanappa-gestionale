@@ -501,6 +501,12 @@ tr:hover td {
                 <div style="font-size:22px; font-weight:700; color:#e67e22; line-height:1;">{{ $fasiAttive }}</div>
             </div>
         </div>
+        <div class="d-flex align-items-center p-2 rounded flex-fill" style="background:#ede9fe; height:56px; min-width:200px; cursor:pointer;" data-bs-toggle="modal" data-bs-target="#modalRiempimento">
+            <div>
+                <div style="font-size:11px; color:#555; line-height:1.2;">Riempimento macchine</div>
+                <div style="font-size:22px; font-weight:700; color:#7c3aed; line-height:1;">{{ round(collect($riempimento)->sum('ore_totali')) }}h</div>
+            </div>
+        </div>
     </div>
 
     {{-- ICONE AZIONI --}}
@@ -2349,4 +2355,46 @@ document.addEventListener('DOMContentLoaded', function() {
     window.addEventListener('resize',vis);
 })();
 </script>
+
+{{-- MODALE RIEMPIMENTO MACCHINE --}}
+<div class="modal fade" id="modalRiempimento" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content" style="background:#0f172a; color:#f1f5f9; border:none;">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title" style="color:#a78bfa; font-weight:800;">Riempimento Macchine
+                    <span style="font-size:0.7rem; color:#64748b; margin-left:0.5rem;">Totale: {{ round(collect($riempimento)->sum('ore_totali')) }}h in coda</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body pt-2">
+                @php $maxOre = max(collect($riempimento)->max('ore_totali'), 1); @endphp
+                @foreach($riempimento as $r)
+                <div class="d-flex align-items-center mb-1">
+                    <span style="font-size:0.85rem; font-weight:600; color:#94a3b8; min-width:120px;">{{ $r['nome'] }}</span>
+                    <div style="flex:1; height:18px; background:#1e293b; border-radius:4px; overflow:hidden; position:relative; margin:0 8px;">
+                        @php
+                            $pctPronte = ($r['ore_1'] / $maxOre) * 100;
+                            $pctCoda = ($r['ore_0'] / $maxOre) * 100;
+                            $pctTotale = $pctPronte + $pctCoda;
+                        @endphp
+                        <div style="position:absolute; left:0; top:0; height:100%; width:{{ $pctTotale }}%; display:flex;">
+                            <div style="width:{{ $pctPronte > 0 ? ($r['ore_1'] / ($r['ore_0'] + $r['ore_1'] ?: 1)) * 100 : 0 }}%; height:100%; background:linear-gradient(90deg, #16a34a, #4ade80); border-radius:4px 0 0 4px;"></div>
+                            <div style="flex:1; height:100%; background:linear-gradient(90deg, #475569, #64748b); border-radius:0 4px 4px 0;"></div>
+                        </div>
+                        <span style="position:absolute; left:{{ min($pctTotale + 1, 88) }}%; top:50%; transform:translateY(-50%); font-size:0.75rem; font-weight:700; color:#f1f5f9; white-space:nowrap;">{{ round($r['ore_totali'], 0) }}h</span>
+                    </div>
+                </div>
+                <div class="d-flex mb-3" style="margin-left:120px; font-size:0.75rem; color:#64748b; gap:1.5rem;">
+                    <span style="color:#4ade80;">Pronte da lavorare: {{ $r['ore_1'] }}h ({{ $r['fasi_1'] }})</span>
+                    <span>In coda: {{ $r['ore_0'] }}h ({{ $r['fasi_0'] }})</span>
+                </div>
+                @endforeach
+                <div class="mt-2 d-flex gap-3" style="font-size:0.75rem; color:#64748b;">
+                    <span><span style="color:#4ade80;">&#9632;</span> Pronte da lavorare (stato 1)</span>
+                    <span><span style="color:#64748b;">&#9632;</span> In coda (stato 0)</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
