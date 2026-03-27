@@ -49,7 +49,7 @@ class ExportPresenzeExcel extends Command
         // ═══════════════════════════════════════
         // FOGLI GIORNALIERI (ultimi 7 giorni)
         // ═══════════════════════════════════════
-        for ($i = 1; $i <= min(7, $giorni); $i++) {
+        for ($i = 1; $i <= 7; $i++) {
             $data = Carbon::today()->subDays($i);
             if ($data->isWeekend()) continue;
             $sheet = $spreadsheet->createSheet();
