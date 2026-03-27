@@ -366,8 +366,7 @@ class ExportPresenzeExcel extends Command
                 $totMinuti += $minGiorno;
 
                 if ($entrata) {
-                    $oreStr = $minGiorno > 0 ? sprintf('%dh%02d', intdiv($minGiorno, 60), $minGiorno % 60) : $entrata;
-                    $sheet->setCellValue($col . $row, $oreStr);
+                    $sheet->setCellValue($col . $row, $entrata);
                 } else {
                     $sheet->setCellValue($col . $row, '-');
                     $sheet->getStyle($col . $row)->getFont()->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('CCCCCC'));
