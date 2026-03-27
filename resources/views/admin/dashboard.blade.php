@@ -18,6 +18,12 @@
             <a href="{{ route('admin.costi.report') }}" class="btn btn-outline-success me-2">Costi & Margini</a>
             <a href="{{ route('admin.turni') }}" class="btn btn-outline-info me-2">Turni Settimanali</a>
             <a href="{{ route('admin.auditLog') }}" class="btn btn-outline-dark me-2">Audit Log</a>
+            @php $op2fa = DB::table('operatori')->where('id', session('operatore_id'))->first(); @endphp
+            @if($op2fa && $op2fa->two_factor_enabled)
+                <a href="{{ route('admin.2fa.devices') }}" class="btn btn-outline-success me-2">2FA Attivo</a>
+            @else
+                <a href="{{ route('admin.2fa.setup') }}" class="btn btn-outline-warning me-2">Attiva 2FA</a>
+            @endif
             <a href="{{ route('mes.fiery') }}" class="btn btn-outline-warning me-2">Fiery V900</a>
             <a href="{{ route('admin.logout') }}" class="btn btn-outline-secondary" style="display:inline;">Logout</a>
         </div>

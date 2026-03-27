@@ -1,7 +1,12 @@
 <?php
 // Esplora tutto il contenuto di NetTime sul .34
 
-@exec('net use \\\\192.168.1.34\\NetTime /user:mes M3s@Nappa26 2>&1');
+require __DIR__ . '/vendor/autoload.php';
+$app = require_once __DIR__ . '/bootstrap/app.php';
+$app->make('Illuminate\Contracts\Console\Kernel')->bootstrap();
+$user = env('NETTIME_SHARE_USER', 'mes');
+$pass = env('NETTIME_SHARE_PASS', '');
+@exec("net use \\\\192.168.1.34\\NetTime /user:{$user} {$pass} 2>&1");
 
 $basePath = '\\\\192.168.1.34\\NetTime';
 $matricola = '000666'; // TORROMACCO

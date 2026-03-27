@@ -29,6 +29,10 @@ class AdminAuth
 
         // 2. Fallback sessione
         if (session('operatore_ruolo') === 'admin') {
+            // Se 2FA in attesa, redirect alla challenge
+            if (session('2fa_pending')) {
+                return redirect('/admin/2fa/challenge');
+            }
             return $next($request);
         }
 

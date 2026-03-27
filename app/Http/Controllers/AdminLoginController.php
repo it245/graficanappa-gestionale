@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Operatore;
 use Illuminate\Support\Facades\Hash;
 use App\Services\AuditService;
+use App\Services\TwoFactorService;
 
 class AdminLoginController extends Controller
 {
@@ -37,6 +38,14 @@ class AdminLoginController extends Controller
         ]);
 
         AuditService::login($operatore->id, $operatore->nome . ' ' . ($operatore->cognome ?? ''));
+
+        // 2FA: se abilitato e dispositivo non fidato → challenge
+        if ($operatore->two_factor_enabled) {
+            if (!TwoFactorService::isDeviceTrusted($request, $operatore->id)) {
+                $request->session()->put('2fa_pending', true);
+                return redirect('/admin/2fa/challenge');
+            }
+        }
 
         return redirect('/admin/dashboard');
     }

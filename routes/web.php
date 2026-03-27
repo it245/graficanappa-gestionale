@@ -14,6 +14,7 @@ use App\Http\Controllers\DashboardAdminController;
 use App\Http\Controllers\FieryController;
 use App\Http\Controllers\EtichettaController;
 use App\Http\Controllers\PresenzeController;
+use App\Http\Controllers\TwoFactorController;
 
 // Operatori
 Route::prefix('operatore')->group(function() {
@@ -74,8 +75,18 @@ Route::get('/owner/alert-ritardi', [PresenzeController::class, 'alertRitardi'])-
 Route::get('/admin/login', [AdminLoginController::class, 'form'])->name('admin.login');
 Route::post('/admin/login', [AdminLoginController::class, 'login'])->middleware('throttle:login')->name('admin.login.post');
 
+// Admin — 2FA challenge (dopo login, prima di admin middleware)
+Route::get('/admin/2fa/challenge', [TwoFactorController::class, 'challenge'])->name('admin.2fa.challenge');
+Route::post('/admin/2fa/verify', [TwoFactorController::class, 'verify'])->name('admin.2fa.verify');
+
 // Admin — area protetta
 Route::middleware(['admin'])->prefix('admin')->group(function() {
+    // 2FA setup e gestione
+    Route::get('/2fa/setup', [TwoFactorController::class, 'setup'])->name('admin.2fa.setup');
+    Route::post('/2fa/confirm', [TwoFactorController::class, 'confirm'])->name('admin.2fa.confirm');
+    Route::post('/2fa/disable', [TwoFactorController::class, 'disable'])->name('admin.2fa.disable');
+    Route::get('/2fa/devices', [TwoFactorController::class, 'devices'])->name('admin.2fa.devices');
+    Route::delete('/2fa/devices/{id}', [TwoFactorController::class, 'revokeDevice'])->name('admin.2fa.revokeDevice');
     Route::match(['get', 'post'], '/logout', [AdminLoginController::class, 'logout'])->name('admin.logout');
     Route::get('/dashboard', [DashboardAdminController::class, 'index'])->name('admin.dashboard');
     Route::get('/operatore/nuovo', [DashboardAdminController::class, 'crea'])->name('admin.operatore.crea');
