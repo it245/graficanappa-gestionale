@@ -14,5 +14,5 @@ return [
     ],
 
     // Tolleranza ritardo in minuti
-    'tolleranza_minuti' => 15,
+    'tolleranza_minuti' => 5,
 ];
