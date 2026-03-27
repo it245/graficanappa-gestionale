@@ -14,7 +14,7 @@ use PhpOffice\PhpSpreadsheet\Cell\DataType;
 
 class ExportPresenzeExcel extends Command
 {
-    protected $signature = 'presenze:export-excel {--giorni=30 : Quanti giorni di storico}';
+    protected $signature = 'presenze:export-excel {--giorni=14 : Quanti giorni di storico}';
     protected $description = 'Esporta storico presenze su Excel condiviso (dashboard_mes_presenze.xlsx)';
 
     public function handle()
