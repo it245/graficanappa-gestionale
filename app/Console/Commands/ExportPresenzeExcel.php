@@ -259,11 +259,11 @@ class ExportPresenzeExcel extends Command
 
     private function buildFoglioRiepilogo($sheet, $anagrafica, Carbon $dataInizio, Carbon $oggi)
     {
-        // Genera lista giorni lavorativi (lun-ven)
+        // Genera lista giorni (lun-sab, esclusa domenica)
         $giorni = [];
         $cur = $dataInizio->copy();
         while ($cur->lte($oggi)) {
-            if (!$cur->isWeekend()) {
+            if (!$cur->isSunday()) {
                 $giorni[] = $cur->copy();
             }
             $cur->addDay();
@@ -290,17 +290,21 @@ class ExportPresenzeExcel extends Command
         // Header: Dipendente + un colonna per ogni giorno
         $sheet->setCellValue('A3', 'Dipendente');
         $col = 'B';
+        $colonneSabato = [];
         foreach ($giorni as $g) {
             $sheet->setCellValue($col . '3', $g->format('d/m'));
             $sheet->getColumnDimension($col)->setWidth(8);
+            if ($g->isSaturday()) {
+                $colonneSabato[] = $col;
+                $sheet->getStyle($col . '3')->applyFromArray([
+                    'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'F59E0B']],
+                ]);
+            }
             $col++;
         }
-        // Colonna totale ore
-        $sheet->setCellValue($col . '3', 'Tot Ore');
-        $colTot = $col;
-        $sheet->getColumnDimension($colTot)->setWidth(10);
+        $colTot = chr(ord($col) - 1); // ultima colonna dati
 
-        $headerRange = "A3:{$colTot}3";
+        $headerRange = "A3:{$col}3";
         $sheet->getStyle($headerRange)->applyFromArray([
             'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 9],
             'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '1E40AF']],
@@ -351,19 +355,19 @@ class ExportPresenzeExcel extends Command
         }
 
         // Dati
+        $esclusi = ['CARDILLO MARCO'];
         $row = 4;
         foreach ($anagrafica as $anag) {
             if (!isset($mappa[$anag->matricola])) continue;
+            $nomeCompleto = "{$anag->cognome} {$anag->nome}";
+            if (in_array(strtoupper($nomeCompleto), $esclusi)) continue;
 
-            $sheet->setCellValue('A' . $row, "{$anag->cognome} {$anag->nome}");
+            $sheet->setCellValue('A' . $row, $nomeCompleto);
 
             $col = 'B';
-            $totMinuti = 0;
             foreach ($giorni as $g) {
                 $giornoStr = $g->format('Y-m-d');
                 $entrata = $mappa[$anag->matricola][$giornoStr] ?? null;
-                $minGiorno = $orePerGiorno[$anag->matricola][$giornoStr] ?? 0;
-                $totMinuti += $minGiorno;
 
                 if ($entrata) {
                     $sheet->setCellValue($col . $row, $entrata);
@@ -371,12 +375,15 @@ class ExportPresenzeExcel extends Command
                     $sheet->setCellValue($col . $row, '-');
                     $sheet->getStyle($col . $row)->getFont()->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('CCCCCC'));
                 }
+
+                // Sabato: sfondo arancione chiaro
+                if (in_array($col, $colonneSabato)) {
+                    $sheet->getStyle($col . $row)->getFill()
+                        ->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('FEF3C7');
+                }
+
                 $col++;
             }
-
-            // Totale ore
-            $sheet->setCellValue($colTot . $row, sprintf('%dh %02dm', intdiv($totMinuti, 60), $totMinuti % 60));
-            $sheet->getStyle($colTot . $row)->getFont()->setBold(true);
 
             if ($row % 2 === 0) {
                 $sheet->getStyle("A{$row}")->getFill()
