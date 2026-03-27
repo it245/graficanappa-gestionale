@@ -772,6 +772,22 @@ class OndaSyncService
                     if ($existsInCommessa) continue;
                 }
 
+                // Dedup EXTALLEST.SHOPPER per commessa + descrizione: 1 per combinazione
+                if ($repartoNome === 'esterno' && str_contains(strtoupper($faseNome), 'EXTALLEST')) {
+                    $descDedup = strtolower(trim($ordine->descrizione ?? ''));
+                    $chiaveDedup = $commessa . '|extallest|' . $faseNome . '|' . $descDedup;
+                    if (isset($dedupPerCommessa[$chiaveDedup])) continue;
+
+                    $existsInCommessa = OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
+                        ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa)
+                            ->where('descrizione', $ordine->descrizione))
+                        ->whereNull('deleted_at')
+                        ->exists();
+
+                    $dedupPerCommessa[$chiaveDedup] = true;
+                    if ($existsInCommessa) continue;
+                }
+
                 // Dedup plastificazione per commessa: 1 sola per commessa per fase_catalogo
                 // (stessa plastificazione su articoli diversi = unico passaggio macchina)
                 if ($repartoNome === 'plastificazione') {
