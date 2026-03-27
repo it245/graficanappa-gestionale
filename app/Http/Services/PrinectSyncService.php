@@ -476,7 +476,8 @@ class PrinectSyncService
             $fase->tempo_esecuzione_sec = $dati['tempo_esecuzione_sec'];
 
             // Se la fase non e ancora avviata (stato 0 o 1), avviala (stato=2)
-            if (in_array($fase->stato, [0, '0', 1, '1'])) {
+            // Ma solo se ha fogli buoni o non è stata riportata manualmente a 0
+            if (in_array($fase->stato, [0, '0', 1, '1']) && $dati['fogli_buoni'] > 0) {
                 $fase->stato = 2;
             }
 
