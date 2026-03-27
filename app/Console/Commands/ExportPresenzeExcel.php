@@ -368,17 +368,6 @@ class ExportPresenzeExcel extends Command
                 if ($entrata) {
                     $oreStr = $minGiorno > 0 ? sprintf('%dh%02d', intdiv($minGiorno, 60), $minGiorno % 60) : $entrata;
                     $sheet->setCellValue($col . $row, $oreStr);
-
-                    // Colore: verde se >= 8h, giallo se >= 4h, rosso se < 4h
-                    if ($minGiorno >= 480) {
-                        $bgColor = 'DCFCE7'; // verde chiaro
-                    } elseif ($minGiorno >= 240) {
-                        $bgColor = 'FEF9C3'; // giallo chiaro
-                    } else {
-                        $bgColor = 'FEE2E2'; // rosso chiaro
-                    }
-                    $sheet->getStyle($col . $row)->getFill()
-                        ->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB($bgColor);
                 } else {
                     $sheet->setCellValue($col . $row, '-');
                     $sheet->getStyle($col . $row)->getFont()->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('CCCCCC'));
