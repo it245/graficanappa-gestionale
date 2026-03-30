@@ -258,7 +258,15 @@ Route::get('/kiosk-demo', function() {
     ]);
 });
 
-// Report commesse per percorso produttivo (PDF)
+// Report commesse per percorso produttivo (Excel)
+Route::get('/report-percorso/excel', function () {
+    return \Maatwebsite\Excel\Facades\Excel::download(
+        new \App\Exports\ReportPercorsoExport(),
+        'Commesse_Percorso_' . now()->format('Y-m-d') . '.xlsx'
+    );
+});
+
+// Report commesse per percorso produttivo (HTML)
 Route::get('/report-percorso', function () {
     $ordini = \App\Models\Ordine::whereHas('fasi', fn($q) => $q->where('stato', '<', 4))
         ->with(['fasi.faseCatalogo'])

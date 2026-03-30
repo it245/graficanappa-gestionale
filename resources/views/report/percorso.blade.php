@@ -56,7 +56,10 @@
 </head>
 <body>
 
-<div class="no-print" style="text-align:center; margin-bottom:12px;">
+<div class="no-print" style="text-align:center; margin-bottom:12px; display:flex; justify-content:center; gap:12px;">
+    <a href="/report-percorso/excel" style="padding:8px 24px; font-size:14px; background:#198754; color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:700; text-decoration:none;">
+        Scarica Excel
+    </a>
     <button onclick="window.print()" style="padding:8px 24px; font-size:14px; background:#d11317; color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:700;">
         Stampa / Salva PDF
     </button>
