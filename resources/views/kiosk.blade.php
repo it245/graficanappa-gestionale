@@ -278,7 +278,7 @@ html { font-size: 22px; }
         @php $totOre = collect($riempimento)->sum('ore_totali'); @endphp
         <span style="font-size:0.7rem; color:#64748b; margin-left:0.5rem;">Totale: {{ round($totOre, 0) }}h in coda</span>
     </div>
-    <div id="z3-scroll" style="flex:1; overflow:hidden;">
+    <div id="z3-scroll" style="flex:1; overflow:hidden; max-height:60vh;">
         <div id="z3-scroll-inner">
             @php $maxOre = max(collect($riempimento)->max('ore_totali'), 1); @endphp
             @foreach($riempimento as $r)
