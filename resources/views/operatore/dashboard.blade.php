@@ -190,54 +190,70 @@
 
 <h2>Dashboard Operatore</h2>
 
-{{-- NOTE TURNO --}}
-<div style="margin:8px; background:#fff; border:1px solid #dee2e6; border-radius:10px; padding:12px 16px; box-shadow:0 1px 4px rgba(0,0,0,0.08);">
-    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
-        <strong style="font-size:14px;">Note di Turno</strong>
-        <button type="button" onclick="document.getElementById('formNota').style.display = document.getElementById('formNota').style.display === 'none' ? 'block' : 'none'" style="background:#0d6efd; color:#fff; border:none; border-radius:6px; padding:5px 14px; font-size:12px; font-weight:600; cursor:pointer;">
-            + Nuova nota
-        </button>
-    </div>
+{{-- NOTE TURNO — Icona + pannello espandibile --}}
+@php $noteNonLette = ($noteTurno ?? collect())->where('letta', false)->count(); @endphp
+<div style="position:relative; display:inline-block; margin:8px;">
+    {{-- Icona appunti --}}
+    <button type="button" onclick="toggleNoteTurno()" id="btnNoteTurno" style="background:#fff; border:1px solid #dee2e6; border-radius:10px; padding:8px 14px; cursor:pointer; box-shadow:0 1px 4px rgba(0,0,0,0.08); display:flex; align-items:center; gap:6px; font-size:13px; font-weight:600; color:#333;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0d6efd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        Nota di Fine Turno
+        @if($noteNonLette > 0)
+            <span id="badgeNote" style="background:#dc3545; color:#fff; font-size:10px; font-weight:700; padding:1px 6px; border-radius:10px; min-width:18px; text-align:center;">{{ $noteNonLette }}</span>
+        @endif
+    </button>
 
-    {{-- Form nuova nota (nascosto di default) --}}
-    <div id="formNota" style="display:none; margin-bottom:10px; padding:10px; background:#f8f9fa; border-radius:8px; border:1px solid #e9ecef;">
-        <textarea id="notaText" rows="2" maxlength="1000" placeholder="Scrivi la nota per il turno successivo..." style="width:100%; border:1px solid #dee2e6; border-radius:6px; padding:8px; font-size:13px; resize:vertical;"></textarea>
-        <div style="display:flex; gap:8px; margin-top:6px; align-items:center;">
-            <label style="font-size:11px; font-weight:600; color:#666;">Destinazione:</label>
-            <select id="notaDest" style="border:1px solid #dee2e6; border-radius:4px; padding:4px 8px; font-size:12px;">
-                <option value="tutti">Tutti i reparti</option>
-                @foreach($operatore->reparti as $rep)
-                    <option value="{{ strtolower($rep->nome) }}">{{ ucfirst($rep->nome) }}</option>
-                @endforeach
-            </select>
-            <button type="button" onclick="inviaNota()" style="background:#198754; color:#fff; border:none; border-radius:6px; padding:5px 16px; font-size:12px; font-weight:600; cursor:pointer; margin-left:auto;">
-                Invia
-            </button>
+    {{-- Pannello note (nascosto) --}}
+    <div id="pannelloNote" style="display:none; position:absolute; top:100%; left:0; z-index:1000; margin-top:4px; width:420px; background:#fff; border:1px solid #dee2e6; border-radius:10px; padding:12px 16px; box-shadow:0 4px 16px rgba(0,0,0,0.15);">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+            <strong style="font-size:14px;">Nota di Fine Turno</strong>
+            <button type="button" onclick="document.getElementById('formNota').style.display = document.getElementById('formNota').style.display === 'none' ? 'block' : 'none'" style="background:#0d6efd; color:#fff; border:none; border-radius:6px; padding:4px 12px; font-size:11px; font-weight:600; cursor:pointer;">+ Nuova</button>
         </div>
-    </div>
 
-    {{-- Lista note recenti --}}
-    <div id="listaNote" style="max-height:200px; overflow-y:auto;">
-        @forelse(($noteTurno ?? collect()) as $n)
-            <div class="nota-turno" data-id="{{ $n->id }}" style="display:flex; gap:8px; align-items:flex-start; padding:6px 0; border-bottom:1px solid #f0f0f0; {{ $n->letta ? 'opacity:0.5;' : '' }}">
-                <div style="flex:1;">
-                    <div style="font-size:12px;">
-                        <strong style="color:#0d6efd;">{{ $n->operatore->nome ?? '' }} {{ $n->operatore->cognome ?? '' }}</strong>
-                        <span style="color:#888; font-size:10px; margin-left:6px;">{{ $n->created_at->format('H:i') }} &middot; {{ $n->destinazione === 'tutti' ? 'Tutti' : ucfirst($n->destinazione) }}</span>
-                    </div>
-                    <div style="font-size:13px; margin-top:2px;">{{ $n->nota }}</div>
-                </div>
-                @if(!$n->letta)
-                    <button onclick="segnaLetta({{ $n->id }}, this)" style="background:none; border:1px solid #dee2e6; border-radius:4px; padding:2px 8px; font-size:10px; color:#666; cursor:pointer; white-space:nowrap;" title="Segna come letta">Letta</button>
-                @endif
+        {{-- Form nuova nota --}}
+        <div id="formNota" style="display:none; margin-bottom:10px; padding:10px; background:#f8f9fa; border-radius:8px; border:1px solid #e9ecef;">
+            <textarea id="notaText" rows="2" maxlength="1000" placeholder="Scrivi la nota per il turno successivo..." style="width:100%; border:1px solid #dee2e6; border-radius:6px; padding:8px; font-size:13px; resize:vertical;"></textarea>
+            <div style="display:flex; gap:8px; margin-top:6px; align-items:center; justify-content:flex-end;">
+                <input type="hidden" id="notaDest" value="{{ strtolower($operatore->reparti->first()->nome ?? 'tutti') }}">
+                <button type="button" onclick="inviaNota()" style="background:#198754; color:#fff; border:none; border-radius:6px; padding:5px 16px; font-size:12px; font-weight:600; cursor:pointer;">Invia</button>
             </div>
-        @empty
-            <div style="color:#999; font-size:12px; text-align:center; padding:8px;">Nessuna nota nelle ultime 24 ore</div>
-        @endforelse
+        </div>
+
+        {{-- Lista note --}}
+        <div id="listaNote" style="max-height:250px; overflow-y:auto;">
+            @forelse(($noteTurno ?? collect()) as $n)
+                <div class="nota-turno" data-id="{{ $n->id }}" style="display:flex; gap:8px; align-items:flex-start; padding:6px 0; border-bottom:1px solid #f0f0f0; {{ $n->letta ? 'opacity:0.5;' : '' }}">
+                    <div style="flex:1;">
+                        <div style="font-size:12px;">
+                            <strong style="color:#0d6efd;">{{ $n->operatore->nome ?? '' }} {{ $n->operatore->cognome ?? '' }}</strong>
+                            <span style="color:#888; font-size:10px; margin-left:6px;">{{ $n->created_at->format('H:i') }} &middot; {{ $n->destinazione === 'tutti' ? 'Tutti' : ucfirst($n->destinazione) }}</span>
+                        </div>
+                        <div style="font-size:13px; margin-top:2px;">{{ $n->nota }}</div>
+                    </div>
+                    @if(!$n->letta)
+                        <button onclick="segnaLetta({{ $n->id }}, this)" style="background:none; border:1px solid #dee2e6; border-radius:4px; padding:2px 8px; font-size:10px; color:#666; cursor:pointer; white-space:nowrap;">Letta</button>
+                    @endif
+                </div>
+            @empty
+                <div style="color:#999; font-size:12px; text-align:center; padding:8px;">Nessuna nota nelle ultime 24 ore</div>
+            @endforelse
+        </div>
     </div>
 </div>
 
 <script>
+function toggleNoteTurno() {
+    var p = document.getElementById('pannelloNote');
+    p.style.display = p.style.display === 'none' ? 'block' : 'none';
+}
+// Chiudi cliccando fuori
+document.addEventListener('click', function(e) {
+    var pannello = document.getElementById('pannelloNote');
+    var btn = document.getElementById('btnNoteTurno');
+    if (pannello && pannello.style.display !== 'none' && !pannello.contains(e.target) && !btn.contains(e.target)) {
+        pannello.style.display = 'none';
+    }
+});
+
 function inviaNota() {
     var nota = document.getElementById('notaText').value.trim();
     if (!nota) return;

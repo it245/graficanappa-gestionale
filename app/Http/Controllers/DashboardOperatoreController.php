@@ -119,15 +119,10 @@ class DashboardOperatoreController extends Controller
             }
         }
 
-        // Note turno: ultime 24h, destinate a "tutti" o ai reparti dell'operatore
+        // Note turno: ultime 24h, solo del proprio reparto
         $noteTurno = \App\Models\NotaTurno::with('operatore')
             ->where('created_at', '>=', now()->subHours(24))
-            ->where(function ($q) use ($nomiReparti) {
-                $q->where('destinazione', 'tutti');
-                foreach ($nomiReparti as $rep) {
-                    $q->orWhere('destinazione', $rep);
-                }
-            })
+            ->whereIn('destinazione', $nomiReparti)
             ->orderByDesc('created_at')
             ->get();
 
