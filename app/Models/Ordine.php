@@ -76,7 +76,7 @@ class Ordine extends Model
         foreach ($fasi as $fase) {
             $nome = strtoupper($fase->faseCatalogo->nome ?? $fase->fase ?? '');
             if (str_contains($nome, 'STAMPACALDO')) $haCaldo = true;
-            if (str_contains($nome, 'RILIEVI'))     $haRilievi = true;
+            if ($nome === 'FUSTBOBSTRILIEVI')       $haRilievi = true;
             if ($haCaldo && $haRilievi) break;
         }
 

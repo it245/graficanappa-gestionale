@@ -29,7 +29,7 @@
     table { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 9px; }
     th { background: #333; color: #fff; padding: 5px 6px; text-align: left; font-size: 9px; font-weight: 600; }
     td { padding: 4px 6px; border-bottom: 1px solid #e0e0e0; vertical-align: top; }
-    tr:nth-child(even) td { background: rgba(0,0,0,0.02); }
+    tr:nth-child(even) td { background: inherit; }
 
     .desc { max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .fasi-col { max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 8px; color: #666; }
@@ -104,7 +104,7 @@
                     [$done, $tot] = explode('/', $o['progresso']);
                     $pct = $tot > 0 ? round(($done / $tot) * 100) : 0;
                 @endphp
-                <tr>
+                <tr style="background: {{ $g['color'] }} !important;">
                     <td class="bold">{{ $o['commessa'] }}</td>
                     <td>{{ $o['cliente'] }}</td>
                     <td>{{ $o['cod_art'] }}</td>
