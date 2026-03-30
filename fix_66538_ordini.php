@@ -86,40 +86,6 @@ foreach ($articoliNuovi as $i => $art) {
     echo "  PI01 (ID:{$piExtra[$i]}) → ordine #{$ordineId}\n";
 }
 
-// Aggiungi BRT1 ai nuovi ordini
-$brtRef = DB::table('ordine_fasi')
-    ->where('ordine_id', $ordineRef->id)
-    ->where('fase', 'BRT1')
-    ->whereNull('deleted_at')
-    ->first();
-
-if ($brtRef) {
-    foreach ($articoliNuovi as $art) {
-        $ordine = DB::table('ordini')->where('commessa', $commessa)->where('cod_art', $art['cod_art'])->first();
-        if (!$ordine) continue;
-
-        $hasBrt = DB::table('ordine_fasi')
-            ->where('ordine_id', $ordine->id)
-            ->where('fase', 'BRT1')
-            ->whereNull('deleted_at')
-            ->exists();
-
-        if (!$hasBrt) {
-            DB::table('ordine_fasi')->insert([
-                'ordine_id' => $ordine->id,
-                'fase' => 'BRT1',
-                'fase_catalogo_id' => $brtRef->fase_catalogo_id,
-                'stato' => 0,
-                'qta_fase' => 2000,
-                'qta_prod' => 0,
-                'esterno' => 0,
-                'manuale' => 0,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-            echo "  BRT1 creata per {$art['cod_art']}\n";
-        }
-    }
-}
+// BRT1: 1 sola per commessa (dedup), già presente sull'ordine Bordeaux
 
 echo "\nFatto.\n";
