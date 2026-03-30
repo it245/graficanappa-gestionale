@@ -119,7 +119,19 @@ class DashboardOperatoreController extends Controller
             }
         }
 
-        return view('operatore.dashboard', compact('fasiVisibili', 'operatore', 'fasiPerReparto', 'showColori', 'showFustella', 'showEsterno', 'isFustellaOperatore', 'showScarti'));
+        // Note turno: ultime 24h, destinate a "tutti" o ai reparti dell'operatore
+        $noteTurno = \App\Models\NotaTurno::with('operatore')
+            ->where('created_at', '>=', now()->subHours(24))
+            ->where(function ($q) use ($nomiReparti) {
+                $q->where('destinazione', 'tutti');
+                foreach ($nomiReparti as $rep) {
+                    $q->orWhere('destinazione', $rep);
+                }
+            })
+            ->orderByDesc('created_at')
+            ->get();
+
+        return view('operatore.dashboard', compact('fasiVisibili', 'operatore', 'fasiPerReparto', 'showColori', 'showFustella', 'showEsterno', 'isFustellaOperatore', 'showScarti', 'noteTurno'));
     }
 
     /**
@@ -308,5 +320,39 @@ class DashboardOperatoreController extends Controller
         } catch (\Exception $e) {
             return redirect()->route('operatore.prestampa', ['op_token' => $request->get('op_token')])->with('error', 'Errore sync: ' . $e->getMessage());
         }
+    }
+
+    public function salvaNota(Request $request)
+    {
+        $operatore = $request->attributes->get('operatore') ?? auth()->guard('operatore')->user();
+        if (!$operatore) return response()->json(['error' => 'Non autenticato'], 403);
+
+        $request->validate([
+            'nota' => 'required|string|max:1000',
+            'destinazione' => 'required|string|max:100',
+        ]);
+
+        $nota = \App\Models\NotaTurno::create([
+            'operatore_id' => $operatore->id,
+            'nota' => $request->nota,
+            'destinazione' => $request->destinazione,
+        ]);
+
+        return response()->json([
+            'ok' => true,
+            'nota' => [
+                'id' => $nota->id,
+                'operatore' => $operatore->nome . ' ' . $operatore->cognome,
+                'nota' => $nota->nota,
+                'destinazione' => $nota->destinazione,
+                'data' => $nota->created_at->format('H:i'),
+            ],
+        ]);
+    }
+
+    public function segnaLetta(Request $request, $id)
+    {
+        \App\Models\NotaTurno::where('id', $id)->update(['letta' => true]);
+        return response()->json(['ok' => true]);
     }
 }

@@ -34,6 +34,10 @@ Route::prefix('operatore')->group(function() {
         Route::post('/prestampa/aggiorna-campo', [DashboardOperatoreController::class, 'prestampaAggiornaCampo'])->name('operatore.prestampa.aggiornaCampo');
         Route::post('/prestampa/sync-onda', [DashboardOperatoreController::class, 'prestampaSyncOnda'])->name('operatore.prestampa.syncOnda');
 
+        // Note turno
+        Route::post('/note-turno', [DashboardOperatoreController::class, 'salvaNota'])->name('operatore.salvaNota');
+        Route::post('/note-turno/{id}/letta', [DashboardOperatoreController::class, 'segnaLetta'])->name('operatore.segnaLetta');
+
         // Etichette EAN
         Route::get('/etichetta/search-ean', [EtichettaController::class, 'searchEan'])->name('operatore.etichetta.searchEan');
         Route::post('/etichetta/salva-ean', [EtichettaController::class, 'salvaEan'])->name('operatore.etichetta.salvaEan');

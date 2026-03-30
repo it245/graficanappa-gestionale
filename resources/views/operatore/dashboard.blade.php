@@ -190,6 +190,107 @@
 
 <h2>Dashboard Operatore</h2>
 
+{{-- NOTE TURNO --}}
+<div style="margin:8px; background:#fff; border:1px solid #dee2e6; border-radius:10px; padding:12px 16px; box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+        <strong style="font-size:14px;">Note di Turno</strong>
+        <button type="button" onclick="document.getElementById('formNota').style.display = document.getElementById('formNota').style.display === 'none' ? 'block' : 'none'" style="background:#0d6efd; color:#fff; border:none; border-radius:6px; padding:5px 14px; font-size:12px; font-weight:600; cursor:pointer;">
+            + Nuova nota
+        </button>
+    </div>
+
+    {{-- Form nuova nota (nascosto di default) --}}
+    <div id="formNota" style="display:none; margin-bottom:10px; padding:10px; background:#f8f9fa; border-radius:8px; border:1px solid #e9ecef;">
+        <textarea id="notaText" rows="2" maxlength="1000" placeholder="Scrivi la nota per il turno successivo..." style="width:100%; border:1px solid #dee2e6; border-radius:6px; padding:8px; font-size:13px; resize:vertical;"></textarea>
+        <div style="display:flex; gap:8px; margin-top:6px; align-items:center;">
+            <label style="font-size:11px; font-weight:600; color:#666;">Destinazione:</label>
+            <select id="notaDest" style="border:1px solid #dee2e6; border-radius:4px; padding:4px 8px; font-size:12px;">
+                <option value="tutti">Tutti i reparti</option>
+                @foreach($operatore->reparti as $rep)
+                    <option value="{{ strtolower($rep->nome) }}">{{ ucfirst($rep->nome) }}</option>
+                @endforeach
+            </select>
+            <button type="button" onclick="inviaNota()" style="background:#198754; color:#fff; border:none; border-radius:6px; padding:5px 16px; font-size:12px; font-weight:600; cursor:pointer; margin-left:auto;">
+                Invia
+            </button>
+        </div>
+    </div>
+
+    {{-- Lista note recenti --}}
+    <div id="listaNote" style="max-height:200px; overflow-y:auto;">
+        @forelse(($noteTurno ?? collect()) as $n)
+            <div class="nota-turno" data-id="{{ $n->id }}" style="display:flex; gap:8px; align-items:flex-start; padding:6px 0; border-bottom:1px solid #f0f0f0; {{ $n->letta ? 'opacity:0.5;' : '' }}">
+                <div style="flex:1;">
+                    <div style="font-size:12px;">
+                        <strong style="color:#0d6efd;">{{ $n->operatore->nome ?? '' }} {{ $n->operatore->cognome ?? '' }}</strong>
+                        <span style="color:#888; font-size:10px; margin-left:6px;">{{ $n->created_at->format('H:i') }} &middot; {{ $n->destinazione === 'tutti' ? 'Tutti' : ucfirst($n->destinazione) }}</span>
+                    </div>
+                    <div style="font-size:13px; margin-top:2px;">{{ $n->nota }}</div>
+                </div>
+                @if(!$n->letta)
+                    <button onclick="segnaLetta({{ $n->id }}, this)" style="background:none; border:1px solid #dee2e6; border-radius:4px; padding:2px 8px; font-size:10px; color:#666; cursor:pointer; white-space:nowrap;" title="Segna come letta">Letta</button>
+                @endif
+            </div>
+        @empty
+            <div style="color:#999; font-size:12px; text-align:center; padding:8px;">Nessuna nota nelle ultime 24 ore</div>
+        @endforelse
+    </div>
+</div>
+
+<script>
+function inviaNota() {
+    var nota = document.getElementById('notaText').value.trim();
+    if (!nota) return;
+    var dest = document.getElementById('notaDest').value;
+
+    fetch('{{ route("operatore.salvaNota") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': csrfToken(),
+            'X-Op-Token': window.opToken()
+        },
+        body: JSON.stringify({ nota: nota, destinazione: dest })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.ok) {
+            var lista = document.getElementById('listaNote');
+            var empty = lista.querySelector('div[style*="text-align:center"]');
+            if (empty) empty.remove();
+
+            var div = document.createElement('div');
+            div.className = 'nota-turno';
+            div.style = 'display:flex; gap:8px; align-items:flex-start; padding:6px 0; border-bottom:1px solid #f0f0f0;';
+            div.innerHTML = '<div style="flex:1;"><div style="font-size:12px;"><strong style="color:#0d6efd;">' + data.nota.operatore + '</strong><span style="color:#888; font-size:10px; margin-left:6px;">' + data.nota.data + ' &middot; ' + (data.nota.destinazione === 'tutti' ? 'Tutti' : data.nota.destinazione) + '</span></div><div style="font-size:13px; margin-top:2px;">' + data.nota.nota.replace(/</g, '&lt;') + '</div></div>';
+            lista.insertBefore(div, lista.firstChild);
+
+            document.getElementById('notaText').value = '';
+            document.getElementById('formNota').style.display = 'none';
+        }
+    });
+}
+
+function segnaLetta(id, btn) {
+    fetch('/operatore/note-turno/' + id + '/letta', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': csrfToken(),
+            'X-Op-Token': window.opToken()
+        }
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.ok) {
+            var row = btn.closest('.nota-turno');
+            row.style.opacity = '0.5';
+            btn.remove();
+        }
+    });
+}
+</script>
+
 @if(!empty($fasiPerReparto))
     {{-- LEGENDA --}}
     <div style="background:#fff; border:1px solid #dee2e6; border-radius:8px; padding:8px 14px; margin:6px 8px 12px 8px; box-shadow:0 1px 4px rgba(0,0,0,0.08);">
