@@ -44,9 +44,13 @@ if ($ordini->isNotEmpty()) {
 
 echo "Commessa NON presente nel MES. Avvio sync...\n";
 
+// Usa il CodCommessa esatto di Onda (es. "0066437-26") per la sync
+$codCommessaOnda = $righe[0]->CodCommessa;
+echo "Codice Onda esatto: $codCommessaOnda\n";
+
 echo "\n=== 3. Sync da Onda ===\n";
 $service = app(App\Services\OndaSyncService::class);
-$result = $service->sincronizzaSingolaCommessa($cerca);
+$result = $service->sincronizzaSingolaCommessa($codCommessaOnda);
 
 if ($result['trovata'] ?? false) {
     echo "SYNC COMPLETATA!\n";
