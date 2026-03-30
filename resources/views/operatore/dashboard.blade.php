@@ -191,6 +191,31 @@
 <h2>Dashboard Operatore</h2>
 
 @if(!empty($fasiPerReparto))
+    {{-- LEGENDA --}}
+    <div style="background:#fff; border:1px solid #dee2e6; border-radius:8px; padding:8px 14px; margin:6px 8px 12px 8px; box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+        <div class="d-flex gap-4" style="font-size:11px;">
+            <div>
+                <div style="font-weight:700; font-size:10px; color:#666; text-transform:uppercase; margin-bottom:4px;">Stati Fase</div>
+                <div class="d-flex flex-column gap-1">
+                    <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#e9ecef;border:1px solid #ccc;border-radius:2px;"></span> 0 Caricato</div>
+                    <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#cfe2ff;border:1px solid #9ec5fe;border-radius:2px;"></span> 1 Pronto</div>
+                    <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#fff3cd;border:1px solid #ffc107;border-radius:2px;"></span> 2 Avviato</div>
+                    <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#d1e7dd;border:1px solid #198754;border-radius:2px;"></span> 3 Terminato</div>
+                    <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#c3c3c3;border:1px solid #999;border-radius:2px;"></span> 4 Consegnato</div>
+                </div>
+            </div>
+            <div style="border-left:1px solid #dee2e6; padding-left:12px;">
+                <div style="font-weight:700; font-size:10px; color:#666; text-transform:uppercase; margin-bottom:4px;">Percorso Produttivo</div>
+                <div class="d-flex flex-column gap-1">
+                    <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#d4edda;border:1px solid #198754;border-radius:2px;"></span> Base (no caldo, no rilievi)</div>
+                    <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#fff3cd;border:1px solid #ffc107;border-radius:2px;"></span> Rilievi (no caldo)</div>
+                    <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#f96f2a;border:1px solid #e65c00;border-radius:2px;"></span> Caldo (no rilievi)</div>
+                    <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#f8d7da;border:1px solid #dc3545;border-radius:2px;"></span> Completo (caldo + rilievi)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     {{-- MULTI-REPARTO: sezioni separate per ogni reparto --}}
     @foreach($fasiPerReparto as $repartoId => $info)
         @if($info['fasi']->isEmpty()) @continue @endif
@@ -221,29 +246,6 @@
                 <label>Descrizione:</label>
                 <input type="text" class="filtro-descrizione" placeholder="Cerca descrizione..." oninput="applicaFiltri(this)">
                 <button type="button" class="btn-reset-filtri" onclick="resetFiltri(this)">Reset</button>
-            </div>
-            <div style="background:#fff; border:1px solid #dee2e6; border-radius:8px; padding:8px 14px; margin:6px 8px; box-shadow:0 1px 4px rgba(0,0,0,0.08);">
-                <div class="d-flex gap-4" style="font-size:11px;">
-                    <div>
-                        <div style="font-weight:700; font-size:10px; color:#666; text-transform:uppercase; margin-bottom:4px;">Stati Fase</div>
-                        <div class="d-flex flex-column gap-1">
-                            <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#e9ecef;border:1px solid #ccc;border-radius:2px;"></span> 0 Caricato</div>
-                            <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#cfe2ff;border:1px solid #9ec5fe;border-radius:2px;"></span> 1 Pronto</div>
-                            <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#fff3cd;border:1px solid #ffc107;border-radius:2px;"></span> 2 Avviato</div>
-                            <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#d1e7dd;border:1px solid #198754;border-radius:2px;"></span> 3 Terminato</div>
-                            <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#c3c3c3;border:1px solid #999;border-radius:2px;"></span> 4 Consegnato</div>
-                        </div>
-                    </div>
-                    <div style="border-left:1px solid #dee2e6; padding-left:12px;">
-                        <div style="font-weight:700; font-size:10px; color:#666; text-transform:uppercase; margin-bottom:4px;">Percorso Produttivo</div>
-                        <div class="d-flex flex-column gap-1">
-                            <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#d4edda;border:1px solid #198754;border-radius:2px;"></span> Base (no caldo, no rilievi)</div>
-                            <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#fff3cd;border:1px solid #ffc107;border-radius:2px;"></span> Rilievi (no caldo)</div>
-                            <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#f96f2a;border:1px solid #e65c00;border-radius:2px;"></span> Caldo (no rilievi)</div>
-                            <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#f8d7da;border:1px solid #dc3545;border-radius:2px;"></span> Completo (caldo + rilievi)</div>
-                        </div>
-                    </div>
-                </div>
             </div>
             <div class="reparto-body">
             <div class="table-wrapper">
