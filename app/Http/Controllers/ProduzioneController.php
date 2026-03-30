@@ -210,24 +210,40 @@ class ProduzioneController extends Controller
             $pausa->fine = now();
             $pausa->save();
 
-            // Calcola durata pausa in secondi e accumula nel pivot
+            // Calcola durata pausa in secondi e accumula nel pivot dell'operatore che aveva messo in pausa
             $durataSecondi = Carbon::parse($pausa->data_ora)->diffInSeconds(Carbon::parse($pausa->fine));
+            $operatorePausa = $pausa->operatore_id;
 
-            if ($fase->operatori->contains($operatoreId)) {
-                $currentSecondi = $fase->operatori->find($operatoreId)->pivot->secondi_pausa ?? 0;
-                $fase->operatori()->updateExistingPivot($operatoreId, [
+            if ($fase->operatori->contains($operatorePausa)) {
+                $currentSecondi = $fase->operatori->find($operatorePausa)->pivot->secondi_pausa ?? 0;
+                $fase->operatori()->updateExistingPivot($operatorePausa, [
                     'secondi_pausa' => $currentSecondi + $durataSecondi
                 ]);
             }
+        }
+
+        // Se chi riprende è un operatore diverso, aggiungilo alla fase (come avviaFase)
+        if ($operatoreId && !$fase->operatori->contains($operatoreId)) {
+            $fase->operatori()->attach($operatoreId, ['data_inizio' => now(), 'data_fine' => null]);
         }
 
         $fase->stato = 2; // Avviato
         $fase->timeout = null;
         $fase->save();
 
+        $fase->load('operatori');
+
+        $operatori = $fase->operatori->map(function($op){
+            return [
+                'nome' => $op->nome,
+                'data_inizio' => $op->pivot->data_inizio ? Carbon::parse($op->pivot->data_inizio)->format('d/m/Y H:i:s') : '-'
+            ];
+        });
+
         return response()->json([
             'success' => true,
             'nuovo_stato' => $this->statoLabel($fase->stato),
+            'operatori' => $operatori,
         ]);
     }
 

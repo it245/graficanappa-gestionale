@@ -644,6 +644,13 @@ function riprendiFase(faseId, checked){
         if(data.success){
             updateBadge(faseId, 2);
             updateButtons(faseId, 2);
+            // Aggiorna lista operatori (nuovo operatore potrebbe essere stato aggiunto)
+            if(data.operatori){
+                var opCell = document.getElementById('operatori-'+faseId);
+                if(opCell){
+                    opCell.innerHTML = data.operatori.map(function(o){ return o.nome+' ('+o.data_inizio+')'; }).join('<br>');
+                }
+            }
         } else {
             alert('Errore: ' + (data.messaggio || 'operazione fallita'));
             document.getElementById('riprendi-'+faseId).checked = false;
