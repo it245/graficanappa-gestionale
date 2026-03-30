@@ -222,6 +222,13 @@
                 <input type="text" class="filtro-descrizione" placeholder="Cerca descrizione..." oninput="applicaFiltri(this)">
                 <button type="button" class="btn-reset-filtri" onclick="resetFiltri(this)">Reset</button>
             </div>
+            <div style="display:flex; gap:14px; font-size:11px; margin:6px 8px; flex-wrap:wrap;">
+                <span style="font-weight:700; color:#666;">Percorso:</span>
+                <span style="display:flex;align-items:center;gap:4px;"><span style="display:inline-block;width:14px;height:14px;background:#d4edda;border:1px solid #198754;border-radius:3px;"></span> Base</span>
+                <span style="display:flex;align-items:center;gap:4px;"><span style="display:inline-block;width:14px;height:14px;background:#fff3cd;border:1px solid #ffc107;border-radius:3px;"></span> Rilievi</span>
+                <span style="display:flex;align-items:center;gap:4px;"><span style="display:inline-block;width:14px;height:14px;background:#f96f2a;border:1px solid #e65c00;border-radius:3px;"></span> Caldo</span>
+                <span style="display:flex;align-items:center;gap:4px;"><span style="display:inline-block;width:14px;height:14px;background:#f8d7da;border:1px solid #dc3545;border-radius:3px;"></span> Completo</span>
+            </div>
             <div class="reparto-body">
             <div class="table-wrapper">
                 <table class="table table-bordered table-sm table-striped">
