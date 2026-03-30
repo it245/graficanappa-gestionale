@@ -28,8 +28,10 @@
         border-radius:10px; border:2px solid #dee2e6; transition:border-color 0.2s;
     }
     .search-box:focus { border-color:#0d6efd; box-shadow:0 0 0 3px rgba(13,110,253,0.15); }
-    .row-scaduta { background: #f8d7da !important; }
-    .row-warning { background: #fff3cd !important; }
+    .percorso-base { background: #d4edda !important; }
+    .percorso-rilievi { background: #fff3cd !important; }
+    .percorso-caldo { background: #f96f2a !important; }
+    .percorso-completo { background: #f8d7da !important; }
     a.commessa-link { color:#000; font-weight:bold; text-decoration:underline; }
     a.commessa-link:hover { color:#0d6efd; }
 </style>
@@ -70,14 +72,7 @@
         <tbody>
             @forelse($fasiEsterne as $fase)
                 @php
-                    $rowClass = '';
-                    if ($fase->ordine && $fase->ordine->data_prevista_consegna) {
-                        $oggi = \Carbon\Carbon::today();
-                        $dataPrevista = \Carbon\Carbon::parse($fase->ordine->data_prevista_consegna);
-                        $diff = $oggi->diffInDays($dataPrevista, false);
-                        if ($diff < -5) $rowClass = 'row-scaduta';
-                        elseif ($diff <= 3) $rowClass = 'row-warning';
-                    }
+                    $rowClass = $fase->ordine ? $fase->ordine->getPercorsoClass() : '';
                     $statoFase = $fase->stato;
                     $inPausa = is_string($statoFase) && !is_numeric($statoFase);
                 @endphp

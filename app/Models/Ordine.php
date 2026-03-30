@@ -54,6 +54,37 @@ class Ordine extends Model
     public function reparto(){
         return $this->belongsTo(\App\Models\Reparto::class);
     }
+
+    /**
+     * Determina il percorso produttivo dell'ordine (caldo/rilievi)
+     * e restituisce la classe CSS corrispondente.
+     *
+     * Verde:   nè caldo nè rilievi
+     * Giallo:  rilievi ma no caldo
+     * Arancio: caldo ma no rilievi
+     * Rosa:    percorso completo (caldo + rilievi)
+     */
+    public function getPercorsoClass(): string
+    {
+        $fasi = $this->relationLoaded('fasi')
+            ? $this->fasi
+            : $this->fasi()->with('faseCatalogo')->get();
+
+        $haCaldo = false;
+        $haRilievi = false;
+
+        foreach ($fasi as $fase) {
+            $nome = strtoupper($fase->faseCatalogo->nome ?? $fase->fase ?? '');
+            if (str_contains($nome, 'STAMPACALDO')) $haCaldo = true;
+            if (str_contains($nome, 'RILIEVI'))     $haRilievi = true;
+            if ($haCaldo && $haRilievi) break;
+        }
+
+        if ($haCaldo && $haRilievi) return 'percorso-completo';
+        if ($haCaldo)               return 'percorso-caldo';
+        if ($haRilievi)             return 'percorso-rilievi';
+        return 'percorso-base';
+    }
 }
 
 

@@ -331,7 +331,7 @@ public function calcolaOreEPriorita($fase)
             // Prinect non disponibile, continua senza sync
         }
 
-        $fasi = OrdineFase::with(['ordine', 'faseCatalogo.reparto', 'operatori' => fn($q) => $q->select('operatori.id', 'nome')])
+        $fasi = OrdineFase::with(['ordine.fasi.faseCatalogo', 'faseCatalogo.reparto', 'operatori' => fn($q) => $q->select('operatori.id', 'nome')])
             ->where('stato', '<', 4)
             ->get()
             ->map(function ($fase) {
@@ -1024,7 +1024,7 @@ public function calcolaOreEPriorita($fase)
         // Escludi reparto spedizione
         $repartoSpedizione = Reparto::where('nome', 'spedizione')->first();
 
-        $query = OrdineFase::with(['ordine', 'faseCatalogo.reparto', 'operatori'])
+        $query = OrdineFase::with(['ordine.fasi.faseCatalogo', 'faseCatalogo.reparto', 'operatori'])
             ->whereHas('ordine');
 
         // Escludi BRT e reparto spedizione
@@ -1326,7 +1326,7 @@ public function calcolaOreEPriorita($fase)
                 }
                 $q->orWhere('esterno', 1);
             })
-            ->with(['ordine', 'faseCatalogo'])
+            ->with(['ordine.fasi.faseCatalogo', 'faseCatalogo'])
             ->get();
 
         $commesseEsterne = collect();

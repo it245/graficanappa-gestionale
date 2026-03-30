@@ -471,6 +471,15 @@ tr:hover td {
                         <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#198754;border-radius:2px;"></span> Tutte completate</div>
                     </div>
                 </div>
+                <div style="border-left:1px solid #dee2e6; padding-left:12px;">
+                    <div style="font-weight:700; font-size:10px; color:#666; text-transform:uppercase; margin-bottom:4px;">Percorso Produttivo</div>
+                    <div class="d-flex flex-column gap-1">
+                        <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#d4edda;border:1px solid #198754;border-radius:2px;"></span> Base (no caldo, no rilievi)</div>
+                        <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#fff3cd;border:1px solid #ffc107;border-radius:2px;"></span> Rilievi (no caldo)</div>
+                        <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#f96f2a;border:1px solid #e65c00;border-radius:2px;"></span> Caldo (no rilievi)</div>
+                        <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#f8d7da;border:1px solid #dc3545;border-radius:2px;"></span> Completo (caldo + rilievi)</div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -873,15 +882,7 @@ tr:hover td {
             <tbody>
             @foreach($fasi as $fase)
                 @php
-                    $rowClass = '';
-                    if ($fase->ordine->data_prevista_consegna) {
-                        $dataPrevista = \Carbon\Carbon::parse($fase->ordine->data_prevista_consegna)->startOfDay();
-                        $oggi = \Carbon\Carbon::today();
-                        $diffGiorni = $oggi->diffInDays($dataPrevista, false);
-                        if ($diffGiorni <= -5) $rowClass = 'scaduta';
-                        elseif ($diffGiorni <= 3) $rowClass = 'warning-strong';
-                        elseif ($diffGiorni <= 5) $rowClass = 'warning-light';
-                    }
+                    $rowClass = $fase->ordine->getPercorsoClass();
                 @endphp
                 @php
                     $statiLabel = [0 => 'Caricato', 1 => 'Pronto', 2 => 'Avviato', 3 => 'Terminato', 4 => 'Consegnato'];

@@ -27,14 +27,14 @@ class DashboardSpedizioneController extends Controller
             ->where('stato', '<', 4)
             ->where(fn($q) => $q->whereNull('tipo_consegna'))
             ->whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', $repartoSpedizione->id))
-            ->with(['ordine', 'faseCatalogo'])
+            ->with(['ordine.fasi.faseCatalogo', 'faseCatalogo'])
             ->get();
 
         // Fasi parziali: tipo_consegna='parziale' e stato < 4
         $fasiParziali = OrdineFase::where('tipo_consegna', 'parziale')
             ->where('stato', '<', 4)
             ->whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', $repartoSpedizione->id))
-            ->with(['ordine', 'faseCatalogo', 'operatori'])
+            ->with(['ordine.fasi.faseCatalogo', 'faseCatalogo', 'operatori'])
             ->get();
 
         // IDs da escludere dalle sezioni normali (DDT + parziali)
@@ -46,7 +46,7 @@ class DashboardSpedizioneController extends Controller
                 $q->where('reparto_id', $repartoSpedizione->id);
             })
             ->whereNotIn('id', $idsDDTeParziali)
-            ->with(['ordine', 'faseCatalogo', 'operatori'])
+            ->with(['ordine.fasi.faseCatalogo', 'faseCatalogo', 'operatori'])
             ->get();
 
         // Pre-fetch: tutte le commesse coinvolte e le loro fasi non-spedizione (evita N+1)
@@ -91,7 +91,7 @@ class DashboardSpedizioneController extends Controller
             ->whereHas('faseCatalogo', function ($q) use ($repartoSpedizione) {
                 $q->where('reparto_id', $repartoSpedizione->id);
             })
-            ->with(['ordine', 'faseCatalogo', 'operatori'])
+            ->with(['ordine.fasi.faseCatalogo', 'faseCatalogo', 'operatori'])
             ->get()
             ->sortByDesc('data_fine');
 
@@ -117,7 +117,7 @@ class DashboardSpedizioneController extends Controller
                 }
                 $q->orWhere('esterno', true);
             })
-            ->with(['ordine', 'faseCatalogo', 'operatori'])
+            ->with(['ordine.fasi.faseCatalogo', 'faseCatalogo', 'operatori'])
             ->get()
             ->sortBy(fn($f) => $f->ordine->data_prevista_consegna ?? '9999-12-31');
 
@@ -128,7 +128,7 @@ class DashboardSpedizioneController extends Controller
             ->whereHas('faseCatalogo', function ($q) use ($repartoSpedizione) {
                 $q->where('reparto_id', $repartoSpedizione->id);
             })
-            ->with(['ordine', 'faseCatalogo', 'operatori'])
+            ->with(['ordine.fasi.faseCatalogo', 'faseCatalogo', 'operatori'])
             ->orderByDesc('data_fine')
             ->get();
 
@@ -155,7 +155,7 @@ class DashboardSpedizioneController extends Controller
                 }
                 $q->orWhere('esterno', true);
             })
-            ->with(['ordine', 'faseCatalogo', 'operatori'])
+            ->with(['ordine.fasi.faseCatalogo', 'faseCatalogo', 'operatori'])
             ->get()
             ->sortBy(fn($f) => $f->ordine->data_prevista_consegna ?? '9999-12-31');
 

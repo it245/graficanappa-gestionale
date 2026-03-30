@@ -11,24 +11,34 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="op-token" content="{{ $opToken ?? '' }}">
     <title>@hasSection('title')@yield('title') — @endif MES GRAFICA NAPPA</title>
+
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#333333">
+    <meta name="description" content="Sistema MES per la gestione della produzione - Grafica Nappa srl">
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="MES GN">
+
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        tr.scaduta td{
-               background-color: #e8747a !important;
-            color: #000000 !important;
-            font-weight: 700;
+        /* Percorso produttivo — colori riga */
+        tr.percorso-base td {
+            background-color: #d4edda !important; /* verde */
+            color: #000 !important;
         }
-
-        tr.warning-strong td {
-            background-color: #f96f2a !important;
-            color: #000000 !important;
-            font-weight: 700;
+        tr.percorso-rilievi td {
+            background-color: #fff3cd !important; /* giallo */
+            color: #000 !important;
         }
-
-        tr.warning-light td {
-            background-color: #ffd07a !important;
-            color: #000000 !important;
-            font-weight: 700;
+        tr.percorso-caldo td {
+            background-color: #f96f2a !important; /* arancio */
+            color: #000 !important;
+        }
+        tr.percorso-completo td {
+            background-color: #f8d7da !important; /* rosa */
+            color: #000 !important;
         }
 
           </style>
@@ -172,5 +182,26 @@
     }, 30 * 60 * 1000);
     </script>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+    <!-- Registrazione Service Worker PWA -->
+    <script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+            navigator.serviceWorker.register('/sw.js').then(function(reg) {
+                // Aggiornamento automatico quando disponibile
+                reg.onupdatefound = function() {
+                    var newWorker = reg.installing;
+                    newWorker.onstatechange = function() {
+                        if (newWorker.state === 'activated') {
+                            console.log('[PWA] Service worker aggiornato');
+                        }
+                    };
+                };
+            }).catch(function(err) {
+                console.warn('[PWA] Registrazione SW fallita:', err);
+            });
+        });
+    }
+    </script>
     </body>
 </html>

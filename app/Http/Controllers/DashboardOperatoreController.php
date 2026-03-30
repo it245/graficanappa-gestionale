@@ -49,7 +49,7 @@ class DashboardOperatoreController extends Controller
             ->whereHas('faseCatalogo', function ($q) use ($reparti) {
                 $q->whereIn('reparto_id', $reparti);
             })
-            ->with(['ordine', 'faseCatalogo.reparto', 'operatori'])
+            ->with(['ordine.fasi.faseCatalogo', 'faseCatalogo.reparto', 'operatori'])
             ->get()
             ->map(function ($fase) use ($fasiInfo) {
                 $qta_carta = $fase->ordine->qta_carta ?? 0;
@@ -144,7 +144,7 @@ class DashboardOperatoreController extends Controller
             ->whereHas('ordine', function ($q) {
                 $q->where('data_prevista_consegna', '<=', Carbon::today()->addDays(30));
             })
-            ->with(['ordine', 'faseCatalogo.reparto'])
+            ->with(['ordine.fasi.faseCatalogo', 'faseCatalogo.reparto'])
             ->get();
 
         // Raggruppa per codice fustella (FS####)
