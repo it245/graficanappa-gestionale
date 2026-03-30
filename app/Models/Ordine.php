@@ -66,14 +66,15 @@ class Ordine extends Model
      */
     public function getPercorsoClass(): string
     {
-        $fasi = $this->relationLoaded('fasi')
-            ? $this->fasi
-            : $this->fasi()->with('faseCatalogo')->get();
+        // Guarda tutte le fasi della stessa commessa (non solo di questo ordine)
+        $tutteFasi = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $this->commessa))
+            ->with('faseCatalogo')
+            ->get();
 
         $haCaldo = false;
         $haRilievi = false;
 
-        foreach ($fasi as $fase) {
+        foreach ($tutteFasi as $fase) {
             $nome = strtoupper($fase->faseCatalogo->nome ?? $fase->fase ?? '');
             if (str_contains($nome, 'STAMPACALDO')) $haCaldo = true;
             if ($nome === 'FUSTBOBSTRILIEVI')       $haRilievi = true;
