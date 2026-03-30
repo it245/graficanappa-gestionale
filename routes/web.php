@@ -258,5 +258,39 @@ Route::get('/kiosk-demo', function() {
     ]);
 });
 
+// Report commesse per percorso produttivo (PDF)
+Route::get('/report-percorso', function () {
+    $ordini = \App\Models\Ordine::whereHas('fasi', fn($q) => $q->where('stato', '<', 4))
+        ->with(['fasi.faseCatalogo'])
+        ->orderBy('commessa')
+        ->get();
+
+    $gruppi = [
+        'percorso-base'     => ['label' => 'BASE — No Caldo, No Rilievi',     'color' => '#d4edda', 'border' => '#28a745', 'ordini' => []],
+        'percorso-rilievi'  => ['label' => 'RILIEVI — Solo Rilievi',          'color' => '#fff3cd', 'border' => '#ffc107', 'ordini' => []],
+        'percorso-caldo'    => ['label' => 'CALDO — Solo Stampa a Caldo',     'color' => '#f96f2a', 'border' => '#e65c00', 'ordini' => []],
+        'percorso-completo' => ['label' => 'COMPLETO — Caldo + Rilievi',      'color' => '#f8d7da', 'border' => '#dc3545', 'ordini' => []],
+    ];
+
+    foreach ($ordini as $ordine) {
+        $classe = $ordine->getPercorsoClass();
+        if (!isset($gruppi[$classe])) continue;
+        $fasiTot = $ordine->fasi->count();
+        $fasiComplete = $ordine->fasi->where('stato', '>=', 3)->count();
+        $gruppi[$classe]['ordini'][] = [
+            'commessa'    => $ordine->commessa,
+            'cliente'     => $ordine->cliente_nome ?? '-',
+            'cod_art'     => $ordine->cod_art ?? '-',
+            'descrizione' => $ordine->descrizione ?? '-',
+            'qta'         => number_format($ordine->qta_richiesta ?? 0, 0, ',', '.'),
+            'consegna'    => $ordine->data_prevista_consegna ? \Carbon\Carbon::parse($ordine->data_prevista_consegna)->format('d/m/Y') : '-',
+            'progresso'   => "$fasiComplete/$fasiTot",
+            'fasi'        => $ordine->fasi->map(fn($f) => $f->faseCatalogo->nome ?? $f->fase ?? '-')->implode(', '),
+        ];
+    }
+
+    return view('report.percorso', ['gruppi' => $gruppi, 'totale' => $ordini->count()]);
+});
+
 // Homepage
 Route::get('/', fn() => view('welcome'));
