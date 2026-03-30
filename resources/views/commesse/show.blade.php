@@ -225,13 +225,8 @@
                         </div>
                         <div class="azioni-cerchi" id="azioni-fase-{{ $fase->id }}">
                             {{-- Tutti e 3 i bottoni sempre visibili --}}
-                            @php
-                                $opId = request()->attributes->get('operatore_id') ?? session('operatore_id');
-                                $giaAssegnato = $fase->operatori->contains($opId);
-                                $avviaLabel = $fase->stato == 2 ? ($giaAssegnato ? 'Avviato' : 'Unisciti') : 'Avvia';
-                            @endphp
                             <input type="checkbox" id="avvia-{{ $fase->id }}" onchange="aggiornaStato({{ $fase->id }}, 'avvia', this.checked)">
-                            <label for="avvia-{{ $fase->id }}" class="badge-avvia{{ $fase->stato == 2 ? ' lampeggia' : '' }}">{{ $avviaLabel }}</label>
+                            <label for="avvia-{{ $fase->id }}" class="badge-avvia{{ $fase->stato == 2 ? ' lampeggia' : '' }}">{{ $fase->stato == 2 ? 'Avviato' : 'Avvia' }}</label>
 
                             <input type="checkbox" id="pausa-{{ $fase->id }}" onchange="gestisciPausa({{ $fase->id }}, this.checked)">
                             <label for="pausa-{{ $fase->id }}" class="badge-pausa">Pausa</label>
