@@ -491,7 +491,7 @@ public function calcolaOreEPriorita($fase)
         $operatore = $request->attributes->get('operatore') ?? auth()->guard('operatore')->user();
         $isReadonly = $this->isReadonly();
 
-        // Riempimento macchine (stessa logica kiosk pagina 3)
+        // Riempimento macchine — ottimizzato: 2 query batch invece di 18
         $repartiRiemp = [
             ['nome' => 'XL 106', 'reparti' => ['stampa offset']],
             ['nome' => 'BOBST', 'reparti' => ['fustella piana']],
@@ -504,41 +504,47 @@ public function calcolaOreEPriorita($fase)
             ['nome' => 'Tagliacarte', 'reparti' => ['tagliacarte']],
         ];
         $fasiOreConfig = config('fasi_ore');
+
+        // 1 query: pre-carica tutti i reparti
+        $tuttiReparti = Reparto::all()->keyBy('nome');
+
+        // 2 query batch: tutte le fasi stato 0 e 1 con reparto, in una sola query per stato
+        $fasiPerReparto = [];
+        foreach ([0, 1] as $stato) {
+            $fasi = DB::table('ordine_fasi')
+                ->join('fasi_catalogo', 'ordine_fasi.fase_catalogo_id', '=', 'fasi_catalogo.id')
+                ->join('ordini', 'ordine_fasi.ordine_id', '=', 'ordini.id')
+                ->join('reparti', 'fasi_catalogo.reparto_id', '=', 'reparti.id')
+                ->where('ordine_fasi.stato', $stato)
+                ->whereNull('ordine_fasi.deleted_at')
+                ->where(fn($q) => $q->where('ordine_fasi.esterno', 0)->orWhereNull('ordine_fasi.esterno'))
+                ->where(fn($q) => $q->whereNull('ordine_fasi.note')->orWhere('ordine_fasi.note', 'NOT LIKE', '%Inviato a:%'))
+                ->select('ordine_fasi.fase', 'ordini.qta_carta', 'reparti.nome as reparto_nome')
+                ->get();
+            foreach ($fasi as $f) {
+                $fasiPerReparto[$f->reparto_nome][$stato][] = $f;
+            }
+        }
+
         $riempimento = [];
         foreach ($repartiRiemp as $ru) {
-            $repartoIds = Reparto::whereIn('nome', $ru['reparti'])->pluck('id');
-            $orePreviste = function ($stato) use ($repartoIds, $fasiOreConfig) {
-                $fasi = DB::table('ordine_fasi')
-                    ->join('fasi_catalogo', 'ordine_fasi.fase_catalogo_id', '=', 'fasi_catalogo.id')
-                    ->join('ordini', 'ordine_fasi.ordine_id', '=', 'ordini.id')
-                    ->whereIn('fasi_catalogo.reparto_id', $repartoIds)
-                    ->where('ordine_fasi.stato', $stato)
-                    ->whereNull('ordine_fasi.deleted_at')
-                    ->where(fn($q) => $q->where('ordine_fasi.esterno', 0)->orWhereNull('ordine_fasi.esterno'))
-                    ->where(fn($q) => $q->whereNull('ordine_fasi.note')->orWhere('ordine_fasi.note', 'NOT LIKE', '%Inviato a:%'))
-                    ->select('ordine_fasi.fase', 'ordini.qta_carta')
-                    ->get();
-                $ore = 0;
-                foreach ($fasi as $f) {
-                    $info = $fasiOreConfig[$f->fase] ?? null;
-                    if ($info) {
-                        $copieh = $info['copieh'] ?: 1000;
-                        $ore += $info['avviamento'] + (($f->qta_carta ?? 0) / $copieh);
-                    } else {
-                        $ore += 0.5;
+            $ore0 = 0; $ore1 = 0; $cnt0 = 0; $cnt1 = 0;
+            foreach ($ru['reparti'] as $repNome) {
+                foreach ([0, 1] as $stato) {
+                    $fasiStato = $fasiPerReparto[$repNome][$stato] ?? [];
+                    foreach ($fasiStato as $f) {
+                        $info = $fasiOreConfig[$f->fase] ?? null;
+                        $ore = $info ? $info['avviamento'] + (($f->qta_carta ?? 0) / ($info['copieh'] ?: 1000)) : 0.5;
+                        if ($stato === 0) { $ore0 += $ore; $cnt0++; }
+                        else { $ore1 += $ore; $cnt1++; }
                     }
                 }
-                return ['ore' => round($ore, 1), 'fasi' => $fasi->count()];
-            };
-            $stato0 = $orePreviste(0);
-            $stato1 = $orePreviste(1);
+            }
             $riempimento[] = [
                 'nome' => $ru['nome'],
-                'ore_0' => $stato0['ore'],
-                'fasi_0' => $stato0['fasi'],
-                'ore_1' => $stato1['ore'],
-                'fasi_1' => $stato1['fasi'],
-                'ore_totali' => $stato0['ore'] + $stato1['ore'],
+                'ore_0' => round($ore0, 1), 'fasi_0' => $cnt0,
+                'ore_1' => round($ore1, 1), 'fasi_1' => $cnt1,
+                'ore_totali' => round($ore0 + $ore1, 1),
             ];
         }
         usort($riempimento, fn($a, $b) => $b['ore_totali'] <=> $a['ore_totali']);
