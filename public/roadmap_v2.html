@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Roadmap MES v2.0 — Grafica Nappa</title>
+<style>
+    @page { size: A4 portrait; margin: 1.5cm; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #222; line-height: 1.5; padding: 30px 40px; max-width: 210mm; margin: 0 auto; font-size: 10pt; }
+
+    .header { text-align: center; border-bottom: 3px solid #D11317; padding-bottom: 15px; margin-bottom: 20px; }
+    .header .azienda { color: #D11317; font-size: 14pt; font-weight: 700; letter-spacing: 0.05em; }
+    .header .titolo { font-size: 18pt; font-weight: 700; color: #111; margin-top: 12px; }
+    .header .sottotitolo { font-size: 10pt; color: #555; margin-top: 4px; }
+    .header .data { font-size: 9pt; color: #888; margin-top: 8px; }
+
+    h2 { color: #D11317; font-size: 13pt; margin-top: 22px; margin-bottom: 8px; border-bottom: 2px solid #D11317; padding-bottom: 3px; page-break-after: avoid; }
+    h3 { color: #333; font-size: 11pt; margin-top: 14px; margin-bottom: 6px; }
+    p { margin-bottom: 6px; text-align: justify; }
+    ul { margin: 6px 0 10px 20px; }
+    li { margin-bottom: 3px; }
+
+    .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 8pt; font-weight: 700; color: #fff; }
+    .badge-done { background: #28a745; }
+    .badge-new { background: #0d6efd; }
+    .badge-ready { background: #17a2b8; }
+    .badge-future { background: #6c757d; }
+    .badge-ai { background: linear-gradient(135deg, #667eea, #764ba2); }
+
+    table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 9pt; }
+    th { background: #333; color: #fff; padding: 5px 8px; text-align: left; }
+    td { padding: 5px 8px; border-bottom: 1px solid #e0e0e0; vertical-align: top; }
+    tr:nth-child(even) { background: #f9f9f9; }
+
+    .highlight-box { border: 2px solid #0d6efd; border-radius: 8px; padding: 12px 15px; margin: 12px 0; background: #f0f7ff; page-break-inside: avoid; }
+    .highlight-box strong { color: #0d6efd; }
+
+    .security-box { border: 2px solid #28a745; border-radius: 8px; padding: 12px 15px; margin: 12px 0; background: #f0fff4; page-break-inside: avoid; }
+    .security-box strong { color: #198754; }
+
+    .ai-box { border: 2px solid #8b5cf6; border-radius: 8px; padding: 12px 15px; margin: 12px 0; background: linear-gradient(135deg, #f5f3ff, #ede9fe); page-break-inside: avoid; }
+    .ai-box strong { color: #7c3aed; }
+
+    .kpi-row { display: flex; gap: 10px; margin: 12px 0; flex-wrap: wrap; }
+    .kpi-card { flex: 1; min-width: 100px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 10px; text-align: center; }
+    .kpi-card .numero { font-size: 20pt; font-weight: 700; color: #D11317; }
+    .kpi-card .label { font-size: 8pt; color: #555; margin-top: 2px; }
+
+    .timeline { margin: 15px 0; }
+    .timeline-item { display: flex; margin-bottom: 6px; align-items: flex-start; }
+    .timeline-dot { width: 12px; height: 12px; border-radius: 50%; margin-top: 4px; margin-right: 10px; flex-shrink: 0; }
+    .timeline-content { flex: 1; }
+    .timeline-content .version { font-weight: 700; font-size: 10pt; }
+    .timeline-content .desc { font-size: 9pt; color: #555; }
+
+    .page-break { page-break-before: always; }
+
+    .footer { margin-top: 30px; padding-top: 10px; border-top: 2px solid #e0e0e0; text-align: center; font-size: 8pt; color: #888; }
+
+    @media print {
+        body { padding: 0; font-size: 9pt; max-width: none; }
+        .page-break { page-break-before: always; }
+        .kpi-row { display: flex !important; }
+    }
+</style>
+</head>
+<body>
+
+<!-- INTESTAZIONE -->
+<div class="header">
+    <div class="azienda">GRAFICA NAPPA S.R.L.</div>
+    <div class="titolo">ROADMAP SISTEMA MES</div>
+    <div class="sottotitolo">Piano di Sviluppo — Aggiornamento v2.0</div>
+    <div class="data">Marzo 2026 — Redatto da Giovanni Pietropaolo</div>
+</div>
+
+<!-- KPI -->
+<div class="kpi-row">
+    <div class="kpi-card">
+        <div class="numero">156</div>
+        <div class="label">Funzionalit&agrave; sviluppate</div>
+    </div>
+    <div class="kpi-card">
+        <div class="numero">10</div>
+        <div class="label">Dashboard attive</div>
+    </div>
+    <div class="kpi-card">
+        <div class="numero">6</div>
+        <div class="label">Integrazioni</div>
+    </div>
+    <div class="kpi-card">
+        <div class="numero">11</div>
+        <div class="label">Protocolli sicurezza</div>
+    </div>
+    <div class="kpi-card">
+        <div class="numero">37</div>
+        <div class="label">Operatori gestiti</div>
+    </div>
+</div>
+
+<!-- STATO ATTUALE -->
+<h2>1. Stato Attuale del Sistema</h2>
+<p>Il sistema MES di Grafica Nappa &egrave; operativo dal Febbraio 2026 e gestisce l'intero ciclo produttivo: dall'arrivo dell'ordine alla spedizione. Il sistema &egrave; sviluppato internamente con il supporto di intelligenza artificiale (Claude Code, Anthropic).</p>
+
+<table>
+    <tr><th>Versione</th><th>Contenuto</th><th>Funzionalit&agrave;</th><th>Stato</th></tr>
+    <tr><td><strong>v1.0</strong></td><td>MES Completo — Produzione, Onda, Prinect, Fiery, BRT, Costi</td><td>81</td><td><span class="badge badge-done">Operativa</span></td></tr>
+    <tr><td><strong>v1.1</strong></td><td>Presenze, Notifiche, Report Ore, Etichette, Kiosk TV</td><td>45</td><td><span class="badge badge-done">Operativa</span></td></tr>
+    <tr><td><strong>v1.2</strong></td><td>Sicurezza: RBAC, Audit Log, 2FA, Rate Limiting, Headers, GDPR</td><td>11</td><td><span class="badge badge-done">Operativa</span></td></tr>
+    <tr><td><strong>v2.0</strong></td><td>Scheduler, PWA, WebSocket, Push, UI Enterprise, Responsive</td><td>19</td><td><span class="badge badge-new">Rilascio Apr 2026</span></td></tr>
+</table>
+
+<!-- V2.0 DETTAGLIO -->
+<div class="page-break"></div>
+<h2>2. Versione 2.0 — Novit&agrave; in Arrivo</h2>
+
+<div class="highlight-box">
+    <strong>AGGIORNAMENTO PRINCIPALE: Scheduler Mossa 37</strong><br>
+    Algoritmo di schedulazione produzione che ottimizza automaticamente l'ordine di lavorazione su ogni macchina. Riduce i tempi di cambio setup raggruppando lavori simili. <strong>Risparmio stimato: 85-93 ore/mese di setup</strong>.
+</div>
+
+<h3>2.1 Scheduler Produzione Intelligente</h3>
+<ul>
+    <li><strong>Simulazione a eventi discreti</strong> — calcola il piano produzione ottimale in meno di 3 secondi per 900+ fasi</li>
+    <li><strong>Batching intelligente</strong> — raggruppa lavorazioni per tipo fustella, tipo lavaggio, tipo plastica per ridurre i cambi</li>
+    <li><strong>BOBST: prima tutti i rilievi, poi tutte le fustelle</strong> — 2-3 cambi configurazione invece di 40+</li>
+    <li><strong>Piegaincolla: raggruppamento PI01/PI02/PI03</strong> — minimizza cambi configurazione</li>
+    <li><strong>Propagazione automatica</strong> — quando una fase termina, la successiva diventa disponibile istantaneamente</li>
+    <li><strong>Piano produzione via email</strong> — report serale automatico con Excel allegato</li>
+    <li><strong>Fallback 3 livelli</strong> — se lo scheduler non ha dati, usa il sistema priorit&agrave; attuale</li>
+</ul>
+
+<h3>2.2 App Installabile (PWA)</h3>
+<ul>
+    <li>Il MES diventa un'<strong>app installabile</strong> su tablet, smartphone e PC</li>
+    <li>Icona sul desktop, apertura a schermo intero, funzionamento offline base</li>
+    <li>Nessun download da App Store — si installa direttamente dal browser</li>
+</ul>
+
+<h3>2.3 Aggiornamento in Tempo Reale (WebSocket)</h3>
+<ul>
+    <li>Le dashboard si aggiornano <strong>istantaneamente</strong> quando cambia qualcosa — senza ricaricare la pagina</li>
+    <li>Notifiche in tempo reale per: cambio stato fasi, note consegne, presenze, chat</li>
+    <li>Tecnologia: Laravel Reverb (WebSocket nativo)</li>
+</ul>
+
+<h3>2.4 Notifiche Push</h3>
+<ul>
+    <li><strong>Alert ritardi critici</strong> — notifica nel browser quando una commessa rischia di sforare</li>
+    <li><strong>Notifica spedizione</strong> — avviso automatico quando una commessa viene spedita</li>
+    <li>Funzionano anche quando il browser non &egrave; aperto</li>
+</ul>
+
+<h3>2.5 Interfaccia Ridisegnata</h3>
+<ul>
+    <li><strong>Layout enterprise</strong> — sidebar navigazione, topbar con info utente, KPI cards</li>
+    <li><strong>Dark mode</strong> — modalit&agrave; scura per ridurre affaticamento visivo</li>
+    <li><strong>Responsive completa</strong> — operatore, prestampa e spedizione ottimizzati per tablet</li>
+    <li><strong>Componenti riutilizzabili</strong> — badge stato, barre progresso, tabelle dati standardizzate</li>
+</ul>
+
+<h3>2.6 Chat Interna</h3>
+<ul>
+    <li>Sistema di messaggistica integrato nel MES</li>
+    <li>Comunicazione in tempo reale tra operatori, owner e spedizione</li>
+</ul>
+
+<!-- SICUREZZA -->
+<div class="page-break"></div>
+<h2>3. Sicurezza Informatica (gi&agrave; operativa)</h2>
+
+<div class="security-box">
+    <strong>11 PROTOCOLLI DI SICUREZZA ATTIVI</strong><br>
+    Il sistema MES &egrave; protetto da protocolli di sicurezza di livello enterprise, documentati ufficialmente nei documenti <em>DOC-SEC-MES-001</em> e <em>DOC-GDPR-MES-001</em>.
+</div>
+
+<table>
+    <tr><th>Protocollo</th><th>Descrizione</th></tr>
+    <tr><td>RBAC</td><td>9 ruoli, 23 permessi — ogni utente accede solo a ci&ograve; che gli compete</td></tr>
+    <tr><td>Audit Log</td><td>Tracciamento automatico di ogni login, modifica stato, eliminazione</td></tr>
+    <tr><td>2FA</td><td>Autenticazione a due fattori per amministratori (dispositivo fidato)</td></tr>
+    <tr><td>Rate Limiting</td><td>Protezione anti brute-force su tutti i login</td></tr>
+    <tr><td>Security Headers</td><td>Protezione clickjacking, MIME sniffing, referrer policy</td></tr>
+    <tr><td>CSRF</td><td>Token anti-contraffazione con refresh automatico ogni 30 minuti</td></tr>
+    <tr><td>Session Encryption</td><td>Sessioni cifrate AES-256 nel database</td></tr>
+    <tr><td>Credenziali Isolate</td><td>Tutte le password e chiavi API protette nel file .env</td></tr>
+    <tr><td>Input Validation</td><td>Validazione e sanitizzazione di tutti gli input utente</td></tr>
+    <tr><td>Password Hashing</td><td>Bcrypt a 12 round per le password amministrative</td></tr>
+    <tr><td>Token Authentication</td><td>Token per-tab con scadenza 12 ore</td></tr>
+</table>
+
+<!-- INTEGRAZIONI -->
+<h2>4. Integrazioni Attive</h2>
+<table>
+    <tr><th>Sistema</th><th>Funzione</th><th>Frequenza</th></tr>
+    <tr><td><strong>Onda IQ</strong> (ERP)</td><td>Sincronizzazione ordini, fasi, clienti, DDT, costi</td><td>Ogni ora + manuale</td></tr>
+    <tr><td><strong>Prinect</strong> (Heidelberg)</td><td>Dati stampa offset in tempo reale: fogli, tempi, operatori</td><td>Ogni 5 minuti</td></tr>
+    <tr><td><strong>Fiery V900</strong> (EFI)</td><td>Dati stampa digitale: avanzamento, terminazione automatica</td><td>Ogni minuto</td></tr>
+    <tr><td><strong>BRT</strong></td><td>Tracking spedizioni, stato consegna, DDT</td><td>On-demand</td></tr>
+    <tr><td><strong>NetTime</strong></td><td>Timbrature presenze dipendenti</td><td>Ogni minuto</td></tr>
+    <tr><td><strong>Excel</strong></td><td>Dashboard condivisa bidirezionale + export presenze</td><td>Ogni 2 min / 15 min</td></tr>
+</table>
+
+<!-- PIANO FUTURO -->
+<div class="page-break"></div>
+<h2>5. Piano di Sviluppo Futuro</h2>
+<p>Il sistema MES seguir&agrave; un piano di evoluzione continua. Ogni versione aggiunge funzionalit&agrave; strategiche che aumentano l'efficienza produttiva, la qualit&agrave; del prodotto e la competitivit&agrave; aziendale.</p>
+
+<div class="timeline">
+    <div class="timeline-item">
+        <div class="timeline-dot" style="background:#28a745;"></div>
+        <div class="timeline-content">
+            <span class="version">v1.0 + v1.1 + v1.2</span> — <span class="badge badge-done">Operativa</span>
+            <div class="desc">MES completo, presenze, sicurezza, kiosk TV, report, etichette</div>
+        </div>
+    </div>
+    <div class="timeline-item">
+        <div class="timeline-dot" style="background:#0d6efd;"></div>
+        <div class="timeline-content">
+            <span class="version">v2.0</span> — <span class="badge badge-new">Aprile 2026</span>
+            <div class="desc">Scheduler produzione, PWA, WebSocket, push notifications, UI enterprise, responsive</div>
+        </div>
+    </div>
+    <div class="timeline-item">
+        <div class="timeline-dot" style="background:#7c3aed;"></div>
+        <div class="timeline-content">
+            <span class="version">v3.0</span> — <span class="badge badge-ai">AI</span> Luglio-Settembre 2026
+            <div class="desc">Assistente AI per il titolare, analisi predittiva ritardi, report generati dall'AI, anomaly detection</div>
+        </div>
+    </div>
+    <div class="timeline-item">
+        <div class="timeline-dot" style="background:#7c3aed;"></div>
+        <div class="timeline-content">
+            <span class="version">v4.0</span> — <span class="badge badge-ai">AI</span> Ottobre-Dicembre 2026
+            <div class="desc">Scheduling AI-powered, simulazione what-if, assegnazione intelligente operatori, drag &amp; drop Gantt</div>
+        </div>
+    </div>
+    <div class="timeline-item">
+        <div class="timeline-dot" style="background:#6c757d;"></div>
+        <div class="timeline-content">
+            <span class="version">v5.0</span> — Gennaio-Marzo 2027
+            <div class="desc">Controllo qualit&agrave; integrato, checklist per fase, foto prodotto, gestione non conformit&agrave;, tracciabilit&agrave; FSC</div>
+        </div>
+    </div>
+    <div class="timeline-item">
+        <div class="timeline-dot" style="background:#6c757d;"></div>
+        <div class="timeline-content">
+            <span class="version">v6.0</span> — Aprile-Giugno 2027
+            <div class="desc">Magazzino e materiali: giacenze, scorta minima, scarico automatico da produzione, costo medio ponderato</div>
+        </div>
+    </div>
+    <div class="timeline-item">
+        <div class="timeline-dot" style="background:#6c757d;"></div>
+        <div class="timeline-content">
+            <span class="version">v7.0</span> — Luglio-Settembre 2027
+            <div class="desc">IoT e Digital Twin: sensori sulle macchine, manutenzione predittiva, monitoraggio consumi energetici</div>
+        </div>
+    </div>
+    <div class="timeline-item">
+        <div class="timeline-dot" style="background:#6c757d;"></div>
+        <div class="timeline-content">
+            <span class="version">v8.0</span> — Ottobre-Dicembre 2027
+            <div class="desc">Business Intelligence avanzata: drill-down, benchmark, previsioni fatturato, analisi ABC clienti</div>
+        </div>
+    </div>
+    <div class="timeline-item">
+        <div class="timeline-dot" style="background:#6c757d;"></div>
+        <div class="timeline-content">
+            <span class="version">v9.0</span> — 2027-2028
+            <div class="desc">Portale clienti, API pubblica, webhook, integrazione contabile, SSO</div>
+        </div>
+    </div>
+    <div class="timeline-item">
+        <div class="timeline-dot" style="background:#6c757d;"></div>
+        <div class="timeline-content">
+            <span class="version">v10.0</span> — 2028
+            <div class="desc">Industria 4.0 completa: app mobile nativa, AI Coach, Digital Twin 3D, manutenzione predittiva, ESG</div>
+        </div>
+    </div>
+</div>
+
+<div class="ai-box">
+    <strong>Oltre la v10.0</strong><br>
+    Il sistema MES &egrave; progettato per evolvere continuamente. Dopo la v10.0 il piano prevede ulteriori versioni con funzionalit&agrave; avanzate: integrazione con sistemi di terze parti, marketplace di plugin, multi-stabilimento, espansione verso il modello SaaS per altre tipografie, certificazioni di settore e conformit&agrave; a standard internazionali (ISO 9001, ISO 14001, FSC Chain of Custody). Il sistema non ha un traguardo finale — cresce con l'azienda.
+</div>
+
+<!-- BENEFICI -->
+<h2>6. Benefici per l'Azienda</h2>
+
+<table>
+    <tr><th>Area</th><th>Beneficio</th><th>Impatto</th></tr>
+    <tr><td>Produzione</td><td>Scheduler riduce tempi setup</td><td><strong>85-93 ore/mese risparmiate</strong></td></tr>
+    <tr><td>Produzione</td><td>Propagazione automatica fasi</td><td>Zero attese tra una fase e l'altra</td></tr>
+    <tr><td>Direzione</td><td>Dashboard real-time con KPI</td><td>Decisioni basate su dati, non intuizioni</td></tr>
+    <tr><td>Direzione</td><td>Report automatici (ore, costi, margini)</td><td>Controllo completo su ogni commessa</td></tr>
+    <tr><td>Operatori</td><td>App installabile su tablet</td><td>Accesso rapido senza browser</td></tr>
+    <tr><td>Operatori</td><td>Notifiche push</td><td>Avvisi immediati senza controllare lo schermo</td></tr>
+    <tr><td>Spedizione</td><td>Tracking BRT integrato</td><td>Stato consegna visibile senza cambiare sistema</td></tr>
+    <tr><td>Sicurezza</td><td>11 protocolli attivi + documentazione</td><td>Conformit&agrave; GDPR, tracciabilit&agrave; completa</td></tr>
+    <tr><td>Costi</td><td>Zero licenze software</td><td>Sistema 100% proprietario, nessun vendor lock-in</td></tr>
+    <tr><td>Competitivit&agrave;</td><td>Specializzazione tipografica</td><td>Nessun MES generico offre queste funzionalit&agrave;</td></tr>
+</table>
+
+<!-- CONFRONTO -->
+<h2>7. Posizionamento Competitivo</h2>
+<p>Il nostro MES si confronta con i principali sistemi industriali sul mercato:</p>
+
+<table>
+    <tr><th>Caratteristica</th><th>MES Grafica Nappa</th><th>Tulip</th><th>SAP Fiori MES</th><th>Odoo MRP</th></tr>
+    <tr><td>Specializzazione tipografica</td><td><strong>Nativo</strong></td><td>No</td><td>No</td><td>No</td></tr>
+    <tr><td>Integrazione Prinect/Fiery</td><td><strong>Nativa</strong></td><td>No</td><td>No</td><td>No</td></tr>
+    <tr><td>Costo licenza annuo</td><td><strong>0 &euro;</strong></td><td>~25.000 &euro;</td><td>~50.000 &euro;</td><td>~5.000 &euro;</td></tr>
+    <tr><td>Scheduler AI</td><td><strong>Integrato</strong></td><td>Plugin</td><td>Plugin</td><td>No</td></tr>
+    <tr><td>PWA installabile</td><td><strong>S&igrave;</strong></td><td>S&igrave;</td><td>S&igrave;</td><td>S&igrave;</td></tr>
+    <tr><td>Personalizzazione</td><td><strong>Totale</strong></td><td>Limitata</td><td>Costosa</td><td>Media</td></tr>
+    <tr><td>Tempo implementazione</td><td><strong>2 mesi</strong></td><td>3-6 mesi</td><td>6-12 mesi</td><td>2-4 mesi</td></tr>
+</table>
+
+<div class="footer">
+    Grafica Nappa S.R.L. — Sistema MES — Roadmap v2.0<br>
+    Documento riservato ad uso interno — Marzo 2026
+</div>
+
+</body>
+</html>
