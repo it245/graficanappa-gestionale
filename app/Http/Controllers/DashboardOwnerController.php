@@ -636,8 +636,19 @@ public function calcolaOreEPriorita($fase)
                 FaseStatoService::controllaCompletamento($fase->id);
             }
 
-            // Se stato cambiato, ricalcola stati di tutta la commessa
+            // Se stato cambiato, gestisci data_fine e ricalcola
             if ($campo === 'stato') {
+                $statoNum = (int) $valore;
+                // Terminata: imposta data_fine se mancante
+                if ($statoNum == 3 && !$fase->data_fine) {
+                    $fase->data_fine = now()->format('Y-m-d H:i:s');
+                    $fase->save();
+                }
+                // Recuperata (riportata a 2): azzera data_fine
+                if ($statoNum == 2) {
+                    $fase->data_fine = null;
+                    $fase->save();
+                }
                 FaseStatoService::ricalcolaCommessa($fase->ordine->commessa);
             }
 
@@ -925,6 +936,11 @@ public function calcolaOreEPriorita($fase)
 
         if ($nuovoStato == 3 && !$fase->data_fine) {
             $fase->data_fine = now()->format('Y-m-d H:i:s');
+        }
+
+        // Se riportata a stato 2 (recuperata), azzera data_fine per la nuova lavorazione
+        if ($nuovoStato == 2) {
+            $fase->data_fine = null;
         }
 
         $fase->save();
