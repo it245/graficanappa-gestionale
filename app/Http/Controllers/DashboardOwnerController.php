@@ -512,7 +512,7 @@ public function calcolaOreEPriorita($fase)
         // 2 query batch: tutte le fasi stato 0 e 1 con reparto, in una sola query per stato
         $fasiPerReparto = [];
         foreach ([0, 1] as $stato) {
-            $fasi = DB::table('ordine_fasi')
+            $fasiRiemp = DB::table('ordine_fasi')
                 ->join('fasi_catalogo', 'ordine_fasi.fase_catalogo_id', '=', 'fasi_catalogo.id')
                 ->join('ordini', 'ordine_fasi.ordine_id', '=', 'ordini.id')
                 ->join('reparti', 'fasi_catalogo.reparto_id', '=', 'reparti.id')
@@ -522,7 +522,7 @@ public function calcolaOreEPriorita($fase)
                 ->where(fn($q) => $q->whereNull('ordine_fasi.note')->orWhere('ordine_fasi.note', 'NOT LIKE', '%Inviato a:%'))
                 ->select('ordine_fasi.fase', 'ordini.qta_carta', 'reparti.nome as reparto_nome')
                 ->get();
-            foreach ($fasi as $f) {
+            foreach ($fasiRiemp as $f) {
                 $fasiPerReparto[$f->reparto_nome][$stato][] = $f;
             }
         }
