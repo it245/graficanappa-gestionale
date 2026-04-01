@@ -481,6 +481,12 @@ class PrinectSyncService
                 $fase->stato = 2;
             }
 
+            // Se la fase è terminata (stato 3) ma il job è RUNNING → recupera a stato 2
+            if (in_array($fase->stato, [3, '3']) && !$terminata) {
+                $fase->stato = 2;
+                $fase->data_fine = null;
+            }
+
             // Se l'operatore ha avviato un'altra commessa → questa e terminata
             if ($terminata && !in_array($fase->stato, [3, '3'])) {
                 $fase->stato = 3;
