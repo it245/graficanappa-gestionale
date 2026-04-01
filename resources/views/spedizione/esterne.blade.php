@@ -407,14 +407,29 @@ function esternoRiprendi(faseId, btn) {
     .catch(err => { if (err !== 'session_expired') { console.error('Errore:', err); alert('Errore: ' + err); } btn.disabled = false; });
 }
 
-// Ricerca
-document.getElementById('searchBox').addEventListener('input', function() {
-    const query = this.value.toLowerCase().trim();
+// Ricerca (include note negli input + persistenza)
+function filtraEsterne() {
+    var query = document.getElementById('searchBox').value.toLowerCase().trim();
+    sessionStorage.setItem('searchEsterne', query);
     document.querySelectorAll('tr.searchable').forEach(function(row) {
-        const text = row.innerText.toLowerCase();
+        var text = row.innerText.toLowerCase();
+        // Includi anche il contenuto degli input (note)
+        row.querySelectorAll('input').forEach(function(inp) {
+            text += ' ' + (inp.value || '').toLowerCase();
+        });
         row.style.display = (!query || text.includes(query)) ? '' : 'none';
     });
-});
+}
+document.getElementById('searchBox').addEventListener('input', filtraEsterne);
+
+// Ripristina ricerca dopo refresh
+(function() {
+    var saved = sessionStorage.getItem('searchEsterne');
+    if (saved) {
+        document.getElementById('searchBox').value = saved;
+        filtraEsterne();
+    }
+})();
 
 // Popup operatore
 document.getElementById('operatoreInfo').addEventListener('click', function(){
