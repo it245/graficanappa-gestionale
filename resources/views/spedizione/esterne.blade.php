@@ -81,21 +81,20 @@
                         @if($statoFase == 0 || $statoFase == 1)
                             <button class="btn btn-sm btn-success fw-bold" onclick="esternoAvvia({{ $fase->id }}, this)">Avvia</button>
                         @elseif($statoFase == 2)
-                            <button class="btn btn-sm btn-warning fw-bold" onclick="esternoPausa({{ $fase->id }}, this)">Pausa</button>
-                            <button class="btn btn-sm btn-danger fw-bold"
+                            <button class="btn btn-sm btn-success fw-bold"
                                     data-qta-fase="{{ $fase->qta_fase ?? 0 }}"
                                     data-fogli-buoni="{{ $fase->fogli_buoni ?? 0 }}"
                                     data-fogli-scarto="{{ $fase->fogli_scarto ?? 0 }}"
                                     data-qta-prod="{{ $fase->qta_prod ?? 0 }}"
-                                    onclick="esternoTermina({{ $fase->id }}, this)">Termina</button>
+                                    onclick="esternoTermina({{ $fase->id }}, this)">Rientro</button>
                         @elseif($inPausa)
                             <button class="btn btn-sm btn-success fw-bold" onclick="esternoRiprendi({{ $fase->id }}, this)">Riprendi</button>
-                            <button class="btn btn-sm btn-danger fw-bold"
+                            <button class="btn btn-sm btn-success fw-bold"
                                     data-qta-fase="{{ $fase->qta_fase ?? 0 }}"
                                     data-fogli-buoni="{{ $fase->fogli_buoni ?? 0 }}"
                                     data-fogli-scarto="{{ $fase->fogli_scarto ?? 0 }}"
                                     data-qta-prod="{{ $fase->qta_prod ?? 0 }}"
-                                    onclick="esternoTermina({{ $fase->id }}, this)">Termina</button>
+                                    onclick="esternoTermina({{ $fase->id }}, this)">Rientro</button>
                         @endif
                     </td>
                     <td>
