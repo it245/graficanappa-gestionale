@@ -56,13 +56,16 @@
                     $inPausa = is_string($statoFase) && !is_numeric($statoFase);
                 @endphp
                 <tr class="{{ $rowClass }} searchable">
-                    <td>
+                    <td style="white-space:nowrap;">
                         @if($statoFase == 0)
                             <span class="badge bg-secondary badge-stato">Da fare</span>
                         @elseif($statoFase == 1)
                             <span class="badge bg-info badge-stato">Pronto</span>
                         @elseif($statoFase == 2)
                             <span class="badge bg-primary badge-stato">In corso</span>
+                            <br>
+                            <button class="btn btn-sm btn-success fw-bold mt-1" style="font-size:11px;"
+                                    onclick="esternoTerminaOwner({{ json_encode($riga->fasi_ids) }})">Rientro</button>
                         @elseif($inPausa)
                             <span class="badge bg-warning text-dark badge-stato">Pausa: {{ $statoFase }}</span>
                         @endif
@@ -94,9 +97,68 @@
     </table>
 </div>
 
+<!-- Modal Termina Esterna (stessa logica della spedizione) -->
+<div class="modal fade" id="modalTerminaEsterno" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Termina Fase Esterna</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="terminaEsternoFasiIds">
+                <p class="fw-bold mb-3">La lavorazione esterna e completata?</p>
+                <button type="button" class="btn btn-success btn-lg w-100 mb-3" onclick="confermaTerminaEsterno('terminata')">
+                    <strong>Terminata</strong><br>
+                    <small>La lavorazione e completata</small>
+                </button>
+                <button type="button" class="btn btn-warning btn-lg w-100 text-dark" onclick="confermaTerminaEsterno('rientro')">
+                    <strong>Rientrata - servono altre lavorazioni</strong><br>
+                    <small>Il materiale e rientrato ma servono lavorazioni aggiuntive</small>
+                </button>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 </div>
 
 <script>
+function esternoTerminaOwner(fasiIds) {
+    document.getElementById('terminaEsternoFasiIds').value = JSON.stringify(fasiIds);
+    new bootstrap.Modal(document.getElementById('modalTerminaEsterno')).show();
+}
+
+function confermaTerminaEsterno(tipo) {
+    var fasiIds = JSON.parse(document.getElementById('terminaEsternoFasiIds').value);
+    bootstrap.Modal.getInstance(document.getElementById('modalTerminaEsterno')).hide();
+
+    var promises = fasiIds.map(function(faseId) {
+        var body = { fase_id: faseId, qta_prodotta: 0, scarti: 0 };
+        if (tipo === 'rientro') body.rientro = true;
+        return fetch('{{ route("produzione.termina") }}', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}',
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(body)
+        }).then(function(r) { return r.json(); });
+    });
+
+    Promise.all(promises).then(function(results) {
+        var errori = results.filter(function(d) { return !d.success; });
+        if (errori.length > 0) {
+            alert('Errore su ' + errori.length + ' fase/i');
+        }
+        window.location.reload();
+    }).catch(function() { alert('Errore di connessione'); });
+}
+
 function aggiornaQtaEsterna(faseId, valore) {
     valore = valore.trim().replace(/\./g, '').replace(',', '.');
     if (valore === '-' || valore === '') return;

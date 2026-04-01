@@ -637,7 +637,7 @@ public function calcolaOreEPriorita($fase)
                 FaseStatoService::controllaCompletamento($fase->id);
             }
 
-            // Se stato cambiato, gestisci data_fine e ricalcola
+            // Se stato cambiato, gestisci data_fine, flag esterno e ricalcola
             if ($campo === 'stato') {
                 $statoNum = (int) $valore;
                 // Terminata: imposta data_fine se mancante
@@ -648,6 +648,11 @@ public function calcolaOreEPriorita($fase)
                 // Recuperata (riportata a 2): azzera data_fine
                 if ($statoNum == 2) {
                     $fase->data_fine = null;
+                    $fase->save();
+                }
+                // Se riportata a 0 o 1, rimuovi flag esterno (non è più esterna)
+                if ($statoNum <= 1 && $fase->esterno) {
+                    $fase->esterno = false;
                     $fase->save();
                 }
                 FaseStatoService::ricalcolaCommessa($fase->ordine->commessa);
@@ -1396,6 +1401,7 @@ public function calcolaOreEPriorita($fase)
                         'qta' => $f->qta_fase ?? $f->ordine->qta_richiesta ?? 0,
                     ])->values()->toArray(),
                     'num_fasi'      => $fasi->count(),
+                    'fasi_ids'      => $fasi->pluck('id')->values()->toArray(),
                     'data_invio'    => $dataInvio,
                     'note'          => $fasi->pluck('note')->filter()->unique()->implode(' | '),
                 ];
