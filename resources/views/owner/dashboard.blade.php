@@ -881,6 +881,7 @@ tr:hover td {
             </thead>
             <tbody>
             @foreach($fasi as $fase)
+                @if(!$fase->ordine) @continue @endif
                 @php
                     $rowClass = $fase->ordine->getPercorsoClass();
                 @endphp
