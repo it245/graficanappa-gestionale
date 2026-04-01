@@ -118,10 +118,14 @@ class ProduzioneController extends Controller
     $fase->scarti = $request->scarti ?? 0;
     $fase->timeout = null;
 
-    // Rientro da esterno con lavorazioni aggiuntive: resta a stato 2
+    // Rientro da esterno con lavorazioni aggiuntive: stato 1 + rimuovi flag esterno
     if ($request->boolean('rientro')) {
-        $fase->note = ($fase->note ?? '') . ', rientro in attesa di lavorazioni';
+        $fase->stato = 1;
+        $fase->esterno = false;
+        $fase->data_fine = null;
         $fase->save();
+
+        FaseStatoService::ricalcolaStati($fase->ordine_id);
 
         return response()->json([
             'success' => true,
