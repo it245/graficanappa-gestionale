@@ -949,6 +949,11 @@ public function calcolaOreEPriorita($fase)
             $fase->data_fine = null;
         }
 
+        // Se riportata a 0 o 1, rimuovi flag esterno
+        if ($nuovoStato <= 1 && $fase->esterno) {
+            $fase->esterno = false;
+        }
+
         $fase->save();
 
         // Ricalcola stati delle fasi successive
