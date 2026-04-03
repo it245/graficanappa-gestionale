@@ -340,8 +340,8 @@
         <thead style="background:#6f42c1; color:#fff;">
             <tr>
                 <th>Azione</th>
-                <th data-sort="text" style="cursor:pointer;">Commessa <span class="sort-arrow"></span></th>
-                <th data-sort="text" style="cursor:pointer;">Cliente <span class="sort-arrow"></span></th>
+                <th data-sort="text" style="cursor:pointer;">Commessa <span class="sort-arrow">▼</span></th>
+                <th data-sort="text" style="cursor:pointer;">Cliente <span class="sort-arrow">▼</span></th>
                 <th>Cod. Articolo</th>
                 <th>Descrizione</th>
                 <th>Qta Ordine</th>
@@ -405,12 +405,12 @@
             <tr>
                 <th>Azione</th>
                 <th>Note</th>
-                <th data-sort="text" style="cursor:pointer;">Commessa <span class="sort-arrow"></span></th>
-                <th data-sort="text" style="cursor:pointer;">Cliente <span class="sort-arrow"></span></th>
+                <th data-sort="text" style="cursor:pointer;">Commessa <span class="sort-arrow">▼</span></th>
+                <th data-sort="text" style="cursor:pointer;">Cliente <span class="sort-arrow">▼</span></th>
                 <th>Cod. Articolo</th>
                 <th>Qta</th>
                 <th>Descrizione</th>
-                <th data-sort="date" style="cursor:pointer;">Data Consegna <span class="sort-arrow"></span></th>
+                <th data-sort="date" style="cursor:pointer;">Data Consegna <span class="sort-arrow">▼</span></th>
                 <th>Progresso</th>
             </tr>
         </thead>
@@ -460,11 +460,11 @@
         <thead style="background:#fd7e14; color:#fff;">
             <tr>
                 <th>Azione</th>
-                <th data-sort="text" style="cursor:pointer;">Commessa <span class="sort-arrow"></span></th>
-                <th data-sort="text" style="cursor:pointer;">Cliente <span class="sort-arrow"></span></th>
+                <th data-sort="text" style="cursor:pointer;">Commessa <span class="sort-arrow">▼</span></th>
+                <th data-sort="text" style="cursor:pointer;">Cliente <span class="sort-arrow">▼</span></th>
                 <th>Cod. Articolo</th>
                 <th>Descrizione</th>
-                <th data-sort="date" style="cursor:pointer;">Data cons. parziale <span class="sort-arrow"></span></th>
+                <th data-sort="date" style="cursor:pointer;">Data cons. parziale <span class="sort-arrow">▼</span></th>
             </tr>
         </thead>
         <tbody>
@@ -494,12 +494,12 @@
         <thead style="background:#ffc107; color:#000;">
             <tr>
                 <th>Azione</th>
-                <th data-sort="text" style="cursor:pointer;">Commessa <span class="sort-arrow"></span></th>
-                <th data-sort="text" style="cursor:pointer;">Cliente <span class="sort-arrow"></span></th>
+                <th data-sort="text" style="cursor:pointer;">Commessa <span class="sort-arrow">▼</span></th>
+                <th data-sort="text" style="cursor:pointer;">Cliente <span class="sort-arrow">▼</span></th>
                 <th>Cod. Articolo</th>
                 <th>Qta</th>
                 <th>Descrizione</th>
-                <th data-sort="date" style="cursor:pointer;">Data Consegna <span class="sort-arrow"></span></th>
+                <th data-sort="date" style="cursor:pointer;">Data Consegna <span class="sort-arrow">▼</span></th>
                 <th>Progresso fasi</th>
             </tr>
         </thead>
