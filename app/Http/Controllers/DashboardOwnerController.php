@@ -650,9 +650,16 @@ public function calcolaOreEPriorita($fase)
                     $fase->data_fine = null;
                     $fase->save();
                 }
-                // Se riportata a 0 o 1, rimuovi flag esterno (non è più esterna)
-                if ($statoNum <= 1 && $fase->esterno) {
-                    $fase->esterno = false;
+                // Se riportata a 0 o 1, pulisci: flag esterno, data_fine, nota "Inviato a:"
+                if ($statoNum <= 1) {
+                    $fase->data_fine = null;
+                    if ($fase->esterno) {
+                        $fase->esterno = false;
+                    }
+                    if ($fase->note && preg_match('/Inviato a:/i', $fase->note)) {
+                        $fase->note = preg_replace('/,?\s*Inviato a:.*$/i', '', $fase->note);
+                        $fase->note = trim($fase->note) ?: null;
+                    }
                     $fase->save();
                 }
                 FaseStatoService::ricalcolaCommessa($fase->ordine->commessa);
@@ -949,9 +956,17 @@ public function calcolaOreEPriorita($fase)
             $fase->data_fine = null;
         }
 
-        // Se riportata a 0 o 1, rimuovi flag esterno
-        if ($nuovoStato <= 1 && $fase->esterno) {
-            $fase->esterno = false;
+        // Se riportata a 0 o 1, pulisci tutto: flag esterno, data_fine, nota "Inviato a:"
+        if ($nuovoStato <= 1) {
+            $fase->data_fine = null;
+            if ($fase->esterno) {
+                $fase->esterno = false;
+            }
+            // Rimuovi "Inviato a:" dalla nota
+            if ($fase->note && preg_match('/Inviato a:/i', $fase->note)) {
+                $fase->note = preg_replace('/,?\s*Inviato a:.*$/i', '', $fase->note);
+                $fase->note = trim($fase->note) ?: null;
+            }
         }
 
         $fase->save();
