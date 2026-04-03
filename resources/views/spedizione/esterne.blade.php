@@ -145,11 +145,15 @@
                     <p class="fw-bold mb-3">La lavorazione esterna e completata?</p>
                     <button type="button" class="btn btn-success btn-lg w-100 mb-3" onclick="setTipoRientro('terminata')">
                         <strong>Terminata</strong><br>
-                        <small>La lavorazione e completata, nessuna azione aggiuntiva</small>
+                        <small>La lavorazione e completata</small>
                     </button>
-                    <button type="button" class="btn btn-warning btn-lg w-100 text-dark" onclick="setTipoRientro('rientro')">
+                    <button type="button" class="btn btn-warning btn-lg w-100 text-dark mb-3" onclick="setTipoRientro('rientro')">
                         <strong>Rientrata - servono altre lavorazioni</strong><br>
                         <small>Il materiale e rientrato ma servono lavorazioni aggiuntive</small>
+                    </button>
+                    <button type="button" class="btn btn-secondary btn-lg w-100" onclick="setTipoRientro('nessuna')">
+                        <strong>Rientrata senza lavorazione</strong><br>
+                        <small>Nessuna lavorazione effettuata, torna in attesa</small>
                     </button>
                 </div>
 
@@ -377,7 +381,7 @@ function setTipoRientro(tipo) {
         scarti: parseInt(scarti) || 0
     };
 
-    if (tipo === 'rientro') {
+    if (tipo === 'rientro' || tipo === 'nessuna') {
         body.rientro = true;
     }
 

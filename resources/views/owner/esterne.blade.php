@@ -112,9 +112,13 @@
                     <strong>Terminata</strong><br>
                     <small>La lavorazione e completata</small>
                 </button>
-                <button type="button" class="btn btn-warning btn-lg w-100 text-dark" onclick="confermaTerminaEsterno('rientro')">
+                <button type="button" class="btn btn-warning btn-lg w-100 text-dark mb-3" onclick="confermaTerminaEsterno('rientro')">
                     <strong>Rientrata - servono altre lavorazioni</strong><br>
                     <small>Il materiale e rientrato ma servono lavorazioni aggiuntive</small>
+                </button>
+                <button type="button" class="btn btn-secondary btn-lg w-100" onclick="confermaTerminaEsterno('nessuna')">
+                    <strong>Rientrata senza lavorazione</strong><br>
+                    <small>Nessuna lavorazione effettuata, torna in attesa</small>
                 </button>
             </div>
             <div class="modal-footer">
@@ -138,7 +142,7 @@ function confermaTerminaEsterno(tipo) {
 
     var promises = fasiIds.map(function(faseId) {
         var body = { fase_id: faseId, qta_prodotta: 0, scarti: 0 };
-        if (tipo === 'rientro') body.rientro = true;
+        if (tipo === 'rientro' || tipo === 'nessuna') body.rientro = true;
         return fetch('{{ route("produzione.termina") }}', {
             method: 'POST',
             headers: {
