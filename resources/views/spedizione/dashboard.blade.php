@@ -400,17 +400,17 @@
 <!-- Tabella fasi da spedire -->
 <h4 class="mx-2 mt-2" id="sezDaConsegnare" style="color:#28a745;">Da consegnare</h4>
 <div class="table-wrapper">
-    <table class="table table-bordered table-sm table-striped" id="tabDaSpedire">
+    <table class="table table-bordered table-sm table-striped sortable" id="tabDaSpedire">
         <thead class="table-dark">
             <tr>
                 <th>Azione</th>
                 <th>Note</th>
-                <th>Commessa</th>
-                <th>Cliente</th>
+                <th data-sort="text" style="cursor:pointer;">Commessa <span class="sort-arrow"></span></th>
+                <th data-sort="text" style="cursor:pointer;">Cliente <span class="sort-arrow"></span></th>
                 <th>Cod. Articolo</th>
                 <th>Qta</th>
                 <th>Descrizione</th>
-                <th>Data Consegna</th>
+                <th data-sort="date" style="cursor:pointer;">Data Consegna <span class="sort-arrow"></span></th>
                 <th>Progresso</th>
             </tr>
         </thead>
@@ -490,16 +490,16 @@
 @if($fasiInAttesa->count() > 0)
 <h4 class="mx-2 mt-4" style="color:#ffc107;">In attesa (lavorazione in corso)</h4>
 <div class="table-wrapper">
-    <table class="table table-bordered table-sm" id="tabInAttesa">
+    <table class="table table-bordered table-sm sortable" id="tabInAttesa">
         <thead style="background:#ffc107; color:#000;">
             <tr>
                 <th>Azione</th>
-                <th>Commessa</th>
-                <th>Cliente</th>
+                <th data-sort="text" style="cursor:pointer;">Commessa <span class="sort-arrow"></span></th>
+                <th data-sort="text" style="cursor:pointer;">Cliente <span class="sort-arrow"></span></th>
                 <th>Cod. Articolo</th>
                 <th>Qta</th>
                 <th>Descrizione</th>
-                <th>Data Consegna</th>
+                <th data-sort="date" style="cursor:pointer;">Data Consegna <span class="sort-arrow"></span></th>
                 <th>Progresso fasi</th>
             </tr>
         </thead>
@@ -1385,5 +1385,42 @@ function showNotificaEsterna(n) {
 
 checkNotificheEsterne();
 setInterval(checkNotificheEsterne, 15000);
+
+// ===== Sort tabelle cliccando intestazione =====
+document.querySelectorAll('table.sortable th[data-sort]').forEach(function(th) {
+    th.addEventListener('click', function() {
+        var table = th.closest('table');
+        var tbody = table.querySelector('tbody');
+        var rows = Array.from(tbody.querySelectorAll('tr'));
+        var colIdx = Array.from(th.parentNode.children).indexOf(th);
+        var sortType = th.getAttribute('data-sort');
+        var asc = th.getAttribute('data-dir') !== 'asc';
+        th.setAttribute('data-dir', asc ? 'asc' : 'desc');
+
+        // Reset frecce
+        th.closest('tr').querySelectorAll('.sort-arrow').forEach(function(s) { s.textContent = ''; });
+        th.querySelector('.sort-arrow').textContent = asc ? ' \u25B2' : ' \u25BC';
+
+        rows.sort(function(a, b) {
+            var aVal = a.cells[colIdx] ? a.cells[colIdx].textContent.trim() : '';
+            var bVal = b.cells[colIdx] ? b.cells[colIdx].textContent.trim() : '';
+
+            if (sortType === 'date') {
+                // Converte dd/mm/yyyy in Date
+                var parseDate = function(s) {
+                    var p = s.split('/');
+                    return p.length === 3 ? new Date(p[2], p[1]-1, p[0]) : new Date(0);
+                };
+                aVal = parseDate(aVal);
+                bVal = parseDate(bVal);
+                return asc ? aVal - bVal : bVal - aVal;
+            } else {
+                return asc ? aVal.localeCompare(bVal, 'it') : bVal.localeCompare(aVal, 'it');
+            }
+        });
+
+        rows.forEach(function(row) { tbody.appendChild(row); });
+    });
+});
 </script>
 @endsection
