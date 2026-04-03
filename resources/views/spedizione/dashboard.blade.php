@@ -336,12 +336,12 @@
 @if($fasiDDT->count() > 0)
 <h4 class="mx-2 mt-2" style="color:#6f42c1;">DDT Emesse da Onda</h4>
 <div class="table-wrapper">
-    <table class="table table-bordered table-sm" id="tabDDT">
+    <table class="table table-bordered table-sm sortable" id="tabDDT">
         <thead style="background:#6f42c1; color:#fff;">
             <tr>
                 <th>Azione</th>
-                <th>Commessa</th>
-                <th>Cliente</th>
+                <th data-sort="text" style="cursor:pointer;">Commessa <span class="sort-arrow"></span></th>
+                <th data-sort="text" style="cursor:pointer;">Cliente <span class="sort-arrow"></span></th>
                 <th>Cod. Articolo</th>
                 <th>Descrizione</th>
                 <th>Qta Ordine</th>
@@ -456,15 +456,15 @@
 @if($fasiParziali->count() > 0)
 <h4 class="mx-2 mt-4" style="color:#fd7e14;">Consegne Parziali</h4>
 <div class="table-wrapper">
-    <table class="table table-bordered table-sm" id="tabParziali">
+    <table class="table table-bordered table-sm sortable" id="tabParziali">
         <thead style="background:#fd7e14; color:#fff;">
             <tr>
                 <th>Azione</th>
-                <th>Commessa</th>
-                <th>Cliente</th>
+                <th data-sort="text" style="cursor:pointer;">Commessa <span class="sort-arrow"></span></th>
+                <th data-sort="text" style="cursor:pointer;">Cliente <span class="sort-arrow"></span></th>
                 <th>Cod. Articolo</th>
                 <th>Descrizione</th>
-                <th>Data cons. parziale</th>
+                <th data-sort="date" style="cursor:pointer;">Data cons. parziale <span class="sort-arrow"></span></th>
             </tr>
         </thead>
         <tbody>
