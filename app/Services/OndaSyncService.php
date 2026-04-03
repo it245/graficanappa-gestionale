@@ -405,6 +405,8 @@ class OndaSyncService
         $dedupPerCommessa = [];
         // Track qta distinte per dedup (chiave => [qta1, qta2, ...])
         $dedupQta = [];
+        // Track fasi multifase processate (PI, FIN): quante righe Onda per ordine+fase
+        $multifaseCount = [];
 
         foreach ($gruppi as $chiave => $righe) {
             $prima = $righe->first();
@@ -874,11 +876,20 @@ class OndaSyncService
                     }
 
                 } else {
-                    $exists = OrdineFase::where('ordine_id', $ordine->id)
+                    // Multifase (PI, FIN): permetti multiple per ordine
+                    $countMes = OrdineFase::where('ordine_id', $ordine->id)
                         ->where('fase_catalogo_id', $faseCatalogo->id)
-                        ->exists();
+                        ->whereNull('deleted_at')
+                        ->count();
 
-                    if (!$exists) {
+                    // Conta quante righe Onda processate per questa fase+ordine
+                    $chiaveMulti = $ordine->id . '|' . $faseCatalogo->id;
+                    if (!isset($multifaseCount[$chiaveMulti])) {
+                        $multifaseCount[$chiaveMulti] = 0;
+                    }
+                    $multifaseCount[$chiaveMulti]++;
+
+                    if ($countMes < $multifaseCount[$chiaveMulti]) {
                         OrdineFase::create($dataFase);
                         $fasiCreate++;
                         $logFasiCreate[] = $commessa . ' → ' . $faseNome;
