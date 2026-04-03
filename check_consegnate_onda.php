@@ -6,44 +6,38 @@ $app->make('Illuminate\Contracts\Console\Kernel')->bootstrap();
 $commesse = $argv[1] ?? '0066475-26,0066480-26,0066555-26,0066562-26,0066566-26,0066622-26,0066656-26,0066661-26,0066810-26,0066811-26,0066818-26';
 $lista = array_map('trim', explode(',', $commesse));
 
-echo "=== CONSEGNE DA ONDA (DDT vendita) ===\n\n";
+echo "=== DDT VENDITA DA ONDA ===\n\n";
 
 foreach ($lista as $comm) {
-    // Cerca DDT vendita (Tipo=3 o Tipo=6)
     $ddts = DB::connection('onda')->select("
-        SELECT d.NumDoc, d.DataDoc, d.Tipo, d.Stato,
-               r.CodArt, r.Descrizione, r.Qta, r.CodUnMis
-        FROM DOCTeste d
-        JOIN DOCRighe r ON d.IdDoc = r.IdDoc
-        WHERE d.CodCommessa = ?
-          AND d.Tipo IN (3, 6, 7, 8)
-        ORDER BY d.DataDoc
+        SELECT t.IdDoc, t.NumeroDocumento, t.DataDocumento,
+               a.RagioneSociale AS Cliente,
+               v.RagioneSociale AS Vettore,
+               r.Descrizione, r.Qta, r.CodUnMis, r.CodCommessa
+        FROM ATTDocTeste t
+        JOIN ATTDocRighe r ON t.IdDoc = r.IdDoc
+        LEFT JOIN STDAnagrafiche a ON t.IdAnagrafica = a.IdAnagrafica
+        LEFT JOIN ATTDocCoda c ON t.IdDoc = c.IdDoc
+        LEFT JOIN STDAnagrafiche v ON c.IdVettore1 = v.IdAnagrafica
+        WHERE r.CodCommessa = ?
+          AND t.TipoDocumento = 3
+          AND r.TipoRiga = 1
+        ORDER BY t.DataDocumento
     ", [$comm]);
 
     if (empty($ddts)) {
-        // Prova anche nella tabella PRDDocTeste per DDT
-        $ddts2 = DB::connection('onda')->select("
-            SELECT d.NumDoc, d.DataDoc, d.Tipo, d.Stato
-            FROM DOCTeste d
-            WHERE d.CodCommessa = ?
-            ORDER BY d.Tipo, d.DataDoc
-        ", [$comm]);
-
-        echo "{$comm}: Nessun DDT vendita trovato\n";
-        if (!empty($ddts2)) {
-            echo "  Documenti trovati:\n";
-            foreach ($ddts2 as $d) {
-                echo "    Tipo:{$d->Tipo} | Num:{$d->NumDoc} | Data:{$d->DataDoc} | Stato:{$d->Stato}\n";
-            }
-        }
-        echo "\n";
+        echo "{$comm}: Nessun DDT vendita\n\n";
         continue;
     }
 
-    echo "{$comm}:\n";
+    $qtaTot = 0;
+    echo "{$comm} ({$ddts[0]->Cliente}):\n";
     foreach ($ddts as $d) {
-        $data = $d->DataDoc ? \Carbon\Carbon::parse($d->DataDoc)->format('d/m/Y') : '-';
-        echo "  DDT {$d->NumDoc} del {$data} — {$d->CodArt} | {$d->Descrizione} | Qta: {$d->Qta} {$d->CodUnMis}\n";
+        $data = $d->DataDocumento ? \Carbon\Carbon::parse($d->DataDocumento)->format('d/m/Y') : '-';
+        $desc = substr($d->Descrizione ?? '-', 0, 50);
+        echo "  DDT {$d->NumeroDocumento} del {$data} | Qta: {$d->Qta} {$d->CodUnMis} | {$desc}\n";
+        if ($d->Vettore) echo "    Vettore: {$d->Vettore}\n";
+        $qtaTot += $d->Qta;
     }
-    echo "\n";
+    echo "  TOTALE CONSEGNATO: {$qtaTot}\n\n";
 }
