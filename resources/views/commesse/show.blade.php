@@ -223,10 +223,15 @@
                             </div>
                             @endif
                         </div>
+                        @php
+                            $inPausa = !is_numeric($fase->stato);
+                            $avviaLabel = $inPausa ? 'Riprendi' : ($fase->stato == 2 ? 'Avviato' : 'Avvia');
+                            $avviaAction = $inPausa ? "riprendiFase({$fase->id}, this.checked)" : "aggiornaStato({$fase->id}, 'avvia', this.checked)";
+                        @endphp
                         <div class="azioni-cerchi" id="azioni-fase-{{ $fase->id }}">
-                            {{-- Tutti e 3 i bottoni sempre visibili --}}
-                            <input type="checkbox" id="avvia-{{ $fase->id }}" onchange="aggiornaStato({{ $fase->id }}, 'avvia', this.checked)">
-                            <label for="avvia-{{ $fase->id }}" class="badge-avvia{{ $fase->stato == 2 ? ' lampeggia' : '' }}">{{ $fase->stato == 2 ? 'Avviato' : 'Avvia' }}</label>
+                            {{-- 3 bottoni: Avvia/Avviato/Riprendi + Pausa + Termina --}}
+                            <input type="checkbox" id="avvia-{{ $fase->id }}" onchange="{{ $avviaAction }}">
+                            <label for="avvia-{{ $fase->id }}" class="badge-avvia{{ $fase->stato == 2 ? ' lampeggia' : '' }}">{{ $avviaLabel }}</label>
 
                             <input type="checkbox" id="pausa-{{ $fase->id }}" onchange="gestisciPausa({{ $fase->id }}, this.checked)">
                             <label for="pausa-{{ $fase->id }}" class="badge-pausa">Pausa</label>
@@ -238,12 +243,6 @@
                                    data-qta-prod="{{ $fase->qta_prod ?? 0 }}"
                                    onchange="aggiornaStato({{ $fase->id }}, 'termina', this.checked)">
                             <label for="termina-{{ $fase->id }}" class="badge-termina">Termina</label>
-
-
-                            @if(!is_numeric($fase->stato))
-                                <input type="checkbox" id="riprendi-{{ $fase->id }}" onchange="riprendiFase({{ $fase->id }}, this.checked)">
-                                <label for="riprendi-{{ $fase->id }}" class="badge-avvia">Riprendi</label>
-                            @endif
                         </div>
                     </div>
                 </div>
@@ -454,22 +453,19 @@ function updateButtons(faseId, nuovoStato) {
     const container = document.getElementById('azioni-fase-'+faseId);
     if (!container) return;
 
-    // I 3 bottoni base sempre visibili
+    // 3 bottoni: Avvia/Avviato/Riprendi + Pausa + Termina
+    var inPausa = (typeof nuovoStato === 'string' && isNaN(nuovoStato));
     var lampeggiaClass = (nuovoStato == 2) ? ' lampeggia' : '';
+    var avviaLabel = inPausa ? 'Riprendi' : (nuovoStato == 2 ? 'Avviato' : 'Avvia');
+    var avviaAction = inPausa ? 'riprendiFase('+faseId+', this.checked)' : 'aggiornaStato('+faseId+', \'avvia\', this.checked)';
+
     let html =
-        '<input type="checkbox" id="avvia-'+faseId+'" onchange="aggiornaStato('+faseId+', \'avvia\', this.checked)">' +
-        '<label for="avvia-'+faseId+'" class="badge-avvia'+lampeggiaClass+'">'+(nuovoStato == 2 ? 'Avviato' : 'Avvia')+'</label>' +
+        '<input type="checkbox" id="avvia-'+faseId+'" onchange="'+avviaAction+'">' +
+        '<label for="avvia-'+faseId+'" class="badge-avvia'+lampeggiaClass+'">'+avviaLabel+'</label>' +
         '<input type="checkbox" id="pausa-'+faseId+'" onchange="gestisciPausa('+faseId+', this.checked)">' +
         '<label for="pausa-'+faseId+'" class="badge-pausa">Pausa</label>' +
         '<input type="checkbox" id="termina-'+faseId+'" onchange="aggiornaStato('+faseId+', \'termina\', this.checked)">' +
         '<label for="termina-'+faseId+'" class="badge-termina">Termina</label>';
-
-    // Aggiungi Riprendi se in pausa
-    if (typeof nuovoStato === 'string' && isNaN(nuovoStato)) {
-        html +=
-            '<input type="checkbox" id="riprendi-'+faseId+'" onchange="riprendiFase('+faseId+', this.checked)">' +
-            '<label for="riprendi-'+faseId+'" class="badge-avvia">Riprendi</label>';
-    }
 
     container.innerHTML = html;
 }
