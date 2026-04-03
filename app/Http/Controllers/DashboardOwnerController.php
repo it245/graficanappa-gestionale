@@ -680,10 +680,10 @@ public function calcolaOreEPriorita($fase)
                 $faseNome = $fase->faseCatalogo->nome_display ?? $fase->fase ?? '';
                 $descrizione = mb_substr($fase->ordine->descrizione ?? '', 0, 60);
 
-                // Segna come esterno e avvia (stato 2 = in lavorazione esterna)
-                if (in_array($fase->stato, [0, '0'])) {
-                    $fase->stato = 2;
-                    $fase->data_inizio = now();
+                // Segna come esterno (stato 5 = in lavorazione esterna)
+                if (in_array((int) $fase->stato, [0, 1])) {
+                    $fase->stato = 5;
+                    $fase->data_inizio = $fase->data_inizio ?? now();
                     $fase->esterno = true;
                     $fase->save();
                 }
@@ -1367,7 +1367,8 @@ public function calcolaOreEPriorita($fase)
         $repartoEsterno = Reparto::where('nome', 'esterno')->first();
 
         // Fasi esterne: reparto "esterno" OPPURE flag esterno=1 (inviate dal owner)
-        $fasiEsterne = OrdineFase::where('stato', '<', 3)
+        // Include stato < 3 (attive) e stato 5 (esterno dedicato)
+        $fasiEsterne = OrdineFase::where(fn($q) => $q->where('stato', '<', 3)->orWhere('stato', 5))
             ->where(function ($q) use ($repartoEsterno) {
                 if ($repartoEsterno) {
                     $q->whereHas('faseCatalogo', fn($q2) => $q2->where('reparto_id', $repartoEsterno->id));
@@ -1399,6 +1400,8 @@ public function calcolaOreEPriorita($fase)
                 if ($stati->contains(fn($s) => is_string($s) && !is_numeric($s))) {
                     $statoPausa = $fasi->first(fn($f) => is_string($f->stato) && !is_numeric($f->stato));
                     $stato = $statoPausa->stato;
+                } elseif ($stati->contains(5)) {
+                    $stato = 5;
                 } elseif ($stati->contains(2)) {
                     $stato = 2;
                 } elseif ($stati->contains(1)) {

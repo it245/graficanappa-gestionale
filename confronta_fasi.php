@@ -106,7 +106,7 @@ if ($ordini->isNotEmpty()) {
         foreach ($ordine->fasi as $fase) {
             $nomeFase = $fase->fase ?? ($fase->faseCatalogo->nome ?? '-');
             $reparto = optional(optional($fase->faseCatalogo)->reparto)->nome ?? '-';
-            $statoLabel = [0 => 'caricato', 1 => 'pronto', 2 => 'avviato', 3 => 'terminato', 4 => 'consegnato'];
+            $statoLabel = [0 => 'caricato', 1 => 'pronto', 2 => 'avviato', 3 => 'terminato', 4 => 'consegnato', 5 => 'esterno'];
             $desc = mb_substr($ordine->descrizione ?? '-', 0, 30);
             printf("  %-30s | %-20s | %-10s | %-8s | %s\n",
                 $desc,

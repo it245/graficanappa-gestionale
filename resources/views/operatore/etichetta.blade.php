@@ -396,7 +396,7 @@
 
     {{-- Card per ogni fase dell'operatore --}}
     @foreach($fasiOperatore as $fase)
-    @php $badgeBg = [0=>'bg-secondary',1=>'bg-info',2=>'bg-warning text-dark',3=>'bg-success']; @endphp
+    @php $badgeBg = [0=>'bg-secondary',1=>'bg-info',2=>'bg-warning text-dark',3=>'bg-success',5=>'bg-purple text-white']; @endphp
     <div class="card card-fase-et mb-3">
         <div class="card-header bg-primary text-white d-flex align-items-center justify-content-between">
             <div>
@@ -925,7 +925,7 @@ function csrfTokenEt() {
 
 function updateBadgeEt(faseId, stato) {
     var badge = document.getElementById('badge-fase-'+faseId);
-    if (badge) { badge.textContent = stato; badge.className = 'badge ms-2 fs-5 ' + ({0:'bg-secondary',1:'bg-info',2:'bg-warning text-dark',3:'bg-success'}[stato] || 'bg-dark'); }
+    if (badge) { badge.textContent = stato; badge.className = 'badge ms-2 fs-5 ' + ({0:'bg-secondary',1:'bg-info',2:'bg-warning text-dark',3:'bg-success',5:'bg-purple text-white'}[stato] || 'bg-dark'); }
 }
 
 function updateOperatoriEt(faseId, operatori) {

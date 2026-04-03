@@ -158,7 +158,7 @@
                 <div class="card border-primary h-100" id="card-fase-{{ $fase->id }}">
                     <div class="card-header bg-primary text-white">
                         <strong>{{ $fase->faseCatalogo->nome_display ?? '-' }}</strong>
-                        @php $badgeBg = [0=>'bg-secondary',1=>'bg-info',2=>'bg-warning text-dark',3=>'bg-success']; @endphp
+                        @php $badgeBg = [0=>'bg-secondary',1=>'bg-info',2=>'bg-warning text-dark',3=>'bg-success',5=>'bg-purple text-white']; @endphp
                         <span class="badge {{ $badgeBg[$fase->stato] ?? 'bg-dark' }} ms-2 fs-5" id="badge-fase-{{ $fase->id }}">{{ $fase->stato }}</span>
                         <span class="ms-2" id="operatori-fase-{{ $fase->id }}">
                             @foreach($fase->operatori as $op)
@@ -440,7 +440,7 @@
 </div>
 
 <script>
-const badgeBgMap = {0:'bg-secondary',1:'bg-info',2:'bg-warning text-dark',3:'bg-success'};
+const badgeBgMap = {0:'bg-secondary',1:'bg-info',2:'bg-warning text-dark',3:'bg-success',5:'bg-purple text-white'};
 
 function updateBadge(faseId, stato) {
     const badge = document.getElementById('badge-fase-'+faseId);

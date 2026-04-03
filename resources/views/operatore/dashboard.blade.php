@@ -549,7 +549,7 @@ function applicaFiltri(el) {
 
         // Le fasi in pausa sono sempre visibili (stato non numerico = motivo pausa)
         var statoText = statoCell ? statoCell.textContent.trim() : '';
-        var inPausa = statoText !== '' && isNaN(statoText) && statoText !== '0' && statoText !== '1' && statoText !== '2' && statoText !== '3' && statoText !== '4';
+        var inPausa = statoText !== '' && isNaN(statoText) && statoText !== '0' && statoText !== '1' && statoText !== '2' && statoText !== '3' && statoText !== '4' && statoText !== '5';
         if (inPausa) {
             riga.style.display = '';
             return;

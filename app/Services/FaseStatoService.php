@@ -9,7 +9,7 @@ class FaseStatoService
 {
     /**
      * Ricalcola gli stati delle fasi di una commessa.
-     * 0 = caricato, 1 = pronto, 2 = avviato, 3 = terminato, 4 = consegnato
+     * 0 = caricato, 1 = pronto, 2 = avviato, 3 = terminato, 4 = consegnato, 5 = esterno
      * Una fase passa a 1 (pronto) solo se tutte le fasi con priorità inferiore sono a 3 (terminato).
      */
     public static function ricalcolaStati($ordineId)
@@ -30,8 +30,8 @@ class FaseStatoService
         $flusso = array_change_key_case($flussoRaw, CASE_UPPER);
 
         foreach ($fasi as $fase) {
-            // Se già avviato (2) o terminato (3), non toccare
-            if ($fase->stato >= 2) continue;
+            // Se già avviato (2), terminato (3), consegnato (4) o esterno (5), non toccare
+            if (is_numeric($fase->stato) && (int) $fase->stato >= 2) continue;
 
             // STAMPA XL (offset) non viene MAI promossa automaticamente a stato 1
             if (str_starts_with($fase->fase, 'STAMPAXL106') || str_starts_with($fase->fase, 'STAMPA XL')) continue;
@@ -47,7 +47,8 @@ class FaseStatoService
                 // Nessuna fase precedente: non toccare lo stato (rispetta modifiche manuali)
             } else {
                 // Fase precedente in pausa (stato stringa non numerica) = NON terminata
-                $tuttTerminate = $fasiPrecedenti->every(fn($f) => is_numeric($f->stato) && $f->stato >= 3);
+                // stato 5 (esterno) NON conta come terminata — la fase è ancora dal fornitore
+                $tuttTerminate = $fasiPrecedenti->every(fn($f) => is_numeric($f->stato) && (int) $f->stato >= 3 && (int) $f->stato != 5);
                 $qualcunaInPausa = $fasiPrecedenti->contains(fn($f) => !is_numeric($f->stato));
 
                 if ($tuttTerminate && !$qualcunaInPausa && $fase->stato == 0) {
@@ -107,7 +108,7 @@ class FaseStatoService
             $completata = false; // Prinect gestisce la terminazione della stampa
         }
 
-        if ($completata && $fase->stato < 3) {
+        if ($completata && $fase->stato < 3 && (int) $fase->stato !== 5) {
             $fase->stato = 3;
             $fase->data_fine = now()->format('Y-m-d H:i:s');
             $fase->save();
@@ -130,7 +131,7 @@ class FaseStatoService
 
         if ($brtConsegnato) {
             OrdineFase::whereIn('ordine_id', $ordineIds)
-                ->whereRaw("stato REGEXP '^[0-9]+$' AND stato < 4")
+                ->whereRaw("stato REGEXP '^[0-9]+$' AND (stato < 4 OR stato = 5)")
                 ->update(['stato' => 4, 'data_fine' => now()->format('Y-m-d H:i:s')]);
         }
     }
@@ -153,7 +154,7 @@ class FaseStatoService
         $flusso = array_change_key_case($flussoRaw, CASE_UPPER);
 
         foreach ($fasi as $fase) {
-            if ($fase->stato >= 2) continue;
+            if (is_numeric($fase->stato) && (int) $fase->stato >= 2) continue;
 
             // STAMPA XL (offset) non viene MAI promossa automaticamente a stato 1
             if (str_starts_with($fase->fase, 'STAMPAXL106') || str_starts_with($fase->fase, 'STAMPA XL')) continue;
@@ -169,7 +170,8 @@ class FaseStatoService
             if ($fasiPrecedenti->isEmpty()) {
                 // Nessuna fase precedente: non toccare lo stato (rispetta modifiche manuali)
             } else {
-                $tuttTerminate = $fasiPrecedenti->every(fn($f) => is_numeric($f->stato) && $f->stato >= 3);
+                // stato 5 (esterno) NON conta come terminata
+                $tuttTerminate = $fasiPrecedenti->every(fn($f) => is_numeric($f->stato) && (int) $f->stato >= 3 && (int) $f->stato != 5);
                 $qualcunaInPausa = $fasiPrecedenti->contains(fn($f) => !is_numeric($f->stato));
 
                 if ($tuttTerminate && !$qualcunaInPausa && $fase->stato == 0) {

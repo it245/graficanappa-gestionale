@@ -9,7 +9,7 @@ class ReportPercorsoExport implements WithMultipleSheets
 {
     public function sheets(): array
     {
-        $ordini = Ordine::whereHas('fasi', fn($q) => $q->where('stato', '<', 4))
+        $ordini = Ordine::whereHas('fasi', fn($q) => $q->where(fn($q2) => $q2->where('stato', '<', 4)->orWhere('stato', 5)))
             ->with(['fasi.faseCatalogo'])
             ->orderBy('commessa')
             ->get();
@@ -32,7 +32,7 @@ class ReportPercorsoExport implements WithMultipleSheets
             $classe = $ordine->getPercorsoClass();
             $key = $mapClasse[$classe] ?? 'Base';
             $fasiTot = $ordine->fasi->count();
-            $fasiComplete = $ordine->fasi->where('stato', '>=', 3)->count();
+            $fasiComplete = $ordine->fasi->filter(fn($f) => is_numeric($f->stato) && (int)$f->stato >= 3 && (int)$f->stato != 5)->count();
 
             $gruppi[$key]['ordini'][] = [
                 $ordine->commessa,

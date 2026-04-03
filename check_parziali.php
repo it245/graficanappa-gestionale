@@ -39,7 +39,7 @@ foreach ($parziali as $p) {
     echo "  Fasi: {$terminate}/{$totFasi} terminate, {$consegnate} consegnate\n";
     echo "  Dettaglio fasi:\n";
     foreach ($fasi as $f) {
-        $stLabel = match((int)$f->stato) { 0 => 'caricato', 1 => 'pronto', 2 => 'avviato', 3 => 'terminato', 4 => 'consegnato', default => $f->stato };
+        $stLabel = match((int)$f->stato) { 0 => 'caricato', 1 => 'pronto', 2 => 'avviato', 3 => 'terminato', 4 => 'consegnato', 5 => 'esterno', default => $f->stato };
         echo "    {$f->fase} ({$f->reparto}) — stato:{$stLabel} — qta:{$f->qta_fase} — prod:{$f->qta_prod}\n";
     }
     echo "\n";

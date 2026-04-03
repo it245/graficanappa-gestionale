@@ -1341,7 +1341,7 @@ class OndaSyncService
 
             $fase->update([
                 'esterno'          => 1,
-                'stato'            => 2,
+                'stato'            => 5,
                 'data_inizio'      => $dataDoc,
                 'note'             => 'Inviato a: ' . $fornitore,
                 'ddt_fornitore_id' => $idDoc,
@@ -1442,7 +1442,7 @@ class OndaSyncService
 
                 $fase->update([
                     'esterno' => 1,
-                    'stato' => 2,
+                    'stato' => 5,
                     'data_inizio' => $dataDoc,
                     'note' => 'Inviato a: ' . $fornitore,
                     'ddt_fornitore_id' => $idDoc,

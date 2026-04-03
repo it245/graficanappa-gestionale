@@ -76,7 +76,7 @@ class CommessaController extends Controller
         // Carica i modelli Ordine con conteggio fasi, poi ordina come la coda
         // unique('commessa'): una commessa può avere più ordini, ne mostriamo uno solo
         $prossime = Ordine::whereIn('commessa', $commesseOrdinate)
-            ->withCount(['fasi', 'fasi as fasi_terminate_count' => fn($q) => $q->where('stato', '>=', 3)])
+            ->withCount(['fasi', 'fasi as fasi_terminate_count' => fn($q) => $q->whereRaw("stato REGEXP '^[0-9]+$' AND stato >= 3 AND stato != 5")])
             ->get()
             ->unique('commessa')
             ->sortBy(fn($o) => $commesseOrdinate->search($o->commessa))

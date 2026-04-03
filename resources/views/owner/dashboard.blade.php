@@ -887,13 +887,13 @@ tr:hover td {
                 @endphp
                 @php
                     $statiLabel = [0 => 'Caricato', 1 => 'Pronto', 2 => 'Avviato', 3 => 'Terminato', 4 => 'Consegnato'];
-                    $statoBg = [0 => '#e9ecef', 1 => '#cfe2ff', 2 => '#fff3cd', 3 => '#d1e7dd', 4 => '#c3c3c3'];
+                    $statoBg = [0 => '#e9ecef', 1 => '#cfe2ff', 2 => '#fff3cd', 3 => '#d1e7dd', 4 => '#c3c3c3', 5 => '#e0cffc'];
                 @endphp
                 <tr class="{{ $rowClass }}" data-id="{{ $fase->id }}">
                     <td><a href="{{ route('owner.dettaglioCommessa', $fase->ordine->commessa ?? '-') }}" style="color:#000;font-weight:bold;text-decoration:underline;">{{ $fase->ordine->commessa ?? '-' }}</a></td>
-                    @if($fase->esterno && $fase->stato < 3 && ($fase->ddt_fornitore_id || $fase->stato == 2))
+                    @if($fase->esterno && ((int)$fase->stato === 5 || $fase->stato < 3) && ($fase->ddt_fornitore_id || (int)$fase->stato === 5))
                     <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)" style="background:#d1fae5 !important;font-weight:bold;text-align:center;color:#065f46;font-size:10px;" title="Inviato al fornitore">EXT</td>
-                    @elseif($fase->esterno && $fase->stato < 3)
+                    @elseif($fase->esterno && ((int)$fase->stato === 5 || $fase->stato < 3))
                     <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)" style="background:#ede9fe !important;font-weight:bold;text-align:center;color:#7c3aed;font-size:10px;" title="Esterno - da inviare">EXT</td>
                     @else
                     <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)" style="background:{{ $statoBg[$fase->stato] ?? '#e9ecef' }} !important;font-weight:bold;text-align:center;">{{ $fase->stato }}</td>
@@ -1634,7 +1634,7 @@ function aggiornaStato(faseId, testo) {
     // Se riscrive EXT, non fare nulla
     if (val === 'EXT') return;
     const nuovoStato = parseInt(val);
-    if (isNaN(nuovoStato) || nuovoStato < 0 || nuovoStato > 3) {
+    if (isNaN(nuovoStato) || nuovoStato < 0 || (nuovoStato > 3 && nuovoStato !== 5)) {
         alert('Stato non valido. Usa: 0, 1, 2, 3');
         return;
     }
@@ -1648,7 +1648,7 @@ function aggiornaStato(faseId, testo) {
         if (!d.success) {
             alert('Errore: ' + (d.messaggio || ''));
         } else {
-            const bgMap = {0: '#e9ecef', 1: '#cfe2ff', 2: '#fff3cd', 3: '#d1e7dd'};
+            const bgMap = {0: '#e9ecef', 1: '#cfe2ff', 2: '#fff3cd', 3: '#d1e7dd', 5: '#e0cffc'};
             const row = document.querySelector('tr[data-id="' + faseId + '"]');
             if (row) {
                 const statoCell = row.cells[1];
