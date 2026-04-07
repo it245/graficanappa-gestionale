@@ -711,20 +711,8 @@ function schedulaDaDB(data) {
         });
     });
 
-    // Fasi senza scheduler (esterne, manuali) — calcola posizione base
-    data.forEach(f => {
-        if (f.sched_macchina) return; // già gestita
-        const reparto = f.reparto || 'Generico';
-        if (!macchine[reparto]) macchine[reparto] = { nome: reparto, reparto_id: f.reparto_id || 0, fasi: [], turni: '6-22' };
-        // Posiziona all'inizio come placeholder
-        macchine[reparto].fasi.push({
-            ...f,
-            start_h: 0,
-            end_h: Math.max(f.ore || 0.5, 0.1),
-            ore_effettive: f.ore || 0.5,
-            lane: 0,
-        });
-    });
+    // Fasi senza scheduler vengono ignorate (sono state schedulate dallo scheduler PHP
+    // oppure sono fasi esterne/manuali che non hanno una macchina assegnata)
 
     // Ordina fasi per posizione scheduler e calcola ore_totali
     Object.values(macchine).forEach(m => {
