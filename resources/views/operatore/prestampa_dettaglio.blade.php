@@ -58,16 +58,18 @@
     $coloriCalc = \App\Helpers\DescrizioneParser::parseColori($tutteDesc, $ordine->cliente_nome ?? '');
     $fustellaCalc = \App\Helpers\DescrizioneParser::parseFustella($tutteDesc, $ordine->cliente_nome ?? '', $ordine->note_prestampa ?? '');
     $mirko = $isMirko ?? false;
+    // Qta: MAX tra gli ordini (non la somma — gli ordini sono documenti di produzione, non articoli diversi)
+    $qtaCommessa = $ordini->max('qta_richiesta');
 @endphp
 <div class="row g-2 mb-2" style="font-size:13px;">
     <div class="col-md-4">
         <div class="border rounded p-2 h-100" style="background:{{ $mirko ? '#e8f4fd' : '#fff3cd' }}">
             <strong class="d-block mb-1">Descrizione</strong>
             @if($mirko)
-                <span>{{ $ordine->descrizione ?: '-' }}</span>
+                <span>{{ $tutteDesc ?: '-' }}</span>
             @else
                 <div contenteditable class="campo-editabile" data-campo="descrizione" data-ordine="{{ $ordine->id }}"
-                     onblur="salvaCampoPrestampa(this)" style="min-height:40px;">{{ $ordine->descrizione ?: '' }}</div>
+                     onblur="salvaCampoPrestampa(this)" style="min-height:40px;">{{ $tutteDesc ?: '' }}</div>
             @endif
         </div>
     </div>
@@ -81,10 +83,10 @@
         <div class="border rounded p-2 h-100" style="background:{{ $mirko ? '#e8f4fd' : '#fff3cd' }}">
             <strong class="d-block mb-1">Qta</strong>
             @if($mirko)
-                <span>{{ $ordine->qta_richiesta ? number_format($ordine->qta_richiesta, 0, ',', '.') : '-' }}</span>
+                <span>{{ $qtaCommessa ? number_format($qtaCommessa, 0, ',', '.') : '-' }}</span>
             @else
                 <div contenteditable class="campo-editabile" data-campo="qta_richiesta" data-ordine="{{ $ordine->id }}"
-                     onblur="salvaCampoPrestampa(this)">{{ $ordine->qta_richiesta ? number_format($ordine->qta_richiesta, 0, ',', '.') : '' }}</div>
+                     onblur="salvaCampoPrestampa(this)">{{ $qtaCommessa ? number_format($qtaCommessa, 0, ',', '.') : '' }}</div>
             @endif
         </div>
     </div>

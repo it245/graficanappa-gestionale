@@ -208,7 +208,7 @@ class DashboardOperatoreController extends Controller
                 \Illuminate\Support\Facades\DB::raw('MIN(data_registrazione) as data_registrazione'),
                 \Illuminate\Support\Facades\DB::raw('MAX(note_prestampa) as note_prestampa'),
                 \Illuminate\Support\Facades\DB::raw('MAX(responsabile) as responsabile'),
-                \Illuminate\Support\Facades\DB::raw('SUM(qta_richiesta) as qta_richiesta'))
+                \Illuminate\Support\Facades\DB::raw('MAX(qta_richiesta) as qta_richiesta'))
             ->groupBy('commessa')
             ->orderBy('data_prevista_consegna')
             ->get();
