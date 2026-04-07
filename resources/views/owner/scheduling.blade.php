@@ -667,6 +667,76 @@ function getBestOre(fase) {
 }
 
 function schedulaPerMacchina(data) {
+    // Se le fasi hanno sched_inizio/sched_fine dal PHP scheduler, usa quelli
+    const hasSchedulerData = data.some(f => f.sched_inizio && f.sched_fine);
+    if (hasSchedulerData) {
+        return schedulaDaDB(data);
+    }
+    // Fallback: calcolo client-side
+    return schedulaClientSide(data);
+}
+
+// ===================== SCHEDULER DA DB (Mossa 37 pre-calcolato) =====================
+function schedulaDaDB(data) {
+    const NOMI_MAC = {
+        'XL106': 'Heidelberg XL 106 (24h)', 'BOBST': 'BOBST 75x106', 'STEL': 'STEL G33/P25',
+        'JOH': 'JOH Stampa a Caldo', 'PLAST': 'Plastificatrice', 'PIEGA': 'Piegaincolla',
+        'FIN': 'Finestratrice', 'INDIGO': 'HP Indigo/MGI', 'TAGLIO': 'Tagliacarte',
+        'LEGAT': 'Legatoria', 'ZUND': 'Zünd', 'SPED': 'Spedizione',
+    };
+    const TURNI_MAC = {
+        'XL106': '24h', 'BOBST': '6-22', 'STEL': '6-22', 'JOH': '6-22, sab 6-13',
+        'PLAST': '6-22', 'PIEGA': '6-22', 'FIN': '6-22', 'INDIGO': '6-22',
+        'TAGLIO': '6-22', 'LEGAT': '6-22', 'ZUND': '6-22', 'SPED': '-',
+    };
+
+    const macchine = {};
+    data.forEach(f => {
+        if (!f.sched_macchina || !f.sched_inizio || !f.sched_fine) return;
+        const mid = f.sched_macchina;
+        const nome = NOMI_MAC[mid] || f.reparto || mid;
+        if (!macchine[nome]) macchine[nome] = { nome, reparto_id: f.reparto_id || 0, fasi: [], turni: TURNI_MAC[mid] || '6-22' };
+
+        const inizio = new Date(f.sched_inizio);
+        const fine = new Date(f.sched_fine);
+        const startH = (inizio - NOW) / 3600000;
+        const endH = (fine - NOW) / 3600000;
+
+        macchine[nome].fasi.push({
+            ...f,
+            start_h: startH,
+            end_h: endH,
+            ore_effettive: (fine - inizio) / 3600000,
+            lane: 0,
+        });
+    });
+
+    // Fasi senza scheduler (esterne, manuali) — calcola posizione base
+    data.forEach(f => {
+        if (f.sched_macchina) return; // già gestita
+        const reparto = f.reparto || 'Generico';
+        if (!macchine[reparto]) macchine[reparto] = { nome: reparto, reparto_id: f.reparto_id || 0, fasi: [], turni: '6-22' };
+        // Posiziona all'inizio come placeholder
+        macchine[reparto].fasi.push({
+            ...f,
+            start_h: 0,
+            end_h: Math.max(f.ore || 0.5, 0.1),
+            ore_effettive: f.ore || 0.5,
+            lane: 0,
+        });
+    });
+
+    // Ordina fasi per posizione scheduler dentro ogni macchina
+    Object.values(macchine).forEach(m => {
+        m.fasi.sort((a, b) => (a.sched_posizione || 999) - (b.sched_posizione || 999));
+        m.lanes = 1;
+    });
+
+    return macchine;
+}
+
+// ===================== SCHEDULER CLIENT-SIDE (fallback) =====================
+function schedulaClientSide(data) {
     const macchine = {};
     const BOBST_KEY = 'Fustella / Rilievo (Bobst)';
     const SPED_KEY = 'Spedizione';
@@ -1212,7 +1282,7 @@ function renderGanttMacchina() {
     macchine.forEach(macchina => {
         const row = el('div', 'gantt-row');
         const label = el('div', 'gantt-label');
-        const turnoLabel = getTurnoLabel(macchina.nome);
+        const turnoLabel = macchina.turni || getTurnoLabel(macchina.nome);
         label.innerHTML = `<div>${macchina.nome}<div class="label-sub">${macchina.fasi.length} fasi &middot; ${Math.round(macchina.fasi.reduce((s,f)=>s+(f.ore_effettive||f.ore),0))}h &middot; ${turnoLabel}</div></div>`;
         row.appendChild(label);
 

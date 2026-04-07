@@ -1338,6 +1338,13 @@ class DashboardOwnerController extends Controller
                 'reparto_id' => $fase->faseCatalogo?->reparto_id ?? 0,
                 'reparto' => ucfirst($fase->faseCatalogo?->reparto?->nome ?? 'generico'),
                 'data_inizio_reale' => $dataInizio,
+                // Dati scheduler Mossa 37
+                'sched_inizio' => $fase->sched_inizio,
+                'sched_fine' => $fase->sched_fine,
+                'sched_macchina' => $fase->sched_macchina,
+                'sched_posizione' => $fase->sched_posizione,
+                'sched_setup_tipo' => $fase->sched_setup_tipo,
+                'sched_batch_group' => $fase->sched_batch_group,
             ];
         })->values();
 
