@@ -5,17 +5,9 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Helvetica', 'Arial', sans-serif; font-size: 9pt; color: #000; }
-        .page { padding: 15mm 15mm 10mm 15mm; }
+        .page { padding: 40mm 15mm 10mm 15mm; } /* 40mm top: spazio per intestazione pre-stampata */
 
-        /* Header */
-        .header { display: table; width: 100%; margin-bottom: 8mm; }
-        .header-left { display: table-cell; width: 55%; vertical-align: top; }
-        .header-right { display: table-cell; width: 45%; vertical-align: top; }
-        .logo-text { font-size: 16pt; font-weight: bold; letter-spacing: 2px; margin-bottom: 2mm; }
-        .logo-text span { color: #e60000; }
-        .logo-sub { font-size: 7pt; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4mm; }
-        .azienda-info { font-size: 7.5pt; line-height: 1.6; color: #333; }
-        .azienda-info strong { font-style: italic; }
+        /* Header rimosso: la carta è già intestata */
 
         /* Cliente */
         .cliente-box { border: 1px solid #999; padding: 3mm; margin-bottom: 2mm; }
@@ -83,44 +75,32 @@
 <body>
 <div class="page">
 
-    {{-- HEADER --}}
-    <div class="header">
-        <div class="header-left">
-            <div class="logo-text">GRAFICA<span>NAPPA</span></div>
-            <div class="logo-sub">INDUSTRIA POLIGRAFICA</div>
-            <div class="azienda-info">
-                <strong>Grafica Nappa srl</strong> <em>industria poligrafica</em><br>
-                Via Gramsci, 19 - 81031 Aversa (Ce) - Italia<br>
-                tel. +39.081.890.6734 - fax. +39.081.890.6739<br>
-                P. IVA IT 00100450618 - CCIAA (CE) REA n. 61760 R.I. di Caserta n. 118273/97<br>
-                www.graficanappa.com - info@graficanappa.com
+    {{-- CLIENTE (posizionato a destra, l'intestazione è pre-stampata sulla carta) --}}
+    <div style="text-align: right; margin-bottom: 3mm;">
+        <div class="cliente-label">Spett.le</div>
+        <div class="cliente-box" style="display: inline-block; text-align: left; min-width: 55%;">
+            <div class="cliente-nome">{{ $testa->ClienteNome }}</div>
+            <div class="cliente-indirizzo">
+                {{ $testa->ClienteIndirizzo }}<br>
+                {{ $testa->ClienteCitta }} {{ $testa->ClienteCap }} {{ $testa->ClienteProvincia }}<br>
+                {{ $nazione }}
             </div>
-        </div>
-        <div class="header-right">
-            {{-- Cliente --}}
-            <div class="cliente-label">Spett.le</div>
-            <div class="cliente-box">
-                <div class="cliente-nome">{{ $testa->ClienteNome }}</div>
-                <div class="cliente-indirizzo">
-                    {{ $testa->ClienteIndirizzo }}<br>
-                    {{ $testa->ClienteCitta }} {{ $testa->ClienteCap }} {{ $testa->ClienteProvincia }}<br>
-                    {{ $nazione }}
-                </div>
-            </div>
-
-            {{-- Destinazione --}}
-            @if($coda && $coda->DestNome)
-            <div class="dest-label">DESTINAZIONE (se l'indirizzo è diverso da quello del destinatario)</div>
-            <div class="dest-box">
-                <div class="cliente-nome">{{ $coda->DestNome }}</div>
-                <div class="cliente-indirizzo">
-                    {{ $coda->DestIndirizzo }}<br>
-                    {{ $coda->DestCap }} {{ $coda->DestCitta }} {{ $coda->DestProvincia }}
-                </div>
-            </div>
-            @endif
         </div>
     </div>
+
+    {{-- Destinazione --}}
+    @if($coda && $coda->DestNome)
+    <div style="text-align: right; margin-bottom: 3mm;">
+        <div class="dest-label">DESTINAZIONE (se l'indirizzo è diverso da quello del destinatario)</div>
+        <div class="dest-box" style="display: inline-block; text-align: left; min-width: 55%;">
+            <div class="cliente-nome">{{ $coda->DestNome }}</div>
+            <div class="cliente-indirizzo">
+                {{ $coda->DestIndirizzo }}<br>
+                {{ $coda->DestCap }} {{ $coda->DestCitta }} {{ $coda->DestProvincia }}
+            </div>
+        </div>
+    </div>
+    @endif
 
     {{-- BLOCCO DDT --}}
     <table class="ddt-info">
