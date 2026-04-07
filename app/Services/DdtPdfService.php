@@ -115,9 +115,10 @@ class DdtPdfService
         // 3. Righe articoli
         $righe = DB::connection('onda')->select("
             SELECT r.TipoRiga, r.CodCommessa, r.Descrizione, r.Qta,
-                   r.CodUnMis, r.CodArt
+                   r.CodUnMis, r.CodArt, r.NonStampa
             FROM ATTDocRighe r
             WHERE r.IdDoc = ?
+              AND (r.NonStampa IS NULL OR r.NonStampa = 0)
             ORDER BY r.NrRiga
         ", [$testa->IdDoc]);
 
