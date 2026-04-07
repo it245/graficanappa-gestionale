@@ -1504,7 +1504,9 @@ class OndaSyncService
             $ordine = Ordine::where('commessa', $codCommessa)->first();
 
             // Salva nella tabella ddt_spedizioni (supporta più DDT per commessa)
+            $ddtNuovo = false;
             if ($ordine) {
+                $esistente = DdtSpedizione::where('onda_id_doc', $idDoc)->where('commessa', $codCommessa)->exists();
                 DdtSpedizione::updateOrCreate(
                     ['onda_id_doc' => $idDoc, 'commessa' => $codCommessa],
                     [
@@ -1516,6 +1518,7 @@ class OndaSyncService
                         'qta'          => $qtaDDT,
                     ]
                 );
+                if (!$esistente) $ddtNuovo = true;
             }
 
             // Aggiorna anche il campo legacy sull'ordine (primo DDT trovato)
@@ -1531,8 +1534,8 @@ class OndaSyncService
             $aggiornati++;
             Log::info("DDT Vendita: commessa {$codCommessa} DDT {$numeroDDT} (IdDoc {$idDoc}, qta: {$qtaDDT})");
 
-            // Genera PDF automaticamente (una volta per numero DDT)
-            if ($numeroDDT && !in_array($numeroDDT, $pdfGenerati)) {
+            // Genera PDF automaticamente solo per DDT nuovi (non già in DB)
+            if ($ddtNuovo && $numeroDDT && !in_array($numeroDDT, $pdfGenerati)) {
                 try {
                     DdtPdfService::generaESalva($numeroDDT);
                     $pdfGenerati[] = $numeroDDT;
