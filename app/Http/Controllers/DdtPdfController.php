@@ -18,7 +18,6 @@ class DdtPdfController extends Controller
         // 1. Recupera testata DDT da Onda
         $testa = DB::connection('onda')->selectOne("
             SELECT t.IdDoc, t.NumeroDocumento, t.DataDocumento, t.DataRegistrazione,
-                   t.CausaleTrasporto,
                    a.RagioneSociale AS ClienteNome,
                    a.Indirizzo AS ClienteIndirizzo,
                    a.CAP AS ClienteCap, a.Citta AS ClienteCitta,
