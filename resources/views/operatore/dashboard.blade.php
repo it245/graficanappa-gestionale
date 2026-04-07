@@ -1,55 +1,45 @@
-@extends('layouts.app')
+@extends('layouts.mes')
 
-@section('title'){{ ($operatore->nome ?? '') . ' ' . ($operatore->cognome ?? '') }}@endsection
+@section('page-title', ($operatore->nome ?? '') . ' ' . ($operatore->cognome ?? '') . ' — MES Grafica Nappa')
+
+@section('topbar-title', 'Dashboard Operatore')
+
+@section('sidebar-items')
+<div class="mes-sidebar-section">
+    <div class="mes-sidebar-section-label">Navigazione</div>
+    <a href="{{ route('operatore.dashboard', ['op_token' => request('op_token')]) }}" class="mes-sidebar-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Dashboard
+    </a>
+    @if($isFustellaOperatore ?? false)
+    <a href="{{ route('operatore.fustelle', ['op_token' => request('op_token')]) }}" class="mes-sidebar-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+        Fustelle
+    </a>
+    @endif
+    @if(collect($operatore->reparti ?? [])->pluck('nome')->map(fn($n) => strtolower($n))->contains('prestampa'))
+    <a href="{{ route('operatore.prestampa', ['op_token' => request('op_token')]) }}" class="mes-sidebar-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        Prestampa
+    </a>
+    @endif
+    <a href="{{ route('etichette.lista', ['op_token' => request('op_token')]) }}" class="mes-sidebar-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+        Etichette
+    </a>
+</div>
+@endsection
+
+@section('topbar-actions')
+<button onclick="cercaCommessa()" class="mes-darkmode-toggle" title="Cerca commessa" style="margin-right:4px;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+</button>
+@endsection
 
 @section('content')
 <div class="container-fluid px-0">
    <style>
-    html, body {
-        margin:0; padding:0; width:100%;
-        overflow-x: hidden;
-    }
     h2, p { margin-left:8px; margin-right:8px; }
-    .top-bar {
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-        margin-bottom:10px;
-    }
-    .operatore-info {
-        position:relative;
-        display:flex;
-        align-items:center;
-        gap:10px;
-        cursor:pointer;
-    }
-    .operatore-info img {
-        width:50px; height:50px; border-radius:50%;
-    }
-    .operatore-popup {
-        position:absolute;
-        top:60px;
-        left:0;
-        background:#fff;
-        border:1px solid #ccc;
-        padding:10px;
-        border-radius:5px;
-        box-shadow:0 2px 10px rgba(0,0,0,0.2);
-        display:none;
-        z-index:1000;
-        min-width:200px;
-    }
-    .operatore-popup button {
-        width:100%;
-        margin-top:8px;
-    }
-    .action-icons img {
-        height:35px;
-        cursor:pointer;
-        margin-right:15px;
-        transition: transform 0.2s;
-    }
-    .action-icons img:hover { transform: scale(1.2); }
     .table-wrapper {
         width:100%;
         max-width:100%;
@@ -155,19 +145,6 @@
     /* ===== RESPONSIVE MOBILE ===== */
     @media (max-width: 768px) {
         h2 { font-size: 18px; }
-        .top-bar {
-            flex-wrap: wrap;
-            gap: 8px;
-            padding: 4px 8px;
-        }
-        .operatore-info img {
-            width: 40px; height: 40px;
-        }
-        .action-icons img {
-            height: 44px;
-            padding: 6px;
-            margin-right: 4px;
-        }
         .table-wrapper {
             max-height: calc(100vh - 280px);
             margin: 0;
@@ -250,42 +227,10 @@
     }
 </style>
 
-<div class="top-bar">
-    <div style="display:flex; align-items:center; gap:10px;">
-        <img src="{{ asset('images/logo_gn.png') }}" alt="Logo" style="height:40px;">
-        <div class="operatore-info" id="operatoreInfo">
-            <img src="{{ asset('images/icons8-utente-uomo-cerchiato-50.png') }}" alt="Operatore">
-        <div class="operatore-popup" id="operatorePopup">
-            <div><strong>{{ $operatore->nome }} {{ $operatore->cognome }}</strong></div>
-            <div>
-                @if($operatore->reparti->isEmpty())
-                    Nessun reparto assegnato
-                @else
-                    <p>Reparto: <strong>{{ $operatore->reparti->pluck('nome')->join(', ') }} </strong></p>
-                @endif
-            </div>
-            <a href="{{ route('operatore.logout') }}" class="btn btn-secondary btn-sm mt-2">Logout</a>
-        </div>
-    </div>
-    </div>
-    <div class="action-icons" style="display:flex; align-items:center; gap:12px;">
-        <img src="{{ asset('images/icons8-ricerca-50.png') }}"
-             title="Cerca commessa"
-             onclick="cercaCommessa()">
-        @if($isFustellaOperatore ?? false)
-            <a href="{{ route('operatore.fustelle', ['op_token' => request('op_token')]) }}"
-               title="Fustelle"
-               style="font-size:28px; text-decoration:none; margin-right:15px;">&#9881;</a>
-        @endif
-    </div>
-</div>
-
 <!-- BOX RICERCA COMMESSA -->
 <div id="searchBox" style="display:none; margin:10px 8px;">
     <input type="text" id="searchInput" class="form-control" placeholder="Digita commessa da cercare...">
 </div>
-
-<h2>Dashboard Operatore</h2>
 
 {{-- NOTE TURNO — Icona + pannello espandibile --}}
 @php $noteNonLette = ($noteTurno ?? collect())->where('letta', false)->count(); @endphp
@@ -570,17 +515,6 @@ function segnaLetta(id, btn) {
 </div>
 
 <script>
-document.getElementById('operatoreInfo').addEventListener('click', function(){
-    const popup = document.getElementById('operatorePopup');
-    popup.style.display = popup.style.display === 'block' ? 'none' : 'block';
-});
-
-document.addEventListener('click', function(e){
-    if(!document.getElementById('operatoreInfo').contains(e.target)){
-        document.getElementById('operatorePopup').style.display='none';
-    }
-});
-
 function cercaCommessa(){
     const box = document.getElementById('searchBox');
     const input = document.getElementById('searchInput');
