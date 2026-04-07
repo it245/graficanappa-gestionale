@@ -242,7 +242,7 @@
                 </td>
                 <td colspan="3">
                     <div class="footer-label">Annotazioni</div>
-                    <div style="font-size:8pt;">{{ $annotazioni }}</div>
+                    <div style="font-size:8pt;">{{ $noteRighe }}</div>
                 </td>
             </tr>
         </table>
