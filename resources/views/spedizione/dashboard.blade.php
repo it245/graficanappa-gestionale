@@ -364,6 +364,9 @@
                     <td style="white-space:nowrap;">
                         <button class="btn-consegna btn-consegna-green" onclick="apriModalConsegnaDDT({{ $fase->id }}, 'totale')">Totale</button>
                         <button class="btn-consegna btn-consegna-orange" onclick="apriModalConsegnaDDT({{ $fase->id }}, 'parziale')">Parziale</button>
+                        @if($numDDT)
+                            <a href="{{ route('ddt.pdf', ltrim($numDDT, '0')) }}" target="_blank" class="btn btn-sm btn-outline-primary fw-bold" title="Stampa PDF DDT">PDF</a>
+                        @endif
                     </td>
                     <td><a href="{{ route('commesse.show', $fase->ordine->commessa ?? '-') }}" class="commessa-link">{{ $fase->ordine->commessa ?? '-' }}</a></td>
                     <td>{{ $fase->ordine->cliente_nome ?? '-' }}</td>
