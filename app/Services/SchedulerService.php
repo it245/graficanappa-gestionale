@@ -127,6 +127,7 @@ class SchedulerService
                 'db_id' => $row->id,
                 'commessa' => $comm,
                 'cod_art' => $ordine->cod_art ?? '',
+                'cod_carta' => trim($ordine->cod_carta ?? ''),
                 'cliente' => $ordine->cliente_nome ?? '',
                 'desc' => $ordine->descrizione ?? '',
                 'fase' => $faseNome,
@@ -143,6 +144,7 @@ class SchedulerService
                 'priorita_db' => $row->priorita ?? 999,
                 'priorita_manuale' => (bool) ($row->priorita_manuale ?? false),
                 'disponibile' => false,
+                'disponibile_da' => $this->now->copy(), // sarà aggiornato da propagaSblocchi
                 'in_corso' => $stato == 2,
                 'completata' => false,
                 'sched' => null,
@@ -187,6 +189,7 @@ class SchedulerService
 
                 if (empty($pred)) {
                     $f['disponibile'] = true;
+                    $f['disponibile_da'] = $this->now->copy();
                     $cambiato = true;
                     continue;
                 }
@@ -200,6 +203,7 @@ class SchedulerService
                     });
                     if (empty($predReali)) {
                         $f['disponibile'] = true;
+                        $f['disponibile_da'] = $this->now->copy();
                         $cambiato = true;
                         continue;
                     }
@@ -216,6 +220,15 @@ class SchedulerService
                 }
                 if ($tuttiOk) {
                     $f['disponibile'] = true;
+                    // disponibile_da = max fine predecessori (quando sarà fisicamente pronta)
+                    $maxFine = $this->now->copy();
+                    foreach ($pred as $pid) {
+                        if (isset($fasi[$pid]) && $fasi[$pid]['sched'] && isset($fasi[$pid]['sched']['fine'])) {
+                            $finePred = $fasi[$pid]['sched']['fine'];
+                            if ($finePred > $maxFine) $maxFine = $finePred->copy();
+                        }
+                    }
+                    $f['disponibile_da'] = $maxFine;
                     $cambiato = true;
                 }
             }
@@ -340,7 +353,11 @@ class SchedulerService
                         $setup = $this->setupRidotto; $st = "RIDOTTO (batch $batchKey)";
                     }
 
-                    $inizio = $this->avanzaTempo($t, $setup, $turni);
+                    // La macchina non può iniziare prima che la fase sia disponibile
+                    $tEff = $t->copy();
+                    $dispDa = $fasi[$fid]['disponibile_da'] ?? $this->now;
+                    if ($dispDa > $tEff) $tEff = $dispDa->copy();
+                    $inizio = $this->avanzaTempo($tEff, $setup, $turni);
                     $fine = $this->avanzaTempo($inizio, $scelta['ore'], $turni);
 
                     $fasi[$fid]['sched'] = [
@@ -422,7 +439,7 @@ class SchedulerService
     protected function getBatchKey(array $f, string $mid): string
     {
         return match ($mid) {
-            'XL106' => $f['tipo_offset'] ?? 'STD',
+            'XL106' => ($f['tipo_offset'] ?? 'STD') . ($f['cod_carta'] ? '|' . $f['cod_carta'] : ''),
             'BOBST', 'STEL', 'JOH' => $f['fs'] ?? 'NOFS_' . $f['commessa'],
             'PLAST' => $f['formato_carta']
                 ? $f['fase'] . '|' . $f['formato_carta']
