@@ -340,9 +340,11 @@
     <div class="articolo-row" id="print-articolo"></div>
     @endif
     @if($isSimpleLabel)
+    @if(!($isNoHeader ?? false))
     <div style="font-size: 18pt; font-weight: 700; text-align: left;">
         <span id="print-cliente-simple">{{ $cliente }}</span>
     </div>
+    @endif
     <div id="print-descrizione-simple" style="font-size: 28pt; font-weight: 700; text-align: center; text-transform: uppercase; flex: 1; display: flex; align-items: center; justify-content: center;">{{ $ordine->descrizione ?? '' }}</div>
     @endif
     @if($isTifataPlastica ?? false)
