@@ -187,8 +187,7 @@ class DdtPdfService
 
     private static function caricaRifOrdMaxtris(): array
     {
-        $excelPath = env('EXCEL_SYNC_PATH', storage_path('app/excel_sync'));
-        $file = rtrim($excelPath, '/\\') . DIRECTORY_SEPARATOR . 'ORDINE ASTUCCI.xlsx';
+        $file = env('ORDINE_ASTUCCI_PATH', 'G:\Il mio Drive\ORDINE ASTUCCI.xlsx');
 
         if (!file_exists($file)) {
             return ['dettaglio' => [], 'commessa' => []];
