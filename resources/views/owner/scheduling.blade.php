@@ -732,7 +732,8 @@ function schedulaDaDB(data) {
         m.lanes = 1;
     });
 
-    return macchine;
+    // Converti oggetto in array (il resto del codice aspetta un array)
+    return Object.values(macchine);
 }
 
 // ===================== SCHEDULER CLIENT-SIDE (fallback) =====================
