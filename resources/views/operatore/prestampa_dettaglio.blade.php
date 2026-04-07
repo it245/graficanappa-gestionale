@@ -1,11 +1,24 @@
-@extends('layouts.app')
+@extends('layouts.mes')
 
-@section('title'){{ ($operatore->nome ?? '') . ' ' . ($operatore->cognome ?? '') }}@endsection
+@section('page-title')Prestampa - {{ $commessa }}@endsection
+@section('topbar-title')Prestampa - {{ $commessa }}@endsection
 
-@section('content')
-<div class="container-fluid px-3">
+@section('sidebar-items')
+<div class="mes-sidebar-section">
+    <div class="mes-sidebar-section-label">Prestampa</div>
+    <a href="{{ route('operatore.prestampa', ['op_token' => request('op_token')]) }}" class="mes-sidebar-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>
+        Lista Commesse
+    </a>
+    <a href="{{ route('operatore.dashboard', ['op_token' => request('op_token')]) }}" class="mes-sidebar-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Dashboard Operatore
+    </a>
+</div>
+@endsection
+
+@section('styles')
 <style>
-    h2 { margin: 10px 0; }
     .btn-back {
         background: #333; color: #fff; border: none; padding: 6px 16px;
         border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none;
@@ -21,12 +34,12 @@
         background: #f0f7ff !important; border-color: #0d6efd;
     }
     .campo-salvato { border-color: #28a745 !important; transition: border-color 0.3s; }
-    table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    thead th {
+    .prestampa-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .prestampa-table thead th {
         background: #000; color: #fff; padding: 6px 8px; border: 1px solid #dee2e6; font-size: 12px;
     }
-    td { border: 1px solid #dee2e6; padding: 4px 8px; }
-    tr:hover td { background: rgba(0,0,0,0.03); }
+    .prestampa-table td { border: 1px solid #dee2e6; padding: 4px 8px; }
+    .prestampa-table tr:hover td { background: rgba(0,0,0,0.03); }
     .stato-badge {
         display: inline-block; padding: 3px 10px; border-radius: 12px;
         font-size: 12px; font-weight: bold;
@@ -34,18 +47,6 @@
 
     /* ===== RESPONSIVE MOBILE ===== */
     @media (max-width: 768px) {
-        .container-fluid { padding-left: 8px !important; padding-right: 8px !important; }
-
-        /* Header: stack vertically */
-        .d-flex.justify-content-between.align-items-center.mb-3.mt-2.px-2 {
-            flex-direction: column;
-            align-items: flex-start !important;
-            gap: 8px;
-        }
-        .d-flex.justify-content-between.align-items-center.mb-3.mt-2.px-2 > .d-flex:last-child {
-            align-self: flex-end;
-        }
-
         /* Back button + title */
         .d-flex.justify-content-between.align-items-center.mb-2 {
             flex-direction: column;
@@ -89,50 +90,33 @@
         }
 
         /* Table */
-        table { font-size: 12px; }
-        thead th { padding: 6px; font-size: 11px; }
-        td { padding: 6px; }
+        .prestampa-table { font-size: 12px; }
+        .prestampa-table thead th { padding: 6px; font-size: 11px; }
+        .prestampa-table td { padding: 6px; }
 
         /* Hide less important columns on mobile */
-        table th:nth-child(4), table td:nth-child(4), /* Qta Carta */
-        table th:nth-child(8), table td:nth-child(8), /* Descrizione */
-        table th:nth-child(9), table td:nth-child(9), /* Data Inizio */
-        table th:nth-child(10), table td:nth-child(10) /* Data Fine */
+        .prestampa-table th:nth-child(4), .prestampa-table td:nth-child(4), /* Qta Carta */
+        .prestampa-table th:nth-child(8), .prestampa-table td:nth-child(8), /* Descrizione */
+        .prestampa-table th:nth-child(9), .prestampa-table td:nth-child(9), /* Data Inizio */
+        .prestampa-table th:nth-child(10), .prestampa-table td:nth-child(10) /* Data Fine */
         {
             display: none;
-        }
-
-        /* Logout button */
-        .btn-outline-secondary.btn-sm {
-            min-height: 44px;
-            min-width: 44px;
-            font-size: 14px;
         }
     }
 
     @media (max-width: 480px) {
-        table { font-size: 11px; }
+        .prestampa-table { font-size: 11px; }
         /* Hide even more columns */
-        table th:nth-child(3), table td:nth-child(3), /* Reparto */
-        table th:nth-child(6), table td:nth-child(6)  /* Operatori */
+        .prestampa-table th:nth-child(3), .prestampa-table td:nth-child(3), /* Reparto */
+        .prestampa-table th:nth-child(6), .prestampa-table td:nth-child(6)  /* Operatori */
         {
             display: none;
         }
     }
 </style>
+@endsection
 
-{{-- Header con logo, nome operatore e logout --}}
-<div class="d-flex justify-content-between align-items-center mb-3 mt-2 px-2" style="border-bottom:1px solid #dee2e6; padding-bottom:10px;">
-    <div class="d-flex align-items-center gap-3">
-        <img src="{{ asset('images/logo_graficanappa.png') }}" alt="Logo" style="height:36px;">
-        <span style="font-size:14px; font-weight:600; color:#333;">Prestampa</span>
-    </div>
-    <div class="d-flex align-items-center gap-3">
-        <span style="font-size:13px; color:#555;">{{ $operatore->nome ?? '' }} {{ $operatore->cognome ?? '' }}</span>
-        <a href="{{ route('operatore.logout', ['op_token' => request('op_token')]) }}" class="btn btn-outline-secondary btn-sm">Logout</a>
-    </div>
-</div>
-
+@section('content')
 <div class="d-flex justify-content-between align-items-center mb-2">
     <div>
         <a href="{{ route('operatore.prestampa', ['op_token' => request('op_token')]) }}" class="btn-back">&larr; Lista Commesse</a>
@@ -266,7 +250,7 @@
 
 {{-- Tabella fasi --}}
 <div style="overflow-x:auto;">
-    <table>
+    <table class="prestampa-table">
         <thead>
             <tr>
                 <th style="width:50px;">Stato</th>
@@ -323,8 +307,9 @@
         </tbody>
     </table>
 </div>
-</div>
+@endsection
 
+@section('scripts')
 <script>
 function salvaCampoPrestampa(el) {
     var campo = el.getAttribute('data-campo');
