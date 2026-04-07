@@ -89,8 +89,26 @@ class DdtPdfService
             LEFT JOIN STDAnagrafiche a ON t.IdAnagrafica = a.IdAnagrafica
             WHERE t.TipoDocumento = 3
               AND t.NumeroDocumento = ?
-            ORDER BY t.DataDocumento DESC
+              AND YEAR(t.DataDocumento) = YEAR(GETDATE())
         ", [$numeroPadded]);
+
+        // Fallback: se non trovato nell'anno corrente, cerca il più recente
+        if (!$testa) {
+            $testa = DB::connection('onda')->selectOne("
+                SELECT t.IdDoc, t.NumeroDocumento, t.DataDocumento, t.DataRegistrazione,
+                       a.RagioneSociale AS ClienteNome,
+                       a.Indirizzo AS ClienteIndirizzo,
+                       a.Cap AS ClienteCap, a.Citta AS ClienteCitta,
+                       a.Provincia AS ClienteProvincia, a.CodNazione AS ClienteNazione,
+                       a.Telefono AS ClienteTelefono,
+                       a.PartitaIva AS ClientePIVA, a.CodiceFiscale AS ClienteCF
+                FROM ATTDocTeste t
+                LEFT JOIN STDAnagrafiche a ON t.IdAnagrafica = a.IdAnagrafica
+                WHERE t.TipoDocumento = 3
+                  AND t.NumeroDocumento = ?
+                ORDER BY t.DataDocumento DESC
+            ", [$numeroPadded]);
+        }
 
         if (!$testa) return null;
 
