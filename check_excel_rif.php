@@ -31,17 +31,16 @@ for ($row = 2; $row <= 11; $row++) {
     echo "  Riga $row: A=[$a] B=[$b] G=[$g]\n";
 }
 
-// Cerca commesse del DDT 860
-echo "\n=== CERCA COMMESSE DDT 860 (0066489-26 e 0066718-26) ===\n";
+// Mostra tutte le righe con RIF. ORD. compilato (colonna G)
+echo "\n=== RIGHE CON RIF. ORD. MAXTRIS (Col G non vuota) ===\n";
 $found = 0;
 foreach ($sheet->getRowIterator(2) as $row) {
-    $cells = [];
-    for ($col = 'A'; $col <= 'H'; $col++) {
-        $cells[$col] = trim($sheet->getCell($col . $row->getRowIndex())->getValue() ?? '');
-    }
-    if (str_contains($cells['A'], '66489') || str_contains($cells['A'], '66718') ||
-        str_contains($cells['B'], '66489') || str_contains($cells['B'], '66718')) {
-        echo "  Riga {$row->getRowIndex()}: A=[{$cells['A']}] B=[{$cells['B']}] G=[{$cells['G']}]\n";
+    $r = $row->getRowIndex();
+    $f = trim($sheet->getCell("F$r")->getValue() ?? '');
+    $g = trim($sheet->getCell("G$r")->getValue() ?? '');
+    $b = trim($sheet->getCell("B$r")->getValue() ?? '');
+    if ($g !== '') {
+        echo "  Riga $r: F(commessa)=[$f] G(rif)=[$g] B(desc)=[$b]\n";
         $found++;
     }
 }
