@@ -57,12 +57,9 @@
             border: 1px solid #999; padding: 1.5mm 2mm; font-size: 8pt;
         }
         table.articoli td.desc { text-align: left; }
-        table.articoli td.um { text-align: center; width: 12%; }
-        table.articoli td.qta { text-align: right; width: 15%; }
-        .rif-header {
-            font-size: 8pt; font-weight: normal; text-align: left;
-            padding: 1.5mm 2mm; border: 1px solid #999; background: none;
-        }
+        table.articoli td.rif { text-align: center; width: 14%; font-size: 7.5pt; }
+        table.articoli td.um { text-align: center; width: 10%; }
+        table.articoli td.qta { text-align: right; width: 14%; }
 
         /* Note */
         .note-text { font-size: 7pt; line-height: 1.4; margin-top: 3mm; color: #333; }
@@ -188,28 +185,19 @@
         <thead>
             <tr>
                 <th style="text-align:left;">DESCRIZIONE</th>
+                <th>RIF. ORD.</th>
                 <th>UM</th>
                 <th>QUANTITA'</th>
             </tr>
         </thead>
         <tbody>
             @foreach($righeRaggruppate as $riga)
-                @if($riga['tipo'] === 'intestazione')
-                    <tr>
-                        <td colspan="3" class="rif-header">
-                            <strong>Rif. Ord.Cli. {{ $riga['commessa'] }}</strong>
-                            @if($riga['rif_ord'])
-                                &nbsp;— Rif. Ord. Maxtris: {{ $riga['rif_ord'] }}
-                            @endif
-                        </td>
-                    </tr>
-                @else
-                    <tr>
-                        <td class="desc">{{ $riga['descrizione'] }}</td>
-                        <td class="um">{{ $riga['um'] }}</td>
-                        <td class="qta">{{ number_format($riga['qta'], 2, ',', '.') }}</td>
-                    </tr>
-                @endif
+                <tr>
+                    <td class="desc">{{ $riga['descrizione'] }}</td>
+                    <td class="rif">{{ $riga['rif_ord'] ?? '' }}</td>
+                    <td class="um">{{ $riga['um'] }}</td>
+                    <td class="qta">{{ number_format($riga['qta'], 2, ',', '.') }}</td>
+                </tr>
             @endforeach
         </tbody>
     </table>

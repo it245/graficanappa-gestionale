@@ -162,8 +162,7 @@ class DdtPdfController extends Controller
      */
     private function raggruppaRighe(array $righe, array $rifMap): array
     {
-        $gruppi = [];
-        $currentCommessa = null;
+        $risultato = [];
 
         foreach ($righe as $riga) {
             // Salta righe di testo (saranno nelle note)
@@ -172,27 +171,16 @@ class DdtPdfController extends Controller
             }
 
             $commessa = trim($riga->CodCommessa ?? '');
+            $rifOrd = $rifMap[$commessa] ?? '';
 
-            // Nuova commessa: crea intestazione
-            if ($commessa && $commessa !== $currentCommessa) {
-                $currentCommessa = $commessa;
-                $rifOrd = $rifMap[$commessa] ?? null;
-
-                $gruppi[] = [
-                    'tipo'      => 'intestazione',
-                    'commessa'  => $commessa,
-                    'rif_ord'   => $rifOrd,
-                ];
-            }
-
-            $gruppi[] = [
-                'tipo'        => 'articolo',
+            $risultato[] = [
                 'descrizione' => $riga->Descrizione ?? '',
+                'rif_ord'     => $rifOrd,
                 'qta'         => $riga->Qta ?? 0,
                 'um'          => $riga->CodUnMis ?? 'PZ',
             ];
         }
 
-        return $gruppi;
+        return $risultato;
     }
 }
