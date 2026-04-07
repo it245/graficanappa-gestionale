@@ -32,7 +32,7 @@ class EtichettaController extends Controller
             'ariagrafica', 'studio w', 'studioesse', 'studio esse',
             'mundo', 'booster', 'openmind', 'russart', 'grafiche mercurio',
             'medspa', 'full pack', 'iltex', 'fashion color', 'advertage',
-            'nicola',
+            'nicola', 'printing',
         ];
         $clienteLower = strtolower($cliente);
         $isSimpleLabel = false;
