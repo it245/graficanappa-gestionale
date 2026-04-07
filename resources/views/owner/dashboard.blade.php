@@ -1,7 +1,109 @@
-@extends('layouts.app')
+@extends('layouts.mes')
 
-@section('viewport')
-{{-- Nessun viewport: il browser mobile usa il default ~980px, la pagina è scrollabile --}}
+@section('viewport')@endsection
+
+@section('topbar-title', 'Dashboard Produzione')
+
+@section('sidebar-items')
+<div class="mes-sidebar-section">
+    <div class="mes-sidebar-section-label">Produzione</div>
+    <a href="{{ route('owner.dashboard') }}?op_token={{ request('op_token') }}" class="mes-sidebar-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Dashboard
+    </a>
+    <a href="{{ route('owner.repartiOverview') }}?op_token={{ request('op_token') }}" class="mes-sidebar-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 20h20"/><rect x="4" y="8" width="4" height="12"/><rect x="10" y="4" width="4" height="16"/><rect x="16" y="11" width="4" height="9"/></svg>
+        Panoramica Reparti
+    </a>
+    <a href="{{ route('owner.scheduling') }}?op_token={{ request('op_token') }}" class="mes-sidebar-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Scheduling
+    </a>
+    <a href="{{ route('owner.esterne') }}?op_token={{ request('op_token') }}" class="mes-sidebar-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+        Lav. Esterne
+    </a>
+    <a href="{{ route('owner.fustelle') }}?op_token={{ request('op_token') }}" class="mes-sidebar-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+        Fustelle
+    </a>
+    <a href="{{ route('mes.prinect') }}?op_token={{ request('op_token') }}" class="mes-sidebar-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="2" width="12" height="6" rx="1"/><rect x="2" y="8" width="20" height="8" rx="1"/><rect x="6" y="16" width="12" height="6" rx="1"/></svg>
+        Prinect Live
+    </a>
+    <a href="{{ route('mes.fiery') }}?op_token={{ request('op_token') }}" class="mes-sidebar-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><line x1="6" y1="10" x2="6" y2="14"/><line x1="10" y1="10" x2="10" y2="14"/><line x1="14" y1="10" x2="14" y2="14"/></svg>
+        Fiery V900
+    </a>
+</div>
+
+<div class="mes-sidebar-section">
+    <div class="mes-sidebar-section-label">Analisi</div>
+    <a href="{{ route('owner.reportOre') }}?op_token={{ request('op_token') }}" class="mes-sidebar-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Report Ore
+    </a>
+    <a href="{{ route('owner.fasiTerminate') }}?op_token={{ request('op_token') }}" class="mes-sidebar-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        Fasi Terminate
+        @if($fasiCompletateOggi > 0)<span class="badge bg-success ms-auto" style="font-size:10px">{{ $fasiCompletateOggi }}</span>@endif
+    </a>
+    <button type="button" class="mes-sidebar-item" data-bs-toggle="modal" data-bs-target="#modalStorico">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Storico Consegne
+    </button>
+</div>
+
+<div class="mes-sidebar-section">
+    <div class="mes-sidebar-section-label">Strumenti</div>
+    <button type="button" class="mes-sidebar-item" data-bs-toggle="modal" data-bs-target="#modalSpedizioniOggi">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+        Consegnati Oggi
+        @if($commesseSpediteOggi > 0)<span class="badge bg-info ms-auto" style="font-size:10px">{{ $commesseSpediteOggi }}</span>@endif
+    </button>
+    <button type="button" class="mes-sidebar-item" data-bs-toggle="modal" data-bs-target="#modalBRT">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+        BRT Tracking
+        @if($spedizioniBRT->count() > 0)<span class="badge bg-warning text-dark ms-auto" style="font-size:10px">{{ $spedizioniBRT->count() }}</span>@endif
+    </button>
+    <button type="button" class="mes-sidebar-item" data-bs-toggle="modal" data-bs-target="#modalNoteSpedizione" id="sidebarNoteBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Note Consegne
+        <span class="badge bg-danger ms-auto" style="font-size:10px; display:none" id="noteConsegneBadge">!</span>
+    </button>
+    <button type="button" class="mes-sidebar-item" data-bs-toggle="modal" data-bs-target="#modalPresenti">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Presenti
+        <span class="badge bg-success ms-auto" style="font-size:10px" id="presentiCount">...</span>
+    </button>
+    <a href="{{ route('owner.presenze') }}?op_token={{ request('op_token') }}" class="mes-sidebar-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Storico Presenze
+    </a>
+    @if(!($isReadonly ?? false))
+    <form method="POST" action="{{ route('owner.syncOnda') }}" style="margin:0;" id="formSyncOnda" onsubmit="this.querySelector('button').disabled=true;">
+        @csrf
+        <button type="submit" class="mes-sidebar-item" style="width:100%; background:none; border:none; text-align:left;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6"/><path d="M2.5 22v-6h6"/><path d="M2.5 11.5a10 10 0 0 1 18.8-4.3"/><path d="M21.5 12.5a10 10 0 0 1-18.8 4.2"/></svg>
+            Sincronizza Onda
+        </button>
+    </form>
+    <button type="button" class="mes-sidebar-item" data-bs-toggle="modal" data-bs-target="#aggiungiRigaModal">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        Aggiungi Riga
+    </button>
+    @endif
+    @if($isReadonly ?? false)
+    <button type="button" class="mes-sidebar-item" onclick="filtraRiferimentiMarco()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+        Rif. Marco
+    </button>
+    <button type="button" class="mes-sidebar-item" onclick="resetRiferimentiMarco()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        Mostra tutte
+    </button>
+    @endif
+</div>
 @endsection
 
 @section('content')
@@ -439,17 +541,7 @@ tr:hover td {
 
 </style>
     <div class="d-flex align-items-center justify-content-between mb-2 mx-2">
-        <div style="display:flex; align-items:center; gap:10px;">
-            <img src="{{ asset('images/logo_gn.png') }}" alt="Logo" style="height:40px;">
-            <div class="operatore-info" id="operatoreInfo" style="position:relative; display:flex; align-items:center; gap:10px; cursor:pointer;">
-                <img src="{{ asset('images/icons8-utente-uomo-cerchiato-50.png') }}" alt="Operatore" style="width:40px; height:40px; border-radius:50%;">
-                <div class="operatore-popup" id="operatorePopup" style="position:absolute; top:50px; left:0; background:#fff; border:1px solid #ccc; padding:10px; border-radius:5px; box-shadow:0 2px 10px rgba(0,0,0,0.2); display:none; z-index:1000; min-width:200px;">
-                    <div><strong>{{ $operatore->nome ?? '' }} {{ $operatore->cognome ?? '' }}</strong></div>
-                    <div><p class="mb-1">Ruolo: <strong>Owner</strong></p></div>
-                    <a href="{{ route('operatore.logout') }}" class="btn btn-secondary btn-sm mt-2">Logout</a>
-                </div>
-            </div>
-        </div>
+        <div></div>
         {{-- LEGENDA --}}
         <div style="background:#fff; border:1px solid #dee2e6; border-radius:8px; padding:8px 14px; box-shadow:0 1px 4px rgba(0,0,0,0.08);">
             <div class="d-flex gap-4" style="font-size:11px;">
@@ -519,218 +611,23 @@ tr:hover td {
     </div>
 
     {{-- ICONE AZIONI --}}
-    <div class="mb-3 d-flex align-items-center action-icons">
-
-        {{-- HAMBURGER --}}
-        <button class="hamburger-btn" id="hamburgerBtn" title="Menu" tabindex="1">
-            <span></span><span></span><span></span>
+    <div class="mb-3 d-flex align-items-center gap-3 mx-2">
+        <button id="toggleFilter" class="btn btn-sm btn-outline-secondary" title="Mostra / Nascondi filtri">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;vertical-align:middle;"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+            Filtri
         </button>
-
-        {{-- ICONA FILTRO --}}
-        <img
-            src="{{ asset('images/icons8-filtro-50.png') }}"
-            id="toggleFilter"
-            title="Mostra / Nascondi filtri"
-            alt="Filtri"
-        >
-
-        {{-- Stampa celle selezionate --}}
-        <button id="printButton" class="btn p-0" style="background:none; border:none;" title="Stampa celle selezionate">
-            <img src="{{ asset('images/printer.png') }}" alt="Stampa">
+        <button id="printButton" class="btn btn-sm btn-outline-secondary" title="Stampa celle selezionate">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;vertical-align:middle;"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            Stampa
         </button>
     </div>
 
-    {{-- SIDEBAR OVERLAY --}}
-    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    {{-- Sidebar è ora nel layout mes (@section sidebar-items) --}}
 
-    {{-- SIDEBAR MENU --}}
-    <div class="sidebar-menu" id="sidebarMenu">
-        <div class="sidebar-header">
-            <h5>Menu</h5>
-            <button class="sidebar-close" id="sidebarClose">&times;</button>
-        </div>
 
-        {{-- Fustelle --}}
-        <a href="{{ route('owner.fustelle', ['op_token' => $opToken ?? request()->query('op_token')]) }}" class="sidebar-item">
-            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#6f42c1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 3v18"/>
-            </svg>
-            <span>Fustelle</span>
-        </a>
 
-        {{-- Panoramica Reparti --}}
-        <a href="{{ route('owner.repartiOverview', ['op_token' => $opToken ?? request()->query('op_token')]) }}" class="sidebar-item">
-            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
-            </svg>
-            <span>Panoramica Reparti</span>
-        </a>
 
-        {{-- Visualizza fasi terminate --}}
-        <a href="{{ route('owner.fasiTerminate') }}" class="sidebar-item">
-            <img src="{{ asset('images/out-of-the-box.png') }}" alt="">
-            <span>Fasi terminate</span>
-        </a>
-
-        {{-- Scheduling Produzione --}}
-        <a href="{{ route('owner.scheduling') }}" class="sidebar-item">
-            <img src="{{ asset('images/icons8-report-grafico-a-torta-50.png') }}" alt="">
-            <span>Scheduling Produzione</span>
-        </a>
-
-        {{-- Report Ore --}}
-        <a href="{{ route('owner.reportOre', ['op_token' => $opToken ?? request()->query('op_token')]) }}" class="sidebar-item">
-            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0d6efd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-            </svg>
-            <span>Report Ore</span>
-        </a>
-
-        {{-- Lavorazioni Esterne --}}
-        <a href="{{ route('owner.esterne') }}" class="sidebar-item">
-            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#17a2b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="7.5 4.21 12 6.81 16.5 4.21"/><polyline points="7.5 19.79 7.5 14.6 3 12"/><polyline points="21 12 16.5 14.6 16.5 19.79"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>
-            </svg>
-            <span>Lavorazioni Esterne</span>
-        </a>
-
-        {{-- Prinect Live --}}
-        <a href="{{ route('mes.prinect') }}" class="sidebar-item">
-            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="6" y="2" width="12" height="6" rx="1"/><rect x="2" y="8" width="20" height="8" rx="1"/><rect x="6" y="16" width="12" height="6" rx="1"/><line x1="6" y1="12" x2="2" y2="12"/><line x1="22" y1="12" x2="18" y2="12"/>
-            </svg>
-            <span>Prinect Live (Offset)</span>
-        </a>
-
-        {{-- Fiery V900 --}}
-        <a href="{{ route('mes.fiery') }}" class="sidebar-item">
-            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#e65100" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="2" y="6" width="20" height="12" rx="2"/><line x1="6" y1="10" x2="6" y2="14"/><line x1="10" y1="10" x2="10" y2="14"/><line x1="14" y1="10" x2="14" y2="14"/><line x1="18" y1="10" x2="18" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/>
-            </svg>
-            <span>Fiery V900 (Digitale)</span>
-        </a>
-
-        {{-- Apri Excel --}}
-        @if(!($isReadonly ?? false))
-        <a href="#" class="sidebar-item" onclick="alert('Apri da Esplora Risorse:\n\n\\\\gestionale\\mes\\dashboard_mes.xlsx'); closeSidebar(); return false;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#198754" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><polyline points="10 9 9 9 8 9"/>
-            </svg>
-            <span>Apri Excel Dashboard</span>
-        </a>
-
-        {{-- TV Kiosk --}}
-        <a href="/kiosk" target="_blank" class="sidebar-item" onclick="closeSidebar();">
-            <span style="font-size:20px;">📺</span>
-            <span>TV Kiosk</span>
-        </a>
-        @endif
-
-        {{-- Aggiungi riga --}}
-        @if(!($isReadonly ?? false))
-        <a href="#" class="sidebar-item" data-bs-toggle="modal" data-bs-target="#aggiungiRigaModal" onclick="closeSidebar()">
-            <img src="{{ asset('images/icons8-ddt-64 (1).png') }}" alt="">
-            <span>Aggiungi riga</span>
-        </a>
-        @endif
-
-        {{-- Consegnati oggi --}}
-        <a href="#" class="sidebar-item" data-bs-toggle="modal" data-bs-target="#modalSpedizioniOggi" onclick="closeSidebar()" id="btnConsegnati">
-            <img src="{{ asset('images/icons8-consegnato-50.png') }}" alt="">
-            <span>Consegnati oggi
-                @if($spedizioniOggi->count() > 0)
-                    <span class="badge rounded-pill bg-danger" style="font-size:11px; vertical-align:middle;">{{ $spedizioniOggi->count() }}</span>
-                @endif
-            </span>
-        </a>
-
-        {{-- Spedizioni BRT --}}
-        <a href="#" class="sidebar-item" data-bs-toggle="modal" data-bs-target="#modalBRT" onclick="closeSidebar()">
-            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#d4380d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
-            </svg>
-            <span>Spedizioni BRT
-                @if($spedizioniBRT->count() > 0)
-                    <span class="badge rounded-pill bg-danger" style="font-size:11px; vertical-align:middle;">{{ $spedizioniBRT->count() }}</span>
-                @endif
-            </span>
-        </a>
-
-        {{-- Storico consegne --}}
-        <a href="#" class="sidebar-item" data-bs-toggle="modal" data-bs-target="#modalStorico" onclick="closeSidebar()">
-            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#6c757d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-            </svg>
-            <span>Storico consegne
-                @if($storicoConsegne->count() > 0)
-                    <span class="badge rounded-pill bg-secondary" style="font-size:11px; vertical-align:middle;">{{ $storicoConsegne->count() }}</span>
-                @endif
-            </span>
-        </a>
-
-        {{-- Note Consegne --}}
-        <a href="#" class="sidebar-item" data-bs-toggle="modal" data-bs-target="#modalNoteSpedizione" onclick="closeSidebar(); caricaNoteSpedizione();">
-            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0d6efd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
-            </svg>
-            <span>Note Consegne</span>
-            <span id="noteConsegneBadge" style="display:none; background:#dc3545; color:#fff; border-radius:50%; width:20px; height:20px; font-size:11px; font-weight:bold; text-align:center; line-height:20px; margin-left:6px;">!</span>
-        </a>
-
-        {{-- Presenti in azienda (modal rapido) --}}
-        <a href="#" class="sidebar-item" data-bs-toggle="modal" data-bs-target="#modalPresenti" onclick="closeSidebar(); caricaPresenti();">
-            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#198754" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-            </svg>
-            <span>Presenti in azienda</span>
-            <span id="presentiCount" class="badge rounded-pill bg-success" style="font-size:11px; vertical-align:middle;"></span>
-        </a>
-
-        {{-- Presenze (pagina completa con storico) --}}
-        <a href="{{ route('owner.presenze') }}" class="sidebar-item" onclick="closeSidebar();">
-            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-            </svg>
-            <span>Storico Presenze</span>
-        </a>
-
-        {{-- Riferimenti Marco (solo readonly) --}}
-        @if($isReadonly ?? false)
-        <a href="#" class="sidebar-item" onclick="filtraRiferimentiMarco(); closeSidebar(); return false;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#198754" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-            </svg>
-            <span>Riferimenti Marco</span>
-        </a>
-        <a href="#" class="sidebar-item" onclick="resetRiferimentiMarco(); closeSidebar(); return false;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#6c757d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
-            <span>Mostra tutte le commesse</span>
-        </a>
-        @endif
-
-        {{-- Sync Onda --}}
-        @if(!($isReadonly ?? false))
-        <form method="POST" action="{{ route('owner.syncOnda') }}" style="margin:0;" onsubmit="this.querySelector('button').disabled=true;">
-            @csrf
-            <button type="submit" class="sidebar-item" style="width:100%; background:none; border:none; border-bottom:1px solid #f0f0f0; text-align:left; font-size:14px; font-weight:500; color:#333;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21.5 2v6h-6"/><path d="M2.5 22v-6h6"/><path d="M2.5 11.5a10 10 0 0 1 18.8-4.3"/><path d="M21.5 12.5a10 10 0 0 1-18.8 4.2"/>
-                </svg>
-                <span>Sincronizza Onda</span>
-            </button>
-        </form>
-        @endif
-
-        {{-- NOTA TV --}}
-        <button type="button" class="sidebar-item" onclick="closeSidebar(); setTimeout(function(){ new bootstrap.Modal(document.getElementById('modalNotaTv')).show(); }, 300);" style="width:100%; background:none; border:none; border-bottom:1px solid #f0f0f0; text-align:left; font-size:14px; font-weight:500; color:#333; display:flex; align-items:center; gap:12px; padding:12px 18px; cursor:pointer;">
-            <span style="font-size:20px;">📢</span>
-            <span>Nota TV (ticker)</span>
-        </button>
-    </div>
-
-        {{-- FILTRI --}}
+                {{-- FILTRI --}}
 <div class="mb-3" id="filterBox" style="display:none;">
     <!-- Filtri multi-valore (virgola) -->
     <input type="text" id="filterCommessa" class="form-control form-control-sm" placeholder="Filtra Commessa (più valori ,)" style="max-width:200px;">
