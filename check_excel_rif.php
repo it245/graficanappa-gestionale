@@ -31,17 +31,35 @@ for ($row = 2; $row <= 11; $row++) {
     echo "  Riga $row: A=[$a] B=[$b] G=[$g]\n";
 }
 
-// Mostra tutte le righe con RIF. ORD. compilato (colonna G)
-echo "\n=== RIGHE CON RIF. ORD. MAXTRIS (Col G non vuota) ===\n";
-$found = 0;
+// Cerca commesse del DDT 860 (66489, 66718) in qualsiasi colonna
+echo "\n=== CERCA COMMESSE DDT 860 ===\n";
+$cercate = ['66489', '66718'];
+foreach ($sheet->getRowIterator(2) as $row) {
+    $r = $row->getRowIndex();
+    $riga = '';
+    for ($col = 'A'; $col <= 'H'; $col++) {
+        $val = trim($sheet->getCell("$col$r")->getValue() ?? '');
+        $riga .= " $col=[$val]";
+    }
+    foreach ($cercate as $c) {
+        if (str_contains($riga, $c)) {
+            echo "  Riga $r: $riga\n";
+        }
+    }
+}
+
+// Mostra anche le righe con RIF compilato vicino a quelle commesse
+echo "\n=== ULTIME 20 RIGHE CON RIF. ORD. ===\n";
+$conRif = [];
 foreach ($sheet->getRowIterator(2) as $row) {
     $r = $row->getRowIndex();
     $f = trim($sheet->getCell("F$r")->getValue() ?? '');
     $g = trim($sheet->getCell("G$r")->getValue() ?? '');
     $b = trim($sheet->getCell("B$r")->getValue() ?? '');
     if ($g !== '') {
-        echo "  Riga $r: F(commessa)=[$f] G(rif)=[$g] B(desc)=[$b]\n";
-        $found++;
+        $conRif[] = "  Riga $r: F=[$f] G=[$g] B=[$b]";
     }
 }
-echo "Trovate: $found\n";
+foreach (array_slice($conRif, -20) as $line) {
+    echo "$line\n";
+}
