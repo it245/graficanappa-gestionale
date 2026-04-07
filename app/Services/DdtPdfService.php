@@ -9,6 +9,9 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class DdtPdfService
 {
+    /** Cache della mappatura Excel (evita di ricaricare il file per ogni DDT) */
+    private static ?array $rifMapCache = null;
+
     /**
      * Genera il PDF per un DDT e lo salva su disco.
      * Ritorna il path del file generato, o null se non trovato.
@@ -118,8 +121,11 @@ class DdtPdfService
             ORDER BY r.NrRiga
         ", [$testa->IdDoc]);
 
-        // 4. Mappatura Excel RIF. ORD. MAXTRIS
-        $rifMap = self::caricaRifOrdMaxtris();
+        // 4. Mappatura Excel RIF. ORD. MAXTRIS (cached)
+        if (self::$rifMapCache === null) {
+            self::$rifMapCache = self::caricaRifOrdMaxtris();
+        }
+        $rifMap = self::$rifMapCache;
 
         // 5. Prepara righe con RIF
         $righeFinali = self::preparaRighe($righe, $rifMap);
