@@ -10,6 +10,7 @@ use App\Models\DdtSpedizione;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Services\FaseStatoService;
+use App\Services\DdtPdfService;
 
 class OndaSyncService
 {
@@ -1487,6 +1488,8 @@ class OndaSyncService
             return 0;
         }
 
+        $pdfGenerati = []; // traccia DDT per cui abbiamo già generato il PDF
+
         foreach ($righeDDT as $riga) {
             $codCommessa = trim($riga->CodCommessa ?? '');
             if (!$codCommessa) continue;
@@ -1527,6 +1530,16 @@ class OndaSyncService
 
             $aggiornati++;
             Log::info("DDT Vendita: commessa {$codCommessa} DDT {$numeroDDT} (IdDoc {$idDoc}, qta: {$qtaDDT})");
+
+            // Genera PDF automaticamente (una volta per numero DDT)
+            if ($numeroDDT && !in_array($numeroDDT, $pdfGenerati)) {
+                try {
+                    DdtPdfService::generaESalva($numeroDDT);
+                    $pdfGenerati[] = $numeroDDT;
+                } catch (\Exception $e) {
+                    Log::warning("DDT PDF: errore generazione DDT {$numeroDDT}: " . $e->getMessage());
+                }
+            }
         }
 
         return $aggiornati;
