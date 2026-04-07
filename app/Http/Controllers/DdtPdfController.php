@@ -65,11 +65,11 @@ class DdtPdfController extends Controller
             ORDER BY r.NrRiga
         ", [$testa->IdDoc]);
 
-        // 4. Carica mappatura RIF. ORD. MAXTRIS da Excel
+        // 4. Carica mappatura RIF. ORD. MAXTRIS da Excel (commessa+descrizione → rif)
         $rifMap = $this->caricaRifOrdMaxtris();
 
-        // 5. Raggruppa righe per commessa con intestazione Rif.Ord.Cli.
-        $righeRaggruppate = $this->raggruppaRighe($righe, $rifMap);
+        // 5. Prepara righe con RIF. ORD. accanto a ogni articolo
+        $righeFinali = $this->preparaRighe($righe, $rifMap);
 
         // 6. Formatta dati
         $dataDdt = $testa->DataDocumento
@@ -86,33 +86,44 @@ class DdtPdfController extends Controller
         }
 
         // Trasporto a cura: Cedente/Cessionario/Vettore
-        $trasportoCura = 'Cedente'; // default
+        $trasportoCura = 'Cedente';
         if ($coda && $coda->TrasportoACura) {
             $map = [1 => 'Cedente', 2 => 'Cessionario', 3 => 'Vettore'];
             $trasportoCura = $map[$coda->TrasportoACura] ?? 'Cedente';
         }
 
-        // Annotazioni: usa Osservazioni dalla coda DDT
-        $annotazioni = '';
-        if ($coda && !empty($coda->CausaleTrasporto)) {
-            // CausaleTrasporto è un campo testo nella coda
+        // Causale trasporto: mappa codici comuni
+        $causale = 'Vendita';
+        if ($coda && $coda->CausaleTrasporto) {
+            $causaliMap = [1 => 'Vendita', 2 => 'Conto lavorazione', 3 => 'Conto visione', 4 => 'Reso'];
+            $causale = $causaliMap[$coda->CausaleTrasporto] ?? $coda->CausaleTrasporto;
         }
-        // Cerca anche righe di testo (TipoRiga=3) per note aggiuntive
+
+        // Note: righe di testo (TipoRiga=3), escluse intestazioni "Rif. Ord.Cli."
         $noteRighe = collect($righe)
-            ->filter(fn($r) => $r->TipoRiga == 3 && !empty(trim($r->Descrizione ?? '')))
+            ->filter(fn($r) => $r->TipoRiga == 3
+                && !empty(trim($r->Descrizione ?? ''))
+                && !str_starts_with(trim($r->Descrizione), 'Rif. Ord.Cli.'))
             ->pluck('Descrizione')
             ->implode("\n");
+
+        // Nazione: mappa codice ISO → nome
+        $nazione = 'Italia';
+        if ($testa->ClienteNazione && !in_array($testa->ClienteNazione, ['IT', 'it', ''])) {
+            $nazione = $testa->ClienteNazione;
+        }
 
         $data = [
             'numeroDdt'       => $numeroPadded,
             'dataDdt'         => $dataDdt,
             'testa'           => $testa,
             'coda'            => $coda,
-            'righeRaggruppate' => $righeRaggruppate,
+            'righeFinali'     => $righeFinali,
             'dataTrasporto'   => $dataTrasporto ?: $dataDdt,
             'oraTrasporto'    => $oraTrasporto,
             'trasportoCura'   => $trasportoCura,
-            'annotazioni'     => $annotazioni,
+            'causale'         => $causale,
+            'nazione'         => $nazione,
             'noteRighe'       => $noteRighe,
         ];
 
@@ -123,7 +134,9 @@ class DdtPdfController extends Controller
     }
 
     /**
-     * Carica la mappatura commessa → RIF. ORD. MAXTRIS dall'Excel ORDINE ASTUCCI.xlsx
+     * Carica mappatura dall'Excel ORDINE ASTUCCI.xlsx
+     * Chiave: "commessa_corta|descrizione_normalizzata" → RIF. ORD. MAXTRIS
+     * Fallback: "commessa_corta" → RIF (primo trovato)
      */
     private function caricaRifOrdMaxtris(): array
     {
@@ -136,42 +149,82 @@ class DdtPdfController extends Controller
 
         $spreadsheet = IOFactory::load($file);
         $sheet = $spreadsheet->getActiveSheet();
-        $map = []; // commessa => rif_ord_maxtris
+        $map = [];          // "commessa|desc_normalizzata" → rif
+        $mapCommessa = [];  // "commessa" → rif (primo trovato, fallback)
 
-        foreach ($sheet->getRowIterator(2) as $row) { // skip header
-            $cells = $row->getCellIterator('A', 'G');
-            $cells->setIterateOnlyExistingCells(false);
-            $rowData = [];
-            foreach ($cells as $cell) {
-                $rowData[] = $cell->getValue();
-            }
+        foreach ($sheet->getRowIterator(2) as $row) {
+            $r = $row->getRowIndex();
+            $commessa = trim($sheet->getCell("F$r")->getValue() ?? '');
+            $descrizione = trim($sheet->getCell("B$r")->getValue() ?? '');
+            $rif = trim($sheet->getCell("G$r")->getValue() ?? '');
 
-            $commessa = trim($rowData[0] ?? ''); // colonna A = commessa
-            $rif = trim($rowData[6] ?? '');       // colonna G = RIF. ORD. MAXTRIS
+            if (!$rif) continue;
 
-            if ($commessa && $rif) {
-                $map[$commessa] = $rif;
+            // Gestisci commesse multiple (es. "66050-66055-66056")
+            $commesse = array_map('trim', explode('-', $commessa));
+            // Se sono tutte numeriche, sono commesse separate; altrimenti è una sola stringa
+            $tutteNumeriche = collect($commesse)->every(fn($c) => is_numeric($c));
+
+            if ($tutteNumeriche && count($commesse) > 1) {
+                foreach ($commesse as $c) {
+                    $key = $c . '|' . $this->normalizza($descrizione);
+                    $map[$key] = $rif;
+                    if (!isset($mapCommessa[$c])) $mapCommessa[$c] = $rif;
+                }
+            } else {
+                $key = $commessa . '|' . $this->normalizza($descrizione);
+                $map[$key] = $rif;
+                if (!isset($mapCommessa[$commessa])) $mapCommessa[$commessa] = $rif;
             }
         }
 
-        return $map;
+        return ['dettaglio' => $map, 'commessa' => $mapCommessa];
     }
 
     /**
-     * Raggruppa righe DDT per commessa, inserendo intestazioni Rif.Ord.Cli.
+     * Normalizza descrizione per matching fuzzy:
+     * rimuove spazi extra, punteggiatura, maiuscolo
      */
-    private function raggruppaRighe(array $righe, array $rifMap): array
+    private function normalizza(string $desc): string
+    {
+        $desc = mb_strtoupper($desc);
+        $desc = preg_replace('/[^A-Z0-9]/', '', $desc);
+        return $desc;
+    }
+
+    /**
+     * Converte commessa Onda (0066649-26) → formato corto Excel (66649)
+     */
+    private function commessaCorta(string $codCommessa): string
+    {
+        // "0066649-26" → prendi prima del trattino e rimuovi zeri iniziali
+        $parts = explode('-', $codCommessa);
+        return ltrim($parts[0], '0') ?: '0';
+    }
+
+    /**
+     * Prepara righe articoli con RIF. ORD. MAXTRIS
+     */
+    private function preparaRighe(array $righe, array $rifMap): array
     {
         $risultato = [];
+        $dettaglio = $rifMap['dettaglio'] ?? [];
+        $perCommessa = $rifMap['commessa'] ?? [];
 
         foreach ($righe as $riga) {
-            // Salta righe di testo (saranno nelle note)
-            if ($riga->TipoRiga != 1) {
-                continue;
-            }
+            if ($riga->TipoRiga != 1) continue;
 
-            $commessa = trim($riga->CodCommessa ?? '');
-            $rifOrd = $rifMap[$commessa] ?? '';
+            $codCommessa = trim($riga->CodCommessa ?? '');
+            $commCorta = $this->commessaCorta($codCommessa);
+            $descNorm = $this->normalizza($riga->Descrizione ?? '');
+
+            // Cerca match esatto commessa+descrizione
+            $rifOrd = $dettaglio[$commCorta . '|' . $descNorm] ?? '';
+
+            // Fallback: solo per commessa
+            if (!$rifOrd) {
+                $rifOrd = $perCommessa[$commCorta] ?? '';
+            }
 
             $risultato[] = [
                 'descrizione' => $riga->Descrizione ?? '',

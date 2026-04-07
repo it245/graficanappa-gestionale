@@ -104,7 +104,7 @@
                 <div class="cliente-indirizzo">
                     {{ $testa->ClienteIndirizzo }}<br>
                     {{ $testa->ClienteCitta }} {{ $testa->ClienteCap }} {{ $testa->ClienteProvincia }}<br>
-                    {{ $testa->ClienteNazione ?? 'Italia' }}
+                    {{ $nazione }}
                 </div>
             </div>
 
@@ -114,7 +114,6 @@
             <div class="dest-box">
                 <div class="cliente-nome">{{ $coda->DestNome }}</div>
                 <div class="cliente-indirizzo">
-                    @if($coda->DestTelefono)TEL. {{ $coda->DestTelefono }}<br>@endif
                     {{ $coda->DestIndirizzo }}<br>
                     {{ $coda->DestCap }} {{ $coda->DestCitta }} {{ $coda->DestProvincia }}
                 </div>
@@ -170,7 +169,7 @@
         <tr>
             <td>
                 <span class="label">CAUSALE DEL TRASPORTO</span><br>
-                <strong>{{ $coda->CausaleTrasporto ?? 'Vendita' }}</strong>
+                <strong>{{ $causale }}</strong>
             </td>
         </tr>
     </table>
@@ -191,7 +190,7 @@
             </tr>
         </thead>
         <tbody>
-            @foreach($righeRaggruppate as $riga)
+            @foreach($righeFinali as $riga)
                 <tr>
                     <td class="desc">{{ $riga['descrizione'] }}</td>
                     <td class="rif">{{ $riga['rif_ord'] ?? '' }}</td>
