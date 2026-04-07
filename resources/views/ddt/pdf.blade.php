@@ -173,7 +173,7 @@
         <tr>
             <td>
                 <span class="label">CAUSALE DEL TRASPORTO</span><br>
-                <strong>Vendita</strong>
+                <strong>{{ $coda->CausaleTrasporto ?? 'Vendita' }}</strong>
             </td>
         </tr>
     </table>

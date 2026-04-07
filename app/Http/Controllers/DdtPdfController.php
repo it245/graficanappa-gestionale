@@ -20,10 +20,10 @@ class DdtPdfController extends Controller
             SELECT t.IdDoc, t.NumeroDocumento, t.DataDocumento, t.DataRegistrazione,
                    a.RagioneSociale AS ClienteNome,
                    a.Indirizzo AS ClienteIndirizzo,
-                   a.CAP AS ClienteCap, a.Citta AS ClienteCitta,
-                   a.Provincia AS ClienteProvincia, a.Nazione AS ClienteNazione,
+                   a.Cap AS ClienteCap, a.Citta AS ClienteCitta,
+                   a.Provincia AS ClienteProvincia, a.CodNazione AS ClienteNazione,
                    a.Telefono AS ClienteTelefono,
-                   a.PartitaIVA AS ClientePIVA, a.CodiceFiscale AS ClienteCF
+                   a.PartitaIva AS ClientePIVA, a.CodiceFiscale AS ClienteCF
             FROM ATTDocTeste t
             LEFT JOIN STDAnagrafiche a ON t.IdAnagrafica = a.IdAnagrafica
             WHERE t.TipoDocumento = 3
@@ -36,20 +36,19 @@ class DdtPdfController extends Controller
 
         // 2. Recupera dati trasporto (coda)
         $coda = DB::connection('onda')->selectOne("
-            SELECT c.NumeroColli, c.AspettoEsteriore, c.Peso,
-                   c.DataInizioTrasporto, c.OraInizioTrasporto,
-                   c.TrasportoACura, c.Annotazioni,
+            SELECT c.TotNumColli AS NumeroColli, c.Aspetto AS AspettoEsteriore,
+                   c.TotPesoLordo AS Peso,
+                   c.DataTrasporto, c.OraTrasporto,
+                   c.CodTrasporto AS TrasportoACura,
+                   c.CausaleTrasporto,
+                   c.RagSocSped AS DestNome,
+                   c.IndirizzoSped AS DestIndirizzo,
+                   c.CapSped AS DestCap, c.CittaSped AS DestCitta,
+                   c.ProvSped AS DestProvincia,
                    v.RagioneSociale AS VettoreNome,
-                   v.Indirizzo AS VettoreIndirizzo, v.Citta AS VettoreCitta,
-                   -- Destinazione diversa
-                   dest.RagioneSociale AS DestNome,
-                   dest.Indirizzo AS DestIndirizzo,
-                   dest.CAP AS DestCap, dest.Citta AS DestCitta,
-                   dest.Provincia AS DestProvincia,
-                   dest.Telefono AS DestTelefono
+                   v.Indirizzo AS VettoreIndirizzo, v.Citta AS VettoreCitta
             FROM ATTDocCoda c
             LEFT JOIN STDAnagrafiche v ON c.IdVettore1 = v.IdAnagrafica
-            LEFT JOIN STDAnagrafiche dest ON c.IdDestinatario = dest.IdAnagrafica
             WHERE c.IdDoc = ?
         ", [$testa->IdDoc]);
 
@@ -59,7 +58,7 @@ class DdtPdfController extends Controller
                    r.CodUnMis, r.CodArt
             FROM ATTDocRighe r
             WHERE r.IdDoc = ?
-            ORDER BY r.NumRiga
+            ORDER BY r.NrRiga
         ", [$testa->IdDoc]);
 
         // 4. Carica mappatura RIF. ORD. MAXTRIS da Excel
@@ -75,12 +74,12 @@ class DdtPdfController extends Controller
         $numeroPadded = str_pad($numeroDdt, 7, '0', STR_PAD_LEFT);
 
         $oraTrasporto = '';
-        if ($coda && $coda->OraInizioTrasporto) {
-            $oraTrasporto = substr($coda->OraInizioTrasporto, 0, 5);
+        if ($coda && $coda->OraTrasporto) {
+            $oraTrasporto = substr($coda->OraTrasporto, 0, 5);
         }
         $dataTrasporto = '';
-        if ($coda && $coda->DataInizioTrasporto) {
-            $dataTrasporto = \Carbon\Carbon::parse($coda->DataInizioTrasporto)->format('d/m/Y');
+        if ($coda && $coda->DataTrasporto) {
+            $dataTrasporto = \Carbon\Carbon::parse($coda->DataTrasporto)->format('d/m/Y');
         }
 
         // Trasporto a cura: Cedente/Cessionario/Vettore
@@ -90,10 +89,10 @@ class DdtPdfController extends Controller
             $trasportoCura = $map[$coda->TrasportoACura] ?? 'Cedente';
         }
 
-        // Annotazioni: cerca "n. X bancali da rendere" nelle righe testo
+        // Annotazioni: usa Osservazioni dalla coda DDT
         $annotazioni = '';
-        if ($coda && $coda->Annotazioni) {
-            $annotazioni = $coda->Annotazioni;
+        if ($coda && !empty($coda->CausaleTrasporto)) {
+            // CausaleTrasporto è un campo testo nella coda
         }
         // Cerca anche righe di testo (TipoRiga=3) per note aggiuntive
         $noteRighe = collect($righe)
