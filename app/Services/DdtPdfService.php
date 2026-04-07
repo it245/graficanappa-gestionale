@@ -89,7 +89,7 @@ class DdtPdfService
             LEFT JOIN STDAnagrafiche a ON t.IdAnagrafica = a.IdAnagrafica
             WHERE t.TipoDocumento = 3
               AND t.NumeroDocumento = ?
-              AND YEAR(t.DataDocumento) = YEAR(GETDATE())
+            ORDER BY t.DataDocumento DESC
         ", [$numeroPadded]);
 
         if (!$testa) return null;

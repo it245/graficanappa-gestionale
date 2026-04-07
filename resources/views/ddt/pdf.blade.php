@@ -5,7 +5,7 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Helvetica', 'Arial', sans-serif; font-size: 9pt; color: #000; }
-        .page { padding: 40mm 15mm 10mm 15mm; } /* 40mm top: spazio per intestazione pre-stampata */
+        .page { padding: 30mm 15mm 10mm 15mm; } /* 30mm top: spazio per intestazione pre-stampata (3cm) */
 
         /* Header rimosso: la carta è già intestata */
 
