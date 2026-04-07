@@ -1,4 +1,16 @@
-@extends('layouts.app')
+@extends('layouts.mes')
+
+@section('topbar-title', 'Chat MES')
+
+@section('sidebar-items')
+<div class="mes-sidebar-section">
+    <div class="mes-sidebar-section-label">Navigazione</div>
+    <a href="{{ url()->previous() }}" class="mes-sidebar-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Torna alla Dashboard
+    </a>
+</div>
+@endsection
 
 @section('content')
 <style>
