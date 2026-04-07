@@ -15,6 +15,7 @@ use App\Http\Controllers\FieryController;
 use App\Http\Controllers\EtichettaController;
 use App\Http\Controllers\PresenzeController;
 use App\Http\Controllers\TwoFactorController;
+use App\Http\Controllers\DdtPdfController;
 
 // Operatori
 Route::prefix('operatore')->group(function() {
@@ -303,6 +304,9 @@ Route::get('/report-percorso', function () {
 
     return view('report.percorso', ['gruppi' => $gruppi, 'totale' => $ordini->count()]);
 });
+
+// DDT PDF
+Route::get('/ddt/pdf/{numeroDdt}', [DdtPdfController::class, 'genera'])->name('ddt.pdf');
 
 // Homepage
 Route::get('/', fn() => view('welcome'));

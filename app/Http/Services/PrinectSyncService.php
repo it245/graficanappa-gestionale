@@ -482,7 +482,8 @@ class PrinectSyncService
             }
 
             // Se la fase è terminata (stato 3) ma il job è RUNNING → recupera a stato 2
-            if (in_array($fase->stato, [3, '3']) && !$terminata) {
+            // Skip se terminata manualmente dall'owner
+            if (in_array($fase->stato, [3, '3']) && !$terminata && !$fase->terminata_manualmente) {
                 $fase->stato = 2;
                 $fase->data_fine = null;
             }
@@ -826,7 +827,8 @@ class PrinectSyncService
                         $ws = $worksteps[$i] ?? null;
                         if (!$ws) continue;
                         // Ripristina solo se il workstep specifico NON è COMPLETED
-                        if (($ws['status'] ?? '') !== 'COMPLETED') {
+                        // Skip se terminata manualmente dall'owner
+                        if (($ws['status'] ?? '') !== 'COMPLETED' && !$fase->terminata_manualmente) {
                             $fase->stato = 2;
                             $fase->data_fine = null;
                             $fase->save();
@@ -837,6 +839,7 @@ class PrinectSyncService
                     $allNotCompleted = $worksteps->every(fn($ws) => ($ws['status'] ?? '') !== 'COMPLETED');
                     if ($allNotCompleted) {
                         foreach ($fasiValues as $fase) {
+                            if ($fase->terminata_manualmente) continue;
                             $fase->stato = 2;
                             $fase->data_fine = null;
                             $fase->save();

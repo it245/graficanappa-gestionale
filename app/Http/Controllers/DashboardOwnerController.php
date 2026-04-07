@@ -949,11 +949,13 @@ public function calcolaOreEPriorita($fase)
 
         if ($nuovoStato == 3 && !$fase->data_fine) {
             $fase->data_fine = now()->format('Y-m-d H:i:s');
+            $fase->terminata_manualmente = true;
         }
 
-        // Se riportata a stato 2 (recuperata), azzera data_fine per la nuova lavorazione
+        // Se riportata a stato 2 (recuperata), azzera data_fine e flag manuale
         if ($nuovoStato == 2) {
             $fase->data_fine = null;
+            $fase->terminata_manualmente = false;
         }
 
         // Se riportata a 0 o 1, pulisci tutto: flag esterno, data_fine, nota "Inviato a:"

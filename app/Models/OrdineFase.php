@@ -31,6 +31,7 @@ class OrdineFase extends Model
         'priorita',
         'priorita_manuale',
         'esterno',
+        'terminata_manualmente',
         'manuale',
         'ore',
         'tipo_consegna',
