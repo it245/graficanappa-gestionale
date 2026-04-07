@@ -726,10 +726,11 @@ function schedulaDaDB(data) {
         });
     });
 
-    // Ordina fasi per posizione scheduler dentro ogni macchina
+    // Ordina fasi per posizione scheduler e calcola ore_totali
     Object.values(macchine).forEach(m => {
         m.fasi.sort((a, b) => (a.sched_posizione || 999) - (b.sched_posizione || 999));
         m.lanes = 1;
+        m.ore_totali = m.fasi.length > 0 ? Math.max(...m.fasi.map(f => f.end_h || 0)) : 0;
     });
 
     // Converti oggetto in array (il resto del codice aspetta un array)
