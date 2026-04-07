@@ -58,8 +58,8 @@
     $coloriCalc = \App\Helpers\DescrizioneParser::parseColori($tutteDesc, $ordine->cliente_nome ?? '');
     $fustellaCalc = \App\Helpers\DescrizioneParser::parseFustella($tutteDesc, $ordine->cliente_nome ?? '', $ordine->note_prestampa ?? '');
     $mirko = $isMirko ?? false;
-    // Qta: MAX tra gli ordini (non la somma — gli ordini sono documenti di produzione, non articoli diversi)
-    $qtaCommessa = $ordini->max('qta_richiesta');
+    // Qta: somma degli articoli finali (esclusi semilavorati SEMILAV*)
+    $qtaCommessa = $ordini->filter(fn($o) => !str_starts_with($o->cod_art ?? '', 'SEMILAV'))->sum('qta_richiesta');
 @endphp
 <div class="row g-2 mb-2" style="font-size:13px;">
     <div class="col-md-4">
