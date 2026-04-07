@@ -554,15 +554,6 @@
 
         @yield('sidebar-items')
 
-        {{-- Link comuni a tutte le pagine --}}
-        <div class="mes-sidebar-section">
-            <div class="mes-sidebar-section-label">Comunicazione</div>
-            <a href="{{ route('chat.index') }}?op_token={{ request('op_token') }}" class="mes-sidebar-item">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                Chat MES
-            </a>
-        </div>
-
         <div class="mes-sidebar-footer">
             v2.0 &middot; {{ now()->format('d/m/Y') }}
         </div>
@@ -823,6 +814,350 @@
     }
     </script>
 
+    @yield('scripts')
+
+    {{-- ============================================
+         CHAT WIDGET FLOTTANTE (stile Messenger)
+         ============================================ --}}
+    <style>
+    .chat-fab {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: var(--accent, #2563eb);
+        color: #fff;
+        border: none;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .chat-fab:hover { transform: scale(1.1); box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
+    .chat-fab svg { width: 26px; height: 26px; }
+    .chat-fab-badge {
+        position: absolute;
+        top: -4px;
+        right: -4px;
+        background: var(--danger, #dc2626);
+        color: #fff;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        font-size: 11px;
+        font-weight: 700;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        line-height: 20px;
+        text-align: center;
+    }
+
+    .chat-popup {
+        position: fixed;
+        bottom: 90px;
+        right: 24px;
+        width: 360px;
+        height: 480px;
+        background: var(--bg-card, #fff);
+        border-radius: 16px;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+        z-index: 9998;
+        display: none;
+        flex-direction: column;
+        overflow: hidden;
+        border: 1px solid var(--border-color, #e2e8f0);
+    }
+    .chat-popup.open { display: flex; }
+
+    .chat-popup-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 16px;
+        background: var(--accent, #2563eb);
+        color: #fff;
+    }
+    .chat-popup-header h6 { margin: 0; font-weight: 600; font-size: 14px; }
+    .chat-popup-close {
+        background: none;
+        border: none;
+        color: #fff;
+        font-size: 20px;
+        cursor: pointer;
+        padding: 0 4px;
+        line-height: 1;
+        opacity: 0.8;
+    }
+    .chat-popup-close:hover { opacity: 1; }
+
+    .chat-popup-canali {
+        display: flex;
+        gap: 4px;
+        padding: 8px 12px;
+        background: var(--bg-page, #f8fafc);
+        border-bottom: 1px solid var(--border-color, #e2e8f0);
+        overflow-x: auto;
+    }
+    .chat-popup-canali .cp-canale {
+        padding: 4px 12px;
+        border-radius: 16px;
+        border: 1px solid var(--border-color, #e2e8f0);
+        background: var(--bg-card, #fff);
+        font-size: 12px;
+        cursor: pointer;
+        white-space: nowrap;
+        color: var(--text-primary);
+    }
+    .chat-popup-canali .cp-canale.active {
+        background: var(--accent, #2563eb);
+        color: #fff;
+        border-color: var(--accent, #2563eb);
+    }
+
+    .chat-popup-msgs {
+        flex: 1;
+        overflow-y: auto;
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        background: var(--bg-page, #f8fafc);
+    }
+    .cp-msg {
+        max-width: 80%;
+        padding: 6px 10px;
+        border-radius: 10px;
+        font-size: 13px;
+        line-height: 1.4;
+        word-wrap: break-word;
+    }
+    .cp-msg.mio { align-self: flex-end; background: #dcf8c6; border-bottom-right-radius: 2px; }
+    .cp-msg.altro { align-self: flex-start; background: var(--bg-card, #fff); border-bottom-left-radius: 2px; border: 1px solid var(--border-color, #e2e8f0); }
+    .cp-msg .cp-utente { font-size: 10px; font-weight: 700; color: var(--accent, #2563eb); margin-bottom: 1px; }
+    .cp-msg.mio .cp-utente { color: #075e54; }
+    .cp-msg .cp-ora { font-size: 9px; color: var(--text-secondary, #999); text-align: right; }
+
+    .chat-popup-input {
+        display: flex;
+        gap: 6px;
+        padding: 10px 12px;
+        border-top: 1px solid var(--border-color, #e2e8f0);
+        background: var(--bg-card, #fff);
+    }
+    .chat-popup-input input {
+        flex: 1;
+        border-radius: 20px;
+        border: 1px solid var(--border-color, #e2e8f0);
+        padding: 8px 14px;
+        font-size: 13px;
+        outline: none;
+        background: var(--bg-page, #f8fafc);
+        color: var(--text-primary);
+    }
+    .chat-popup-input input:focus { border-color: var(--accent, #2563eb); }
+    .chat-popup-input button {
+        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        border: none;
+        background: var(--accent, #2563eb);
+        color: #fff;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .chat-popup-input button:hover { opacity: 0.9; }
+
+    @media (max-width: 480px) {
+        .chat-popup { width: calc(100vw - 20px); right: 10px; bottom: 80px; height: 60vh; }
+    }
+    </style>
+
+    {{-- FAB Button --}}
+    <button class="chat-fab" id="chatFab" onclick="toggleChatPopup()" title="Chat MES">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+        <span class="chat-fab-badge" id="chatFabBadge">0</span>
+    </button>
+
+    {{-- Chat Popup --}}
+    <div class="chat-popup" id="chatPopup">
+        <div class="chat-popup-header">
+            <h6>Chat MES</h6>
+            <button class="chat-popup-close" onclick="toggleChatPopup()">&times;</button>
+        </div>
+        <div class="chat-popup-canali" id="cpCanali"></div>
+        <div class="chat-popup-msgs" id="cpMsgs">
+            <div style="text-align:center; color:var(--text-secondary); padding:20px; font-size:13px;">Caricamento...</div>
+        </div>
+        <div class="chat-popup-input">
+            <input type="text" id="cpInput" placeholder="Scrivi..." autocomplete="off" onkeydown="if(event.key==='Enter')cpInvia()">
+            <button onclick="cpInvia()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </button>
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        var cpOpen = false;
+        var cpCanale = 'generale';
+        var cpUltimoId = 0;
+        var cpOperatoreId = {{ $operatore->id ?? 0 }};
+        var cpOperatoreNome = @json(($operatore->nome ?? '') . ' ' . ($operatore->cognome ?? ''));
+        var cpCanali = ['generale', 'produzione', 'spedizione', 'urgenze'];
+        var cpPollTimer = null;
+        var cpUnread = 0;
+
+        window.toggleChatPopup = function() {
+            cpOpen = !cpOpen;
+            document.getElementById('chatPopup').classList.toggle('open', cpOpen);
+            if (cpOpen) {
+                cpUnread = 0;
+                updateBadge();
+                cpLoadCanali();
+                cpLoadMessaggi();
+                if (!cpPollTimer) cpPollTimer = setInterval(cpPoll, 3000);
+                setTimeout(function() { document.getElementById('cpInput').focus(); }, 100);
+            }
+        };
+
+        function cpLoadCanali() {
+            var html = '';
+            cpCanali.forEach(function(c) {
+                html += '<span class="cp-canale ' + (c === cpCanale ? 'active' : '') + '" onclick="cpCambiaCanale(\'' + c + '\')">#' + c + '</span>';
+            });
+            document.getElementById('cpCanali').innerHTML = html;
+        }
+
+        window.cpCambiaCanale = function(c) {
+            cpCanale = c;
+            cpUltimoId = 0;
+            cpLoadCanali();
+            cpLoadMessaggi();
+        };
+
+        function cpLoadMessaggi() {
+            var container = document.getElementById('cpMsgs');
+            container.innerHTML = '<div style="text-align:center; color:var(--text-secondary); padding:20px; font-size:13px;">Caricamento...</div>';
+            fetch('/chat/messaggi?canale=' + cpCanale + '&after=0')
+                .then(function(r) { return r.json(); })
+                .then(function(msgs) {
+                    container.innerHTML = '';
+                    if (msgs.length === 0) {
+                        container.innerHTML = '<div style="text-align:center; color:var(--text-secondary); padding:20px; font-size:13px;">Nessun messaggio</div>';
+                        return;
+                    }
+                    msgs.forEach(function(m) { cpAppend(m, container); });
+                    container.scrollTop = container.scrollHeight;
+                    if (msgs.length > 0) cpUltimoId = msgs[msgs.length - 1].id;
+                })
+                .catch(function() {
+                    container.innerHTML = '<div style="text-align:center; color:var(--text-secondary); padding:20px; font-size:13px;">Errore caricamento</div>';
+                });
+        }
+
+        function cpAppend(msg, container) {
+            if (!container) container = document.getElementById('cpMsgs');
+            var div = document.createElement('div');
+            var isMio = msg.operatore_id === cpOperatoreId || msg.mio;
+            div.className = 'cp-msg ' + (isMio ? 'mio' : 'altro');
+            var html = '';
+            if (!isMio) html += '<div class="cp-utente">' + cpEsc(msg.utente || msg.operatore_nome || '') + '</div>';
+            html += '<div>' + cpEsc(msg.messaggio) + '</div>';
+            html += '<div class="cp-ora">' + cpEsc(msg.timestamp || '') + '</div>';
+            div.innerHTML = html;
+            container.appendChild(div);
+        }
+
+        function cpEsc(t) {
+            var d = document.createElement('div');
+            d.textContent = t || '';
+            return d.innerHTML;
+        }
+
+        window.cpInvia = function() {
+            var input = document.getElementById('cpInput');
+            var testo = input.value.trim();
+            if (!testo) return;
+            input.value = '';
+            input.focus();
+
+            cpAppend({
+                messaggio: testo,
+                utente: cpOperatoreNome,
+                timestamp: new Date().toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit'}),
+                mio: true
+            });
+            var container = document.getElementById('cpMsgs');
+            container.scrollTop = container.scrollHeight;
+
+            fetch('/chat/invia', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken(), 'Accept': 'application/json' },
+                body: JSON.stringify({ messaggio: testo, canale: cpCanale })
+            }).then(function(r) { return r.json(); })
+              .then(function(data) { if (data.ok) cpUltimoId = Math.max(cpUltimoId, data.id || cpUltimoId); })
+              .catch(function(e) { console.error('Chat errore:', e); });
+        };
+
+        function cpPoll() {
+            fetch('/chat/messaggi?canale=' + cpCanale + '&after=' + cpUltimoId)
+                .then(function(r) { return r.json(); })
+                .then(function(msgs) {
+                    var container = document.getElementById('cpMsgs');
+                    var vuota = container.querySelector('div[style*="text-align:center"]');
+                    msgs.forEach(function(m) {
+                        if (m.id > cpUltimoId) {
+                            if (!m.mio && m.operatore_id !== cpOperatoreId) {
+                                if (vuota) { vuota.remove(); vuota = null; }
+                                cpAppend(m, container);
+                                container.scrollTop = container.scrollHeight;
+                                if (!cpOpen) { cpUnread++; updateBadge(); }
+                            }
+                            cpUltimoId = m.id;
+                        }
+                    });
+                })
+                .catch(function() {});
+        }
+
+        function updateBadge() {
+            var badge = document.getElementById('chatFabBadge');
+            if (cpUnread > 0) {
+                badge.textContent = cpUnread > 9 ? '9+' : cpUnread;
+                badge.style.display = 'flex';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        // Polling globale per badge (anche quando popup chiuso)
+        setInterval(function() {
+            if (cpOpen) return; // Il poll attivo lo gestisce cpPoll
+            fetch('/chat/messaggi?canale=' + cpCanale + '&after=' + cpUltimoId)
+                .then(function(r) { return r.json(); })
+                .then(function(msgs) {
+                    msgs.forEach(function(m) {
+                        if (m.id > cpUltimoId && m.operatore_id !== cpOperatoreId) {
+                            cpUnread++;
+                            cpUltimoId = m.id;
+                        }
+                    });
+                    updateBadge();
+                })
+                .catch(function() {});
+        }, 10000);
+    })();
+    </script>
     @yield('scripts')
 </body>
 </html>
