@@ -62,6 +62,9 @@ class SchedulerService
         // 3. Simulazione
         $schedule = $this->simula($fasi);
 
+        // 3.5 Calcola date BRT/spedizione: fine = max(fine predecessori nella commessa)
+        $this->calcolaDateSpedizione($fasi, $schedule);
+
         // 4. Salva nel DB
         $this->salvaRisultati($fasi, $schedule);
 
@@ -583,5 +586,51 @@ class SchedulerService
         if (str_contains($c, 'DRIP OFF')) return 'DRIP';
         if (str_contains($c, 'PANTONE') || str_contains($c, 'PANT')) return 'PANT';
         return 'STD';
+    }
+
+    /**
+     * Per ogni fase senza macchina (BRT, legatoria manuale, ecc.):
+     * calcola sched_fine come il massimo sched_fine dei predecessori nella commessa.
+     * Così le fasi di spedizione hanno una data prevista di completamento.
+     */
+    protected function calcolaDateSpedizione(array &$fasi, array &$schedule): void
+    {
+        // Raggruppa fasi schedulate per commessa con la loro data fine
+        $maxFinePerCommessa = [];
+        foreach ($fasi as &$f) {
+            if ($f['sched'] && isset($f['sched']['fine'])) {
+                $comm = $f['commessa'];
+                $fine = $f['sched']['fine'];
+                if (!isset($maxFinePerCommessa[$comm]) || $fine > $maxFinePerCommessa[$comm]) {
+                    $maxFinePerCommessa[$comm] = $fine;
+                }
+            }
+        }
+        unset($f);
+
+        // Assegna sched a fasi senza macchina (BRT, fasi manuali)
+        foreach ($fasi as &$f) {
+            if ($f['sched'] !== null) continue; // già schedulata
+            if ($f['completata'] || $f['in_corso']) continue;
+
+            $comm = $f['commessa'];
+            if (!isset($maxFinePerCommessa[$comm])) continue;
+
+            $fineCommessa = $maxFinePerCommessa[$comm];
+
+            $f['sched'] = [
+                'mac' => 'SPED',
+                'inizio' => $fineCommessa->copy(),
+                'fine' => $fineCommessa->copy(),
+                'setup_h' => 0,
+                'setup_tipo' => 'AUTO',
+                'batch_group' => null,
+            ];
+
+            // Aggiungi alla schedule per il conteggio
+            if (!isset($schedule['SPED'])) $schedule['SPED'] = [];
+            $schedule['SPED'][] = $f;
+        }
+        unset($f);
     }
 }
