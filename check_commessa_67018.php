@@ -3,6 +3,14 @@ require __DIR__ . '/vendor/autoload.php';
 $app = require_once __DIR__ . '/bootstrap/app.php';
 $app->make('Illuminate\Contracts\Console\Kernel')->bootstrap();
 
+// Fix: aggiorna descrizione ordine 6380 da Onda
+$fix = App\Models\Ordine::find(6380);
+if ($fix && str_contains($fix->descrizione, 'PISTACCHIO')) {
+    $fix->descrizione = 'AST. 500 GR AMOR GOLOSO MIX (P01284)';
+    $fix->save();
+    echo "FIX: Ordine 6380 descrizione aggiornata a MIX\n\n";
+}
+
 echo "=== MES: ORDINI COMMESSA 0067018-26 ===\n";
 $ordini = App\Models\Ordine::where('commessa', '0067018-26')->with('fasi')->get();
 foreach ($ordini as $o) {
