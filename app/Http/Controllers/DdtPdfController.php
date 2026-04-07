@@ -15,7 +15,10 @@ class DdtPdfController extends Controller
      */
     public function genera($numeroDdt)
     {
-        // 1. Recupera testata DDT da Onda
+        // Zero-pad a 7 cifre (860 → 0000860)
+        $numeroPadded = str_pad($numeroDdt, 7, '0', STR_PAD_LEFT);
+
+        // 1. Recupera testata DDT da Onda (anno corrente per evitare duplicati)
         $testa = DB::connection('onda')->selectOne("
             SELECT t.IdDoc, t.NumeroDocumento, t.DataDocumento, t.DataRegistrazione,
                    a.RagioneSociale AS ClienteNome,
@@ -28,7 +31,8 @@ class DdtPdfController extends Controller
             LEFT JOIN STDAnagrafiche a ON t.IdAnagrafica = a.IdAnagrafica
             WHERE t.TipoDocumento = 3
               AND t.NumeroDocumento = ?
-        ", [$numeroDdt]);
+              AND YEAR(t.DataDocumento) = YEAR(GETDATE())
+        ", [$numeroPadded]);
 
         if (!$testa) {
             abort(404, "DDT n. {$numeroDdt} non trovato in Onda");
@@ -71,7 +75,6 @@ class DdtPdfController extends Controller
         $dataDdt = $testa->DataDocumento
             ? \Carbon\Carbon::parse($testa->DataDocumento)->format('d/m/Y')
             : '';
-        $numeroPadded = str_pad($numeroDdt, 7, '0', STR_PAD_LEFT);
 
         $oraTrasporto = '';
         if ($coda && $coda->OraTrasporto) {
