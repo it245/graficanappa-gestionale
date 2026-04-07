@@ -1,45 +1,71 @@
-@extends('layouts.app')
+@extends('layouts.mes')
+
+@section('topbar-title', 'Dashboard Spedizione')
+
+@section('topbar-actions')
+<form method="POST" action="{{ route('spedizione.syncOnda') }}" style="margin:0;" onsubmit="this.querySelector('button').disabled=true; this.querySelector('button span').textContent='Sync...';">
+    @csrf
+    <button type="submit" style="background:none; border:1px solid var(--border-color); border-radius:6px; padding:4px 12px; cursor:pointer; display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-secondary);">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21.5 2v6h-6"/><path d="M2.5 22v-6h6"/><path d="M2.5 11.5a10 10 0 0 1 18.8-4.3"/><path d="M21.5 12.5a10 10 0 0 1-18.8 4.2"/>
+        </svg>
+        <span>Sync Onda</span>
+    </button>
+</form>
+@endsection
+
+@section('sidebar-items')
+<div class="mes-sidebar-section">
+    <div class="mes-sidebar-section-label">Navigazione</div>
+    <a href="{{ route('spedizione.dashboard', ['op_token' => request('op_token')]) }}" class="mes-sidebar-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Dashboard
+    </a>
+    <a href="{{ route('spedizione.esterne', ['op_token' => request('op_token')]) }}" class="mes-sidebar-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+        Esterne
+    </a>
+    <a href="#" class="mes-sidebar-item" data-bs-toggle="modal" data-bs-target="#modalNoteConsegne" onclick="caricaNote()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        Note Giornaliere
+    </a>
+    <a href="#" class="mes-sidebar-item" data-bs-toggle="modal" data-bs-target="#modalBRT">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        Notifiche BRT
+    </a>
+</div>
+<div class="mes-sidebar-section">
+    <div class="mes-sidebar-section-label">Sezioni</div>
+    <a href="#sezDaConsegnare" class="mes-sidebar-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        Da consegnare <span class="ms-auto badge" style="background:var(--success); color:#fff; font-size:10px;">{{ $fasiDaSpedire->count() }}</span>
+    </a>
+    <a href="#sezInAttesa" class="mes-sidebar-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        In attesa <span class="ms-auto badge" style="background:var(--warning); color:#000; font-size:10px;">{{ $fasiInAttesa->count() }}</span>
+    </a>
+    <a href="#sezDDT" class="mes-sidebar-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        DDT Emesse <span class="ms-auto badge" style="background:var(--external); color:#fff; font-size:10px;">{{ $fasiDDT->count() }}</span>
+    </a>
+    <a href="#sezParziali" class="mes-sidebar-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        Parziali <span class="ms-auto badge" style="background:var(--warning); color:#000; font-size:10px;">{{ $fasiParziali->count() }}</span>
+    </a>
+    <a href="#" class="mes-sidebar-item" data-bs-toggle="modal" data-bs-target="#modalSpediteOggi">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        Consegnate oggi
+    </a>
+    <a href="#" class="mes-sidebar-item" data-bs-toggle="modal" data-bs-target="#modalStorico">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Storico
+    </a>
+</div>
+@endsection
 
 @section('content')
 <div class="container-fluid px-0">
 <style>
-    html, body {
-        margin:0; padding:0; overflow-x:hidden; width:100%;
-    }
-    h2, h4, p { margin-left:8px; margin-right:8px; }
-    .top-bar {
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-        margin-bottom:10px;
-    }
-    .operatore-info {
-        position:relative;
-        display:flex;
-        align-items:center;
-        gap:10px;
-        cursor:pointer;
-    }
-    .operatore-info img {
-        width:50px; height:50px; border-radius:50%;
-    }
-    .operatore-popup {
-        position:absolute;
-        top:60px;
-        left:0;
-        background:#fff;
-        border:1px solid #ccc;
-        padding:10px;
-        border-radius:5px;
-        box-shadow:0 2px 10px rgba(0,0,0,0.2);
-        display:none;
-        z-index:1000;
-        min-width:200px;
-    }
-    .operatore-popup button {
-        width:100%;
-        margin-top:8px;
-    }
     .table-wrapper {
         width:100%;
         max-width:100%;
@@ -47,6 +73,7 @@
         overflow-y:visible;
         margin: 0 4px;
     }
+    h2, h4, p { margin-left:8px; margin-right:8px; }
     table th, table td { white-space:nowrap; }
     td.desc-col, td:nth-child(7){ white-space:normal; min-width:150px; max-width:220px; overflow:hidden; text-overflow:ellipsis; }
 
@@ -91,21 +118,6 @@
         transform: none;
         box-shadow: none;
     }
-
-    .kpi-box {
-        background: #fff;
-        border: 1px solid #dee2e6;
-        border-radius: 8px;
-        padding: 15px;
-        text-align: center;
-        margin-bottom: 15px;
-    }
-    .kpi-box h3 {
-        margin: 0;
-        font-size: 28px;
-        font-weight: bold;
-    }
-    .kpi-box small { color: #6c757d; }
 
     .progress-bar-custom {
         height: 18px;
@@ -178,67 +190,11 @@
     }
     .btn-scan:hover { color: #0b5ed7; }
 
-    /* Hamburger */
-    .hamburger-btn {
-        background: none; border: none; cursor: pointer; padding: 4px;
-        display: flex; flex-direction: column; gap: 5px; transition: transform 0.15s ease;
-    }
-    .hamburger-btn:hover { transform: scale(1.1); }
-    .hamburger-btn span {
-        display: block; width: 28px; height: 3px; background: #333; border-radius: 2px;
-    }
-    /* Sidebar */
-    .sidebar-overlay {
-        display: none; position: fixed; top:0; left:0; right:0; bottom:0;
-        background: rgba(0,0,0,0.4); z-index: 9998;
-    }
-    .sidebar-overlay.open { display: block; }
-    .sidebar-menu {
-        position: fixed; top:0; left:-300px; width: 280px; height: 100%;
-        background: #fff; z-index: 9999; box-shadow: 2px 0 12px rgba(0,0,0,0.2);
-        transition: left 0.25s ease; overflow-y: auto; padding-top: 15px;
-    }
-    .sidebar-menu.open { left: 0; }
-    .sidebar-menu .sidebar-header {
-        display: flex; align-items: center; justify-content: space-between;
-        padding: 10px 18px 15px; border-bottom: 1px solid #dee2e6; margin-bottom: 5px;
-    }
-    .sidebar-menu .sidebar-header h5 { margin: 0; font-size: 16px; font-weight: 700; }
-    .sidebar-close { background: none; border: none; font-size: 22px; cursor: pointer; color: #666; }
-    .sidebar-close:hover { color: #000; }
-    .sidebar-menu .sidebar-item {
-        display: flex; align-items: center; gap: 12px; padding: 12px 18px;
-        text-decoration: none; color: #333; font-size: 14px; font-weight: 500;
-        border-bottom: 1px solid #f0f0f0; cursor: pointer; transition: background 0.15s;
-    }
-    .sidebar-menu .sidebar-item:hover { background: #f5f5f5; color: #000; }
-    .sidebar-menu .sidebar-item .kpi-inline {
-        font-size: 20px; font-weight: 700; min-width: 28px; text-align: center;
-    }
-
     /* ===== RESPONSIVE MOBILE ===== */
     @media (max-width: 768px) {
         h2, h4, p { margin-left: 4px; margin-right: 4px; }
         h2 { font-size: 16px; }
         h4 { font-size: 15px; }
-
-        /* Top bar */
-        .top-bar {
-            flex-wrap: wrap;
-            gap: 8px;
-            padding: 4px 8px;
-        }
-        .top-bar img[alt="Logo"] { height: 32px !important; }
-        .operatore-info img { width: 40px; height: 40px; }
-
-        /* Hamburger touch target */
-        .hamburger-btn {
-            padding: 12px;
-            min-width: 44px;
-            min-height: 44px;
-            justify-content: center;
-            align-items: center;
-        }
 
         /* Search bar area */
         .search-box {
@@ -308,14 +264,6 @@
             min-width: 120px;
         }
 
-        /* KPI boxes */
-        .kpi-box { padding: 10px; }
-        .kpi-box h3 { font-size: 22px; }
-
-        /* Search + notes wrapper: stack */
-        div[style*="display:flex"][style*="flex-wrap:nowrap"] {
-            flex-wrap: wrap !important;
-        }
     }
 
     @media (max-width: 480px) {
@@ -344,87 +292,6 @@
     $consegneSenzaTipo = $fasiSpediteOggi->whereNull('tipo_consegna')->count();
     $consegneTotali += $consegneSenzaTipo;
 @endphp
-
-<div class="top-bar">
-    <div style="display:flex; align-items:center; gap:12px;">
-        <img src="{{ asset('images/logo_gn.png') }}" alt="Logo" style="height:40px;">
-        <button class="hamburger-btn" id="hamburgerBtn" title="Menu">
-            <span></span><span></span><span></span>
-        </button>
-        <h2 class="mb-0">Dashboard Logistica</h2>
-        <form method="POST" action="{{ route('spedizione.syncOnda') }}" style="margin:0;" onsubmit="this.querySelector('button').disabled=true; this.querySelector('button span').textContent='Sync...';">
-            @csrf
-            <button type="submit" style="background:none; border:1px solid #ccc; border-radius:6px; padding:4px 12px; cursor:pointer; display:flex; align-items:center; gap:6px; font-size:13px; color:#333;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21.5 2v6h-6"/><path d="M2.5 22v-6h6"/><path d="M2.5 11.5a10 10 0 0 1 18.8-4.3"/><path d="M21.5 12.5a10 10 0 0 1-18.8 4.2"/>
-                </svg>
-                <span>Sync Onda</span>
-            </button>
-        </form>
-    </div>
-    <div class="operatore-info" id="operatoreInfo">
-        <img src="{{ asset('images/icons8-utente-uomo-cerchiato-50.png') }}" alt="Operatore">
-        <div class="operatore-popup" id="operatorePopup">
-            <div><strong>{{ $operatore->nome }} {{ $operatore->cognome }}</strong></div>
-            <div><p>Reparto: <strong>Spedizione</strong></p></div>
-            <a href="{{ route('operatore.logout') }}" class="btn btn-secondary btn-sm mt-2">Logout</a>
-        </div>
-    </div>
-</div>
-
-<!-- Sidebar overlay -->
-<div class="sidebar-overlay" id="sidebarOverlay"></div>
-
-<!-- Sidebar menu -->
-<div class="sidebar-menu" id="sidebarMenu">
-    <div class="sidebar-header">
-        <h5>Riepilogo</h5>
-        <button class="sidebar-close" id="sidebarClose">&times;</button>
-    </div>
-    <a href="#sezDaConsegnare" class="sidebar-item" onclick="closeSidebar()">
-        <span class="kpi-inline" style="color:#28a745;">{{ $fasiDaSpedire->count() }}</span>
-        <span>Da consegnare</span>
-    </a>
-    <a href="#sezInAttesa" class="sidebar-item" onclick="closeSidebar()">
-        <span class="kpi-inline" style="color:#ffc107;">{{ $fasiInAttesa->count() }}</span>
-        <span>In attesa</span>
-    </a>
-    <a href="#sezDDT" class="sidebar-item" onclick="closeSidebar()">
-        <span class="kpi-inline" style="color:#6f42c1;">{{ $fasiDDT->count() }}</span>
-        <span>DDT Emesse</span>
-    </a>
-    <a href="#sezParziali" class="sidebar-item" onclick="closeSidebar()">
-        <span class="kpi-inline" style="color:#fd7e14;">{{ $fasiParziali->count() }}</span>
-        <span>Parziali in attesa</span>
-    </a>
-    <a href="#" class="sidebar-item" data-bs-toggle="modal" data-bs-target="#modalSpediteOggi" onclick="closeSidebar()">
-        <span class="kpi-inline" style="color:#198754;">{{ $consegneTotali }}</span>
-        <span>Consegne totali oggi</span>
-    </a>
-    <a href="#" class="sidebar-item" data-bs-toggle="modal" data-bs-target="#modalSpediteOggi" onclick="closeSidebar()">
-        <span class="kpi-inline" style="color:#fd7e14;">{{ $consegneParziali }}</span>
-        <span>Consegne parziali oggi</span>
-    </a>
-    <hr style="margin:4px 18px;">
-    <a href="{{ route('spedizione.esterne') }}" class="sidebar-item" onclick="closeSidebar()">
-        <span class="kpi-inline" style="color:#17a2b8;">{{ $fasiEsterne->count() }}</span>
-        <span>Lav. esterne</span>
-    </a>
-    <a href="#" class="sidebar-item" data-bs-toggle="modal" data-bs-target="#modalBRT" onclick="closeSidebar()">
-        <span class="kpi-inline" style="color:#d4380d;">{{ $spedizioniBRT->count() }}</span>
-        <span>Spedizioni BRT</span>
-    </a>
-    <hr style="margin:4px 18px;">
-    <a href="#" class="sidebar-item" data-bs-toggle="modal" data-bs-target="#modalStorico" onclick="closeSidebar()">
-        <span class="kpi-inline" style="color:#6c757d;">{{ $storicoConsegne->count() }}</span>
-        <span>Storico consegne</span>
-    </a>
-    <hr style="margin:4px 18px;">
-    <a href="#" class="sidebar-item" data-bs-toggle="modal" data-bs-target="#modalNoteConsegne" onclick="closeSidebar(); caricaNote();">
-        <span class="kpi-inline" style="color:#0d6efd;">&#9998;</span>
-        <span>Note consegne</span>
-    </a>
-</div>
 
 <!-- Ricerca + matita note -->
 <div style="display:flex; align-items:center; gap:8px; margin:12px 8px; flex-wrap:nowrap;">
@@ -1231,33 +1098,6 @@ function filtraRicerca(query) {
         row.style.display = (!q || text.includes(q)) ? '' : 'none';
     });
 }
-
-// Sidebar
-function openSidebar() {
-    document.getElementById('sidebarMenu').classList.add('open');
-    document.getElementById('sidebarOverlay').classList.add('open');
-}
-function closeSidebar() {
-    document.getElementById('sidebarMenu').classList.remove('open');
-    document.getElementById('sidebarOverlay').classList.remove('open');
-}
-document.getElementById('hamburgerBtn').addEventListener('click', openSidebar);
-document.getElementById('sidebarOverlay').addEventListener('click', closeSidebar);
-document.getElementById('sidebarClose').addEventListener('click', closeSidebar);
-document.querySelectorAll('.sidebar-menu a.sidebar-item').forEach(function(el) {
-    el.addEventListener('click', function() { setTimeout(closeSidebar, 100); });
-});
-
-// Popup operatore
-document.getElementById('operatoreInfo').addEventListener('click', function(){
-    const popup = document.getElementById('operatorePopup');
-    popup.style.display = popup.style.display === 'block' ? 'none' : 'block';
-});
-document.addEventListener('click', function(e){
-    if(!document.getElementById('operatoreInfo').contains(e.target)){
-        document.getElementById('operatorePopup').style.display='none';
-    }
-});
 
 // === Scanner codice a barre ===
 var scannerInstances = {};
