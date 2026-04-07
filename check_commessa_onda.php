@@ -108,6 +108,22 @@ foreach ($righe as $r) {
     }
 }
 
+// Documenti Onda (DDT fornitore, OdL, fatture, ecc.)
+echo "\n=== ONDA: Documenti (OdL, DDT, fatture) ===\n";
+$docs = DB::connection('onda')->select("
+    SELECT t.TipoDocumento, t.NumeroDocumento, t.DataRegistrazione, t.DataDocumento,
+           a.RagioneSociale, t.StatoDocumento
+    FROM ATTDocTeste t
+    LEFT JOIN STDAnagrafiche a ON t.IdAnagrafica = a.IdAnagrafica
+    WHERE t.CodCommessa LIKE ?
+    ORDER BY t.DataRegistrazione
+", [$commessaArg . '%']);
+
+foreach ($docs as $d) {
+    echo "  Tipo:{$d->TipoDocumento} | Num:{$d->NumeroDocumento} | DataReg:{$d->DataRegistrazione} | DataDoc:{$d->DataDocumento} | {$d->RagioneSociale} | Stato:{$d->StatoDocumento}\n";
+}
+if (empty($docs)) echo "  Nessun documento trovato\n";
+
 // Controlla anche il MES
 echo "\n=== MES: Fasi nel database ===\n";
 $commessaCode = strlen($commessaArg) <= 7 ? str_pad($commessaArg, 7, '0', STR_PAD_LEFT) . '-26' : $commessaArg;

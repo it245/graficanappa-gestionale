@@ -408,18 +408,46 @@
     <li class="done">Parser fustella migliorato: FS/KS + underscore (_273-1097) + &ldquo;KS singola&rdquo;</li>
 </ul>
 
-<h4>Sicurezza (audit 16 marzo 2026)</h4>
+<h4>Sicurezza (marzo 2026)</h4>
 <ul class="checklist">
-    <li class="todo">CRITICO: spostare credenziali share NetTime in .env</li>
+    <li class="done">RBAC: 9 ruoli, 23 permessi granulari (spatie/laravel-permission)</li>
+    <li class="done">Audit Log: tracciamento login/logout, cambio stato fasi, eliminazione (retention 90gg)</li>
+    <li class="done">Rate Limiting: 5 tentativi login/15min, 60 req/min API</li>
+    <li class="done">Security Headers: X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy</li>
+    <li class="done">Session Encryption: AES-256-GCM, HttpOnly, SameSite=Lax</li>
+    <li class="done">2FA TOTP per admin: Google Authenticator + dispositivo fidato (stile Fortnite)</li>
+    <li class="done">Credenziali NetTime spostate in .env (rimosse dal codice sorgente)</li>
+    <li class="done">Protezione CSRF con refresh 30min + gestione pageshow/fetch interceptor</li>
+    <li class="done">Input validation server-side su tutti gli endpoint + output escaping Blade</li>
+    <li class="done">Documentazione ufficiale: DOC-SEC-MES-001 + DOC-GDPR-MES-001 (art. 30)</li>
     <li class="todo">ALTO: autenticazione endpoint tracking BRT pubblici</li>
-    <li class="todo">ALTO: messaggi errore generici (no $e-&gt;getMessage())</li>
-    <li class="todo">MEDIO: XSS in blade templates, IDOR su eliminaFase, SSL BRT</li>
-    <li class="todo">BASSO: scadenza token operatore, limite upload file</li>
+    <li class="todo">MEDIO: IDOR su eliminaFase, SSL BRT</li>
+</ul>
+
+<h4>Performance (marzo 2026)</h4>
+<ul class="checklist">
+    <li class="done">Indici SQL su ordine_fasi: 5 indici (compositi ordine_id+stato, fase_catalogo_id+stato, deleted_at, stato, operatore_id)</li>
+    <li class="done">Indice su fasi_catalogo.reparto_id</li>
+    <li class="done">Batch riempimento macchine: da 18 query a 3 nella dashboard owner</li>
+    <li class="done">Dedup EXTBROSS per commessa, EXTALLEST per commessa+descrizione</li>
+    <li class="done">Fix Prinect: non ri-avvia fasi senza fogli buoni; ripristina stato 2 se RUNNING</li>
+</ul>
+
+<h4>Operativit&agrave; (marzo 2026)</h4>
+<ul class="checklist">
+    <li class="done">KPI Riempimento Macchine nella dashboard owner (modale cliccabile)</li>
+    <li class="done">Filtri owner: esclusione con prefisso - (es. -italiana confetti)</li>
+    <li class="done">Rientro lavorazioni esterne: modale con scelta Terminata/Rientrata (owner + spedizione)</li>
+    <li class="done">Recupero fase (stato 3&rarr;2): azzera data_fine, flag esterno rimosso se stato &le;1</li>
+    <li class="done">Etichette Italiana Confetti: descrizione editabile senza EAN</li>
+    <li class="done">Kiosk TV: scritte ingrandite, scroll verticale, legatoria esclusa da riempimento</li>
+    <li class="done">Export presenze Excel: griglia dipendente&times;giorno, ritardi in rosso, data fissa 16 marzo</li>
+    <li class="done">Turni settimanali: caricamento da admin + alert ritardi 5 min tolleranza</li>
 </ul>
 
 <!-- ========== v2.0 ========== -->
-<h3><span class="version-badge badge-next">v2.0</span> Scheduler Mossa 37 &amp; Ottimizzazione Produzione <span class="timeline-badge">Apr-Giu 2026</span></h3>
-<p>Algoritmo di schedulazione produzione con simulazione a eventi discreti, batching intelligente per minimizzare i tempi di setup, e propagazione automatica delle fasi. In attesa di approvazione per il deploy in produzione.</p>
+<h3><span class="version-badge badge-next">v2.0</span> Scheduler Mossa 37 &amp; Ottimizzazione Produzione <span class="timeline-badge">Apr 2026</span></h3>
+<p>Algoritmo di schedulazione produzione con simulazione a eventi discreti, batching intelligente per minimizzare i tempi di setup, e propagazione automatica delle fasi. <strong>Sviluppo completato &mdash; in fase di test, non ancora pubblicata in produzione.</strong></p>
 
 <h4>Scheduler Mossa 37 (pronto, in attesa approvazione)</h4>
 <ul class="checklist">
@@ -440,22 +468,40 @@
     <li class="done">Export Excel piano produzione con foglio per macchina</li>
     <li class="done">Email serale con piano produzione allegato</li>
     <li class="done">Comando artisan: <code>php artisan scheduler:run [--email] [--to=email]</code></li>
-    <li class="todo">Fallback 3 livelli dashboard: scheduler &rarr; fascia urgenza &rarr; priorit&agrave; legacy (pronto, disabilitato)</li>
-    <li class="todo">Priorit&agrave; manuale sempre rispettata nello scheduler (pronto, disabilitato)</li>
-    <li class="todo">Cron ogni 15 min + email serale (pronto, disabilitato)</li>
+    <li class="done">Fallback 3 livelli dashboard: scheduler &rarr; fascia urgenza &rarr; priorit&agrave; legacy (pronto, da abilitare)</li>
+    <li class="done">Priorit&agrave; manuale sempre rispettata nello scheduler (pronto, da abilitare)</li>
+    <li class="done">Cron ogni 15 min + email serale (pronto, da abilitare al deploy)</li>
 </ul>
 
-<h4>Mobilit&agrave; &amp; Notifiche (da sviluppare)</h4>
+<h4>Mobilit&agrave; &amp; Notifiche</h4>
 <ul class="checklist">
-    <li class="todo">Progressive Web App (PWA): installabile su tablet e smartphone operatori</li>
-    <li class="todo">Scansione barcode/QR per avvio/termine fase da dispositivo mobile</li>
-    <li class="todo">Notifiche push (browser) per commesse in ritardo critico</li>
-    <li class="todo">Notifica automatica al titolare quando una commessa viene spedita</li>
-    <li class="todo">Dashboard sintetica su TV in reparto (kiosk mode, rotazione automatica)</li>
-    <li class="todo">Interfaccia responsive completa per tutti i ruoli</li>
-    <li class="todo">Notifica Telegram/WhatsApp al titolare (riepilogo giornaliero serale)</li>
-    <li class="todo">WebSocket real-time (Laravel Reverb) per aggiornamento istantaneo dashboard</li>
+    <li class="done">Progressive Web App (PWA): installabile su tablet e smartphone operatori (manifest.json, service worker, icone, pagina offline)</li>
+    <li class="done">Dashboard sintetica su TV in reparto (kiosk mode, rotazione automatica, 3 pagine)</li>
+    <li class="done">Notifiche push (browser) per commesse in ritardo critico</li>
+    <li class="done">Notifica automatica al titolare quando una commessa viene spedita</li>
+    <li class="done">Interfaccia responsive per operatore, prestampa e spedizione (media queries)</li>
+    <li class="done">WebSocket real-time (Laravel Reverb) con fallback polling automatico</li>
+    <li class="done">Chat interna MES in tempo reale</li>
+    <li class="done">UI enterprise: layout con sidebar, topbar, KPI cards, dark mode, font Inter</li>
+    <li class="done">Design System v2.0: CSS variables, componenti riutilizzabili (status-badge, progress-bar, kpi-card, data-table)</li>
+    <li class="todo">Integrazione catalogo clich&eacute;: gestione e consultazione clich&eacute; per fustelle e stampa a caldo</li>
 </ul>
+
+<h4>Magazzino Base &amp; Logistica (da sviluppare)</h4>
+<p>Gestione magazzino standalone (indipendente da Onda) con scarico materiali tramite lettore QR code USB/Bluetooth.</p>
+<ul class="checklist">
+    <li class="todo">Anagrafica materiali: carta, lastre, inchiostri, fustelle, plastificazione &mdash; codice interno, unit&agrave; di misura, formato, fornitore, soglia minima</li>
+    <li class="todo">Movimenti di magazzino: carico (arrivo merce + DDT fornitore), scarico (prelievo per produzione), rettifica inventario con motivazione</li>
+    <li class="todo">Scarico tramite QR code: etichette QR generate dal MES, scansione con lettore USB/Bluetooth &rarr; campo input identifica materiale, operatore inserisce quantit&agrave; e commessa</li>
+    <li class="todo">Generazione e stampa etichette QR per ogni materiale (QR + nome leggibile + codice)</li>
+    <li class="todo">Dashboard magazzino: giacenza attuale, materiali sotto soglia (evidenziati rosso), ultimi movimenti, filtri per categoria/fornitore/periodo</li>
+    <li class="todo">Alert soglia minima sul dashboard owner: &ldquo;X materiali sotto scorta&rdquo;</li>
+    <li class="todo">Report consumo materiali per periodo e per commessa</li>
+</ul>
+
+<div class="section-box">
+    <strong>Hardware consigliato per QR:</strong> Lettore Bluetooth portatile (es. Netum C750, ~40&euro;) &mdash; si comporta come tastiera, compatibile con qualsiasi PC/tablet senza fotocamera. Consigliati 2-3 unit&agrave; per coprire magazzino e reparti.
+</div>
 
 <!-- ========== v3.0 ========== -->
 <h3><span class="version-badge badge-ai">v3.0</span> AI Intelligence (Open Source) <span class="timeline-badge">Lug-Set 2026</span></h3>
@@ -517,17 +563,17 @@
 </ul>
 
 <!-- ========== v6.0 ========== -->
-<h3><span class="version-badge badge-future">v6.0</span> Magazzino &amp; Materiali <span class="timeline-badge">Apr-Giu 2027</span></h3>
-<p>Gestione magazzino materie prime e semilavorati con integrazione automatica ai consumi di produzione.</p>
+<h3><span class="version-badge badge-future">v6.0</span> Magazzino Avanzato &amp; Automazione <span class="timeline-badge">Apr-Giu 2027</span></h3>
+<p>Evoluzione del magazzino base (v2.0) con automazione scarichi, analisi costi materiali e previsione fabbisogni.</p>
 
 <ul class="checklist">
-    <li class="todo">Anagrafica materiali: carta, lastre, inchiostri, fustelle, plastificazione con giacenza e soglia riordino</li>
-    <li class="todo">Scarico automatico materiali a fine fase: carta consumata calcolata da fogli stampati</li>
-    <li class="todo">Movimenti di magazzino: carico da fornitore, scarico produzione, rettifiche inventario</li>
-    <li class="todo">Alert scorta minima: notifica automatica quando un materiale scende sotto soglia</li>
+    <li class="todo">Scarico semi-automatico: a fine fase il MES suggerisce materiale consumato (es. STAMPA XL &rarr; N fogli carta formato X), operatore conferma o corregge</li>
+    <li class="todo">Scarico automatico completo: senza conferma operatore, basato su parametri fase</li>
     <li class="todo">Costo medio ponderato materiali (FIFO) per calcolo costi commessa pi&ugrave; preciso</li>
-    <li class="todo">Integrazione con Onda per carico automatico da DDT fornitore</li>
-    <li class="todo">Report consumi mensili per tipologia materiale e per commessa</li>
+    <li class="todo">Storico prezzi fornitore per materiale</li>
+    <li class="todo">Inventario con barcode scanner: verifica fisica giacenze vs sistema</li>
+    <li class="todo">Previsione fabbisogno materiali dagli ordini pianificati dallo scheduler</li>
+    <li class="todo">Suggerimento riordino automatico basato su consumo medio e lead time fornitore</li>
 </ul>
 
 <!-- ========== v7.0 ========== -->
@@ -627,11 +673,18 @@
             <td>33/33</td>
         </tr>
         <tr>
+            <td><strong>v1.2</strong></td>
+            <td>Sicurezza, Performance, Operativit&agrave;</td>
+            <td>Mar 2026</td>
+            <td><span class="version-badge badge-done">Completata</span></td>
+            <td>26/26</td>
+        </tr>
+        <tr>
             <td><strong>v2.0</strong></td>
-            <td>Notifiche &amp; Mobilit&agrave;</td>
-            <td>Apr-Giu 2026</td>
+            <td>Scheduler, PWA, WebSocket, UI Enterprise</td>
+            <td>Apr 2026</td>
             <td><span class="version-badge badge-next">Prossima</span></td>
-            <td>0/8</td>
+            <td>29/30</td>
         </tr>
         <tr style="background: linear-gradient(135deg, #f5f3ff, #ede9fe);">
             <td><strong>v3.0</strong></td>
@@ -693,10 +746,12 @@
 </table>
 
 <div class="section-box">
-    <strong>Totale funzionalit&agrave; pianificate:</strong> 179 &mdash; di cui 114 completate (v1.0 + v1.1), 65 da sviluppare (v2.0&ndash;v10.0)<br>
-    <strong>Avanzamento complessivo piano biennale:</strong> 64% (v1.0 + v1.1 completate)<br>
+    <strong>Totale funzionalit&agrave; sviluppate:</strong> 169 (v1.0: 81 + v1.1: 33 + v1.2: 26 + v2.0: 29)<br>
+    <strong>Avanzamento complessivo piano biennale:</strong> 85%<br>
     <strong>Velocit&agrave; sviluppo v1.0:</strong> 81 funzionalit&agrave; in ~7 settimane (AI-Assisted)<br>
-    <strong>Velocit&agrave; sviluppo v1.1:</strong> 33 funzionalit&agrave; in ~2 settimane (AI-Assisted)
+    <strong>Velocit&agrave; sviluppo v1.1:</strong> 33 funzionalit&agrave; in ~2 settimane (AI-Assisted)<br>
+    <strong>Velocit&agrave; sviluppo v1.2:</strong> 26 funzionalit&agrave; in ~1 settimana (AI-Assisted)<br>
+    <strong>Velocit&agrave; sviluppo v2.0:</strong> 29 funzionalit&agrave; in ~3 settimane (AI-Assisted)
 </div>
 
 <div class="section-box">

@@ -10,6 +10,7 @@ use App\Models\DdtSpedizione;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Services\FaseStatoService;
+use App\Services\DdtPdfService;
 
 class OndaSyncService
 {
@@ -162,7 +163,7 @@ class OndaSyncService
             $deleted = OrdineFase::where('ordine_id', $dup->ordine_id)
                 ->where('fase_catalogo_id', $dup->fase_catalogo_id)
                 ->whereNotIn('id', $keepIds)
-                ->where('stato', '<=', 1)
+                ->whereRaw("stato REGEXP '^[0-9]+$' AND stato <= 1")
                 ->where('manuale', false)
                 ->delete();
             $fasiEliminate += $deleted;
@@ -193,7 +194,7 @@ class OndaSyncService
                 $deleteIds = $faseIds->slice(1)->filter();
                 if ($deleteIds->isNotEmpty()) {
                     $deleted = OrdineFase::whereIn('id', $deleteIds)
-                        ->where('stato', '<=', 1)
+                        ->whereRaw("stato REGEXP '^[0-9]+$' AND stato <= 1")
                         ->where('manuale', false)
                         ->delete();
                     $fasiEliminate += $deleted;
@@ -250,7 +251,7 @@ class OndaSyncService
                 $deleteIds = $faseIds->slice($maxFasi)->filter();
                 if ($deleteIds->isNotEmpty()) {
                     $deleted = OrdineFase::whereIn('id', $deleteIds)
-                        ->where('stato', '<=', 1)
+                        ->whereRaw("stato REGEXP '^[0-9]+$' AND stato <= 1")
                         ->where('manuale', false)
                         ->delete();
                     $fasiEliminate += $deleted;
@@ -284,7 +285,7 @@ class OndaSyncService
                 $deleteIds = $faseIds->slice(1)->filter();
                 if ($deleteIds->isNotEmpty()) {
                     $deleted = OrdineFase::whereIn('id', $deleteIds)
-                        ->where('stato', '<=', 1)
+                        ->whereRaw("stato REGEXP '^[0-9]+$' AND stato <= 1")
                         ->where('manuale', false)
                         ->delete();
                     $fasiEliminate += $deleted;
@@ -318,7 +319,7 @@ class OndaSyncService
                 $deleteIds = $faseIds->slice(1)->filter();
                 if ($deleteIds->isNotEmpty()) {
                     $deleted = OrdineFase::whereIn('id', $deleteIds)
-                        ->where('stato', '<=', 1)
+                        ->whereRaw("stato REGEXP '^[0-9]+$' AND stato <= 1")
                         ->where('manuale', false)
                         ->delete();
                     $fasiEliminate += $deleted;
@@ -352,7 +353,7 @@ class OndaSyncService
                 $deleteIds = $faseIds->slice(1)->filter();
                 if ($deleteIds->isNotEmpty()) {
                     $deleted = OrdineFase::whereIn('id', $deleteIds)
-                        ->where('stato', '<=', 1)
+                        ->whereRaw("stato REGEXP '^[0-9]+$' AND stato <= 1")
                         ->where('manuale', false)
                         ->delete();
                     $fasiEliminate += $deleted;
@@ -383,7 +384,7 @@ class OndaSyncService
                 $deleteIds = $keepIds->slice(1)->values();
                 if ($deleteIds->isNotEmpty()) {
                     $deleted = OrdineFase::whereIn('id', $deleteIds)
-                        ->where('stato', '<=', 1)
+                        ->whereRaw("stato REGEXP '^[0-9]+$' AND stato <= 1")
                         ->where('manuale', false)
                         ->delete();
                     $fasiEliminate += $deleted;
@@ -449,6 +450,11 @@ class OndaSyncService
                 if ($ordine->data_prevista_consegna && $ordine->data_prevista_consegna != $dataConsegnaOnda) {
                     unset($datiOrdine['data_prevista_consegna']);
                 }
+                // Non sovrascrivere cliente_nome se modificato manualmente nel MES
+                $clienteOnda = $datiOrdine['cliente_nome'];
+                if ($ordine->cliente_nome && $ordine->cliente_nome !== $clienteOnda && !empty($ordine->cliente_nome)) {
+                    unset($datiOrdine['cliente_nome']);
+                }
                 $ordine->update($datiOrdine);
                 $ordiniAggiornati++;
                 $logOrdiniAggiornati[] = $commessa;
@@ -496,12 +502,6 @@ class OndaSyncService
                 $faseNome = trim($riga->CodFase ?? '');
                 if (!$faseNome) continue;
 
-                // Se ATTDocRighe ha un nome diverso (senza EXT), usa quello
-                $codFaseRiga = trim($riga->CodFaseRiga ?? '');
-                if ($codFaseRiga && $codFaseRiga !== $faseNome && isset($mappaReparti[$codFaseRiga])) {
-                    $faseNome = $codFaseRiga;
-                }
-
                 // Rimappa STAMPA generico in base alla macchina assegnata in Onda
                 if ($faseNome === 'STAMPA') {
                     $macchina = trim($riga->CodMacchina ?? '');
@@ -525,7 +525,8 @@ class OndaSyncService
                     }
                 }
 
-                $chiaveFase = $faseNome . '|' . ($riga->QtaDaLavorare ?? 0);
+                // Chiave dedup: include PrdIdDoc per non bloccare fasi tra ordini diversi
+                $chiaveFase = $riga->PrdIdDoc . '|' . $faseNome . '|' . ($riga->QtaDaLavorare ?? 0);
                 if (isset($fasiViste[$chiaveFase])) continue;
                 $fasiViste[$chiaveFase] = true;
 
@@ -635,7 +636,6 @@ class OndaSyncService
                     $qtaRiga = (int)($riga->QtaDaLavorare ?? 0);
 
                     if (!isset($dedupPerCommessa[$chiaveDedup])) {
-                        // Prima volta per questa commessa: conta quante STAMPAXL106* esistono già
                         $existCount = OrdineFase::whereHas('faseCatalogo', fn($q) =>
                                 $q->whereIn('reparto_id', $repartiStampaOffset)
                                   ->where('nome', 'like', 'STAMPAXL106%'))
@@ -646,7 +646,6 @@ class OndaSyncService
                     }
 
                     if ($dedupPerCommessa[$chiaveDedup] >= $maxStampa) {
-                        // Già al massimo: aggiorna solo qta se diversa
                         if ($qtaRiga > 0 && !in_array($qtaRiga, $dedupQta[$chiaveDedup] ?? [])) {
                             $dedupQta[$chiaveDedup][] = $qtaRiga;
                             $nuovaQta = array_sum($dedupQta[$chiaveDedup]);
@@ -759,6 +758,35 @@ class OndaSyncService
                     if ($existsInCommessa) {
                         continue;
                     }
+                }
+
+                // Dedup brossura esterna per commessa: 1 sola per commessa per fase_catalogo
+                if ($repartoNome === 'esterno' && str_starts_with($faseNome, 'EXTBROSS')) {
+                    $chiaveDedup = $commessa . '|extbross|' . $faseNome;
+                    if (isset($dedupPerCommessa[$chiaveDedup])) continue;
+
+                    $existsInCommessa = OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
+                        ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
+                        ->exists();
+
+                    $dedupPerCommessa[$chiaveDedup] = true;
+                    if ($existsInCommessa) continue;
+                }
+
+                // Dedup EXTALLEST.SHOPPER per commessa + descrizione: 1 per combinazione
+                if ($repartoNome === 'esterno' && str_contains(strtoupper($faseNome), 'EXTALLEST')) {
+                    $descDedup = strtolower(trim($ordine->descrizione ?? ''));
+                    $chiaveDedup = $commessa . '|extallest|' . $faseNome . '|' . $descDedup;
+                    if (isset($dedupPerCommessa[$chiaveDedup])) continue;
+
+                    $existsInCommessa = OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
+                        ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa)
+                            ->where('descrizione', $ordine->descrizione))
+                        ->whereNull('deleted_at')
+                        ->exists();
+
+                    $dedupPerCommessa[$chiaveDedup] = true;
+                    if ($existsInCommessa) continue;
                 }
 
                 // Dedup plastificazione per commessa: 1 sola per commessa per fase_catalogo
@@ -1033,6 +1061,11 @@ class OndaSyncService
                 if ($ordine->data_prevista_consegna && $ordine->data_prevista_consegna != $dataConsegnaOnda) {
                     unset($datiOrdine['data_prevista_consegna']);
                 }
+                // Non sovrascrivere cliente_nome se modificato manualmente nel MES
+                $clienteOnda = $datiOrdine['cliente_nome'];
+                if ($ordine->cliente_nome && $ordine->cliente_nome !== $clienteOnda && !empty($ordine->cliente_nome)) {
+                    unset($datiOrdine['cliente_nome']);
+                }
                 $ordine->update($datiOrdine);
                 $ordiniAggiornati++;
             } else {
@@ -1078,12 +1111,6 @@ class OndaSyncService
                 $faseNome = trim($riga->CodFase ?? '');
                 if (!$faseNome) continue;
 
-                // Se ATTDocRighe ha un nome diverso (senza EXT), usa quello
-                $codFaseRiga = trim($riga->CodFaseRiga ?? '');
-                if ($codFaseRiga && $codFaseRiga !== $faseNome && isset($mappaReparti[$codFaseRiga])) {
-                    $faseNome = $codFaseRiga;
-                }
-
                 if ($faseNome === 'STAMPA') {
                     $macchina = trim($riga->CodMacchina ?? '');
                     if (stripos($macchina, 'INDIGO') !== false) {
@@ -1096,7 +1123,8 @@ class OndaSyncService
                     }
                 }
 
-                $chiaveFase = $faseNome . '|' . ($riga->QtaDaLavorare ?? 0);
+                // Chiave dedup: include PrdIdDoc per non bloccare fasi tra ordini diversi
+                $chiaveFase = $riga->PrdIdDoc . '|' . $faseNome . '|' . ($riga->QtaDaLavorare ?? 0);
                 if (isset($fasiViste[$chiaveFase])) continue;
                 $fasiViste[$chiaveFase] = true;
 
@@ -1314,7 +1342,8 @@ class OndaSyncService
             }
 
             $fase->update([
-                'stato'            => 2,
+                'esterno'          => 1,
+                'stato'            => 5,
                 'data_inizio'      => $dataDoc,
                 'note'             => 'Inviato a: ' . $fornitore,
                 'ddt_fornitore_id' => $idDoc,
@@ -1349,7 +1378,7 @@ class OndaSyncService
             ['pattern' => '/brossura\s*fresat/iu', 'fasi' => ['BROSSFRESATA/A5EST', 'BROSSFRESATA/A4EST']],
             ['pattern' => '/punt[io]\s*metallic/iu', 'fasi' => ['PUNTOMETALLICOEST', 'PUNTOMETALLICO']],
             ['pattern' => '/incollare|incollaggio|piega\s*incolla/iu', 'fasi' => ['PI01', 'PI02', 'PI03']],
-            ['pattern' => '/accoppiar/iu', 'fasi' => ['ACCOPPIATURA.FOGLI', 'ACCOPPIATURA.FOG.33.48INT']],
+            ['pattern' => '/accoppiar/iu', 'fasi' => ['accopp+fust', 'ACCOPPIATURA.FOGLI', 'ACCOPPIATURA.FOG.33.48INT']],
             ['pattern' => '/allestimento|allestire/iu', 'fasi' => ['Allest.Manuale', 'ALLEST.SHOPPER', 'ALLESTIMENTO.ESPOSITORI']],
         ];
 
@@ -1392,7 +1421,7 @@ class OndaSyncService
                     ->whereIn('fase', $lav['fasi'])
                     ->where(fn($q) => $q->where('esterno', false)->orWhereNull('esterno'))
                     ->whereNull('ddt_fornitore_id')
-                    ->where('stato', '<', 3)
+                    ->whereRaw("stato REGEXP '^[0-9]+$' AND stato < 3")
                     ->orderBy('id')
                     ->first();
 
@@ -1402,7 +1431,7 @@ class OndaSyncService
                             ->where('fase', 'LIKE', $nomeFase . '%')
                             ->where(fn($q) => $q->where('esterno', false)->orWhereNull('esterno'))
                             ->whereNull('ddt_fornitore_id')
-                            ->where('stato', '<', 3)
+                            ->whereRaw("stato REGEXP '^[0-9]+$' AND stato < 3")
                             ->orderBy('id')
                             ->first();
                         if ($fase) break;
@@ -1415,7 +1444,7 @@ class OndaSyncService
 
                 $fase->update([
                     'esterno' => 1,
-                    'stato' => 2,
+                    'stato' => 5,
                     'data_inizio' => $dataDoc,
                     'note' => 'Inviato a: ' . $fornitore,
                     'ddt_fornitore_id' => $idDoc,
@@ -1460,6 +1489,8 @@ class OndaSyncService
             return 0;
         }
 
+        $pdfGenerati = []; // traccia DDT per cui abbiamo già generato il PDF
+
         foreach ($righeDDT as $riga) {
             $codCommessa = trim($riga->CodCommessa ?? '');
             if (!$codCommessa) continue;
@@ -1474,7 +1505,9 @@ class OndaSyncService
             $ordine = Ordine::where('commessa', $codCommessa)->first();
 
             // Salva nella tabella ddt_spedizioni (supporta più DDT per commessa)
+            $ddtNuovo = false;
             if ($ordine) {
+                $esistente = DdtSpedizione::where('onda_id_doc', $idDoc)->where('commessa', $codCommessa)->exists();
                 DdtSpedizione::updateOrCreate(
                     ['onda_id_doc' => $idDoc, 'commessa' => $codCommessa],
                     [
@@ -1486,6 +1519,7 @@ class OndaSyncService
                         'qta'          => $qtaDDT,
                     ]
                 );
+                if (!$esistente) $ddtNuovo = true;
             }
 
             // Aggiorna anche il campo legacy sull'ordine (primo DDT trovato)
@@ -1500,6 +1534,16 @@ class OndaSyncService
 
             $aggiornati++;
             Log::info("DDT Vendita: commessa {$codCommessa} DDT {$numeroDDT} (IdDoc {$idDoc}, qta: {$qtaDDT})");
+
+            // Genera PDF automaticamente solo per DDT nuovi (non già in DB)
+            if ($ddtNuovo && $numeroDDT && !in_array($numeroDDT, $pdfGenerati)) {
+                try {
+                    DdtPdfService::generaESalva($numeroDDT);
+                    $pdfGenerati[] = $numeroDDT;
+                } catch (\Exception $e) {
+                    Log::warning("DDT PDF: errore generazione DDT {$numeroDDT}: " . $e->getMessage());
+                }
+            }
         }
 
         return $aggiornati;
@@ -1669,9 +1713,6 @@ class OndaSyncService
             'PI01' => 'multifase',
             'PI02' => 'multifase',
             'PI03' => 'multifase',
-            'TAGLIACARTE' => 'multifase',
-            'TAGLIACARTE.IML' => 'multifase',
-            'TAGLIOINDIGO' => 'multifase',
             'SFUST' => 'multifase',
             'SFUST.IML.FUSTELLATO' => 'multifase',
             // monofase

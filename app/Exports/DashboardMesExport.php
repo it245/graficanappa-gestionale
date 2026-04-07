@@ -9,18 +9,47 @@ use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
+use Maatwebsite\Excel\Concerns\WithMultipleSheets;
+use Maatwebsite\Excel\Concerns\WithTitle;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Font;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use App\Helpers\DescrizioneParser;
 
-class DashboardMesExport implements FromCollection, WithHeadings, WithMapping, WithStyles, WithColumnWidths
+class DashboardMesExport implements WithMultipleSheets
 {
+    public function sheets(): array
+    {
+        return [
+            new DashboardMesSheet('<', 3, 'tutto'),
+            new DashboardMesSheet('=', 3, 'Terminate'),
+        ];
+    }
+}
+
+class DashboardMesSheet implements FromCollection, WithHeadings, WithMapping, WithStyles, WithColumnWidths, WithTitle
+{
+    private string $operatore;
+    private int $stato;
+    private string $titolo;
+
+    public function __construct(string $operatore, int $stato, string $titolo)
+    {
+        $this->operatore = $operatore;
+        $this->stato = $stato;
+        $this->titolo = $titolo;
+    }
+
+    public function title(): string
+    {
+        return $this->titolo;
+    }
+
     public function collection()
     {
         return OrdineFase::with(['ordine', 'faseCatalogo.reparto', 'operatori' => fn($q) => $q->select('operatori.id', 'nome')])
-            ->where('stato', '<', 4)
+            ->where('stato', $this->operatore, $this->stato)
             ->get();
     }
 

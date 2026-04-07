@@ -143,7 +143,7 @@ class DashboardAdminController extends Controller
                     )
                     ->get();
 
-                $op->stat_fasi_completate = $fasi->filter(fn($f) => $f->stato >= 3)->count();
+                $op->stat_fasi_completate = $fasi->filter(fn($f) => is_numeric($f->stato) && (int)$f->stato >= 3 && (int)$f->stato != 5)->count();
                 $op->stat_fasi_in_corso = $fasi->where('stato', 2)->count();
 
                 // Tempo totale lavorato (somma differenze data_inizio - data_fine dalla pivot, meno pause)
@@ -160,7 +160,7 @@ class DashboardAdminController extends Controller
                 $op->stat_sec_medio = $fasiConTempo > 0 ? round($secTotale / $fasiConTempo) : 0;
 
                 // Quantita prodotta totale
-                $op->stat_qta_prod = $fasi->filter(fn($f) => $f->stato >= 3)->sum('qta_prod');
+                $op->stat_qta_prod = $fasi->filter(fn($f) => is_numeric($f->stato) && (int)$f->stato >= 3 && (int)$f->stato != 5)->sum('qta_prod');
 
                 // Ultimi 7 giorni
                 $recenti = $fasi->filter(function ($f) use ($sogliaRecenti) {
@@ -212,7 +212,7 @@ class DashboardAdminController extends Controller
             ->map(function ($row) {
                 $fasi = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $row->commessa))->get();
                 $row->fasi_totali = $fasi->count();
-                $row->fasi_completate = $fasi->filter(fn($f) => $f->stato >= 3)->count();
+                $row->fasi_completate = $fasi->filter(fn($f) => is_numeric($f->stato) && (int)$f->stato >= 3 && (int)$f->stato != 5)->count();
                 $row->percentuale = $row->fasi_totali > 0 ? round(($row->fasi_completate / $row->fasi_totali) * 100) : 0;
                 $row->completata = $row->fasi_totali > 0 && $row->fasi_completate === $row->fasi_totali;
                 $row->consegnata = $fasi->contains(fn($f) => $f->stato == 4);
@@ -318,7 +318,7 @@ class DashboardAdminController extends Controller
             }
         }
 
-        $tutteCompletate = $ordini->flatMap->fasi->every(fn($f) => $f->stato >= 3);
+        $tutteCompletate = $ordini->flatMap->fasi->every(fn($f) => is_numeric($f->stato) && (int)$f->stato >= 3 && (int)$f->stato != 5);
         $deltaComplessivo = $totaleOreEffettive - $totaleOreStimate;
         $percentualeComplessiva = $totaleOreStimate > 0 ? round(($deltaComplessivo / $totaleOreStimate) * 100, 1) : 0;
 
@@ -344,7 +344,7 @@ class DashboardAdminController extends Controller
         // Fasi completate negli ultimi 7 giorni
         $fasiCompletate7gg = DB::table('fase_operatore')
             ->join('ordine_fasi', 'ordine_fasi.id', '=', 'fase_operatore.fase_id')
-            ->where('ordine_fasi.stato', '>=', 3)
+            ->where('ordine_fasi.stato', '>=', 3)->where('ordine_fasi.stato', '!=', 5)
             ->where('fase_operatore.data_fine', '>=', $da)
             ->count();
 
@@ -366,7 +366,7 @@ class DashboardAdminController extends Controller
         $commesseSpedite = DB::table('fase_operatore')
             ->join('ordine_fasi', 'ordine_fasi.id', '=', 'fase_operatore.fase_id')
             ->join('ordini', 'ordini.id', '=', 'ordine_fasi.ordine_id')
-            ->where('ordine_fasi.stato', '>=', 3)
+            ->where('ordine_fasi.stato', '>=', 3)->where('ordine_fasi.stato', '!=', 5)
             ->where('fase_operatore.data_fine', '>=', $da)
             ->select('ordini.commessa')
             ->distinct()
@@ -391,7 +391,7 @@ class DashboardAdminController extends Controller
             ->map(function ($row) use ($oggi) {
                 $row->giorni_ritardo = Carbon::parse($row->data_prevista_consegna)->diffInDays($oggi);
                 $fasiTot = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $row->commessa))->count();
-                $fasiDone = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $row->commessa))->where('stato', '>=', 3)->count();
+                $fasiDone = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $row->commessa))->where('stato', '>=', 3)->where('stato', '!=', 5)->count();
                 $row->avanzamento = $fasiTot > 0 ? round(($fasiDone / $fasiTot) * 100) : 0;
                 return $row;
             })
@@ -402,7 +402,7 @@ class DashboardAdminController extends Controller
         $topOperatori = DB::table('fase_operatore')
             ->join('ordine_fasi', 'ordine_fasi.id', '=', 'fase_operatore.fase_id')
             ->join('operatori', 'operatori.id', '=', 'fase_operatore.operatore_id')
-            ->where('ordine_fasi.stato', '>=', 3)
+            ->where('ordine_fasi.stato', '>=', 3)->where('ordine_fasi.stato', '!=', 5)
             ->where('fase_operatore.data_fine', '>=', $da)
             ->select('operatori.nome', 'operatori.cognome', DB::raw('COUNT(*) as fasi_completate'))
             ->groupBy('operatori.id', 'operatori.nome', 'operatori.cognome')
@@ -414,7 +414,7 @@ class DashboardAdminController extends Controller
         $commesseCompletate = DB::table('fase_operatore')
             ->join('ordine_fasi', 'ordine_fasi.id', '=', 'fase_operatore.fase_id')
             ->join('ordini', 'ordini.id', '=', 'ordine_fasi.ordine_id')
-            ->where('ordine_fasi.stato', '>=', 3)
+            ->where('ordine_fasi.stato', '>=', 3)->where('ordine_fasi.stato', '!=', 5)
             ->where('fase_operatore.data_fine', '>=', $da)
             ->select('ordini.commessa', 'ordini.cliente_nome', 'ordini.descrizione')
             ->distinct()
@@ -459,7 +459,7 @@ class DashboardAdminController extends Controller
         $commesseCompletate30gg = DB::table('fase_operatore')
             ->join('ordine_fasi', 'ordine_fasi.id', '=', 'fase_operatore.fase_id')
             ->join('ordini', 'ordini.id', '=', 'ordine_fasi.ordine_id')
-            ->where('ordine_fasi.stato', '>=', 3)
+            ->where('ordine_fasi.stato', '>=', 3)->where('ordine_fasi.stato', '!=', 5)
             ->where('fase_operatore.data_fine', '>=', $da30gg)
             ->select('ordini.commessa')
             ->distinct()
@@ -481,7 +481,7 @@ class DashboardAdminController extends Controller
             ->map(function ($row) use ($oggi) {
                 $row->giorni_ritardo = Carbon::parse($row->data_prevista_consegna)->diffInDays($oggi);
                 $fasiTot = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $row->commessa))->count();
-                $fasiDone = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $row->commessa))->where('stato', '>=', 3)->count();
+                $fasiDone = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $row->commessa))->where('stato', '>=', 3)->where('stato', '!=', 5)->count();
                 $row->avanzamento = $fasiTot > 0 ? round(($fasiDone / $fasiTot) * 100) : 0;
                 return $row;
             })
@@ -493,7 +493,7 @@ class DashboardAdminController extends Controller
         $commesseConConsegna = DB::table('fase_operatore')
             ->join('ordine_fasi', 'ordine_fasi.id', '=', 'fase_operatore.fase_id')
             ->join('ordini', 'ordini.id', '=', 'ordine_fasi.ordine_id')
-            ->where('ordine_fasi.stato', '>=', 3)
+            ->where('ordine_fasi.stato', '>=', 3)->where('ordine_fasi.stato', '!=', 5)
             ->where('fase_operatore.data_fine', '>=', $da30gg)
             ->whereNotNull('ordini.data_prevista_consegna')
             ->select('ordini.commessa', 'ordini.data_prevista_consegna', DB::raw('MAX(fase_operatore.data_fine) as ultima_fine'))
@@ -529,14 +529,14 @@ class DashboardAdminController extends Controller
         // --- 5b. Fasi completate ultimi 30gg ---
         $fasiCompletate30gg = DB::table('fase_operatore')
             ->join('ordine_fasi', 'ordine_fasi.id', '=', 'fase_operatore.fase_id')
-            ->where('ordine_fasi.stato', '>=', 3)
+            ->where('ordine_fasi.stato', '>=', 3)->where('ordine_fasi.stato', '!=', 5)
             ->where('fase_operatore.data_fine', '>=', $da30gg)
             ->count();
 
         // --- 6. Trend giornaliero (30gg) ---
         $trendRaw = DB::table('fase_operatore')
             ->join('ordine_fasi', 'ordine_fasi.id', '=', 'fase_operatore.fase_id')
-            ->where('ordine_fasi.stato', '>=', 3)
+            ->where('ordine_fasi.stato', '>=', 3)->where('ordine_fasi.stato', '!=', 5)
             ->where('fase_operatore.data_fine', '>=', $da30gg)
             ->whereNotNull('fase_operatore.data_inizio')
             ->whereNotNull('fase_operatore.data_fine')
@@ -567,7 +567,7 @@ class DashboardAdminController extends Controller
                 'nome' => $rep->nome,
                 'attesa' => $fasi->whereIn('stato', [0, 1])->count(),
                 'in_corso' => $fasi->where('stato', 2)->count(),
-                'completate' => $fasi->where('stato', '>=', 3)->count(),
+                'completate' => $fasi->where('stato', '>=', 3)->where('stato', '!=', 5)->count(),
             ];
         })->filter(fn($r) => ($r->attesa + $r->in_corso + $r->completate) > 0)->values();
 
@@ -603,7 +603,7 @@ class DashboardAdminController extends Controller
         $topOperatoriMese = DB::table('fase_operatore')
             ->join('ordine_fasi', 'ordine_fasi.id', '=', 'fase_operatore.fase_id')
             ->join('operatori', 'operatori.id', '=', 'fase_operatore.operatore_id')
-            ->where('ordine_fasi.stato', '>=', 3)
+            ->where('ordine_fasi.stato', '>=', 3)->where('ordine_fasi.stato', '!=', 5)
             ->where('fase_operatore.data_fine', '>=', $da30gg)
             ->select(
                 'operatori.nome',
@@ -627,7 +627,7 @@ class DashboardAdminController extends Controller
             })
             ->map(function ($row) use ($oggi) {
                 $fasiTot = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $row->commessa))->count();
-                $fasiDone = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $row->commessa))->where('stato', '>=', 3)->count();
+                $fasiDone = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $row->commessa))->where('stato', '>=', 3)->where('stato', '!=', 5)->count();
                 $row->avanzamento = $fasiTot > 0 ? round(($fasiDone / $fasiTot) * 100) : 0;
                 $row->giorni_mancanti = $oggi->diffInDays(Carbon::parse($row->data_prevista_consegna));
                 return $row;
@@ -665,7 +665,7 @@ class DashboardAdminController extends Controller
         // --- Fasi completate ---
         $fasiCompletate = DB::table('fase_operatore')
             ->join('ordine_fasi', 'ordine_fasi.id', '=', 'fase_operatore.fase_id')
-            ->where('ordine_fasi.stato', '>=', 3)
+            ->where('ordine_fasi.stato', '>=', 3)->where('ordine_fasi.stato', '!=', 5)
             ->whereBetween('fase_operatore.data_fine', [$da, $a])
             ->count();
 
@@ -687,7 +687,7 @@ class DashboardAdminController extends Controller
         $commesseCompletate = DB::table('fase_operatore')
             ->join('ordine_fasi', 'ordine_fasi.id', '=', 'fase_operatore.fase_id')
             ->join('ordini', 'ordini.id', '=', 'ordine_fasi.ordine_id')
-            ->where('ordine_fasi.stato', '>=', 3)
+            ->where('ordine_fasi.stato', '>=', 3)->where('ordine_fasi.stato', '!=', 5)
             ->whereBetween('fase_operatore.data_fine', [$da, $a])
             ->select('ordini.commessa')
             ->distinct()
@@ -711,7 +711,7 @@ class DashboardAdminController extends Controller
             ->map(function ($row) use ($oggi) {
                 $row->giorni_ritardo = Carbon::parse($row->data_prevista_consegna)->diffInDays($oggi);
                 $fasiTot = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $row->commessa))->count();
-                $fasiDone = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $row->commessa))->where('stato', '>=', 3)->count();
+                $fasiDone = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $row->commessa))->where('stato', '>=', 3)->where('stato', '!=', 5)->count();
                 $row->avanzamento = $fasiTot > 0 ? round(($fasiDone / $fasiTot) * 100) : 0;
                 $fasi = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $row->commessa))
                     ->where('stato', '<', 3)
@@ -727,7 +727,7 @@ class DashboardAdminController extends Controller
         $commesseConConsegna = DB::table('fase_operatore')
             ->join('ordine_fasi', 'ordine_fasi.id', '=', 'fase_operatore.fase_id')
             ->join('ordini', 'ordini.id', '=', 'ordine_fasi.ordine_id')
-            ->where('ordine_fasi.stato', '>=', 3)
+            ->where('ordine_fasi.stato', '>=', 3)->where('ordine_fasi.stato', '!=', 5)
             ->whereBetween('fase_operatore.data_fine', [$da, $a])
             ->whereNotNull('ordini.data_prevista_consegna')
             ->select('ordini.commessa', 'ordini.data_prevista_consegna', DB::raw('MAX(fase_operatore.data_fine) as ultima_fine'))
@@ -767,7 +767,7 @@ class DashboardAdminController extends Controller
                 ->join('ordine_fasi', 'ordine_fasi.id', '=', 'fase_operatore.fase_id')
                 ->join('fasi_catalogo', 'fasi_catalogo.id', '=', 'ordine_fasi.fase_catalogo_id')
                 ->where('fasi_catalogo.reparto_id', $rep->id)
-                ->where('ordine_fasi.stato', '>=', 3)
+                ->where('ordine_fasi.stato', '>=', 3)->where('ordine_fasi.stato', '!=', 5)
                 ->whereBetween('fase_operatore.data_fine', [$da, $a])
                 ->count();
 
@@ -776,7 +776,7 @@ class DashboardAdminController extends Controller
                 ->join('ordine_fasi', 'ordine_fasi.id', '=', 'fase_operatore.fase_id')
                 ->join('fasi_catalogo', 'fasi_catalogo.id', '=', 'ordine_fasi.fase_catalogo_id')
                 ->where('fasi_catalogo.reparto_id', $rep->id)
-                ->where('ordine_fasi.stato', '>=', 3)
+                ->where('ordine_fasi.stato', '>=', 3)->where('ordine_fasi.stato', '!=', 5)
                 ->whereBetween('fase_operatore.data_fine', [$da, $a])
                 ->whereNotNull('fase_operatore.data_inizio')
                 ->whereNotNull('fase_operatore.data_fine')
@@ -813,7 +813,7 @@ class DashboardAdminController extends Controller
 
         $trendRaw = DB::table('fase_operatore')
             ->join('ordine_fasi', 'ordine_fasi.id', '=', 'fase_operatore.fase_id')
-            ->where('ordine_fasi.stato', '>=', 3)
+            ->where('ordine_fasi.stato', '>=', 3)->where('ordine_fasi.stato', '!=', 5)
             ->whereBetween('fase_operatore.data_fine', [$da, $a])
             ->whereNotNull('fase_operatore.data_inizio')
             ->whereNotNull('fase_operatore.data_fine')
@@ -833,7 +833,7 @@ class DashboardAdminController extends Controller
         $operatoriPerf = DB::table('fase_operatore')
             ->join('ordine_fasi', 'ordine_fasi.id', '=', 'fase_operatore.fase_id')
             ->join('operatori', 'operatori.id', '=', 'fase_operatore.operatore_id')
-            ->where('ordine_fasi.stato', '>=', 3)
+            ->where('ordine_fasi.stato', '>=', 3)->where('ordine_fasi.stato', '!=', 5)
             ->whereBetween('fase_operatore.data_fine', [$da, $a])
             ->whereNotNull('fase_operatore.data_inizio')
             ->whereNotNull('fase_operatore.data_fine')
@@ -1483,5 +1483,28 @@ class DashboardAdminController extends Controller
         }
 
         return response()->json(['success' => true]);
+    }
+
+    /**
+     * Audit Log
+     */
+    public function auditLog(Request $request)
+    {
+        $query = DB::table('audit_logs')->orderByDesc('created_at');
+
+        if ($request->filled('azione')) {
+            $query->where('action', $request->azione);
+        }
+        if ($request->filled('utente')) {
+            $query->where('user_name', 'like', '%' . $request->utente . '%');
+        }
+        if ($request->filled('data')) {
+            $query->whereDate('created_at', $request->data);
+        }
+
+        $logs = $query->paginate(50);
+        $azioni = DB::table('audit_logs')->distinct()->pluck('action');
+
+        return view('admin.audit_log', compact('logs', 'azioni'));
     }
 }

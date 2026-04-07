@@ -24,6 +24,11 @@ class OrdiniImport implements ToModel, WithHeadingRow, WithChunkReading
 
     if (!$commessa || !$faseNome) return null;
 
+    // Auto-append anno (-26, -27, ecc.) se mancante
+    if (!preg_match('/-\d{2}$/', $commessa)) {
+        $commessa .= '-' . date('y');
+    }
+
     // --- 1. GESTIONE ORDINE ---
     $ordine = Ordine::updateOrCreate(
         [

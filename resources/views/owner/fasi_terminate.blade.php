@@ -103,17 +103,12 @@ tbody tr:nth-child(even) {
 }
 
 /* =========================
-   COLORI SCADENZA
+   COLORI PERCORSO PRODUTTIVO
    ========================= */
-tr.scaduta td {
-    background-color: #f8d7da !important;
-}
-tr.warning-strong td {
-    background-color: #fff3cd !important;
-}
-tr.warning-light td {
-    background-color: #fefce8 !important;
-}
+tr.percorso-base td { background-color: #d4edda !important; }
+tr.percorso-rilievi td { background-color: #fff3cd !important; }
+tr.percorso-caldo td { background-color: #f96f2a !important; }
+tr.percorso-completo td { background-color: #f8d7da !important; }
 
 /* =========================
    LARGHEZZA COLONNE
@@ -365,15 +360,7 @@ th:nth-child(24), td:nth-child(24) {
         <tbody>
             @forelse($fasiTerminate as $fase)
                 @php
-                    $rowClass = '';
-                    if ($fase->ordine && $fase->ordine->data_prevista_consegna) {
-                        $oggi = \Carbon\Carbon::today();
-                        $dataPrevista = \Carbon\Carbon::parse($fase->ordine->data_prevista_consegna);
-                        $diff = $oggi->diffInDays($dataPrevista, false);
-                        if ($diff < -5) $rowClass = 'scaduta';
-                        elseif ($diff <= 3) $rowClass = 'warning-strong';
-                        elseif ($diff <= 5) $rowClass = 'warning-light';
-                    }
+                    $rowClass = $fase->ordine ? $fase->ordine->getPercorsoClass() : '';
                 @endphp
                 <tr class="{{ $rowClass }}" data-reparto="{{ strtolower($fase->reparto_nome ?? '') }}" data-fase="{{ strtolower($fase->faseCatalogo->nome_display ?? $fase->fase ?? '') }}" data-operatori="{{ strtolower($fase->operatori->map(fn($op) => $op->nome . ' ' . $op->cognome)->implode(', ')) }}">
                     <td><strong>{{ $fase->ordine->commessa ?? '-' }}</strong></td>

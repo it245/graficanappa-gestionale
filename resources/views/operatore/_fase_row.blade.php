@@ -1,13 +1,5 @@
 @php
-    $rowClass = '';
-    if ($fase->ordine && $fase->ordine->data_prevista_consegna) {
-        $oggi = \Carbon\Carbon::today();
-        $dataPrevista = \Carbon\Carbon::parse($fase->ordine->data_prevista_consegna);
-        $diff = $oggi->diffInDays($dataPrevista, false);
-        if ($diff < -5) $rowClass = 'scaduta';
-        elseif ($diff <= 3) $rowClass = 'warning-strong';
-        elseif ($diff <= 5) $rowClass = 'warning-light';
-    }
+    $rowClass = $fase->ordine ? $fase->ordine->getPercorsoClass() : '';
     $statoBg = [0 => '#e9ecef', 1 => '#cfe2ff', 2 => '#fff3cd', 3 => '#d1e7dd'];
 @endphp
 

@@ -40,6 +40,11 @@ Schedule::command('fiery:snapshot-contatori')->weeklyOn(1, '08:00');
 // Sync presenze NetTime ogni minuto (lun-ven 5:00-23:00)
 Schedule::command('presenze:sync')->everyMinute()->weekdays()->between('5:00', '23:00')->withoutOverlapping();
 
+Schedule::command('presenze:export-excel')->everyFifteenMinutes()->weekdays()->between('5:00', '23:00')->withoutOverlapping();
+
+// Pulizia audit log: mantieni ultimi 90 giorni
+Schedule::command('audit:pulisci')->dailyAt('03:00');
+
 // Scheduler Mossa 37 — DISABILITATO (in attesa approvazione capo)
 // Schedule::command('scheduler:run')->everyFifteenMinutes()->weekdays()->between('6:00', '22:00')->withoutOverlapping();
 

@@ -287,7 +287,149 @@
 
 <h2>Dashboard Operatore</h2>
 
+{{-- NOTE TURNO — Icona + pannello espandibile --}}
+@php $noteNonLette = ($noteTurno ?? collect())->where('letta', false)->count(); @endphp
+<div style="position:relative; display:inline-block; margin:8px;">
+    {{-- Icona appunti --}}
+    <button type="button" onclick="toggleNoteTurno()" id="btnNoteTurno" style="background:#fff; border:1px solid #dee2e6; border-radius:10px; padding:8px 14px; cursor:pointer; box-shadow:0 1px 4px rgba(0,0,0,0.08); display:flex; align-items:center; gap:6px; font-size:13px; font-weight:600; color:#333;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0d6efd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        Nota di Fine Turno
+        @if($noteNonLette > 0)
+            <span id="badgeNote" style="background:#dc3545; color:#fff; font-size:10px; font-weight:700; padding:1px 6px; border-radius:10px; min-width:18px; text-align:center;">{{ $noteNonLette }}</span>
+        @endif
+    </button>
+
+    {{-- Pannello note (nascosto) --}}
+    <div id="pannelloNote" style="display:none; position:absolute; top:100%; left:0; z-index:1000; margin-top:4px; width:420px; background:#fff; border:1px solid #dee2e6; border-radius:10px; padding:12px 16px; box-shadow:0 4px 16px rgba(0,0,0,0.15);">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+            <strong style="font-size:14px;">Nota di Fine Turno</strong>
+            <button type="button" onclick="document.getElementById('formNota').style.display = document.getElementById('formNota').style.display === 'none' ? 'block' : 'none'" style="background:#0d6efd; color:#fff; border:none; border-radius:6px; padding:4px 12px; font-size:11px; font-weight:600; cursor:pointer;">+ Nuova</button>
+        </div>
+
+        {{-- Form nuova nota --}}
+        <div id="formNota" style="display:none; margin-bottom:10px; padding:10px; background:#f8f9fa; border-radius:8px; border:1px solid #e9ecef;">
+            <textarea id="notaText" rows="2" maxlength="1000" placeholder="Scrivi la nota per il turno successivo..." style="width:100%; border:1px solid #dee2e6; border-radius:6px; padding:8px; font-size:13px; resize:vertical;"></textarea>
+            <div style="display:flex; gap:8px; margin-top:6px; align-items:center; justify-content:flex-end;">
+                <input type="hidden" id="notaDest" value="{{ strtolower($operatore->reparti->first()->nome ?? 'tutti') }}">
+                <button type="button" onclick="inviaNota()" style="background:#198754; color:#fff; border:none; border-radius:6px; padding:5px 16px; font-size:12px; font-weight:600; cursor:pointer;">Invia</button>
+            </div>
+        </div>
+
+        {{-- Lista note --}}
+        <div id="listaNote" style="max-height:250px; overflow-y:auto;">
+            @forelse(($noteTurno ?? collect()) as $n)
+                <div class="nota-turno" data-id="{{ $n->id }}" style="display:flex; gap:8px; align-items:flex-start; padding:6px 0; border-bottom:1px solid #f0f0f0; {{ $n->letta ? 'opacity:0.5;' : '' }}">
+                    <div style="flex:1;">
+                        <div style="font-size:12px;">
+                            <strong style="color:#0d6efd;">{{ $n->operatore->nome ?? '' }} {{ $n->operatore->cognome ?? '' }}</strong>
+                            <span style="color:#888; font-size:10px; margin-left:6px;">{{ $n->created_at->format('H:i') }} &middot; {{ $n->destinazione === 'tutti' ? 'Tutti' : ucfirst($n->destinazione) }}</span>
+                        </div>
+                        <div style="font-size:13px; margin-top:2px;">{{ $n->nota }}</div>
+                    </div>
+                    @if(!$n->letta)
+                        <button onclick="segnaLetta({{ $n->id }}, this)" style="background:none; border:1px solid #dee2e6; border-radius:4px; padding:2px 8px; font-size:10px; color:#666; cursor:pointer; white-space:nowrap;">Letta</button>
+                    @endif
+                </div>
+            @empty
+                <div style="color:#999; font-size:12px; text-align:center; padding:8px;">Nessuna nota nelle ultime 24 ore</div>
+            @endforelse
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleNoteTurno() {
+    var p = document.getElementById('pannelloNote');
+    p.style.display = p.style.display === 'none' ? 'block' : 'none';
+}
+// Chiudi cliccando fuori
+document.addEventListener('click', function(e) {
+    var pannello = document.getElementById('pannelloNote');
+    var btn = document.getElementById('btnNoteTurno');
+    if (pannello && pannello.style.display !== 'none' && !pannello.contains(e.target) && !btn.contains(e.target)) {
+        pannello.style.display = 'none';
+    }
+});
+
+function inviaNota() {
+    var nota = document.getElementById('notaText').value.trim();
+    if (!nota) return;
+    var dest = document.getElementById('notaDest').value;
+
+    fetch('{{ route("operatore.salvaNota") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': csrfToken(),
+            'X-Op-Token': window.opToken()
+        },
+        body: JSON.stringify({ nota: nota, destinazione: dest })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.ok) {
+            var lista = document.getElementById('listaNote');
+            var empty = lista.querySelector('div[style*="text-align:center"]');
+            if (empty) empty.remove();
+
+            var div = document.createElement('div');
+            div.className = 'nota-turno';
+            div.style = 'display:flex; gap:8px; align-items:flex-start; padding:6px 0; border-bottom:1px solid #f0f0f0;';
+            div.innerHTML = '<div style="flex:1;"><div style="font-size:12px;"><strong style="color:#0d6efd;">' + data.nota.operatore + '</strong><span style="color:#888; font-size:10px; margin-left:6px;">' + data.nota.data + ' &middot; ' + (data.nota.destinazione === 'tutti' ? 'Tutti' : data.nota.destinazione) + '</span></div><div style="font-size:13px; margin-top:2px;">' + data.nota.nota.replace(/</g, '&lt;') + '</div></div>';
+            lista.insertBefore(div, lista.firstChild);
+
+            document.getElementById('notaText').value = '';
+            document.getElementById('formNota').style.display = 'none';
+        }
+    });
+}
+
+function segnaLetta(id, btn) {
+    fetch('/operatore/note-turno/' + id + '/letta', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': csrfToken(),
+            'X-Op-Token': window.opToken()
+        }
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.ok) {
+            var row = btn.closest('.nota-turno');
+            row.style.opacity = '0.5';
+            btn.remove();
+        }
+    });
+}
+</script>
+
 @if(!empty($fasiPerReparto))
+    {{-- LEGENDA --}}
+    <div style="background:#fff; border:1px solid #dee2e6; border-radius:8px; padding:8px 14px; margin:6px 8px 12px 8px; box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+        <div class="d-flex gap-4" style="font-size:11px;">
+            <div>
+                <div style="font-weight:700; font-size:10px; color:#666; text-transform:uppercase; margin-bottom:4px;">Stati Fase</div>
+                <div class="d-flex flex-column gap-1">
+                    <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#e9ecef;border:1px solid #ccc;border-radius:2px;"></span> 0 Caricato</div>
+                    <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#cfe2ff;border:1px solid #9ec5fe;border-radius:2px;"></span> 1 Pronto</div>
+                    <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#fff3cd;border:1px solid #ffc107;border-radius:2px;"></span> 2 Avviato</div>
+                    <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#d1e7dd;border:1px solid #198754;border-radius:2px;"></span> 3 Terminato</div>
+                    <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#c3c3c3;border:1px solid #999;border-radius:2px;"></span> 4 Consegnato</div>
+                </div>
+            </div>
+            <div style="border-left:1px solid #dee2e6; padding-left:12px;">
+                <div style="font-weight:700; font-size:10px; color:#666; text-transform:uppercase; margin-bottom:4px;">Percorso Produttivo</div>
+                <div class="d-flex flex-column gap-1">
+                    <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#d4edda;border:1px solid #198754;border-radius:2px;"></span> Base (no caldo, no rilievi)</div>
+                    <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#fff3cd;border:1px solid #ffc107;border-radius:2px;"></span> Rilievi (no caldo)</div>
+                    <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#f96f2a;border:1px solid #e65c00;border-radius:2px;"></span> Caldo (no rilievi)</div>
+                    <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#f8d7da;border:1px solid #dc3545;border-radius:2px;"></span> Completo (caldo + rilievi)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     {{-- MULTI-REPARTO: sezioni separate per ogni reparto --}}
     @foreach($fasiPerReparto as $repartoId => $info)
         @if($info['fasi']->isEmpty()) @continue @endif
@@ -504,7 +646,7 @@ function applicaFiltri(el) {
 
         // Le fasi in pausa sono sempre visibili (stato non numerico = motivo pausa)
         var statoText = statoCell ? statoCell.textContent.trim() : '';
-        var inPausa = statoText !== '' && isNaN(statoText) && statoText !== '0' && statoText !== '1' && statoText !== '2' && statoText !== '3' && statoText !== '4';
+        var inPausa = statoText !== '' && isNaN(statoText) && statoText !== '0' && statoText !== '1' && statoText !== '2' && statoText !== '3' && statoText !== '4' && statoText !== '5';
         if (inPausa) {
             riga.style.display = '';
             return;

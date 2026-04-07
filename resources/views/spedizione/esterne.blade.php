@@ -28,8 +28,10 @@
         border-radius:10px; border:2px solid #dee2e6; transition:border-color 0.2s;
     }
     .search-box:focus { border-color:#0d6efd; box-shadow:0 0 0 3px rgba(13,110,253,0.15); }
-    .row-scaduta { background: #f8d7da !important; }
-    .row-warning { background: #fff3cd !important; }
+    .percorso-base { background: #d4edda !important; }
+    .percorso-rilievi { background: #fff3cd !important; }
+    .percorso-caldo { background: #f96f2a !important; }
+    .percorso-completo { background: #f8d7da !important; }
     a.commessa-link { color:#000; font-weight:bold; text-decoration:underline; }
     a.commessa-link:hover { color:#0d6efd; }
 </style>
@@ -70,14 +72,7 @@
         <tbody>
             @forelse($fasiEsterne as $fase)
                 @php
-                    $rowClass = '';
-                    if ($fase->ordine && $fase->ordine->data_prevista_consegna) {
-                        $oggi = \Carbon\Carbon::today();
-                        $dataPrevista = \Carbon\Carbon::parse($fase->ordine->data_prevista_consegna);
-                        $diff = $oggi->diffInDays($dataPrevista, false);
-                        if ($diff < -5) $rowClass = 'row-scaduta';
-                        elseif ($diff <= 3) $rowClass = 'row-warning';
-                    }
+                    $rowClass = $fase->ordine ? $fase->ordine->getPercorsoClass() : '';
                     $statoFase = $fase->stato;
                     $inPausa = is_string($statoFase) && !is_numeric($statoFase);
                 @endphp
@@ -86,21 +81,20 @@
                         @if($statoFase == 0 || $statoFase == 1)
                             <button class="btn btn-sm btn-success fw-bold" onclick="esternoAvvia({{ $fase->id }}, this)">Avvia</button>
                         @elseif($statoFase == 2)
-                            <button class="btn btn-sm btn-warning fw-bold" onclick="esternoPausa({{ $fase->id }}, this)">Pausa</button>
-                            <button class="btn btn-sm btn-danger fw-bold"
+                            <button class="btn btn-sm btn-success fw-bold"
                                     data-qta-fase="{{ $fase->qta_fase ?? 0 }}"
                                     data-fogli-buoni="{{ $fase->fogli_buoni ?? 0 }}"
                                     data-fogli-scarto="{{ $fase->fogli_scarto ?? 0 }}"
                                     data-qta-prod="{{ $fase->qta_prod ?? 0 }}"
-                                    onclick="esternoTermina({{ $fase->id }}, this)">Termina</button>
+                                    onclick="esternoTermina({{ $fase->id }}, this)">Rientro</button>
                         @elseif($inPausa)
                             <button class="btn btn-sm btn-success fw-bold" onclick="esternoRiprendi({{ $fase->id }}, this)">Riprendi</button>
-                            <button class="btn btn-sm btn-danger fw-bold"
+                            <button class="btn btn-sm btn-success fw-bold"
                                     data-qta-fase="{{ $fase->qta_fase ?? 0 }}"
                                     data-fogli-buoni="{{ $fase->fogli_buoni ?? 0 }}"
                                     data-fogli-scarto="{{ $fase->fogli_scarto ?? 0 }}"
                                     data-qta-prod="{{ $fase->qta_prod ?? 0 }}"
-                                    onclick="esternoTermina({{ $fase->id }}, this)">Termina</button>
+                                    onclick="esternoTermina({{ $fase->id }}, this)">Rientro</button>
                         @endif
                     </td>
                     <td>
@@ -151,11 +145,15 @@
                     <p class="fw-bold mb-3">La lavorazione esterna e completata?</p>
                     <button type="button" class="btn btn-success btn-lg w-100 mb-3" onclick="setTipoRientro('terminata')">
                         <strong>Terminata</strong><br>
-                        <small>La lavorazione e completata, nessuna azione aggiuntiva</small>
+                        <small>La lavorazione e completata</small>
                     </button>
-                    <button type="button" class="btn btn-warning btn-lg w-100 text-dark" onclick="setTipoRientro('rientro')">
+                    <button type="button" class="btn btn-warning btn-lg w-100 text-dark mb-3" onclick="setTipoRientro('rientro')">
                         <strong>Rientrata - servono altre lavorazioni</strong><br>
                         <small>Il materiale e rientrato ma servono lavorazioni aggiuntive</small>
+                    </button>
+                    <button type="button" class="btn btn-secondary btn-lg w-100" onclick="setTipoRientro('nessuna')">
+                        <strong>Rientrata senza lavorazione</strong><br>
+                        <small>Nessuna lavorazione effettuata, torna in attesa</small>
                     </button>
                 </div>
 
@@ -383,7 +381,7 @@ function setTipoRientro(tipo) {
         scarti: parseInt(scarti) || 0
     };
 
-    if (tipo === 'rientro') {
+    if (tipo === 'rientro' || tipo === 'nessuna') {
         body.rientro = true;
     }
 
@@ -413,14 +411,29 @@ function esternoRiprendi(faseId, btn) {
     .catch(err => { if (err !== 'session_expired') { console.error('Errore:', err); alert('Errore: ' + err); } btn.disabled = false; });
 }
 
-// Ricerca
-document.getElementById('searchBox').addEventListener('input', function() {
-    const query = this.value.toLowerCase().trim();
+// Ricerca (include note negli input + persistenza)
+function filtraEsterne() {
+    var query = document.getElementById('searchBox').value.toLowerCase().trim();
+    sessionStorage.setItem('searchEsterne', query);
     document.querySelectorAll('tr.searchable').forEach(function(row) {
-        const text = row.innerText.toLowerCase();
+        var text = row.innerText.toLowerCase();
+        // Includi anche il contenuto degli input (note)
+        row.querySelectorAll('input').forEach(function(inp) {
+            text += ' ' + (inp.value || '').toLowerCase();
+        });
         row.style.display = (!query || text.includes(query)) ? '' : 'none';
     });
-});
+}
+document.getElementById('searchBox').addEventListener('input', filtraEsterne);
+
+// Ripristina ricerca dopo refresh
+(function() {
+    var saved = sessionStorage.getItem('searchEsterne');
+    if (saved) {
+        document.getElementById('searchBox').value = saved;
+        filtraEsterne();
+    }
+})();
 
 // Popup operatore
 document.getElementById('operatoreInfo').addEventListener('click', function(){

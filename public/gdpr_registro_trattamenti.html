@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>DOC-GDPR-MES-001 — Registro Attivit&agrave; di Trattamento</title>
+<style>
+    @page { size: A4 portrait; margin: 1.5cm 1.5cm 2cm 1.5cm; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Georgia, 'Times New Roman', serif; color: #222; line-height: 1.5; padding: 30px 40px; max-width: 210mm; margin: 0 auto; font-size: 10pt; }
+
+    .page-header { text-align: center; border-bottom: 3px solid #D11317; padding-bottom: 15px; margin-bottom: 10px; }
+    .page-header .azienda { color: #D11317; font-size: 14pt; font-weight: 700; letter-spacing: 0.05em; }
+    .page-header .indirizzo { font-size: 8pt; color: #555; }
+    .page-header .titolo { font-size: 17pt; font-weight: 700; color: #111; margin-top: 15px; }
+    .page-header .sottotitolo { font-size: 10pt; color: #333; margin-top: 4px; }
+
+    .meta-table { width: 100%; border-collapse: collapse; margin: 10px 0 20px 0; font-size: 8.5pt; }
+    .meta-table td { padding: 4px 8px; border: 1px solid #ccc; }
+    .meta-table td:first-child { font-weight: 700; width: 200px; background: #f5f5f5; }
+
+    .classificazione { text-align: center; padding: 6px; background: #D11317; color: #fff; font-weight: 700; font-size: 9pt; letter-spacing: 0.1em; margin-bottom: 25px; }
+
+    h2 { color: #D11317; font-size: 12pt; margin-top: 20px; margin-bottom: 8px; border-bottom: 2px solid #D11317; padding-bottom: 3px; page-break-after: avoid; }
+    h3 { color: #333; font-size: 10.5pt; margin-top: 14px; margin-bottom: 6px; page-break-after: avoid; }
+    p { margin-bottom: 6px; text-align: justify; }
+    ul { margin: 6px 0 6px 20px; }
+    li { margin-bottom: 3px; }
+
+    table.data { width: 100%; border-collapse: collapse; margin: 8px 0 12px 0; font-size: 8.5pt; font-family: 'Segoe UI', Tahoma, sans-serif; }
+    table.data th { background: #333; color: #fff; padding: 4px 6px; text-align: left; font-weight: 600; }
+    table.data td { padding: 4px 6px; border-bottom: 1px solid #ddd; vertical-align: top; }
+    table.data tr:nth-child(even) { background: #f9f9f9; }
+
+    .trattamento-box { border: 1px solid #ddd; border-left: 4px solid #1E40AF; padding: 10px 12px; margin: 10px 0; background: #fafafa; page-break-inside: avoid; }
+    .trattamento-box .codice { font-family: 'Courier New', monospace; font-size: 8pt; color: #1E40AF; font-weight: 700; }
+    .trattamento-box .nome { font-size: 10pt; font-weight: 700; color: #111; margin-left: 8px; }
+    .trattamento-box table { width: 100%; margin-top: 6px; font-size: 8.5pt; border-collapse: collapse; font-family: 'Segoe UI', sans-serif; }
+    .trattamento-box td { padding: 3px 6px; border-bottom: 1px solid #eee; vertical-align: top; }
+    .trattamento-box td:first-child { font-weight: 600; width: 200px; color: #555; }
+
+    .firma-box { border: 1px solid #ccc; padding: 15px; margin: 12px 0; page-break-inside: avoid; }
+    .firma-linea { border-bottom: 1px solid #333; width: 300px; height: 25px; margin-top: 10px; }
+    .firma-box .ruolo { font-size: 8.5pt; color: #555; margin-top: 3px; }
+
+    .firma-digitale-stamp { font-family: 'Brush Script MT', 'Segoe Script', cursive; font-size: 22pt; color: #1a3a6b; padding: 8px 0 4px 0; border-bottom: 2px solid #1a3a6b; display: inline-block; min-width: 300px; }
+    .firma-digitale-stamp .firma-data { font-family: 'Segoe UI', sans-serif; font-size: 9pt; color: #555; margin-top: 3px; }
+    .firma-digitale-stamp .firma-hash { font-family: 'Courier New', monospace; font-size: 7pt; color: #999; margin-top: 2px; }
+
+    .page-break { page-break-before: always; }
+    @media print {
+        body { padding: 0; font-size: 9pt; max-width: none; }
+        .no-print { display: none !important; }
+        .no-print-hide { display: none !important; }
+        #firme-stampabili { display: block !important; }
+        .page-break { page-break-before: always; }
+        .trattamento-box { page-break-inside: avoid; }
+    }
+</style>
+</head>
+<body>
+
+<!-- INTESTAZIONE -->
+<div class="page-header">
+    <div class="azienda">GRAFICA NAPPA S.R.L.</div>
+    <div class="indirizzo">Via Gramsci, 19 — 81031 Aversa (CE)</div>
+    <div class="titolo">REGISTRO DELLE ATTIVIT&Agrave; DI TRATTAMENTO</div>
+    <div class="sottotitolo">Art. 30 Regolamento UE 2016/679 (GDPR)</div>
+</div>
+
+<div class="classificazione">RISERVATO — USO INTERNO</div>
+
+<table class="meta-table">
+    <tr><td>Codice Documento</td><td>DOC-GDPR-MES-001</td></tr>
+    <tr><td>Versione</td><td>1.0</td></tr>
+    <tr><td>Data Emissione</td><td>28 Marzo 2026</td></tr>
+    <tr><td>Classificazione</td><td>Riservato — Uso Interno</td></tr>
+    <tr><td>Titolare del Trattamento</td><td>Grafica Nappa S.R.L. — Via Gramsci, 19 — 81031 Aversa (CE)</td></tr>
+    <tr><td>Redatto da</td><td>Giovanni Pietropaolo — Analista e Progettista Basi Dati</td></tr>
+    <tr><td>Riferimento Sicurezza</td><td>DOC-SEC-MES-001 v1.0</td></tr>
+    <tr><td>Prossima revisione</td><td>28 Settembre 2026</td></tr>
+</table>
+
+<!-- 1. PREMESSA -->
+<h2>1. Premessa e Ambito di Applicazione</h2>
+<p>Il presente registro &egrave; redatto ai sensi dell'art. 30 del Regolamento UE 2016/679 (GDPR) e documenta le attivit&agrave; di trattamento dei dati personali effettuate tramite il sistema MES (Manufacturing Execution System) in uso presso Grafica Nappa S.R.L.</p>
+<p>Il registro copre tutti i trattamenti di dati personali di dipendenti e operatori effettuati attraverso il sistema MES e i sistemi ad esso integrati (NetTime, Prinect, Fiery, Onda, BRT).</p>
+
+<h3>1.1 Riferimenti normativi</h3>
+<ul>
+    <li>Regolamento UE 2016/679 (GDPR) — Art. 5, 6, 13, 14, 30, 32</li>
+    <li>D.Lgs. 196/2003 (Codice Privacy) come modificato dal D.Lgs. 101/2018</li>
+    <li>Provvedimento Garante Privacy n. 53/2006 — Videosorveglianza e controllo lavoratori</li>
+    <li>Art. 4 L. 300/1970 (Statuto dei Lavoratori) — Controlli a distanza</li>
+</ul>
+
+<!-- 2. TITOLARE -->
+<h2>2. Informazioni sul Titolare del Trattamento</h2>
+<table class="data">
+    <tr><th>Campo</th><th>Valore</th></tr>
+    <tr><td>Ragione Sociale</td><td>Grafica Nappa S.R.L.</td></tr>
+    <tr><td>Sede Legale</td><td>Via Gramsci, 19 — 81031 Aversa (CE)</td></tr>
+    <tr><td>Responsabile Sistemi Informativi</td><td>Giovanni Pietropaolo</td></tr>
+    <tr><td>Sistema di trattamento</td><td>MES — Manufacturing Execution System (applicazione web Laravel/MySQL)</td></tr>
+    <tr><td>Server</td><td>192.168.1.60 (rete locale, non esposto a Internet)</td></tr>
+</table>
+
+<!-- 3. TRATTAMENTI -->
+<div class="page-break"></div>
+<h2>3. Registro dei Trattamenti</h2>
+
+<!-- T01 -->
+<div class="trattamento-box">
+    <span class="codice">T-MES-001</span> <span class="nome">Gestione presenze e timbrature dipendenti</span>
+    <table>
+        <tr><td>Finalit&agrave;</td><td>Rilevazione automatica delle presenze, calcolo ore lavorate, gestione turni, verifica ritardi</td></tr>
+        <tr><td>Base giuridica</td><td>Art. 6(1)(b) GDPR — Esecuzione del contratto di lavoro; Art. 6(1)(c) — Obbligo legale (D.Lgs. 66/2003 orario di lavoro)</td></tr>
+        <tr><td>Categorie di interessati</td><td>Dipendenti e collaboratori dell'azienda</td></tr>
+        <tr><td>Categorie di dati</td><td>Matricola, cognome, nome, data e ora timbratura, verso (entrata/uscita), terminale di rilevazione</td></tr>
+        <tr><td>Tabelle coinvolte</td><td><code>nettime_anagrafica</code> (matricola, cognome, nome), <code>nettime_timbrature</code> (matricola, data_ora, verso, terminale)</td></tr>
+        <tr><td>Origine dei dati</td><td>Sistema NetTime (192.168.1.34) tramite condivisione di rete SMB — sincronizzazione automatica ogni minuto (lun-ven 05:00-23:00)</td></tr>
+        <tr><td>Destinatari interni</td><td>Direzione aziendale (dashboard presenze), Responsabile SI (amministrazione sistema)</td></tr>
+        <tr><td>Destinatari esterni</td><td>Nessuno</td></tr>
+        <tr><td>Trasferimento paesi terzi</td><td>No</td></tr>
+        <tr><td>Periodo di conservazione</td><td>Dati operativi: 7 giorni (sincronizzazione incrementale). Storico completo: conservato nel database per tutta la durata del rapporto di lavoro + 5 anni (prescrizione)</td></tr>
+        <tr><td>Export</td><td>File Excel condiviso <code>dashboard_mes_presenze.xlsx</code> aggiornato ogni 15 minuti, accessibile su rete locale</td></tr>
+        <tr><td>Misure di sicurezza</td><td>Rif. DOC-SEC-MES-001: autenticazione, RBAC, session encryption, audit log, rete chiusa</td></tr>
+    </table>
+</div>
+
+<!-- T02 -->
+<div class="trattamento-box">
+    <span class="codice">T-MES-002</span> <span class="nome">Gestione turni lavorativi</span>
+    <table>
+        <tr><td>Finalit&agrave;</td><td>Pianificazione turni settimanali, verifica ritardi rispetto all'orario previsto</td></tr>
+        <tr><td>Base giuridica</td><td>Art. 6(1)(b) GDPR — Esecuzione del contratto di lavoro</td></tr>
+        <tr><td>Categorie di interessati</td><td>Dipendenti assegnati a turni</td></tr>
+        <tr><td>Categorie di dati</td><td>Cognome e nome, data, codice turno (T/1/2/3/F/R), orari inizio e fine</td></tr>
+        <tr><td>Tabelle coinvolte</td><td><code>turni</code> (cognome_nome, data, turno, ora_inizio, ora_fine)</td></tr>
+        <tr><td>Origine dei dati</td><td>Inserimento manuale da parte della Direzione tramite dashboard amministrativa</td></tr>
+        <tr><td>Destinatari interni</td><td>Direzione, Responsabile SI</td></tr>
+        <tr><td>Destinatari esterni</td><td>Nessuno</td></tr>
+        <tr><td>Trasferimento paesi terzi</td><td>No</td></tr>
+        <tr><td>Periodo di conservazione</td><td>Durata del rapporto di lavoro + 5 anni</td></tr>
+        <tr><td>Misure di sicurezza</td><td>Rif. DOC-SEC-MES-001: accesso riservato a ruolo admin, audit log</td></tr>
+    </table>
+</div>
+
+<!-- T03 -->
+<div class="trattamento-box">
+    <span class="codice">T-MES-003</span> <span class="nome">Tracciamento attivit&agrave; operatori su fasi di produzione</span>
+    <table>
+        <tr><td>Finalit&agrave;</td><td>Registrazione dell'operatore assegnato a ciascuna fase produttiva, calcolo tempi di lavorazione, gestione pause, monitoraggio avanzamento produzione</td></tr>
+        <tr><td>Base giuridica</td><td>Art. 6(1)(f) GDPR — Legittimo interesse del titolare (organizzazione e ottimizzazione della produzione); Art. 4 L. 300/1970 (previo accordo sindacale o autorizzazione INL)</td></tr>
+        <tr><td>Categorie di interessati</td><td>Operatori di produzione</td></tr>
+        <tr><td>Categorie di dati</td><td>ID operatore, nome, cognome, data/ora inizio e fine fase, durata pause (secondi), quantit&agrave; prodotta, scarti, motivo pausa</td></tr>
+        <tr><td>Tabelle coinvolte</td><td><code>fase_operatore</code> (operatore_id, data_inizio, data_fine, secondi_pausa), <code>pausa_operatores</code> (operatore_id, motivo, data_ora), <code>ordine_fasi</code> (operatore_id, stato, qta_prod)</td></tr>
+        <tr><td>Origine dei dati</td><td>Input diretto degli operatori tramite dashboard (avvio, pausa, termine fase) e sincronizzazione automatica da Prinect (nomi operatori macchina stampa)</td></tr>
+        <tr><td>Destinatari interni</td><td>Direzione (dashboard owner), Responsabili reparto</td></tr>
+        <tr><td>Destinatari esterni</td><td>Nessuno</td></tr>
+        <tr><td>Trasferimento paesi terzi</td><td>No</td></tr>
+        <tr><td>Periodo di conservazione</td><td>Durata vita dell'ordine di produzione + 2 anni (garanzia)</td></tr>
+        <tr><td>Misure di sicurezza</td><td>Rif. DOC-SEC-MES-001: RBAC, audit log su cambio stato, session encryption</td></tr>
+    </table>
+</div>
+
+<!-- T04 -->
+<div class="page-break"></div>
+<div class="trattamento-box">
+    <span class="codice">T-MES-004</span> <span class="nome">Sincronizzazione dati operatori da Prinect</span>
+    <table>
+        <tr><td>Finalit&agrave;</td><td>Correlazione automatica tra attivit&agrave; di stampa offset (Heidelberg Prinect) e operatori del MES per calcolo tempi effettivi</td></tr>
+        <tr><td>Base giuridica</td><td>Art. 6(1)(f) GDPR — Legittimo interesse (monitoraggio efficienza impianti produttivi)</td></tr>
+        <tr><td>Categorie di interessati</td><td>Operatori addetti alla macchina da stampa offset XL106</td></tr>
+        <tr><td>Categorie di dati</td><td>Nome e cognome operatore (dal sistema Prinect), associazione a job di stampa, tempi di avviamento e esecuzione</td></tr>
+        <tr><td>Tabelle coinvolte</td><td><code>prinect_attivita</code> (operatore_prinect — nomi in formato CSV)</td></tr>
+        <tr><td>Origine dei dati</td><td>API REST Prinect (rete locale) — endpoint <code>/rest/device/{id}/activity</code> — ultimi 30 giorni</td></tr>
+        <tr><td>Destinatari interni</td><td>Direzione (report Prinect), Responsabile SI</td></tr>
+        <tr><td>Destinatari esterni</td><td>Nessuno (dati ricevuti da Prinect, non inviati)</td></tr>
+        <tr><td>Trasferimento paesi terzi</td><td>No</td></tr>
+        <tr><td>Periodo di conservazione</td><td>30 giorni (finestra di sincronizzazione)</td></tr>
+        <tr><td>Misure di sicurezza</td><td>Rif. DOC-SEC-MES-001: credenziali API in .env, rete locale</td></tr>
+    </table>
+</div>
+
+<!-- T05 -->
+<div class="trattamento-box">
+    <span class="codice">T-MES-005</span> <span class="nome">Audit log accessi e operazioni</span>
+    <table>
+        <tr><td>Finalit&agrave;</td><td>Tracciamento degli accessi al sistema e delle operazioni effettuate per finalit&agrave; di sicurezza informatica e conformit&agrave; normativa</td></tr>
+        <tr><td>Base giuridica</td><td>Art. 6(1)(c) GDPR — Obbligo legale (misure di sicurezza art. 32 GDPR); Art. 6(1)(f) — Legittimo interesse (sicurezza del sistema informativo)</td></tr>
+        <tr><td>Categorie di interessati</td><td>Tutti gli utenti del sistema MES (operatori, owner, admin)</td></tr>
+        <tr><td>Categorie di dati</td><td>ID utente, nome utente, azione effettuata, indirizzo IP, user-agent (browser/dispositivo), data e ora, valori modificati (prima/dopo)</td></tr>
+        <tr><td>Tabelle coinvolte</td><td><code>audit_logs</code> (user_id, user_name, action, ip, user_agent, old_values, new_values)</td></tr>
+        <tr><td>Origine dei dati</td><td>Generazione automatica dal sistema (Observer su OrdineFase, AuditService su login/logout)</td></tr>
+        <tr><td>Destinatari interni</td><td>Direzione (pagina /owner/audit-log e /admin/audit-log), Responsabile SI</td></tr>
+        <tr><td>Destinatari esterni</td><td>Nessuno</td></tr>
+        <tr><td>Trasferimento paesi terzi</td><td>No</td></tr>
+        <tr><td>Periodo di conservazione</td><td>90 giorni — pulizia automatica quotidiana (comando <code>audit:pulisci</code>)</td></tr>
+        <tr><td>Misure di sicurezza</td><td>Rif. DOC-SEC-MES-001: accesso riservato a ruoli owner/admin, graceful degradation</td></tr>
+    </table>
+</div>
+
+<!-- T06 -->
+<div class="trattamento-box">
+    <span class="codice">T-MES-006</span> <span class="nome">Gestione sessioni e autenticazione</span>
+    <table>
+        <tr><td>Finalit&agrave;</td><td>Autenticazione degli utenti, gestione delle sessioni di lavoro, autenticazione a due fattori (2FA) per utenti amministrativi</td></tr>
+        <tr><td>Base giuridica</td><td>Art. 6(1)(f) GDPR — Legittimo interesse (sicurezza del sistema informativo)</td></tr>
+        <tr><td>Categorie di interessati</td><td>Tutti gli utenti del sistema MES</td></tr>
+        <tr><td>Categorie di dati</td><td>ID utente, token di sessione (64 caratteri), indirizzo IP, user-agent, hash dispositivo fidato, segreto 2FA (cifrato AES-256), codici di recupero</td></tr>
+        <tr><td>Tabelle coinvolte</td><td><code>sessions</code> (user_id, ip_address, user_agent), <code>operatore_tokens</code> (token, expires_at), <code>trusted_devices</code> (device_token_hash, ip_first_use), <code>operatori</code> (two_factor_secret, password hash)</td></tr>
+        <tr><td>Origine dei dati</td><td>Generazione automatica al login</td></tr>
+        <tr><td>Destinatari interni</td><td>Sistema automatico</td></tr>
+        <tr><td>Destinatari esterni</td><td>Nessuno</td></tr>
+        <tr><td>Trasferimento paesi terzi</td><td>No</td></tr>
+        <tr><td>Periodo di conservazione</td><td>Sessioni: 480 minuti (8 ore). Token: 12 ore. Dispositivi fidati: illimitato (revocabile manualmente)</td></tr>
+        <tr><td>Misure di sicurezza</td><td>Rif. DOC-SEC-MES-001: session encryption AES-256, cookie HttpOnly + SameSite, password Bcrypt 12 round, 2FA secret cifrato, token SHA-256</td></tr>
+    </table>
+</div>
+
+<!-- T07 -->
+<div class="trattamento-box">
+    <span class="codice">T-MES-007</span> <span class="nome">Comunicazione dati a vettore BRT per spedizioni</span>
+    <table>
+        <tr><td>Finalit&agrave;</td><td>Tracking spedizioni tramite API BRT, verifica stato consegna</td></tr>
+        <tr><td>Base giuridica</td><td>Art. 6(1)(b) GDPR — Esecuzione del contratto (consegna prodotti al cliente)</td></tr>
+        <tr><td>Categorie di interessati</td><td>Clienti destinatari delle spedizioni</td></tr>
+        <tr><td>Categorie di dati</td><td>Numero DDT, ID spedizione, segnacollo — nessun dato personale dei dipendenti trasmesso. Dati ricevuti: firmatario consegna, ragione sociale destinatario, localit&agrave;</td></tr>
+        <tr><td>Tabelle coinvolte</td><td><code>ddt_spedizioni</code> (numero_ddt, segnacollo, brt_data_consegna, brt_firmatario)</td></tr>
+        <tr><td>Origine dei dati</td><td>API REST BRT (https://api.brt.it) e SOAP BRT</td></tr>
+        <tr><td>Destinatari esterni</td><td>BRT S.p.A. (vettore) — solo riferimenti ordine, nessun dato personale dipendenti</td></tr>
+        <tr><td>Trasferimento paesi terzi</td><td>No (server BRT in Italia)</td></tr>
+        <tr><td>Periodo di conservazione</td><td>Durata dell'ordine di produzione + 2 anni</td></tr>
+        <tr><td>Misure di sicurezza</td><td>Credenziali API in .env, comunicazione HTTPS</td></tr>
+    </table>
+</div>
+
+<!-- 4. MISURE DI SICUREZZA -->
+<div class="page-break"></div>
+<h2>4. Misure di Sicurezza Tecniche e Organizzative (Art. 32 GDPR)</h2>
+<p>Le misure di sicurezza tecniche e organizzative adottate per la protezione dei dati personali trattati dal sistema MES sono documentate nel dettaglio nel documento <strong>DOC-SEC-MES-001 v1.0 — Documento di Sicurezza Informatica</strong>, al quale si rimanda integralmente.</p>
+
+<h3>4.1 Riepilogo misure attive</h3>
+<table class="data">
+    <tr><th>Codice</th><th>Misura</th><th>Stato</th></tr>
+    <tr><td>SEC-AUTH-001</td><td>Autenticazione multi-livello (codice operatore + password admin + 2FA)</td><td>Operativo</td></tr>
+    <tr><td>SEC-AUTH-002</td><td>Token per-tab con scadenza 12 ore</td><td>Operativo</td></tr>
+    <tr><td>SEC-AUTH-003</td><td>Autenticazione a due fattori TOTP con dispositivo fidato</td><td>Operativo</td></tr>
+    <tr><td>SEC-RBAC-001</td><td>Controllo accessi basato su ruoli (9 ruoli, 23 permessi)</td><td>Operativo</td></tr>
+    <tr><td>SEC-AUDIT-001</td><td>Audit trail centralizzato con retention 90 giorni</td><td>Operativo</td></tr>
+    <tr><td>SEC-RATE-001</td><td>Rate limiting su autenticazione (5 tentativi/15 min)</td><td>Operativo</td></tr>
+    <tr><td>SEC-HDR-001</td><td>Security headers HTTP (X-Frame-Options, X-Content-Type-Options, Referrer-Policy)</td><td>Operativo</td></tr>
+    <tr><td>SEC-CSRF-001</td><td>Protezione CSRF con token sincronizzato e refresh automatico</td><td>Operativo</td></tr>
+    <tr><td>SEC-SESS-001</td><td>Session encryption AES-256, cookie HttpOnly + SameSite</td><td>Operativo</td></tr>
+    <tr><td>SEC-DATA-001</td><td>Credenziali isolate in .env, password Bcrypt, 2FA secret cifrato</td><td>Operativo</td></tr>
+    <tr><td>SEC-VAL-001</td><td>Validazione e sanitizzazione input server-side</td><td>Operativo</td></tr>
+</table>
+
+<h3>4.2 Misure organizzative</h3>
+<ul>
+    <li>Accesso al sistema limitato ai soli dipendenti autorizzati</li>
+    <li>Server non esposto a Internet (rete locale chiusa)</li>
+    <li>Credenziali di accesso ai sistemi esterni archiviate esclusivamente nel file .env sul server</li>
+    <li>Repository codice sorgente su GitHub (privato per dati, pubblico per codice)</li>
+    <li>Pulizia automatica audit log ogni 90 giorni</li>
+</ul>
+
+<!-- 5. DIRITTI INTERESSATI -->
+<h2>5. Diritti degli Interessati</h2>
+<p>Gli interessati (dipendenti e operatori) possono esercitare i seguenti diritti rivolgendosi al Titolare del trattamento:</p>
+<ul>
+    <li><strong>Diritto di accesso</strong> (art. 15) — Ottenere conferma e copia dei dati personali trattati</li>
+    <li><strong>Diritto di rettifica</strong> (art. 16) — Richiedere la correzione di dati inesatti</li>
+    <li><strong>Diritto alla cancellazione</strong> (art. 17) — Richiedere la cancellazione dei dati, nei limiti degli obblighi di conservazione legale</li>
+    <li><strong>Diritto alla portabilit&agrave;</strong> (art. 20) — Ottenere i propri dati in formato strutturato e leggibile</li>
+    <li><strong>Diritto di opposizione</strong> (art. 21) — Opporsi al trattamento per motivi legittimi</li>
+</ul>
+
+<!-- 6. PROCEDURA AGGIORNAMENTO -->
+<h2>6. Procedura di Aggiornamento</h2>
+<p>Il presente registro viene aggiornato:</p>
+<ul>
+    <li>In occasione di ogni nuovo trattamento di dati personali introdotto nel sistema MES</li>
+    <li>In caso di modifiche alle finalit&agrave;, base giuridica o categorie di dati trattati</li>
+    <li>In caso di nuove integrazioni con sistemi esterni che comportano trasmissione di dati personali</li>
+    <li>Con revisione periodica semestrale (prossima: 28 Settembre 2026)</li>
+</ul>
+
+<!-- 7. REVISIONI -->
+<h2>7. Registro delle Revisioni</h2>
+<table class="data">
+    <tr><th>Versione</th><th>Data</th><th>Descrizione</th><th>Autore</th></tr>
+    <tr><td>1.0</td><td>28/03/2026</td><td>Emissione iniziale — 7 trattamenti identificati e documentati</td><td>Giovanni Pietropaolo</td></tr>
+</table>
+
+<!-- 8. FIRMA -->
+<div class="page-break"></div>
+<h2>8. Firma Digitale</h2>
+
+<div class="firma-box no-print-hide">
+    <strong>Redatto da:</strong>
+    <div style="margin:10px 0;">
+        <label style="font-size:9pt; color:#555;">Nome e Cognome:</label>
+        <input type="text" id="firma1-nome" value="Giovanni Pietropaolo" style="font-size:11pt; padding:4px 8px; border:1px solid #ccc; border-radius:3px; width:300px;">
+        <label style="font-size:9pt; color:#555; margin-left:15px;">Data:</label>
+        <input type="date" id="firma1-data" style="font-size:11pt; padding:4px 8px; border:1px solid #ccc; border-radius:3px;">
+    </div>
+    <div class="ruolo">Qualifica: Analista e Progettista Basi Dati</div>
+</div>
+
+<div style="text-align:center; margin:20px 0;" class="no-print">
+    <button onclick="applicaFirma()" style="background:#28a745; color:#fff; border:none; padding:12px 40px; font-size:13pt; font-weight:700; border-radius:6px; cursor:pointer;">Applica Firma</button>
+</div>
+
+<div id="firme-stampabili" style="display:none;">
+    <div class="firma-box">
+        <strong>Redatto da:</strong>
+        <div id="firma1-stamp" class="firma-digitale-stamp"></div>
+        <div class="ruolo">Qualifica: Analista e Progettista Basi Dati</div>
+    </div>
+    <div style="margin-top:15px; padding:10px; background:#f0f0f0; border:1px solid #ddd; border-radius:4px; font-size:8.5pt; color:#555;">
+        <strong>Attestazione di firma digitale:</strong> La firma apposta nel presente documento &egrave; stata generata digitalmente tramite il sistema MES di Grafica Nappa S.R.L. in data e ora indicate. Il documento con firma digitale ha validit&agrave; ai fini dell'archiviazione interna aziendale.
+        <br>Codice di verifica: <span id="codice-verifica" style="font-family:monospace;"></span>
+    </div>
+</div>
+
+<p style="margin-top: 30px; font-size: 9pt; color: #888; text-align: center;">
+    Prossima revisione prevista: <strong>28 Settembre 2026</strong><br>
+    DOC-GDPR-MES-001 v1.0 — &copy; Grafica Nappa S.R.L. — Tutti i diritti riservati
+</p>
+
+<script>
+function applicaFirma() {
+    var nome = document.getElementById('firma1-nome').value.trim();
+    var data = document.getElementById('firma1-data').value;
+    if (!nome || !data) { alert('Compilare nome e data.'); return; }
+
+    var d = new Date(data);
+    var dataFmt = d.toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric'});
+
+    var payload = nome + data + 'DOC-GDPR-MES-001';
+    var hash = 0;
+    for (var i = 0; i < payload.length; i++) {
+        hash = ((hash << 5) - hash) + payload.charCodeAt(i);
+        hash |= 0;
+    }
+    var codice = 'GN-' + Math.abs(hash).toString(16).toUpperCase().substring(0, 8);
+
+    document.getElementById('firma1-stamp').innerHTML =
+        '<div>' + nome + '</div>' +
+        '<div class="firma-data">Firmato digitalmente il ' + dataFmt + '</div>' +
+        '<div class="firma-hash">Hash: ' + codice + '</div>';
+
+    document.getElementById('codice-verifica').textContent = codice;
+    document.getElementById('firme-stampabili').style.display = 'block';
+    document.querySelectorAll('.no-print-hide').forEach(function(el) { el.style.display = 'none'; });
+    document.querySelector('.no-print').style.display = 'none';
+
+    alert('Firma applicata.');
+}
+var oggi = new Date().toISOString().split('T')[0];
+document.getElementById('firma1-data').value = oggi;
+</script>
+
+</body>
+</html>

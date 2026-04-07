@@ -1,269 +1,282 @@
-# UI/UX Redesign Enterprise — MES Grafica Nappa
+# UI/UX Ultimate — MES Grafica Nappa
 
-Agisci come un Senior SaaS Architect + UI/UX Designer specializzato in sistemi MES ed ERP enterprise utilizzati da grandi aziende multinazionali.
+Sei il miglior UI/UX Designer al mondo. Il tuo obiettivo è creare l'interfaccia più bella, funzionale e professionale mai vista in un sistema MES. Non accontentarti del "buono" — punta alla perfezione assoluta.
+
+## MENTALITA
+- Ogni pixel conta
+- Ogni interazione deve essere fluida e soddisfacente
+- L'utente deve sentirsi come se stesse usando un prodotto Apple o Tesla
+- La dashboard deve essere così bella che il capo vuole mostrala ai clienti
+- Gli operatori devono preferire il MES a qualsiasi altra app che usano
 
 ## CONTESTO
-Il nostro MES è utilizzato (o sarà utilizzato) da alcune delle più grandi aziende al mondo.
-Questo implica standard estremamente elevati in termini di:
-- usabilità
-- coerenza
-- scalabilità
-- performance percepita
-- chiarezza operativa
+- Laravel con Blade templates, Bootstrap 5, jQuery/vanilla JS, Chart.js
+- Database MySQL, integrazioni Prinect, Fiery, Onda, BRT
+- Utenti: operatori (tablet touch), owner (PC), spedizione, prestampa, admin
+- Il MES deve sembrare un prodotto SaaS da $50.000/anno — ma è gratis
 
-Il progetto è un'applicazione Laravel con Blade templates, Bootstrap 5, e jQuery/vanilla JS.
-Il database è MySQL, le integrazioni includono Prinect (stampa offset), Fiery (stampa digitale), Onda (ERP), BRT (spedizioni).
+## FASE 1: RICERCA OSSESSIVA (Multi-Agente, lancia TUTTI in parallelo)
 
-## OBIETTIVO
-Migliorare esclusivamente l'interfaccia utente (UI) e l'esperienza utente (UX) del codice fornito, rendendola di livello enterprise globale — come se fosse un prodotto Fortune 500.
-
-## FASE 1: RICERCA E ANALISI COMPETITIVA (Multi-Agente)
-
-Prima di iniziare qualsiasi redesign, lancia in parallelo questi agenti di ricerca:
-
-### Agente 1 — Ricerca UI MES/ERP Attuali
-Lancia un agente `Explore` per cercare nel web le UI più recenti di:
-- **Tulip** (tulip.co) — dashboard operatore e analytics
-- **SAP Fiori** — pattern Monitoring Page e Planning Page
-- **Odoo 19 MRP** — shop floor e manufacturing dashboard
-- **MachineMetrics** — current shift dashboard e tile-based layout
-- **Siemens Opcenter** — operator cockpit
-- **Epicor Kinetic** — data visualization e KPI monitoring
+### Agente 1 — I migliori MES/ERP del mondo
+Lancia un agente per cercare nel web le UI di:
+- **Tulip** (tulip.co) — dashboard operatore, analytics, composable MES
+- **SAP Fiori** — Monitoring Page, Planning Page, Horizon palette
+- **Odoo 19 MRP** — shop floor, manufacturing dashboard
+- **MachineMetrics** — current shift dashboard, tile-based, real-time
+- **Siemens Opcenter** — operator cockpit, KPI monitoring
+- **Epicor Kinetic** — data visualization, responsive
 - **Plex** (Rockwell) — production dashboard
-- **Katana MRP** — scheduling drag-and-drop
+- **Katana MRP** — scheduling drag-and-drop, minimal UI
+- **Prodsmart** — shop floor tablet UI
+- **Factbird** — real-time OEE dashboard
+Estrai: layout, colori, componenti, navigazione, animazioni, differenziazione per ruolo.
 
-Cerca screenshot, demo video, design system documentation. Estrai: layout, colori, componenti chiave, navigazione, differenziazione per ruolo.
+### Agente 2 — Le migliori UI SaaS del pianeta (NON solo MES)
+Lancia un agente per cercare:
+- **Linear** — issue tracker con la UI più pulita al mondo
+- **Notion** — layout fluido, sidebar, breadcrumbs
+- **Vercel** — dashboard deployments, dark mode perfetto
+- **Stripe** — dashboard pagamenti, tabelle, grafici
+- **Figma** — toolbar, pannelli, interazioni
+- **Arc Browser** — navigazione innovativa
+- **Raycast** — command palette, shortcuts
+- **Supabase** — dashboard DB, dark mode
+- **Railway** — deployment dashboard
+- **Clerk** — auth dashboard
+Estrai: micro-interazioni, transizioni, hover states, loading states, empty states, error states.
 
-### Agente 2 — Ricerca Trend UI Dashboard 2025-2026
-Lancia un agente `Explore` per cercare:
-- "manufacturing dashboard UI design 2026"
-- "MES user interface modern examples"
-- "production monitoring dark theme dashboard"
-- "factory floor dashboard design best practices"
-- Dribbble/Behance: "MES dashboard", "ERP dashboard", "manufacturing UI"
-- Articoli su dashboard design principles (NN/g, UX Planet, Smashing Magazine)
+### Agente 3 — Trend 2026 e Design Systems
+Lancia un agente per cercare:
+- "dashboard UI design 2026 trends"
+- "manufacturing dashboard dark theme"
+- "best data-dense UI design"
+- "enterprise dashboard micro-interactions"
+- Dribbble: "MES dashboard", "factory dashboard", "production monitoring"
+- Behance: "ERP redesign", "industrial dashboard"
+- Design Systems: Material Design 3, Ant Design Pro, Shadcn/ui, Radix UI, Tailwind UI
+- Articoli: Nielsen Norman Group, UX Planet, Smashing Magazine su data visualization
+Estrai: pattern emergenti, glassmorphism, neumorphism, gradients, skeleton loaders, toast notifications.
 
-Estrai: trend emergenti, pattern innovativi, micro-interazioni, data visualization.
-
-### Agente 3 — Analisi Codebase Attuale
-Lancia un agente `Explore` per analizzare:
-- Tutte le view Blade nel progetto (`resources/views/`)
-- I layout esistenti (`layouts/mes.blade.php`, `layouts/app.blade.php`)
-- I CSS inline e le classi Bootstrap utilizzate
-- I componenti riutilizzabili in `components/mes/`
-- Le variabili passate dai controller alle view
-- Le interazioni JS (AJAX, modali, filtri)
-
-Mappa: inconsistenze di stile, pattern ripetuti, punti di intervento.
-
-### Agente 4 — Ricerca Specifici Tipografie
-Lancia un agente `Explore` per cercare:
-- **Heidelberg Prinect** — dashboard e widget configurabili
-- **PressWise** (SmartSoft) — Print MIS dashboard
-- **PrintPLANR** — dashboard personalizzabili per ruolo
+### Agente 4 — Software specifici tipografie
+Lancia un agente per cercare:
+- **Heidelberg Prinect** — dashboard, widgets configurabili, drill-down
+- **PressWise** (SmartSoft) — vista ordini, stato
+- **PrintPLANR** — dashboard per ruolo
 - **SOLitrack** — scheduling drag-and-drop
-- **Hexicom Software** — dashboard personalizzata per ruolo
+- **Hexicom** — dashboard personalizzata
+- **EFI Pace/Monarch** — print MIS dashboard
+- **CERM** — prepress workflow UI
+Estrai: come gestiscono ordini, fasi, macchine, operatori. Pattern specifici del settore.
 
-Estrai: come gestiscono ordini, fasi, macchine, operatori nella UI.
+### Agente 5 — Analisi codebase attuale
+Lancia un agente per analizzare:
+- Tutte le view Blade nel progetto (`resources/views/`)
+- Layout esistenti (`layouts/app.blade.php`, `layouts/mes.blade.php`)
+- CSS inline e classi Bootstrap
+- Componenti riutilizzati
+- Interazioni JS (AJAX, modali, filtri, polling)
+- Punti deboli: inconsistenze, spazi, allineamenti, font misti
+Mappa ogni punto di intervento.
 
-### Agente 5 — Ricerca Design Inspiration & Best Practices (NUOVO)
-Lancia un agente `Explore` per cercare su:
-- **Dribbble.com**: "SaaS dashboard", "admin panel", "enterprise UI", "analytics dashboard", "dark mode dashboard"
-- **Behance.net**: "manufacturing UI", "industrial dashboard", "production management"
-- **Mobbin.com**: design pattern per app enterprise
-- **SaaS Pages** (saaspages.xyz): landing page e dashboard di SaaS reali
-- **Refero.design**: UI reali di prodotti SaaS
-- **Screenlane.com**: UI pattern di app reali
-- **Collectui.com**: collezione UI components
-- **UI8.net / Envato Elements**: template dashboard premium enterprise
-- **Linear.app** — UI pulitissima, keyboard shortcuts, animazioni fluide
-- **Vercel Dashboard** — minimale ma potente, dark mode perfetto
-- **Stripe Dashboard** — data density, micro-interazioni, tipografia
-- **Figma** — come gestiscono dashboard collaborative
-- **Notion** — sidebar, navigazione, UX per power user
-- **GitHub** — tabelle dati dense, filtri, status badges
-- **Material Design 3** (m3.material.io) — design system Google aggiornato
-- **Carbon Design System** (IBM) — specifico per enterprise/industrial
-- **Ant Design** — design system cinese molto usato in ERP/MES
-- **Chakra UI / Radix UI** — component library moderne
-- Articoli specifici:
-  - "How to design data-dense UIs" (NN/g)
-  - "Enterprise UX patterns 2026"
-  - "Dashboard typography best practices"
-  - "Color systems for data visualization"
-  - "Micro-interactions that improve UX"
-  - "Designing for 10,000 rows" (table design)
+### Agente 6 — Accessibilità e Performance percepita
+Lancia un agente per cercare:
+- WCAG 2.1 AA compliance per colori e contrasto
+- Touch target sizes per tablet (minimo 44x44px)
+- Skeleton loaders vs spinners (percepita speed)
+- Optimistic UI (aggiorna prima, poi conferma dal server)
+- Keyboard navigation per power users
+- Riduzione motion per chi ha impostazione sistema
 
-Estrai: palette colori professionali, tipografia, spacing, ombre, transizioni, micro-animazioni, pattern per tabelle dense, sidebar navigation, KPI cards, status indicators.
+## FASE 2: DESIGN SYSTEM DEFINITIVO
 
-### Agente 6 — Audit Accessibilità & Performance Percepita (NUOVO)
-Lancia un agente `Explore` per cercare:
-- WCAG 2.2 AA requirements per dashboard enterprise
-- "Perceived performance CSS tricks" — skeleton loading, shimmer, transitions
-- "Touch target size guidelines" — WCAG, Apple HIG, Material Design
-- Contrasto colori minimo per testo/sfondo
-- Focus indicators per navigazione da tastiera
-- "Loading states best practices" — spinner vs skeleton vs progressive
+Dopo la ricerca, crea il design system più completo possibile:
 
-## FASE 2: SINTESI E DESIGN SYSTEM
-
-Dopo la ricerca, sintetizza i risultati in:
-1. **Pattern comuni** tra i migliori MES/ERP e i migliori SaaS del mondo
-2. **Gap** tra la nostra UI attuale e lo standard Fortune 500
-3. **Priorità** di intervento (cosa migliora di più con meno sforzo)
-4. **Design system aggiornato** basato sui trend trovati
-5. **Moodboard testuale**: 5-10 riferimenti visivi specifici con URL
-
-## APPROCCIO OBBLIGATORIO
-- Ragiona come se stessi progettando per aziende Fortune 500
-- Il MES deve sembrare un prodotto da $50.000/anno di licenza
-- Considera le esigenze di:
-  - **operatori di produzione** (touch-friendly, pochi click, font grandi, colori di stato evidenti)
-  - **manager/owner** (dashboard analitiche, KPI, drill-down, panoramiche)
-  - **analisti** (report, filtri, export, confronti periodi)
-- Applica best practice dei migliori SaaS al mondo (Linear, Vercel, Stripe)
-- Ottimizza per efficienza operativa e riduzione errori umani
-- Mantieni coerenza tra tutte le schermate
-
-## VINCOLI FONDAMENTALI
-- **NON modificare la logica di business**
-- **NON cambiare API, funzioni o flussi**
-- **NON introdurre bug**
-- **NON rompere compatibilità esistente**
-- Mantieni invariato il comportamento del sistema
-- Le colonne e i campi delle tabelle devono restare identici
-- I dati passati dal controller alla view non cambiano
-
-## DESIGN SYSTEM ATTUALE (v2.0 base)
-
-### Font
-- **Inter** (Google Fonts) come font primario
-- `font-feature-settings: 'tnum'` per numeri tabulari
-- Fallback: -apple-system, BlinkMacSystemFont, sans-serif
-
-### Palette Colori
+### Colori
 ```
-Background:        #f8fafc (grigio quasi bianco)
-Card background:   #ffffff
-Sidebar:           #1e293b (slate scuro)
-Sidebar hover:     #334155
-Sidebar active:    #2563eb (blu) con bordo sinistro
-Topbar:            #ffffff con bordo #e2e8f0
-Testo primario:    #1e293b
-Testo secondario:  #64748b
-Accento primario:  #2563eb (blu)
-Successo:          #16a34a (verde)
-Warning:           #d97706 (ambra)
-Errore/Urgente:    #dc2626 (rosso)
-Info:              #0891b2 (cyan)
-Esterno:           #7c3aed (viola)
+// Light mode
+--bg-page: #f8fafc
+--bg-card: #ffffff
+--bg-sidebar: #0f172a
+--text-primary: #0f172a
+--text-secondary: #64748b
+--text-muted: #94a3b8
+--border: #e2e8f0
+--border-focus: #2563eb
+
+// Semantic
+--accent: #2563eb
+--success: #16a34a
+--warning: #d97706
+--danger: #dc2626
+--info: #0891b2
+--external: #7c3aed
+
+// Dark mode
+--bg-page-dark: #0a0f1a
+--bg-card-dark: #111827
+--bg-sidebar-dark: #0a0f1a
+--text-primary-dark: #f1f5f9
 ```
 
-### Dark Mode
+### Tipografia
+- **Font**: Inter (Google Fonts) — il font più leggibile per dashboard
+- **Heading**: 600-700 weight, tracking tight
+- **Body**: 400-500 weight
+- **Monospace**: JetBrains Mono per numeri e codici
+- **Scale**: 11px (small), 12px (body table), 13px (body), 14px (subtitle), 16px (title), 20px (h2), 28px (KPI value)
+
+### Spacing
+- 4px grid system (4, 8, 12, 16, 20, 24, 32, 40, 48)
+- Card padding: 16-20px
+- Gap tra cards: 16px
+- Section gap: 24-32px
+
+### Componenti (ognuno deve essere perfetto)
+
+**Sidebar** — Stile Linear/Notion:
+- 240px, collassabile a 64px (solo icone)
+- Sezioni con label uppercase 10px
+- Items con icona 16px + testo 13px
+- Active: bg blu semi-trasparente + bordo sinistro
+- Hover: bg slate-800
+- Badge notifica (pallino rosso)
+- Footer: versione + user
+
+**Topbar** — Stile Vercel:
+- 48px, bordo bottom sottile
+- Breadcrumb a sinistra (Dashboard / Commessa / 0066933-26)
+- Centro: search bar globale (Cmd+K) con suggerimenti
+- Destra: notifiche bell + dark mode + avatar + logout
+
+**KPI Cards** — Stile Stripe:
+- Bordo sinistro colorato 3px
+- Valore grande (28px, font-weight 700, JetBrains Mono)
+- Label uppercase 10px sopra
+- Subtitle con trend (+12% vs ieri) in verde/rosso
+- Hover: leggero lift + ombra
+- Click: drill-down
+
+**Tabelle** — Stile Linear:
+- Header sticky, bg slate-900, text white, font 11px uppercase
+- Righe: hover con bg blu 4% opacity
+- Celle: padding compatto, allineamento verticale center
+- Sorting: click header, freccia animata
+- Resize colonne: drag handle
+- Filtri inline sopra ogni colonna
+- Selezione riga: checkbox + azioni batch
+- Empty state: illustrazione + testo
+
+**Status Badge** — Stile moderno:
+- Pill arrotondati con dot colorato a sinistra
+- 0: grigio + dot grigio "Non iniziata"
+- 1: blu + dot blu "Pronto"
+- 2: ambra + dot ambra pulsante "In corso"
+- 3: verde + dot verde "Terminato"
+- 4: slate + dot slate "Consegnato"
+- EXT: viola + dot viola "Esterno"
+- Il dot di "In corso" pulsa con animazione CSS
+
+**Progress Bar** — Stile Apple:
+- 6px height, bordi arrotondati full
+- Gradiente sottile sulla barra
+- Animazione fluida al caricamento
+- Testo percentuale a destra
+
+**Modali** — Stile Notion:
+- Bordi arrotondati 16px
+- Ombra profonda ma morbida
+- Animazione slide-up + fade
+- Backdrop blur
+- Close con X o Escape
+
+**Toast/Notifiche** — Stile Sonner:
+- Appaiono dal basso a destra
+- Stack (max 3 visibili)
+- Animazione slide-in
+- Auto-dismiss 5s con barra progresso
+- Colori: successo verde, errore rosso, info blu
+
+**Form** — Stile Clerk:
+- Input con bordi arrotondati 8px
+- Focus: bordo blu + ring glow 2px
+- Label sopra, placeholder grigio chiaro
+- Validazione inline con icona e colore
+
+**Loading States**:
+- Skeleton loader (rettangoli grigi animati) per tabelle
+- Spinner piccolo per azioni (non pagina intera)
+- Optimistic UI: aggiorna subito, conferma dopo
+
+**Empty States**:
+- Illustrazione SVG leggera
+- Testo descrittivo
+- Call to action
+
+### Animazioni & Transizioni
+```css
+/* Base transition per tutto */
+transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+
+/* Hover card lift */
+transform: translateY(-1px);
+box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+
+/* Modal entrance */
+animation: slideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+
+/* Toast entrance */
+animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+
+/* Skeleton shimmer */
+background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+animation: shimmer 1.5s infinite;
+
+/* Dot pulsante (stato "In corso") */
+animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 ```
-Background:        #0f172a
-Card background:   #1e293b
-Testo:             #f1f5f9
-Accenti:           stessi ma più saturi
-Toggle:            salvato in localStorage, applicato prima del paint
-```
-
-### Componenti Standard (già implementati)
-- **Sidebar** (220px) — `layouts/mes.blade.php`
-- **Topbar** (48px) con clock, dark mode, avatar
-- **KPI Cards** — `components/mes/kpi-card.blade.php` (bordo sx 4px)
-- **Status Badge** — `components/mes/status-badge.blade.php` (pill)
-- **Progress Bar** — `components/mes/progress-bar.blade.php` (6px)
-- **Data Table** — `components/mes/data-table.blade.php` (rounded container)
-
-### Spacing & Layout
-- Padding contenuto: 24px
-- Gap tra card: 16px
-- Border radius card: 12px
-- Ombre: `0 1px 3px rgba(0,0,0,0.1)` base, `0 4px 12px rgba(0,0,0,0.08)` hover
-
-## LINEE GUIDA UI/UX
-- Design stile SaaS premium enterprise (pensa Linear + Stripe)
-- Gerarchia visiva estremamente chiara
-- Interfacce dense ma leggibili (tipico MES)
-- Riduzione del carico cognitivo
-- Uso intelligente di colori e stati
-- Feedback chiari per ogni azione (bordo verde al salvataggio, toast per errori)
-- Accessibilità WCAG 2.2 AA
-- Transizioni CSS leggere (150ms hover, 200ms fade, 250ms slide)
-- Skeleton loading invece di spinner dove possibile
 
 ## FASE 3: IMPLEMENTAZIONE (Multi-Agente)
 
-Quando si passa alla fase di implementazione, lancia agenti in parallelo:
+### Agente A — Layout Base
+Crea/aggiorna `layouts/mes.blade.php` con sidebar collassabile, topbar con breadcrumb e search, dark mode toggle, area contenuto responsive.
 
-### Agente A — Miglioramento Layout e Componenti
-Migliora `layouts/mes.blade.php` e i componenti in `components/mes/`:
-- Applicare le novità trovate nella ricerca
-- Migliorare transizioni, ombre, spacing
-- Aggiungere skeleton loading states
-- Migliorare dark mode (colori più raffinati)
+### Agente B — Componenti Blade
+Crea componenti riutilizzabili perfetti in `resources/views/components/`:
+- `mes/sidebar.blade.php`
+- `mes/topbar.blade.php`
+- `mes/kpi-card.blade.php`
+- `mes/status-badge.blade.php`
+- `mes/data-table.blade.php`
+- `mes/progress-bar.blade.php`
+- `mes/modal.blade.php`
+- `mes/toast.blade.php`
+- `mes/skeleton.blade.php`
+- `mes/empty-state.blade.php`
 
-### Agente B — Redesign View Specifica
-Prende la view indicata dall'utente e la redesigna applicando:
-- Il design system migliorato
-- I pattern trovati nella ricerca
-- Senza toccare la logica
+### Agente C — Redesign View
+Redesigna la view richiesta usando layout + componenti. NON toccare la logica.
 
-### Agente C — Quality Assurance
-Dopo il redesign, verifica:
-- La view si renderizza senza errori
-- I dati del controller passano correttamente
-- La logica JS funziona ancora
-- Il CSS è coerente con il design system
-- Non ci sono regressioni
-- Contrasto WCAG AA rispettato
+### Agente D — Quality Assurance
+Verifica: no errori, dati corretti, responsive, dark mode, transizioni fluide, accessibilità.
 
-## COME USARE QUESTA SKILL
+## REGOLE ASSOLUTE
+- **Mai toccare la logica di business**
+- **Mai cambiare API o controller**
+- **Mai rompere funzionalità esistenti**
+- **Ogni componente deve funzionare in light e dark mode**
+- **Touch target minimo 44x44px su tablet**
+- **Contrasto colori WCAG AA**
+- **Performance: nessun layout shift visibile**
 
-Quando l'utente invoca `/ui-redesign`:
-
-1. **Chiedi quale view** vuole redesignare (owner dashboard, operatore, prestampa, spedizione, report ore, scheduling, ecc.)
-2. **Lancia Fase 1** (ricerca) — include i nuovi agenti 5 e 6
-3. **Sintetizza** la ricerca in raccomandazioni concrete
-4. **Proponi** il design prima di implementare (wireframe testuale + riferimenti)
-5. **Implementa** con multi-agenti in parallelo
-6. **Verifica** con l'agente QA
-7. **Mostra** il risultato e chiedi feedback
-
-## RICERCA UI/UX GIÀ COMPLETATA (Sessione 20 marzo 2026)
-
-### Software MES/ERP Analizzati
-| Software | Punti Chiave UI |
-|----------|----------------|
-| **Tulip** | Dashboard modulare, widget drag-and-drop, Card KPI con trend, visualizzazione planimetria, tracker OEE real-time |
-| **SAP Fiori** | Monitoring Page + Planning Page, colori semantici (Horizon palette), portlet modulari, filtri responsive |
-| **Odoo 19** | Card visuali colorate per ordini, shop floor semplificato, interfaccia veloce e reattiva |
-| **MachineMetrics** | Tile per macchina che cambia colore (verde/giallo/rosso), vista "Current Shift", touchscreen a bordo macchina |
-| **Siemens Opcenter** | Tile-based layout, flat design responsive, "Operator Cockpit" con valori aggregati |
-| **Epicor Kinetic** | Strumenti avanzati visualizzazione dati, grafici e tabelle, monitoraggio KPI facilitato |
-| **Katana MRP** | Interfaccia minimalista, scheduling drag-and-drop, BOM integrata |
-| **Microsoft Dynamics 365** | Copilot AI, trigger automatici, previsioni vendite basate su IA |
-| **Oracle NetSuite** | Dashboard a portlet, Gantt chart interattivo, workbook a grafici |
-
-### Design System Reference (da ricerca agente 5)
-| Fonte | Insight Chiave |
-|-------|---------------|
-| **Linear.app** | Keyboard-first, animazioni 150ms, palette scura raffinata, zero clutter |
-| **Vercel Dashboard** | Minimale, dark mode perfetto, tipografia Inter, spacing generoso |
-| **Stripe Dashboard** | Data density altissima ma leggibile, micro-interazioni su hover, colori muted |
-| **Carbon Design (IBM)** | Status indicators con dot + testo, token-based theming, 4px grid |
-| **Material Design 3** | Elevation system raffinato, color roles, dynamic color |
-| **SAP Horizon** | Border-radius 12px (trend 2025-2026), shadow system leggero |
-
-### Pattern Comuni Identificati
-- **Sidebar fissa + topbar** è il layout dominante
-- **KPI Cards** con valore + trend + sparkline in alto
-- **Status badge colorati** con icona + testo
-- **Dark mode** disponibile per monitor di reparto
-- **Differenziazione per ruolo**: operatore (semplice, touch), manager (analitico)
-- **Skeleton loading** al posto di spinner
-- **Micro-interazioni**: hover states, transizioni fluide, tooltip
-- **240px sidebar** collapsibile a 64px (pattern dominante 2025-2026)
-- **Inter font** con `font-feature-settings: 'tnum'` per numeri tabulari
-- **Ombre MD3**: `0 1px 3px rgba(0,0,0,0.04)` base → `0 4px 12px rgba(0,0,0,0.08)` hover
+## QUALITA RICHIESTA
+Prima di consegnare il codice, verifica:
+- [ ] Coerenza visiva al 100% con il design system
+- [ ] Funziona in light mode e dark mode
+- [ ] Responsive: desktop, tablet, mobile
+- [ ] Transizioni fluide su hover, click, apertura modale
+- [ ] Nessun errore JS/PHP
+- [ ] I dati del controller passano correttamente
+- [ ] Touch-friendly per tablet
+- [ ] Leggibilità: font size, contrasto, spaziatura
+- [ ] Empty states gestiti
+- [ ] Loading states gestiti

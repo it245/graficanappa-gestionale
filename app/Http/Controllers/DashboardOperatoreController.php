@@ -49,7 +49,7 @@ class DashboardOperatoreController extends Controller
             ->whereHas('faseCatalogo', function ($q) use ($reparti) {
                 $q->whereIn('reparto_id', $reparti);
             })
-            ->with(['ordine', 'faseCatalogo.reparto', 'operatori'])
+            ->with(['ordine.fasi.faseCatalogo', 'faseCatalogo.reparto', 'operatori'])
             ->get()
             ->map(function ($fase) use ($fasiInfo) {
                 $qta_carta = $fase->ordine->qta_carta ?? 0;
@@ -119,7 +119,14 @@ class DashboardOperatoreController extends Controller
             }
         }
 
-        return view('operatore.dashboard', compact('fasiVisibili', 'operatore', 'fasiPerReparto', 'showColori', 'showFustella', 'showEsterno', 'isFustellaOperatore', 'showScarti'));
+        // Note turno: ultime 24h, solo del proprio reparto
+        $noteTurno = \App\Models\NotaTurno::with('operatore')
+            ->where('created_at', '>=', now()->subHours(24))
+            ->whereIn('destinazione', $nomiReparti)
+            ->orderByDesc('created_at')
+            ->get();
+
+        return view('operatore.dashboard', compact('fasiVisibili', 'operatore', 'fasiPerReparto', 'showColori', 'showFustella', 'showEsterno', 'isFustellaOperatore', 'showScarti', 'noteTurno'));
     }
 
     /**
@@ -144,7 +151,7 @@ class DashboardOperatoreController extends Controller
             ->whereHas('ordine', function ($q) {
                 $q->where('data_prevista_consegna', '<=', Carbon::today()->addDays(30));
             })
-            ->with(['ordine', 'faseCatalogo.reparto'])
+            ->with(['ordine.fasi.faseCatalogo', 'faseCatalogo.reparto'])
             ->get();
 
         // Raggruppa per codice fustella (FS####)
@@ -205,28 +212,6 @@ class DashboardOperatoreController extends Controller
             ->groupBy('commessa')
             ->orderBy('data_prevista_consegna')
             ->get();
-
-        // Mirko D'Orazio: mostra solo commesse senza FS o con 2+ FS
-        $isMirko = strtolower(trim($operatore->cognome ?? '')) === "d'orazio"
-                || strtolower(trim($operatore->cognome ?? '')) === 'dorazio'
-                || strtolower(trim($operatore->cognome ?? '')) === 'd orazio';
-
-        if ($isMirko) {
-            $commesse = $commesse->filter(function ($c) {
-                $desc = $c->tutte_descrizioni ?? $c->descrizione ?? '';
-                $cliente = $c->cliente_nome ?? '';
-                $notePre = $c->note_prestampa ?? '';
-                $fs = \App\Helpers\DescrizioneParser::parseFustella($desc, $cliente, $notePre);
-
-                // Nessuna fustella trovata
-                if (!$fs || $fs === '-') return true;
-
-                // Due o più fustelle (contiene "/" o ",")
-                if (str_contains($fs, '/') || str_contains($fs, ',')) return true;
-
-                return false;
-            })->values();
-        }
 
         return view('operatore.prestampa', compact('operatore', 'commesse'));
     }
@@ -330,5 +315,39 @@ class DashboardOperatoreController extends Controller
         } catch (\Exception $e) {
             return redirect()->route('operatore.prestampa', ['op_token' => $request->get('op_token')])->with('error', 'Errore sync: ' . $e->getMessage());
         }
+    }
+
+    public function salvaNota(Request $request)
+    {
+        $operatore = $request->attributes->get('operatore') ?? auth()->guard('operatore')->user();
+        if (!$operatore) return response()->json(['error' => 'Non autenticato'], 403);
+
+        $request->validate([
+            'nota' => 'required|string|max:1000',
+            'destinazione' => 'required|string|max:100',
+        ]);
+
+        $nota = \App\Models\NotaTurno::create([
+            'operatore_id' => $operatore->id,
+            'nota' => $request->nota,
+            'destinazione' => $request->destinazione,
+        ]);
+
+        return response()->json([
+            'ok' => true,
+            'nota' => [
+                'id' => $nota->id,
+                'operatore' => $operatore->nome . ' ' . $operatore->cognome,
+                'nota' => $nota->nota,
+                'destinazione' => $nota->destinazione,
+                'data' => $nota->created_at->format('H:i'),
+            ],
+        ]);
+    }
+
+    public function segnaLetta(Request $request, $id)
+    {
+        \App\Models\NotaTurno::where('id', $id)->update(['letta' => true]);
+        return response()->json(['ok' => true]);
     }
 }

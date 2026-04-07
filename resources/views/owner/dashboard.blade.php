@@ -471,6 +471,15 @@ tr:hover td {
                         <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#198754;border-radius:2px;"></span> Tutte completate</div>
                     </div>
                 </div>
+                <div style="border-left:1px solid #dee2e6; padding-left:12px;">
+                    <div style="font-weight:700; font-size:10px; color:#666; text-transform:uppercase; margin-bottom:4px;">Percorso Produttivo</div>
+                    <div class="d-flex flex-column gap-1">
+                        <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#d4edda;border:1px solid #198754;border-radius:2px;"></span> Base (no caldo, no rilievi)</div>
+                        <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#fff3cd;border:1px solid #ffc107;border-radius:2px;"></span> Rilievi (no caldo)</div>
+                        <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#f96f2a;border:1px solid #e65c00;border-radius:2px;"></span> Caldo (no rilievi)</div>
+                        <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#f8d7da;border:1px solid #dc3545;border-radius:2px;"></span> Completo (caldo + rilievi)</div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -501,13 +510,19 @@ tr:hover td {
                 <div style="font-size:22px; font-weight:700; color:#e67e22; line-height:1;">{{ $fasiAttive }}</div>
             </div>
         </div>
+        <div class="d-flex align-items-center p-2 rounded flex-fill" style="background:#ede9fe; height:56px; min-width:200px; cursor:pointer;" data-bs-toggle="modal" data-bs-target="#modalRiempimento">
+            <div>
+                <div style="font-size:11px; color:#555; line-height:1.2;">Riempimento macchine</div>
+                <div style="font-size:22px; font-weight:700; color:#7c3aed; line-height:1;">{{ round(collect($riempimento)->sum('ore_totali')) }}h</div>
+            </div>
+        </div>
     </div>
 
     {{-- ICONE AZIONI --}}
     <div class="mb-3 d-flex align-items-center action-icons">
 
         {{-- HAMBURGER --}}
-        <button class="hamburger-btn" id="hamburgerBtn" title="Menu">
+        <button class="hamburger-btn" id="hamburgerBtn" title="Menu" tabindex="1">
             <span></span><span></span><span></span>
         </button>
 
@@ -602,6 +617,12 @@ tr:hover td {
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><polyline points="10 9 9 9 8 9"/>
             </svg>
             <span>Apri Excel Dashboard</span>
+        </a>
+
+        {{-- TV Kiosk --}}
+        <a href="/kiosk" target="_blank" class="sidebar-item" onclick="closeSidebar();">
+            <span style="font-size:20px;">📺</span>
+            <span>TV Kiosk</span>
         </a>
         @endif
 
@@ -701,8 +722,14 @@ tr:hover td {
             </button>
         </form>
         @endif
+
+        {{-- NOTA TV --}}
+        <button type="button" class="sidebar-item" onclick="closeSidebar(); setTimeout(function(){ new bootstrap.Modal(document.getElementById('modalNotaTv')).show(); }, 300);" style="width:100%; background:none; border:none; border-bottom:1px solid #f0f0f0; text-align:left; font-size:14px; font-weight:500; color:#333; display:flex; align-items:center; gap:12px; padding:12px 18px; cursor:pointer;">
+            <span style="font-size:20px;">📢</span>
+            <span>Nota TV (ticker)</span>
+        </button>
     </div>
-    
+
         {{-- FILTRI --}}
 <div class="mb-3" id="filterBox" style="display:none;">
     <!-- Filtri multi-valore (virgola) -->
@@ -854,25 +881,20 @@ tr:hover td {
             </thead>
             <tbody>
             @foreach($fasi as $fase)
+                @if(!$fase->ordine) @continue @endif
                 @php
-                    $rowClass = '';
-                    if ($fase->ordine->data_prevista_consegna) {
-                        $dataPrevista = \Carbon\Carbon::parse($fase->ordine->data_prevista_consegna)->startOfDay();
-                        $oggi = \Carbon\Carbon::today();
-                        $diffGiorni = $oggi->diffInDays($dataPrevista, false);
-                        if ($diffGiorni <= -5) $rowClass = 'scaduta';
-                        elseif ($diffGiorni <= 3) $rowClass = 'warning-strong';
-                        elseif ($diffGiorni <= 5) $rowClass = 'warning-light';
-                    }
+                    $rowClass = $fase->ordine->getPercorsoClass();
                 @endphp
                 @php
                     $statiLabel = [0 => 'Caricato', 1 => 'Pronto', 2 => 'Avviato', 3 => 'Terminato', 4 => 'Consegnato'];
-                    $statoBg = [0 => '#e9ecef', 1 => '#cfe2ff', 2 => '#fff3cd', 3 => '#d1e7dd', 4 => '#c3c3c3'];
+                    $statoBg = [0 => '#e9ecef', 1 => '#cfe2ff', 2 => '#fff3cd', 3 => '#d1e7dd', 4 => '#c3c3c3', 5 => '#e0cffc'];
                 @endphp
                 <tr class="{{ $rowClass }}" data-id="{{ $fase->id }}">
                     <td><a href="{{ route('owner.dettaglioCommessa', $fase->ordine->commessa ?? '-') }}" style="color:#000;font-weight:bold;text-decoration:underline;">{{ $fase->ordine->commessa ?? '-' }}</a></td>
-                    @if($fase->esterno)
-                    <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)" style="background:#ede9fe !important;font-weight:bold;text-align:center;color:#7c3aed;font-size:10px;">EXT</td>
+                    @if($fase->esterno && ((int)$fase->stato === 5 || $fase->stato < 3) && ($fase->ddt_fornitore_id || (int)$fase->stato === 5))
+                    <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)" style="background:#d1fae5 !important;font-weight:bold;text-align:center;color:#065f46;font-size:10px;" title="Inviato al fornitore">EXT</td>
+                    @elseif($fase->esterno && ((int)$fase->stato === 5 || $fase->stato < 3))
+                    <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)" style="background:#ede9fe !important;font-weight:bold;text-align:center;color:#7c3aed;font-size:10px;" title="Esterno - da inviare">EXT</td>
                     @else
                     <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)" style="background:{{ $statoBg[$fase->stato] ?? '#e9ecef' }} !important;font-weight:bold;text-align:center;">{{ $fase->stato }}</td>
                     @endif
@@ -885,7 +907,7 @@ tr:hover td {
                         $coloriOwner = \App\Helpers\DescrizioneParser::parseColori($descOwner, $clienteOwner, $repartoOwner);
                         $fustellaOwner = \App\Helpers\DescrizioneParser::parseFustella($descOwner, $clienteOwner, $fase->ordine->note_prestampa ?? '');
                     @endphp
-                    <td>{{ $coloriOwner ?: '-' }}</td>
+                    <td>{{ $coloriOwner ?: '-' }}{{ str_contains(strtolower($clienteOwner), 'tifata') ? ' - IML' : '' }}</td>
                     <td>{{ $fustellaOwner ?: '-' }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'descrizione', this.innerText)">{{ $fase->ordine->descrizione ?? '-' }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'qta_richiesta', this.innerText)">{{ $fase->ordine->qta_richiesta ?? '-' }}</td>
@@ -1318,6 +1340,26 @@ tr:hover td {
 
 <script>
 // Sidebar menu
+function salvaNotaTv() {
+    var nota = document.getElementById('notaTvInput').value.trim();
+    fetch('/kiosk/nota', {
+        method: 'POST',
+        headers: {'X-CSRF-TOKEN': csrfToken(), 'Content-Type': 'application/json'},
+        body: JSON.stringify({nota: nota})
+    }).then(r => r.json()).then(d => {
+        if (d.success) {
+            var btn = document.querySelector('#modalNotaTv .btn-danger');
+            btn.textContent = '✓ Salvata!';
+            btn.classList.replace('btn-danger', 'btn-success');
+            setTimeout(function() { bootstrap.Modal.getInstance(document.getElementById('modalNotaTv')).hide(); btn.textContent = 'Salva e pubblica'; btn.classList.replace('btn-success', 'btn-danger'); }, 1000);
+        } else { alert('Errore'); }
+    });
+}
+// Carica nota TV corrente
+fetch('/kiosk/nota').then(r => r.json()).then(d => {
+    if (d.nota) document.getElementById('notaTvInput').value = d.nota;
+});
+
 function openSidebar() {
     document.getElementById('sidebarMenu').classList.add('open');
     document.getElementById('sidebarOverlay').classList.add('open');
@@ -1349,10 +1391,16 @@ document.getElementById('filtro-storico')?.addEventListener('input', function() 
     });
 });
 document.getElementById('hamburgerBtn').addEventListener('click', openSidebar);
+document.getElementById('hamburgerBtn').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' || e.keyCode === 13) { e.preventDefault(); openSidebar(); }
+});
 document.getElementById('sidebarOverlay').addEventListener('click', closeSidebar);
 document.getElementById('sidebarClose').addEventListener('click', closeSidebar);
 document.querySelectorAll('.sidebar-menu a.sidebar-item').forEach(function(el) {
     el.addEventListener('click', function() { setTimeout(closeSidebar, 100); });
+    el.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.keyCode === 13) { e.preventDefault(); this.click(); }
+    });
 });
 
 // === Token per fetch autenticate ===
@@ -1531,7 +1579,7 @@ document.getElementById('modalBRT').addEventListener('shown.bs.modal', function(
 document.addEventListener('DOMContentLoaded', function(){
     // Rendi tutte le td focusabili (per espandere testo troncato al click)
     document.querySelectorAll('#tabellaOrdini td:not([contenteditable])').forEach(function(td){
-        td.setAttribute('tabindex', '0');
+        td.setAttribute('tabindex', '-1');
     });
 
     // Badge consegnati
@@ -1586,7 +1634,7 @@ function aggiornaStato(faseId, testo) {
     // Se riscrive EXT, non fare nulla
     if (val === 'EXT') return;
     const nuovoStato = parseInt(val);
-    if (isNaN(nuovoStato) || nuovoStato < 0 || nuovoStato > 3) {
+    if (isNaN(nuovoStato) || nuovoStato < 0 || (nuovoStato > 3 && nuovoStato !== 5)) {
         alert('Stato non valido. Usa: 0, 1, 2, 3');
         return;
     }
@@ -1600,7 +1648,7 @@ function aggiornaStato(faseId, testo) {
         if (!d.success) {
             alert('Errore: ' + (d.messaggio || ''));
         } else {
-            const bgMap = {0: '#e9ecef', 1: '#cfe2ff', 2: '#fff3cd', 3: '#d1e7dd'};
+            const bgMap = {0: '#e9ecef', 1: '#cfe2ff', 2: '#fff3cd', 3: '#d1e7dd', 5: '#e0cffc'};
             const row = document.querySelector('tr[data-id="' + faseId + '"]');
             if (row) {
                 const statoCell = row.cells[1];
@@ -1833,14 +1881,30 @@ document.addEventListener('DOMContentLoaded', () => {
         return input.split(',').map(v => v.trim().toLowerCase()).filter(v => v);
     }
 
+    // Separa valori positivi e negativi (con prefisso -)
+    function parseWithExclusion(input) {
+        var all = input.split(',').map(v => v.trim().toLowerCase()).filter(v => v);
+        var include = all.filter(v => !v.startsWith('-'));
+        var exclude = all.filter(v => v.startsWith('-')).map(v => v.substring(1).trim()).filter(v => v);
+        return { include, exclude };
+    }
+
+    function matchField(fieldValue, parsed) {
+        // Se ci sono esclusioni, verifica che nessuna matchi
+        if (parsed.exclude.length && parsed.exclude.some(v => fieldValue.includes(v))) return false;
+        // Se ci sono inclusioni, almeno una deve matchare
+        if (parsed.include.length && !parsed.include.some(v => fieldValue.includes(v))) return false;
+        return true;
+    }
+
     function getSelectedOptions(select) {
         return Array.from(select.selectedOptions).map(opt => opt.value.toLowerCase());
     }
 
     function filtra() {
-        const commesse = parseValues(fCommessa.value);
-        const clienti = parseValues(fCliente.value);
-        const descrizioni = parseValues(fDescrizione.value);
+        const commesse = parseWithExclusion(fCommessa.value);
+        const clienti = parseWithExclusion(fCliente.value);
+        const descrizioni = parseWithExclusion(fDescrizione.value);
         const stati = getSelectedOptions(fStato);
         const fasi = getSelectedOptions(fFase);
         const reparti = getSelectedOptions(fReparto);
@@ -1848,10 +1912,13 @@ document.addEventListener('DOMContentLoaded', () => {
         requestAnimationFrame(() => {
             rowData.forEach(data => {
                 let match = true;
-                if(commesse.length) match = match && commesse.some(v => data.commessa.includes(v));
-                if(clienti.length) match = match && clienti.some(v => data.cliente.includes(v));
-                if(descrizioni.length) match = match && descrizioni.some(v => data.descrizione.includes(v));
-                if(stati.length) match = match && stati.includes(data.stato);
+                if(commesse.include.length || commesse.exclude.length) match = match && matchField(data.commessa, commesse);
+                if(clienti.include.length || clienti.exclude.length) match = match && matchField(data.cliente, clienti);
+                if(descrizioni.include.length || descrizioni.exclude.length) match = match && matchField(data.descrizione, descrizioni);
+                if(stati.length) {
+                    var isInPausa = isNaN(data.stato) && data.stato !== 'ext';
+                    match = match && (isInPausa || stati.includes(data.stato));
+                }
                 if(fasi.length) match = match && fasi.some(f => data.fase.includes(f));
                 if(reparti.length) match = match && reparti.includes(data.reparto);
                 data.row.style.display = match ? '' : 'none';
@@ -1959,7 +2026,7 @@ const CLIENTI_MARCO = [
     'AGRELLI', 'GIAGUARO', 'MUSEO SAN SEVERO', 'DOPPIAVU', 'ITALY STAMPE',
     'SPRINT SRL', 'EXTON', 'FABULA PROJECT', 'EUROSTYLE', 'FRATELLI CUOMO',
     'F.LLI CUOMO', 'DISTILL HUB', 'SAN GREGORIO S.R.L.', 'STARWOOD',
-    'CAPOBIANCO', 'VILLA RAIANO'
+    'CAPOBIANCO', 'VILLA RAIANO', 'BE PACKAGING'
 ];
 
 function filtraRiferimentiMarco() {
@@ -2156,6 +2223,27 @@ function salvaNoteSped() {
         </div>
     </div>
 </div>
+{{-- Modal Nota TV --}}
+<div class="modal fade" id="modalNotaTv" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#dc2626; color:#fff;">
+                <h5 class="modal-title">📢 Nota TV (ticker)</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size:13px; color:#666; margin-bottom:10px;">Il testo apparirà come ticker scorrevole sulla TV del reparto.</p>
+                <input type="text" id="notaTvInput" class="form-control" placeholder="Es: Consegna urgente TRENITALIA ore 15:00" style="font-size:15px;">
+                <div style="margin-top:10px; font-size:12px; color:#999;">Lascia vuoto per rimuovere la nota. Dura 24 ore.</div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Chiudi</button>
+                <button onclick="salvaNotaTv()" class="btn btn-danger btn-sm">Salva e pubblica</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {{-- Modal Presenti in azienda --}}
 <div class="modal fade" id="modalPresenti" tabindex="-1">
     <div class="modal-dialog modal-lg">
@@ -2288,4 +2376,46 @@ document.addEventListener('DOMContentLoaded', function() {
     window.addEventListener('resize',vis);
 })();
 </script>
+
+{{-- MODALE RIEMPIMENTO MACCHINE --}}
+<div class="modal fade" id="modalRiempimento" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content" style="background:#0f172a; color:#f1f5f9; border:none;">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title" style="color:#a78bfa; font-weight:800;">Riempimento Macchine
+                    <span style="font-size:0.7rem; color:#64748b; margin-left:0.5rem;">Totale: {{ round(collect($riempimento)->sum('ore_totali')) }}h in coda</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body pt-2">
+                @php $maxOre = max(collect($riempimento)->max('ore_totali'), 1); @endphp
+                @foreach($riempimento as $r)
+                <div class="d-flex align-items-center mb-1">
+                    <span style="font-size:0.85rem; font-weight:600; color:#94a3b8; min-width:120px;">{{ $r['nome'] }}</span>
+                    <div style="flex:1; height:18px; background:#1e293b; border-radius:4px; overflow:hidden; position:relative; margin:0 8px;">
+                        @php
+                            $pctPronte = ($r['ore_1'] / $maxOre) * 100;
+                            $pctCoda = ($r['ore_0'] / $maxOre) * 100;
+                            $pctTotale = $pctPronte + $pctCoda;
+                        @endphp
+                        <div style="position:absolute; left:0; top:0; height:100%; width:{{ $pctTotale }}%; display:flex;">
+                            <div style="width:{{ $pctPronte > 0 ? ($r['ore_1'] / ($r['ore_0'] + $r['ore_1'] ?: 1)) * 100 : 0 }}%; height:100%; background:linear-gradient(90deg, #16a34a, #4ade80); border-radius:4px 0 0 4px;"></div>
+                            <div style="flex:1; height:100%; background:linear-gradient(90deg, #475569, #64748b); border-radius:0 4px 4px 0;"></div>
+                        </div>
+                        <span style="position:absolute; left:{{ min($pctTotale + 1, 88) }}%; top:50%; transform:translateY(-50%); font-size:0.75rem; font-weight:700; color:#f1f5f9; white-space:nowrap;">{{ round($r['ore_totali'], 0) }}h</span>
+                    </div>
+                </div>
+                <div class="d-flex mb-3" style="margin-left:120px; font-size:0.75rem; color:#64748b; gap:1.5rem;">
+                    <span style="color:#4ade80;">Pronte da lavorare: {{ $r['ore_1'] }}h ({{ $r['fasi_1'] }})</span>
+                    <span>In coda: {{ $r['ore_0'] }}h ({{ $r['fasi_0'] }})</span>
+                </div>
+                @endforeach
+                <div class="mt-2 d-flex gap-3" style="font-size:0.75rem; color:#64748b;">
+                    <span><span style="color:#4ade80;">&#9632;</span> Pronte da lavorare (stato 1)</span>
+                    <span><span style="color:#64748b;">&#9632;</span> In coda (stato 0)</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection

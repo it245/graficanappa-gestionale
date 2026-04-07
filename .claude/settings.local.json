@@ -21,7 +21,8 @@
       "WebFetch(domain:communities.efi.com)",
       "WebFetch(domain:raw.githubusercontent.com)",
       "WebFetch(domain:efi.my.site.com)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(echo \"DONE: $?\")"
     ]
   }
 }

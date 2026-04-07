@@ -332,8 +332,9 @@ class DashboardOwnerController extends Controller
             // Prinect non disponibile, continua senza sync
         }
 
-        $fasi = OrdineFase::with(['ordine', 'faseCatalogo.reparto', 'operatori' => fn($q) => $q->select('operatori.id', 'nome')])
+        $fasi = OrdineFase::with(['ordine.fasi.faseCatalogo', 'faseCatalogo.reparto', 'operatori' => fn($q) => $q->select('operatori.id', 'nome')])
             ->where('stato', '<', 4)
+            ->whereHas('ordine')
             ->get()
             ->map(function ($fase) {
                 $fase = $this->calcolaOreEPriorita($fase);
@@ -492,17 +493,75 @@ class DashboardOwnerController extends Controller
         $operatore = $request->attributes->get('operatore') ?? auth()->guard('operatore')->user();
         $isReadonly = $this->isReadonly();
 
+        // Riempimento macchine — ottimizzato: 2 query batch invece di 18
+        $repartiRiemp = [
+            ['nome' => 'XL 106', 'reparti' => ['stampa offset']],
+            ['nome' => 'BOBST', 'reparti' => ['fustella piana']],
+            ['nome' => 'JOH Caldo', 'reparti' => ['stampa a caldo']],
+            ['nome' => 'Plastificatrice', 'reparti' => ['plastificazione']],
+            ['nome' => 'Piegaincolla', 'reparti' => ['piegaincolla']],
+            ['nome' => 'Finestratrice', 'reparti' => ['finestratura']],
+            ['nome' => 'Fust. Cilindrica', 'reparti' => ['fustella cilindrica']],
+            ['nome' => 'Digitale', 'reparti' => ['digitale', 'finitura digitale']],
+            ['nome' => 'Tagliacarte', 'reparti' => ['tagliacarte']],
+        ];
+        $fasiOreConfig = config('fasi_ore');
+
+        // 1 query: pre-carica tutti i reparti
+        $tuttiReparti = Reparto::all()->keyBy('nome');
+
+        // 2 query batch: tutte le fasi stato 0 e 1 con reparto, in una sola query per stato
+        $fasiPerReparto = [];
+        foreach ([0, 1] as $stato) {
+            $fasiRiemp = DB::table('ordine_fasi')
+                ->join('fasi_catalogo', 'ordine_fasi.fase_catalogo_id', '=', 'fasi_catalogo.id')
+                ->join('ordini', 'ordine_fasi.ordine_id', '=', 'ordini.id')
+                ->join('reparti', 'fasi_catalogo.reparto_id', '=', 'reparti.id')
+                ->where('ordine_fasi.stato', $stato)
+                ->whereNull('ordine_fasi.deleted_at')
+                ->where(fn($q) => $q->where('ordine_fasi.esterno', 0)->orWhereNull('ordine_fasi.esterno'))
+                ->where(fn($q) => $q->whereNull('ordine_fasi.note')->orWhere('ordine_fasi.note', 'NOT LIKE', '%Inviato a:%'))
+                ->select('ordine_fasi.fase', 'ordini.qta_carta', 'reparti.nome as reparto_nome')
+                ->get();
+            foreach ($fasiRiemp as $f) {
+                $fasiPerReparto[$f->reparto_nome][$stato][] = $f;
+            }
+        }
+
+        $riempimento = [];
+        foreach ($repartiRiemp as $ru) {
+            $ore0 = 0; $ore1 = 0; $cnt0 = 0; $cnt1 = 0;
+            foreach ($ru['reparti'] as $repNome) {
+                foreach ([0, 1] as $stato) {
+                    $fasiStato = $fasiPerReparto[$repNome][$stato] ?? [];
+                    foreach ($fasiStato as $f) {
+                        $info = $fasiOreConfig[$f->fase] ?? null;
+                        $ore = $info ? $info['avviamento'] + (($f->qta_carta ?? 0) / ($info['copieh'] ?: 1000)) : 0.5;
+                        if ($stato === 0) { $ore0 += $ore; $cnt0++; }
+                        else { $ore1 += $ore; $cnt1++; }
+                    }
+                }
+            }
+            $riempimento[] = [
+                'nome' => $ru['nome'],
+                'ore_0' => round($ore0, 1), 'fasi_0' => $cnt0,
+                'ore_1' => round($ore1, 1), 'fasi_1' => $cnt1,
+                'ore_totali' => round($ore0 + $ore1, 1),
+            ];
+        }
+        usort($riempimento, fn($a, $b) => $b['ore_totali'] <=> $a['ore_totali']);
+
         return view('owner.dashboard', compact(
             'fasi', 'reparti', 'fasiCatalogo', 'spedizioniOggi', 'storicoConsegne',
             'fasiCompletateOggi', 'oreLavorateOggi', 'orePerOperatoreOggi', 'commesseSpediteOggi', 'fasiAttive', 'spedizioniBRT', 'operatore', 'isReadonly',
-            'progressoCommesse'
+            'progressoCommesse', 'riempimento'
         ));
     }
 
     public function aggiornaCampo(Request $request)
     {
         if ($deny = $this->denyIfReadonly()) return $deny;
-        $campiFase = ['qta_prod', 'note', 'stato', 'data_inizio', 'data_fine', 'ore', 'priorita', 'fase', 'esterno'];
+        $campiFase = ['qta_prod', 'qta_fase', 'note', 'stato', 'data_inizio', 'data_fine', 'ore', 'priorita', 'fase', 'esterno'];
         $campiOrdine = ['cliente_nome', 'cod_art', 'descrizione', 'qta_richiesta', 'um',
                         'data_registrazione', 'data_prevista_consegna',
                         'cod_carta', 'carta', 'qta_carta', 'UM_carta'];
@@ -579,8 +638,31 @@ class DashboardOwnerController extends Controller
                 FaseStatoService::controllaCompletamento($fase->id);
             }
 
-            // Se stato cambiato, ricalcola stati di tutta la commessa
+            // Se stato cambiato, gestisci data_fine, flag esterno e ricalcola
             if ($campo === 'stato') {
+                $statoNum = (int) $valore;
+                // Terminata: imposta data_fine se mancante
+                if ($statoNum == 3 && !$fase->data_fine) {
+                    $fase->data_fine = now()->format('Y-m-d H:i:s');
+                    $fase->save();
+                }
+                // Recuperata (riportata a 2): azzera data_fine
+                if ($statoNum == 2) {
+                    $fase->data_fine = null;
+                    $fase->save();
+                }
+                // Se riportata a 0 o 1, pulisci: flag esterno, data_fine, nota "Inviato a:"
+                if ($statoNum <= 1) {
+                    $fase->data_fine = null;
+                    if ($fase->esterno) {
+                        $fase->esterno = false;
+                    }
+                    if ($fase->note && preg_match('/Inviato a:/i', $fase->note)) {
+                        $fase->note = preg_replace('/,?\s*Inviato a:.*$/i', '', $fase->note);
+                        $fase->note = trim($fase->note) ?: null;
+                    }
+                    $fase->save();
+                }
                 FaseStatoService::ricalcolaCommessa($fase->ordine->commessa);
             }
 
@@ -599,10 +681,10 @@ class DashboardOwnerController extends Controller
                 $faseNome = $fase->faseCatalogo->nome_display ?? $fase->fase ?? '';
                 $descrizione = mb_substr($fase->ordine->descrizione ?? '', 0, 60);
 
-                // Segna come esterno e avvia (stato 2 = in lavorazione esterna)
-                if (in_array($fase->stato, [0, '0'])) {
-                    $fase->stato = 2;
-                    $fase->data_inizio = now();
+                // Segna come esterno (stato 5 = in lavorazione esterna)
+                if (in_array((int) $fase->stato, [0, 1])) {
+                    $fase->stato = 5;
+                    $fase->data_inizio = $fase->data_inizio ?? now();
                     $fase->esterno = true;
                     $fase->save();
                 }
@@ -648,8 +730,15 @@ class DashboardOwnerController extends Controller
             ? FasiCatalogo::with('reparto')->find($request->fase_catalogo_id)
             : null;
 
+        // Auto-append anno (-26, -27, ecc.) se mancante
+        $commessa = trim($request->commessa);
+        $suffissoAnno = '-' . date('y');
+        if (!preg_match('/-\d{2}$/', $commessa)) {
+            $commessa .= $suffissoAnno;
+        }
+
         $ordine = Ordine::create([
-            'commessa' => trim($request->commessa),
+            'commessa' => $commessa,
             'cliente_nome' => trim($request->cliente_nome ?? ''),
             'cod_art' => trim($request->cod_art ?? ''),
             'descrizione' => trim($request->descrizione ?? ''),
@@ -861,6 +950,26 @@ class DashboardOwnerController extends Controller
 
         if ($nuovoStato == 3 && !$fase->data_fine) {
             $fase->data_fine = now()->format('Y-m-d H:i:s');
+            $fase->terminata_manualmente = true;
+        }
+
+        // Se riportata a stato 2 (recuperata), azzera data_fine e flag manuale
+        if ($nuovoStato == 2) {
+            $fase->data_fine = null;
+            $fase->terminata_manualmente = false;
+        }
+
+        // Se riportata a 0 o 1, pulisci tutto: flag esterno, data_fine, nota "Inviato a:"
+        if ($nuovoStato <= 1) {
+            $fase->data_fine = null;
+            if ($fase->esterno) {
+                $fase->esterno = false;
+            }
+            // Rimuovi "Inviato a:" dalla nota
+            if ($fase->note && preg_match('/Inviato a:/i', $fase->note)) {
+                $fase->note = preg_replace('/,?\s*Inviato a:.*$/i', '', $fase->note);
+                $fase->note = trim($fase->note) ?: null;
+            }
         }
 
         $fase->save();
@@ -890,8 +999,14 @@ class DashboardOwnerController extends Controller
             $duplicatiRimossi = $this->pulisciDuplicati();
 
             $risultato = OndaSyncService::sincronizza();
+            $ddtFornitore = OndaSyncService::sincronizzaDDTFornitore();
+            $ddtLavorazioni = OndaSyncService::sincronizzaDDTFornitureLavorazioni();
+            $ddtVendita = OndaSyncService::sincronizzaDDTVendita();
             $msg = "Sync Onda completato: {$risultato['ordini_creati']} ordini creati, "
                  . "{$risultato['ordini_aggiornati']} aggiornati, {$risultato['fasi_create']} fasi create.";
+            $totDDT = $ddtFornitore + $ddtLavorazioni;
+            if ($totDDT > 0) $msg .= " DDT fornitore: {$totDDT} fasi esterne.";
+            if ($ddtVendita > 0) $msg .= " DDT vendita: {$ddtVendita}.";
             if ($duplicatiRimossi > 0) {
                 $msg .= " ($duplicatiRimossi ordini duplicati rimossi)";
             }
@@ -960,7 +1075,7 @@ class DashboardOwnerController extends Controller
         // Escludi reparto spedizione
         $repartoSpedizione = Reparto::where('nome', 'spedizione')->first();
 
-        $query = OrdineFase::with(['ordine', 'faseCatalogo.reparto', 'operatori'])
+        $query = OrdineFase::with(['ordine.fasi.faseCatalogo', 'faseCatalogo.reparto', 'operatori'])
             ->whereHas('ordine');
 
         // Escludi BRT e reparto spedizione
@@ -1255,14 +1370,15 @@ class DashboardOwnerController extends Controller
         $repartoEsterno = Reparto::where('nome', 'esterno')->first();
 
         // Fasi esterne: reparto "esterno" OPPURE flag esterno=1 (inviate dal owner)
-        $fasiEsterne = OrdineFase::where('stato', '<', 3)
+        // Include stato < 3 (attive) e stato 5 (esterno dedicato)
+        $fasiEsterne = OrdineFase::where(fn($q) => $q->where('stato', '<', 3)->orWhere('stato', 5))
             ->where(function ($q) use ($repartoEsterno) {
                 if ($repartoEsterno) {
                     $q->whereHas('faseCatalogo', fn($q2) => $q2->where('reparto_id', $repartoEsterno->id));
                 }
                 $q->orWhere('esterno', 1);
             })
-            ->with(['ordine', 'faseCatalogo'])
+            ->with(['ordine.fasi.faseCatalogo', 'faseCatalogo'])
             ->get();
 
         $commesseEsterne = collect();
@@ -1287,6 +1403,8 @@ class DashboardOwnerController extends Controller
                 if ($stati->contains(fn($s) => is_string($s) && !is_numeric($s))) {
                     $statoPausa = $fasi->first(fn($f) => is_string($f->stato) && !is_numeric($f->stato));
                     $stato = $statoPausa->stato;
+                } elseif ($stati->contains(5)) {
+                    $stato = 5;
                 } elseif ($stati->contains(2)) {
                     $stato = 2;
                 } elseif ($stati->contains(1)) {
@@ -1303,7 +1421,13 @@ class DashboardOwnerController extends Controller
                     'fornitore'     => $fornitore,
                     'stato'         => $stato,
                     'fasi'          => $fasi->pluck('faseCatalogo.nome_display', 'id')->filter()->values()->implode(', ') ?: $fasi->pluck('fase')->implode(', '),
+                    'fasi_dettaglio' => $fasi->map(fn($f) => [
+                        'id' => $f->id,
+                        'nome' => $f->faseCatalogo->nome_display ?? $f->fase,
+                        'qta' => $f->qta_fase ?? $f->ordine->qta_richiesta ?? 0,
+                    ])->values()->toArray(),
                     'num_fasi'      => $fasi->count(),
+                    'fasi_ids'      => $fasi->pluck('id')->values()->toArray(),
                     'data_invio'    => $dataInvio,
                     'note'          => $fasi->pluck('note')->filter()->unique()->implode(' | '),
                 ];
@@ -1362,5 +1486,29 @@ class DashboardOwnerController extends Controller
         ksort($fustelleMap);
 
         return view('owner.fustelle', compact('fustelleMap'));
+    }
+
+    /**
+     * Audit Log — visualizzazione eventi di sicurezza
+     */
+    public function auditLog(Request $request)
+    {
+        $query = DB::table('audit_logs')->orderByDesc('created_at');
+
+        if ($request->filled('azione')) {
+            $query->where('action', $request->azione);
+        }
+        if ($request->filled('utente')) {
+            $query->where('user_name', 'like', '%' . $request->utente . '%');
+        }
+        if ($request->filled('data')) {
+            $query->whereDate('created_at', $request->data);
+        }
+
+        $logs = $query->paginate(50);
+
+        $azioni = DB::table('audit_logs')->distinct()->pluck('action');
+
+        return view('owner.audit_log', compact('logs', 'azioni'));
     }
 }

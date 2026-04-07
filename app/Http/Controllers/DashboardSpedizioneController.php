@@ -27,14 +27,14 @@ class DashboardSpedizioneController extends Controller
             ->where('stato', '<', 4)
             ->where(fn($q) => $q->whereNull('tipo_consegna'))
             ->whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', $repartoSpedizione->id))
-            ->with(['ordine', 'faseCatalogo'])
+            ->with(['ordine.fasi.faseCatalogo', 'faseCatalogo'])
             ->get();
 
         // Fasi parziali: tipo_consegna='parziale' e stato < 4
         $fasiParziali = OrdineFase::where('tipo_consegna', 'parziale')
             ->where('stato', '<', 4)
             ->whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', $repartoSpedizione->id))
-            ->with(['ordine', 'faseCatalogo', 'operatori'])
+            ->with(['ordine.fasi.faseCatalogo', 'faseCatalogo', 'operatori'])
             ->get();
 
         // IDs da escludere dalle sezioni normali (DDT + parziali)
@@ -46,7 +46,7 @@ class DashboardSpedizioneController extends Controller
                 $q->where('reparto_id', $repartoSpedizione->id);
             })
             ->whereNotIn('id', $idsDDTeParziali)
-            ->with(['ordine', 'faseCatalogo', 'operatori'])
+            ->with(['ordine.fasi.faseCatalogo', 'faseCatalogo', 'operatori'])
             ->get();
 
         // Pre-fetch: tutte le commesse coinvolte e le loro fasi non-spedizione (evita N+1)
@@ -65,7 +65,8 @@ class DashboardSpedizioneController extends Controller
             $commessa = $fase->ordine->commessa ?? null;
             if (!$commessa) return false;
             $fasiNonBrt = $tutteFasiPerCommessa->get($commessa, collect());
-            return $fasiNonBrt->isNotEmpty() && $fasiNonBrt->every(fn($f) => $f->stato >= 3);
+            // stato 5 (esterno) NON conta come terminata
+            return $fasiNonBrt->isNotEmpty() && $fasiNonBrt->every(fn($f) => is_numeric($f->stato) && (int)$f->stato >= 3 && (int)$f->stato != 5);
         })->sortBy(fn($fase) => $fase->ordine->data_prevista_consegna ?? '9999-12-31');
 
         // Auto-promuovi fasi stato 0→1 che sono pronte per la spedizione
@@ -81,7 +82,8 @@ class DashboardSpedizioneController extends Controller
             $commessa = $fase->ordine->commessa ?? null;
             $fasiNonBrt = $tutteFasiPerCommessa->get($commessa, collect());
             $totaleFasi = $fasiNonBrt->count();
-            $fasiTerminate = $fasiNonBrt->where('stato', '>=', 3)->count();
+            // stato 5 (esterno) NON conta come terminata
+            $fasiTerminate = $fasiNonBrt->filter(fn($f) => is_numeric($f->stato) && (int)$f->stato >= 3 && (int)$f->stato != 5)->count();
             $fase->percentuale = $totaleFasi > 0 ? round(($fasiTerminate / $totaleFasi) * 100) : 0;
         }
 
@@ -91,7 +93,7 @@ class DashboardSpedizioneController extends Controller
             ->whereHas('faseCatalogo', function ($q) use ($repartoSpedizione) {
                 $q->where('reparto_id', $repartoSpedizione->id);
             })
-            ->with(['ordine', 'faseCatalogo', 'operatori'])
+            ->with(['ordine.fasi.faseCatalogo', 'faseCatalogo', 'operatori'])
             ->get()
             ->sortByDesc('data_fine');
 
@@ -110,14 +112,14 @@ class DashboardSpedizioneController extends Controller
 
         // Fasi esterne (reparto "esterno" + flag esterno) non terminate
         $repartoEsterno = Reparto::where('nome', 'esterno')->first();
-        $fasiEsterne = OrdineFase::where('stato', '<', 3)
+        $fasiEsterne = OrdineFase::where(fn($q) => $q->where('stato', '<', 3)->orWhere('stato', 5))
             ->where(function ($q) use ($repartoEsterno) {
                 if ($repartoEsterno) {
                     $q->whereHas('faseCatalogo', fn($q2) => $q2->where('reparto_id', $repartoEsterno->id));
                 }
                 $q->orWhere('esterno', true);
             })
-            ->with(['ordine', 'faseCatalogo', 'operatori'])
+            ->with(['ordine.fasi.faseCatalogo', 'faseCatalogo', 'operatori'])
             ->get()
             ->sortBy(fn($f) => $f->ordine->data_prevista_consegna ?? '9999-12-31');
 
@@ -128,7 +130,7 @@ class DashboardSpedizioneController extends Controller
             ->whereHas('faseCatalogo', function ($q) use ($repartoSpedizione) {
                 $q->where('reparto_id', $repartoSpedizione->id);
             })
-            ->with(['ordine', 'faseCatalogo', 'operatori'])
+            ->with(['ordine.fasi.faseCatalogo', 'faseCatalogo', 'operatori'])
             ->orderByDesc('data_fine')
             ->get();
 
@@ -148,14 +150,14 @@ class DashboardSpedizioneController extends Controller
         if (!$operatore) abort(403, 'Accesso negato');
 
         $repartoEsterno = Reparto::where('nome', 'esterno')->first();
-        $fasiEsterne = OrdineFase::where('stato', '<', 3)
+        $fasiEsterne = OrdineFase::where(fn($q) => $q->where('stato', '<', 3)->orWhere('stato', 5))
             ->where(function ($q) use ($repartoEsterno) {
                 if ($repartoEsterno) {
                     $q->whereHas('faseCatalogo', fn($q2) => $q2->where('reparto_id', $repartoEsterno->id));
                 }
                 $q->orWhere('esterno', true);
             })
-            ->with(['ordine', 'faseCatalogo', 'operatori'])
+            ->with(['ordine.fasi.faseCatalogo', 'faseCatalogo', 'operatori'])
             ->get()
             ->sortBy(fn($f) => $f->ordine->data_prevista_consegna ?? '9999-12-31');
 
@@ -170,7 +172,7 @@ class DashboardSpedizioneController extends Controller
                 return response()->json(['success' => false, 'messaggio' => 'Fase non trovata']);
             }
 
-            if ($fase->stato >= 3) {
+            if ((int) $fase->stato >= 3 && (int) $fase->stato !== 5) {
                 return response()->json(['success' => false, 'messaggio' => 'Già consegnato']);
             }
 
@@ -223,7 +225,7 @@ class DashboardSpedizioneController extends Controller
             } else {
                 // Consegna totale: tutte le fasi della commessa vanno a stato=4 (consegnato)
                 $tutteLeFasiCommessa = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
-                    ->where('stato', '<', 4)
+                    ->whereRaw("stato REGEXP '^[0-9]+$' AND (stato < 4 OR stato = 5)")
                     ->get();
 
                 foreach ($tutteLeFasiCommessa as $f) {
@@ -527,5 +529,23 @@ class DashboardSpedizioneController extends Controller
     {
         \DB::table('notifiche_spedizione')->where('letto', false)->update(['letto' => true]);
         return response()->json(['success' => true]);
+    }
+
+    public function syncOnda(Request $request)
+    {
+        try {
+            $risultato = \App\Services\OndaSyncService::sincronizza();
+            $ddtFornitore = \App\Services\OndaSyncService::sincronizzaDDTFornitore();
+            $ddtLavorazioni = \App\Services\OndaSyncService::sincronizzaDDTFornitureLavorazioni();
+            $ddtVendita = \App\Services\OndaSyncService::sincronizzaDDTVendita();
+            $msg = "Sync Onda: {$risultato['ordini_creati']} creati, "
+                 . "{$risultato['ordini_aggiornati']} aggiornati, {$risultato['fasi_create']} fasi.";
+            $totDDT = $ddtFornitore + $ddtLavorazioni;
+            if ($totDDT > 0) $msg .= " DDT fornitore: {$totDDT} fasi esterne.";
+            if ($ddtVendita > 0) $msg .= " DDT vendita: {$ddtVendita}.";
+            return redirect()->back()->with('success', $msg);
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Errore sync Onda: ' . $e->getMessage());
+        }
     }
 }

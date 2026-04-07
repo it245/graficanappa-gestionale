@@ -38,7 +38,9 @@ class SyncPresenze extends Command
     {
         // Se la share .34 non è raggiungibile, prova a connetterla
         if (!file_exists(self::TIMBRATURE_PATH_PRIMARY)) {
-            @exec('net use \\\\192.168.1.34\\NetTime /user:mes M3s@Nappa26 2>&1', $out, $code);
+            $user = env('NETTIME_SHARE_USER', 'mes');
+            $pass = env('NETTIME_SHARE_PASS', '');
+            @exec("net use \\\\192.168.1.34\\NetTime /user:{$user} {$pass} 2>&1", $out, $code);
             if ($code !== 0) {
                 $this->warn("Share .34 non raggiungibile: " . implode(' ', $out));
             }

@@ -10,7 +10,7 @@
         <input type="text" id="filtroEtichette" class="form-control" placeholder="Cerca commessa, cliente o descrizione..." autofocus>
     </div>
 
-    <div style="overflow-x:auto;">
+    <div>
         <table class="table table-bordered table-hover table-sm" style="font-size:13px;" id="tabellaEtichette">
             <thead class="table-dark">
                 <tr>

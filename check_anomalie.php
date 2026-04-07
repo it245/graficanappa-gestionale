@@ -63,7 +63,7 @@ foreach ($commesse as $commessa) {
         foreach ($ordini as $ordine) {
             foreach ($ordine->fasi as $fase) {
                 $reparto = optional(optional($fase->faseCatalogo)->reparto)->nome ?? '-';
-                $statoLabel = [0=>'caricato',1=>'pronto',2=>'avviato',3=>'terminato',4=>'consegnato'];
+                $statoLabel = [0=>'caricato',1=>'pronto',2=>'avviato',3=>'terminato',4=>'consegnato',5=>'esterno'];
                 printf("    %-20s | %-15s | %-10s | %-8s | %s\n",
                     $fase->fase,
                     mb_substr($reparto, 0, 15),

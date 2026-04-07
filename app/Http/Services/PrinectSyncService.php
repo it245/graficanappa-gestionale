@@ -126,11 +126,11 @@ class PrinectSyncService
             FaseStatoService::controllaCompletamento($faseId);
         }
 
-        // Ripristina fasi erroneamente terminate che hanno attività recenti
-        $this->ripristinaFasiAttive();
-
         // Auto-terminazione via stato workstep Prinect (COMPLETED)
         $this->controllaCompletamentoPrinect();
+
+        // Ripristina fasi erroneamente terminate che hanno attività recenti o workstep non COMPLETED
+        $this->ripristinaFasiAttive();
 
         // Termina fasi stampa "abbandonate": stato 2 ma nessuna attività recente
         $this->terminaFasiAbbandonate();
@@ -476,8 +476,16 @@ class PrinectSyncService
             $fase->tempo_esecuzione_sec = $dati['tempo_esecuzione_sec'];
 
             // Se la fase non e ancora avviata (stato 0 o 1), avviala (stato=2)
-            if (in_array($fase->stato, [0, '0', 1, '1'])) {
+            // Ma solo se ha fogli buoni o non è stata riportata manualmente a 0
+            if (in_array($fase->stato, [0, '0', 1, '1']) && $dati['fogli_buoni'] > 0) {
                 $fase->stato = 2;
+            }
+
+            // Se la fase è terminata (stato 3) ma il job è RUNNING → recupera a stato 2
+            // Skip se terminata manualmente dall'owner
+            if (in_array($fase->stato, [3, '3']) && !$terminata && !$fase->terminata_manualmente) {
+                $fase->stato = 2;
+                $fase->data_fine = null;
             }
 
             // Se l'operatore ha avviato un'altra commessa → questa e terminata
@@ -652,7 +660,28 @@ class PrinectSyncService
                 $totaleBuoniWs = $worksteps->sum(fn($ws) => $ws['amountProduced'] ?? 0);
                 $totaleScartaWs = $worksteps->sum(fn($ws) => $ws['wasteProduced'] ?? 0);
 
-                if ($totaleBuoniWs > 0) {
+                // Aggiorna fogli per-workstep se match 1:1, altrimenti totale su tutte
+                $wsValues = $worksteps->values();
+                $fasiValues = $fasi->values();
+
+                if ($fasiValues->count() > 1 && $fasiValues->count() === $wsValues->count()) {
+                    // Match 1:1: ogni fase prende i fogli del suo workstep
+                    foreach ($fasiValues as $i => $fase) {
+                        $ws = $wsValues[$i] ?? null;
+                        if (!$ws) continue;
+                        $wsBuoni = $ws['amountProduced'] ?? 0;
+                        $wsScarto = $ws['wasteProduced'] ?? 0;
+                        if ($wsBuoni > ($fase->fogli_buoni ?? 0)) {
+                            $fase->fogli_buoni = $wsBuoni;
+                            $fase->qta_prod = $wsBuoni;
+                            if ($wsScarto > ($fase->fogli_scarto ?? 0)) {
+                                $fase->fogli_scarto = $wsScarto;
+                            }
+                            $fase->save();
+                        }
+                    }
+                } elseif ($totaleBuoniWs > 0) {
+                    // Singola fase o numero diverso: totale su tutte
                     foreach ($fasi as $fase) {
                         if ($totaleBuoniWs > ($fase->fogli_buoni ?? 0)) {
                             $fase->fogli_buoni = $totaleBuoniWs;
@@ -660,8 +689,6 @@ class PrinectSyncService
                             if ($totaleScartaWs > ($fase->fogli_scarto ?? 0)) {
                                 $fase->fogli_scarto = $totaleScartaWs;
                             }
-                            // NON cambiare stato qui — l'avvio lo fa sincronizzaDaLive o l'operatore
-                            // Aggiorna solo fogli per fasi già avviate (stato >= 2)
                             $fase->save();
                         }
                     }
@@ -756,6 +783,7 @@ class PrinectSyncService
      */
     protected function ripristinaFasiAttive(): void
     {
+        // Raggruppa fasi terminate per commessa
         $fasiTerminate = OrdineFase::with('ordine')
             ->where('fogli_buoni', '>', 0)
             ->where('stato', 3)
@@ -764,25 +792,62 @@ class PrinectSyncService
                   ->orWhere('fase', 'STAMPA')
                   ->orWhere('fase', 'LIKE', 'STAMPA XL%');
             })
-            ->get();
+            ->get()
+            ->groupBy(fn($f) => $f->ordine->commessa ?? '');
 
-        foreach ($fasiTerminate as $fase) {
-            $commessa = $fase->ordine->commessa ?? '';
+        foreach ($fasiTerminate as $commessa => $fasi) {
             if (!$commessa) continue;
+            $jobId = ltrim(explode('-', $commessa)[0] ?? '', '0');
+            if (!$jobId || !is_numeric($jobId)) continue;
 
+            // Check 1: attività recente — ma deve essere per la fase specifica
+            // Se nessuna attività recente, non ripristinare
             $ultimaAttivita = PrinectAttivita::where('commessa_gestionale', $commessa)
                 ->orderByDesc('start_time')
                 ->first();
+            $attivitaRecente = $ultimaAttivita && $ultimaAttivita->start_time
+                && Carbon::parse($ultimaAttivita->end_time ?? $ultimaAttivita->start_time)->diffInMinutes(now()) < 60;
 
-            if (!$ultimaAttivita || !$ultimaAttivita->start_time) continue;
+            if (!$attivitaRecente) continue; // nessuna attività recente → non ripristinare
 
-            $ultimoTempo = Carbon::parse($ultimaAttivita->end_time ?? $ultimaAttivita->start_time);
+            // Check 2: controlla per-workstep quale fase ripristinare
+            try {
+                $wsData = $this->prinect->getJobWorksteps($jobId);
+                $worksteps = collect($wsData['worksteps'] ?? [])
+                    ->filter(fn($ws) => in_array('ConventionalPrinting', $ws['types'] ?? []))
+                    ->values();
 
-            // Se l'ultima attività è nell'ultima ora, la macchina sta ancora stampando
-            if ($ultimoTempo->diffInMinutes(now()) < 60) {
-                $fase->stato = 2;
-                $fase->data_fine = null;
-                $fase->save();
+                if ($worksteps->isEmpty()) continue;
+
+                $fasiValues = $fasi->values();
+
+                // Match 1:1 se stesso numero
+                if ($fasiValues->count() === $worksteps->count()) {
+                    foreach ($fasiValues as $i => $fase) {
+                        $ws = $worksteps[$i] ?? null;
+                        if (!$ws) continue;
+                        // Ripristina solo se il workstep specifico NON è COMPLETED
+                        // Skip se terminata manualmente dall'owner
+                        if (($ws['status'] ?? '') !== 'COMPLETED' && !$fase->terminata_manualmente) {
+                            $fase->stato = 2;
+                            $fase->data_fine = null;
+                            $fase->save();
+                        }
+                    }
+                } else {
+                    // Numero diverso: ripristina solo se TUTTI i workstep non sono COMPLETED
+                    $allNotCompleted = $worksteps->every(fn($ws) => ($ws['status'] ?? '') !== 'COMPLETED');
+                    if ($allNotCompleted) {
+                        foreach ($fasiValues as $fase) {
+                            if ($fase->terminata_manualmente) continue;
+                            $fase->stato = 2;
+                            $fase->data_fine = null;
+                            $fase->save();
+                        }
+                    }
+                }
+            } catch (\Exception $e) {
+                // API non disponibile, non ripristinare
             }
         }
     }

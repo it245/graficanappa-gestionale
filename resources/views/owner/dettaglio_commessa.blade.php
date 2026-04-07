@@ -250,7 +250,15 @@
 
 {{-- Note Fustelle (note inserite da Mirko/prestampa sulle singole fasi) --}}
 @php
-    $noteFasi = $fasi->filter(fn($f) => !empty($f->note))->values();
+    $noteFasi = $fasi->filter(function($f) {
+        if (empty($f->note)) return false;
+        $n = trim($f->note);
+        // Escludi note di sistema (DDT fornitore, colori, fustelle)
+        if (str_starts_with($n, 'Inviato a:')) return false;
+        if (str_starts_with($n, '[COL:')) return false;
+        if (str_starts_with($n, '[FS:')) return false;
+        return true;
+    })->values();
 @endphp
 @if($noteFasi->isNotEmpty())
 <div class="row g-2 mb-3">
@@ -269,12 +277,12 @@
 @endif
 
 @php
-    $statoBg = [0 => '#e9ecef', 1 => '#cfe2ff', 2 => '#fff3cd', 3 => '#d1e7dd', 4 => '#c3c3c3'];
-    $statoColor = [0 => '#333', 1 => '#084298', 2 => '#664d03', 3 => '#0f5132', 4 => '#1a1a1a'];
-    $statoLabel = [0 => 'Caricato', 1 => 'Pronto', 2 => 'Avviato', 3 => 'Terminato', 4 => 'Consegnato'];
+    $statoBg = [0 => '#e9ecef', 1 => '#cfe2ff', 2 => '#fff3cd', 3 => '#d1e7dd', 4 => '#c3c3c3', 5 => '#e0cffc'];
+    $statoColor = [0 => '#333', 1 => '#084298', 2 => '#664d03', 3 => '#0f5132', 4 => '#1a1a1a', 5 => '#6f42c1'];
+    $statoLabel = [0 => 'Caricato', 1 => 'Pronto', 2 => 'Avviato', 3 => 'Terminato', 4 => 'Consegnato', 5 => 'Esterno'];
 
     $totaleFasi = $fasi->count();
-    $fasiTerminateCont = $fasi->where('stato', '>=', 3)->count();
+    $fasiTerminateCont = $fasi->filter(fn($f) => is_numeric($f->stato) && (int)$f->stato >= 3 && (int)$f->stato != 5)->count();
     $fasiAvviate = $fasi->where('stato', 2)->count();
     $pctCompletamento = $totaleFasi > 0 ? round(($fasiTerminateCont / $totaleFasi) * 100) : 0;
     $pctAvviate = $totaleFasi > 0 ? round(($fasiAvviate / $totaleFasi) * 100) : 0;

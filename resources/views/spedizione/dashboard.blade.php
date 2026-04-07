@@ -139,8 +139,10 @@
         box-shadow: 0 0 0 3px rgba(13,110,253,0.15);
     }
 
-    .row-scaduta { background: #f8d7da !important; }
-    .row-warning { background: #fff3cd !important; }
+    .percorso-base { background: #d4edda !important; }
+    .percorso-rilievi { background: #fff3cd !important; }
+    .percorso-caldo { background: #f96f2a !important; }
+    .percorso-completo { background: #f8d7da !important; }
 
     a.commessa-link {
         color: #000;
@@ -350,6 +352,15 @@
             <span></span><span></span><span></span>
         </button>
         <h2 class="mb-0">Dashboard Logistica</h2>
+        <form method="POST" action="{{ route('spedizione.syncOnda') }}" style="margin:0;" onsubmit="this.querySelector('button').disabled=true; this.querySelector('button span').textContent='Sync...';">
+            @csrf
+            <button type="submit" style="background:none; border:1px solid #ccc; border-radius:6px; padding:4px 12px; cursor:pointer; display:flex; align-items:center; gap:6px; font-size:13px; color:#333;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21.5 2v6h-6"/><path d="M2.5 22v-6h6"/><path d="M2.5 11.5a10 10 0 0 1 18.8-4.3"/><path d="M21.5 12.5a10 10 0 0 1-18.8 4.2"/>
+                </svg>
+                <span>Sync Onda</span>
+            </button>
+        </form>
     </div>
     <div class="operatore-info" id="operatoreInfo">
         <img src="{{ asset('images/icons8-utente-uomo-cerchiato-50.png') }}" alt="Operatore">
@@ -409,23 +420,33 @@
         <span>Storico consegne</span>
     </a>
     <hr style="margin:4px 18px;">
-    <a href="#" class="sidebar-item" onclick="toggleNotePanel(); closeSidebar(); return false;">
+    <a href="#" class="sidebar-item" data-bs-toggle="modal" data-bs-target="#modalNoteConsegne" onclick="closeSidebar(); caricaNote();">
         <span class="kpi-inline" style="color:#0d6efd;">&#9998;</span>
         <span>Note consegne</span>
     </a>
 </div>
 
-<!-- Ricerca + matita note + pannello inline -->
+<!-- Ricerca + matita note -->
 <div style="display:flex; align-items:center; gap:8px; margin:12px 8px; flex-wrap:nowrap;">
     <input type="text" id="searchBox" class="form-control search-box" placeholder="Cerca commessa, cliente, descrizione..." style="margin:0; flex:1; min-width:200px;">
-    <button onclick="toggleNotePanel()" title="Note consegne" style="background:none; border:none; cursor:pointer; font-size:24px; color:#0d6efd; padding:4px 8px; position:relative;">&#9998;<span id="noteConsegneBadge" style="display:none; position:absolute; top:-2px; right:-2px; background:#dc3545; color:#fff; border-radius:50%; width:16px; height:16px; font-size:10px; font-weight:bold; text-align:center; line-height:16px;">!</span></button>
-    <div id="notePanel" style="display:none; padding:8px 14px; background:#fff; border:2px solid #0d6efd; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.1); flex:0 0 auto; white-space:nowrap;">
-        <div style="display:flex; align-items:center; gap:8px;">
-            <strong style="color:#0d6efd; font-size:13px; white-space:nowrap;">Note consegne</strong>
-            <textarea id="notaContenuto" rows="18" class="form-control" style="border-color:#0d6efd; font-size:14px; width:700px; min-height:400px; resize:vertical;" placeholder="Note consegne..."></textarea>
-            <button onclick="salvaNote()" class="btn btn-primary btn-sm" style="font-size:12px; padding:4px 14px; white-space:nowrap;">Salva</button>
-            <span id="noteSaveStatus" style="font-size:11px; color:#6c757d; white-space:nowrap;"></span>
-            <button onclick="toggleNotePanel()" style="background:none; border:none; font-size:16px; cursor:pointer; color:#666; line-height:1; padding:0 4px;">&times;</button>
+    <button data-bs-toggle="modal" data-bs-target="#modalNoteConsegne" onclick="caricaNote()" title="Note consegne" style="background:none; border:none; cursor:pointer; font-size:24px; color:#0d6efd; padding:4px 8px; position:relative;">&#9998;<span id="noteConsegneBadge" style="display:none; position:absolute; top:-2px; right:-2px; background:#dc3545; color:#fff; border-radius:50%; width:16px; height:16px; font-size:10px; font-weight:bold; text-align:center; line-height:16px;">!</span></button>
+</div>
+
+<!-- Modale Note Consegne -->
+<div class="modal fade" id="modalNoteConsegne" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#0d6efd; color:#fff; padding:12px 20px;">
+                <h5 class="modal-title" style="font-weight:700;">Note Consegne</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="padding:20px;">
+                <textarea id="notaContenuto" rows="18" class="form-control" style="border-color:#0d6efd; font-size:14px; min-height:400px; resize:vertical;" placeholder="Note consegne..."></textarea>
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-top:12px;">
+                    <span id="noteSaveStatus" style="font-size:12px; color:#6c757d;"></span>
+                    <button onclick="salvaNote()" class="btn btn-primary" style="padding:8px 28px;">Salva</button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -435,12 +456,12 @@
 @if($fasiDDT->count() > 0)
 <h4 class="mx-2 mt-2" style="color:#6f42c1;">DDT Emesse da Onda</h4>
 <div class="table-wrapper">
-    <table class="table table-bordered table-sm" id="tabDDT">
+    <table class="table table-bordered table-sm sortable" id="tabDDT">
         <thead style="background:#6f42c1; color:#fff;">
             <tr>
                 <th>Azione</th>
-                <th>Commessa</th>
-                <th>Cliente</th>
+                <th data-sort="text" style="cursor:pointer;">Commessa <span class="sort-arrow">▼</span></th>
+                <th data-sort="text" style="cursor:pointer;">Cliente <span class="sort-arrow">▼</span></th>
                 <th>Cod. Articolo</th>
                 <th>Descrizione</th>
                 <th>Qta Ordine</th>
@@ -463,6 +484,9 @@
                     <td style="white-space:nowrap;">
                         <button class="btn-consegna btn-consegna-green" onclick="apriModalConsegnaDDT({{ $fase->id }}, 'totale')">Totale</button>
                         <button class="btn-consegna btn-consegna-orange" onclick="apriModalConsegnaDDT({{ $fase->id }}, 'parziale')">Parziale</button>
+                        @if($numDDT)
+                            <a href="{{ route('ddt.pdf', ltrim($numDDT, '0')) }}" target="_blank" class="btn btn-sm btn-outline-primary fw-bold" title="Stampa PDF DDT">PDF</a>
+                        @endif
                     </td>
                     <td><a href="{{ route('commesse.show', $fase->ordine->commessa ?? '-') }}" class="commessa-link">{{ $fase->ordine->commessa ?? '-' }}</a></td>
                     <td>{{ $fase->ordine->cliente_nome ?? '-' }}</td>
@@ -499,31 +523,24 @@
 <!-- Tabella fasi da spedire -->
 <h4 class="mx-2 mt-2" id="sezDaConsegnare" style="color:#28a745;">Da consegnare</h4>
 <div class="table-wrapper">
-    <table class="table table-bordered table-sm table-striped" id="tabDaSpedire">
+    <table class="table table-bordered table-sm table-striped sortable" id="tabDaSpedire">
         <thead class="table-dark">
             <tr>
                 <th>Azione</th>
                 <th>Note</th>
-                <th>Commessa</th>
-                <th>Cliente</th>
+                <th data-sort="text" style="cursor:pointer;">Commessa <span class="sort-arrow">▼</span></th>
+                <th data-sort="text" style="cursor:pointer;">Cliente <span class="sort-arrow">▼</span></th>
                 <th>Cod. Articolo</th>
                 <th>Qta</th>
                 <th>Descrizione</th>
-                <th>Data Consegna</th>
+                <th data-sort="date" style="cursor:pointer;">Data Consegna <span class="sort-arrow">▼</span></th>
                 <th>Progresso</th>
             </tr>
         </thead>
         <tbody>
             @forelse($fasiDaSpedire as $fase)
                 @php
-                    $rowClass = '';
-                    if ($fase->ordine && $fase->ordine->data_prevista_consegna) {
-                        $oggi = \Carbon\Carbon::today();
-                        $dataPrevista = \Carbon\Carbon::parse($fase->ordine->data_prevista_consegna);
-                        $diff = $oggi->diffInDays($dataPrevista, false);
-                        if ($diff < -5) $rowClass = 'row-scaduta';
-                        elseif ($diff <= 3) $rowClass = 'row-warning';
-                    }
+                    $rowClass = $fase->ordine ? $fase->ordine->getPercorsoClass() : '';
                     $pct = $fase->percentuale ?? 0;
                     $pctColor = $pct == 100 ? '#28a745' : ($pct >= 75 ? '#17a2b8' : ($pct >= 50 ? '#ffc107' : '#dc3545'));
                 @endphp
@@ -562,15 +579,15 @@
 @if($fasiParziali->count() > 0)
 <h4 class="mx-2 mt-4" style="color:#fd7e14;">Consegne Parziali</h4>
 <div class="table-wrapper">
-    <table class="table table-bordered table-sm" id="tabParziali">
+    <table class="table table-bordered table-sm sortable" id="tabParziali">
         <thead style="background:#fd7e14; color:#fff;">
             <tr>
                 <th>Azione</th>
-                <th>Commessa</th>
-                <th>Cliente</th>
+                <th data-sort="text" style="cursor:pointer;">Commessa <span class="sort-arrow">▼</span></th>
+                <th data-sort="text" style="cursor:pointer;">Cliente <span class="sort-arrow">▼</span></th>
                 <th>Cod. Articolo</th>
                 <th>Descrizione</th>
-                <th>Data cons. parziale</th>
+                <th data-sort="date" style="cursor:pointer;">Data cons. parziale <span class="sort-arrow">▼</span></th>
             </tr>
         </thead>
         <tbody>
@@ -596,16 +613,16 @@
 @if($fasiInAttesa->count() > 0)
 <h4 class="mx-2 mt-4" style="color:#ffc107;">In attesa (lavorazione in corso)</h4>
 <div class="table-wrapper">
-    <table class="table table-bordered table-sm" id="tabInAttesa">
+    <table class="table table-bordered table-sm sortable" id="tabInAttesa">
         <thead style="background:#ffc107; color:#000;">
             <tr>
                 <th>Azione</th>
-                <th>Commessa</th>
-                <th>Cliente</th>
+                <th data-sort="text" style="cursor:pointer;">Commessa <span class="sort-arrow">▼</span></th>
+                <th data-sort="text" style="cursor:pointer;">Cliente <span class="sort-arrow">▼</span></th>
                 <th>Cod. Articolo</th>
                 <th>Qta</th>
                 <th>Descrizione</th>
-                <th>Data Consegna</th>
+                <th data-sort="date" style="cursor:pointer;">Data Consegna <span class="sort-arrow">▼</span></th>
                 <th>Progresso fasi</th>
             </tr>
         </thead>
@@ -1325,18 +1342,9 @@ function csrfToken() {
 }
 
 // === Note giornaliere ===
-function toggleNotePanel() {
-    var panel = document.getElementById('notePanel');
-    if (panel.style.display === 'none') {
-        panel.style.display = 'block';
-        caricaNote();
-        document.getElementById('noteConsegneBadge').style.display = 'none';
-    } else {
-        panel.style.display = 'none';
-    }
-}
 
 function caricaNote() {
+    document.getElementById('noteConsegneBadge').style.display = 'none';
     fetch(urlToken('{{ route("spedizione.noteGiornaliere") }}?data={{ now()->toDateString() }}'), {
         headers: {'Accept': 'application/json'}
     })
@@ -1371,12 +1379,12 @@ function salvaNote() {
     .then(r => r.json())
     .then(d => {
         if (d.success) {
-            document.getElementById('noteSaveStatus').textContent = 'Salvato alle ' + new Date().toLocaleTimeString('it-IT');
-            document.getElementById('noteSaveStatus').style.color = '#198754';
             // Aggiorna timestamp per non auto-notificarsi
             fetch(urlToken('{{ route("spedizione.noteCheck") }}'), {headers:{'Accept':'application/json'}})
                 .then(function(r){return r.json();})
                 .then(function(dd){ if(dd.updated_at){ _noteLastUpdate=dd.updated_at; localStorage.setItem('noteConsegne_lastUpdate_sped',_noteLastUpdate); } });
+            // Chiudi modale
+            bootstrap.Modal.getInstance(document.getElementById('modalNoteConsegne')).hide();
         }
     })
     .catch(() => {
@@ -1442,7 +1450,9 @@ function showNoteToast(msg) {
     toast.onclick = function() {
         toast.remove();
         document.getElementById('noteConsegneBadge').style.display = 'none';
-        if (document.getElementById('notePanel').style.display === 'none') toggleNotePanel();
+        var modal = new bootstrap.Modal(document.getElementById('modalNoteConsegne'));
+        modal.show();
+        caricaNote();
     };
     document.body.appendChild(toast);
     setTimeout(function() { if (toast.parentNode) toast.remove(); }, 30000);
@@ -1522,5 +1532,42 @@ if (window.listenOrPoll) {
     checkNotificheEsterne();
     setInterval(checkNotificheEsterne, 15000);
 }
+
+// ===== Sort tabelle cliccando intestazione =====
+document.querySelectorAll('table.sortable th[data-sort]').forEach(function(th) {
+    th.addEventListener('click', function() {
+        var table = th.closest('table');
+        var tbody = table.querySelector('tbody');
+        var rows = Array.from(tbody.querySelectorAll('tr'));
+        var colIdx = Array.from(th.parentNode.children).indexOf(th);
+        var sortType = th.getAttribute('data-sort');
+        var asc = th.getAttribute('data-dir') !== 'asc';
+        th.setAttribute('data-dir', asc ? 'asc' : 'desc');
+
+        // Reset frecce
+        th.closest('tr').querySelectorAll('.sort-arrow').forEach(function(s) { s.textContent = ''; });
+        th.querySelector('.sort-arrow').textContent = asc ? ' \u25B2' : ' \u25BC';
+
+        rows.sort(function(a, b) {
+            var aVal = a.cells[colIdx] ? a.cells[colIdx].textContent.trim() : '';
+            var bVal = b.cells[colIdx] ? b.cells[colIdx].textContent.trim() : '';
+
+            if (sortType === 'date') {
+                // Converte dd/mm/yyyy in Date
+                var parseDate = function(s) {
+                    var p = s.split('/');
+                    return p.length === 3 ? new Date(p[2], p[1]-1, p[0]) : new Date(0);
+                };
+                aVal = parseDate(aVal);
+                bVal = parseDate(bVal);
+                return asc ? aVal - bVal : bVal - aVal;
+            } else {
+                return asc ? aVal.localeCompare(bVal, 'it') : bVal.localeCompare(aVal, 'it');
+            }
+        });
+
+        rows.forEach(function(row) { tbody.appendChild(row); });
+    });
+});
 </script>
 @endsection
