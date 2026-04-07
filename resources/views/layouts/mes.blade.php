@@ -554,6 +554,15 @@
 
         @yield('sidebar-items')
 
+        {{-- Link comuni a tutte le pagine --}}
+        <div class="mes-sidebar-section">
+            <div class="mes-sidebar-section-label">Comunicazione</div>
+            <a href="{{ route('chat.index') }}?op_token={{ request('op_token') }}" class="mes-sidebar-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                Chat MES
+            </a>
+        </div>
+
         <div class="mes-sidebar-footer">
             v2.0 &middot; {{ now()->format('d/m/Y') }}
         </div>
