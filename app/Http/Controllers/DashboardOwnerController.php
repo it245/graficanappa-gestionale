@@ -332,7 +332,7 @@ class DashboardOwnerController extends Controller
             // Prinect non disponibile, continua senza sync
         }
 
-        $fasi = OrdineFase::with(['ordine.fasi.faseCatalogo', 'faseCatalogo.reparto', 'operatori' => fn($q) => $q->select('operatori.id', 'nome')])
+        $fasi = OrdineFase::with(['ordine', 'faseCatalogo.reparto', 'operatori' => fn($q) => $q->select('operatori.id', 'nome')])
             ->where('stato', '<', 4)
             ->whereHas('ordine')
             ->get()
@@ -469,21 +469,23 @@ class DashboardOwnerController extends Controller
             ->get()
             ->groupBy('numero_ddt');
 
-        // Progresso fasi per commessa (tutte le fasi, incluse stato >= 4)
-        $tutteFasiCommesse = OrdineFase::with('ordine')
-            ->whereHas('ordine')
-            ->get()
-            ->groupBy(fn($f) => $f->ordine->commessa ?? '');
+        // Progresso fasi per commessa — singola query aggregata (invece di caricare tutte le fasi in memoria)
+        $progressoRaw = DB::table('ordine_fasi')
+            ->join('ordini', 'ordini.id', '=', 'ordine_fasi.ordine_id')
+            ->whereNull('ordine_fasi.deleted_at')
+            ->selectRaw("ordini.commessa,
+                COUNT(*) as totale,
+                SUM(CASE WHEN ordine_fasi.stato >= 3 THEN 1 ELSE 0 END) as terminate,
+                SUM(CASE WHEN ordine_fasi.stato = 2 THEN 1 ELSE 0 END) as avviate")
+            ->groupBy('ordini.commessa')
+            ->get();
         $progressoCommesse = [];
-        foreach ($tutteFasiCommesse as $comm => $fasiComm) {
-            $totale = $fasiComm->count();
-            $terminate = $fasiComm->where('stato', '>=', 3)->count();
-            $avviate = $fasiComm->where('stato', 2)->count();
-            $progressoCommesse[$comm] = [
-                'totale' => $totale,
-                'terminate' => $terminate,
-                'avviate' => $avviate,
-                'percentuale' => $totale > 0 ? round(($terminate / $totale) * 100) : 0,
+        foreach ($progressoRaw as $p) {
+            $progressoCommesse[$p->commessa] = [
+                'totale' => $p->totale,
+                'terminate' => $p->terminate,
+                'avviate' => $p->avviate,
+                'percentuale' => $p->totale > 0 ? round(($p->terminate / $p->totale) * 100) : 0,
             ];
         }
 
@@ -1224,50 +1226,19 @@ class DashboardOwnerController extends Controller
             $syncService->sincronizzaDaLive($rawOggi);
         } catch (\Exception $e) {}
 
-        // Calcola tempi medi storici per tipo fase (da Prinect e operatori)
-        $tempiMediPerFase = [];
-        $fasiCompletate = OrdineFase::with(['ordine', 'operatori'])
+        // Calcola tempi medi storici per tipo fase — singola query aggregata
+        $tempiMedi = DB::table('ordine_fasi')
             ->where('stato', '>=', 3)
             ->where('data_fine', '>=', Carbon::now()->subDays(90))
-            ->get();
-        foreach ($fasiCompletate as $fc) {
-            $tipo = $fc->fase;
-            $qtaCarta = $fc->ordine->qta_carta ?? 0;
-            if ($qtaCarta <= 0) continue;
-
-            // Ore effettive: prima Prinect, poi pivot operatore
-            $ore = null;
-            $secP = ($fc->tempo_avviamento_sec ?? 0) + ($fc->tempo_esecuzione_sec ?? 0);
-            if ($secP > 60) {
-                $ore = $secP / 3600;
-            } else {
-                // Calcola da operatori pivot
-                if ($fc->operatori->isNotEmpty()) {
-                    $secOp = 0;
-                    foreach ($fc->operatori as $op) {
-                        if ($op->pivot->data_inizio && $op->pivot->data_fine) {
-                            $s = Carbon::parse($op->pivot->data_fine)->diffInSeconds(Carbon::parse($op->pivot->data_inizio));
-                            $s -= ($op->pivot->secondi_pausa ?? 0);
-                            if ($s > 0) $secOp += $s;
-                        }
-                    }
-                    if ($secOp > 60) $ore = $secOp / 3600;
-                }
-            }
-            if ($ore && $ore > 0.01 && $ore < 200) {
-                if (!isset($tempiMediPerFase[$tipo])) $tempiMediPerFase[$tipo] = ['totOre' => 0, 'totQta' => 0, 'count' => 0];
-                $tempiMediPerFase[$tipo]['totOre'] += $ore;
-                $tempiMediPerFase[$tipo]['totQta'] += $qtaCarta;
-                $tempiMediPerFase[$tipo]['count']++;
-            }
-        }
-        // Calcola ore medie per foglio e avviamento medio
-        $tempiMedi = [];
-        foreach ($tempiMediPerFase as $tipo => $dati) {
-            if ($dati['count'] >= 2 && $dati['totQta'] > 0) {
-                $tempiMedi[$tipo] = round($dati['totOre'] / $dati['count'], 3); // ore medie per job
-            }
-        }
+            ->where(function ($q) {
+                $q->whereRaw('(COALESCE(tempo_avviamento_sec, 0) + COALESCE(tempo_esecuzione_sec, 0)) > 60');
+            })
+            ->selectRaw('fase, AVG((COALESCE(tempo_avviamento_sec, 0) + COALESCE(tempo_esecuzione_sec, 0)) / 3600.0) as ore_medie')
+            ->groupBy('fase')
+            ->havingRaw('COUNT(*) >= 2')
+            ->pluck('ore_medie', 'fase')
+            ->map(fn($v) => round((float)$v, 3))
+            ->toArray();
 
         $fasi = OrdineFase::with(['ordine', 'faseCatalogo.reparto', 'operatori'])
             ->where('stato', '<', 3)
