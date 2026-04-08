@@ -121,13 +121,15 @@
             </td>
         </tr>
         <tr>
-            <td rowspan="2" style="width:30%; border:1px solid #999; padding:2mm 3mm; vertical-align:top;">
+            <td rowspan="2" style="width:35%; border:1px solid #999; padding:2mm 3mm; vertical-align:top;">
                 <span class="label">TRASPORTO A CURA DEL</span><br>
-                <span class="checkbox {{ $trasportoCura === 'Cedente' ? 'checked' : '' }}">{{ $trasportoCura === 'Cedente' ? 'x' : '' }}</span> Cedente
-                &nbsp;
-                <span class="checkbox {{ $trasportoCura === 'Cessionario' ? 'checked' : '' }}">{{ $trasportoCura === 'Cessionario' ? 'x' : '' }}</span> Cessionario
-                &nbsp;
-                <span class="checkbox {{ $trasportoCura === 'Vettore' ? 'checked' : '' }}">{{ $trasportoCura === 'Vettore' ? 'x' : '' }}</span> Vettore
+                <div style="white-space:nowrap; margin-top:1mm;">
+                    <span class="checkbox {{ $trasportoCura === 'Cedente' ? 'checked' : '' }}">{{ $trasportoCura === 'Cedente' ? 'x' : '' }}</span> Cedente
+                    &nbsp;&nbsp;
+                    <span class="checkbox {{ $trasportoCura === 'Cessionario' ? 'checked' : '' }}">{{ $trasportoCura === 'Cessionario' ? 'x' : '' }}</span> Cessionario
+                    &nbsp;&nbsp;
+                    <span class="checkbox {{ $trasportoCura === 'Vettore' ? 'checked' : '' }}">{{ $trasportoCura === 'Vettore' ? 'x' : '' }}</span> Vettore
+                </div>
             </td>
             <td colspan="3" rowspan="2" style="border:1px solid #999; padding:2mm 3mm; vertical-align:top;">
                 <span class="label">INIZIO DEL TRASPORTO O CONSEGNA</span><br><br>
