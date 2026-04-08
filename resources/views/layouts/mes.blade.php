@@ -705,6 +705,30 @@
     })();
 
     /* ===========================================
+       CSRF Token Refresh (evita 419 Page Expired)
+       =========================================== */
+    // Refresh su pageshow (frecce avanti/indietro del browser)
+    window.addEventListener('pageshow', function(e) {
+        if (e.persisted) {
+            fetch('/csrf-refresh').then(function(r) { return r.json(); }).then(function(d) {
+                if (d.token) {
+                    var meta = document.querySelector('meta[name="csrf-token"]');
+                    if (meta) meta.setAttribute('content', d.token);
+                }
+            }).catch(function() {});
+        }
+    });
+    // Refresh ogni 30 minuti
+    setInterval(function() {
+        fetch('/csrf-refresh').then(function(r) { return r.json(); }).then(function(d) {
+            if (d.token) {
+                var meta = document.querySelector('meta[name="csrf-token"]');
+                if (meta) meta.setAttribute('content', d.token);
+            }
+        }).catch(function() {});
+    }, 30 * 60 * 1000);
+
+    /* ===========================================
        Sidebar Toggle (mobile)
        =========================================== */
     function toggleSidebar() {
