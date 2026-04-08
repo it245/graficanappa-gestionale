@@ -171,12 +171,12 @@
         </tbody>
     </table>
 
-    {{-- NOTE AGGIUNTIVE (righe testo dal DDT) --}}
+    {{-- NOTE AGGIUNTIVE (righe testo dal DDT, dentro la tabella articoli) --}}
     @if($noteRighe)
     <div class="note-text">{!! nl2br(e($noteRighe)) !!}</div>
     @endif
 
-    {{-- DISCLAIMER --}}
+    {{-- DISCLAIMER (una sola volta) --}}
     <div class="disclaimer">
         Eventuali contestazioni relative a quantità, qualità o conformità della merce del presente documento devono
         essere comunicate per iscritto (PEC, mail, o raccomandata) entro e non oltre 8 giorni dal ricevimento della
@@ -187,56 +187,43 @@
     <div class="footer">
         <table class="footer-table">
             <tr>
-                <td style="width:12%">
+                <td style="width:10%">
                     <div class="footer-label">Numero colli</div>
-                    <div class="footer-value">{{ $coda->NumeroColli ?? '' }}</div>
+                    <div class="footer-value">{{ ($coda->NumeroColli ?? 0) > 0 ? $coda->NumeroColli : '' }}</div>
                 </td>
-                <td style="width:23%">
+                <td style="width:20%">
                     <div class="footer-label">Aspetto esteriore dei beni</div>
                     <div class="footer-value">{{ strtoupper($coda->AspettoEsteriore ?? '') }}</div>
                 </td>
-                <td style="width:32%">
+                <td style="width:8%">
+                    <div class="footer-label">Kg</div>
+                    <div class="footer-value">{{ $coda && $coda->Peso && $coda->Peso > 0 ? number_format($coda->Peso, 0, ',', '.') : '' }}</div>
+                </td>
+                <td style="width:62%">
                     <div class="footer-label">Firma del Conducente</div>
                 </td>
-                <td style="width:33%">
-                    <div class="footer-label">Firma del Cessionario</div>
-                </td>
             </tr>
         </table>
 
-        <table class="footer-table" style="margin-top:-1px;">
+        <table class="vettore-table" style="margin-top:-1px;">
             <tr>
-                <td style="width:12%">
-                    <div class="footer-label">Kg</div>
-                    <div class="footer-value">{{ $coda && $coda->Peso ? number_format($coda->Peso, 0, ',', '.') : '' }}</div>
+                <td style="width:20%">
+                    <div class="footer-label">VETTORE - Ditta</div>
+                    @if($coda && $coda->VettoreNome)
+                        <div style="font-size:8pt; font-weight:bold;">{{ $coda->VettoreNome }}</div>
+                    @endif
                 </td>
-                <td colspan="3">
-                    <div class="footer-label">Annotazioni</div>
-                    <div style="font-size:8pt;">{{ $noteRighe }}</div>
+                <td style="width:35%">
+                    <div class="footer-label">Residenza domicilio (Comune, via e n.)</div>
+                    @if($coda && $coda->VettoreIndirizzo)
+                        <div style="font-size:7pt;">{{ $coda->VettoreCitta }} - {{ $coda->VettoreIndirizzo }}</div>
+                    @endif
                 </td>
+                <td style="width:15%"><div class="footer-label">Data del ritiro</div></td>
+                <td style="width:15%"><div class="footer-label">Ora del ritiro</div></td>
+                <td style="width:15%"><div class="footer-label">Firma</div></td>
             </tr>
         </table>
-
-        <div class="vettore-row">
-            <table class="vettore-table">
-                <tr>
-                    <td style="width:20%">
-                        <div class="footer-label">VETTORE - Ditta</div>
-                        @if($coda && $coda->VettoreNome)
-                            <div style="font-size:8pt; font-weight:bold;">{{ $coda->VettoreNome }}</div>
-                        @endif
-                    </td>
-                    <td style="width:35%">
-                        <div class="footer-label">Residenza domicilio (Comune, via e n.)</div>
-                        @if($coda && $coda->VettoreIndirizzo)
-                            <div style="font-size:7pt;">{{ $coda->VettoreCitta }} - {{ $coda->VettoreIndirizzo }}</div>
-                        @endif
-                    </td>
-                    <td style="width:15%"><div class="footer-label">Data del ritiro</div></td>
-                    <td style="width:15%"><div class="footer-label">Ora del ritiro</div></td>
-                    <td style="width:15%"><div class="footer-label">Firma</div></td>
-                </tr>
-            </table>
         </div>
     </div>
 
