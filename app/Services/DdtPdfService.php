@@ -119,11 +119,11 @@ class DdtPdfService
                    c.DataTrasporto, c.OraTrasporto,
                    c.CodTrasporto AS TrasportoACura,
                    c.CausaleTrasporto,
-                   COALESCE(NULLIF(c.RagSocSped, ''), dest.RagioneSociale) AS DestNome,
-                   COALESCE(NULLIF(c.IndirizzoSped, ''), dest.Indirizzo) AS DestIndirizzo,
-                   COALESCE(NULLIF(c.CapSped, ''), dest.Cap) AS DestCap,
-                   COALESCE(NULLIF(c.CittaSped, ''), dest.Citta) AS DestCitta,
-                   COALESCE(NULLIF(c.ProvSped, ''), dest.Provincia) AS DestProvincia,
+                   COALESCE(NULLIF(LTRIM(RTRIM(c.RagSocSped)), ''), dest.RagioneSociale) AS DestNome,
+                   COALESCE(NULLIF(LTRIM(RTRIM(c.IndirizzoSped)), ''), dest.Indirizzo) AS DestIndirizzo,
+                   COALESCE(NULLIF(LTRIM(RTRIM(c.CapSped)), ''), dest.Cap) AS DestCap,
+                   COALESCE(NULLIF(LTRIM(RTRIM(c.CittaSped)), ''), dest.Citta) AS DestCitta,
+                   COALESCE(NULLIF(LTRIM(RTRIM(c.ProvSped)), ''), dest.Provincia) AS DestProvincia,
                    dest.RagioneSociale2 AS DestTelefono,
                    v.RagioneSociale AS VettoreNome,
                    v.Indirizzo AS VettoreIndirizzo, v.Citta AS VettoreCitta
@@ -131,8 +131,7 @@ class DdtPdfService
             LEFT JOIN STDAnagrafiche v ON c.IdVettore1 = v.IdAnagrafica
             LEFT JOIN ATTDocTeste t2 ON c.IdDoc = t2.IdDoc
             LEFT JOIN STDAnagIndirizzi dest ON dest.IdAnagrafica = t2.IdAnagrafica
-                AND dest.IdIndirizzo = c.IdIndirizzoMerce
-                AND c.IdIndirizzoMerce IS NOT NULL AND c.IdIndirizzoMerce > 0
+                AND CAST(dest.IdIndirizzo AS VARCHAR) = CAST(c.IdIndirizzoMerce AS VARCHAR)
             WHERE c.IdDoc = ?
         ", [$testa->IdDoc]);
 
