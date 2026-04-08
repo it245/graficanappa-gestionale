@@ -28,6 +28,11 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     @yield('vendor-css')
 
+    {{-- Preload risorse critiche --}}
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" as="script">
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+
     <style>
     /* ============================================
        MES Design System - CSS Custom Properties
@@ -532,6 +537,28 @@
     @yield('styles')
 </head>
 <body>
+
+    {{-- Loading bar per navigazione veloce --}}
+    <div id="mesLoadingBar" style="position:fixed;top:0;left:0;width:0;height:3px;background:var(--accent,#2563eb);z-index:99999;transition:width 0.3s ease;"></div>
+    <style>
+    #mesLoadingBar.active { width: 70%; transition: width 2s ease; }
+    #mesLoadingBar.done { width: 100%; transition: width 0.2s ease; opacity: 0; transition: width 0.2s ease, opacity 0.3s ease 0.2s; }
+    </style>
+    <script>
+    // Mostra barra di caricamento su ogni click di navigazione
+    document.addEventListener('click', function(e) {
+        var link = e.target.closest('a[href]');
+        if (!link) return;
+        var href = link.getAttribute('href');
+        if (!href || href.startsWith('#') || href.startsWith('javascript:') || link.target === '_blank') return;
+        var bar = document.getElementById('mesLoadingBar');
+        if (bar) { bar.style.width = '0'; bar.className = ''; requestAnimationFrame(function() { bar.className = 'active'; }); }
+    });
+    window.addEventListener('pageshow', function() {
+        var bar = document.getElementById('mesLoadingBar');
+        if (bar) { bar.className = 'done'; setTimeout(function() { bar.style.width = '0'; bar.className = ''; }, 500); }
+    });
+    </script>
 
     {{-- Dark mode: apply class before paint --}}
     <script>
