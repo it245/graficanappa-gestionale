@@ -92,8 +92,13 @@ class DdtPdfService
               AND YEAR(t.DataDocumento) = YEAR(GETDATE())
         ", [$numeroPadded]);
 
-        // Fallback: se non trovato nell'anno corrente, cerca il più recente
+        // Se non trovato nell'anno corrente → 404 (no fallback ad anni precedenti)
         if (!$testa) {
+            return null;
+        }
+
+        // Codice morto rimosso — era il fallback che prendeva DDT di anni precedenti
+        if (false) {
             $testa = DB::connection('onda')->selectOne("
                 SELECT t.IdDoc, t.NumeroDocumento, t.DataDocumento, t.DataRegistrazione,
                        a.RagioneSociale AS ClienteNome,
