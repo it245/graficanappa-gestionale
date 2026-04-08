@@ -35,13 +35,14 @@ class EtichettaController extends Controller
             'nicola', 'printing', 'area grafica',
         ];
 
+        $clienteLower = strtolower($cliente);
+
         // Clienti senza intestazione (né Grafica Nappa né nome cliente)
         $clientiNoHeader = ['printing', 'area grafica'];
         $isNoHeader = false;
         foreach ($clientiNoHeader as $cn) {
             if (str_contains($clienteLower, $cn)) { $isNoHeader = true; break; }
         }
-        $clienteLower = strtolower($cliente);
         $isSimpleLabel = false;
         foreach ($clientiSemplici as $cs) {
             if (str_contains($clienteLower, $cs)) {
