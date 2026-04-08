@@ -1,0 +1,1535 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manuale Utente MES v2.0 — Grafica Nappa srl</title>
+    <style>
+        @page {
+            margin: 1.5cm;
+            size: A4;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 11pt;
+            line-height: 1.6;
+            color: #333;
+            max-width: 210mm;
+            margin: 0 auto;
+            padding: 20px 30px;
+            background: #fff;
+        }
+
+        /* Title Page */
+        .title-page {
+            page-break-after: always;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 90vh;
+            text-align: center;
+        }
+
+        .title-page .company-logo {
+            font-size: 36pt;
+            color: #d11317;
+            font-weight: 800;
+            margin-bottom: 40px;
+            letter-spacing: 3px;
+        }
+
+        .title-page h1 {
+            font-size: 28pt;
+            color: #d11317;
+            margin-bottom: 10px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            border: none;
+            padding: 0;
+        }
+
+        .title-page h2 {
+            font-size: 18pt;
+            color: #555;
+            font-weight: 400;
+            margin-bottom: 30px;
+            border: none;
+            padding: 0;
+        }
+
+        .title-page .version {
+            font-size: 14pt;
+            color: #d11317;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .title-page .date {
+            font-size: 12pt;
+            color: #777;
+            margin-bottom: 40px;
+        }
+
+        .title-page .author {
+            font-size: 11pt;
+            color: #555;
+            border-top: 2px solid #d11317;
+            padding-top: 15px;
+            margin-top: 20px;
+        }
+
+        /* TOC */
+        .toc {
+            page-break-after: always;
+        }
+
+        .toc h2 {
+            font-size: 18pt;
+            color: #d11317;
+            border-bottom: 3px solid #d11317;
+            padding-bottom: 8px;
+            margin-bottom: 20px;
+            border-left: none;
+            padding-left: 0;
+        }
+
+        .toc ol {
+            list-style: none;
+            padding: 0;
+            counter-reset: toc-counter;
+        }
+
+        .toc > ol > li {
+            counter-increment: toc-counter;
+            margin-bottom: 12px;
+        }
+
+        .toc > ol > li > a {
+            font-size: 12pt;
+            font-weight: 600;
+            color: #d11317;
+            text-decoration: none;
+        }
+
+        .toc > ol > li > a::before {
+            content: counter(toc-counter) ". ";
+        }
+
+        .toc > ol > li > a:hover {
+            text-decoration: underline;
+        }
+
+        .toc > ol > li > ol {
+            list-style: none;
+            padding-left: 25px;
+            margin-top: 4px;
+            counter-reset: toc-sub;
+        }
+
+        .toc > ol > li > ol > li {
+            counter-increment: toc-sub;
+            margin-bottom: 3px;
+        }
+
+        .toc > ol > li > ol > li > a {
+            font-size: 10.5pt;
+            color: #444;
+            text-decoration: none;
+        }
+
+        .toc > ol > li > ol > li > a:hover {
+            color: #d11317;
+        }
+
+        /* Headers */
+        h1 {
+            font-size: 20pt;
+            color: #d11317;
+            border-left: 5px solid #d11317;
+            padding-left: 15px;
+            margin-top: 40px;
+            margin-bottom: 15px;
+            page-break-after: avoid;
+        }
+
+        h2 {
+            font-size: 15pt;
+            color: #d11317;
+            border-left: 3px solid #d11317;
+            padding-left: 12px;
+            margin-top: 30px;
+            margin-bottom: 10px;
+            page-break-after: avoid;
+        }
+
+        h3 {
+            font-size: 12pt;
+            color: #444;
+            margin-top: 20px;
+            margin-bottom: 8px;
+            font-weight: 600;
+            page-break-after: avoid;
+        }
+
+        h4 {
+            font-size: 11pt;
+            color: #555;
+            margin-top: 15px;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        p {
+            margin-bottom: 10px;
+        }
+
+        ul, ol {
+            margin-bottom: 10px;
+            padding-left: 25px;
+        }
+
+        li {
+            margin-bottom: 4px;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            font-size: 10pt;
+            page-break-inside: auto;
+        }
+
+        thead {
+            display: table-header-group;
+        }
+
+        tr {
+            page-break-inside: avoid;
+        }
+
+        th {
+            background-color: #d11317;
+            color: #fff;
+            padding: 8px 10px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 10pt;
+        }
+
+        td {
+            padding: 6px 10px;
+            border-bottom: 1px solid #ddd;
+            vertical-align: top;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tr:hover {
+            background-color: #f0f0f0;
+        }
+
+        /* Info box */
+        .info-box {
+            background: #f5f7fa;
+            border: 1px solid #d0d5dd;
+            border-left: 4px solid #667085;
+            padding: 12px 16px;
+            margin: 15px 0;
+            border-radius: 4px;
+            page-break-inside: avoid;
+        }
+
+        .info-box strong {
+            color: #333;
+        }
+
+        /* Warning box */
+        .warning-box {
+            background: #fefce8;
+            border: 1px solid #fbbf24;
+            border-left: 4px solid #f59e0b;
+            padding: 12px 16px;
+            margin: 15px 0;
+            border-radius: 4px;
+            page-break-inside: avoid;
+        }
+
+        /* Success box */
+        .success-box {
+            background: #f0fdf4;
+            border: 1px solid #86efac;
+            border-left: 4px solid #22c55e;
+            padding: 12px 16px;
+            margin: 15px 0;
+            border-radius: 4px;
+            page-break-inside: avoid;
+        }
+
+        /* Danger box */
+        .danger-box {
+            background: #fef2f2;
+            border: 1px solid #fca5a5;
+            border-left: 4px solid #dc2626;
+            padding: 12px 16px;
+            margin: 15px 0;
+            border-radius: 4px;
+            page-break-inside: avoid;
+        }
+
+        /* Step boxes */
+        .step {
+            background: #f8f9fa;
+            border: 1px solid #e2e5e9;
+            border-radius: 6px;
+            padding: 14px 18px;
+            margin: 12px 0;
+            page-break-inside: avoid;
+        }
+
+        .step-number {
+            display: inline-block;
+            background: #d11317;
+            color: #fff;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 28px;
+            font-weight: 700;
+            font-size: 13px;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+
+        .step-title {
+            font-weight: 600;
+            font-size: 11pt;
+            color: #222;
+            vertical-align: middle;
+        }
+
+        .step-desc {
+            margin-top: 8px;
+            margin-left: 38px;
+            color: #444;
+        }
+
+        /* Badge */
+        .badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 4px;
+            font-size: 9pt;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .badge-grigio { background: #6b7280; }
+        .badge-blu { background: #3b82f6; }
+        .badge-giallo { background: #f59e0b; color: #333; }
+        .badge-verde { background: #22c55e; }
+        .badge-rosso { background: #dc2626; }
+        .badge-viola { background: #8b5cf6; }
+
+        /* Color swatch */
+        .color-swatch {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+            vertical-align: middle;
+            margin-right: 6px;
+            border: 1px solid #ccc;
+        }
+
+        /* Keyboard shortcut */
+        kbd {
+            display: inline-block;
+            padding: 2px 6px;
+            font-family: 'Segoe UI', monospace;
+            font-size: 9pt;
+            background: #f1f3f5;
+            border: 1px solid #ced4da;
+            border-radius: 3px;
+            box-shadow: 0 1px 0 #adb5bd;
+        }
+
+        /* Screenshot placeholder */
+        .screenshot {
+            background: #f0f0f0;
+            border: 2px dashed #ccc;
+            border-radius: 6px;
+            padding: 30px;
+            text-align: center;
+            color: #888;
+            font-style: italic;
+            margin: 15px 0;
+        }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 60px;
+            padding-top: 15px;
+            border-top: 2px solid #d11317;
+            text-align: center;
+            font-size: 9pt;
+            color: #777;
+        }
+
+        .page-footer .company {
+            font-weight: 700;
+            color: #d11317;
+        }
+
+        /* Print */
+        @media print {
+            body {
+                padding: 0;
+            }
+
+            .no-print {
+                display: none;
+            }
+
+            h1, h2 {
+                page-break-after: avoid;
+            }
+
+            .step, .info-box, .warning-box, .success-box, .danger-box {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ==================== TITLE PAGE ==================== -->
+<div class="title-page">
+    <div class="company-logo">GRAFICA NAPPA</div>
+    <h1>Manuale Utente</h1>
+    <h2>Sistema MES v2.0</h2>
+    <div class="version">Versione 2.0</div>
+    <div class="date">Aprile 2026</div>
+    <div class="author">
+        <strong>Grafica Nappa srl</strong><br>
+        Via Appia, 234 — 81020 San Nicola la Strada (CE)<br><br>
+        Giovanni Pietropaolo — Responsabile IT
+    </div>
+</div>
+
+<!-- ==================== TABLE OF CONTENTS ==================== -->
+<div class="toc">
+    <h2>Indice</h2>
+    <ol>
+        <li>
+            <a href="#introduzione">Introduzione</a>
+            <ol>
+                <li><a href="#cosae">Cos'e il MES</a></li>
+                <li><a href="#accesso">Come accedere</a></li>
+                <li><a href="#login">Login con codice operatore</a></li>
+            </ol>
+        </li>
+        <li>
+            <a href="#operatore">Dashboard Operatore</a>
+            <ol>
+                <li><a href="#op-tabella">Come leggere la tabella fasi</a></li>
+                <li><a href="#op-avvia">Avviare una fase</a></li>
+                <li><a href="#op-pausa">Mettere in pausa</a></li>
+                <li><a href="#op-termina">Terminare una fase</a></li>
+                <li><a href="#op-riprendi">Riprendere dopo una pausa</a></li>
+                <li><a href="#op-cerca">Cercare una commessa</a></li>
+                <li><a href="#op-colori">Significato dei colori</a></li>
+            </ol>
+        </li>
+        <li>
+            <a href="#owner">Dashboard Owner</a>
+            <ol>
+                <li><a href="#owner-kpi">KPI giornalieri</a></li>
+                <li><a href="#owner-filtri">Filtri</a></li>
+                <li><a href="#owner-modifica">Modificare una cella</a></li>
+                <li><a href="#owner-sidebar">Sidebar di navigazione</a></li>
+                <li><a href="#owner-darkmode">Dark mode</a></li>
+                <li><a href="#owner-legenda">Legenda</a></li>
+            </ol>
+        </li>
+        <li>
+            <a href="#scheduling">Scheduling</a>
+            <ol>
+                <li><a href="#sched-gantt">Diagramma di Gantt</a></li>
+                <li><a href="#sched-colori">Colori del Gantt</a></li>
+                <li><a href="#sched-filtri">Filtri per reparto</a></li>
+                <li><a href="#sched-viste">Viste disponibili</a></li>
+                <li><a href="#sched-excel">Export Excel</a></li>
+            </ol>
+        </li>
+        <li>
+            <a href="#spedizione">Dashboard Spedizione</a>
+            <ol>
+                <li><a href="#sped-sezioni">Sezioni della dashboard</a></li>
+                <li><a href="#sped-consegna">Confermare una consegna</a></li>
+                <li><a href="#sped-ddt">Generare DDT in PDF</a></li>
+                <li><a href="#sped-brt">BRT Tracking</a></li>
+                <li><a href="#sped-note">Note consegne</a></li>
+            </ol>
+        </li>
+        <li>
+            <a href="#chat">Chat MES</a>
+            <ol>
+                <li><a href="#chat-widget">Il widget chat</a></li>
+                <li><a href="#chat-canali">Canali per reparto</a></li>
+                <li><a href="#chat-menzioni">Menzioni</a></li>
+                <li><a href="#chat-notifiche">Notifiche</a></li>
+            </ol>
+        </li>
+        <li>
+            <a href="#prestampa">Prestampa</a>
+            <ol>
+                <li><a href="#pre-lista">Lista commesse</a></li>
+                <li><a href="#pre-dettaglio">Dettaglio commessa</a></li>
+                <li><a href="#pre-fustelle">Note fustelle</a></li>
+            </ol>
+        </li>
+        <li>
+            <a href="#etichette">Etichette</a>
+            <ol>
+                <li><a href="#eti-stampa">Come stampare un'etichetta</a></li>
+                <li><a href="#eti-clienti">Layout per cliente</a></li>
+                <li><a href="#eti-campi">Campi editabili</a></li>
+            </ol>
+        </li>
+        <li>
+            <a href="#presenze">Presenze</a>
+            <ol>
+                <li><a href="#pres-visualizza">Visualizzare le presenze</a></li>
+                <li><a href="#pres-filtro">Filtro per dipendente</a></li>
+            </ol>
+        </li>
+        <li>
+            <a href="#faq">FAQ e Risoluzione Problemi</a>
+        </li>
+    </ol>
+</div>
+
+<!-- ==================== 1. INTRODUZIONE ==================== -->
+<h1 id="introduzione">1. Introduzione</h1>
+
+<h2 id="cosae">1.1 Cos'e il MES</h2>
+<p>
+    Il <strong>MES</strong> (Manufacturing Execution System) e il sistema gestionale di produzione di Grafica Nappa.
+    Serve a monitorare e gestire in tempo reale tutte le fasi di lavorazione delle commesse, dalla prestampa
+    alla spedizione.
+</p>
+<p>Attraverso il MES ogni operatore puo:</p>
+<ul>
+    <li>Vedere le fasi di lavoro assegnate al proprio reparto</li>
+    <li>Avviare, mettere in pausa e terminare le lavorazioni</li>
+    <li>Consultare le informazioni della commessa (cliente, quantita, descrizione)</li>
+    <li>Comunicare con gli altri reparti tramite la chat integrata</li>
+</ul>
+<p>I responsabili (owner) hanno accesso a una dashboard completa con KPI, filtri avanzati e strumenti di scheduling.</p>
+
+<h2 id="accesso">1.2 Come accedere</h2>
+<div class="step">
+    <span class="step-number">1</span>
+    <span class="step-title">Aprire il browser</span>
+    <div class="step-desc">
+        Utilizzare Google Chrome o Microsoft Edge (consigliati). Il sistema funziona anche da tablet e smartphone.
+    </div>
+</div>
+<div class="step">
+    <span class="step-number">2</span>
+    <span class="step-title">Digitare l'indirizzo</span>
+    <div class="step-desc">
+        Nella barra degli indirizzi, digitare: <strong>http://192.168.1.60</strong> e premere Invio.
+    </div>
+</div>
+<div class="step">
+    <span class="step-number">3</span>
+    <span class="step-title">Raggiungere la pagina di login</span>
+    <div class="step-desc">
+        Si aprira la pagina principale del MES. Se non si e gia autenticati, si verra reindirizzati alla pagina di login.
+    </div>
+</div>
+
+<div class="info-box">
+    <strong>Nota:</strong> Il MES e accessibile solo dalla rete interna aziendale (192.168.1.x).
+    Assicurarsi di essere connessi alla rete Wi-Fi o cablata dell'azienda.
+</div>
+
+<h2 id="login">1.3 Login con codice operatore</h2>
+<p>Per accedere al sistema:</p>
+<div class="step">
+    <span class="step-number">1</span>
+    <span class="step-title">Inserire il codice operatore</span>
+    <div class="step-desc">
+        Ogni operatore dispone di un codice personale assegnato dall'amministratore. Inserirlo nel campo "Codice Operatore".
+    </div>
+</div>
+<div class="step">
+    <span class="step-number">2</span>
+    <span class="step-title">Premere "Accedi"</span>
+    <div class="step-desc">
+        Il sistema riconoscera il reparto di appartenenza e mostrera automaticamente la dashboard corretta
+        (operatore, owner, spedizione o prestampa).
+    </div>
+</div>
+
+<div class="warning-box">
+    <strong>Attenzione:</strong> Non condividere il proprio codice operatore con i colleghi.
+    Ogni azione registrata nel sistema e associata al codice di chi ha effettuato il login.
+</div>
+
+<!-- ==================== 2. DASHBOARD OPERATORE ==================== -->
+<h1 id="operatore">2. Dashboard Operatore</h1>
+<p>
+    La dashboard operatore e la schermata principale di lavoro. Mostra tutte le fasi assegnate al reparto
+    dell'operatore, ordinate per priorita.
+</p>
+
+<h2 id="op-tabella">2.1 Come leggere la tabella fasi</h2>
+<p>La tabella mostra le fasi di lavoro con le seguenti colonne:</p>
+<table>
+    <thead>
+        <tr>
+            <th>Colonna</th>
+            <th>Descrizione</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr><td><strong>Commessa</strong></td><td>Numero della commessa (es. 66575)</td></tr>
+        <tr><td><strong>Cliente</strong></td><td>Nome del cliente</td></tr>
+        <tr><td><strong>Descrizione</strong></td><td>Descrizione del prodotto</td></tr>
+        <tr><td><strong>Quantita</strong></td><td>Numero di pezzi da produrre</td></tr>
+        <tr><td><strong>Fase</strong></td><td>Nome della fase di lavorazione</td></tr>
+        <tr><td><strong>Stato</strong></td><td>Stato attuale della fase (vedi legenda colori)</td></tr>
+        <tr><td><strong>Azioni</strong></td><td>Bottoni per avviare, mettere in pausa o terminare</td></tr>
+    </tbody>
+</table>
+
+<div class="info-box">
+    <strong>Prossime commesse:</strong> In fondo alla pagina e presente la sezione "Prossime commesse",
+    che mostra le lavorazioni in arrivo ordinate per priorita nel tuo reparto. Sono escluse le commesse
+    gia completate.
+</div>
+
+<h2 id="op-avvia">2.2 Avviare una fase</h2>
+<div class="step">
+    <span class="step-number">1</span>
+    <span class="step-title">Individuare la fase da avviare</span>
+    <div class="step-desc">
+        La fase deve essere nello stato <span class="badge badge-blu">Pronto</span> (stato 1).
+        Significa che tutte le fasi precedenti del ciclo produttivo sono state completate.
+    </div>
+</div>
+<div class="step">
+    <span class="step-number">2</span>
+    <span class="step-title">Premere il bottone verde "Avvia"</span>
+    <div class="step-desc">
+        Il bottone verde avviera la lavorazione. Lo stato passera a <span class="badge badge-giallo">Avviato</span> (stato 2)
+        e il sistema iniziera a conteggiare il tempo di lavorazione.
+    </div>
+</div>
+
+<div class="warning-box">
+    <strong>Importante:</strong> Se il bottone "Avvia" non e visibile, significa che le fasi precedenti non sono ancora state terminate. Verificare lo stato della commessa o contattare il reparto precedente.
+</div>
+
+<h2 id="op-pausa">2.3 Mettere in pausa</h2>
+<p>Se e necessario interrompere temporaneamente una lavorazione:</p>
+<div class="step">
+    <span class="step-number">1</span>
+    <span class="step-title">Premere il bottone giallo "Pausa"</span>
+    <div class="step-desc">
+        Apparira sulla fase attualmente in lavorazione (stato 2).
+    </div>
+</div>
+<div class="step">
+    <span class="step-number">2</span>
+    <span class="step-title">Selezionare il motivo della pausa</span>
+    <div class="step-desc">
+        Il sistema chiedera di indicare il motivo dell'interruzione. Le opzioni disponibili includono:
+        <ul>
+            <li><strong>Pausa pranzo</strong> — interruzione per il pasto</li>
+            <li><strong>Cambio lavoro</strong> — passaggio ad altra commessa</li>
+            <li><strong>Attesa materiale</strong> — materiale non ancora disponibile</li>
+            <li><strong>Guasto macchina</strong> — problema tecnico sulla macchina</li>
+            <li><strong>Altro</strong> — motivo generico</li>
+        </ul>
+    </div>
+</div>
+
+<div class="info-box">
+    <strong>Nota:</strong> Il tempo di pausa viene registrato separatamente e non viene conteggiato nelle ore di lavorazione effettive.
+</div>
+
+<h2 id="op-termina">2.4 Terminare una fase</h2>
+<div class="step">
+    <span class="step-number">1</span>
+    <span class="step-title">Premere il bottone rosso "Termina"</span>
+    <div class="step-desc">
+        Disponibile sulle fasi in stato <span class="badge badge-giallo">Avviato</span> (stato 2).
+    </div>
+</div>
+<div class="step">
+    <span class="step-number">2</span>
+    <span class="step-title">Inserire la quantita prodotta</span>
+    <div class="step-desc">
+        Si aprira un modulo dove indicare:
+        <ul>
+            <li><strong>Quantita buona</strong> — il numero di pezzi conformi prodotti</li>
+            <li><strong>Scarti</strong> — il numero di pezzi scartati</li>
+        </ul>
+    </div>
+</div>
+<div class="step">
+    <span class="step-number">3</span>
+    <span class="step-title">Confermare</span>
+    <div class="step-desc">
+        Premere "Conferma" per terminare la fase. Lo stato passera a <span class="badge badge-verde">Terminato</span> (stato 3)
+        e la fase successiva nel ciclo diventera disponibile (stato 1 — Pronto).
+    </div>
+</div>
+
+<h2 id="op-riprendi">2.5 Riprendere dopo una pausa</h2>
+<div class="step">
+    <span class="step-number">1</span>
+    <span class="step-title">Premere il bottone "Riprendi"</span>
+    <div class="step-desc">
+        Sulla fase in pausa apparira il bottone per riprendere la lavorazione.
+        Il conteggio del tempo ripartira dal punto in cui era stato interrotto.
+    </div>
+</div>
+
+<h2 id="op-cerca">2.6 Cercare una commessa</h2>
+<p>Per trovare rapidamente una commessa specifica:</p>
+<div class="step">
+    <span class="step-number">1</span>
+    <span class="step-title">Utilizzare la barra di ricerca</span>
+    <div class="step-desc">
+        In alto nella dashboard e presente un campo di ricerca. Digitare il numero della commessa,
+        il nome del cliente o parte della descrizione.
+    </div>
+</div>
+<div class="step">
+    <span class="step-number">2</span>
+    <span class="step-title">Risultati in tempo reale</span>
+    <div class="step-desc">
+        La tabella si filtrera automaticamente mostrando solo le fasi corrispondenti alla ricerca.
+    </div>
+</div>
+
+<h2 id="op-colori">2.7 Significato dei colori</h2>
+
+<h3>Colori delle righe commessa</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Colore</th>
+            <th>Significato</th>
+            <th>Esempio</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><span class="color-swatch" style="background:#e8f5e9"></span> Verde chiaro</td>
+            <td>Commessa base / standard</td>
+            <td>Lavorazione normale senza urgenze</td>
+        </tr>
+        <tr>
+            <td><span class="color-swatch" style="background:#fff9c4"></span> Giallo chiaro</td>
+            <td>Rilievi</td>
+            <td>Commessa con lavorazione rilievi a secco o caldo</td>
+        </tr>
+        <tr>
+            <td><span class="color-swatch" style="background:#ffe0b2"></span> Arancione chiaro</td>
+            <td>Stampa a caldo</td>
+            <td>Commessa con lavorazione JOH (caldo)</td>
+        </tr>
+        <tr>
+            <td><span class="color-swatch" style="background:#ffcdd2"></span> Rosso chiaro</td>
+            <td>Completo</td>
+            <td>Commessa con ciclo completo (tutte le lavorazioni speciali)</td>
+        </tr>
+    </tbody>
+</table>
+
+<h3>Colori degli stati fase</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Stato</th>
+            <th>Colore</th>
+            <th>Significato</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>0</td>
+            <td><span class="badge badge-grigio">Non iniziata</span></td>
+            <td>La fase non e ancora pronta (fasi precedenti in corso)</td>
+        </tr>
+        <tr>
+            <td>1</td>
+            <td><span class="badge badge-blu">Pronto</span></td>
+            <td>La fase e pronta per essere avviata</td>
+        </tr>
+        <tr>
+            <td>2</td>
+            <td><span class="badge badge-giallo">Avviato</span></td>
+            <td>La fase e in corso di lavorazione</td>
+        </tr>
+        <tr>
+            <td>3</td>
+            <td><span class="badge badge-verde">Terminato</span></td>
+            <td>La fase e stata completata</td>
+        </tr>
+        <tr>
+            <td>5</td>
+            <td><span class="badge badge-viola">EXT</span></td>
+            <td>Fase esterna — lavorazione affidata a fornitore esterno</td>
+        </tr>
+    </tbody>
+</table>
+
+<!-- ==================== 3. DASHBOARD OWNER ==================== -->
+<h1 id="owner">3. Dashboard Owner</h1>
+<p>
+    La dashboard owner e il pannello di controllo principale per i responsabili di produzione.
+    Offre una visione completa di tutte le commesse e le lavorazioni in corso.
+</p>
+
+<h2 id="owner-kpi">3.1 KPI giornalieri</h2>
+<p>Nella parte superiore della dashboard sono mostrati i principali indicatori di performance:</p>
+<table>
+    <thead>
+        <tr>
+            <th>KPI</th>
+            <th>Descrizione</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr><td><strong>Fasi completate</strong></td><td>Numero totale di fasi terminate nella giornata</td></tr>
+        <tr><td><strong>Ore lavorate</strong></td><td>Totale ore di lavorazione effettive registrate oggi</td></tr>
+        <tr><td><strong>Consegnate</strong></td><td>Numero di commesse consegnate al cliente oggi</td></tr>
+        <tr><td><strong>In lavorazione</strong></td><td>Numero di fasi attualmente in corso (stato 2)</td></tr>
+        <tr><td><strong>Riempimento</strong></td><td>Percentuale di capacita produttiva utilizzata</td></tr>
+    </tbody>
+</table>
+
+<h2 id="owner-filtri">3.2 Filtri</h2>
+<p>I filtri permettono di restringere la visualizzazione delle commesse. Sono disponibili:</p>
+<ul>
+    <li><strong>Commessa</strong> — filtra per numero commessa</li>
+    <li><strong>Cliente</strong> — filtra per nome cliente</li>
+    <li><strong>Descrizione</strong> — filtra per descrizione prodotto</li>
+    <li><strong>Stato</strong> — filtra per stato della fase (non iniziata, pronto, avviato, terminato, esterno)</li>
+    <li><strong>Fase</strong> — filtra per tipo di fase (stampa, plastifica, fustella, ecc.)</li>
+    <li><strong>Reparto</strong> — filtra per reparto di produzione</li>
+</ul>
+<div class="info-box">
+    <strong>Suggerimento:</strong> I filtri possono essere combinati tra loro.
+    Per esempio, si puo cercare tutte le fasi "avviate" nel reparto "legatoria".
+</div>
+
+<h2 id="owner-modifica">3.3 Modificare una cella</h2>
+<p>Molte celle della tabella owner sono editabili direttamente (contenteditable). Per modificare un valore:</p>
+<div class="step">
+    <span class="step-number">1</span>
+    <span class="step-title">Fare click sulla cella</span>
+    <div class="step-desc">
+        La cella diventera editabile e apparira un bordo per indicare la modalita di modifica.
+    </div>
+</div>
+<div class="step">
+    <span class="step-number">2</span>
+    <span class="step-title">Modificare il valore</span>
+    <div class="step-desc">
+        Digitare il nuovo valore. Per le date, utilizzare il formato <strong>GG/MM/AAAA HH:MM</strong>.
+        Per cancellare una data, digitare <strong>-</strong> (trattino).
+    </div>
+</div>
+<div class="step">
+    <span class="step-number">3</span>
+    <span class="step-title">Fare click fuori dalla cella</span>
+    <div class="step-desc">
+        Il salvataggio avviene automaticamente quando si clicca fuori dalla cella.
+        Una breve animazione verde confermera il salvataggio riuscito.
+    </div>
+</div>
+
+<h2 id="owner-sidebar">3.4 Sidebar di navigazione</h2>
+<p>A sinistra della dashboard e presente una sidebar con i link rapidi alle diverse sezioni:</p>
+<ul>
+    <li><strong>Dashboard</strong> — panoramica generale</li>
+    <li><strong>Panoramica Reparti</strong> — stato di tutti i reparti con ore totali</li>
+    <li><strong>Scheduling</strong> — diagramma di Gantt e piano produzione</li>
+    <li><strong>Spedizione</strong> — stato delle consegne</li>
+    <li><strong>Report Ore</strong> — analisi ore lavorate vs previste</li>
+    <li><strong>Etichette</strong> — stampa etichette</li>
+    <li><strong>Presenze</strong> — timbrature dipendenti</li>
+</ul>
+
+<div class="info-box">
+    <strong>Hamburger menu:</strong> Su dispositivi mobili, la sidebar e nascosta.
+    Premere l'icona hamburger (tre linee orizzontali) in alto a sinistra per aprirla.
+</div>
+
+<h2 id="owner-darkmode">3.5 Dark mode</h2>
+<p>
+    In alto a destra della dashboard e presente un toggle per attivare la <strong>modalita scura</strong> (dark mode).
+    Questa modalita riduce l'affaticamento visivo in ambienti con poca luce e inverte i colori di sfondo e testo.
+</p>
+<div class="step">
+    <span class="step-number">1</span>
+    <span class="step-title">Premere l'icona sole/luna</span>
+    <div class="step-desc">
+        L'icona in alto a destra alterna tra modalita chiara e scura. La preferenza viene salvata nel browser.
+    </div>
+</div>
+
+<h2 id="owner-legenda">3.6 Legenda</h2>
+<p>
+    Il bottone "Legenda" in alto nella dashboard mostra/nasconde un pannello con la spiegazione di tutti
+    i colori, le icone e i simboli utilizzati nella tabella. Utile per i nuovi utenti.
+</p>
+
+<!-- ==================== 4. SCHEDULING ==================== -->
+<h1 id="scheduling">4. Scheduling</h1>
+<p>
+    La sezione Scheduling permette di visualizzare la pianificazione della produzione attraverso
+    un diagramma di Gantt interattivo e diverse viste complementari.
+</p>
+
+<h2 id="sched-gantt">4.1 Diagramma di Gantt</h2>
+<p>
+    Il Gantt mostra una rappresentazione visiva delle lavorazioni pianificate per ogni macchina.
+    L'asse orizzontale rappresenta il tempo (giorni/ore), mentre l'asse verticale elenca le macchine.
+</p>
+<p>Ogni <strong>barra</strong> del Gantt rappresenta una fase di lavorazione e riporta:</p>
+<ul>
+    <li>Numero della commessa</li>
+    <li>Nome della fase</li>
+    <li>Durata prevista</li>
+</ul>
+<div class="info-box">
+    <strong>Interazione:</strong> Passando il mouse su una barra, appare un tooltip con i dettagli completi
+    della lavorazione (cliente, descrizione, quantita, date inizio/fine previste).
+</div>
+
+<h2 id="sched-colori">4.2 Colori del Gantt</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Colore</th>
+            <th>Significato</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><span class="color-swatch" style="background:#22c55e"></span> <strong>Verde</strong></td>
+            <td>Fase in lavorazione — attualmente in corso sulla macchina</td>
+        </tr>
+        <tr>
+            <td><span class="color-swatch" style="background:#3b82f6"></span> <strong>Blu</strong></td>
+            <td>Fase pronta — pianificata e in attesa di avvio</td>
+        </tr>
+        <tr>
+            <td><span class="color-swatch" style="background:#dc2626"></span> <strong>Rosso</strong></td>
+            <td>Fase scaduta — la data di consegna prevista e superata</td>
+        </tr>
+        <tr>
+            <td><span class="color-swatch" style="background:#f97316"></span> <strong>Arancione</strong></td>
+            <td>Fase critica — la consegna e imminente o a rischio</td>
+        </tr>
+    </tbody>
+</table>
+
+<h2 id="sched-filtri">4.3 Filtri per reparto</h2>
+<p>
+    Nella parte superiore della pagina Scheduling sono presenti i pulsanti per filtrare il Gantt per reparto.
+    Premere il nome del reparto per visualizzare solo le macchine e le fasi di quel reparto.
+</p>
+
+<h2 id="sched-viste">4.4 Viste disponibili</h2>
+<p>Oltre al Gantt standard, sono disponibili tre viste aggiuntive:</p>
+<table>
+    <thead>
+        <tr>
+            <th>Vista</th>
+            <th>Descrizione</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>Per Macchina</strong></td>
+            <td>Raggruppa le fasi per macchina. Mostra il carico di lavoro di ogni singola macchina.</td>
+        </tr>
+        <tr>
+            <td><strong>Per Commessa</strong></td>
+            <td>Raggruppa le fasi per commessa. Utile per seguire l'avanzamento di un ordine specifico su tutte le macchine.</td>
+        </tr>
+        <tr>
+            <td><strong>Tabella Priorita</strong></td>
+            <td>Elenco tabulare con ordinamento per priorita, urgenza e data consegna. Mostra i dettagli numerici di scheduling.</td>
+        </tr>
+    </tbody>
+</table>
+
+<h2 id="sched-excel">4.5 Export Excel piano produzione</h2>
+<div class="step">
+    <span class="step-number">1</span>
+    <span class="step-title">Premere il bottone "Scarica Excel"</span>
+    <div class="step-desc">
+        Nella pagina Scheduling e presente un pulsante per scaricare il piano di produzione in formato Excel.
+        Il file contiene tutte le fasi pianificate con date, macchine, priorita e stato.
+    </div>
+</div>
+
+<!-- ==================== 5. DASHBOARD SPEDIZIONE ==================== -->
+<h1 id="spedizione">5. Dashboard Spedizione</h1>
+<p>
+    La dashboard spedizione e dedicata al personale del reparto spedizioni.
+    Gestisce le consegne, i DDT e il tracking dei corrieri.
+</p>
+
+<h2 id="sped-sezioni">5.1 Sezioni della dashboard</h2>
+<p>La pagina e organizzata in sezioni accessibili tramite la sidebar laterale con ancoraggi:</p>
+<table>
+    <thead>
+        <tr>
+            <th>Sezione</th>
+            <th>Descrizione</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>Da consegnare</strong></td>
+            <td>Commesse con tutte le fasi completate, pronte per la consegna al cliente</td>
+        </tr>
+        <tr>
+            <td><strong>In attesa</strong></td>
+            <td>Commesse con alcune fasi ancora in corso di lavorazione</td>
+        </tr>
+        <tr>
+            <td><strong>DDT Emesse</strong></td>
+            <td>Commesse per le quali e stato generato il Documento di Trasporto</td>
+        </tr>
+        <tr>
+            <td><strong>Parziali</strong></td>
+            <td>Commesse consegnate parzialmente (una parte gia spedita, il resto in attesa)</td>
+        </tr>
+        <tr>
+            <td><strong>Consegnate oggi</strong></td>
+            <td>Commesse completamente consegnate nella giornata odierna</td>
+        </tr>
+    </tbody>
+</table>
+<div class="info-box">
+    <strong>Navigazione rapida:</strong> Nella sidebar a sinistra, cliccare sul nome della sezione
+    per scorrere automaticamente alla posizione corrispondente nella pagina.
+</div>
+
+<h2 id="sped-consegna">5.2 Confermare una consegna</h2>
+<div class="step">
+    <span class="step-number">1</span>
+    <span class="step-title">Individuare la commessa da consegnare</span>
+    <div class="step-desc">
+        Nella sezione "Da consegnare", trovare la riga della commessa.
+    </div>
+</div>
+<div class="step">
+    <span class="step-number">2</span>
+    <span class="step-title">Scegliere il tipo di consegna</span>
+    <div class="step-desc">
+        <ul>
+            <li><strong>Totale</strong> — tutta la quantita e stata consegnata</li>
+            <li><strong>Parziale</strong> — solo una parte della quantita. Sara richiesto di indicare la quantita consegnata.</li>
+        </ul>
+    </div>
+</div>
+<div class="step">
+    <span class="step-number">3</span>
+    <span class="step-title">Confermare</span>
+    <div class="step-desc">
+        Premere il pulsante di conferma. La commessa si spostera nella sezione appropriata
+        (Consegnate oggi o Parziali).
+    </div>
+</div>
+
+<h2 id="sped-ddt">5.3 Generare DDT in PDF</h2>
+<div class="step">
+    <span class="step-number">1</span>
+    <span class="step-title">Premere il bottone PDF</span>
+    <div class="step-desc">
+        Accanto a ogni commessa e presente un pulsante <strong>PDF</strong> che genera il
+        Documento di Trasporto in formato PDF, pronto per la stampa.
+    </div>
+</div>
+<div class="step">
+    <span class="step-number">2</span>
+    <span class="step-title">Stampare il documento</span>
+    <div class="step-desc">
+        Il PDF si aprira in una nuova scheda del browser. Utilizzare la funzione di stampa del browser
+        (<kbd>Ctrl</kbd> + <kbd>P</kbd>) per stamparlo.
+    </div>
+</div>
+
+<h2 id="sped-brt">5.4 BRT Tracking</h2>
+<p>
+    Per le spedizioni tramite corriere BRT, il sistema mostra automaticamente il numero di tracking
+    e lo stato della spedizione. Le colonne BRT sono visibili nella tabella delle DDT emesse.
+</p>
+<div class="warning-box">
+    <strong>Nota:</strong> Le spedizioni BRT multi-collo (esito -22) sono escluse automaticamente
+    dalle notifiche di ritardo, poiche hanno tempi di gestione diversi.
+</div>
+
+<h2 id="sped-note">5.5 Note consegne</h2>
+<p>
+    Il sistema di note consegne permette la comunicazione bidirezionale tra il reparto spedizione
+    e la dashboard owner.
+</p>
+<div class="step">
+    <span class="step-number">1</span>
+    <span class="step-title">Aprire le note</span>
+    <div class="step-desc">
+        Premere l'icona delle note accanto alla commessa per aprire il modulo di inserimento.
+    </div>
+</div>
+<div class="step">
+    <span class="step-number">2</span>
+    <span class="step-title">Scrivere la nota</span>
+    <div class="step-desc">
+        Inserire il contenuto della nota nel campo di testo e premere "Salva".
+        La nota sara visibile sia nella dashboard spedizione che nella dashboard owner.
+    </div>
+</div>
+<div class="info-box">
+    <strong>Notifiche in tempo reale:</strong> Quando una nuova nota viene aggiunta, l'owner riceve
+    una notifica con badge, suono (beep) e toast a comparsa. Le note vengono aggiornate ogni 15 secondi.
+</div>
+
+<!-- ==================== 6. CHAT MES ==================== -->
+<h1 id="chat">6. Chat MES</h1>
+<p>
+    La Chat MES e uno strumento di comunicazione interna integrato nel sistema gestionale.
+    Permette di scambiare messaggi rapidi tra reparti senza uscire dalla propria dashboard.
+</p>
+
+<h2 id="chat-widget">6.1 Il widget chat</h2>
+<p>
+    Il widget della chat e posizionato in basso a destra dello schermo, rappresentato da un'<strong>icona chat blu</strong>.
+    Premendola si apre la finestra di conversazione.
+</p>
+<div class="step">
+    <span class="step-number">1</span>
+    <span class="step-title">Aprire la chat</span>
+    <div class="step-desc">
+        Fare click sull'icona blu in basso a destra. Si aprira la finestra della chat con l'elenco dei canali disponibili.
+    </div>
+</div>
+<div class="step">
+    <span class="step-number">2</span>
+    <span class="step-title">Scrivere un messaggio</span>
+    <div class="step-desc">
+        Selezionare il canale desiderato, digitare il messaggio nel campo di testo e premere Invio o il pulsante di invio.
+    </div>
+</div>
+
+<h2 id="chat-canali">6.2 Canali per reparto</h2>
+<p>I messaggi sono organizzati in canali tematici corrispondenti ai reparti:</p>
+<table>
+    <thead>
+        <tr>
+            <th>Canale</th>
+            <th>Destinatari</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr><td><strong>@Tutti</strong></td><td>Messaggio visibile a tutti i reparti</td></tr>
+        <tr><td><strong>@Stampa Offset</strong></td><td>Reparto stampa offset</td></tr>
+        <tr><td><strong>@Digitale</strong></td><td>Reparto stampa digitale</td></tr>
+        <tr><td><strong>@Finitura Digitale</strong></td><td>Reparto finitura digitale</td></tr>
+        <tr><td><strong>@Legatoria</strong></td><td>Reparto legatoria</td></tr>
+        <tr><td><strong>@Fustella</strong></td><td>Reparto fustella piana</td></tr>
+        <tr><td><strong>@Spedizione</strong></td><td>Reparto spedizione</td></tr>
+        <tr><td><strong>@Prestampa</strong></td><td>Reparto prestampa</td></tr>
+    </tbody>
+</table>
+
+<h2 id="chat-menzioni">6.3 Menzioni</h2>
+<p>Per menzionare un reparto o una persona specifica:</p>
+<div class="step">
+    <span class="step-number">1</span>
+    <span class="step-title">Digitare il simbolo @</span>
+    <div class="step-desc">
+        Digitando <strong>@</strong> nel campo di testo, apparira un menu a tendina con i nomi disponibili.
+    </div>
+</div>
+<div class="step">
+    <span class="step-number">2</span>
+    <span class="step-title">Selezionare il destinatario</span>
+    <div class="step-desc">
+        Cliccare sul nome desiderato oppure continuare a digitare per filtrare l'elenco.
+        La menzione verra evidenziata nel messaggio.
+    </div>
+</div>
+
+<h2 id="chat-notifiche">6.4 Notifiche</h2>
+<p>
+    Quando arriva un nuovo messaggio nel canale del proprio reparto, appare un <strong>badge rosso</strong>
+    sull'icona della chat con il numero di messaggi non letti. Il badge scompare aprendo la conversazione.
+</p>
+
+<!-- ==================== 7. PRESTAMPA ==================== -->
+<h1 id="prestampa">7. Prestampa</h1>
+<p>
+    La dashboard Prestampa e dedicata agli operatori del reparto prestampa.
+    Permette di gestire le commesse in fase di preparazione prima della stampa.
+</p>
+
+<h2 id="pre-lista">7.1 Lista commesse</h2>
+<p>
+    La pagina principale mostra l'elenco delle commesse assegnate alla prestampa.
+    E possibile filtrare per numero commessa, cliente o descrizione utilizzando i campi di filtro in alto.
+</p>
+
+<h2 id="pre-dettaglio">7.2 Dettaglio commessa</h2>
+<p>Cliccando su una commessa si apre la scheda di dettaglio con i seguenti campi editabili:</p>
+<table>
+    <thead>
+        <tr>
+            <th>Campo</th>
+            <th>Descrizione</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr><td><strong>Descrizione</strong></td><td>Descrizione del prodotto (editabile)</td></tr>
+        <tr><td><strong>Cliente</strong></td><td>Nome del cliente</td></tr>
+        <tr><td><strong>Quantita</strong></td><td>Numero di pezzi da produrre</td></tr>
+        <tr><td><strong>Colori</strong></td><td>Specifiche cromatiche (CMYK, Pantone, ecc.)</td></tr>
+        <tr><td><strong>Fustella</strong></td><td>Codice o nome della fustella da utilizzare</td></tr>
+        <tr><td><strong>Note prestampa</strong></td><td>Annotazioni tecniche per la lavorazione</td></tr>
+        <tr><td><strong>Operatore prestampa</strong></td><td>Nome dell'operatore assegnato</td></tr>
+        <tr><td><strong>Commento produzione</strong></td><td>Note generali per la produzione</td></tr>
+    </tbody>
+</table>
+
+<div class="info-box">
+    <strong>Salvataggio:</strong> Le modifiche vengono salvate automaticamente quando si clicca fuori dal campo editato.
+</div>
+
+<h2 id="pre-fustelle">7.3 Note fustelle</h2>
+<p>
+    Le note fustelle sono un campo speciale dedicato alle comunicazioni con il responsabile fustelle (Mirko).
+    Ogni nota e prefissata automaticamente con il nome dell'autore e viene evidenziata in viola nella scheda commessa.
+</p>
+<div class="step">
+    <span class="step-number">1</span>
+    <span class="step-title">Aprire il dettaglio della commessa</span>
+    <div class="step-desc">
+        Cliccare sulla commessa nella lista prestampa.
+    </div>
+</div>
+<div class="step">
+    <span class="step-number">2</span>
+    <span class="step-title">Compilare il campo "Note fustelle"</span>
+    <div class="step-desc">
+        Inserire le indicazioni per la fustella. Il nome dell'autore viene aggiunto automaticamente.
+        Le note sono visibili sia nella dashboard operatore che nella dashboard owner.
+    </div>
+</div>
+
+<!-- ==================== 8. ETICHETTE ==================== -->
+<h1 id="etichette">8. Etichette</h1>
+<p>
+    Il modulo Etichette consente di generare e stampare etichette per i prodotti finiti.
+    Supporta diversi layout in base al cliente.
+</p>
+
+<h2 id="eti-stampa">8.1 Come stampare un'etichetta</h2>
+<div class="step">
+    <span class="step-number">1</span>
+    <span class="step-title">Accedere alla sezione Etichette</span>
+    <div class="step-desc">
+        Dalla sidebar della dashboard owner, selezionare "Etichette".
+    </div>
+</div>
+<div class="step">
+    <span class="step-number">2</span>
+    <span class="step-title">Selezionare la commessa</span>
+    <div class="step-desc">
+        Cercare la commessa per numero o descrizione. Selezionarla dalla lista.
+    </div>
+</div>
+<div class="step">
+    <span class="step-number">3</span>
+    <span class="step-title">Compilare i dati dell'etichetta</span>
+    <div class="step-desc">
+        Verificare e completare i campi: descrizione, pezzi per cassa, lotto e data.
+        La descrizione e editabile direttamente.
+    </div>
+</div>
+<div class="step">
+    <span class="step-number">4</span>
+    <span class="step-title">Stampare</span>
+    <div class="step-desc">
+        Premere il pulsante "Stampa etichetta". L'etichetta verra generata con un codice Data Matrix
+        e inviata alla stampante.
+    </div>
+</div>
+
+<h2 id="eti-clienti">8.2 Layout per cliente</h2>
+<p>Il sistema supporta layout diversi in base al cliente:</p>
+<table>
+    <thead>
+        <tr>
+            <th>Cliente</th>
+            <th>Layout</th>
+            <th>Particolarita</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>Italiana Confetti</strong></td>
+            <td>Layout con codice EAN</td>
+            <td>Include il codice a barre EAN obbligatorio per la distribuzione</td>
+        </tr>
+        <tr>
+            <td><strong>Tifata</strong></td>
+            <td>Layout personalizzato</td>
+            <td>Layout specifico secondo le indicazioni del cliente</td>
+        </tr>
+        <tr>
+            <td><strong>Standard</strong></td>
+            <td>Layout semplificato</td>
+            <td>Layout generico per tutti gli altri clienti</td>
+        </tr>
+    </tbody>
+</table>
+
+<h2 id="eti-campi">8.3 Campi editabili</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Campo</th>
+            <th>Descrizione</th>
+            <th>Note</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>Descrizione</strong></td>
+            <td>Testo che appare sull'etichetta</td>
+            <td>Editabile — puo differire dalla descrizione della commessa</td>
+        </tr>
+        <tr>
+            <td><strong>Pz x cassa</strong></td>
+            <td>Numero di pezzi per ogni cassa</td>
+            <td>Necessario per il calcolo delle casse totali</td>
+        </tr>
+        <tr>
+            <td><strong>Lotto</strong></td>
+            <td>Codice del lotto di produzione</td>
+            <td>Generato automaticamente o inseribile manualmente</td>
+        </tr>
+        <tr>
+            <td><strong>Data</strong></td>
+            <td>Data di produzione</td>
+            <td>Precompilata con la data odierna</td>
+        </tr>
+    </tbody>
+</table>
+
+<div class="info-box">
+    <strong>Data Matrix:</strong> L'etichetta include un codice Data Matrix (plain, non GS1) con:
+    prefisso "A" nel campo GTIN, quantita con 8 cifre zero-padded.
+</div>
+
+<!-- ==================== 9. PRESENZE ==================== -->
+<h1 id="presenze">9. Presenze</h1>
+<p>
+    La sezione Presenze mostra le timbrature dei dipendenti, sincronizzate automaticamente con il sistema
+    NetTime presente in azienda.
+</p>
+
+<h2 id="pres-visualizza">9.1 Visualizzare le presenze</h2>
+<div class="step">
+    <span class="step-number">1</span>
+    <span class="step-title">Accedere alla sezione Presenze</span>
+    <div class="step-desc">
+        Dalla sidebar della dashboard owner, selezionare "Presenze".
+    </div>
+</div>
+<div class="step">
+    <span class="step-number">2</span>
+    <span class="step-title">Consultare le timbrature</span>
+    <div class="step-desc">
+        La tabella mostra per ogni dipendente:
+        <ul>
+            <li>Nome e cognome</li>
+            <li>Orario di ingresso</li>
+            <li>Orario di uscita</li>
+            <li>Ore totali lavorate</li>
+            <li>Stato (presente / assente)</li>
+        </ul>
+    </div>
+</div>
+
+<div class="info-box">
+    <strong>Aggiornamento automatico:</strong> Le timbrature vengono sincronizzate dal terminale NetTime ogni 5 minuti.
+</div>
+
+<h2 id="pres-filtro">9.2 Filtro per dipendente</h2>
+<p>
+    Utilizzare il campo di ricerca in alto per filtrare la tabella per nome o cognome del dipendente.
+    E possibile anche selezionare un intervallo di date per visualizzare lo storico presenze.
+</p>
+
+<!-- ==================== 10. FAQ ==================== -->
+<h1 id="faq">10. FAQ e Risoluzione Problemi</h1>
+<p>
+    Questa sezione raccoglie le domande piu frequenti e le soluzioni ai problemi comuni.
+</p>
+
+<h3>"Page Expired 419" — La pagina e scaduta</h3>
+<div class="danger-box">
+    <strong>Problema:</strong> Appare il messaggio "419 — Page Expired" quando si tenta un'azione.
+</div>
+<div class="success-box">
+    <strong>Soluzione:</strong> Ricaricare la pagina premendo <kbd>F5</kbd> o <kbd>Ctrl</kbd> + <kbd>R</kbd>.
+    Questo errore si verifica quando la sessione di sicurezza e scaduta (normalmente dopo un periodo di inattivita).
+    Il sistema rinnova automaticamente il token di sicurezza ogni 30 minuti, ma in caso di problemi un semplice
+    ricaricamento risolve la situazione.
+</div>
+
+<h3>"La fase non si avvia" — Il bottone Avvia non funziona</h3>
+<div class="danger-box">
+    <strong>Problema:</strong> Il bottone "Avvia" non e visibile o non e cliccabile su una fase.
+</div>
+<div class="success-box">
+    <strong>Soluzione:</strong> Verificare che tutte le fasi precedenti nel ciclo produttivo siano nello
+    stato <span class="badge badge-verde">Terminato</span> (stato 3). Una fase puo essere avviata
+    solo quando le fasi che la precedono nella sequenza di lavorazione sono state completate.
+    Contattare il reparto responsabile della fase precedente se risulta ancora in lavorazione.
+</div>
+
+<h3>"Non vedo le mie fasi" — La tabella e vuota</h3>
+<div class="danger-box">
+    <strong>Problema:</strong> Dopo il login, la dashboard operatore non mostra alcuna fase.
+</div>
+<div class="success-box">
+    <strong>Soluzione:</strong> Verificare con l'amministratore che il proprio codice operatore sia
+    associato al reparto corretto. Le fasi vengono mostrate solo per il reparto di appartenenza
+    dell'operatore. Se il reparto e stato modificato di recente, potrebbe essere necessario
+    effettuare un nuovo login (logout e rientro).
+</div>
+
+<h3>"Il sync Onda non funziona" — Le commesse non si aggiornano</h3>
+<div class="danger-box">
+    <strong>Problema:</strong> Le nuove commesse non appaiono nel sistema o i dati non sono aggiornati.
+</div>
+<div class="success-box">
+    <strong>Soluzione:</strong> La sincronizzazione con il gestionale Onda avviene automaticamente ogni ora.
+    Se una commessa appena inserita in Onda non appare:
+    <ul>
+        <li>Attendere fino alla prossima sincronizzazione (massimo 1 ora)</li>
+        <li>Verificare che la commessa sia stata salvata correttamente in Onda</li>
+        <li>Se il problema persiste, contattare il responsabile IT per verificare la connessione al server Onda</li>
+    </ul>
+</div>
+
+<h3>"La pagina non risponde" — Il sistema e lento</h3>
+<div class="danger-box">
+    <strong>Problema:</strong> La dashboard si carica lentamente o non risponde ai comandi.
+</div>
+<div class="success-box">
+    <strong>Soluzione:</strong>
+    <ul>
+        <li>Verificare la connessione di rete (il MES richiede la rete aziendale)</li>
+        <li>Provare a ricaricare la pagina (<kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>R</kbd> per un ricaricamento completo)</li>
+        <li>Chiudere le schede del browser non necessarie</li>
+        <li>Se il problema persiste, contattare il responsabile IT</li>
+    </ul>
+</div>
+
+<h3>"Le note non si vedono" — Note non visibili</h3>
+<div class="danger-box">
+    <strong>Problema:</strong> Le note inserite non sono visibili nella dashboard dell'owner o della spedizione.
+</div>
+<div class="success-box">
+    <strong>Soluzione:</strong> Le note vengono aggiornate automaticamente ogni 15 secondi. Attendere qualche
+    secondo e verificare che la nota sia stata salvata (appare una conferma dopo il salvataggio).
+    Se il problema persiste, ricaricare la pagina.
+</div>
+
+<!-- ==================== RIEPILOGO RAPIDO ==================== -->
+<h1>Riepilogo rapido</h1>
+
+<h2>Flusso di lavoro tipico — Operatore</h2>
+<div class="step">
+    <span class="step-number">1</span>
+    <span class="step-title">Login</span>
+    <div class="step-desc">Accedere con il proprio codice operatore.</div>
+</div>
+<div class="step">
+    <span class="step-number">2</span>
+    <span class="step-title">Consultare le fasi</span>
+    <div class="step-desc">Verificare le fasi disponibili (stato Pronto, badge blu).</div>
+</div>
+<div class="step">
+    <span class="step-number">3</span>
+    <span class="step-title">Avviare la lavorazione</span>
+    <div class="step-desc">Premere "Avvia" sulla fase da lavorare.</div>
+</div>
+<div class="step">
+    <span class="step-number">4</span>
+    <span class="step-title">Lavorare</span>
+    <div class="step-desc">Eseguire la lavorazione. Usare "Pausa" se necessario.</div>
+</div>
+<div class="step">
+    <span class="step-number">5</span>
+    <span class="step-title">Terminare</span>
+    <div class="step-desc">Premere "Termina", inserire quantita e scarti, confermare.</div>
+</div>
+<div class="step">
+    <span class="step-number">6</span>
+    <span class="step-title">Prossima fase</span>
+    <div class="step-desc">Passare alla fase successiva o alla commessa successiva.</div>
+</div>
+
+<h2>Scorciatoie da tastiera</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Combinazione</th>
+            <th>Azione</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr><td><kbd>F5</kbd></td><td>Ricarica la pagina</td></tr>
+        <tr><td><kbd>Ctrl</kbd> + <kbd>P</kbd></td><td>Stampa la pagina / DDT</td></tr>
+        <tr><td><kbd>Ctrl</kbd> + <kbd>F</kbd></td><td>Ricerca nel browser (utile per trovare commesse)</td></tr>
+        <tr><td><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>R</kbd></td><td>Ricaricamento completo (svuota cache)</td></tr>
+    </tbody>
+</table>
+
+<!-- ==================== FOOTER ==================== -->
+<div class="page-footer">
+    <span class="company">Grafica Nappa srl</span> — Manuale Utente MES v2.0<br>
+    Giovanni Pietropaolo, Responsabile IT<br>
+    Aprile 2026 — Versione 2.0
+</div>
+
+</body>
+</html>
