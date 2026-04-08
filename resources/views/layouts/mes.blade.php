@@ -1058,11 +1058,11 @@
     <script>
     (function() {
         var cpOpen = false;
-        var cpCanale = 'generale';
+        var cpCanale = 'Tutti';
         var cpUltimoId = 0;
         var cpOperatoreId = {{ $operatore->id ?? 0 }};
         var cpOperatoreNome = @json(($operatore->nome ?? '') . ' ' . ($operatore->cognome ?? ''));
-        var cpCanali = ['generale', 'produzione', 'spedizione', 'urgenze'];
+        var cpCanali = ['Tutti', 'Stampa Offset', 'Stampa a Caldo', 'Fustella', 'Piegaincolla', 'Legatoria', 'Spedizione', 'Prestampa', 'Urgenze'];
         var cpPollTimer = null;
         var cpUnread = 0;
 
@@ -1082,7 +1082,7 @@
         function cpLoadCanali() {
             var html = '';
             cpCanali.forEach(function(c) {
-                html += '<span class="cp-canale ' + (c === cpCanale ? 'active' : '') + '" onclick="cpCambiaCanale(\'' + c + '\')">#' + c + '</span>';
+                html += '<span class="cp-canale ' + (c === cpCanale ? 'active' : '') + '" onclick="cpCambiaCanale(\'' + c + '\')">@' + c + '</span>';
             });
             document.getElementById('cpCanali').innerHTML = html;
         }

@@ -1012,6 +1012,14 @@ class DashboardOwnerController extends Controller
             if ($duplicatiRimossi > 0) {
                 $msg .= " ($duplicatiRimossi ordini duplicati rimossi)";
             }
+
+            // Rigenera piano produzione Excel nella condivisa
+            try {
+                $excelPath = env('EXCEL_SYNC_PATH', storage_path('app/excel_sync'));
+                \App\Services\SchedulerExportService::export(rtrim($excelPath, '/\\') . DIRECTORY_SEPARATOR . 'piano_produzione.xlsx');
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::warning('Piano produzione Excel: ' . $e->getMessage());
+            }
             $redirectUrl = request('redirect');
             if ($redirectUrl) {
                 return redirect($redirectUrl)->with('success', $msg);
@@ -1341,6 +1349,21 @@ class DashboardOwnerController extends Controller
         }
 
         return response()->download($filePath, 'dashboard_mes.xlsx');
+    }
+
+    public function schedulingExcel()
+    {
+        $excelPath = env('EXCEL_SYNC_PATH', storage_path('app/excel_sync'));
+        $filePath = rtrim($excelPath, '/\\') . DIRECTORY_SEPARATOR . 'piano_produzione.xlsx';
+
+        // Rigenera sempre (dati freschi)
+        \App\Services\SchedulerExportService::export($filePath);
+
+        if (!file_exists($filePath)) {
+            return redirect()->back()->with('error', 'Errore generazione piano produzione.');
+        }
+
+        return response()->download($filePath, 'piano_produzione_' . now()->format('Y-m-d') . '.xlsx');
     }
 
     public function esterne()
