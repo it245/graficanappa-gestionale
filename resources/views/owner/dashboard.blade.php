@@ -106,6 +106,14 @@
 </div>
 @endsection
 
+@section('vendor-css')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
+@endsection
+
+@section('vendor-scripts')
+<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+@endsection
+
 @section('content')
 <div class="container-fluid px-0">
 <style>

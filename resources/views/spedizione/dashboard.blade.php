@@ -2,6 +2,11 @@
 
 @section('topbar-title', 'Dashboard Spedizione')
 
+@section('vendor-scripts')
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+@include('partials.echo-client')
+@endsection
+
 @section('topbar-actions')
 <form method="POST" action="{{ route('spedizione.syncOnda') }}" style="margin:0;" onsubmit="this.querySelector('button').disabled=true; this.querySelector('button span').textContent='Sync...';">
     @csrf

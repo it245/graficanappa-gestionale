@@ -2,6 +2,10 @@
 
 @section('topbar-title', 'Stampa Etichetta')
 
+@section('vendor-scripts')
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+@endsection
+
 @section('sidebar-items')
 <div class="mes-sidebar-section">
     <div class="mes-sidebar-section-label">Navigazione</div>

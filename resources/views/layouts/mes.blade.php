@@ -26,7 +26,7 @@
 
     {{-- Vendor CSS --}}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
+    @yield('vendor-css')
 
     <style>
     /* ============================================
@@ -614,13 +614,11 @@
         </div>
     </main>
 
-    {{-- Vendor JS --}}
+    {{-- Vendor JS (solo Bootstrap globale) --}}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
-    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
-    {{-- Laravel Echo (WebSocket real-time) --}}
-    @include('partials.echo-client')
+    {{-- Script opzionali: caricati solo dalle pagine che li usano via @section('vendor-scripts') --}}
+    @yield('vendor-scripts')
 
     <script>
     /* ===========================================
@@ -1025,7 +1023,7 @@
                 updateBadge();
                 cpLoadCanali();
                 cpLoadMessaggi();
-                if (!cpPollTimer) cpPollTimer = setInterval(cpPoll, 3000);
+                if (!cpPollTimer) cpPollTimer = setInterval(cpPoll, 10000);
                 setTimeout(function() { document.getElementById('cpInput').focus(); }, 100);
             }
         };
