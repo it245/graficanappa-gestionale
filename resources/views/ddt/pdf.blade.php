@@ -102,42 +102,41 @@
     </div>
     @endif
 
-    {{-- BLOCCO DDT --}}
-    <table class="ddt-info">
+    {{-- BLOCCO DDT (replica layout Onda) --}}
+    <table style="width:100%; border-collapse:collapse; margin-bottom:0;">
         <tr>
-            <td style="width:35%">
-                <span class="label">DOCUMENTO DI TRASPORTO N.</span><br>
+            <td style="width:35%; border:1px solid #999; padding:2mm 3mm;">
+                <span class="label">DOCUMENTO DI TRASPORTO N.</span>
+            </td>
+            <td style="width:15%; border:1px solid #999; padding:2mm 3mm; text-align:center;">
                 <span class="value">{{ $numeroDdt }}</span>
             </td>
-            <td style="width:5%; text-align:center; font-weight:bold;">DEL</td>
-            <td style="width:15%">
+            <td style="width:5%; border:1px solid #999; padding:2mm 3mm; text-align:center; font-weight:bold;">DEL</td>
+            <td style="width:15%; border:1px solid #999; padding:2mm 3mm;">
                 <span class="value">{{ $dataDdt }}</span>
             </td>
-            <td style="width:45%; text-align:right;">
-                <span class="label">PARTITA IVA</span> &nbsp;&nbsp;/&nbsp;&nbsp; <span class="label">CODICE FISCALE</span><br>
+            <td rowspan="4" style="width:30%; border:1px solid #999; padding:2mm 3mm; vertical-align:top;">
+                <span class="label">PARTITA IVA</span> &nbsp;/&nbsp; <span class="label">CODICE FISCALE</span><br>
                 <span class="value" style="font-size:8.5pt">{{ $testa->ClientePIVA }}</span>
-                &nbsp;&nbsp;&nbsp;&nbsp;
-                <span class="value" style="font-size:8.5pt">{{ $testa->ClienteCF }}</span>
             </td>
         </tr>
-    </table>
-
-    {{-- TRASPORTO + INIZIO + CAUSALE (una riga) --}}
-    <table style="width:100%; border-collapse:collapse; margin-bottom:2mm;">
         <tr>
-            <td style="width:35%; vertical-align:top; border:1px solid #999; padding:2mm 3mm;">
+            <td colspan="2" rowspan="2" style="border:1px solid #999; padding:2mm 3mm; vertical-align:top;">
                 <span class="label">TRASPORTO A CURA DEL</span><br>
                 <span class="checkbox {{ $trasportoCura === 'Cedente' ? 'checked' : '' }}">{{ $trasportoCura === 'Cedente' ? 'x' : '' }}</span> Cedente
-                &nbsp;
+                &nbsp;&nbsp;
                 <span class="checkbox {{ $trasportoCura === 'Cessionario' ? 'checked' : '' }}">{{ $trasportoCura === 'Cessionario' ? 'x' : '' }}</span> Cessionario
-                &nbsp;
+                &nbsp;&nbsp;
                 <span class="checkbox {{ $trasportoCura === 'Vettore' ? 'checked' : '' }}">{{ $trasportoCura === 'Vettore' ? 'x' : '' }}</span> Vettore
             </td>
-            <td style="width:35%; vertical-align:top; border:1px solid #999; padding:2mm 3mm;">
+            <td colspan="2" rowspan="2" style="border:1px solid #999; padding:2mm 3mm; vertical-align:top;">
                 <span class="label">INIZIO DEL TRASPORTO O CONSEGNA</span><br>
                 Data <strong>{{ $dataTrasporto }}</strong> &nbsp;&nbsp; Ora <strong>{{ $oraTrasporto }}</strong>
             </td>
-            <td style="width:30%; vertical-align:top; border:1px solid #999; padding:2mm 3mm;">
+        </tr>
+        <tr></tr>
+        <tr>
+            <td colspan="4" style="border:1px solid #999; padding:2mm 3mm;">
                 <span class="label">CAUSALE DEL TRASPORTO</span><br>
                 <strong>{{ $causale }}</strong>
             </td>
