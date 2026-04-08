@@ -68,7 +68,12 @@
                 @endphp
                 <tr class="{{ $rowClass }} searchable">
                     <td style="white-space:nowrap;">
-                        @if($statoFase == 0)
+                        @if($statoFase == 5)
+                            <span class="badge badge-stato" style="background:#7c3aed;color:#fff;">Esterno</span>
+                            <br>
+                            <button class="btn btn-sm btn-success fw-bold mt-1" style="font-size:11px;"
+                                    onclick="esternoTerminaOwner({{ json_encode($riga->fasi_ids) }})">Rientro</button>
+                        @elseif($statoFase == 0)
                             <span class="badge bg-secondary badge-stato">Da fare</span>
                         @elseif($statoFase == 1)
                             <span class="badge bg-info badge-stato">Pronto</span>
