@@ -539,10 +539,10 @@ tr:hover td {
 }
 
 /* Colori percorso produttivo */
-tr.percorso-base td { background-color: #d4edda !important; }
-tr.percorso-rilievi td { background-color: #fff3cd !important; }
-tr.percorso-caldo td { background-color: #f96f2a !important; color: #fff !important; }
-tr.percorso-completo td { background-color: #f8d7da !important; }
+tr.percorso-base td { background-color: #d4edda !important; color: #000 !important; }
+tr.percorso-rilievi td { background-color: #fff3cd !important; color: #000 !important; }
+tr.percorso-caldo td { background-color: #f96f2a !important; color: #000 !important; }
+tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !important; }
 
 </style>
     <div class="d-flex align-items-center justify-content-between mb-2 mx-2">

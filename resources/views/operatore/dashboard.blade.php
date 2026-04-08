@@ -225,6 +225,12 @@
             display: none;
         }
     }
+
+    /* Colori percorso produttivo */
+    tr.percorso-base td { background-color: #d4edda !important; }
+    tr.percorso-rilievi td { background-color: #fff3cd !important; }
+    tr.percorso-caldo td { background-color: #f96f2a !important; }
+    tr.percorso-completo td { background-color: #f8d7da !important; }
 </style>
 
 <!-- BOX RICERCA COMMESSA -->
