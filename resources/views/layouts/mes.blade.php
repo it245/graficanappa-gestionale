@@ -1047,8 +1047,9 @@
         <div class="chat-popup-msgs" id="cpMsgs">
             <div style="text-align:center; color:var(--text-secondary); padding:20px; font-size:13px;">Caricamento...</div>
         </div>
-        <div class="chat-popup-input">
-            <input type="text" id="cpInput" placeholder="Scrivi..." autocomplete="off" onkeydown="if(event.key==='Enter')cpInvia()">
+        <div class="chat-popup-input" style="position:relative;">
+            <div id="cpMentionDropdown" style="display:none; position:absolute; bottom:100%; left:12px; right:60px; max-height:200px; overflow-y:auto; background:var(--bg-card,#fff); border:1px solid var(--border-color,#e2e8f0); border-radius:8px; box-shadow:0 -4px 12px rgba(0,0,0,0.15); z-index:10;"></div>
+            <input type="text" id="cpInput" placeholder="Scrivi... (@nome per menzionare)" autocomplete="off" onkeydown="if(event.key==='Enter' && !cpMentionVisible())cpInvia()" oninput="cpCheckMention(this)">
             <button onclick="cpInvia()">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
             </button>
@@ -1121,7 +1122,10 @@
             div.className = 'cp-msg ' + (isMio ? 'mio' : 'altro');
             var html = '';
             if (!isMio) html += '<div class="cp-utente">' + cpEsc(msg.utente || msg.operatore_nome || '') + '</div>';
-            html += '<div>' + cpEsc(msg.messaggio) + '</div>';
+            // Evidenzia menzioni @nome in blu
+            var msgText = cpEsc(msg.messaggio);
+            msgText = msgText.replace(/@([A-Za-zÀ-ÿ\s]+?)(?=\s|$)/g, '<span style="color:var(--accent,#2563eb);font-weight:600;">@$1</span>');
+            html += '<div>' + msgText + '</div>';
             html += '<div class="cp-ora">' + cpEsc(msg.timestamp || '') + '</div>';
             div.innerHTML = html;
             container.appendChild(div);
@@ -1205,6 +1209,100 @@
                 })
                 .catch(function() {});
         }, 10000);
+
+        // === MENZIONI @ ===
+        var cpMentionList = [
+            // Reparti
+            {type: 'reparto', name: 'Stampa Offset', icon: '🏭'},
+            {type: 'reparto', name: 'Stampa a Caldo', icon: '🔥'},
+            {type: 'reparto', name: 'Fustella', icon: '✂️'},
+            {type: 'reparto', name: 'Piegaincolla', icon: '📐'},
+            {type: 'reparto', name: 'Legatoria', icon: '📚'},
+            {type: 'reparto', name: 'Spedizione', icon: '🚚'},
+            {type: 'reparto', name: 'Prestampa', icon: '🖥️'},
+            {type: 'reparto', name: 'Plastificazione', icon: '✨'},
+            {type: 'reparto', name: 'Finitura Digitale', icon: '🖨️'},
+            {type: 'reparto', name: 'Tutti', icon: '📢'},
+            // Operatori dal server
+            @if(isset($operatori_chat))
+            @foreach($operatori_chat as $op)
+            {type: 'operatore', name: @json($op->nome . ' ' . $op->cognome), icon: '👤'},
+            @endforeach
+            @endif
+        ];
+
+        var cpMentionActive = false;
+        var cpMentionQuery = '';
+        var cpMentionStart = -1;
+        var cpMentionSelected = 0;
+
+        window.cpMentionVisible = function() { return cpMentionActive; };
+
+        window.cpCheckMention = function(input) {
+            var val = input.value;
+            var pos = input.selectionStart;
+            // Cerca l'ultima @ prima del cursore
+            var lastAt = val.lastIndexOf('@', pos - 1);
+            if (lastAt >= 0) {
+                var afterAt = val.substring(lastAt + 1, pos);
+                // Se c'è uno spazio dopo @, non è una menzione
+                if (afterAt.indexOf(' ') === -1 || afterAt.length <= 20) {
+                    cpMentionQuery = afterAt.toLowerCase();
+                    cpMentionStart = lastAt;
+                    var filtered = cpMentionList.filter(function(m) {
+                        return m.name.toLowerCase().indexOf(cpMentionQuery) >= 0;
+                    }).slice(0, 8);
+                    if (filtered.length > 0 && cpMentionQuery.length >= 0) {
+                        cpMentionActive = true;
+                        cpMentionSelected = 0;
+                        renderMentionDropdown(filtered);
+                        return;
+                    }
+                }
+            }
+            hideMentionDropdown();
+        };
+
+        function renderMentionDropdown(items) {
+            var dd = document.getElementById('cpMentionDropdown');
+            dd.innerHTML = '';
+            items.forEach(function(item, i) {
+                var div = document.createElement('div');
+                div.style.cssText = 'padding:8px 12px; cursor:pointer; font-size:13px; display:flex; align-items:center; gap:8px; border-bottom:1px solid var(--border-color,#eee);';
+                if (i === cpMentionSelected) div.style.background = 'var(--accent,#2563eb)20';
+                div.innerHTML = '<span>' + item.icon + '</span><span>' + cpEsc(item.name) + '</span><span style="font-size:10px;color:var(--text-secondary,#999);margin-left:auto;">' + item.type + '</span>';
+                div.onclick = function() { selectMention(item); };
+                dd.appendChild(div);
+            });
+            dd.style.display = 'block';
+        }
+
+        function hideMentionDropdown() {
+            cpMentionActive = false;
+            document.getElementById('cpMentionDropdown').style.display = 'none';
+        }
+
+        function selectMention(item) {
+            var input = document.getElementById('cpInput');
+            var val = input.value;
+            input.value = val.substring(0, cpMentionStart) + '@' + item.name + ' ' + val.substring(input.selectionStart);
+            input.focus();
+            hideMentionDropdown();
+        }
+
+        // Keyboard navigation nel dropdown
+        document.getElementById('cpInput').addEventListener('keydown', function(e) {
+            if (!cpMentionActive) return;
+            var dd = document.getElementById('cpMentionDropdown');
+            var items = dd.children;
+            if (e.key === 'ArrowDown') { e.preventDefault(); cpMentionSelected = Math.min(cpMentionSelected + 1, items.length - 1); cpCheckMention(this); }
+            else if (e.key === 'ArrowUp') { e.preventDefault(); cpMentionSelected = Math.max(cpMentionSelected - 1, 0); cpCheckMention(this); }
+            else if (e.key === 'Enter' && items[cpMentionSelected]) {
+                e.preventDefault();
+                items[cpMentionSelected].click();
+            }
+            else if (e.key === 'Escape') { hideMentionDropdown(); }
+        });
     })();
     </script>
     @yield('scripts')

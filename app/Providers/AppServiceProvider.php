@@ -59,6 +59,15 @@ class AppServiceProvider extends ServiceProvider
                 ?? $request->query('op_token')
                 ?? null;
             $view->with('opToken', $opToken);
+
+            // Lista operatori per menzioni chat @
+            if (!$view->offsetExists('operatori_chat')) {
+                try {
+                    $view->with('operatori_chat', \App\Models\Operatore::where('attivo', true)->orderBy('cognome')->get());
+                } catch (\Exception $e) {
+                    $view->with('operatori_chat', collect());
+                }
+            }
         });
     }
 }
