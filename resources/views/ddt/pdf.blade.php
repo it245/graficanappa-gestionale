@@ -90,16 +90,11 @@
 
     {{-- Destinazione (solo se indirizzo diverso dal cliente) --}}
     @if($coda && $coda->DestNome && trim($coda->DestIndirizzo ?? '') !== trim($testa->ClienteIndirizzo ?? ''))
-    <div style="text-align: right; margin-bottom: 1mm;">
-        <div class="dest-label">DESTINAZIONE (se l'indirizzo è diverso da quello del destinatario)</div>
-        <div class="dest-box" style="display: inline-block; text-align: left; min-width: 55%;">
-            <div class="cliente-nome">{{ $coda->DestNome }}</div>
-            <div class="cliente-indirizzo">
-                @if(!empty($coda->DestTelefono))TEL. {{ $coda->DestTelefono }}<br>@endif
-                {{ $coda->DestIndirizzo }}<br>
-                {{ $coda->DestCap }} {{ $coda->DestCitta }} {{ $coda->DestProvincia }}
-            </div>
-        </div>
+    <div style="text-align: right; margin-bottom: 1mm; font-size: 8pt;">
+        <em style="color:#666; font-size:7pt;">DESTINAZIONE (se l'indirizzo è diverso da quello del destinatario)</em><br>
+        <strong>{{ $coda->DestNome }}</strong>
+        @if(!empty($coda->DestTelefono))— TEL. {{ $coda->DestTelefono }}@endif<br>
+        {{ $coda->DestIndirizzo }}, {{ $coda->DestCap }} {{ $coda->DestCitta }} {{ $coda->DestProvincia }}
     </div>
     @endif
 
