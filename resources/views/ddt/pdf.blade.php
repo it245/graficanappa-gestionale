@@ -116,8 +116,10 @@
                 <span class="value">{{ $dataDdt }}</span>
             </td>
             <td rowspan="4" style="width:30%; border:1px solid #999; padding:2mm 3mm; vertical-align:top;">
-                <span class="label">PARTITA IVA</span> &nbsp;/&nbsp; <span class="label">CODICE FISCALE</span><br>
+                <span class="label">PARTITA IVA</span> &nbsp;&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp; <span class="label">CODICE FISCALE</span><br>
                 <span class="value" style="font-size:8.5pt">{{ $testa->ClientePIVA }}</span>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                <span class="value" style="font-size:8.5pt">{{ $testa->ClienteCF }}</span>
             </td>
         </tr>
         <tr>
