@@ -122,32 +122,22 @@
         </tr>
     </table>
 
-    {{-- TRASPORTO --}}
+    {{-- TRASPORTO + INIZIO + CAUSALE (una riga) --}}
     <table style="width:100%; border-collapse:collapse; margin-bottom:2mm;">
         <tr>
-            <td style="width:50%; vertical-align:top; padding-right:2mm;">
-                <div class="trasporto-box">
-                    <span class="label">TRASPORTO A CURA DEL</span><br>
-                    <span class="checkbox {{ $trasportoCura === 'Cedente' ? 'checked' : '' }}">{{ $trasportoCura === 'Cedente' ? 'x' : '' }}</span> Cedente
-                    &nbsp;&nbsp;
-                    <span class="checkbox {{ $trasportoCura === 'Cessionario' ? 'checked' : '' }}">{{ $trasportoCura === 'Cessionario' ? 'x' : '' }}</span> Cessionario
-                    &nbsp;&nbsp;
-                    <span class="checkbox {{ $trasportoCura === 'Vettore' ? 'checked' : '' }}">{{ $trasportoCura === 'Vettore' ? 'x' : '' }}</span> Vettore
-                </div>
+            <td style="width:35%; vertical-align:top; border:1px solid #999; padding:2mm 3mm;">
+                <span class="label">TRASPORTO A CURA DEL</span><br>
+                <span class="checkbox {{ $trasportoCura === 'Cedente' ? 'checked' : '' }}">{{ $trasportoCura === 'Cedente' ? 'x' : '' }}</span> Cedente
+                &nbsp;
+                <span class="checkbox {{ $trasportoCura === 'Cessionario' ? 'checked' : '' }}">{{ $trasportoCura === 'Cessionario' ? 'x' : '' }}</span> Cessionario
+                &nbsp;
+                <span class="checkbox {{ $trasportoCura === 'Vettore' ? 'checked' : '' }}">{{ $trasportoCura === 'Vettore' ? 'x' : '' }}</span> Vettore
             </td>
-            <td style="width:50%; vertical-align:top;">
-                <div class="trasporto-box">
-                    <span class="label">INIZIO DEL TRASPORTO O CONSEGNA</span><br>
-                    Data <strong>{{ $dataTrasporto }}</strong> &nbsp;&nbsp; Ora <strong>{{ $oraTrasporto }}</strong>
-                </div>
+            <td style="width:35%; vertical-align:top; border:1px solid #999; padding:2mm 3mm;">
+                <span class="label">INIZIO DEL TRASPORTO O CONSEGNA</span><br>
+                Data <strong>{{ $dataTrasporto }}</strong> &nbsp;&nbsp; Ora <strong>{{ $oraTrasporto }}</strong>
             </td>
-        </tr>
-    </table>
-
-    {{-- CAUSALE --}}
-    <table class="causale-row">
-        <tr>
-            <td>
+            <td style="width:30%; vertical-align:top; border:1px solid #999; padding:2mm 3mm;">
                 <span class="label">CAUSALE DEL TRASPORTO</span><br>
                 <strong>{{ $causale }}</strong>
             </td>
@@ -164,7 +154,7 @@
         <thead>
             <tr>
                 <th style="text-align:left;">DESCRIZIONE</th>
-                <th>RIF. ORD.</th>
+                <th>RIF.VS ORD.</th>
                 <th>UM</th>
                 <th>QUANTITA'</th>
             </tr>
@@ -175,7 +165,7 @@
                     <td class="desc">{{ $riga['descrizione'] }}</td>
                     <td class="rif">{{ $riga['rif_ord'] ?? '' }}</td>
                     <td class="um">{{ $riga['um'] }}</td>
-                    <td class="qta">{{ number_format($riga['qta'], 2, ',', '.') }}</td>
+                    <td class="qta">{{ number_format($riga['qta'], 0, ',', '.') }}</td>
                 </tr>
             @endforeach
         </tbody>
