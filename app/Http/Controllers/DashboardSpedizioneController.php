@@ -533,6 +533,7 @@ class DashboardSpedizioneController extends Controller
 
     public function syncOnda(Request $request)
     {
+        set_time_limit(120);
         try {
             $risultato = \App\Services\OndaSyncService::sincronizza();
             $ddtFornitore = \App\Services\OndaSyncService::sincronizzaDDTFornitore();
