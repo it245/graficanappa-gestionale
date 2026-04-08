@@ -116,10 +116,18 @@
                 <span class="value">{{ $dataDdt }}</span>
             </td>
             <td rowspan="4" style="width:30%; border:1px solid #999; padding:2mm 3mm; vertical-align:top;">
-                <span class="label">PARTITA IVA</span> &nbsp;&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp; <span class="label">CODICE FISCALE</span><br>
-                <span class="value" style="font-size:8.5pt">{{ $testa->ClientePIVA }}</span>
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                <span class="value" style="font-size:8.5pt">{{ $testa->ClienteCF }}</span>
+                <table style="width:100%; border:none; border-collapse:collapse;">
+                    <tr>
+                        <td style="border:none; padding:0; text-align:center; font-size:7.5pt; color:#333;">PARTITA IVA</td>
+                        <td style="border:none; padding:0; text-align:center; font-size:7.5pt; color:#333;">/</td>
+                        <td style="border:none; padding:0; text-align:center; font-size:7.5pt; color:#333;">CODICE FISCALE</td>
+                    </tr>
+                    <tr>
+                        <td style="border:none; padding:1mm 0 0 0; text-align:center; font-size:8.5pt; font-weight:bold;">{{ $testa->ClientePIVA }}</td>
+                        <td style="border:none; padding:0;"></td>
+                        <td style="border:none; padding:1mm 0 0 0; text-align:center; font-size:8.5pt; font-weight:bold;">{{ $testa->ClienteCF }}</td>
+                    </tr>
+                </table>
             </td>
         </tr>
         <tr>
