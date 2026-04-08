@@ -556,7 +556,8 @@ function aggiornaAnteprima() {
         cliente = document.getElementById('campo-cliente-simple').value;
         articolo = '';
         ean = '';
-        document.getElementById('print-cliente-simple').textContent = cliente;
+        var printCliente = document.getElementById('print-cliente-simple');
+        if (printCliente) printCliente.textContent = cliente;
         var desc = document.getElementById('campo-descrizione-simple').value;
         var descEl = document.getElementById('print-descrizione-simple');
         descEl.textContent = desc;
