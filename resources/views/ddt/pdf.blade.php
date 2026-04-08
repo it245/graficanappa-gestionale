@@ -88,8 +88,8 @@
         </div>
     </div>
 
-    {{-- Destinazione --}}
-    @if($coda && $coda->DestNome)
+    {{-- Destinazione (solo se diversa dal cliente) --}}
+    @if($coda && $coda->DestNome && trim($coda->DestNome) !== trim($testa->ClienteNome ?? ''))
     <div style="text-align: right; margin-bottom: 3mm;">
         <div class="dest-label">DESTINAZIONE (se l'indirizzo è diverso da quello del destinatario)</div>
         <div class="dest-box" style="display: inline-block; text-align: left; min-width: 55%;">
@@ -121,15 +121,13 @@
             </td>
         </tr>
         <tr>
-            <td rowspan="2" style="width:35%; border:1px solid #999; padding:2mm 3mm; vertical-align:top;">
+            <td rowspan="2" style="width:40%; border:1px solid #999; padding:2mm 3mm; vertical-align:top;">
                 <span class="label">TRASPORTO A CURA DEL</span><br>
-                <div style="white-space:nowrap; margin-top:1mm;">
-                    <span class="checkbox {{ $trasportoCura === 'Cedente' ? 'checked' : '' }}">{{ $trasportoCura === 'Cedente' ? 'x' : '' }}</span> Cedente
-                    &nbsp;&nbsp;
-                    <span class="checkbox {{ $trasportoCura === 'Cessionario' ? 'checked' : '' }}">{{ $trasportoCura === 'Cessionario' ? 'x' : '' }}</span> Cessionario
-                    &nbsp;&nbsp;
-                    <span class="checkbox {{ $trasportoCura === 'Vettore' ? 'checked' : '' }}">{{ $trasportoCura === 'Vettore' ? 'x' : '' }}</span> Vettore
-                </div>
+                <table style="border:none; border-collapse:collapse; margin-top:1mm;"><tr>
+                    <td style="border:none; padding:0 3mm 0 0;"><span class="checkbox {{ $trasportoCura === 'Cedente' ? 'checked' : '' }}">{{ $trasportoCura === 'Cedente' ? 'x' : '' }}</span> Cedente</td>
+                    <td style="border:none; padding:0 3mm 0 0;"><span class="checkbox {{ $trasportoCura === 'Cessionario' ? 'checked' : '' }}">{{ $trasportoCura === 'Cessionario' ? 'x' : '' }}</span> Cessionario</td>
+                    <td style="border:none; padding:0;"><span class="checkbox {{ $trasportoCura === 'Vettore' ? 'checked' : '' }}">{{ $trasportoCura === 'Vettore' ? 'x' : '' }}</span> Vettore</td>
+                </tr></table>
             </td>
             <td colspan="3" rowspan="2" style="border:1px solid #999; padding:2mm 3mm; vertical-align:top;">
                 <span class="label">INIZIO DEL TRASPORTO O CONSEGNA</span><br><br>
