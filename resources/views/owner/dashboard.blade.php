@@ -553,10 +553,10 @@ tr.percorso-caldo td { background-color: #f96f2a !important; color: #000 !import
 tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !important; }
 
 </style>
-    <div class="d-flex align-items-center justify-content-between mb-2 mx-2">
-        <div></div>
-        {{-- LEGENDA --}}
-        <div style="background:#fff; border:1px solid #dee2e6; border-radius:8px; padding:8px 14px; box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+    <div class="d-flex align-items-center justify-content-end mb-1 mx-1">
+        {{-- LEGENDA (collassabile) --}}
+        <button class="btn btn-sm btn-outline-secondary me-2" onclick="document.getElementById('legendaBox').classList.toggle('d-none')" style="font-size:11px;">Legenda</button>
+        <div id="legendaBox" class="d-none" style="background:#fff; border:1px solid #dee2e6; border-radius:8px; padding:6px 10px; box-shadow:0 1px 4px rgba(0,0,0,0.08);">
             <div class="d-flex gap-4" style="font-size:11px;">
                 <div>
                     <div style="font-weight:700; font-size:10px; color:#666; text-transform:uppercase; margin-bottom:4px;">Stati Fase</div>
@@ -590,7 +590,7 @@ tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !imp
     </div>
 
     {{-- KPI GIORNALIERI --}}
-    <div class="d-flex gap-2 mb-2 mx-0" style="max-width:920px;">
+    <div class="d-flex gap-2 mb-1 mx-0" style="max-width:920px;">
         <a href="{{ route('owner.fasiTerminate', ['oggi' => 1]) }}" class="d-flex align-items-center p-2 rounded flex-fill text-decoration-none" style="background:#d1e7dd; height:56px; min-width:200px; cursor:pointer;" title="Visualizza fasi completate oggi">
             <div>
                 <div style="font-size:11px; color:#555; line-height:1.2;">Fasi completate oggi</div>

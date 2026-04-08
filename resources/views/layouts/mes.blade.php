@@ -292,7 +292,7 @@
     }
 
     .mes-content-inner {
-        padding: 24px;
+        padding: 8px 16px;
     }
 
     /* ============================================
