@@ -1,56 +1,34 @@
-@extends('layouts.app')
+@extends('layouts.mes')
+
+@section('topbar-title', 'Fasi Terminate')
+
+@section('sidebar-items')
+<div class="mes-sidebar-section">
+    <div class="mes-sidebar-section-label">Produzione</div>
+    <a href="{{ route('owner.dashboard') }}?op_token={{ request('op_token') }}" class="mes-sidebar-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Dashboard
+    </a>
+    <a href="{{ route('owner.scheduling') }}?op_token={{ request('op_token') }}" class="mes-sidebar-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Scheduling
+    </a>
+</div>
+<div class="mes-sidebar-section">
+    <div class="mes-sidebar-section-label">Analisi</div>
+    <a href="{{ route('owner.reportOre') }}?op_token={{ request('op_token') }}" class="mes-sidebar-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Report Ore
+    </a>
+    <a href="{{ route('owner.fasiTerminate') }}?op_token={{ request('op_token') }}" class="mes-sidebar-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        Fasi Terminate
+    </a>
+</div>
+@endsection
 
 @section('content')
-<div class="container-fluid px-0">
 <style>
-* {
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-}
-
-html, body {
-    margin: 0 !important;
-    padding: 0 !important;
-    width: 100%;
-    height: 100%;
-    overflow-x: hidden;
-}
-
-.container-fluid {
-    padding-left: 1px !important;
-    padding-right: 1px !important;
-    margin-left: 0 !important;
-}
-
-h2 {
-    margin: 8px 4px !important;
-    font-size: 20px;
-}
-
-.top-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin: 4px;
-}
-
-.btn-back {
-    background: #000;
-    color: #fff;
-    border: none;
-    padding: 6px 16px;
-    border-radius: 4px;
-    font-size: 13px;
-    font-weight: bold;
-    cursor: pointer;
-    text-decoration: none;
-    transition: background 0.15s ease;
-}
-.btn-back:hover {
-    background: #333;
-    color: #fff;
-}
-
 /* =========================
    TABELLA (EXCEL STYLE)
    ========================= */
@@ -58,25 +36,19 @@ h2 {
     width: 100%;
     max-width: 100%;
     overflow: auto;
-    margin: 0 1px;
+    margin: 0;
     max-height: calc(100vh - 280px);
 }
-thead th {
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    background: #343a40;
-}
 
-table {
+table.ft-table {
     width: 3200px;
     border-collapse: collapse;
     table-layout: fixed;
     font-size: 12px;
 }
 
-th, td {
-    border: 1px solid #dee2e6;
+.ft-table th, .ft-table td {
+    border: 1px solid var(--border-color, #dee2e6);
     padding: 3px 6px;
     white-space: nowrap;
     overflow: hidden;
@@ -84,8 +56,8 @@ th, td {
     line-height: 1.3;
 }
 
-thead th {
-    background: #000000;
+.ft-table thead th {
+    background: var(--bg-sidebar, #1e293b);
     color: #ffffff;
     font-size: 11.5px;
     position: sticky;
@@ -93,12 +65,11 @@ thead th {
     z-index: 2;
 }
 
-tr:hover td {
+.ft-table tr:hover td {
     background: rgba(0, 0, 0, 0.03);
 }
 
-/* Righe alternate */
-tbody tr:nth-child(even) {
+.ft-table tbody tr:nth-child(even) {
     background: #f8f9fa;
 }
 
@@ -113,124 +84,35 @@ tr.percorso-completo td { background-color: #f8d7da !important; }
 /* =========================
    LARGHEZZA COLONNE
    ========================= */
-
-/* Commessa */
-th:nth-child(1), td:nth-child(1) { width: 90px; }
-
-/* Cliente */
-th:nth-child(2), td:nth-child(2) {
-    width: 180px;
-    white-space: normal;
-}
-
-/* Codice articolo */
-th:nth-child(3), td:nth-child(3) { width: 110px; }
-
-/* Descrizione */
-th:nth-child(4), td:nth-child(4) {
-    width: 280px;
-    max-width: 280px;
-    white-space: normal;
-}
-
-/* Qta / UM / Priorità */
-th:nth-child(5), td:nth-child(5),
-th:nth-child(6), td:nth-child(6),
-th:nth-child(7), td:nth-child(7) {
-    width: 70px;
-    text-align: center;
-}
-
-/* Date registrazione / consegna */
-th:nth-child(8), td:nth-child(8),
-th:nth-child(9), td:nth-child(9) {
-    width: 115px;
-}
-
-/* Cod Carta / Carta */
-th:nth-child(10), td:nth-child(10),
-th:nth-child(11), td:nth-child(11) {
-    width: 160px;
-    white-space: normal;
-}
-
-/* Qta Carta / UM Carta */
-th:nth-child(12), td:nth-child(12),
-th:nth-child(13), td:nth-child(13) {
-    width: 80px;
-    text-align: center;
-}
-
-/* Fase / Reparto */
-th:nth-child(14), td:nth-child(14),
-th:nth-child(15), td:nth-child(15) {
-    width: 110px;
-}
-
-/* Operatori */
-th:nth-child(16), td:nth-child(16) {
-    width: 130px;
-    white-space: normal;
-}
-
-/* Qta Prodotta */
-th:nth-child(17), td:nth-child(17) {
-    width: 80px;
-    text-align: center;
-}
-
-/* Note */
-th:nth-child(18), td:nth-child(18) {
-    width: 160px;
-    white-space: normal;
-}
-
-/* Data Inizio / Data Fine */
-th:nth-child(19), td:nth-child(19),
-th:nth-child(20), td:nth-child(20) {
-    width: 150px;
-}
-
-/* Pausa */
-th:nth-child(21), td:nth-child(21) {
-    width: 100px;
-    text-align: center;
-}
-
-/* Ore Previste */
-th:nth-child(22), td:nth-child(22) {
-    width: 100px;
-    text-align: center;
-}
-
-/* Ore Lavorate */
-th:nth-child(23), td:nth-child(23) {
-    width: 100px;
-    text-align: center;
-    font-weight: bold;
-}
-
-/* Stato */
-th:nth-child(24), td:nth-child(24) {
-    width: 70px;
-    text-align: center;
-}
-
-/* Badge stato */
-.badge-stato {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 10px;
-    font-size: 11px;
-    font-weight: bold;
-    color: #fff;
-    background: #28a745;
-}
+.ft-table th:nth-child(1), .ft-table td:nth-child(1) { width: 90px; }
+.ft-table th:nth-child(2), .ft-table td:nth-child(2) { width: 180px; white-space: normal; }
+.ft-table th:nth-child(3), .ft-table td:nth-child(3) { width: 110px; }
+.ft-table th:nth-child(4), .ft-table td:nth-child(4) { width: 280px; max-width: 280px; white-space: normal; }
+.ft-table th:nth-child(5), .ft-table td:nth-child(5),
+.ft-table th:nth-child(6), .ft-table td:nth-child(6),
+.ft-table th:nth-child(7), .ft-table td:nth-child(7) { width: 70px; text-align: center; }
+.ft-table th:nth-child(8), .ft-table td:nth-child(8),
+.ft-table th:nth-child(9), .ft-table td:nth-child(9) { width: 115px; }
+.ft-table th:nth-child(10), .ft-table td:nth-child(10),
+.ft-table th:nth-child(11), .ft-table td:nth-child(11) { width: 160px; white-space: normal; }
+.ft-table th:nth-child(12), .ft-table td:nth-child(12),
+.ft-table th:nth-child(13), .ft-table td:nth-child(13) { width: 80px; text-align: center; }
+.ft-table th:nth-child(14), .ft-table td:nth-child(14),
+.ft-table th:nth-child(15), .ft-table td:nth-child(15) { width: 110px; }
+.ft-table th:nth-child(16), .ft-table td:nth-child(16) { width: 130px; white-space: normal; }
+.ft-table th:nth-child(17), .ft-table td:nth-child(17) { width: 80px; text-align: center; }
+.ft-table th:nth-child(18), .ft-table td:nth-child(18) { width: 160px; white-space: normal; }
+.ft-table th:nth-child(19), .ft-table td:nth-child(19),
+.ft-table th:nth-child(20), .ft-table td:nth-child(20) { width: 150px; }
+.ft-table th:nth-child(21), .ft-table td:nth-child(21) { width: 100px; text-align: center; }
+.ft-table th:nth-child(22), .ft-table td:nth-child(22) { width: 100px; text-align: center; }
+.ft-table th:nth-child(23), .ft-table td:nth-child(23) { width: 100px; text-align: center; font-weight: bold; }
+.ft-table th:nth-child(24), .ft-table td:nth-child(24) { width: 70px; text-align: center; }
 
 /* KPI box */
 .kpi-box {
-    background: #fff;
-    border: 1px solid #dee2e6;
+    background: var(--bg-card, #fff);
+    border: 1px solid var(--border-color, #dee2e6);
     border-radius: 8px;
     padding: 12px;
     text-align: center;
@@ -242,7 +124,7 @@ th:nth-child(24), td:nth-child(24) {
     font-weight: bold;
 }
 .kpi-box small {
-    color: #6c757d;
+    color: var(--text-secondary, #6c757d);
     font-size: 12px;
 }
 
@@ -253,11 +135,7 @@ th:nth-child(24), td:nth-child(24) {
 }
 </style>
 
-<div class="top-bar">
-    <a href="{{ route('owner.dashboard') }}" class="btn-back">← Torna alla Dashboard</a>
-</div>
-
-<h2>Fasi Terminate{{ !empty($soloOggi) ? ' - Oggi' : '' }}</h2>
+<h2 style="margin:0 0 12px; font-size:20px;">Fasi Terminate{{ !empty($soloOggi) ? ' - Oggi' : '' }}</h2>
 @if(!empty($soloOggi))
     <a href="{{ route('owner.fasiTerminate') }}" class="btn btn-sm btn-outline-secondary mb-2 ms-1">Mostra tutte le fasi terminate</a>
 @endif
@@ -326,7 +204,7 @@ th:nth-child(24), td:nth-child(24) {
 
 <!-- Tabella -->
 <div class="table-wrapper">
-    <table>
+    <table class="ft-table">
         <thead>
             <tr>
                 <th>Commessa</th>
@@ -447,7 +325,6 @@ th:nth-child(24), td:nth-child(24) {
             @endforelse
         </tbody>
     </table>
-</div>
 </div>
 
 <script>

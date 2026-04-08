@@ -1,4 +1,20 @@
-@extends('layouts.app')
+@extends('layouts.mes')
+
+@section('topbar-title', 'Lista Etichette')
+
+@section('sidebar-items')
+<div class="mes-sidebar-section">
+    <div class="mes-sidebar-section-label">Navigazione</div>
+    <a href="{{ route('operatore.dashboard', ['op_token' => request('op_token')]) }}" class="mes-sidebar-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Dashboard
+    </a>
+    <a href="{{ route('etichette.lista', ['op_token' => request('op_token')]) }}" class="mes-sidebar-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+        Etichette
+    </a>
+</div>
+@endsection
 
 @section('content')
 <div class="container-fluid px-3">

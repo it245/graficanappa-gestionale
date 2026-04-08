@@ -1,79 +1,67 @@
-@extends('layouts.app')
+@extends('layouts.mes')
 
-@section('title', 'Presenze')
+@section('page-title', 'Presenze - MES Grafica Nappa')
+@section('topbar-title', 'Presenze')
+
+@section('topbar-actions')
+    <span class="text-muted" style="font-size:12px;">{{ $data->format('l d/m/Y') }}{{ $data->isToday() ? ' (oggi)' : '' }}</span>
+    @if(!$data->isToday())
+        <a href="{{ route('owner.presenze') }}" class="mes-topbar-logout" style="border-color:var(--success); color:var(--success);">Oggi</a>
+    @endif
+@endsection
+
+@section('sidebar-items')
+<div class="mes-sidebar-section">
+    <div class="mes-sidebar-section-label">Navigazione</div>
+    <a href="{{ route('owner.dashboard') }}" class="mes-sidebar-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Dashboard
+    </a>
+    <a href="{{ route('owner.presenze') }}" class="mes-sidebar-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Presenze
+    </a>
+</div>
+@endsection
 
 @section('content')
 <style>
-    .pz-page { background:#f0f2f5; min-height:100vh; font-family:'Inter','Segoe UI',system-ui,sans-serif; }
-    .pz-topbar { background:#fff; border-bottom:1px solid #e5e7eb; padding:14px 24px; position:sticky; top:0; z-index:100; box-shadow:0 1px 3px rgba(0,0,0,.04); }
-    .pz-topbar-inner { max-width:1440px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
-    .pz-logo { display:flex; align-items:center; gap:10px; }
-    .pz-logo-icon { width:34px; height:34px; border-radius:8px; background:linear-gradient(135deg,#059669,#10b981); display:flex; align-items:center; justify-content:center; }
-    .pz-title { font-size:16px; font-weight:700; color:#111827; margin:0; }
-    .pz-subtitle { font-size:11px; color:#9ca3af; }
-    .pz-back { display:inline-flex; align-items:center; gap:5px; padding:7px 14px; border-radius:6px; background:#f3f4f6; color:#6b7280; text-decoration:none; font-size:12px; font-weight:500; border:1px solid #e5e7eb; }
-    .pz-back:hover { background:#e5e7eb; color:#374151; }
-    .pz-body { max-width:1440px; margin:0 auto; padding:20px 24px; }
     .pz-kpi-row { display:flex; gap:16px; margin-bottom:20px; flex-wrap:wrap; }
-    .pz-kpi { flex:1; min-width:160px; background:#fff; border-radius:10px; padding:16px 20px; border:1px solid #e5e7eb; }
-    .pz-kpi-label { font-size:11px; color:#9ca3af; text-transform:uppercase; letter-spacing:.5px; font-weight:600; }
-    .pz-kpi-value { font-size:28px; font-weight:700; color:#111827; margin-top:4px; }
-    .pz-kpi-value.green { color:#059669; }
-    .pz-kpi-value.red { color:#dc2626; }
-    .pz-kpi-value.blue { color:#2563eb; }
-    .pz-card { background:#fff; border-radius:10px; border:1px solid #e5e7eb; margin-bottom:20px; overflow:hidden; }
-    .pz-card-header { padding:14px 20px; border-bottom:1px solid #f3f4f6; display:flex; align-items:center; justify-content:space-between; }
-    .pz-card-title { font-size:14px; font-weight:600; color:#111827; display:flex; align-items:center; gap:8px; }
+    .pz-kpi { flex:1; min-width:160px; background:var(--bg-card); border-radius:10px; padding:16px 20px; border:1px solid var(--border-color); }
+    .pz-kpi-label { font-size:11px; color:var(--text-secondary); text-transform:uppercase; letter-spacing:.5px; font-weight:600; }
+    .pz-kpi-value { font-size:28px; font-weight:700; color:var(--text-primary); margin-top:4px; }
+    .pz-kpi-value.green { color:var(--success); }
+    .pz-kpi-value.red { color:var(--danger); }
+    .pz-kpi-value.blue { color:var(--accent); }
+    .pz-card { background:var(--bg-card); border-radius:10px; border:1px solid var(--border-color); margin-bottom:20px; overflow:hidden; }
+    .pz-card-header { padding:14px 20px; border-bottom:1px solid var(--border-color); display:flex; align-items:center; justify-content:space-between; }
+    .pz-card-title { font-size:14px; font-weight:600; color:var(--text-primary); display:flex; align-items:center; gap:8px; }
     .pz-table { width:100%; border-collapse:collapse; font-size:13px; }
-    .pz-table th { background:#f9fafb; padding:8px 12px; text-align:left; font-weight:600; color:#6b7280; font-size:11px; text-transform:uppercase; border-bottom:1px solid #e5e7eb; }
-    .pz-table td { padding:8px 12px; border-bottom:1px solid #f3f4f6; color:#374151; }
-    .pz-table tr:hover { background:#f9fafb; }
+    .pz-table th { background:var(--bg-sidebar); padding:8px 12px; text-align:left; font-weight:600; color:#fff; font-size:11px; text-transform:uppercase; border-bottom:1px solid var(--border-color); }
+    .pz-table td { padding:8px 12px; border-bottom:1px solid var(--border-color); color:var(--text-primary); }
+    .pz-table tr:hover { background:rgba(0,0,0,0.02); }
     .pz-badge { display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:600; }
     .pz-badge.presente { background:#d1fae5; color:#065f46; }
     .pz-badge.uscito { background:#f3f4f6; color:#6b7280; }
     .pz-ore { font-variant-numeric:tabular-nums; }
     .pz-giorni { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:16px; }
-    .pz-giorno { padding:6px 12px; border-radius:6px; font-size:12px; font-weight:500; text-decoration:none; border:1px solid #e5e7eb; color:#6b7280; background:#fff; }
-    .pz-giorno:hover { background:#f3f4f6; color:#374151; }
-    .pz-giorno.active { background:#059669; color:#fff; border-color:#059669; }
-    .pz-timbrature { font-size:11px; color:#9ca3af; }
+    .pz-giorno { padding:6px 12px; border-radius:6px; font-size:12px; font-weight:500; text-decoration:none; border:1px solid var(--border-color); color:var(--text-secondary); background:var(--bg-card); }
+    .pz-giorno:hover { background:var(--border-color); color:var(--text-primary); }
+    .pz-giorno.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+    .pz-timbrature { font-size:11px; color:var(--text-secondary); }
     .pz-timbrature span { display:inline-block; margin-right:6px; }
-    .pz-timbrature .e { color:#059669; }
-    .pz-timbrature .u { color:#dc2626; }
+    .pz-timbrature .e { color:var(--success); }
+    .pz-timbrature .u { color:var(--danger); }
     .pz-intervalli { display:flex; gap:4px; flex-wrap:wrap; align-items:center; }
     .pz-int { display:inline-flex; align-items:center; gap:3px; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:500; }
     .pz-int.lavoro { background:#d1fae5; color:#065f46; }
     .pz-int.pausa { background:#fef3c7; color:#92400e; }
     .pz-int .pz-int-ore { font-weight:700; }
     .pz-int-arrow { color:#d1d5db; font-size:10px; }
-    .pz-anagrafica-search { padding:6px 12px; border:1px solid #e5e7eb; border-radius:6px; font-size:12px; width:220px; }
+    .pz-anagrafica-search { padding:6px 12px; border:1px solid var(--border-color); border-radius:6px; font-size:12px; width:220px; background:var(--bg-card); color:var(--text-primary); }
 </style>
 
-<div class="pz-page">
-    <div class="pz-topbar">
-        <div class="pz-topbar-inner">
-            <div class="pz-logo">
-                <div class="pz-logo-icon">
-                    <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#fff" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                </div>
-                <div>
-                    <h1 class="pz-title">Presenze</h1>
-                    <div class="pz-subtitle">{{ $data->format('l d/m/Y') }}{{ $data->isToday() ? ' (oggi)' : '' }}</div>
-                </div>
-            </div>
-            <div style="display:flex; gap:10px; align-items:center;">
-                @if(!$data->isToday())
-                    <a href="{{ route('owner.presenze') }}" class="pz-back">Oggi</a>
-                @endif
-                <a href="{{ route('owner.dashboard') }}" class="pz-back">
-                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
-                    Dashboard
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <div class="pz-body">
+<div>
         {{-- Navigazione giorni --}}
         <div class="pz-giorni">
             @foreach($giorniDisponibili as $g)
@@ -220,7 +208,6 @@
                 </tbody>
             </table>
         </div>
-    </div>
 </div>
 
 <script>

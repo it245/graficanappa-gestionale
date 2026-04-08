@@ -1,8 +1,35 @@
-@extends('layouts.app')
+@extends('layouts.mes')
+
+@section('topbar-title', 'Scheduling Produzione')
+
+@section('sidebar-items')
+<div class="mes-sidebar-section">
+    <div class="mes-sidebar-section-label">Produzione</div>
+    <a href="{{ route('owner.dashboard') }}?op_token={{ request('op_token') }}" class="mes-sidebar-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Dashboard
+    </a>
+    <a href="{{ route('owner.scheduling') }}?op_token={{ request('op_token') }}" class="mes-sidebar-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Scheduling
+    </a>
+</div>
+<div class="mes-sidebar-section">
+    <div class="mes-sidebar-section-label">Analisi</div>
+    <a href="{{ route('owner.reportOre') }}?op_token={{ request('op_token') }}" class="mes-sidebar-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Report Ore
+    </a>
+    <a href="{{ route('owner.fasiTerminate') }}?op_token={{ request('op_token') }}" class="mes-sidebar-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        Fasi Terminate
+    </a>
+</div>
+@endsection
 
 @section('content')
 <style>
-    html, body { margin:0; padding:0; overflow-x:hidden; background:#12122a; }
+    html, body { overflow-x:hidden; background:#12122a; }
 
     /* ===== HEADER ===== */
     .sched-header {
@@ -23,12 +50,6 @@
     }
     .search-box::placeholder { color:rgba(255,255,255,0.45); }
     .search-box:focus { background:rgba(255,255,255,0.2); border-color:rgba(255,255,255,0.5); }
-    .btn-back {
-        text-decoration:none; color:#fff; border:1px solid rgba(255,255,255,0.3);
-        padding:8px 20px; border-radius:25px; font-size:14px; font-weight:500;
-        transition:all 0.2s;
-    }
-    .btn-back:hover { background:rgba(255,255,255,0.15); color:#fff; }
 
     /* ===== KPI ===== */
     .kpi-row { display:flex; gap:16px; padding:20px 24px 16px; flex-wrap:wrap; }
@@ -382,7 +403,6 @@
     </div>
     <div class="header-right">
         <input type="text" id="searchGlobal" class="search-box" placeholder="Cerca commessa, cliente, fase...">
-        <a href="{{ route('owner.dashboard') }}" class="btn-back">← Dashboard</a>
     </div>
 </div>
 

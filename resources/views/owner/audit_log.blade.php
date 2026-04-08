@@ -1,11 +1,24 @@
-@extends('layouts.app')
+@extends('layouts.mes')
 
-@section('title', 'Audit Log')
+@section('page-title', 'Audit Log - MES Grafica Nappa')
+@section('topbar-title', 'Audit Log')
+
+@section('sidebar-items')
+<div class="mes-sidebar-section">
+    <div class="mes-sidebar-section-label">Navigazione</div>
+    <a href="{{ route('owner.dashboard') }}" class="mes-sidebar-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Dashboard
+    </a>
+    <a href="{{ route('owner.auditLog') }}" class="mes-sidebar-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        Audit Log
+    </a>
+</div>
+@endsection
 
 @section('content')
-<div class="container-fluid py-3">
-    <h4 class="mb-3">Audit Log</h4>
-
+<div>
     {{-- Filtri --}}
     <form method="GET" class="row g-2 mb-3">
         <div class="col-auto">

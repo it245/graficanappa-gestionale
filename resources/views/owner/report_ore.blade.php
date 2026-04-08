@@ -1,4 +1,31 @@
-@extends('layouts.app')
+@extends('layouts.mes')
+
+@section('topbar-title', 'Report Ore')
+
+@section('sidebar-items')
+<div class="mes-sidebar-section">
+    <div class="mes-sidebar-section-label">Produzione</div>
+    <a href="{{ route('owner.dashboard') }}?op_token={{ request('op_token') }}" class="mes-sidebar-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Dashboard
+    </a>
+    <a href="{{ route('owner.scheduling') }}?op_token={{ request('op_token') }}" class="mes-sidebar-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Scheduling
+    </a>
+</div>
+<div class="mes-sidebar-section">
+    <div class="mes-sidebar-section-label">Analisi</div>
+    <a href="{{ route('owner.reportOre') }}?op_token={{ request('op_token') }}" class="mes-sidebar-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Report Ore
+    </a>
+    <a href="{{ route('owner.fasiTerminate') }}?op_token={{ request('op_token') }}" class="mes-sidebar-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        Fasi Terminate
+    </a>
+</div>
+@endsection
 
 @section('title', 'Report Ore')
 
@@ -15,16 +42,8 @@
 @endphp
 
 <style>
-    .ro-page { background:#f0f2f5; min-height:100vh; font-family:'Inter','Segoe UI',system-ui,sans-serif; }
-    .ro-topbar { background:#fff; border-bottom:1px solid #e5e7eb; padding:14px 24px; position:sticky; top:0; z-index:100; box-shadow:0 1px 3px rgba(0,0,0,.04); }
-    .ro-topbar-inner { max-width:1440px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; }
-    .ro-logo { display:flex; align-items:center; gap:10px; }
-    .ro-logo-icon { width:34px; height:34px; border-radius:8px; background:linear-gradient(135deg,#4f46e5,#7c3aed); display:flex; align-items:center; justify-content:center; }
-    .ro-title { font-size:16px; font-weight:700; color:#111827; letter-spacing:-0.3px; margin:0; }
-    .ro-subtitle { font-size:11px; color:#9ca3af; }
-    .ro-back { display:inline-flex; align-items:center; gap:5px; padding:7px 14px; border-radius:6px; background:#f3f4f6; color:#6b7280; text-decoration:none; font-size:12px; font-weight:500; border:1px solid #e5e7eb; transition:all .15s; }
-    .ro-back:hover { background:#e5e7eb; color:#374151; }
-    .ro-container { max-width:1440px; margin:0 auto; padding:20px 24px; }
+    .ro-page { min-height:100vh; }
+    .ro-container { max-width:1440px; margin:0 auto; padding:0; }
 
     .ro-kpi-grid { display:grid; grid-template-columns:repeat(6, 1fr); gap:12px; margin-bottom:20px; }
     .ro-kpi { background:#fff; border:1px solid #e5e7eb; border-radius:10px; padding:16px 18px; }
@@ -88,25 +107,6 @@
 </style>
 
 <div class="ro-page">
-    {{-- Top bar --}}
-    <div class="ro-topbar">
-        <div class="ro-topbar-inner">
-            <div class="ro-logo">
-                <div class="ro-logo-icon">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                </div>
-                <div>
-                    <h1 class="ro-title">Report Ore</h1>
-                    <span class="ro-subtitle">Analisi produttivita per commessa e reparto</span>
-                </div>
-            </div>
-            <a href="{{ route('owner.dashboard', ['op_token' => request()->query('op_token')]) }}" class="ro-back">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-                Dashboard
-            </a>
-        </div>
-    </div>
-
     <div class="ro-container">
 
         {{-- Filtri --}}

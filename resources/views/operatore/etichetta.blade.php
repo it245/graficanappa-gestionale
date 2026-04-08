@@ -1,4 +1,16 @@
-@extends('layouts.app')
+@extends('layouts.mes')
+
+@section('topbar-title', 'Stampa Etichetta')
+
+@section('sidebar-items')
+<div class="mes-sidebar-section">
+    <div class="mes-sidebar-section-label">Navigazione</div>
+    <a href="{{ url()->previous() }}" class="mes-sidebar-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Indietro
+    </a>
+</div>
+@endsection
 
 @section('content')
 <style>
@@ -169,7 +181,9 @@
     /* ===== PRINT ===== */
     @media print {
         body, html { margin: 0; padding: 0; }
-        .etichetta-form, .no-print, .alert, .top-bar, nav, header, footer { display: none !important; }
+        .etichetta-form, .no-print, .alert, .top-bar, .mes-sidebar, .mes-topbar, .mes-sidebar-overlay, nav, header, footer { display: none !important; }
+        .mes-content { margin-left: 0 !important; padding-top: 0 !important; }
+        .mes-content-inner { padding: 0 !important; }
         .container-fluid { padding: 0 !important; margin: 0 !important; }
         .etichetta-preview {
             border: none;

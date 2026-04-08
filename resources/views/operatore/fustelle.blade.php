@@ -1,21 +1,23 @@
-@extends('layouts.app')
+@extends('layouts.mes')
+
+@section('topbar-title', 'Fustelle')
+
+@section('sidebar-items')
+<div class="mes-sidebar-section">
+    <div class="mes-sidebar-section-label">Navigazione</div>
+    <a href="{{ route('operatore.dashboard', ['op_token' => request('op_token')]) }}" class="mes-sidebar-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Dashboard
+    </a>
+    <a href="{{ route('operatore.fustelle', ['op_token' => request('op_token')]) }}" class="mes-sidebar-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+        Fustelle
+    </a>
+</div>
+@endsection
 
 @section('content')
 <style>
-    .top-bar {
-        display: flex; justify-content: space-between; align-items: center;
-        padding: 8px 12px; background: #1a1a2e; color: #fff;
-    }
-    .top-bar a { color: #fff; text-decoration: none; font-size: 14px; font-weight: 600; background: rgba(255,255,255,.15); padding: 6px 14px; border-radius: 6px; }
-    .top-bar a:hover { background: rgba(255,255,255,.25); }
-    .operatore-info { position: relative; cursor: pointer; }
-    .operatore-popup {
-        display: none; position: absolute; top: 40px; left: 0;
-        background: #fff; color: #333; border: 1px solid #ccc;
-        border-radius: 6px; padding: 12px; min-width: 200px;
-        box-shadow: 0 4px 12px rgba(0,0,0,.15); z-index: 100;
-    }
-
     .fustelle-layout { display: flex; gap: 0; min-height: calc(100vh - 56px); }
 
     .fustelle-sidebar {
@@ -102,7 +104,7 @@
     .btn-stampa:hover { background: rgba(255,255,255,.25); }
 
     @media print {
-        .top-bar, .fustelle-sidebar, .kpi-row, .btn-stampa,
+        .mes-sidebar, .mes-topbar, .fustelle-sidebar, .kpi-row, .btn-stampa,
         #filtroFustella, #filtroCliente, label[for="filtroFustella"],
         button[onclick*="Reset"] { display: none !important; }
         .fustelle-layout { display: block !important; }
@@ -113,29 +115,6 @@
         body { font-size: 12px; }
     }
 </style>
-
-<div class="top-bar">
-    <div style="display:flex; align-items:center; gap:10px;">
-        <img src="{{ asset('images/logo_gn.png') }}" alt="Logo" style="height:40px;">
-        <div class="operatore-info" id="operatoreInfo">
-            <img src="{{ asset('images/icons8-utente-uomo-cerchiato-50.png') }}" alt="Operatore">
-            <div class="operatore-popup" id="operatorePopup">
-                <div><strong>{{ $operatore->nome }} {{ $operatore->cognome }}</strong></div>
-                <div>
-                    @if($operatore->reparti->isEmpty())
-                        Nessun reparto assegnato
-                    @else
-                        <p>Reparto: <strong>{{ $operatore->reparti->pluck('nome')->join(', ') }}</strong></p>
-                    @endif
-                </div>
-                <a href="{{ route('operatore.logout') }}" class="btn btn-secondary btn-sm mt-2">Logout</a>
-            </div>
-        </div>
-    </div>
-    <div style="display:flex; align-items:center; gap:15px;">
-        <a href="{{ route('operatore.dashboard', ['op_token' => request('op_token')]) }}">Dashboard</a>
-    </div>
-</div>
 
 <div class="fustelle-layout">
 
@@ -264,16 +243,6 @@
 </div> {{-- fine fustelle-layout --}}
 
 <script>
-document.getElementById('operatoreInfo').addEventListener('click', function(){
-    const popup = document.getElementById('operatorePopup');
-    popup.style.display = popup.style.display === 'block' ? 'none' : 'block';
-});
-document.addEventListener('click', function(e){
-    if(!document.getElementById('operatoreInfo').contains(e.target)){
-        document.getElementById('operatorePopup').style.display='none';
-    }
-});
-
 function filtroSidebar(codice) {
     // Aggiorna sidebar active
     document.querySelectorAll('.sidebar-item').forEach(function(item) {

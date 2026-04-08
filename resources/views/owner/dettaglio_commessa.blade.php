@@ -1,35 +1,39 @@
-@extends('layouts.app')
+@extends('layouts.mes')
+
+@section('page-title', 'Dettaglio Commessa - MES Grafica Nappa')
+@section('topbar-title', 'Dettaglio Commessa')
+
+@section('sidebar-items')
+<div class="mes-sidebar-section">
+    <div class="mes-sidebar-section-label">Navigazione</div>
+    <a href="{{ route('owner.dashboard') }}" class="mes-sidebar-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Dashboard
+    </a>
+    <a href="{{ url()->previous() }}" class="mes-sidebar-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Torna indietro
+    </a>
+</div>
+@endsection
 
 @section('content')
-<div class="container-fluid px-3">
 <style>
-    h2 { margin: 10px 0; }
-    .btn-back {
-        background: #333;
-        color: #fff;
-        border: none;
-        padding: 6px 16px;
-        border-radius: 4px;
-        font-size: 13px;
-        cursor: pointer;
-        text-decoration: none;
-    }
-    .btn-back:hover { background: #555; color: #fff; }
-    table {
+    .dc-table {
         width: 100%;
         border-collapse: collapse;
         font-size: 13px;
         table-layout: fixed;
     }
-    thead th {
-        background: #000;
+    .dc-table thead th {
+        background: var(--bg-sidebar);
         color: #fff;
         padding: 6px 8px;
-        border: 1px solid #dee2e6;
+        border: 1px solid var(--border-color);
         font-size: 12px;
     }
-    td {
-        border: 1px solid #dee2e6;
+    .dc-table td {
+        border: 1px solid var(--border-color);
         padding: 4px 8px;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -37,13 +41,13 @@
         max-height: 3.9em;
         line-height: 1.3;
     }
-    tr:hover td { background: rgba(0,0,0,0.03); }
-    td[contenteditable] {
+    .dc-table tr:hover td { background: rgba(0,0,0,0.03); }
+    .dc-table td[contenteditable] {
         user-select: text;
         cursor: text;
     }
-    td[contenteditable]:focus {
-        outline: 2px solid #0d6efd;
+    .dc-table td[contenteditable]:focus {
+        outline: 2px solid var(--accent);
         outline-offset: -2px;
         background: #f0f7ff !important;
     }
@@ -55,22 +59,22 @@
         font-weight: bold;
         cursor: pointer;
     }
-    th:nth-child(1), td:nth-child(1) { width: 70px; text-align: center; }
-    th:nth-child(2), td:nth-child(2) { width: 60px; text-align: center; }
-    th:nth-child(3), td:nth-child(3) { width: 120px; }
-    th:nth-child(4), td:nth-child(4) { width: 100px; }
-    th:nth-child(5), td:nth-child(5) { width: 80px; text-align: center; }
-    th:nth-child(6), td:nth-child(6) { width: 80px; text-align: center; }
-    th:nth-child(7), td:nth-child(7) { width: 65px; text-align: center; }
-    th:nth-child(8), td:nth-child(8) { width: 65px; text-align: center; }
-    th:nth-child(9), td:nth-child(9) { width: 120px; }
-    th:nth-child(10), td:nth-child(10) { width: 100px; }
-    th:nth-child(11), td:nth-child(11) { width: 180px; }
-    th:nth-child(12), td:nth-child(12) { width: 110px; }
-    th:nth-child(13), td:nth-child(13) { width: 110px; }
-    th:nth-child(14), td:nth-child(14) { width: 50px; text-align: center; }
+    .dc-table th:nth-child(1), .dc-table td:nth-child(1) { width: 70px; text-align: center; }
+    .dc-table th:nth-child(2), .dc-table td:nth-child(2) { width: 60px; text-align: center; }
+    .dc-table th:nth-child(3), .dc-table td:nth-child(3) { width: 120px; }
+    .dc-table th:nth-child(4), .dc-table td:nth-child(4) { width: 100px; }
+    .dc-table th:nth-child(5), .dc-table td:nth-child(5) { width: 80px; text-align: center; }
+    .dc-table th:nth-child(6), .dc-table td:nth-child(6) { width: 80px; text-align: center; }
+    .dc-table th:nth-child(7), .dc-table td:nth-child(7) { width: 65px; text-align: center; }
+    .dc-table th:nth-child(8), .dc-table td:nth-child(8) { width: 65px; text-align: center; }
+    .dc-table th:nth-child(9), .dc-table td:nth-child(9) { width: 120px; }
+    .dc-table th:nth-child(10), .dc-table td:nth-child(10) { width: 100px; }
+    .dc-table th:nth-child(11), .dc-table td:nth-child(11) { width: 180px; }
+    .dc-table th:nth-child(12), .dc-table td:nth-child(12) { width: 110px; }
+    .dc-table th:nth-child(13), .dc-table td:nth-child(13) { width: 110px; }
+    .dc-table th:nth-child(14), .dc-table td:nth-child(14) { width: 50px; text-align: center; }
     .btn-elimina {
-        background: #dc3545;
+        background: var(--danger);
         color: #fff;
         border: none;
         border-radius: 4px;
@@ -81,7 +85,7 @@
     .btn-elimina:hover { background: #c82333; }
     .preview-card {
         border-radius: 12px;
-        border: 1px solid #dee2e6;
+        border: 1px solid var(--border-color);
         overflow: hidden;
         margin-bottom: 15px;
     }
@@ -89,14 +93,13 @@
         max-width: 100%;
         max-height: 220px;
         border-radius: 8px;
-        border: 1px solid #dee2e6;
+        border: 1px solid var(--border-color);
     }
 </style>
 
-<div class="d-flex justify-content-between align-items-center mb-2 mt-2">
+<div class="d-flex justify-content-between align-items-center mb-2">
     <div>
-        <a href="{{ route('owner.dashboard') }}" class="btn-back">&larr; Torna alla dashboard</a>
-        <h2 class="d-inline ms-3">Commessa: <strong>{{ $commessa }}</strong></h2>
+        <h2 class="d-inline" style="margin:10px 0;">Commessa: <strong>{{ $commessa }}</strong></h2>
         <span class="badge bg-primary ms-2" style="font-size:14px; vertical-align:middle;">OC: {{ $ordine->ordine_cliente ?? '-' }}</span>
     </div>
     <div class="d-flex gap-2">
@@ -316,7 +319,7 @@
 </div>
 
 <div style="overflow-x:auto; margin-top:10px;">
-    <table>
+    <table class="dc-table">
         <thead>
             <tr>
                 <th>Priorit&agrave;</th>
@@ -392,7 +395,6 @@
         @endforeach
         </tbody>
     </table>
-</div>
 </div>
 
 <script>
