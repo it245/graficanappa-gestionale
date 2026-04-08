@@ -130,8 +130,8 @@
                 <span class="checkbox {{ $trasportoCura === 'Vettore' ? 'checked' : '' }}">{{ $trasportoCura === 'Vettore' ? 'x' : '' }}</span> Vettore
             </td>
             <td colspan="3" rowspan="2" style="border:1px solid #999; padding:2mm 3mm; vertical-align:top;">
-                <span class="label">INIZIO DEL TRASPORTO O CONSEGNA</span><br>
-                Data <strong>{{ $dataTrasporto }}</strong> &nbsp;&nbsp; Ora <strong>{{ $oraTrasporto }}</strong>
+                <span class="label">INIZIO DEL TRASPORTO O CONSEGNA</span><br><br>
+                Data <strong>{{ $dataTrasporto }}</strong> &nbsp;&nbsp;&nbsp;&nbsp; Ora <strong>{{ $oraTrasporto }}</strong>
             </td>
         </tr>
         <tr></tr>
