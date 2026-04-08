@@ -224,7 +224,7 @@
         </div>
         <div class="mb-3">
             <label class="form-label">Descrizione articolo</label>
-            <input type="text" id="campo-descrizione-simple" class="form-control" value="{{ ($isNoHeader ?? false) ? '' : ($ordine->descrizione ?? '') }}" placeholder="Scrivi la descrizione...">
+            <input type="text" id="campo-descrizione-simple" class="form-control" value="{{ $ordine->descrizione ?? '' }}" placeholder="Scrivi la descrizione...">
         </div>
     @elseif($isItalianaConfetti)
         {{-- ITALIANA CONFETTI: dropdown ricerca EAN + opzioni extra --}}
@@ -345,7 +345,7 @@
         <span id="print-cliente-simple">{{ $cliente }}</span>
     </div>
     @endif
-    <div id="print-descrizione-simple" style="font-size: 28pt; font-weight: 700; text-align: center; text-transform: uppercase; flex: 1; display: flex; align-items: center; justify-content: center;">{{ ($isNoHeader ?? false) ? '' : ($ordine->descrizione ?? '') }}</div>
+    <div id="print-descrizione-simple" style="font-size: 28pt; font-weight: 700; text-align: center; text-transform: uppercase; flex: 1; display: flex; align-items: center; justify-content: center;">{{ $ordine->descrizione ?? '' }}</div>
     @endif
     @if($isTifataPlastica ?? false)
     {{-- TIFATA PLASTICA: descrizione sopra, lotto/qta/data affiancati, no EAN/DataMatrix --}}
