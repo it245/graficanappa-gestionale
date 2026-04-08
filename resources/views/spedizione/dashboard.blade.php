@@ -981,7 +981,11 @@ function apriTrackingDDT(numeroDDT, btn) {
         } else {
             eventi.forEach(function(ev) {
                 var tr = document.createElement('tr');
-                tr.innerHTML = '<td>' + (ev.data || '-') + '</td><td>' + (ev.ora || '-') + '</td><td>' + (ev.descrizione || '-') + '</td><td>' + (ev.filiale || '-') + '</td>';
+                [ev.data || '-', ev.ora || '-', ev.descrizione || '-', ev.filiale || '-'].forEach(function(val) {
+                    var td = document.createElement('td');
+                    td.textContent = val;
+                    tr.appendChild(td);
+                });
                 eventiBody.appendChild(tr);
             });
         }

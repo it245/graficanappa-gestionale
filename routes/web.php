@@ -75,8 +75,8 @@ Route::get('/owner/note-spedizione-check', [DashboardSpedizioneController::class
 Route::get('/owner/audit-log', [DashboardOwnerController::class, 'auditLog'])->name('owner.auditLog');
 });
 
-// Alert ritardi (API senza auth per polling dashboard)
-Route::get('/owner/alert-ritardi', [PresenzeController::class, 'alertRitardi'])->name('owner.alertRitardi');
+// Alert ritardi (protetto con middleware owner)
+Route::get('/owner/alert-ritardi', [PresenzeController::class, 'alertRitardi'])->middleware(['owner'])->name('owner.alertRitardi');
 
 // Admin — login pubblico
 Route::get('/admin/login', [AdminLoginController::class, 'form'])->name('admin.login');
@@ -185,9 +185,9 @@ Route::prefix('spedizione')->middleware(['operatore.auth'])->group(function() {
     Route::post('/sync-onda', [DashboardSpedizioneController::class, 'syncOnda'])->name('spedizione.syncOnda');
 });
 
-// Tracking BRT test (accesso diretto)
-Route::get('/spedizione/tracking-test', [DashboardSpedizioneController::class, 'trackingTest'])->name('spedizione.trackingTest');
-Route::get('/spedizione/tracking-json/{segnacollo}', [DashboardSpedizioneController::class, 'trackingJson'])->name('spedizione.trackingJson');
+// Tracking BRT (protetto)
+Route::get('/spedizione/tracking-test', [DashboardSpedizioneController::class, 'trackingTest'])->middleware(['operatore.auth'])->name('spedizione.trackingTest');
+Route::get('/spedizione/tracking-json/{segnacollo}', [DashboardSpedizioneController::class, 'trackingJson'])->middleware(['operatore.auth'])->name('spedizione.trackingJson');
 
 // Prototipo nuova UI
 Route::get('/proto/owner', [DashboardOwnerController::class, 'prototipo'])->name('proto.owner');
@@ -222,7 +222,7 @@ Route::get('/commesse/{commessa}', [App\Http\Controllers\CommessaController::cla
 
 // TV Kiosk (no auth) — dati reali
 Route::get('/kiosk', [\App\Http\Controllers\KioskController::class, 'index']);
-Route::post('/kiosk/nota', [\App\Http\Controllers\KioskController::class, 'salvaNota'])->name('kiosk.salvaNota');
+Route::post('/kiosk/nota', [\App\Http\Controllers\KioskController::class, 'salvaNota'])->middleware(['owner'])->name('kiosk.salvaNota');
 Route::get('/kiosk/nota', [\App\Http\Controllers\KioskController::class, 'getNota'])->name('kiosk.getNota');
 
 // Kiosk demo (dati finti per test locale)

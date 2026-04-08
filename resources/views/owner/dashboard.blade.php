@@ -1450,7 +1450,11 @@ function apriTrackingDDT(numeroDDT, btn) {
         } else {
             eventi.forEach(function(ev) {
                 var tr = document.createElement('tr');
-                tr.innerHTML = '<td>' + (ev.data || '-') + '</td><td>' + (ev.ora || '-') + '</td><td>' + (ev.descrizione || '-') + '</td><td>' + (ev.filiale || '-') + '</td>';
+                [ev.data || '-', ev.ora || '-', ev.descrizione || '-', ev.filiale || '-'].forEach(function(val) {
+                    var td = document.createElement('td');
+                    td.textContent = val;
+                    tr.appendChild(td);
+                });
                 eventiBody.appendChild(tr);
             });
         }
@@ -2192,7 +2196,11 @@ function fetchPresenti() {
             var pb = document.getElementById('presentiBody');
             pb.innerHTML = '';
             d.presenti.forEach(function(p) {
-                pb.innerHTML += '<tr><td><strong>' + p.nome + '</strong></td><td>' + (p.entrata || '-') + '</td><td>' + p.ultima_timbratura + '</td></tr>';
+                var tr = document.createElement('tr');
+                var td1 = document.createElement('td'); var b = document.createElement('strong'); b.textContent = p.nome; td1.appendChild(b); tr.appendChild(td1);
+                var td2 = document.createElement('td'); td2.textContent = p.entrata || '-'; tr.appendChild(td2);
+                var td3 = document.createElement('td'); td3.textContent = p.ultima_timbratura; tr.appendChild(td3);
+                pb.appendChild(tr);
             });
             if (d.presenti.length === 0) pb.innerHTML = '<tr><td colspan="3" class="text-muted">Nessuno presente</td></tr>';
 
