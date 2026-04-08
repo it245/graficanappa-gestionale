@@ -78,7 +78,7 @@
     {{-- CLIENTE (posizionato a destra, l'intestazione è pre-stampata sulla carta) --}}
     <div style="text-align: right; margin-bottom: 3mm;">
         <div class="cliente-label">Spett.le</div>
-        <div class="cliente-box" style="display: inline-block; text-align: left; min-width: 55%;">
+        <div class="cliente-box" style="display: inline-block; text-align: left; min-width: 40%; max-width: 50%;">
             <div class="cliente-nome">{{ $testa->ClienteNome }}</div>
             <div class="cliente-indirizzo">
                 {{ $testa->ClienteIndirizzo }}<br>
