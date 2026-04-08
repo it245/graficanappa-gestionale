@@ -88,8 +88,8 @@
         </div>
     </div>
 
-    {{-- Destinazione (solo se diversa dal cliente) --}}
-    @if($coda && $coda->DestNome && trim($coda->DestNome) !== trim($testa->ClienteNome ?? ''))
+    {{-- Destinazione (solo se indirizzo diverso dal cliente) --}}
+    @if($coda && $coda->DestNome && trim($coda->DestIndirizzo ?? '') !== trim($testa->ClienteIndirizzo ?? ''))
     <div style="text-align: right; margin-bottom: 3mm;">
         <div class="dest-label">DESTINAZIONE (se l'indirizzo è diverso da quello del destinatario)</div>
         <div class="dest-box" style="display: inline-block; text-align: left; min-width: 55%;">
