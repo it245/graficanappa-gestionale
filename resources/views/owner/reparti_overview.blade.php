@@ -1,35 +1,24 @@
-@extends('layouts.app')
+@extends('layouts.mes')
+
+@section('topbar-title', 'Panoramica Reparti')
+
+@section('sidebar-items')
+<div class="mes-sidebar-section">
+    <div class="mes-sidebar-section-label">Produzione</div>
+    <a href="{{ route('owner.dashboard') }}?op_token={{ $opToken ?? request('op_token') }}" class="mes-sidebar-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Dashboard
+    </a>
+    <a href="{{ route('owner.repartiOverview') }}?op_token={{ $opToken ?? request('op_token') }}" class="mes-sidebar-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 20h20"/><rect x="4" y="8" width="4" height="12"/><rect x="10" y="4" width="4" height="16"/><rect x="16" y="11" width="4" height="9"/></svg>
+        Panoramica Reparti
+    </a>
+</div>
+@endsection
 
 @section('content')
 <div class="container-fluid px-3">
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-
-    body { background: #f0f2f5; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
-
-    /* Header */
-    .rov-header {
-        display: flex; align-items: center; justify-content: space-between;
-        margin-bottom: 28px; padding: 18px 0;
-    }
-    .rov-header h1 {
-        font-size: 24px; font-weight: 800; color: #111827; margin: 0; letter-spacing: -0.5px;
-    }
-    .rov-header h1 small {
-        font-size: 13px; font-weight: 500; color: #9ca3af; margin-left: 10px;
-        letter-spacing: 0;
-    }
-    .rov-header .nav-links { display: flex; gap: 6px; }
-    .rov-header .nav-links a {
-        color: #4b5563; text-decoration: none; font-size: 13px; font-weight: 500;
-        padding: 7px 16px; border: 1px solid #e5e7eb; border-radius: 8px;
-        transition: all 0.15s; background: #fff;
-    }
-    .rov-header .nav-links a:hover { background: #f3f4f6; border-color: #d1d5db; }
-    .rov-header .nav-links a.active {
-        background: #111827; color: #fff; border-color: #111827;
-    }
-
     /* KPI Cards */
     .kpi-row {
         display: grid; grid-template-columns: repeat(4, 1fr);
@@ -234,20 +223,15 @@
     }
 
     @media print {
-        .rov-header .nav-links, .kpi-row { display: none; }
+        .kpi-row { display: none; }
         .rep-body.collapsed { display: block !important; }
         .rep-card { break-inside: avoid; page-break-inside: avoid; box-shadow: none; }
         .kpi-card { box-shadow: none; }
     }
 </style>
 
-<div class="rov-header">
-    <h1>Panoramica Reparti <small>Commesse in lavorazione</small></h1>
-    <div class="nav-links">
-        <a href="{{ route('owner.dashboard', ['op_token' => $opToken]) }}">Dashboard</a>
-        <a href="{{ route('owner.repartiOverview', ['op_token' => $opToken]) }}" class="active">Reparti</a>
-        <a href="{{ route('owner.esterne', ['op_token' => $opToken]) }}">Esterne</a>
-    </div>
+<div style="margin-bottom: 28px; padding: 18px 0;">
+    <h1 style="font-size: 24px; font-weight: 800; color: #111827; margin: 0; letter-spacing: -0.5px;">Panoramica Reparti <small style="font-size: 13px; font-weight: 500; color: #9ca3af; margin-left: 10px; letter-spacing: 0;">Commesse in lavorazione</small></h1>
 </div>
 
 {{-- KPI --}}

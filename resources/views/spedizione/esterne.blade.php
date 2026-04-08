@@ -1,23 +1,24 @@
-@extends('layouts.app')
+@extends('layouts.mes')
+
+@section('topbar-title', 'Lavorazioni Esterne')
+
+@section('sidebar-items')
+<div class="mes-sidebar-section">
+    <div class="mes-sidebar-section-label">Spedizione</div>
+    <a href="{{ route('spedizione.dashboard') }}" class="mes-sidebar-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+        Dashboard Spedizione
+    </a>
+    <a href="{{ route('spedizione.esterne') }}" class="mes-sidebar-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+        Esterne
+    </a>
+</div>
+@endsection
 
 @section('content')
 <div class="container-fluid px-0">
 <style>
-    html, body { margin:0; padding:0; overflow-x:hidden; width:100%; }
-    h2, h4, p { margin-left:8px; margin-right:8px; }
-    .top-bar {
-        display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;
-    }
-    .operatore-info {
-        position:relative; display:flex; align-items:center; gap:10px; cursor:pointer;
-    }
-    .operatore-info img { width:50px; height:50px; border-radius:50%; }
-    .operatore-popup {
-        position:absolute; top:60px; left:0; background:#fff; border:1px solid #ccc;
-        padding:10px; border-radius:5px; box-shadow:0 2px 10px rgba(0,0,0,0.2);
-        display:none; z-index:1000; min-width:200px;
-    }
-    .operatore-popup button { width:100%; margin-top:8px; }
     .table-wrapper {
         width:100%; max-width:100%; overflow-x:auto; overflow-y:visible; margin: 0 4px;
     }
@@ -36,21 +37,7 @@
     a.commessa-link:hover { color:#0d6efd; }
 </style>
 
-<div class="top-bar">
-    <div class="operatore-info" id="operatoreInfo">
-        <img src="{{ asset('images/icons8-utente-uomo-cerchiato-50.png') }}" alt="Operatore">
-        <div class="operatore-popup" id="operatorePopup">
-            <div><strong>{{ $operatore->nome }} {{ $operatore->cognome }}</strong></div>
-            <div><p>Reparto: <strong>Spedizione</strong></p></div>
-            <a href="{{ route('operatore.logout') }}" class="btn btn-secondary btn-sm mt-2">Logout</a>
-        </div>
-    </div>
-</div>
-
-<div class="d-flex align-items-center mx-2 mb-2">
-    <a href="{{ route('spedizione.dashboard') }}" class="btn btn-outline-secondary btn-sm me-3">&larr; Dashboard</a>
-    <h2 class="mb-0" style="color:#17a2b8;">Lavorazioni Esterne ({{ $fasiEsterne->count() }})</h2>
-</div>
+<h2 class="mb-2 mx-2" style="color:#17a2b8;">Lavorazioni Esterne ({{ $fasiEsterne->count() }})</h2>
 
 <input type="text" id="searchBox" class="form-control search-box" placeholder="Cerca commessa, cliente, descrizione...">
 
@@ -435,15 +422,5 @@ document.getElementById('searchBox').addEventListener('input', filtraEsterne);
     }
 })();
 
-// Popup operatore
-document.getElementById('operatoreInfo').addEventListener('click', function(){
-    const popup = document.getElementById('operatorePopup');
-    popup.style.display = popup.style.display === 'block' ? 'none' : 'block';
-});
-document.addEventListener('click', function(e){
-    if(!document.getElementById('operatoreInfo').contains(e.target)){
-        document.getElementById('operatorePopup').style.display='none';
-    }
-});
 </script>
 @endsection

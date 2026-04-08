@@ -1,10 +1,24 @@
-@extends('layouts.app')
+@extends('layouts.mes')
+
+@section('topbar-title', 'Lavorazioni Esterne')
+
+@section('sidebar-items')
+<div class="mes-sidebar-section">
+    <div class="mes-sidebar-section-label">Produzione</div>
+    <a href="{{ route('owner.dashboard') }}?op_token={{ request('op_token') }}" class="mes-sidebar-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Dashboard
+    </a>
+    <a href="{{ route('owner.esterne') }}?op_token={{ request('op_token') }}" class="mes-sidebar-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+        Lav. Esterne
+    </a>
+</div>
+@endsection
 
 @section('content')
 <div class="container-fluid px-0">
 <style>
-    html, body { margin:0; padding:0; overflow-x:hidden; width:100%; }
-    h2, h4, p { margin-left:8px; margin-right:8px; }
     .table-wrapper {
         width:100%; max-width:100%; overflow-x:auto; overflow-y:visible; margin: 0 4px;
     }
@@ -25,10 +39,7 @@
     .badge-stato { font-size:11px; }
 </style>
 
-<div class="d-flex align-items-center mx-2 mb-2 mt-2">
-    <a href="{{ route('owner.dashboard') }}" class="btn btn-outline-secondary btn-sm me-3">&larr; Dashboard</a>
-    <h2 class="mb-0" style="color:#17a2b8;">Lavorazioni Esterne ({{ $commesseEsterne->count() }})</h2>
-</div>
+<h2 class="mb-2 mt-2 mx-2" style="color:#17a2b8;">Lavorazioni Esterne ({{ $commesseEsterne->count() }})</h2>
 
 <input type="text" id="searchBox" class="form-control search-box" placeholder="Cerca commessa, cliente, fornitore, fase...">
 
