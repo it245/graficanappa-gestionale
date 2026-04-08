@@ -175,11 +175,12 @@ class DdtPdfService
             $causale = $causaliMap[$coda->CausaleTrasporto] ?? $coda->CausaleTrasporto;
         }
 
-        // Note: righe testo escluse intestazioni Rif. Ord.Cli.
+        // Note: righe testo escluse intestazioni Rif. Ord.Cli. e disclaimer
         $noteRighe = collect($righe)
             ->filter(fn($r) => $r->TipoRiga == 3
                 && !empty(trim($r->Descrizione ?? ''))
-                && !str_starts_with(trim($r->Descrizione), 'Rif. Ord.Cli.'))
+                && !str_starts_with(trim($r->Descrizione), 'Rif. Ord.Cli.')
+                && !str_contains(strtolower($r->Descrizione ?? ''), 'contestazioni'))
             ->pluck('Descrizione')
             ->implode("\n");
 
