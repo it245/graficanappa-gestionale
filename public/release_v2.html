@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>MES v2.0 — Pre-Release Notes</title>
+<style>
+    @page { margin: 2cm; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #222; line-height: 1.7; padding: 40px; max-width: 900px; margin: 0 auto; }
+
+    .header { text-align: center; border-bottom: 3px solid #d11317; padding-bottom: 20px; margin-bottom: 30px; }
+    .header h1 { color: #d11317; font-size: 26px; margin-bottom: 4px; }
+    .header h2 { color: #333; font-size: 16px; font-weight: 400; }
+    .header .date { color: #888; font-size: 13px; margin-top: 8px; }
+    .header .badge { display: inline-block; padding: 4px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; color: #fff; background: #0d6efd; margin-top: 10px; }
+
+    h3 { color: #d11317; font-size: 18px; margin-top: 30px; margin-bottom: 12px; border-left: 4px solid #d11317; padding-left: 10px; }
+    h4 { color: #333; font-size: 15px; margin-top: 18px; margin-bottom: 8px; }
+    p { margin-bottom: 10px; font-size: 14px; text-align: justify; }
+    ul { margin: 10px 0 10px 20px; font-size: 14px; }
+    li { padding: 4px 0; }
+    li strong { color: #0d6efd; }
+
+    .feature-box { background: #f0f7ff; border: 1px solid #bee3f8; border-radius: 10px; padding: 16px 20px; margin: 15px 0; }
+    .feature-box strong { color: #0d6efd; }
+
+    .warning-box { background: #fff3cd; border: 1px solid #ffc107; border-radius: 10px; padding: 16px 20px; margin: 15px 0; }
+    .warning-box strong { color: #856404; }
+
+    .test-box { background: #d4edda; border: 1px solid #28a745; border-radius: 10px; padding: 16px 20px; margin: 15px 0; }
+    .test-box strong { color: #155724; }
+
+    .roadmap-box { background: #e8f4fd; border: 1px solid #0891b2; border-radius: 10px; padding: 16px 20px; margin: 15px 0; }
+
+    table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 13px; }
+    th { background: #d11317; color: #fff; padding: 10px 14px; text-align: left; }
+    td { padding: 10px 14px; border-bottom: 1px solid #e0e0e0; }
+    tr:nth-child(even) { background: #f9f9f9; }
+
+    .footer { margin-top: 40px; padding-top: 15px; border-top: 2px solid #e0e0e0; text-align: center; font-size: 12px; color: #888; }
+
+    @media print {
+        body { padding: 0; font-size: 12px; }
+        h3 { page-break-after: avoid; }
+        .feature-box, .test-box, .warning-box, .roadmap-box { page-break-inside: avoid; }
+    }
+</style>
+</head>
+<body>
+
+<div class="header">
+    <h1>MES GRAFICA NAPPA</h1>
+    <h2>Pre-Release v2.0 &mdash; Note di rilascio</h2>
+    <div class="badge">PRE-RELEASE &bull; Testing in corso</div>
+    <div class="date">8 Aprile 2026 &mdash; Rilascio previsto: 11 Aprile 2026</div>
+</div>
+
+<h3>Panoramica</h3>
+<p>
+    La versione 2.0 del MES rappresenta un aggiornamento significativo del sistema gestionale di produzione.
+    Il focus principale &egrave; stato su <strong>interfaccia enterprise</strong>, <strong>schedulazione intelligente della produzione</strong>
+    e <strong>comunicazione interna in tempo reale</strong>. Tutte le funzionalit&agrave; della v1.0 sono state mantenute e migliorate.
+</p>
+
+<h3>Nuove funzionalit&agrave;</h3>
+
+<div class="feature-box">
+    <strong>1. Interfaccia Enterprise</strong><br>
+    Completa riprogettazione dell'interfaccia utente su tutte le dashboard (owner, operatore, spedizione, prestampa, scheduling, report).
+    <ul>
+        <li><strong>Sidebar fissa</strong> con navigazione raggruppata per area (Produzione, Analisi, Strumenti)</li>
+        <li><strong>Topbar</strong> con titolo pagina, dark mode, orologio, avatar utente</li>
+        <li><strong>Dark mode</strong> per monitor di reparto</li>
+        <li><strong>Design system</strong> coerente: font Inter, colori semantici, componenti riutilizzabili</li>
+        <li><strong>Responsive</strong> su tablet e smartphone con sidebar collassabile</li>
+    </ul>
+</div>
+
+<div class="feature-box">
+    <strong>2. Scheduler Mossa 37 &mdash; Pianificazione Intelligente</strong><br>
+    Algoritmo di schedulazione a simulazione a eventi discreti che ottimizza la sequenza di produzione su 11 macchine.
+    <ul>
+        <li><strong>Batching intelligente</strong>: raggruppa commesse con stessa fustella/configurazione per ridurre i tempi di setup</li>
+        <li><strong>BOBST blocchi</strong>: prima tutti i rilievi, poi tutte le fustelle (2-3 cambi setup vs 40+)</li>
+        <li><strong>Piegaincolla blocchi</strong>: raggruppa PI01/PI02/PI03 con cambio config 1h</li>
+        <li><strong>XL106</strong>: raggruppa per tipo lavaggio (DRIP OFF, Pantone, Standard) e codice carta</li>
+        <li><strong>Risparmio stimato</strong>: 85-93 ore/mese di setup</li>
+        <li><strong>Gantt interattivo</strong> con dati reali dallo scheduler (non calcolo client-side)</li>
+        <li><strong>Date spedizione previste</strong>: ogni commessa ha una data di spedibilit&agrave; calcolata</li>
+        <li><strong>Export Excel</strong> piano produzione con foglio per macchina, colori ritardo/verde, riepilogo KPI</li>
+        <li><strong>Excel condiviso</strong>: si aggiorna automaticamente nella cartella condivisa dopo ogni sync Onda</li>
+    </ul>
+</div>
+
+<div class="feature-box">
+    <strong>3. Chat Interna MES</strong><br>
+    Sistema di messaggistica interna integrato in tutte le pagine.
+    <ul>
+        <li><strong>Widget flottante</strong> stile Messenger in basso a destra</li>
+        <li><strong>Canali per reparto</strong>: @Stampa Offset, @Fustella, @Piegaincolla, @Spedizione, ecc.</li>
+        <li><strong>Menzioni @</strong> stile WhatsApp: digita @ e seleziona reparto o operatore</li>
+        <li><strong>Notifiche</strong>: badge con conteggio messaggi non letti</li>
+    </ul>
+</div>
+
+<div class="feature-box">
+    <strong>4. Progressive Web App (PWA)</strong><br>
+    Il MES &egrave; ora installabile su tablet e smartphone come un'app nativa.
+    <ul>
+        <li>Installabile dalla barra degli indirizzi di Chrome</li>
+        <li>Pagina offline di fallback</li>
+        <li>Icona sulla home screen del dispositivo</li>
+        <li>Notifiche push browser per commesse in ritardo</li>
+    </ul>
+</div>
+
+<div class="feature-box">
+    <strong>5. DDT PDF Automatico</strong><br>
+    Generazione automatica del PDF del Documento di Trasporto quando viene emessa una DDT su Onda.
+    <ul>
+        <li>PDF con layout per carta intestata</li>
+        <li>Colonna RIF. ORD. MAXTRIS collegata all'Excel ORDINE ASTUCCI (Google Drive)</li>
+        <li>Pulsante &ldquo;PDF&rdquo; nella dashboard spedizione</li>
+        <li>Salvato automaticamente in <code>C:\condivisa\mes\ddt\</code></li>
+    </ul>
+</div>
+
+<div class="feature-box">
+    <strong>6. Stato 5 = Esterno</strong><br>
+    Le fasi inviate a fornitori esterni ora hanno uno stato dedicato (stato 5) separato dall'avviato (stato 2).
+    <ul>
+        <li>Badge viola &ldquo;EXT&rdquo; nelle dashboard</li>
+        <li>Non confonde pi&ugrave; le analisi dei tempi (Excel export corretto)</li>
+        <li>Protezione: il sync Prinect non sovrascrive le fasi terminate manualmente</li>
+    </ul>
+</div>
+
+<h3>Miglioramenti Performance</h3>
+<table>
+    <tr><th>Area</th><th>Prima (v1)</th><th>Dopo (v2)</th><th>Miglioramento</th></tr>
+    <tr><td>Script per pagina</td><td>384 KB</td><td>108 KB</td><td><strong>-72%</strong></td></tr>
+    <tr><td>Query dashboard owner</td><td>~116</td><td>~20</td><td><strong>-83%</strong></td></tr>
+    <tr><td>Progresso commesse</td><td>10.000+ righe PHP</td><td>1 query SQL</td><td><strong>-99%</strong></td></tr>
+    <tr><td>CSRF token</td><td>Scadeva dopo 2h</td><td>Refresh ogni 30min</td><td>No pi&ugrave; &ldquo;Page Expired&rdquo;</td></tr>
+</table>
+
+<h3>Sicurezza</h3>
+<ul>
+    <li>Fix XSS: rimosso innerHTML con dati utente (BRT tracking, presenze)</li>
+    <li>Endpoint protetti: alert ritardi, BRT tracking, kiosk nota ora richiedono autenticazione</li>
+    <li>CSRF token refresh ogni 30 minuti + pageshow handler</li>
+</ul>
+
+<div class="test-box">
+    <strong>Come testare la v2.0</strong><br><br>
+    La versione 2.0 &egrave; disponibile per il test all'indirizzo:<br><br>
+    <strong style="font-size:18px; color:#0d6efd;">http://192.168.1.60:8080</strong><br><br>
+    Accedere con le stesse credenziali della v1.0 (stesso database).<br>
+    La v1.0 continua a funzionare normalmente sulla porta 80:<br>
+    <strong>http://192.168.1.60</strong> (produzione, invariata)<br><br>
+    <strong>Cosa verificare:</strong>
+    <ul>
+        <li>Navigazione sidebar: tutte le pagine raggiungibili</li>
+        <li>Dashboard owner: KPI, filtri, tabella, modali</li>
+        <li>Scheduling: Gantt con date reali</li>
+        <li>Chat: widget in basso a destra, menzioni @</li>
+        <li>Dark mode: toggle in alto a destra</li>
+        <li>Funzionalit&agrave; operatore: avvia/pausa/termina fase</li>
+    </ul>
+</div>
+
+<div class="roadmap-box">
+    <strong>Prossimi sviluppi (post-rilascio v2.0)</strong><br><br>
+    Dopo il rilascio della v2.0, le prossime implementazioni previste sono:
+    <ul>
+        <li><strong>Catalogo Fustelle</strong>: gestione archivio fustelle con posizione fisica, storico utilizzo, manutenzione programmata e riordino automatico</li>
+        <li><strong>Catalogazione Clich&eacute;</strong>: archivio clich&eacute; per stampa a caldo con tracking utilizzo, associazione commesse e gestione scorte</li>
+        <li><strong>Magazzino Base</strong>: anagrafica materiali, movimenti carico/scarico, scarico tramite QR code, alert soglia minima</li>
+        <li><strong>AI Intelligence (v3.0)</strong>: assistente AI per il titolare, analisi predittiva ritardi, ottimizzazione tempi stimati</li>
+    </ul>
+    Queste funzionalit&agrave; sono attualmente in fase di progettazione e verranno rilasciate progressivamente.
+</div>
+
+<div class="warning-box">
+    <strong>Note importanti per il deploy</strong>
+    <ul>
+        <li>Il passaggio alla v2.0 richiede l'esecuzione delle migration del database</li>
+        <li>Le credenziali di accesso restano invariate</li>
+        <li>Il rollback alla v1.0 &egrave; possibile in qualsiasi momento</li>
+        <li>Il database &egrave; condiviso: le modifiche fatte sulla v2.0 sono visibili anche sulla v1.0</li>
+    </ul>
+</div>
+
+<div class="footer">
+    <strong>Grafica Nappa srl</strong> &mdash; Sistema MES v2.0<br>
+    Sviluppo: Giovanni Pietropaolo &mdash; Tirocinante Sistemi Informativi<br>
+    Assistenza AI: Claude Code (Anthropic)<br>
+    &copy; 2026
+</div>
+
+</body>
+</html>
