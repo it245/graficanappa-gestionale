@@ -1,0 +1,1543 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentazione Tecnica MES v2.0 — Grafica Nappa srl</title>
+    <style>
+        @page {
+            margin: 1.5cm;
+            size: A4;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 11pt;
+            line-height: 1.6;
+            color: #333;
+            max-width: 210mm;
+            margin: 0 auto;
+            padding: 20px 30px;
+            background: #fff;
+        }
+
+        /* Title Page */
+        .title-page {
+            page-break-after: always;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 90vh;
+            text-align: center;
+        }
+
+        .title-page h1 {
+            font-size: 28pt;
+            color: #d11317;
+            margin-bottom: 10px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .title-page h2 {
+            font-size: 18pt;
+            color: #555;
+            font-weight: 400;
+            margin-bottom: 30px;
+        }
+
+        .title-page .version {
+            font-size: 14pt;
+            color: #d11317;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .title-page .date {
+            font-size: 12pt;
+            color: #777;
+            margin-bottom: 40px;
+        }
+
+        .title-page .author {
+            font-size: 11pt;
+            color: #555;
+            border-top: 2px solid #d11317;
+            padding-top: 15px;
+            margin-top: 20px;
+        }
+
+        .title-page .company-logo {
+            font-size: 36pt;
+            color: #d11317;
+            font-weight: 800;
+            margin-bottom: 40px;
+            letter-spacing: 3px;
+        }
+
+        /* Headers */
+        h1 {
+            font-size: 20pt;
+            color: #d11317;
+            border-left: 5px solid #d11317;
+            padding-left: 15px;
+            margin-top: 40px;
+            margin-bottom: 15px;
+            page-break-after: avoid;
+        }
+
+        h2 {
+            font-size: 15pt;
+            color: #d11317;
+            border-left: 3px solid #d11317;
+            padding-left: 12px;
+            margin-top: 30px;
+            margin-bottom: 10px;
+            page-break-after: avoid;
+        }
+
+        h3 {
+            font-size: 12pt;
+            color: #444;
+            margin-top: 20px;
+            margin-bottom: 8px;
+            font-weight: 600;
+            page-break-after: avoid;
+        }
+
+        h4 {
+            font-size: 11pt;
+            color: #555;
+            margin-top: 15px;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        /* Paragraphs and lists */
+        p {
+            margin-bottom: 10px;
+        }
+
+        ul, ol {
+            margin-bottom: 10px;
+            padding-left: 25px;
+        }
+
+        li {
+            margin-bottom: 4px;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            font-size: 10pt;
+            page-break-inside: auto;
+        }
+
+        thead {
+            display: table-header-group;
+        }
+
+        tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+        }
+
+        th {
+            background-color: #d11317;
+            color: #fff;
+            padding: 8px 10px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 10pt;
+        }
+
+        td {
+            padding: 6px 10px;
+            border-bottom: 1px solid #ddd;
+            vertical-align: top;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tr:hover {
+            background-color: #f0f0f0;
+        }
+
+        /* Info box */
+        .info-box {
+            background: #f5f7fa;
+            border: 1px solid #d0d5dd;
+            border-left: 4px solid #667085;
+            padding: 12px 16px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+
+        .info-box strong {
+            color: #333;
+        }
+
+        /* Warning box */
+        .warning-box {
+            background: #fefce8;
+            border: 1px solid #fbbf24;
+            border-left: 4px solid #f59e0b;
+            padding: 12px 16px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+
+        .warning-box strong {
+            color: #92400e;
+        }
+
+        /* Info blue box */
+        .info-blue-box {
+            background: #eff6ff;
+            border: 1px solid #93c5fd;
+            border-left: 4px solid #3b82f6;
+            padding: 12px 16px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+
+        .info-blue-box strong {
+            color: #1e40af;
+        }
+
+        /* Critical box */
+        .critical-box {
+            background: #fef2f2;
+            border: 1px solid #fca5a5;
+            border-left: 4px solid #dc2626;
+            padding: 12px 16px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+
+        .critical-box strong {
+            color: #991b1b;
+        }
+
+        /* Success box */
+        .success-box {
+            background: #f0fdf4;
+            border: 1px solid #86efac;
+            border-left: 4px solid #22c55e;
+            padding: 12px 16px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+
+        .success-box strong {
+            color: #166534;
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 9pt;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .badge-critical { background: #dc2626; }
+        .badge-high { background: #f59e0b; color: #333; }
+        .badge-medium { background: #3b82f6; }
+        .badge-low { background: #6b7280; }
+        .badge-new { background: #22c55e; }
+        .badge-done { background: #10b981; }
+        .badge-planned { background: #8b5cf6; }
+
+        /* Code */
+        code {
+            background: #f1f5f9;
+            padding: 1px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 9.5pt;
+            color: #d11317;
+        }
+
+        pre {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 14px 18px;
+            border-radius: 6px;
+            font-size: 9pt;
+            overflow-x: auto;
+            margin: 10px 0 15px 0;
+            line-height: 1.5;
+        }
+
+        pre code {
+            background: none;
+            color: #e2e8f0;
+            padding: 0;
+        }
+
+        /* TOC */
+        .toc {
+            page-break-after: always;
+        }
+
+        .toc ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .toc li {
+            padding: 4px 0;
+            border-bottom: 1px dotted #ccc;
+        }
+
+        .toc li a {
+            color: #333;
+            text-decoration: none;
+        }
+
+        .toc li a:hover {
+            color: #d11317;
+        }
+
+        .toc .toc-h1 {
+            font-weight: 700;
+            font-size: 11pt;
+            padding-left: 0;
+        }
+
+        .toc .toc-h2 {
+            font-weight: 400;
+            font-size: 10pt;
+            padding-left: 20px;
+        }
+
+        /* Section divider */
+        .section-divider {
+            border: none;
+            border-top: 2px solid #d11317;
+            margin: 30px 0;
+        }
+
+        /* Footer */
+        .doc-footer {
+            margin-top: 40px;
+            padding-top: 15px;
+            border-top: 2px solid #d11317;
+            text-align: center;
+            font-size: 9pt;
+            color: #777;
+        }
+
+        /* Print */
+        @media print {
+            body {
+                padding: 0;
+                font-size: 10pt;
+            }
+
+            .title-page {
+                min-height: 100vh;
+            }
+
+            h1, h2 {
+                page-break-after: avoid;
+            }
+
+            table, pre, .info-box, .warning-box, .info-blue-box, .critical-box {
+                page-break-inside: avoid;
+            }
+
+            .no-print {
+                display: none;
+            }
+        }
+
+        /* Diagram flow */
+        .flow-diagram {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            margin: 10px 0;
+        }
+
+        .flow-step {
+            background: #fee2e2;
+            border: 1px solid #d11317;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 9pt;
+            font-weight: 600;
+            color: #d11317;
+        }
+
+        .flow-arrow {
+            color: #999;
+            font-size: 14pt;
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===================== TITLE PAGE ===================== -->
+<div class="title-page">
+    <div class="company-logo">GRAFICA NAPPA</div>
+    <h1 style="border:none; padding:0; text-align:center;">DOCUMENTAZIONE TECNICA COMPLETA</h1>
+    <h2>Sistema MES Produzione</h2>
+    <div class="version">Versione 2.0</div>
+    <div class="date">Aprile 2026</div>
+    <div class="author">
+        Redatto da: <strong>Giovanni Pietropaolo</strong> — Responsabile IT<br>
+        Grafica Nappa srl — Caserta (CE)
+    </div>
+</div>
+
+<!-- ===================== TABLE OF CONTENTS ===================== -->
+<div class="toc">
+    <h1>Indice</h1>
+    <ul>
+        <li class="toc-h1"><a href="#s1">1. Informazioni Generali</a></li>
+        <li class="toc-h1"><a href="#s2">2. Descrizione del Sistema</a></li>
+        <li class="toc-h1"><a href="#s3">3. Architettura Tecnica</a></li>
+        <li class="toc-h2"><a href="#s3-1">3.1 Stack Tecnologico</a></li>
+        <li class="toc-h2"><a href="#s3-2">3.2 Struttura del Progetto</a></li>
+        <li class="toc-h2"><a href="#s3-3">3.3 Design System Enterprise</a></li>
+        <li class="toc-h1"><a href="#s4">4. Database</a></li>
+        <li class="toc-h2"><a href="#s4-1">4.1 Tabelle Principali</a></li>
+        <li class="toc-h2"><a href="#s4-2">4.2 Nuove Tabelle v2.0</a></li>
+        <li class="toc-h2"><a href="#s4-3">4.3 Campi Mossa 37 (ordine_fasi)</a></li>
+        <li class="toc-h1"><a href="#s5">5. Integrazioni Esterne</a></li>
+        <li class="toc-h2"><a href="#s5-1">5.1 Onda (ERP — SOAP)</a></li>
+        <li class="toc-h2"><a href="#s5-2">5.2 Prinect (Heidelberg)</a></li>
+        <li class="toc-h2"><a href="#s5-3">5.3 Fiery (EFI)</a></li>
+        <li class="toc-h2"><a href="#s5-4">5.4 Excel Bidirezionale</a></li>
+        <li class="toc-h2"><a href="#s5-5">5.5 DDT PDF Service</a></li>
+        <li class="toc-h2"><a href="#s5-6">5.6 NetTime (Presenze)</a></li>
+        <li class="toc-h2"><a href="#s5-7">5.7 Google Drive</a></li>
+        <li class="toc-h2"><a href="#s5-8">5.8 BRT Tracking (SOAP)</a></li>
+        <li class="toc-h2"><a href="#s5-9">5.9 Laravel Reverb (WebSocket)</a></li>
+        <li class="toc-h1"><a href="#s6">6. Sicurezza</a></li>
+        <li class="toc-h1"><a href="#s7">7. Funzionalita Principali</a></li>
+        <li class="toc-h2"><a href="#s7-1">7.1 Dashboard Operatore</a></li>
+        <li class="toc-h2"><a href="#s7-2">7.2 Dashboard Owner</a></li>
+        <li class="toc-h2"><a href="#s7-3">7.3 Dashboard Spedizione</a></li>
+        <li class="toc-h2"><a href="#s7-4">7.4 Ciclo di Vita Fase</a></li>
+        <li class="toc-h2"><a href="#s7-5">7.5 Sync Onda</a></li>
+        <li class="toc-h2"><a href="#s7-6">7.6 Sync Prinect</a></li>
+        <li class="toc-h2"><a href="#s7-7">7.7 Sync Fiery</a></li>
+        <li class="toc-h2"><a href="#s7-8">7.8 Sync Excel</a></li>
+        <li class="toc-h2"><a href="#s7-9">7.9 Report Ore</a></li>
+        <li class="toc-h2"><a href="#s7-10">7.10 Etichette e DataMatrix</a></li>
+        <li class="toc-h2"><a href="#s7-11">7.11 Dashboard Prestampa</a></li>
+        <li class="toc-h2"><a href="#s7-12">7.12 Scheduler Mossa 37</a></li>
+        <li class="toc-h2"><a href="#s7-13">7.13 Chat MES</a></li>
+        <li class="toc-h2"><a href="#s7-14">7.14 DDT PDF Automatico</a></li>
+        <li class="toc-h2"><a href="#s7-15">7.15 Interfaccia Enterprise</a></li>
+        <li class="toc-h2"><a href="#s7-16">7.16 Progressive Web App (PWA)</a></li>
+        <li class="toc-h2"><a href="#s7-17">7.17 Presenze (NetTime)</a></li>
+        <li class="toc-h2"><a href="#s7-18">7.18 Kiosk TV</a></li>
+        <li class="toc-h2"><a href="#s7-19">7.19 Etichette Avanzate</a></li>
+        <li class="toc-h1"><a href="#s8">8. Procedura di Deploy</a></li>
+        <li class="toc-h1"><a href="#s9">9. Gestione Versioni</a></li>
+        <li class="toc-h1"><a href="#s10">10. Roadmap</a></li>
+        <li class="toc-h1"><a href="#s11">11. Analisi dei Rischi</a></li>
+        <li class="toc-h1"><a href="#s12">12. Procedure di Ripristino</a></li>
+    </ul>
+</div>
+
+<!-- ===================== 1. INFORMAZIONI GENERALI ===================== -->
+<h1 id="s1">1. Informazioni Generali</h1>
+
+<table>
+    <thead>
+        <tr><th style="width:35%">Campo</th><th>Valore</th></tr>
+    </thead>
+    <tbody>
+        <tr><td><strong>Nome Progetto</strong></td><td>Sistema MES Produzione — Grafica Nappa srl</td></tr>
+        <tr><td><strong>Versione</strong></td><td>2.0</td></tr>
+        <tr><td><strong>Data Rilascio</strong></td><td>Aprile 2026</td></tr>
+        <tr><td><strong>Autore</strong></td><td>Giovanni Pietropaolo — Responsabile IT</td></tr>
+        <tr><td><strong>Framework</strong></td><td>Laravel 12 (PHP 8.5)</td></tr>
+        <tr><td><strong>Database</strong></td><td>MySQL 8.x (server 192.168.1.60)</td></tr>
+        <tr><td><strong>Server</strong></td><td>Windows Server — IIS — 192.168.1.60</td></tr>
+        <tr><td><strong>Repository</strong></td><td>Git — branch <code>def2.0</code></td></tr>
+        <tr><td><strong>Licenza</strong></td><td>Proprietaria — Grafica Nappa srl</td></tr>
+    </tbody>
+</table>
+
+<div class="info-blue-box">
+    <strong>Nota:</strong> La v2.0 rappresenta una riscrittura significativa del sistema. Il database e stato migrato da SQLite a MySQL, l'interfaccia e stata completamente ridisegnata con un design system enterprise, ed e stato introdotto il motore di schedulazione Mossa 37 per l'ottimizzazione della produzione.
+</div>
+
+<!-- ===================== 2. DESCRIZIONE DEL SISTEMA ===================== -->
+<h1 id="s2">2. Descrizione del Sistema</h1>
+
+<p>Il Sistema MES (Manufacturing Execution System) di Grafica Nappa srl e un'applicazione web progettata per la gestione completa del ciclo produttivo di una tipografia industriale. Il sistema copre tutte le fasi dalla ricezione dell'ordine alla spedizione del prodotto finito.</p>
+
+<h3>Obiettivi Principali</h3>
+<ul>
+    <li><strong>Tracciabilita completa</strong> — Monitoraggio in tempo reale di ogni fase produttiva, dall'ordine alla spedizione</li>
+    <li><strong>Integrazione ERP</strong> — Sincronizzazione bidirezionale con il gestionale Onda tramite SOAP</li>
+    <li><strong>Ottimizzazione macchine</strong> — Dati di produzione da Prinect (offset) e Fiery (digitale) in tempo reale</li>
+    <li><strong>Gestione spedizioni</strong> — Tracking BRT, generazione DDT, gestione consegne</li>
+    <li><strong>Schedulazione intelligente</strong> — Motore Mossa 37: simulazione a eventi discreti per ottimizzazione setup e throughput</li>
+    <li><strong>Comunicazione interna</strong> — Chat MES in tempo reale con menzioni per reparto e operatore</li>
+    <li><strong>Generazione documenti</strong> — DDT PDF automatici su carta intestata pre-stampata</li>
+    <li><strong>Interfaccia enterprise</strong> — Design system coerente con sidebar, dark mode, KPI cards</li>
+    <li><strong>Accessibilita mobile</strong> — PWA installabile con notifiche push e modalita offline</li>
+    <li><strong>Monitoraggio presenze</strong> — Integrazione NetTime per timbrature e ore lavorate</li>
+</ul>
+
+<h3>Reparti Gestiti</h3>
+<table>
+    <thead>
+        <tr><th>Reparto</th><th>Macchine/Attivita</th><th>Turni</th></tr>
+    </thead>
+    <tbody>
+        <tr><td>Stampa Offset</td><td>XL106 (Heidelberg)</td><td>24h lun-ven</td></tr>
+        <tr><td>Digitale</td><td>Stampanti digitali EFI</td><td>6-22 lun-ven</td></tr>
+        <tr><td>Plastificazione</td><td>Plastificatrici</td><td>6-22 lun-ven</td></tr>
+        <tr><td>Stampa a caldo</td><td>JOH (collo di bottiglia)</td><td>6-22 lun-ven</td></tr>
+        <tr><td>Finitura Digitale</td><td>MGI, UV Spot</td><td>6-22 lun-ven</td></tr>
+        <tr><td>Taglio</td><td>Tagliacarte</td><td>6-22 lun-ven</td></tr>
+        <tr><td>Fustella Piana</td><td>BOBST (2 config: rilievi + fustelle)</td><td>6-22 lun-ven</td></tr>
+        <tr><td>Finestratura</td><td>Finestratrice</td><td>6-22 lun-ven</td></tr>
+        <tr><td>Piegaincolla</td><td>3 config (PI01/PI02/PI03)</td><td>6-22 lun-ven</td></tr>
+        <tr><td>Legatoria</td><td>Attivita manuali</td><td>6-22 lun-ven</td></tr>
+        <tr><td>Allestimento</td><td>Confezionamento finale</td><td>6-22 lun-ven</td></tr>
+        <tr><td>Prestampa</td><td>Preparazione file e lastre</td><td>Orario ufficio</td></tr>
+        <tr><td>Spedizione</td><td>Logistica e BRT</td><td>Orario ufficio</td></tr>
+    </tbody>
+</table>
+
+<!-- ===================== 3. ARCHITETTURA TECNICA ===================== -->
+<h1 id="s3">3. Architettura Tecnica</h1>
+
+<h2 id="s3-1">3.1 Stack Tecnologico</h2>
+
+<table>
+    <thead>
+        <tr><th>Componente</th><th>Tecnologia</th><th>Versione</th></tr>
+    </thead>
+    <tbody>
+        <tr><td>Backend</td><td>PHP</td><td>8.5</td></tr>
+        <tr><td>Framework</td><td>Laravel</td><td>12.x</td></tr>
+        <tr><td>Database</td><td>MySQL</td><td>8.x</td></tr>
+        <tr><td>WebSocket</td><td>Laravel Reverb</td><td>1.x</td></tr>
+        <tr><td>PDF Generation</td><td>dompdf (barryvdh/laravel-dompdf)</td><td>3.x</td></tr>
+        <tr><td>Push Notifications</td><td>Pusher PHP SDK</td><td>7.x</td></tr>
+        <tr><td>Permessi</td><td>Spatie Laravel Permission</td><td>6.x</td></tr>
+        <tr><td>Frontend</td><td>Blade + Alpine.js + Tailwind CSS</td><td>—</td></tr>
+        <tr><td>Font</td><td>Inter (Google Fonts)</td><td>—</td></tr>
+        <tr><td>Grafici</td><td>Chart.js</td><td>4.x</td></tr>
+        <tr><td>Web Server</td><td>IIS (Windows Server)</td><td>10</td></tr>
+        <tr><td>PWA</td><td>Service Worker + manifest.json</td><td>—</td></tr>
+        <tr><td>SOAP Client</td><td>PHP SoapClient nativo</td><td>—</td></tr>
+    </tbody>
+</table>
+
+<h2 id="s3-2">3.2 Struttura del Progetto</h2>
+
+<pre><code>graficanappa-gestionale/
+├── app/
+│   ├── Console/Commands/          # Comandi Artisan (sync Onda, Prinect, Fiery, Excel, NetTime)
+│   ├── Events/                    # PhaseCompleted, ecc.
+│   ├── Http/
+│   │   ├── Controllers/           # Controller per ogni dashboard e API
+│   │   └── Middleware/            # SecurityHeaders, RateLimit, CSRF
+│   ├── Models/                    # Eloquent models (Ordine, OrdineFasi, Operatore, ecc.)
+│   ├── Services/                  # PriorityService, DdtPdfService, SchedulerService
+│   └── Listeners/                 # Event listeners per propagazione fasi
+├── config/
+│   ├── fasi_priorita.php          # Mappatura priorita fasi per ricalcolo commesse
+│   ├── fasi_ore.php               # Ore stimate per fase (Mossa 37)
+│   └── sequenza_fasi.php          # Sequenza produttiva (10→999)
+├── database/
+│   └── migrations/                # ~90 migration files
+├── resources/views/
+│   ├── layouts/
+│   │   └── mes.blade.php          # Layout enterprise (sidebar + topbar)
+│   ├── components/mes/            # KPI card, status badge, progress bar, data table
+│   ├── operatore/                 # Dashboard operatore + prestampa
+│   ├── owner/                     # Dashboard owner
+│   ├── spedizione/                # Dashboard spedizione
+│   ├── chat/                      # Chat MES widget
+│   └── kiosk/                     # Kiosk TV pages
+├── public/
+│   ├── manifest.json              # PWA manifest
+│   ├── sw.js                      # Service worker
+│   └── offline.html               # Pagina offline PWA
+├── routes/
+│   ├── web.php                    # Route principali
+│   └── channels.php               # Broadcasting channels (Reverb)
+└── .env                           # Configurazione ambiente</code></pre>
+
+<h2 id="s3-3">3.3 Design System Enterprise</h2>
+
+<p>La v2.0 introduce un design system enterprise completo basato sul layout <code>layouts/mes.blade.php</code>:</p>
+
+<table>
+    <thead>
+        <tr><th>Componente</th><th>Descrizione</th></tr>
+    </thead>
+    <tbody>
+        <tr><td><code>Sidebar (220px)</code></td><td>Navigazione laterale fissa con logo, menu contestuale per ruolo, collassabile su mobile</td></tr>
+        <tr><td><code>Topbar (48px)</code></td><td>Barra superiore con breadcrumb, notifiche, profilo utente, toggle dark mode</td></tr>
+        <tr><td><code>mes/kpi-card</code></td><td>Card metriche KPI con icona, valore, trend e colore configurabile</td></tr>
+        <tr><td><code>mes/status-badge</code></td><td>Badge stato fase con colori semantici (grigio/giallo/blu/verde/viola/rosso)</td></tr>
+        <tr><td><code>mes/progress-bar</code></td><td>Barra progresso commessa con percentuale e colore dinamico</td></tr>
+        <tr><td><code>mes/data-table</code></td><td>Tabella dati con sorting, filtri, paginazione e export</td></tr>
+        <tr><td><code>CSS Variables</code></td><td>Tema configurabile tramite variabili CSS (--primary, --sidebar-bg, --text, ecc.)</td></tr>
+        <tr><td><code>Dark Mode</code></td><td>Supporto completo dark mode con toggle persistente (localStorage)</td></tr>
+        <tr><td><code>Font Inter</code></td><td>Google Font "Inter" per leggibilita ottimale su schermo e stampa</td></tr>
+    </tbody>
+</table>
+
+<div class="info-box">
+    <strong>Responsive:</strong> L'interfaccia e completamente responsive. Su mobile, la sidebar diventa un hamburger menu con touch target di 44px. La dashboard owner usa la larghezza naturale del browser (no viewport meta) per garantire la visibilita di tutte le colonne.
+</div>
+
+<!-- ===================== 4. DATABASE ===================== -->
+<h1 id="s4">4. Database</h1>
+
+<div class="success-box">
+    <strong>Migrazione completata:</strong> Il database e stato migrato da SQLite a MySQL 8.x sul server 192.168.1.60. Questo risolve i problemi di concorrenza, locking e scalabilita presenti nella v1.x.
+</div>
+
+<h2 id="s4-1">4.1 Tabelle Principali</h2>
+
+<table>
+    <thead>
+        <tr><th>Tabella</th><th>Descrizione</th><th>Record Stimati</th></tr>
+    </thead>
+    <tbody>
+        <tr><td><code>ordini</code></td><td>Ordini di produzione sincronizzati da Onda</td><td>~5.000</td></tr>
+        <tr><td><code>ordine_fasi</code></td><td>Fasi di lavorazione per ogni ordine</td><td>~30.000</td></tr>
+        <tr><td><code>operatori</code></td><td>Anagrafica operatori con ruolo e reparto</td><td>~30</td></tr>
+        <tr><td><code>fasi_catalogo</code></td><td>Catalogo fasi disponibili con reparto e priorita</td><td>~80</td></tr>
+        <tr><td><code>reparti</code></td><td>Reparti produttivi</td><td>~15</td></tr>
+        <tr><td><code>fase_operatore</code></td><td>Pivot: operatore assegnato a fase con tempi</td><td>~50.000</td></tr>
+        <tr><td><code>articoli</code></td><td>Anagrafica articoli</td><td>~2.000</td></tr>
+        <tr><td><code>pausa_operatori</code></td><td>Registrazione pause operatore</td><td>~10.000</td></tr>
+        <tr><td><code>operatore_tokens</code></td><td>Token di autenticazione operatori (PIN)</td><td>~30</td></tr>
+        <tr><td><code>ean_prodotti</code></td><td>Codici EAN per etichette DataMatrix</td><td>~500</td></tr>
+        <tr><td><code>costi_reparto</code></td><td>Costi orari per reparto</td><td>~15</td></tr>
+        <tr><td><code>contatori_stampante</code></td><td>Contatori Fiery per fogli stampati</td><td>~200</td></tr>
+        <tr><td><code>notifiche_spedizione</code></td><td>Notifiche bidirezionali owner-spedizione</td><td>~1.000</td></tr>
+    </tbody>
+</table>
+
+<h2 id="s4-2">4.2 Nuove Tabelle v2.0</h2>
+
+<table>
+    <thead>
+        <tr><th>Tabella</th><th>Descrizione</th><th>Note</th></tr>
+    </thead>
+    <tbody>
+        <tr><td><code>chat_messages</code></td><td>Messaggi della Chat MES</td><td>Campi: canale, operatore_id, messaggio, created_at</td></tr>
+        <tr><td><code>ai_chat_messages</code></td><td>Storico conversazioni assistente AI</td><td>Messaggi utente/assistente per contesto</td></tr>
+        <tr><td><code>push_subscriptions</code></td><td>Sottoscrizioni push browser</td><td>Endpoint, p256dh, auth per Web Push API</td></tr>
+        <tr><td><code>ddt_spedizioni</code></td><td>DDT generati e tracking spedizioni</td><td>Cache tracking BRT, stato emissione</td></tr>
+        <tr><td><code>turni</code></td><td>Turni settimanali per macchina/reparto</td><td>Giorno, ora_inizio, ora_fine, macchina</td></tr>
+        <tr><td><code>note_spedizione</code></td><td>Note spedizione persistenti</td><td>Contenuto unificato, autore, data</td></tr>
+        <tr><td><code>note_turno</code></td><td>Note cambio turno tra operatori</td><td>Passaggio consegne tra turni</td></tr>
+        <tr><td><code>audit_logs</code></td><td>Log audit per tracciabilita azioni</td><td>Utente, azione, modello, vecchio/nuovo valore</td></tr>
+        <tr><td><code>permissions / roles</code></td><td>Tabelle Spatie Permission</td><td>RBAC con 9 ruoli e 23 permessi</td></tr>
+        <tr><td><code>two_factor_*</code></td><td>Tabelle 2FA TOTP</td><td>Segreti, recovery codes per admin</td></tr>
+    </tbody>
+</table>
+
+<div class="info-blue-box">
+    <strong>NetTime:</strong> Le tabelle <code>nettime_anagrafica</code> e <code>nettime_timbrature</code> vengono lette direttamente dal database NetTime sul server 192.168.1.34, non replicate localmente.
+</div>
+
+<h2 id="s4-3">4.3 Campi Mossa 37 (ordine_fasi)</h2>
+
+<p>La tabella <code>ordine_fasi</code> e stata estesa con i seguenti campi per il motore di schedulazione:</p>
+
+<table>
+    <thead>
+        <tr><th>Campo</th><th>Tipo</th><th>Descrizione</th></tr>
+    </thead>
+    <tbody>
+        <tr><td><code>terminata_manualmente</code></td><td>boolean</td><td>Protegge la fase da sovrascrittura Prinect</td></tr>
+        <tr><td><code>sched_posizione</code></td><td>integer</td><td>Posizione nella coda della macchina</td></tr>
+        <tr><td><code>sched_macchina</code></td><td>string</td><td>Macchina assegnata dallo scheduler</td></tr>
+        <tr><td><code>sched_inizio</code></td><td>datetime</td><td>Inizio previsto lavorazione</td></tr>
+        <tr><td><code>sched_fine</code></td><td>datetime</td><td>Fine prevista lavorazione</td></tr>
+        <tr><td><code>sched_setup_h</code></td><td>decimal</td><td>Ore setup previste</td></tr>
+        <tr><td><code>sched_setup_tipo</code></td><td>string</td><td>Tipo setup (full/partial/none)</td></tr>
+        <tr><td><code>sched_batch_group</code></td><td>string</td><td>Gruppo batch per accorpamento</td></tr>
+        <tr><td><code>disponibile_m37</code></td><td>boolean</td><td>Fase disponibile (tutte le precedenti completate)</td></tr>
+        <tr><td><code>urgenza_reale</code></td><td>integer</td><td>Giorni residui prima della scadenza</td></tr>
+        <tr><td><code>fascia_urgenza</code></td><td>string</td><td>Fascia urgenza (critica/alta/media/bassa)</td></tr>
+        <tr><td><code>giorni_lavoro_residuo</code></td><td>integer</td><td>Giorni lavorativi rimanenti</td></tr>
+        <tr><td><code>batch_key</code></td><td>string</td><td>Chiave per raggruppamento batch</td></tr>
+        <tr><td><code>sequenza_m37</code></td><td>integer</td><td>Sequenza nel ciclo produttivo (10-999)</td></tr>
+        <tr><td><code>priorita_m37</code></td><td>decimal</td><td>Punteggio priorita calcolato (4 livelli)</td></tr>
+    </tbody>
+</table>
+
+<!-- ===================== 5. INTEGRAZIONI ===================== -->
+<h1 id="s5">5. Integrazioni Esterne</h1>
+
+<h2 id="s5-1">5.1 Onda (ERP — SOAP)</h2>
+
+<table>
+    <thead>
+        <tr><th>Parametro</th><th>Valore</th></tr>
+    </thead>
+    <tbody>
+        <tr><td><strong>Protocollo</strong></td><td>SOAP (PHP SoapClient nativo)</td></tr>
+        <tr><td><strong>Frequenza</strong></td><td>Ogni ora (schedulato)</td></tr>
+        <tr><td><strong>Direzione</strong></td><td>Onda → MES (lettura ordini, fasi, clienti)</td></tr>
+        <tr><td><strong>Database sorgente</strong></td><td>SQL Server (Onda)</td></tr>
+        <tr><td><strong>Comando</strong></td><td><code>php artisan onda:sync</code> / <code>php artisan onda:sync {commessa}</code></td></tr>
+    </tbody>
+</table>
+
+<p>La sync Onda importa ordini, fasi di lavorazione, dati cliente e date di consegna. Il comando accetta un numero commessa opzionale per sincronizzare una singola commessa senza filtro data.</p>
+
+<h2 id="s5-2">5.2 Prinect (Heidelberg)</h2>
+
+<table>
+    <thead>
+        <tr><th>Parametro</th><th>Valore</th></tr>
+    </thead>
+    <tbody>
+        <tr><td><strong>Protocollo</strong></td><td>REST API (JMF/Prinect API)</td></tr>
+        <tr><td><strong>Frequenza</strong></td><td>Ogni minuto</td></tr>
+        <tr><td><strong>Finestra</strong></td><td>Ultimi 30 giorni</td></tr>
+        <tr><td><strong>Dati</strong></td><td>Tempi avviamento, esecuzione, fogli, scarti (XL106)</td></tr>
+        <tr><td><strong>Comando</strong></td><td><code>php artisan prinect:sync</code></td></tr>
+    </tbody>
+</table>
+
+<div class="warning-box">
+    <strong>Protezione terminazione:</strong> Il sync Prinect protegge le fasi attive (meno di 1 ora), termina automaticamente quelle abbandonate (piu di 4 ore, giorno diverso), e ripristina lo stato 2 se rileva attivita recenti. Il flag <code>terminata_manualmente</code> impedisce la sovrascrittura.
+</div>
+
+<h2 id="s5-3">5.3 Fiery (EFI)</h2>
+
+<table>
+    <thead>
+        <tr><th>Parametro</th><th>Valore</th></tr>
+    </thead>
+    <tbody>
+        <tr><td><strong>Protocollo</strong></td><td>REST API (Fiery API v5)</td></tr>
+        <tr><td><strong>Frequenza</strong></td><td>Ogni minuto</td></tr>
+        <tr><td><strong>Dati</strong></td><td>Stato job, fogli stampati, accounting storico</td></tr>
+        <tr><td><strong>Nota</strong></td><td>API v5 jobs mostra solo ultimo run; Accounting API per totali storici</td></tr>
+        <tr><td><strong>Comando</strong></td><td><code>php artisan fiery:sync</code></td></tr>
+    </tbody>
+</table>
+
+<h2 id="s5-4">5.4 Excel Bidirezionale</h2>
+
+<table>
+    <thead>
+        <tr><th>Parametro</th><th>Valore</th></tr>
+    </thead>
+    <tbody>
+        <tr><td><strong>Frequenza</strong></td><td>Ogni 2 minuti</td></tr>
+        <tr><td><strong>Direzione</strong></td><td>Bidirezionale (MES ↔ Excel)</td></tr>
+        <tr><td><strong>File</strong></td><td>File Excel condiviso su rete</td></tr>
+        <tr><td><strong>Dati</strong></td><td>Stati fasi, date, quantita, note</td></tr>
+        <tr><td><strong>Comando</strong></td><td><code>php artisan excel:sync</code></td></tr>
+    </tbody>
+</table>
+
+<h2 id="s5-5">5.5 DDT PDF Service</h2>
+
+<table>
+    <thead>
+        <tr><th>Parametro</th><th>Valore</th></tr>
+    </thead>
+    <tbody>
+        <tr><td><strong>Classe</strong></td><td><code>App\Services\DdtPdfService</code></td></tr>
+        <tr><td><strong>Libreria</strong></td><td>barryvdh/laravel-dompdf</td></tr>
+        <tr><td><strong>Trigger</strong></td><td>Automatico al sync Onda quando DDT emesso</td></tr>
+        <tr><td><strong>Layout</strong></td><td>Ottimizzato per carta intestata pre-stampata</td></tr>
+        <tr><td><strong>Extra</strong></td><td>RIF. ORD. MAXTRIS letto da Excel Google Drive</td></tr>
+    </tbody>
+</table>
+
+<div class="info-box">
+    <strong>Funzionamento:</strong> Quando la sync Onda rileva un DDT emesso, il servizio genera automaticamente il PDF con i dati dell'ordine. Per i clienti Maxtris, il riferimento ordine viene recuperato dal file "ORDINE ASTUCCI.xlsx" su Google Drive.
+</div>
+
+<h2 id="s5-6">5.6 NetTime (Presenze)</h2>
+
+<table>
+    <thead>
+        <tr><th>Parametro</th><th>Valore</th></tr>
+    </thead>
+    <tbody>
+        <tr><td><strong>Server NetTime</strong></td><td>192.168.1.34</td></tr>
+        <tr><td><strong>Lettore badge</strong></td><td>Share \\192.168.1.34 (SMB)</td></tr>
+        <tr><td><strong>Frequenza</strong></td><td>Ogni 5 minuti</td></tr>
+        <tr><td><strong>Dati</strong></td><td>Timbrature ingresso/uscita per operatore</td></tr>
+        <tr><td><strong>Credenziali</strong></td><td>NETTIME_SHARE_USER / NETTIME_SHARE_PASS in .env</td></tr>
+    </tbody>
+</table>
+
+<h2 id="s5-7">5.7 Google Drive</h2>
+
+<table>
+    <thead>
+        <tr><th>Parametro</th><th>Valore</th></tr>
+    </thead>
+    <tbody>
+        <tr><td><strong>File</strong></td><td>ORDINE ASTUCCI.xlsx</td></tr>
+        <tr><td><strong>Frequenza</strong></td><td>Ogni 5 minuti (copia schedulata)</td></tr>
+        <tr><td><strong>Utilizzo</strong></td><td>Riferimento ordine Maxtris per DDT PDF</td></tr>
+    </tbody>
+</table>
+
+<h2 id="s5-8">5.8 BRT Tracking (SOAP)</h2>
+
+<table>
+    <thead>
+        <tr><th>Parametro</th><th>Valore</th></tr>
+    </thead>
+    <tbody>
+        <tr><td><strong>Protocollo</strong></td><td>SOAP</td></tr>
+        <tr><td><strong>Dati</strong></td><td>Stato spedizione, data consegna, esiti</td></tr>
+        <tr><td><strong>Eccezioni</strong></td><td>Esito -22 (multi-spedizione) escluso da email ritardi</td></tr>
+        <tr><td><strong>Dashboard</strong></td><td>Integrato in spedizione e owner</td></tr>
+    </tbody>
+</table>
+
+<h2 id="s5-9">5.9 Laravel Reverb (WebSocket)</h2>
+
+<table>
+    <thead>
+        <tr><th>Parametro</th><th>Valore</th></tr>
+    </thead>
+    <tbody>
+        <tr><td><strong>Tecnologia</strong></td><td>Laravel Reverb (WebSocket nativo Laravel)</td></tr>
+        <tr><td><strong>Utilizzo</strong></td><td>Chat MES, notifiche real-time, aggiornamenti dashboard</td></tr>
+        <tr><td><strong>Fallback</strong></td><td>Polling HTTP ogni 15 secondi se WebSocket non disponibile</td></tr>
+        <tr><td><strong>Canali</strong></td><td>Privati per reparto, presence per chat</td></tr>
+    </tbody>
+</table>
+
+<!-- ===================== 6. SICUREZZA ===================== -->
+<h1 id="s6">6. Sicurezza</h1>
+
+<h3>Autenticazione e Autorizzazione</h3>
+<table>
+    <thead>
+        <tr><th>Misura</th><th>Implementazione</th><th>Stato</th></tr>
+    </thead>
+    <tbody>
+        <tr><td>Autenticazione operatori</td><td>PIN numerico con token criptato</td><td><span class="badge badge-done">Attivo</span></td></tr>
+        <tr><td>Autenticazione admin</td><td>Email + password + 2FA TOTP</td><td><span class="badge badge-done">Attivo</span></td></tr>
+        <tr><td>2FA TOTP</td><td>Google Authenticator per ruoli admin/owner</td><td><span class="badge badge-done">Attivo</span></td></tr>
+        <tr><td>RBAC</td><td>Spatie Permission — 9 ruoli, 23 permessi</td><td><span class="badge badge-done">Attivo</span></td></tr>
+        <tr><td>Rate Limiting</td><td>5 tentativi login / 15 minuti</td><td><span class="badge badge-done">Attivo</span></td></tr>
+        <tr><td>CSRF Protection</td><td>Token Laravel + refresh ogni 30 minuti</td><td><span class="badge badge-done">Attivo</span></td></tr>
+        <tr><td>Session Encryption</td><td>AES-256-GCM</td><td><span class="badge badge-done">Attivo</span></td></tr>
+        <tr><td>Security Headers</td><td>Middleware custom (X-Frame, CSP, HSTS)</td><td><span class="badge badge-done">Attivo</span></td></tr>
+        <tr><td>Audit Log</td><td>Tracciamento azioni utente su tabella audit_logs</td><td><span class="badge badge-done">Attivo</span></td></tr>
+        <tr><td>Logout sicuro</td><td>GET + POST per evitare 419 CSRF su back button</td><td><span class="badge badge-done">Attivo</span></td></tr>
+    </tbody>
+</table>
+
+<h3>Ruoli RBAC</h3>
+<table>
+    <thead>
+        <tr><th>Ruolo</th><th>Permessi Principali</th></tr>
+    </thead>
+    <tbody>
+        <tr><td><strong>super-admin</strong></td><td>Accesso completo a tutte le funzionalita</td></tr>
+        <tr><td><strong>owner</strong></td><td>Dashboard owner, gestione commesse, report, scheduler</td></tr>
+        <tr><td><strong>capo-reparto</strong></td><td>Gestione operatori del reparto, assegnazione fasi</td></tr>
+        <tr><td><strong>operatore</strong></td><td>Dashboard operatore, avvio/fine fasi assegnate</td></tr>
+        <tr><td><strong>prestampa</strong></td><td>Dashboard prestampa, modifica campi pre-produzione</td></tr>
+        <tr><td><strong>spedizione</strong></td><td>Dashboard spedizione, gestione DDT e BRT</td></tr>
+        <tr><td><strong>magazzino</strong></td><td>Gestione materiali e giacenze</td></tr>
+        <tr><td><strong>qualita</strong></td><td>Report qualita, gestione scarti</td></tr>
+        <tr><td><strong>viewer</strong></td><td>Sola lettura su tutte le dashboard</td></tr>
+    </tbody>
+</table>
+
+<div class="warning-box">
+    <strong>Configurazione .env:</strong> Per accesso da VPN/telefono impostare <code>SESSION_DOMAIN=</code> (vuoto, non "null"). Per tunnel tnnl.in: <code>SESSION_DOMAIN=.p.tnnl.in</code> e <code>SESSION_SECURE_COOKIE=true</code>.
+</div>
+
+<!-- ===================== 7. FUNZIONALITA PRINCIPALI ===================== -->
+<h1 id="s7">7. Funzionalita Principali</h1>
+
+<h2 id="s7-1">7.1 Dashboard Operatore</h2>
+
+<p>Interfaccia principale per gli operatori di reparto. Mostra le fasi assegnate ordinate per priorita, con possibilita di avviare, mettere in pausa e completare le lavorazioni.</p>
+
+<h3>Caratteristiche</h3>
+<ul>
+    <li>Lista fasi assegnate ordinate per <strong>priorita manuale</strong> (flag <code>priorita_manuale</code>) e poi per urgenza</li>
+    <li>Pulsanti avvio/pausa/fine fase con registrazione tempi automatica</li>
+    <li><strong>Prossime commesse</strong>: tabella con dettagli (descrizione, data consegna, quantita, stato fasi nel reparto)</li>
+    <li>Fasi ordinate per priorita nel reparto dell'operatore (JOIN ordine_fasi + fasi_catalogo)</li>
+    <li>Escluse commesse gia completate e fasi esterne (<code>esterno = true</code>)</li>
+    <li>Solo fasi con stato 0/1/2 nel reparto dell'operatore</li>
+    <li>Note fasi successive visibili (con nome autore)</li>
+    <li>Note fustelle Mirko: editabili, prefissate con nome, box viola nel dettaglio</li>
+    <li>Redirect automatico a <code>/operatore/prestampa</code> per operatori del reparto prestampa</li>
+</ul>
+
+<h2 id="s7-2">7.2 Dashboard Owner</h2>
+
+<p>Vista completa della produzione per il titolare e i responsabili. Include panoramica reparti, dettaglio commesse e gestione priorita.</p>
+
+<h3>Caratteristiche</h3>
+<ul>
+    <li><strong>Panoramica Reparti</strong>: stato complessivo di ogni reparto con ore totali</li>
+    <li>Tabella allargata (2800px) con scrollbar orizzontale sticky</li>
+    <li>Colonna <strong>Ore Lavorate</strong>: priorita Prinect → fallback pivot operatore, indicatore "P"</li>
+    <li>Colonna <strong>Descrizione</strong>: max-width 220px con ellipsis</li>
+    <li>Data registrazione posizionata prima di Progresso</li>
+    <li>Date editing: supporto formato <code>d/m/Y H:i</code>, cancellazione con "-"</li>
+    <li>Filtri stato: include opzione "EXT" (viola) per fasi esterne</li>
+    <li>Dettaglio commessa con tutte le fasi, tempi e stati</li>
+    <li><strong>Notifiche Note Consegne</strong>: polling 1s, badge, browser push, beep, toast</li>
+    <li>Hamburger mobile: touch target 44px, padding 12px, z-index 100</li>
+</ul>
+
+<h2 id="s7-3">7.3 Dashboard Spedizione</h2>
+
+<p>Gestione delle spedizioni con integrazione BRT, tracking DDT e comunicazione con il reparto owner.</p>
+
+<h3>Caratteristiche</h3>
+<ul>
+    <li><strong>Sidebar con anchor</strong>: click su voci (Da consegnare, Parziali, ecc.) scrolla alla sezione</li>
+    <li><strong>Note spedizione persistenti</strong>: se oggi non ha nota, carica l'ultima disponibile con indicazione data</li>
+    <li><strong>Note Consegne bidirezionali</strong>: owner ↔ spedizione, polling 15s, toast 30s, beep AudioContext</li>
+    <li>Colonna Descrizione in tabelle BRT</li>
+    <li>BRT multi-spedizione (esito -22) esclusa da email ritardi</li>
+    <li>Tracking automatico con segnacollo BRT</li>
+</ul>
+
+<h2 id="s7-4">7.4 Ciclo di Vita Fase</h2>
+
+<p>Ogni fase di lavorazione attraversa gli stati seguenti:</p>
+
+<table>
+    <thead>
+        <tr><th>Stato</th><th>Codice</th><th>Descrizione</th><th>Colore Badge</th></tr>
+    </thead>
+    <tbody>
+        <tr><td>Non Iniziata</td><td><code>0</code></td><td>Fase registrata, non ancora avviabile</td><td>Grigio</td></tr>
+        <tr><td>Pronto</td><td><code>1</code></td><td>Fase pronta per essere avviata (materiali disponibili)</td><td>Giallo</td></tr>
+        <tr><td>Avviato</td><td><code>2</code></td><td>Fase in lavorazione da un operatore</td><td>Blu</td></tr>
+        <tr><td>Terminato</td><td><code>3</code></td><td>Fase completata</td><td>Verde</td></tr>
+        <tr><td>Consegnato</td><td><code>4</code></td><td>Materiale consegnato al reparto successivo o al cliente</td><td>Verde scuro</td></tr>
+        <tr><td><strong>Esterno</strong></td><td><code>5</code></td><td>Fase inviata a fornitore esterno</td><td>Viola</td></tr>
+    </tbody>
+</table>
+
+<div class="info-blue-box">
+    <strong>Flag terminata_manualmente:</strong> Quando un operatore termina manualmente una fase, il flag <code>terminata_manualmente</code> viene impostato a <code>true</code>. Questo impedisce che la sync Prinect sovrascriva lo stato della fase.
+</div>
+
+<div class="info-box">
+    <strong>Ricalcolo commessa:</strong> La funzione <code>ricalcolaCommessa()</code> ricalcola gli stati su tutti gli ordini della commessa utilizzando <code>config/fasi_priorita.php</code>. Viene invocata dopo ogni cambio stato fase.
+</div>
+
+<h2 id="s7-5">7.5 Sync Onda</h2>
+
+<p>Comando: <code>php artisan onda:sync</code></p>
+<ul>
+    <li>Importa ordini dal gestionale Onda tramite SOAP</li>
+    <li>Frequenza: ogni ora (task schedulato)</li>
+    <li>Sync singola commessa: <code>php artisan onda:sync 66575</code> (senza filtro data)</li>
+    <li>Crea/aggiorna ordini, fasi, clienti</li>
+    <li>Trigger generazione DDT PDF se DDT emesso</li>
+</ul>
+
+<h2 id="s7-6">7.6 Sync Prinect</h2>
+
+<p>Comando: <code>php artisan prinect:sync</code></p>
+<ul>
+    <li>Scarica dati produzione XL106 (Heidelberg) via REST API</li>
+    <li>Frequenza: ogni minuto</li>
+    <li>Finestra: ultimi 30 giorni (estesa da 7 per catturare storico)</li>
+    <li>Dati: tempo_avviamento_sec, tempo_esecuzione_sec, fogli stampati, scarti</li>
+    <li><strong>Auto-terminazione intelligente</strong>: protegge fasi attive (&lt;1h), termina abbandonate (&gt;4h, giorno diverso), ripristina stato 2 se attivita recenti</li>
+    <li>Workstep COMPLETED senza actualStartDate ora terminano correttamente</li>
+</ul>
+
+<h2 id="s7-7">7.7 Sync Fiery</h2>
+
+<p>Comando: <code>php artisan fiery:sync</code></p>
+<ul>
+    <li>Scarica dati stampanti digitali EFI via REST API</li>
+    <li>Frequenza: ogni minuto</li>
+    <li>Accounting API per fogli totali storici (v5 jobs mostra solo ultimo run)</li>
+    <li>Non termina job in stampa; ripristina stato 3→2 se attivo</li>
+</ul>
+
+<h2 id="s7-8">7.8 Sync Excel</h2>
+
+<p>Comando: <code>php artisan excel:sync</code></p>
+<ul>
+    <li>Sincronizzazione bidirezionale con file Excel su rete</li>
+    <li>Frequenza: ogni 2 minuti</li>
+    <li>Aggiorna stati, date, quantita, note</li>
+</ul>
+
+<h2 id="s7-9">7.9 Report Ore</h2>
+
+<p>Report professionale delle ore lavorate con tema SaaS, accessibile dalla dashboard owner.</p>
+
+<ul>
+    <li><strong>6 KPI</strong> principali in cards nella parte superiore</li>
+    <li><strong>4 grafici Chart.js</strong>: andamento ore, distribuzione per reparto, efficienza, trend settimanale</li>
+    <li>Ore lavorate vs previste, raggruppate per commessa</li>
+    <li>Dettaglio fasi collassabile per ogni commessa</li>
+    <li>Click su commesse "sforate" → dettaglio con analisi</li>
+    <li>Solo fasi con stato &gt; 2 (terminate o consegnate)</li>
+    <li>Priorita dati Prinect (tempo_avviamento + esecuzione) per stampa XL</li>
+    <li>Fallback pivot operatore (data_fine - data_inizio - secondi_pausa)</li>
+</ul>
+
+<h2 id="s7-10">7.10 Etichette e DataMatrix</h2>
+
+<ul>
+    <li>Generazione etichette con DataMatrix plain (non GS1)</li>
+    <li>Formato: "A" nel campo GTIN, quantita 8 cifre zero-padded</li>
+    <li>Ricerca per codice EAN dalla tabella <code>ean_prodotti</code></li>
+</ul>
+
+<h2 id="s7-11">7.11 Dashboard Prestampa</h2>
+
+<p>Dashboard dedicata al reparto prestampa con lista commesse e dettaglio editabile.</p>
+
+<ul>
+    <li>Lista commesse con filtri per stato e data</li>
+    <li>Dettaglio con campi editabili: descrizione, cliente, quantita, colori, fustella</li>
+    <li>Note prestampa, operatore prestampa, commento produzione</li>
+    <li>Fustella visibile a tutti i reparti (non solo piegaincolla)</li>
+    <li>Fustella da tutte le descrizioni: <code>GROUP_CONCAT(DISTINCT descrizione)</code></li>
+    <li>Prestampa fustella: colonna + filtro + commesse raggruppate 1 riga per commessa</li>
+</ul>
+
+<hr class="section-divider">
+
+<h2 id="s7-12">7.12 Scheduler Mossa 37</h2>
+
+<div class="info-blue-box">
+    <strong>Novita v2.0:</strong> Il motore di schedulazione "Mossa 37" e il cuore della v2.0. Utilizza una simulazione a eventi discreti per ottimizzare la sequenza produttiva su 11 macchine, minimizzando i tempi di setup e massimizzando il throughput.
+</div>
+
+<h3>Architettura</h3>
+<ul>
+    <li><strong>PriorityService</strong>: calcolo priorita a 4 livelli (disponibilita, urgenza reale, batch affinity, sequenza ciclo)</li>
+    <li><strong>SchedulerService</strong>: simulazione eventi discreti con propagazione tra fasi</li>
+    <li><strong>PhaseCompleted Event</strong>: trigger automatico al completamento fase per ricalcolo disponibilita successive</li>
+    <li><strong>Propagazione</strong>: completamento di una fase rende disponibili le successive nella sequenza</li>
+</ul>
+
+<h3>Sequenza Produttiva</h3>
+<div class="flow-diagram">
+    <span class="flow-step">10 Stampa</span><span class="flow-arrow">→</span>
+    <span class="flow-step">11 Digitale</span><span class="flow-arrow">→</span>
+    <span class="flow-step">20 Plastica</span><span class="flow-arrow">→</span>
+    <span class="flow-step">30 Caldo JOH</span><span class="flow-arrow">→</span>
+    <span class="flow-step">31 Plast. Lux</span><span class="flow-arrow">→</span>
+    <span class="flow-step">35 Finit. Dig.</span><span class="flow-arrow">→</span>
+    <span class="flow-step">37 Taglio</span><span class="flow-arrow">→</span>
+    <span class="flow-step">39 Rilievi BOBST</span><span class="flow-arrow">→</span>
+    <span class="flow-step">40 Fustella</span><span class="flow-arrow">→</span>
+    <span class="flow-step">100 Finestre</span><span class="flow-arrow">→</span>
+    <span class="flow-step">110 Piegaincolla</span><span class="flow-arrow">→</span>
+    <span class="flow-step">120 Legatoria</span><span class="flow-arrow">→</span>
+    <span class="flow-step">700 Allestimento</span><span class="flow-arrow">→</span>
+    <span class="flow-step">999 Spedizione</span>
+</div>
+
+<h3>Batching Intelligente</h3>
+<table>
+    <thead>
+        <tr><th>Macchina</th><th>Strategia Batch</th><th>Finestra</th></tr>
+    </thead>
+    <tbody>
+        <tr><td>BOBST</td><td>Blocchi consecutivi (2 config: rilievi seq39 + fustelle seq40), cambio 1h</td><td>±5gg urgenza</td></tr>
+        <tr><td>Piegaincolla</td><td>Blocchi consecutivi (3 config: PI01/PI02/PI03), cambio 1h</td><td>±5gg urgenza</td></tr>
+        <tr><td>XL106</td><td>Per tipo lavaggio + codice carta</td><td>±5gg urgenza</td></tr>
+        <tr><td>Plastificatrici</td><td>Per formato foglio</td><td>±5gg urgenza</td></tr>
+    </tbody>
+</table>
+
+<h3>Colli di Bottiglia</h3>
+<p>In ordine di criticita: <strong>JOH</strong> (stampa a caldo) &gt; <strong>BOBST</strong> (fustella/rilievi) &gt; <strong>Piegaincolla</strong>. Raccomandazione: 3° turno per JOH.</p>
+
+<h3>Performance</h3>
+<ul>
+    <li>Risparmio setup stimato: <strong>85-93 ore/mese</strong></li>
+    <li>Export Excel del piano schedulato</li>
+    <li>Turni: XL106 24h lun-ven, altre macchine 6-22 lun-ven</li>
+    <li>Predizione date BRT per spedizioni</li>
+</ul>
+
+<h2 id="s7-13">7.13 Chat MES</h2>
+
+<div class="info-blue-box">
+    <strong>Novita v2.0:</strong> Sistema di messaggistica interna in tempo reale per la comunicazione tra reparti e operatori.
+</div>
+
+<ul>
+    <li><strong>Widget floating</strong>: accessibile da qualsiasi pagina del MES</li>
+    <li><strong>Menzioni</strong>: <code>@reparto</code> per notificare un intero reparto, <code>@operatore</code> per singolo</li>
+    <li><strong>Canali per reparto</strong>: ogni reparto ha il proprio canale di comunicazione</li>
+    <li><strong>Badge notifiche</strong>: contatore messaggi non letti visibile nella topbar</li>
+    <li><strong>Real-time</strong>: tramite Laravel Reverb (WebSocket) con fallback polling</li>
+    <li><strong>Storico</strong>: tutti i messaggi persistiti su tabella <code>chat_messages</code></li>
+    <li><strong>AI Chat</strong>: assistente AI integrato con storico su <code>ai_chat_messages</code></li>
+</ul>
+
+<h2 id="s7-14">7.14 DDT PDF Automatico</h2>
+
+<ul>
+    <li><strong>Generazione automatica</strong>: quando la sync Onda rileva un DDT emesso, il PDF viene generato</li>
+    <li><strong>DdtPdfService</strong>: classe dedicata in <code>App\Services\DdtPdfService</code></li>
+    <li><strong>Layout</strong>: ottimizzato per stampa su carta intestata pre-stampata (margini, posizionamento)</li>
+    <li><strong>RIF. ORD. MAXTRIS</strong>: per clienti Maxtris, il riferimento ordine viene letto automaticamente dal file "ORDINE ASTUCCI.xlsx" scaricato da Google Drive ogni 5 minuti</li>
+    <li><strong>Tracking</strong>: tabella <code>ddt_spedizioni</code> per stato emissione e cache BRT</li>
+</ul>
+
+<h2 id="s7-15">7.15 Interfaccia Enterprise</h2>
+
+<p>La v2.0 introduce un'interfaccia completamente ridisegnata con design system enterprise.</p>
+
+<table>
+    <thead>
+        <tr><th>Elemento</th><th>Specifica</th></tr>
+    </thead>
+    <tbody>
+        <tr><td>Layout</td><td>Sidebar 220px + Topbar 48px (<code>layouts/mes.blade.php</code>)</td></tr>
+        <tr><td>Font</td><td>Inter (Google Fonts) — ottimizzato per leggibilita</td></tr>
+        <tr><td>Tema</td><td>CSS Variables — configurabile, dark mode supportato</td></tr>
+        <tr><td>KPI Cards</td><td>Componente <code>mes/kpi-card</code> con icona, valore, trend</td></tr>
+        <tr><td>Status Badge</td><td>Componente <code>mes/status-badge</code> con colori semantici</td></tr>
+        <tr><td>Progress Bar</td><td>Componente <code>mes/progress-bar</code> con percentuale dinamica</td></tr>
+        <tr><td>Data Table</td><td>Componente <code>mes/data-table</code> con sorting, filtri, export</td></tr>
+        <tr><td>Responsive</td><td>Mobile-first con hamburger menu (touch target 44px)</td></tr>
+        <tr><td>Branding</td><td>Configurabile via CSS variables per futura multi-tenancy SaaS</td></tr>
+    </tbody>
+</table>
+
+<h2 id="s7-16">7.16 Progressive Web App (PWA)</h2>
+
+<ul>
+    <li><strong>Installabile</strong>: manifest.json con icone, colori tema, display standalone</li>
+    <li><strong>Pagina offline</strong>: <code>public/offline.html</code> mostrata quando non c'e connessione</li>
+    <li><strong>Service Worker</strong>: <code>public/sw.js</code> per caching assets e gestione offline</li>
+    <li><strong>Push Notifications</strong>: notifiche browser tramite Web Push API, sottoscrizioni su <code>push_subscriptions</code></li>
+    <li><strong>Beep audio</strong>: notifica sonora tramite AudioContext (non file audio) per compatibilita mobile</li>
+</ul>
+
+<h2 id="s7-17">7.17 Presenze (NetTime)</h2>
+
+<ul>
+    <li><strong>Integrazione</strong>: lettura timbrature dal sistema NetTime (server 192.168.1.34)</li>
+    <li><strong>Share SMB</strong>: badge letti dalla share di rete \\192.168.1.34</li>
+    <li><strong>Frequenza</strong>: task schedulato ogni 5 minuti</li>
+    <li><strong>Dati</strong>: orario ingresso/uscita per operatore, calcolo ore presenza</li>
+    <li><strong>Credenziali</strong>: configurabili tramite <code>NETTIME_SHARE_USER</code> e <code>NETTIME_SHARE_PASS</code> nel file .env</li>
+</ul>
+
+<h2 id="s7-18">7.18 Kiosk TV</h2>
+
+<ul>
+    <li><strong>Scopo</strong>: visualizzazione su monitor in reparto per informazioni produzione</li>
+    <li><strong>3 pagine rotanti</strong>: panoramica reparti, commesse urgenti, KPI giornalieri</li>
+    <li><strong>Autorefresh</strong>: aggiornamento automatico dei dati</li>
+    <li><strong>Ottimizzato</strong>: layout full-screen per TV/monitor di grande formato</li>
+</ul>
+
+<h2 id="s7-19">7.19 Etichette Avanzate</h2>
+
+<ul>
+    <li><strong>DataMatrix GS1</strong>: codici DataMatrix per identificazione prodotto</li>
+    <li><strong>Plain DataMatrix</strong>: formato semplificato con "A" nel GTIN, qty 8 cifre zero-padded</li>
+    <li><strong>Ricerca EAN</strong>: ricerca codici dalla tabella <code>ean_prodotti</code></li>
+    <li><strong>Etichette semplificate</strong>: formato ridotto per clienti specifici</li>
+</ul>
+
+<!-- ===================== 8. DEPLOY ===================== -->
+<h1 id="s8">8. Procedura di Deploy</h1>
+
+<h3>Prerequisiti</h3>
+<ul>
+    <li>PHP 8.5 con estensioni: pdo_mysql, soap, gd, mbstring, openssl, zip</li>
+    <li>MySQL 8.x attivo sul server 192.168.1.60</li>
+    <li>Composer 2.x installato</li>
+    <li>Git configurato</li>
+    <li>Accesso rete a Onda (SOAP), Prinect (REST), Fiery (REST), NetTime (SMB)</li>
+</ul>
+
+<h3>Procedura</h3>
+<pre><code># 1. Clonare/aggiornare il repository
+git checkout def2.0
+git pull origin def2.0
+
+# 2. Installare dipendenze (include dompdf, pusher, reverb, spatie)
+composer install --no-dev --optimize-autoloader
+
+# 3. Configurare ambiente
+cp .env.example .env
+# Editare .env con credenziali DB, Onda, Prinect, Fiery, NetTime, Reverb
+
+# 4. Eseguire migrazioni
+php artisan migrate --force
+
+# 5. Cache configurazione
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+
+# 6. Avviare lo scheduler (cron o Task Scheduler Windows)
+php artisan schedule:run
+
+# 7. Avviare Laravel Reverb (WebSocket)
+php artisan reverb:start --daemon
+
+# 8. Seed permessi e ruoli (prima installazione)
+php artisan db:seed --class=RolesAndPermissionsSeeder</code></pre>
+
+<div class="warning-box">
+    <strong>Importante:</strong> Tutti i comandi artisan (migrate, sync, tinker) vanno eseguiti sul server .60, mai in locale. Il database MySQL risiede esclusivamente sul server di produzione.
+</div>
+
+<h3>Variabili .env Critiche</h3>
+<table>
+    <thead>
+        <tr><th>Variabile</th><th>Descrizione</th><th>Esempio</th></tr>
+    </thead>
+    <tbody>
+        <tr><td><code>DB_CONNECTION</code></td><td>Driver database</td><td>mysql</td></tr>
+        <tr><td><code>DB_HOST</code></td><td>Server MySQL</td><td>192.168.1.60</td></tr>
+        <tr><td><code>ONDA_WSDL_URL</code></td><td>Endpoint SOAP Onda</td><td>https://...</td></tr>
+        <tr><td><code>PRINECT_API_URL</code></td><td>Endpoint Prinect REST</td><td>https://...</td></tr>
+        <tr><td><code>FIERY_API_URL</code></td><td>Endpoint Fiery REST</td><td>https://...</td></tr>
+        <tr><td><code>NETTIME_SHARE_USER</code></td><td>Utente SMB NetTime</td><td>nettime_user</td></tr>
+        <tr><td><code>NETTIME_SHARE_PASS</code></td><td>Password SMB NetTime</td><td>***</td></tr>
+        <tr><td><code>REVERB_APP_ID</code></td><td>ID app Reverb</td><td>mes-production</td></tr>
+        <tr><td><code>SESSION_DOMAIN</code></td><td>Dominio sessione</td><td>(vuoto per LAN)</td></tr>
+    </tbody>
+</table>
+
+<!-- ===================== 9. VERSIONI ===================== -->
+<h1 id="s9">9. Gestione Versioni</h1>
+
+<table>
+    <thead>
+        <tr><th>Versione</th><th>Data</th><th>Novita Principali</th></tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><span class="badge badge-low">v1.0</span></td>
+            <td>Gennaio 2026</td>
+            <td>
+                Prima release: dashboard operatore e owner, sync Onda base, gestione fasi, autenticazione PIN.
+            </td>
+        </tr>
+        <tr>
+            <td><span class="badge badge-medium">v1.1</span></td>
+            <td>Febbraio 2026</td>
+            <td>
+                Sync Prinect e Fiery, Excel bidirezionale, dashboard spedizione, BRT tracking, etichette DataMatrix, report ore base, flag esterno e priorita manuale.
+            </td>
+        </tr>
+        <tr>
+            <td><span class="badge badge-high">v1.2</span></td>
+            <td>Marzo 2026</td>
+            <td>
+                Dashboard prestampa, note bidirezionali owner-spedizione, auto-terminazione Prinect/Fiery, CSRF fix, report ore professionale (Chart.js, KPI), Prinect 30 giorni, scrollbar sticky, note fustelle Mirko.
+            </td>
+        </tr>
+        <tr>
+            <td><span class="badge badge-new">v2.0</span></td>
+            <td>Aprile 2026</td>
+            <td>
+                <strong>Release maggiore</strong> con le seguenti novita:
+                <ul style="margin-top: 5px;">
+                    <li><strong>Migrazione MySQL</strong>: da SQLite a MySQL 8.x per scalabilita e concorrenza</li>
+                    <li><strong>Scheduler Mossa 37</strong>: simulazione eventi discreti, 11 macchine, batching intelligente, risparmio 85-93h/mese setup</li>
+                    <li><strong>Chat MES</strong>: messaggistica real-time con menzioni, canali per reparto, widget floating</li>
+                    <li><strong>DDT PDF automatico</strong>: generazione su sync Onda, layout carta intestata, RIF. ORD. MAXTRIS da Google Drive</li>
+                    <li><strong>Interfaccia Enterprise</strong>: design system completo, sidebar + topbar, dark mode, KPI cards, CSS variables</li>
+                    <li><strong>PWA</strong>: installabile, offline page, push notifications, service worker</li>
+                    <li><strong>WebSocket (Reverb)</strong>: aggiornamenti real-time con fallback polling</li>
+                    <li><strong>2FA TOTP</strong>: autenticazione a due fattori per admin (Google Authenticator)</li>
+                    <li><strong>RBAC Spatie</strong>: 9 ruoli, 23 permessi, gestione granulare accessi</li>
+                    <li><strong>Audit Log</strong>: tracciamento completo azioni utente</li>
+                    <li><strong>Security Headers</strong>: middleware CSP, X-Frame, HSTS</li>
+                    <li><strong>Presenze NetTime</strong>: integrazione timbrature badge</li>
+                    <li><strong>Kiosk TV</strong>: 3 pagine rotanti per monitor in reparto</li>
+                    <li><strong>Stato 5 Esterno</strong>: gestione fasi inviate a fornitori</li>
+                    <li><strong>Flag terminata_manualmente</strong>: protezione da sovrascrittura Prinect</li>
+                    <li><strong>AI Chat Assistant</strong>: assistente AI integrato nel MES</li>
+                    <li><strong>Gantt scheduler</strong>: visualizzazione grafica piano produzione</li>
+                    <li><strong>Rate Limiting</strong>: protezione login (5 tentativi/15min)</li>
+                    <li><strong>Session encryption</strong>: AES-256-GCM</li>
+                </ul>
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+<!-- ===================== 10. ROADMAP ===================== -->
+<h1 id="s10">10. Roadmap</h1>
+
+<table>
+    <thead>
+        <tr><th>Versione</th><th>Target</th><th>Funzionalita</th><th>Stato</th></tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>v1.0</strong></td>
+            <td>Gen 2026</td>
+            <td>Core MES: dashboard, sync Onda, gestione fasi</td>
+            <td><span class="badge badge-done">Completato</span></td>
+        </tr>
+        <tr>
+            <td><strong>v1.1</strong></td>
+            <td>Feb 2026</td>
+            <td>Integrazioni: Prinect, Fiery, Excel, BRT, etichette</td>
+            <td><span class="badge badge-done">Completato</span></td>
+        </tr>
+        <tr>
+            <td><strong>v1.2</strong></td>
+            <td>Mar 2026</td>
+            <td>Prestampa, report ore, auto-terminazione, UX miglioramenti</td>
+            <td><span class="badge badge-done">Completato</span></td>
+        </tr>
+        <tr>
+            <td><strong>v2.0</strong></td>
+            <td>Apr 2026</td>
+            <td>Scheduler M37, Chat, DDT PDF, Enterprise UI, PWA, Security</td>
+            <td><span class="badge badge-done">Completato</span></td>
+        </tr>
+        <tr>
+            <td><strong>v3.0</strong></td>
+            <td>Q3 2026</td>
+            <td>AI Intelligence: ottimizzazione Claude API (~40 call/giorno), ML previsionale, suggerimenti automatici scheduling</td>
+            <td><span class="badge badge-planned">Pianificato</span></td>
+        </tr>
+        <tr>
+            <td><strong>v4.0</strong></td>
+            <td>Q4 2026</td>
+            <td>Multi-tenancy SaaS: onboarding clienti, branding configurabile, billing</td>
+            <td><span class="badge badge-planned">Pianificato</span></td>
+        </tr>
+        <tr>
+            <td><strong>v5.0</strong></td>
+            <td>Q1 2027</td>
+            <td>Modulo Qualita: gestione non conformita, ispezioni, certificazioni</td>
+            <td><span class="badge badge-planned">Pianificato</span></td>
+        </tr>
+        <tr>
+            <td><strong>v6.0</strong></td>
+            <td>Q2 2027</td>
+            <td>Magazzino avanzato: giacenze, riordino automatico, barcode scanning</td>
+            <td><span class="badge badge-planned">Pianificato</span></td>
+        </tr>
+        <tr>
+            <td><strong>v7.0</strong></td>
+            <td>Q3 2027</td>
+            <td>IoT Integration: sensori macchina, OEE real-time, manutenzione predittiva</td>
+            <td><span class="badge badge-planned">Pianificato</span></td>
+        </tr>
+        <tr>
+            <td><strong>v8.0</strong></td>
+            <td>Q4 2027</td>
+            <td>Business Intelligence: dashboard analytics, export PDF report, KPI storici</td>
+            <td><span class="badge badge-planned">Pianificato</span></td>
+        </tr>
+        <tr>
+            <td><strong>v9.0</strong></td>
+            <td>Q1 2028</td>
+            <td>Mobile App nativa: iOS/Android con React Native, offline-first</td>
+            <td><span class="badge badge-planned">Pianificato</span></td>
+        </tr>
+        <tr>
+            <td><strong>v10.0</strong></td>
+            <td>Q2 2028</td>
+            <td>Marketplace: plugin di terze parti, integrazioni custom, API pubblica</td>
+            <td><span class="badge badge-planned">Pianificato</span></td>
+        </tr>
+    </tbody>
+</table>
+
+<div class="info-box">
+    <strong>Obiettivo commerciale:</strong> Il MES di Grafica Nappa diventera un prodotto SaaS per tipografie industriali. L'interfaccia enterprise v2.0 e il primo passo verso un prodotto multi-tenant con branding configurabile.
+</div>
+
+<!-- ===================== 11. RISCHI ===================== -->
+<h1 id="s11">11. Analisi dei Rischi</h1>
+
+<table>
+    <thead>
+        <tr><th>Rischio</th><th>Probabilita</th><th>Impatto</th><th>Mitigazione</th></tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Interruzione sync Onda (SOAP)</td>
+            <td><span class="badge badge-medium">Media</span></td>
+            <td><span class="badge badge-critical">Alto</span></td>
+            <td>Retry automatico, log errori, notifica admin, dati persistenti anche offline</td>
+        </tr>
+        <tr>
+            <td>Downtime server .60</td>
+            <td><span class="badge badge-low">Bassa</span></td>
+            <td><span class="badge badge-critical">Critico</span></td>
+            <td>Backup MySQL giornaliero, procedura di ripristino documentata (sez. 12)</td>
+        </tr>
+        <tr>
+            <td>Perdita connessione Prinect/Fiery</td>
+            <td><span class="badge badge-medium">Media</span></td>
+            <td><span class="badge badge-medium">Medio</span></td>
+            <td>Fallback su dati manuali, ultima sync valida mantenuta, auto-terminazione intelligente</td>
+        </tr>
+        <tr>
+            <td>Accesso non autorizzato</td>
+            <td><span class="badge badge-low">Bassa</span></td>
+            <td><span class="badge badge-critical">Alto</span></td>
+            <td>2FA TOTP admin, RBAC 9 ruoli, rate limiting, audit log, session encryption AES-256-GCM</td>
+        </tr>
+        <tr>
+            <td>Crash MySQL / corruzione dati</td>
+            <td><span class="badge badge-low">Bassa</span></td>
+            <td><span class="badge badge-critical">Critico</span></td>
+            <td>InnoDB con crash recovery, backup giornaliero, replica possibile</td>
+        </tr>
+        <tr>
+            <td>WebSocket/Reverb non disponibile</td>
+            <td><span class="badge badge-medium">Media</span></td>
+            <td><span class="badge badge-low">Basso</span></td>
+            <td>Fallback automatico su polling HTTP (15s). Chat e notifiche funzionano anche senza WebSocket</td>
+        </tr>
+        <tr>
+            <td>Conflitto dati Excel bidirezionale</td>
+            <td><span class="badge badge-medium">Media</span></td>
+            <td><span class="badge badge-medium">Medio</span></td>
+            <td>Timestamp-based conflict resolution, MES come source of truth</td>
+        </tr>
+        <tr>
+            <td>Overload scheduler M37</td>
+            <td><span class="badge badge-low">Bassa</span></td>
+            <td><span class="badge badge-medium">Medio</span></td>
+            <td>Timeout configurabile, esecuzione asincrona via queue, log dettagliato</td>
+        </tr>
+        <tr>
+            <td>Costi API Claude (v3.0)</td>
+            <td><span class="badge badge-medium">Media</span></td>
+            <td><span class="badge badge-low">Basso</span></td>
+            <td>Stimato ~$25-50/mese con Sonnet (~40 chiamate/giorno), monitoraggio costi</td>
+        </tr>
+        <tr>
+            <td>Dipendenza Google Drive</td>
+            <td><span class="badge badge-low">Bassa</span></td>
+            <td><span class="badge badge-low">Basso</span></td>
+            <td>Solo per RIF. ORD. MAXTRIS; DDT generabile anche senza</td>
+        </tr>
+    </tbody>
+</table>
+
+<div class="success-box">
+    <strong>Risolto in v2.0:</strong> Il rischio "Database SQLite — concorrenza limitata e locking" presente nelle versioni 1.x e stato completamente risolto con la migrazione a MySQL 8.x, che supporta transazioni ACID, locking a livello di riga e connessioni concorrenti illimitate.
+</div>
+
+<!-- ===================== 12. RIPRISTINO ===================== -->
+<h1 id="s12">12. Procedure di Ripristino</h1>
+
+<h3>12.1 Backup MySQL</h3>
+
+<pre><code># Backup completo database
+mysqldump -u root -p mes_production --single-transaction --routines > backup_mes_$(date +%Y%m%d).sql
+
+# Backup automatico (cron giornaliero alle 02:00)
+0 2 * * * mysqldump -u root -p*** mes_production --single-transaction > /backup/mes_$(date +\%Y\%m\%d).sql</code></pre>
+
+<h3>12.2 Ripristino da Backup</h3>
+
+<pre><code># 1. Fermare i servizi
+php artisan down
+
+# 2. Ripristinare il database
+mysql -u root -p mes_production < backup_mes_20260408.sql
+
+# 3. Eseguire eventuali migrazioni mancanti
+php artisan migrate --force
+
+# 4. Pulire cache
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+
+# 5. Riavviare i servizi
+php artisan up
+php artisan reverb:start --daemon
+php artisan schedule:run</code></pre>
+
+<h3>12.3 Ripristino Codice</h3>
+
+<pre><code># Ripristino da Git
+git fetch origin
+git checkout def2.0
+git reset --hard origin/def2.0
+composer install --no-dev --optimize-autoloader
+php artisan migrate --force
+php artisan config:cache</code></pre>
+
+<div class="critical-box">
+    <strong>Attenzione:</strong> In caso di corruzione grave del database, contattare immediatamente il Responsabile IT. Il backup giornaliero garantisce una perdita massima di 24 ore di dati. Le sync Onda, Prinect e Fiery ricostruiscono i dati di produzione automaticamente.
+</div>
+
+<h3>12.4 Checklist Post-Ripristino</h3>
+
+<table>
+    <thead>
+        <tr><th>#</th><th>Azione</th><th>Comando/Verifica</th></tr>
+    </thead>
+    <tbody>
+        <tr><td>1</td><td>Verificare connessione MySQL</td><td><code>php artisan tinker --execute="DB::connection()->getPdo()"</code></td></tr>
+        <tr><td>2</td><td>Verificare sync Onda</td><td><code>php artisan onda:sync</code></td></tr>
+        <tr><td>3</td><td>Verificare sync Prinect</td><td><code>php artisan prinect:sync</code></td></tr>
+        <tr><td>4</td><td>Verificare sync Fiery</td><td><code>php artisan fiery:sync</code></td></tr>
+        <tr><td>5</td><td>Verificare WebSocket</td><td><code>php artisan reverb:start</code></td></tr>
+        <tr><td>6</td><td>Verificare scheduler</td><td><code>php artisan schedule:run</code></td></tr>
+        <tr><td>7</td><td>Verificare login operatori</td><td>Test manuale da browser</td></tr>
+        <tr><td>8</td><td>Verificare dashboard owner</td><td>Test manuale da browser</td></tr>
+        <tr><td>9</td><td>Verificare chat MES</td><td>Invio messaggio di test</td></tr>
+        <tr><td>10</td><td>Verificare DDT PDF</td><td>Generazione DDT di test</td></tr>
+    </tbody>
+</table>
+
+<!-- ===================== FOOTER ===================== -->
+<div class="doc-footer">
+    <hr style="border: none; border-top: 2px solid #d11317; margin-bottom: 15px;">
+    <p>
+        <strong>Grafica Nappa srl</strong> — Sistema MES Produzione — v2.0<br>
+        Aprile 2026 — Giovanni Pietropaolo (Responsabile IT)<br>
+        <em>Documento riservato — Uso interno</em>
+    </p>
+</div>
+
+</body>
+</html>
