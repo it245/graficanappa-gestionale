@@ -11,8 +11,8 @@
 return [
     'macchine' => [
         'XL106' => [
-            'nome' => 'Heidelberg XL 106 (24h)',
-            'turni' => 'h24', // 0-24 lun-ven
+            'nome' => 'Heidelberg XL 106 (16h)',
+            'turni' => 'standard', // 6-22 lun-ven
             'fasi' => ['STAMPAXL106','STAMPAXL106.1','STAMPAXL106.2','STAMPAXL106.3',
                         'STAMPAXL106.4','STAMPAXL106.5','STAMPAXL106.6','STAMPAXL106.7','STAMPA'],
         ],
