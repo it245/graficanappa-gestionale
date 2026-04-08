@@ -1292,18 +1292,7 @@ document.getElementById('filtro-storico')?.addEventListener('input', function() 
         table.style.display = visibili > 0 ? '' : 'none';
     });
 });
-document.getElementById('hamburgerBtn').addEventListener('click', openSidebar);
-document.getElementById('hamburgerBtn').addEventListener('keydown', function(e) {
-    if (e.key === 'Enter' || e.keyCode === 13) { e.preventDefault(); openSidebar(); }
-});
-document.getElementById('sidebarOverlay').addEventListener('click', closeSidebar);
-document.getElementById('sidebarClose').addEventListener('click', closeSidebar);
-document.querySelectorAll('.sidebar-menu a.sidebar-item').forEach(function(el) {
-    el.addEventListener('click', function() { setTimeout(closeSidebar, 100); });
-    el.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' || e.keyCode === 13) { e.preventDefault(); this.click(); }
-    });
-});
+// Sidebar ora è nel layout MES (mes.blade.php)
 
 // === Token per fetch autenticate ===
 var _opToken = '{{ $opToken ?? request()->query("op_token", "") }}';
@@ -1949,16 +1938,7 @@ function resetRiferimentiMarco() {
     fCliente.dispatchEvent(new Event('input'));
 }
 
-// Popup operatore
-document.getElementById('operatoreInfo').addEventListener('click', function(){
-    var popup = document.getElementById('operatorePopup');
-    popup.style.display = popup.style.display === 'block' ? 'none' : 'block';
-});
-document.addEventListener('click', function(e){
-    if(!document.getElementById('operatoreInfo').contains(e.target)){
-        document.getElementById('operatorePopup').style.display='none';
-    }
-});
+// Popup operatore (ora nella topbar del layout MES)
 
 // === Notifiche Note Consegne ===
 var _noteLastUpdate = localStorage.getItem('noteConsegne_lastUpdate') || '';
