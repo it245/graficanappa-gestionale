@@ -103,20 +103,6 @@
             <td style="width:15%; border:1px solid #999; padding:2mm 3mm;">
                 <span class="value">{{ $dataDdt }}</span>
             </td>
-            <td rowspan="4" style="width:30%; border:1px solid #999; padding:2mm 3mm; vertical-align:top;">
-                <table style="width:100%; border:none; border-collapse:collapse;">
-                    <tr>
-                        <td style="border:none; padding:0; text-align:center; font-size:7.5pt; color:#333;">PARTITA IVA</td>
-                        <td style="border:none; padding:0; text-align:center; font-size:7.5pt; color:#333;">/</td>
-                        <td style="border:none; padding:0; text-align:center; font-size:7.5pt; color:#333;">CODICE FISCALE</td>
-                    </tr>
-                    <tr>
-                        <td style="border:none; padding:1mm 0 0 0; text-align:center; font-size:8.5pt; font-weight:bold;">{{ $testa->ClientePIVA }}</td>
-                        <td style="border:none; padding:0;"></td>
-                        <td style="border:none; padding:1mm 0 0 0; text-align:center; font-size:8.5pt; font-weight:bold;">{{ $testa->ClienteCF }}</td>
-                    </tr>
-                </table>
-            </td>
         </tr>
         <tr>
             <td rowspan="2" style="width:40%; border:1px solid #999; padding:2mm 3mm; vertical-align:top;">
