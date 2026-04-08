@@ -32,9 +32,17 @@ class EtichettaController extends Controller
             'ariagrafica', 'studio w', 'studioesse', 'studio esse',
             'mundo', 'booster', 'openmind', 'russart', 'grafiche mercurio',
             'medspa', 'full pack', 'iltex', 'fashion color', 'advertage',
-            'nicola',
+            'nicola', 'printing', 'area grafica',
         ];
+
         $clienteLower = strtolower($cliente);
+
+        // Clienti senza intestazione (né Grafica Nappa né nome cliente)
+        $clientiNoHeader = ['printing', 'area grafica'];
+        $isNoHeader = false;
+        foreach ($clientiNoHeader as $cn) {
+            if (str_contains($clienteLower, $cn)) { $isNoHeader = true; break; }
+        }
         $isSimpleLabel = false;
         foreach ($clientiSemplici as $cs) {
             if (str_contains($clienteLower, $cs)) {
@@ -74,7 +82,7 @@ class EtichettaController extends Controller
 
         return view('operatore.etichetta', compact(
             'ordine', 'lotto', 'cliente', 'data',
-            'isItalianaConfetti', 'isSimpleLabel', 'isTifataPlastica', 'eanProdotti', 'articoloDefault', 'eanSalvato',
+            'isItalianaConfetti', 'isSimpleLabel', 'isNoHeader', 'isTifataPlastica', 'eanProdotti', 'articoloDefault', 'eanSalvato',
             'fasiOperatore', 'faseOperatore', 'operatore', 'righeFS'
         ));
     }

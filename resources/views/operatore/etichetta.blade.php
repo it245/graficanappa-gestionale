@@ -195,7 +195,7 @@
         @if(request('from') === 'etichette')
             <a href="{{ route('etichette.lista') }}" class="btn btn-outline-secondary btn-sm me-2">&larr; Lista Etichette</a>
         @else
-            <a href="{{ route('operatore.dashboard') }}" class="btn btn-outline-secondary btn-sm me-2">&larr; Dashboard</a>
+            <a href="{{ request('from_url') ?: url()->previous() }}" class="btn btn-outline-secondary btn-sm me-2">&larr; Dashboard</a>
             <a href="/commesse/{{ $ordine->commessa }}?op_token={{ request('op_token') }}" class="btn btn-outline-primary btn-sm me-3">&larr; Commessa</a>
         @endif
         <h4 class="mb-0">Stampa Etichetta</h4>
@@ -224,7 +224,7 @@
         </div>
         <div class="mb-3">
             <label class="form-label">Descrizione articolo</label>
-            <input type="text" id="campo-descrizione-simple" class="form-control" value="{{ $ordine->descrizione ?? '' }}">
+            <input type="text" id="campo-descrizione-simple" class="form-control" value="{{ $ordine->descrizione ?? '' }}" placeholder="Scrivi la descrizione...">
         </div>
     @elseif($isItalianaConfetti)
         {{-- ITALIANA CONFETTI: dropdown ricerca EAN + opzioni extra --}}
@@ -340,9 +340,11 @@
     <div class="articolo-row" id="print-articolo"></div>
     @endif
     @if($isSimpleLabel)
+    @if(!($isNoHeader ?? false))
     <div style="font-size: 18pt; font-weight: 700; text-align: left;">
         <span id="print-cliente-simple">{{ $cliente }}</span>
     </div>
+    @endif
     <div id="print-descrizione-simple" style="font-size: 28pt; font-weight: 700; text-align: center; text-transform: uppercase; flex: 1; display: flex; align-items: center; justify-content: center;">{{ $ordine->descrizione ?? '' }}</div>
     @endif
     @if($isTifataPlastica ?? false)
@@ -554,7 +556,8 @@ function aggiornaAnteprima() {
         cliente = document.getElementById('campo-cliente-simple').value;
         articolo = '';
         ean = '';
-        document.getElementById('print-cliente-simple').textContent = cliente;
+        var printCliente = document.getElementById('print-cliente-simple');
+        if (printCliente) printCliente.textContent = cliente;
         var desc = document.getElementById('campo-descrizione-simple').value;
         var descEl = document.getElementById('print-descrizione-simple');
         descEl.textContent = desc;

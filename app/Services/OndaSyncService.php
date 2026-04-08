@@ -455,6 +455,10 @@ class OndaSyncService
                 if ($ordine->cliente_nome && $ordine->cliente_nome !== $clienteOnda && !empty($ordine->cliente_nome)) {
                     unset($datiOrdine['cliente_nome']);
                 }
+                // Aggiorna descrizione da Onda se diversa (corregge import iniziale errato)
+                if ($descrizione && $ordine->descrizione !== $descrizione) {
+                    $ordine->descrizione = $descrizione;
+                }
                 $ordine->update($datiOrdine);
                 $ordiniAggiornati++;
                 $logOrdiniAggiornati[] = $commessa;
