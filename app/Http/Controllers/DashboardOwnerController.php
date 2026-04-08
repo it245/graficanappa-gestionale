@@ -989,6 +989,8 @@ public function calcolaOreEPriorita($fase)
 
     public function syncOnda()
     {
+        set_time_limit(120); // Il sync Onda può richiedere più di 30 secondi
+
         // Permetti sync da prestampa (hanno redirect)
         if (!request('redirect')) {
             if ($deny = $this->denyIfReadonly()) return $deny;
