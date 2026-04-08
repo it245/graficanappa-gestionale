@@ -5,18 +5,18 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Helvetica', 'Arial', sans-serif; font-size: 9pt; color: #000; }
-        .page { padding: 30mm 15mm 10mm 15mm; } /* 30mm top: spazio per intestazione pre-stampata (3cm) */
+        .page { padding: 22mm 15mm 10mm 15mm; } /* 2.2cm top: spazio per intestazione pre-stampata */
 
         /* Header rimosso: la carta è già intestata */
 
         /* Cliente */
-        .cliente-box { border: 1px solid #999; padding: 3mm; margin-bottom: 2mm; }
+        .cliente-box { border: 1px solid #999; padding: 2mm; margin-bottom: 1mm; }
         .cliente-label { font-size: 7pt; color: #666; margin-bottom: 1mm; }
         .cliente-nome { font-size: 10pt; font-weight: bold; margin-bottom: 1mm; }
         .cliente-indirizzo { font-size: 8.5pt; line-height: 1.5; }
 
         /* Destinazione */
-        .dest-label { font-size: 7pt; color: #666; font-style: italic; margin-bottom: 1mm; margin-top: 2mm; }
+        .dest-label { font-size: 7pt; color: #666; font-style: italic; margin-bottom: 0; margin-top: 1mm; }
         .dest-box { border: 1px solid #999; padding: 3mm; }
 
         /* Blocco DDT */
@@ -76,7 +76,7 @@
 <div class="page">
 
     {{-- CLIENTE (posizionato a destra, l'intestazione è pre-stampata sulla carta) --}}
-    <div style="text-align: right; margin-bottom: 3mm;">
+    <div style="text-align: right; margin-bottom: 1mm;">
         <div class="cliente-label">Spett.le</div>
         <div class="cliente-box" style="display: inline-block; text-align: left; min-width: 40%; max-width: 50%;">
             <div class="cliente-nome">{{ $testa->ClienteNome }}</div>
@@ -90,7 +90,7 @@
 
     {{-- Destinazione (solo se indirizzo diverso dal cliente) --}}
     @if($coda && $coda->DestNome && trim($coda->DestIndirizzo ?? '') !== trim($testa->ClienteIndirizzo ?? ''))
-    <div style="text-align: right; margin-bottom: 3mm;">
+    <div style="text-align: right; margin-bottom: 1mm;">
         <div class="dest-label">DESTINAZIONE (se l'indirizzo è diverso da quello del destinatario)</div>
         <div class="dest-box" style="display: inline-block; text-align: left; min-width: 55%;">
             <div class="cliente-nome">{{ $coda->DestNome }}</div>
