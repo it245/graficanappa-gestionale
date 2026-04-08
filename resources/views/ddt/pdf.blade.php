@@ -95,6 +95,7 @@
         <div class="dest-box" style="display: inline-block; text-align: left; min-width: 55%;">
             <div class="cliente-nome">{{ $coda->DestNome }}</div>
             <div class="cliente-indirizzo">
+                @if(!empty($coda->DestTelefono))TEL. {{ $coda->DestTelefono }}<br>@endif
                 {{ $coda->DestIndirizzo }}<br>
                 {{ $coda->DestCap }} {{ $coda->DestCitta }} {{ $coda->DestProvincia }}
             </div>

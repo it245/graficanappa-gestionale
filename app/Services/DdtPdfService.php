@@ -119,14 +119,20 @@ class DdtPdfService
                    c.DataTrasporto, c.OraTrasporto,
                    c.CodTrasporto AS TrasportoACura,
                    c.CausaleTrasporto,
-                   c.RagSocSped AS DestNome,
-                   c.IndirizzoSped AS DestIndirizzo,
-                   c.CapSped AS DestCap, c.CittaSped AS DestCitta,
-                   c.ProvSped AS DestProvincia,
+                   COALESCE(NULLIF(c.RagSocSped, ''), dest.RagioneSociale) AS DestNome,
+                   COALESCE(NULLIF(c.IndirizzoSped, ''), dest.Indirizzo) AS DestIndirizzo,
+                   COALESCE(NULLIF(c.CapSped, ''), dest.Cap) AS DestCap,
+                   COALESCE(NULLIF(c.CittaSped, ''), dest.Citta) AS DestCitta,
+                   COALESCE(NULLIF(c.ProvSped, ''), dest.Provincia) AS DestProvincia,
+                   dest.RagioneSociale2 AS DestTelefono,
                    v.RagioneSociale AS VettoreNome,
                    v.Indirizzo AS VettoreIndirizzo, v.Citta AS VettoreCitta
             FROM ATTDocCoda c
             LEFT JOIN STDAnagrafiche v ON c.IdVettore1 = v.IdAnagrafica
+            LEFT JOIN ATTDocTeste t2 ON c.IdDoc = t2.IdDoc
+            LEFT JOIN STDAnagIndirizzi dest ON dest.IdAnagrafica = t2.IdAnagrafica
+                AND dest.IdIndirizzo = c.IdIndirizzoMerce
+                AND c.IdIndirizzoMerce IS NOT NULL AND c.IdIndirizzoMerce > 0
             WHERE c.IdDoc = ?
         ", [$testa->IdDoc]);
 
