@@ -168,10 +168,10 @@
                 </tr>
             @endforeach
             @if($noteRighe)
-            <tr><td colspan="4" style="border:none; font-size:8pt; padding:2mm 2mm;">{{ $noteRighe }}</td></tr>
+            <tr><td colspan="4" style="border:1px solid #999; border-top:none; font-size:8pt; padding:2mm 2mm;">{{ $noteRighe }}</td></tr>
             @endif
             <tr>
-                <td colspan="4" style="border:none; font-size:6.5pt; padding:3mm 2mm; color:#555; line-height:1.4;">
+                <td colspan="4" style="border:1px solid #999; border-top:none; font-size:6.5pt; padding:3mm 2mm; color:#555; line-height:1.4;">
                     Eventuali contestazioni relative a quantità, qualità o conformità della merce del presente documento devono
                     essere comunicate per iscritto (PEC, mail, o raccomandata) entro e non oltre 8 giorni dal ricevimento della
                     stessa (art. 1495 c.c.). Trascorso tale termine, la merce si intende definitivamente accettata.
