@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MES Grafica Nappa v2.0 — Brochure Commerciale</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+        :root {
+            --primary: #d11317;
+            --primary-dark: #a50f12;
+            --accent: #2563eb;
+            --accent-light: #3b82f6;
+            --dark: #1e293b;
+            --dark-light: #334155;
+            --gray: #64748b;
+            --gray-light: #94a3b8;
+            --bg: #f8fafc;
+            --white: #ffffff;
+            --success: #10b981;
+            --warning: #f59e0b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: var(--dark);
+            background: var(--white);
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        @page {
+            size: A4;
+            margin: 0;
+        }
+
+        .page {
+            width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto;
+            position: relative;
+            overflow: hidden;
+            page-break-after: always;
+        }
+
+        @media print {
+            .page {
+                margin: 0;
+                box-shadow: none;
+            }
+        }
+
+        @media screen {
+            .page {
+                box-shadow: 0 4px 40px rgba(0,0,0,0.12);
+                margin-bottom: 30px;
+            }
+            body {
+                background: #e2e8f0;
+                padding: 30px 0;
+            }
+        }
+
+        /* ===== PAGE 1 — HERO ===== */
+        .page-hero {
+            background: linear-gradient(135deg, var(--dark) 0%, #0f172a 50%, var(--dark) 100%);
+            color: var(--white);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 0;
+        }
+
+        .hero-top-bar {
+            background: var(--primary);
+            height: 6px;
+            width: 100%;
+        }
+
+        .hero-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 30px 45px;
+        }
+
+        .hero-logo-text {
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--white);
+        }
+
+        .hero-version {
+            background: var(--primary);
+            color: var(--white);
+            font-size: 11px;
+            font-weight: 700;
+            padding: 5px 14px;
+            border-radius: 20px;
+            letter-spacing: 1px;
+        }
+
+        .hero-content {
+            padding: 0 45px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            background: rgba(37, 99, 235, 0.15);
+            border: 1px solid rgba(37, 99, 235, 0.3);
+            color: var(--accent-light);
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 6px 16px;
+            border-radius: 20px;
+            margin-bottom: 24px;
+        }
+
+        .hero-title {
+            font-size: 42px;
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 10px;
+            letter-spacing: -1px;
+        }
+
+        .hero-title span {
+            background: linear-gradient(135deg, var(--primary), #ff4444);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            font-size: 20px;
+            font-weight: 300;
+            color: var(--gray-light);
+            margin-bottom: 50px;
+            line-height: 1.5;
+        }
+
+        .hero-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .hero-stat {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 14px;
+            padding: 22px 18px;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+
+        .hero-stat-number {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--white);
+            line-height: 1;
+        }
+
+        .hero-stat-number .accent {
+            color: var(--primary);
+        }
+
+        .hero-stat-label {
+            font-size: 11px;
+            color: var(--gray-light);
+            margin-top: 8px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .hero-bottom {
+            padding: 30px 45px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-top: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .hero-tagline {
+            font-size: 13px;
+            color: var(--gray-light);
+            font-weight: 400;
+        }
+
+        .hero-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--primary);
+            color: var(--white);
+            font-size: 13px;
+            font-weight: 600;
+            padding: 10px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            letter-spacing: 0.3px;
+        }
+
+        /* ===== PAGE 2 — FEATURES ===== */
+        .page-features {
+            background: var(--white);
+            padding: 45px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .section-eyebrow {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .section-title {
+            font-size: 30px;
+            font-weight: 800;
+            color: var(--dark);
+            margin-bottom: 6px;
+            letter-spacing: -0.5px;
+        }
+
+        .section-desc {
+            font-size: 14px;
+            color: var(--gray);
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            flex: 1;
+        }
+
+        .feature-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 22px;
+            position: relative;
+            overflow: hidden;
+            transition: box-shadow 0.2s;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+        }
+
+        .feature-card.red::before { background: var(--primary); }
+        .feature-card.blue::before { background: var(--accent); }
+        .feature-card.green::before { background: var(--success); }
+        .feature-card.amber::before { background: var(--warning); }
+
+        .feature-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            margin-bottom: 14px;
+        }
+
+        .feature-card.red .feature-icon { background: #fef2f2; color: var(--primary); }
+        .feature-card.blue .feature-icon { background: #eff6ff; color: var(--accent); }
+        .feature-card.green .feature-icon { background: #f0fdf4; color: var(--success); }
+        .feature-card.amber .feature-icon { background: #fffbeb; color: var(--warning); }
+
+        .feature-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 6px;
+        }
+
+        .feature-text {
+            font-size: 12px;
+            color: var(--gray);
+            line-height: 1.6;
+        }
+
+        .feature-tag {
+            display: inline-block;
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            padding: 3px 8px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+
+        .feature-card.red .feature-tag { background: #fef2f2; color: var(--primary); }
+        .feature-card.blue .feature-tag { background: #eff6ff; color: var(--accent); }
+        .feature-card.green .feature-tag { background: #f0fdf4; color: var(--success); }
+        .feature-card.amber .feature-tag { background: #fffbeb; color: #d97706; }
+
+        .page-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+            margin-top: auto;
+        }
+
+        .page-footer-left {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .page-footer-right {
+            font-size: 11px;
+            color: var(--gray);
+        }
+
+        /* ===== PAGE 3 — DIFFERENZIATORI ===== */
+        .page-diff {
+            background: var(--bg);
+            padding: 45px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .diff-hero-section {
+            background: linear-gradient(135deg, var(--dark) 0%, #0f172a 100%);
+            border-radius: 18px;
+            padding: 40px;
+            color: var(--white);
+            margin-bottom: 28px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .diff-hero-section::after {
+            content: '';
+            position: absolute;
+            top: -60px;
+            right: -60px;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(209,19,23,0.15), transparent 70%);
+            border-radius: 50%;
+        }
+
+        .diff-hero-title {
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 10px;
+            letter-spacing: -0.5px;
+        }
+
+        .diff-hero-subtitle {
+            font-size: 14px;
+            color: var(--gray-light);
+            line-height: 1.6;
+            max-width: 500px;
+        }
+
+        .diff-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            flex: 1;
+        }
+
+        .diff-card {
+            background: var(--white);
+            border-radius: 14px;
+            padding: 26px;
+            border: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .diff-number {
+            font-size: 36px;
+            font-weight: 900;
+            color: #e2e8f0;
+            line-height: 1;
+            margin-bottom: 10px;
+        }
+
+        .diff-card-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 8px;
+        }
+
+        .diff-card-text {
+            font-size: 12px;
+            color: var(--gray);
+            line-height: 1.7;
+            flex: 1;
+        }
+
+        .diff-highlight {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--primary), #ff4444);
+            color: var(--white);
+            font-size: 10px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 5px;
+            margin-top: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .diff-card.featured {
+            grid-column: span 2;
+            background: linear-gradient(135deg, #eff6ff, #f0fdf4);
+            border-color: var(--accent);
+            flex-direction: row;
+            align-items: center;
+            gap: 30px;
+        }
+
+        .diff-card.featured .diff-number {
+            font-size: 48px;
+            color: var(--accent);
+        }
+
+        .diff-card.featured .diff-card-title {
+            font-size: 18px;
+        }
+
+        /* ===== PAGE 4 — CONTATTI ===== */
+        .page-contact {
+            background: linear-gradient(180deg, var(--white) 0%, var(--bg) 100%);
+            padding: 45px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .contact-hero {
+            text-align: center;
+            padding: 50px 20px 40px;
+        }
+
+        .contact-hero-title {
+            font-size: 32px;
+            font-weight: 900;
+            color: var(--dark);
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        .contact-hero-text {
+            font-size: 15px;
+            color: var(--gray);
+            line-height: 1.7;
+            max-width: 450px;
+            margin: 0 auto 40px;
+        }
+
+        .contact-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+
+        .contact-card {
+            background: var(--white);
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 28px;
+            text-align: center;
+        }
+
+        .contact-card-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            margin: 0 auto 14px;
+            background: #fef2f2;
+            color: var(--primary);
+        }
+
+        .contact-card-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--gray);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+        }
+
+        .contact-card-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--dark);
+            line-height: 1.5;
+        }
+
+        .contact-bottom {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+        }
+
+        .contact-cta-box {
+            background: linear-gradient(135deg, var(--dark), #0f172a);
+            border-radius: 18px;
+            padding: 40px;
+            text-align: center;
+            color: var(--white);
+            margin-bottom: 30px;
+        }
+
+        .contact-cta-title {
+            font-size: 22px;
+            font-weight: 800;
+            margin-bottom: 10px;
+        }
+
+        .contact-cta-text {
+            font-size: 13px;
+            color: var(--gray-light);
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .contact-cta-btn {
+            display: inline-block;
+            background: var(--primary);
+            color: var(--white);
+            font-size: 14px;
+            font-weight: 700;
+            padding: 12px 36px;
+            border-radius: 8px;
+            text-decoration: none;
+            letter-spacing: 0.3px;
+        }
+
+        .contact-legal {
+            text-align: center;
+            font-size: 10px;
+            color: var(--gray-light);
+            line-height: 1.6;
+        }
+
+        .contact-legal strong {
+            color: var(--gray);
+        }
+
+        /* Utilities */
+        .red-bar {
+            width: 40px;
+            height: 4px;
+            background: var(--primary);
+            border-radius: 2px;
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===== PAGE 1 — HERO ===== -->
+<div class="page page-hero">
+    <div>
+        <div class="hero-top-bar"></div>
+        <div class="hero-header">
+            <div class="hero-logo-text">Grafica Nappa</div>
+            <div class="hero-version">v2.0</div>
+        </div>
+    </div>
+
+    <div class="hero-content">
+        <div class="hero-badge">Manufacturing Execution System</div>
+        <h1 class="hero-title">
+            <span>MES</span> Grafica Nappa
+        </h1>
+        <p class="hero-subtitle">
+            Il sistema gestionale per la tipografia moderna.<br>
+            Dalla commessa alla spedizione, tutto sotto controllo.
+        </p>
+
+        <div class="hero-stats">
+            <div class="hero-stat">
+                <div class="hero-stat-number">30<span class="accent">+</span></div>
+                <div class="hero-stat-label">Operatori<br>Connessi</div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-stat-number">11</div>
+                <div class="hero-stat-label">Macchine<br>Integrate</div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-stat-number">900<span class="accent">+</span></div>
+                <div class="hero-stat-label">Fasi Attive<br>Monitorate</div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-stat-number">85<span class="accent">h</span></div>
+                <div class="hero-stat-label">Risparmio<br>Setup / Mese</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="hero-bottom">
+        <div class="hero-tagline">Produzione ottimizzata. Dati in tempo reale. Decisioni intelligenti.</div>
+        <div class="hero-cta">Scopri di piu &#8594;</div>
+    </div>
+</div>
+
+<!-- ===== PAGE 2 — FEATURES ===== -->
+<div class="page page-features">
+    <div class="section-eyebrow">Funzionalita</div>
+    <h2 class="section-title">Tutto quello che serve alla tua tipografia</h2>
+    <p class="section-desc">Un unico sistema per gestire produzione, operatori, macchine e spedizioni. Progettato specificamente per il settore grafico.</p>
+
+    <div class="features-grid">
+        <div class="feature-card red">
+            <div class="feature-icon">&#9881;</div>
+            <div class="feature-title">Scheduling Intelligente</div>
+            <div class="feature-text">L'algoritmo Mossa 37 ottimizza la sequenza di produzione su 11 macchine, riducendo i tempi di setup da 85 a 93 ore al mese. Batching automatico, gestione urgenze e propagazione fasi.</div>
+            <div class="feature-tag">Mossa 37</div>
+        </div>
+
+        <div class="feature-card blue">
+            <div class="feature-icon">&#9636;</div>
+            <div class="feature-title">Dashboard Real-Time</div>
+            <div class="feature-text">KPI aggiornati in tempo reale tramite WebSocket. Diagramma Gantt interattivo, progresso commesse, stato operatori e avanzamento per reparto. Tutto su un'unica schermata.</div>
+            <div class="feature-tag">WebSocket</div>
+        </div>
+
+        <div class="feature-card green">
+            <div class="feature-icon">&#9881;</div>
+            <div class="feature-title">Integrazione Macchine</div>
+            <div class="feature-text">Connessione nativa con Prinect (Heidelberg offset), Fiery (EFI digitale) e qualsiasi sistema tramite API REST. Dati di produzione acquisiti automaticamente, senza inserimento manuale.</div>
+            <div class="feature-tag">Prinect + Fiery</div>
+        </div>
+
+        <div class="feature-card amber">
+            <div class="feature-icon">&#9993;</div>
+            <div class="feature-title">Chat Interna MES</div>
+            <div class="feature-text">Comunicazione integrata per reparto con @menzioni, notifiche push e storico messaggi. Niente piu telefonate o fogli di carta per coordinare la produzione.</div>
+            <div class="feature-tag">Real-Time</div>
+        </div>
+
+        <div class="feature-card blue">
+            <div class="feature-icon">&#128196;</div>
+            <div class="feature-title">DDT Automatico</div>
+            <div class="feature-text">Generazione automatica documenti di trasporto in PDF con riferimenti cliente, tracciamento BRT e notifiche di stato. Dalla produzione alla consegna, senza interruzioni.</div>
+            <div class="feature-tag">PDF + BRT</div>
+        </div>
+
+        <div class="feature-card green">
+            <div class="feature-icon">&#128241;</div>
+            <div class="feature-title">PWA Mobile</div>
+            <div class="feature-text">Installabile su tablet e smartphone come app nativa. Dark mode per monitor di reparto, responsive design e funzionamento anche con connessione intermittente.</div>
+            <div class="feature-tag">Installabile</div>
+        </div>
+
+        <div class="feature-card red">
+            <div class="feature-icon">&#128274;</div>
+            <div class="feature-title">Sicurezza Enterprise</div>
+            <div class="feature-text">Autenticazione a due fattori (2FA), controllo accessi basato su ruoli (RBAC), registro audit completo, protezione CSRF e crittografia dati sensibili.</div>
+            <div class="feature-tag">2FA + RBAC</div>
+        </div>
+
+        <div class="feature-card amber">
+            <div class="feature-icon">&#128200;</div>
+            <div class="feature-title">Report e Analytics</div>
+            <div class="feature-text">Report ore lavorate, OEE, scarti e performance per macchina. Export Excel, grafici Chart.js interattivi, confronto multi-periodo e KPI personalizzabili.</div>
+            <div class="feature-tag">Excel + Charts</div>
+        </div>
+    </div>
+
+    <div class="page-footer">
+        <div class="page-footer-left">MES Grafica Nappa v2.0</div>
+        <div class="page-footer-right">Pagina 2 di 4</div>
+    </div>
+</div>
+
+<!-- ===== PAGE 3 — DIFFERENZIATORI ===== -->
+<div class="page page-diff">
+    <div class="diff-hero-section">
+        <div class="section-eyebrow" style="color: var(--primary);">Vantaggi Competitivi</div>
+        <h2 class="diff-hero-title">Perche il nostro MES e diverso</h2>
+        <p class="diff-hero-subtitle">Non un gestionale generico adattato. Un sistema nato in tipografia, per la tipografia. Ogni funzione e stata progettata risolvendo problemi reali.</p>
+    </div>
+
+    <div class="diff-grid">
+        <div class="diff-card">
+            <div class="diff-number">01</div>
+            <div class="diff-card-title">Specializzato per Tipografie</div>
+            <div class="diff-card-text">Non e un MES generico riadattato. Ogni modulo e stato progettato per i flussi reali della produzione grafica: dalla prestampa alla legatoria, dalla fustella alla spedizione.</div>
+            <div class="diff-highlight">Verticale 100%</div>
+        </div>
+
+        <div class="diff-card">
+            <div class="diff-number">02</div>
+            <div class="diff-card-title">Integrazione Nativa Prinect/Fiery</div>
+            <div class="diff-card-text">Connessione diretta con i sistemi Heidelberg e EFI. Tempi di avviamento, fogli stampati e stato job acquisiti automaticamente. Nessun software intermedio necessario.</div>
+            <div class="diff-highlight">Plug &amp; Play</div>
+        </div>
+
+        <div class="diff-card">
+            <div class="diff-number">03</div>
+            <div class="diff-card-title">Zero Licenze Software</div>
+            <div class="diff-card-text">Tecnologia 100% proprietaria basata su stack open-source (Laravel, MySQL, Bootstrap). Nessuna dipendenza da vendor lock-in, nessun costo di licenza ricorrente per componenti di terze parti.</div>
+            <div class="diff-highlight">Open Stack</div>
+        </div>
+
+        <div class="diff-card">
+            <div class="diff-number">04</div>
+            <div class="diff-card-title">Sviluppato In-House</div>
+            <div class="diff-card-text">Il codice sorgente e interamente nostro. Ogni personalizzazione richiesta dal cliente viene implementata direttamente, senza intermediari o tempi di attesa da fornitori esterni.</div>
+            <div class="diff-highlight">Personalizzabile</div>
+        </div>
+
+        <div class="diff-card featured">
+            <div>
+                <div class="diff-number">05</div>
+            </div>
+            <div>
+                <div class="diff-card-title">AI-Ready: Predisposto per l'Intelligenza Artificiale</div>
+                <div class="diff-card-text">Architettura predisposta per l'integrazione di modelli AI. Ottimizzazione automatica della sequenza di produzione, predizione ritardi, suggerimenti intelligenti per il bilanciamento dei carichi macchina. Il futuro della produzione grafica e gia qui.</div>
+                <div class="diff-highlight" style="background: linear-gradient(135deg, var(--accent), #7c3aed);">Prossima Generazione</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="page-footer">
+        <div class="page-footer-left">MES Grafica Nappa v2.0</div>
+        <div class="page-footer-right">Pagina 3 di 4</div>
+    </div>
+</div>
+
+<!-- ===== PAGE 4 — CONTATTI ===== -->
+<div class="page page-contact">
+    <div class="contact-hero">
+        <div class="red-bar" style="margin: 0 auto 16px;"></div>
+        <h2 class="contact-hero-title">Inizia a ottimizzare la tua produzione</h2>
+        <p class="contact-hero-text">Contattaci per una demo personalizzata. Ti mostreremo come il MES Grafica Nappa puo trasformare la gestione della tua tipografia.</p>
+    </div>
+
+    <div class="contact-cards">
+        <div class="contact-card">
+            <div class="contact-card-icon">&#127968;</div>
+            <div class="contact-card-label">Sede</div>
+            <div class="contact-card-value">Grafica Nappa srl<br>Via Gramsci 19<br>81031 Aversa (CE)</div>
+        </div>
+        <div class="contact-card">
+            <div class="contact-card-icon">&#128222;</div>
+            <div class="contact-card-label">Telefono</div>
+            <div class="contact-card-value">+39 081 890 6734</div>
+        </div>
+        <div class="contact-card">
+            <div class="contact-card-icon">&#9993;</div>
+            <div class="contact-card-label">Email</div>
+            <div class="contact-card-value">info@graficanappa.com</div>
+        </div>
+        <div class="contact-card">
+            <div class="contact-card-icon">&#127760;</div>
+            <div class="contact-card-label">Web</div>
+            <div class="contact-card-value">www.graficanappa.com</div>
+        </div>
+    </div>
+
+    <div class="contact-bottom">
+        <div class="contact-cta-box">
+            <h3 class="contact-cta-title">Richiedi una demo gratuita</h3>
+            <p class="contact-cta-text">Organizziamo una presentazione dal vivo del sistema, personalizzata sulle esigenze della tua azienda. Senza impegno.</p>
+            <div class="contact-cta-btn">Prenota la tua Demo</div>
+        </div>
+
+        <div class="contact-legal">
+            <strong>Grafica Nappa srl</strong> &mdash; P.IVA 02598730618 &mdash; REA CE-178891<br>
+            &copy; 2026 Tutti i diritti riservati. MES Grafica Nappa e un prodotto proprietario di Grafica Nappa srl.
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

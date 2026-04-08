@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MES Grafica Nappa v2.0 — Scheda Tecnica</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+        :root {
+            --primary: #d11317;
+            --primary-dark: #a50f12;
+            --accent: #2563eb;
+            --accent-light: #3b82f6;
+            --dark: #1e293b;
+            --dark-light: #334155;
+            --gray: #64748b;
+            --gray-light: #94a3b8;
+            --bg: #f8fafc;
+            --white: #ffffff;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --border: #e2e8f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: var(--dark);
+            background: var(--white);
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        @page {
+            size: A4;
+            margin: 0;
+        }
+
+        .page {
+            width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto;
+            position: relative;
+            overflow: hidden;
+            page-break-after: always;
+            display: flex;
+            flex-direction: column;
+        }
+
+        @media print {
+            .page { margin: 0; box-shadow: none; }
+        }
+
+        @media screen {
+            .page {
+                box-shadow: 0 4px 40px rgba(0,0,0,0.12);
+                margin-bottom: 30px;
+            }
+            body {
+                background: #e2e8f0;
+                padding: 30px 0;
+            }
+        }
+
+        /* Header */
+        .doc-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 24px 40px;
+            border-bottom: 3px solid var(--primary);
+        }
+
+        .doc-header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .doc-logo-box {
+            width: 44px;
+            height: 44px;
+            background: var(--primary);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-size: 16px;
+            font-weight: 900;
+            letter-spacing: -0.5px;
+        }
+
+        .doc-header-title {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--dark);
+            letter-spacing: -0.3px;
+        }
+
+        .doc-header-sub {
+            font-size: 11px;
+            color: var(--gray);
+            font-weight: 500;
+        }
+
+        .doc-header-right {
+            text-align: right;
+        }
+
+        .doc-code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--gray);
+            letter-spacing: 0.5px;
+        }
+
+        .doc-version-badge {
+            display: inline-block;
+            background: var(--primary);
+            color: var(--white);
+            font-size: 10px;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 4px;
+            margin-top: 4px;
+        }
+
+        /* Content */
+        .doc-content {
+            padding: 28px 40px;
+            flex: 1;
+        }
+
+        .section {
+            margin-bottom: 24px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 14px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-num {
+            width: 28px;
+            height: 28px;
+            background: var(--dark);
+            color: var(--white);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 800;
+            flex-shrink: 0;
+        }
+
+        .section-num.red { background: var(--primary); }
+        .section-num.blue { background: var(--accent); }
+        .section-num.green { background: var(--success); }
+
+        .section-label {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--dark);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        table thead th {
+            background: var(--dark);
+            color: var(--white);
+            font-weight: 600;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            padding: 8px 14px;
+            text-align: left;
+        }
+
+        table thead th:first-child {
+            border-radius: 6px 0 0 0;
+        }
+
+        table thead th:last-child {
+            border-radius: 0 6px 0 0;
+        }
+
+        table tbody td {
+            padding: 9px 14px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: top;
+        }
+
+        table tbody tr:nth-child(even) {
+            background: var(--bg);
+        }
+
+        table tbody tr:last-child td:first-child {
+            border-radius: 0 0 0 6px;
+        }
+
+        table tbody tr:last-child td:last-child {
+            border-radius: 0 0 6px 0;
+        }
+
+        .param-name {
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .param-value {
+            color: var(--dark-light);
+        }
+
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            background: var(--bg);
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: var(--accent);
+        }
+
+        /* Module cards */
+        .modules-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .module-card {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px 16px;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .module-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 7px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            flex-shrink: 0;
+        }
+
+        .module-icon.red { background: #fef2f2; color: var(--primary); }
+        .module-icon.blue { background: #eff6ff; color: var(--accent); }
+        .module-icon.green { background: #f0fdf4; color: var(--success); }
+        .module-icon.amber { background: #fffbeb; color: #d97706; }
+        .module-icon.purple { background: #faf5ff; color: #7c3aed; }
+        .module-icon.dark { background: #f1f5f9; color: var(--dark); }
+
+        .module-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 3px;
+        }
+
+        .module-desc {
+            font-size: 10px;
+            color: var(--gray);
+            line-height: 1.5;
+        }
+
+        /* Tags */
+        .tag {
+            display: inline-block;
+            font-size: 9px;
+            font-weight: 600;
+            padding: 2px 7px;
+            border-radius: 3px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .tag-read { background: #eff6ff; color: var(--accent); }
+        .tag-write { background: #fef2f2; color: var(--primary); }
+        .tag-bidi { background: #f0fdf4; color: var(--success); }
+        .tag-soap { background: #fffbeb; color: #d97706; }
+        .tag-rest { background: #faf5ff; color: #7c3aed; }
+        .tag-file { background: #f1f5f9; color: var(--dark-light); }
+
+        /* Direction badges */
+        .dir-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        .dir-badge .arrow {
+            font-size: 12px;
+        }
+
+        /* Footer */
+        .doc-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 40px;
+            border-top: 1px solid var(--border);
+            margin-top: auto;
+        }
+
+        .doc-footer-left {
+            font-size: 10px;
+            color: var(--gray);
+        }
+
+        .doc-footer-center {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .doc-footer-right {
+            font-size: 10px;
+            color: var(--gray);
+        }
+
+        /* Confidential stripe */
+        .confidential-stripe {
+            background: var(--bg);
+            text-align: center;
+            padding: 6px;
+            font-size: 9px;
+            font-weight: 600;
+            color: var(--gray);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        /* Requirements section */
+        .req-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+        }
+
+        .req-card {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .req-card-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--dark);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--primary);
+        }
+
+        .req-item {
+            font-size: 11px;
+            color: var(--dark-light);
+            line-height: 1.8;
+        }
+
+        .req-item strong {
+            color: var(--dark);
+        }
+
+        /* KPI strip */
+        .kpi-strip {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+
+        .kpi-box {
+            background: linear-gradient(135deg, var(--dark), #0f172a);
+            border-radius: 8px;
+            padding: 14px;
+            text-align: center;
+            color: var(--white);
+        }
+
+        .kpi-value {
+            font-size: 22px;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .kpi-value .unit {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .kpi-label {
+            font-size: 9px;
+            color: var(--gray-light);
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===== PAGE 1 ===== -->
+<div class="page">
+    <div class="confidential-stripe">Documento Tecnico &mdash; MES Grafica Nappa</div>
+
+    <div class="doc-header">
+        <div class="doc-header-left">
+            <div class="doc-logo-box">GN</div>
+            <div>
+                <div class="doc-header-title">Scheda Tecnica</div>
+                <div class="doc-header-sub">MES Grafica Nappa &mdash; Manufacturing Execution System</div>
+            </div>
+        </div>
+        <div class="doc-header-right">
+            <div class="doc-code">DOC-TECH-MES-001</div>
+            <div class="doc-version-badge">Versione 2.0</div>
+        </div>
+    </div>
+
+    <div class="doc-content">
+        <!-- KPI Strip -->
+        <div class="kpi-strip">
+            <div class="kpi-box">
+                <div class="kpi-value">8 <span class="unit">moduli</span></div>
+                <div class="kpi-label">Integrati</div>
+            </div>
+            <div class="kpi-box">
+                <div class="kpi-value">7 <span class="unit">sistemi</span></div>
+                <div class="kpi-label">Connessi</div>
+            </div>
+            <div class="kpi-box">
+                <div class="kpi-value">11 <span class="unit">macchine</span></div>
+                <div class="kpi-label">Schedulate</div>
+            </div>
+            <div class="kpi-box">
+                <div class="kpi-value">24/7</div>
+                <div class="kpi-label">Monitoraggio</div>
+            </div>
+        </div>
+
+        <!-- Section 1: General -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-num red">1</div>
+                <div class="section-label">Informazioni Generali</div>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 35%;">Parametro</th>
+                        <th>Valore</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="param-name">Nome Prodotto</td>
+                        <td class="param-value">MES Grafica Nappa</td>
+                    </tr>
+                    <tr>
+                        <td class="param-name">Versione</td>
+                        <td class="param-value">2.0 <span class="mono">def2.0</span></td>
+                    </tr>
+                    <tr>
+                        <td class="param-name">Tipologia</td>
+                        <td class="param-value">Web Application (SaaS-ready)</td>
+                    </tr>
+                    <tr>
+                        <td class="param-name">Stack Backend</td>
+                        <td class="param-value"><span class="mono">Laravel 12</span> &middot; <span class="mono">PHP 8.5</span> &middot; <span class="mono">MySQL 8+</span> &middot; <span class="mono">Apache</span></td>
+                    </tr>
+                    <tr>
+                        <td class="param-name">Stack Frontend</td>
+                        <td class="param-value"><span class="mono">Bootstrap 5</span> &middot; Inter font &middot; CSS Variables &middot; <span class="mono">Chart.js</span></td>
+                    </tr>
+                    <tr>
+                        <td class="param-name">Real-Time</td>
+                        <td class="param-value"><span class="mono">Laravel Reverb</span> (WebSocket nativo)</td>
+                    </tr>
+                    <tr>
+                        <td class="param-name">Mobile</td>
+                        <td class="param-value">PWA (Progressive Web App) &mdash; installabile, dark mode, offline-capable</td>
+                    </tr>
+                    <tr>
+                        <td class="param-name">Licenza</td>
+                        <td class="param-value">Proprietaria &mdash; Grafica Nappa srl</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Section 2: Modules -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-num blue">2</div>
+                <div class="section-label">Moduli Funzionali</div>
+            </div>
+            <div class="modules-grid">
+                <div class="module-card">
+                    <div class="module-icon red">&#9881;</div>
+                    <div>
+                        <div class="module-title">Gestione Produzione</div>
+                        <div class="module-desc">Fasi, operatori, KPI, avanzamento commesse. Dashboard per reparto con stato real-time.</div>
+                    </div>
+                </div>
+                <div class="module-card">
+                    <div class="module-icon blue">&#128197;</div>
+                    <div>
+                        <div class="module-title">Scheduling (Mossa 37)</div>
+                        <div class="module-desc">Ottimizzazione su 11 macchine, batching automatico, gestione urgenze, propagazione fasi.</div>
+                    </div>
+                </div>
+                <div class="module-card">
+                    <div class="module-icon green">&#9989;</div>
+                    <div>
+                        <div class="module-title">Qualita</div>
+                        <div class="module-desc">Tracciamento scarti, calcolo OEE, monitoraggio efficienza per macchina e operatore.</div>
+                    </div>
+                </div>
+                <div class="module-card">
+                    <div class="module-icon amber">&#128666;</div>
+                    <div>
+                        <div class="module-title">Spedizioni</div>
+                        <div class="module-desc">Generazione DDT PDF, tracking BRT, notifiche stato consegna, gestione parziali.</div>
+                    </div>
+                </div>
+                <div class="module-card">
+                    <div class="module-icon purple">&#128200;</div>
+                    <div>
+                        <div class="module-title">Reporting</div>
+                        <div class="module-desc">Export Excel, grafici Chart.js, confronto multi-periodo, report ore lavorate vs previste.</div>
+                    </div>
+                </div>
+                <div class="module-card">
+                    <div class="module-icon dark">&#128172;</div>
+                    <div>
+                        <div class="module-title">Comunicazione</div>
+                        <div class="module-desc">Chat MES integrata, @menzioni, notifiche push browser, coordinamento per reparto.</div>
+                    </div>
+                </div>
+                <div class="module-card">
+                    <div class="module-icon green">&#128336;</div>
+                    <div>
+                        <div class="module-title">Presenze</div>
+                        <div class="module-desc">Integrazione NetTime, importazione timbrature automatica, calcolo ore nette.</div>
+                    </div>
+                </div>
+                <div class="module-card">
+                    <div class="module-icon red">&#128274;</div>
+                    <div>
+                        <div class="module-title">Sicurezza</div>
+                        <div class="module-desc">2FA, RBAC multi-ruolo, audit log completo, protezione CSRF, crittografia dati.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="doc-footer">
+        <div class="doc-footer-left">Grafica Nappa srl &mdash; Via Gramsci 19, 81031 Aversa (CE)</div>
+        <div class="doc-footer-center">DOC-TECH-MES-001</div>
+        <div class="doc-footer-right">Pagina 1 di 2</div>
+    </div>
+</div>
+
+<!-- ===== PAGE 2 ===== -->
+<div class="page">
+    <div class="confidential-stripe">Documento Tecnico &mdash; MES Grafica Nappa</div>
+
+    <div class="doc-header">
+        <div class="doc-header-left">
+            <div class="doc-logo-box">GN</div>
+            <div>
+                <div class="doc-header-title">Scheda Tecnica</div>
+                <div class="doc-header-sub">Integrazioni e Requisiti di Sistema</div>
+            </div>
+        </div>
+        <div class="doc-header-right">
+            <div class="doc-code">DOC-TECH-MES-001</div>
+            <div class="doc-version-badge">Versione 2.0</div>
+        </div>
+    </div>
+
+    <div class="doc-content">
+        <!-- Section 3: Integrations -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-num green">3</div>
+                <div class="section-label">Integrazioni di Sistema</div>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 25%;">Sistema</th>
+                        <th style="width: 20%;">Protocollo</th>
+                        <th style="width: 20%;">Direzione</th>
+                        <th>Dettagli</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="param-name">Onda IQ (ERP)</td>
+                        <td><span class="tag tag-rest">SQL Server</span></td>
+                        <td><span class="dir-badge"><span class="arrow" style="color: var(--accent);">&#8592;</span> Lettura</span></td>
+                        <td class="param-value">Importazione commesse, clienti, fasi lavorazione. Sync ogni ora.</td>
+                    </tr>
+                    <tr>
+                        <td class="param-name">Prinect (Heidelberg)</td>
+                        <td><span class="tag tag-rest">REST API</span></td>
+                        <td><span class="dir-badge"><span class="arrow" style="color: var(--accent);">&#8592;</span> Lettura</span></td>
+                        <td class="param-value">Tempi avviamento, esecuzione, fogli stampati. Offset XL 106.</td>
+                    </tr>
+                    <tr>
+                        <td class="param-name">Fiery (EFI)</td>
+                        <td><span class="tag tag-rest">REST API</span></td>
+                        <td><span class="dir-badge"><span class="arrow" style="color: var(--accent);">&#8592;</span> Lettura</span></td>
+                        <td class="param-value">Stato job, fogli totali, accounting storico. Stampa digitale.</td>
+                    </tr>
+                    <tr>
+                        <td class="param-name">BRT (Corriere)</td>
+                        <td><span class="tag tag-soap">SOAP</span></td>
+                        <td><span class="dir-badge"><span class="arrow" style="color: var(--accent);">&#8592;</span> Lettura</span></td>
+                        <td class="param-value">Tracking spedizioni, esiti consegna, gestione multi-spedizione.</td>
+                    </tr>
+                    <tr>
+                        <td class="param-name">NetTime (Presenze)</td>
+                        <td><span class="tag tag-file">File Share</span></td>
+                        <td><span class="dir-badge"><span class="arrow" style="color: var(--accent);">&#8592;</span> Lettura</span></td>
+                        <td class="param-value">Timbrature dipendenti, importazione automatica ogni 5 minuti.</td>
+                    </tr>
+                    <tr>
+                        <td class="param-name">Excel (Produzione)</td>
+                        <td><span class="tag tag-file">PhpSpreadsheet</span></td>
+                        <td><span class="dir-badge"><span class="arrow" style="color: var(--success);">&#8596;</span> Bidirezionale</span></td>
+                        <td class="param-value">Import/export dati produzione, sync bidirezionale ogni 2 min.</td>
+                    </tr>
+                    <tr>
+                        <td class="param-name">Google Drive</td>
+                        <td><span class="tag tag-file">File Sync</span></td>
+                        <td><span class="dir-badge"><span class="arrow" style="color: var(--accent);">&#8592;</span> Lettura</span></td>
+                        <td class="param-value">Sincronizzazione file di produzione e documenti condivisi.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Section 4: Requirements -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-num">4</div>
+                <div class="section-label">Requisiti di Sistema</div>
+            </div>
+            <div class="req-grid">
+                <div class="req-card">
+                    <div class="req-card-title">&#128421; Server</div>
+                    <div class="req-item"><strong>OS:</strong> Windows Server / Linux</div>
+                    <div class="req-item"><strong>Runtime:</strong> PHP 8.x</div>
+                    <div class="req-item"><strong>Database:</strong> MySQL 8+</div>
+                    <div class="req-item"><strong>Web Server:</strong> Apache / Nginx</div>
+                    <div class="req-item"><strong>RAM:</strong> 8 GB min.</div>
+                    <div class="req-item"><strong>Disco:</strong> 50 GB SSD</div>
+                </div>
+                <div class="req-card">
+                    <div class="req-card-title">&#128187; Client</div>
+                    <div class="req-item"><strong>Browser:</strong> Chrome (consigliato)</div>
+                    <div class="req-item"><strong>Compatibile:</strong> Edge, Firefox, Safari</div>
+                    <div class="req-item"><strong>Mobile:</strong> Android / iOS (PWA)</div>
+                    <div class="req-item"><strong>Risoluzione:</strong> 1280x720 min.</div>
+                    <div class="req-item"><strong>Tablet:</strong> 10" consigliato</div>
+                    <div class="req-item"><strong>JS:</strong> Abilitato</div>
+                </div>
+                <div class="req-card">
+                    <div class="req-card-title">&#127760; Rete</div>
+                    <div class="req-item"><strong>Tipo:</strong> LAN (consigliato)</div>
+                    <div class="req-item"><strong>Remoto:</strong> VPN supportato</div>
+                    <div class="req-item"><strong>WebSocket:</strong> Porta 8080</div>
+                    <div class="req-item"><strong>HTTPS:</strong> Consigliato</div>
+                    <div class="req-item"><strong>Banda:</strong> 10 Mbps min.</div>
+                    <div class="req-item"><strong>Latenza:</strong> &lt; 100ms</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 5: Architecture -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-num red">5</div>
+                <div class="section-label">Architettura Software</div>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 30%;">Componente</th>
+                        <th style="width: 30%;">Tecnologia</th>
+                        <th>Descrizione</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="param-name">Backend Framework</td>
+                        <td><span class="mono">Laravel 12</span></td>
+                        <td class="param-value">MVC, Eloquent ORM, Queue, Events, Scheduling</td>
+                    </tr>
+                    <tr>
+                        <td class="param-name">Real-Time Engine</td>
+                        <td><span class="mono">Laravel Reverb</span></td>
+                        <td class="param-value">WebSocket nativo, broadcasting eventi, presenza canali</td>
+                    </tr>
+                    <tr>
+                        <td class="param-name">Scheduler Engine</td>
+                        <td><span class="mono">Mossa 37</span></td>
+                        <td class="param-value">Simulazione eventi discreti, 4 livelli priorita, propagazione</td>
+                    </tr>
+                    <tr>
+                        <td class="param-name">Autenticazione</td>
+                        <td><span class="mono">Laravel Fortify</span></td>
+                        <td class="param-value">Login, 2FA TOTP, password reset, session management</td>
+                    </tr>
+                    <tr>
+                        <td class="param-name">PDF Generation</td>
+                        <td><span class="mono">DomPDF</span></td>
+                        <td class="param-value">DDT, etichette, report stampabili formato A4</td>
+                    </tr>
+                    <tr>
+                        <td class="param-name">Excel I/O</td>
+                        <td><span class="mono">PhpSpreadsheet</span></td>
+                        <td class="param-value">Import/export bidirezionale, sync automatizzato</td>
+                    </tr>
+                    <tr>
+                        <td class="param-name">Caching</td>
+                        <td><span class="mono">Redis / File</span></td>
+                        <td class="param-value">Cache query, sessioni, rate limiting, code</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Compliance note -->
+        <div style="background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 16px 20px; margin-top: auto;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+                <span style="font-size: 14px;">&#128274;</span>
+                <span style="font-size: 12px; font-weight: 700; color: var(--dark);">Conformita e Sicurezza</span>
+            </div>
+            <div style="font-size: 11px; color: var(--gray); line-height: 1.7;">
+                Il sistema e conforme alle best practice OWASP Top 10. Protezione CSRF su tutti i form, sanitizzazione input,
+                prepared statements per query SQL, crittografia password bcrypt, audit log per tutte le operazioni sensibili.
+                Predisposto per conformita GDPR con registro trattamenti dati integrato.
+            </div>
+        </div>
+    </div>
+
+    <div class="doc-footer">
+        <div class="doc-footer-left">Grafica Nappa srl &mdash; info@graficanappa.com &mdash; +39 081 890 6734</div>
+        <div class="doc-footer-center">DOC-TECH-MES-001</div>
+        <div class="doc-footer-right">Pagina 2 di 2</div>
+    </div>
+</div>
+
+</body>
+</html>

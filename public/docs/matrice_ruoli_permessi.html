@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matrice Ruoli e Permessi | MES Grafica Nappa v2.0</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 20mm 15mm 20mm 15mm;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 11pt;
+            line-height: 1.5;
+            color: #333;
+            background: #fff;
+        }
+        .page {
+            page-break-after: always;
+            padding: 0;
+        }
+        .page:last-child {
+            page-break-after: avoid;
+        }
+
+        /* Header */
+        .doc-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 3px solid #d11317;
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+        }
+        .doc-header .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .doc-header .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: #d11317;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 700;
+            font-size: 14pt;
+        }
+        .doc-header h1 {
+            font-size: 18pt;
+            color: #d11317;
+            font-weight: 700;
+        }
+        .doc-header .subtitle {
+            font-size: 9pt;
+            color: #666;
+        }
+        .doc-header .doc-info {
+            text-align: right;
+            font-size: 8pt;
+            color: #666;
+            line-height: 1.6;
+        }
+        .doc-header .doc-code {
+            font-size: 10pt;
+            font-weight: 600;
+            color: #d11317;
+        }
+
+        /* Section titles */
+        .section-title {
+            color: #d11317;
+            font-size: 14pt;
+            font-weight: 600;
+            margin: 24px 0 12px 0;
+            padding-bottom: 6px;
+            border-bottom: 2px solid #d11317;
+        }
+        .section-title:first-of-type {
+            margin-top: 0;
+        }
+
+        /* Main permissions table */
+        .perm-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            font-size: 9.5pt;
+        }
+        .perm-table thead th {
+            background: #d11317;
+            color: #fff;
+            padding: 8px 6px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 9pt;
+            border: 1px solid #b01015;
+        }
+        .perm-table thead th:first-child {
+            text-align: left;
+            padding-left: 12px;
+            width: 34%;
+        }
+        .perm-table tbody td {
+            padding: 6px;
+            border: 1px solid #ddd;
+            text-align: center;
+            vertical-align: middle;
+        }
+        .perm-table tbody td:first-child {
+            text-align: left;
+            padding-left: 12px;
+            font-weight: 500;
+        }
+        .perm-table tbody tr:nth-child(even) {
+            background: #fafafa;
+        }
+        .perm-table tbody tr:hover {
+            background: #fff3f3;
+        }
+
+        /* Category row */
+        .cat-row td {
+            background: #f5f5f5 !important;
+            font-weight: 700 !important;
+            color: #d11317;
+            font-size: 9.5pt;
+            padding: 8px 12px !important;
+            border-top: 2px solid #d11317;
+        }
+
+        /* Check / Cross */
+        .yes {
+            color: #2e7d32;
+            font-weight: 700;
+            font-size: 13pt;
+        }
+        .no {
+            color: #ccc;
+            font-size: 11pt;
+        }
+        .partial {
+            color: #f57f17;
+            font-weight: 600;
+            font-size: 9pt;
+        }
+
+        /* Middleware table */
+        .mw-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            font-size: 10pt;
+        }
+        .mw-table thead th {
+            background: #d11317;
+            color: #fff;
+            padding: 8px 12px;
+            text-align: left;
+            font-weight: 600;
+            border: 1px solid #b01015;
+        }
+        .mw-table tbody td {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            vertical-align: top;
+        }
+        .mw-table tbody tr:nth-child(even) {
+            background: #fafafa;
+        }
+        code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 9pt;
+            color: #c62828;
+        }
+
+        /* Role cards */
+        .role-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .role-card {
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 12px;
+            border-top: 3px solid #d11317;
+        }
+        .role-card h3 {
+            color: #d11317;
+            font-size: 11pt;
+            margin-bottom: 6px;
+        }
+        .role-card p {
+            font-size: 9pt;
+            color: #555;
+            line-height: 1.4;
+        }
+        .role-card .badge {
+            display: inline-block;
+            background: #d11317;
+            color: #fff;
+            padding: 1px 8px;
+            border-radius: 10px;
+            font-size: 8pt;
+            margin-top: 6px;
+        }
+
+        /* Footer */
+        .doc-footer {
+            margin-top: 30px;
+            padding-top: 10px;
+            border-top: 2px solid #d11317;
+            display: flex;
+            justify-content: space-between;
+            font-size: 8pt;
+            color: #999;
+        }
+
+        /* Legend */
+        .legend {
+            display: flex;
+            gap: 24px;
+            margin: 12px 0 20px 0;
+            font-size: 9pt;
+            color: #555;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Approval table */
+        .approval-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 9pt;
+        }
+        .approval-table th {
+            background: #d11317;
+            color: #fff;
+            padding: 8px 12px;
+            text-align: left;
+        }
+        .approval-table td {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+        }
+
+        @media print {
+            body { margin: 0; }
+            .page { page-break-after: always; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- PAGE 1: Header + Role Descriptions + Permission Matrix -->
+<div class="page">
+    <div class="doc-header">
+        <div class="logo-area">
+            <div class="logo-icon">MES</div>
+            <div>
+                <h1>Matrice Ruoli e Permessi</h1>
+                <div class="subtitle">MES Grafica Nappa v2.0 &mdash; Manufacturing Execution System</div>
+            </div>
+        </div>
+        <div class="doc-info">
+            <div class="doc-code">DOC-ROLE-MES-001</div>
+            Versione: 2.0<br>
+            Data: 08/04/2026<br>
+            Classificazione: Uso Interno<br>
+            Autore: Amministrazione MES
+        </div>
+    </div>
+
+    <h2 class="section-title">Definizione Ruoli</h2>
+
+    <div class="role-cards">
+        <div class="role-card">
+            <h3>Operatore</h3>
+            <p>Addetto di reparto. Visualizza e gestisce le fasi produttive assegnate al proprio reparto. Accesso limitato alla propria dashboard.</p>
+            <span class="badge">operatore.auth</span>
+        </div>
+        <div class="role-card">
+            <h3>Owner</h3>
+            <p>Responsabile di produzione. Visione completa su tutti i reparti, gestione commesse, report, scheduling e lavorazioni esterne.</p>
+            <span class="badge">owner</span>
+        </div>
+        <div class="role-card">
+            <h3>Admin</h3>
+            <p>Amministratore di sistema. Accesso completo a tutte le funzionalita', incluse configurazioni, CRUD operatori, turni e report direzione.</p>
+            <span class="badge">admin</span>
+        </div>
+        <div class="role-card">
+            <h3>Spedizione</h3>
+            <p>Addetto alla logistica. Gestisce le conferme di consegna (totale/parziale), DDT, tracking BRT e note consegne.</p>
+            <span class="badge">spedizione</span>
+        </div>
+        <div class="role-card">
+            <h3>Prestampa</h3>
+            <p>Operatore prestampa. Gestisce il dettaglio commessa in fase di preparazione: fustella, colori, note, operatore assegnato.</p>
+            <span class="badge">prestampa</span>
+        </div>
+    </div>
+
+    <h2 class="section-title">Matrice dei Permessi</h2>
+
+    <div class="legend">
+        <div class="legend-item"><span class="yes">&#10003;</span> Accesso consentito</div>
+        <div class="legend-item"><span class="no">&mdash;</span> Accesso negato</div>
+        <div class="legend-item"><span class="partial">Parziale</span> Accesso limitato</div>
+    </div>
+
+    <table class="perm-table">
+        <thead>
+            <tr>
+                <th>Funzionalita'</th>
+                <th>Operatore</th>
+                <th>Owner</th>
+                <th>Admin</th>
+                <th>Spedizione</th>
+                <th>Prestampa</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Accesso Base -->
+            <tr class="cat-row"><td colspan="6">Accesso Base</td></tr>
+            <tr>
+                <td>Login / Logout</td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+            </tr>
+            <tr>
+                <td>Dark Mode</td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+            </tr>
+            <tr>
+                <td>Chat MES</td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+            </tr>
+            <tr>
+                <td>Etichette</td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="no">&mdash;</span></td>
+            </tr>
+
+            <!-- Dashboard -->
+            <tr class="cat-row"><td colspan="6">Dashboard</td></tr>
+            <tr>
+                <td>Dashboard proprio reparto</td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="no">&mdash;</span></td>
+            </tr>
+            <tr>
+                <td>Dashboard tutti i reparti</td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="no">&mdash;</span></td>
+            </tr>
+            <tr>
+                <td>Prestampa dettaglio</td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+            </tr>
+            <tr>
+                <td>Dashboard Prinect</td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="no">&mdash;</span></td>
+            </tr>
+            <tr>
+                <td>Dashboard Fiery</td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="no">&mdash;</span></td>
+            </tr>
+
+            <!-- Produzione -->
+            <tr class="cat-row"><td colspan="6">Produzione</td></tr>
+            <tr>
+                <td>Avvia / Pausa / Termina fase</td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="no">&mdash;</span></td>
+            </tr>
+            <tr>
+                <td>Modifica stato manuale</td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="no">&mdash;</span></td>
+            </tr>
+            <tr>
+                <td>Elimina fase</td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="no">&mdash;</span></td>
+            </tr>
+            <tr>
+                <td>Fasi Terminate</td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="no">&mdash;</span></td>
+            </tr>
+            <tr>
+                <td>Lavorazioni Esterne</td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="no">&mdash;</span></td>
+            </tr>
+            <tr>
+                <td>Scheduling / Gantt</td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="no">&mdash;</span></td>
+            </tr>
+
+            <!-- Importazione Dati -->
+            <tr class="cat-row"><td colspan="6">Importazione Dati</td></tr>
+            <tr>
+                <td>Import Excel</td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="no">&mdash;</span></td>
+            </tr>
+            <tr>
+                <td>Sync Onda</td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+            </tr>
+
+            <!-- Spedizione e Logistica -->
+            <tr class="cat-row"><td colspan="6">Spedizione e Logistica</td></tr>
+            <tr>
+                <td>Conferma spedizione</td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="no">&mdash;</span></td>
+            </tr>
+            <tr>
+                <td>DDT PDF</td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="no">&mdash;</span></td>
+            </tr>
+            <tr>
+                <td>BRT Tracking</td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="no">&mdash;</span></td>
+            </tr>
+            <tr>
+                <td>Note consegne</td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="no">&mdash;</span></td>
+            </tr>
+
+            <!-- Report e Analisi -->
+            <tr class="cat-row"><td colspan="6">Report e Analisi</td></tr>
+            <tr>
+                <td>Report Ore</td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="no">&mdash;</span></td>
+            </tr>
+            <tr>
+                <td>Report Costi</td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="no">&mdash;</span></td>
+            </tr>
+            <tr>
+                <td>Report Direzione</td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="no">&mdash;</span></td>
+            </tr>
+            <tr>
+                <td>Audit Log</td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="no">&mdash;</span></td>
+            </tr>
+
+            <!-- Amministrazione -->
+            <tr class="cat-row"><td colspan="6">Amministrazione</td></tr>
+            <tr>
+                <td>Presenze</td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="no">&mdash;</span></td>
+            </tr>
+            <tr>
+                <td>Turni</td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="no">&mdash;</span></td>
+            </tr>
+            <tr>
+                <td>CRUD Operatori</td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="no">&mdash;</span></td>
+            </tr>
+            <tr>
+                <td>Tariffe reparto</td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="yes">&#10003;</span></td>
+                <td><span class="no">&mdash;</span></td>
+                <td><span class="no">&mdash;</span></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- PAGE 2: Middleware Mapping + Notes + Approvals -->
+<div class="page">
+    <div class="doc-header">
+        <div class="logo-area">
+            <div class="logo-icon">MES</div>
+            <div>
+                <h1>Matrice Ruoli e Permessi</h1>
+                <div class="subtitle">MES Grafica Nappa v2.0</div>
+            </div>
+        </div>
+        <div class="doc-info">
+            <div class="doc-code">DOC-ROLE-MES-001</div>
+            Pagina 2 di 3
+        </div>
+    </div>
+
+    <h2 class="section-title">Mapping Middleware Laravel</h2>
+
+    <p style="font-size: 10pt; color: #555; margin-bottom: 14px;">
+        Il sistema di autorizzazione del MES si basa sui middleware Laravel. Ogni gruppo di route e' protetto dal middleware corrispondente al ruolo richiesto.
+    </p>
+
+    <table class="mw-table">
+        <thead>
+            <tr>
+                <th style="width: 200px;">Middleware</th>
+                <th>Descrizione</th>
+                <th style="width: 200px;">Route Protette</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>operatore.auth</code></td>
+                <td>Autenticazione operatore tramite codice personale. Accesso alla dashboard del reparto assegnato e alle funzioni di avvio/pausa/termine fase.</td>
+                <td><code>/operatore/*</code></td>
+            </tr>
+            <tr>
+                <td><code>owner</code></td>
+                <td>Accesso riservato al responsabile di produzione. Visione completa su tutti i reparti, gestione commesse, import, report, scheduling.</td>
+                <td><code>/owner/*</code></td>
+            </tr>
+            <tr>
+                <td><code>admin</code></td>
+                <td>Accesso amministratore con privilegi completi. Include tutte le funzionalita' owner piu' configurazioni di sistema, CRUD operatori, turni, tariffe e report direzione.</td>
+                <td><code>/admin/*</code></td>
+            </tr>
+            <tr>
+                <td><code>owner.or.admin</code></td>
+                <td>Middleware combinato che consente l'accesso sia all'owner che all'admin. Utilizzato per le route condivise tra i due ruoli (es. report, scheduling, Prinect, Fiery).</td>
+                <td><code>/report/*</code><br><code>/scheduling/*</code></td>
+            </tr>
+            <tr>
+                <td><code>spedizione</code></td>
+                <td>Accesso riservato agli operatori della logistica. Conferma spedizioni, generazione DDT, tracking BRT, note consegne.</td>
+                <td><code>/spedizione/*</code></td>
+            </tr>
+            <tr>
+                <td><code>prestampa</code></td>
+                <td>Accesso riservato agli operatori prestampa. Dashboard dedicata con dettaglio commesse in preparazione.</td>
+                <td><code>/operatore/prestampa</code></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2 class="section-title">Flusso di Autenticazione</h2>
+
+    <table class="mw-table">
+        <thead>
+            <tr>
+                <th style="width: 50px;">Step</th>
+                <th>Descrizione</th>
+                <th style="width: 220px;">Dettaglio Tecnico</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style="text-align: center; font-weight: 700; color: #d11317;">1</td>
+                <td>L'utente accede alla pagina di login del MES</td>
+                <td><code>GET /login</code></td>
+            </tr>
+            <tr>
+                <td style="text-align: center; font-weight: 700; color: #d11317;">2</td>
+                <td>Inserisce le credenziali (codice operatore o username/password)</td>
+                <td><code>POST /login</code></td>
+            </tr>
+            <tr>
+                <td style="text-align: center; font-weight: 700; color: #d11317;">3</td>
+                <td>Il sistema verifica il ruolo e ridireziona alla dashboard appropriata</td>
+                <td>Redirect basato su ruolo</td>
+            </tr>
+            <tr>
+                <td style="text-align: center; font-weight: 700; color: #d11317;">4</td>
+                <td>Il token CSRF viene rinnovato ogni 30 minuti per evitare errori 419</td>
+                <td>Meta tag <code>csrf-token</code></td>
+            </tr>
+            <tr>
+                <td style="text-align: center; font-weight: 700; color: #d11317;">5</td>
+                <td>Il logout supporta sia GET che POST per evitare errori CSRF</td>
+                <td><code>Route::match(['get','post'])</code></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2 class="section-title">Note sulla Sicurezza</h2>
+
+    <table class="mw-table">
+        <thead>
+            <tr>
+                <th style="width: 180px;">Aspetto</th>
+                <th>Dettaglio</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Sessione</strong></td>
+                <td>Le sessioni sono gestite da Laravel con driver file. Il <code>SESSION_DOMAIN</code> deve essere configurato correttamente (vuoto, non "null") per evitare errori CSRF su dispositivi mobili e VPN.</td>
+            </tr>
+            <tr>
+                <td><strong>Escalation privilegi</strong></td>
+                <td>Non e' possibile accedere a route protette da un middleware di livello superiore. Un operatore non puo' accedere a <code>/owner/*</code> o <code>/admin/*</code>.</td>
+            </tr>
+            <tr>
+                <td><strong>Audit trail</strong></td>
+                <td>Tutte le azioni significative (avvio/termine fase, modifica stato, conferma spedizione) vengono registrate nell'audit log con timestamp, utente e dettaglio operazione.</td>
+            </tr>
+            <tr>
+                <td><strong>Principio minimo privilegio</strong></td>
+                <td>Ogni ruolo ha accesso esclusivamente alle funzionalita' necessarie al proprio compito. L'admin e' l'unico ruolo con accesso completo.</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- PAGE 3: Revision History + Approvals -->
+<div class="page">
+    <div class="doc-header">
+        <div class="logo-area">
+            <div class="logo-icon">MES</div>
+            <div>
+                <h1>Matrice Ruoli e Permessi</h1>
+                <div class="subtitle">MES Grafica Nappa v2.0</div>
+            </div>
+        </div>
+        <div class="doc-info">
+            <div class="doc-code">DOC-ROLE-MES-001</div>
+            Pagina 3 di 3
+        </div>
+    </div>
+
+    <h2 class="section-title">Riepilogo Accessi per Ruolo</h2>
+
+    <table class="perm-table" style="font-size: 10pt;">
+        <thead>
+            <tr>
+                <th>Ruolo</th>
+                <th style="text-align: center;">Funzionalita' Accessibili</th>
+                <th style="text-align: center;">Funzionalita' Totali</th>
+                <th style="text-align: center;">Copertura</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Admin</strong></td>
+                <td style="text-align: center;">27</td>
+                <td style="text-align: center;">28</td>
+                <td style="text-align: center; color: #2e7d32; font-weight: 600;">96%</td>
+            </tr>
+            <tr>
+                <td><strong>Owner</strong></td>
+                <td style="text-align: center;">21</td>
+                <td style="text-align: center;">28</td>
+                <td style="text-align: center; color: #2e7d32; font-weight: 600;">75%</td>
+            </tr>
+            <tr>
+                <td><strong>Spedizione</strong></td>
+                <td style="text-align: center;">9</td>
+                <td style="text-align: center;">28</td>
+                <td style="text-align: center; color: #f57f17; font-weight: 600;">32%</td>
+            </tr>
+            <tr>
+                <td><strong>Operatore</strong></td>
+                <td style="text-align: center;">7</td>
+                <td style="text-align: center;">28</td>
+                <td style="text-align: center; color: #f57f17; font-weight: 600;">25%</td>
+            </tr>
+            <tr>
+                <td><strong>Prestampa</strong></td>
+                <td style="text-align: center;">5</td>
+                <td style="text-align: center;">28</td>
+                <td style="text-align: center; color: #c62828; font-weight: 600;">18%</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2 class="section-title">Storico Revisioni</h2>
+
+    <table class="approval-table">
+        <thead>
+            <tr>
+                <th>Versione</th>
+                <th>Data</th>
+                <th>Autore</th>
+                <th>Descrizione Modifica</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>1.0</td>
+                <td>10/03/2026</td>
+                <td>Amministrazione MES</td>
+                <td>Prima stesura della matrice ruoli e permessi</td>
+            </tr>
+            <tr>
+                <td>2.0</td>
+                <td>08/04/2026</td>
+                <td>Amministrazione MES</td>
+                <td>Aggiornamento per v2.0: aggiunto ruolo Prestampa, middleware mapping, Chat MES, Dark Mode, Audit Log</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2 class="section-title">Approvazioni</h2>
+
+    <table class="approval-table">
+        <thead>
+            <tr>
+                <th>Ruolo</th>
+                <th>Nome</th>
+                <th>Firma</th>
+                <th>Data</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Redatto da</td>
+                <td style="width: 200px;"></td>
+                <td style="width: 180px; height: 50px;"></td>
+                <td style="width: 120px;"></td>
+            </tr>
+            <tr>
+                <td>Verificato da</td>
+                <td></td>
+                <td style="height: 50px;"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>Approvato da</td>
+                <td></td>
+                <td style="height: 50px;"></td>
+                <td></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2 class="section-title">Riferimenti</h2>
+
+    <table class="approval-table">
+        <thead>
+            <tr>
+                <th>Codice</th>
+                <th>Documento</th>
+                <th>Ubicazione</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>DOC-SOP-MES-001</td>
+                <td>Procedure Operative Standard</td>
+                <td><code>http://gestionale/docs/sop_procedure_operative.html</code></td>
+            </tr>
+            <tr>
+                <td>DOC-SEC-MES-001</td>
+                <td>Protocolli di Sicurezza</td>
+                <td><code>http://gestionale/security_protocols.html</code></td>
+            </tr>
+            <tr>
+                <td>DOC-GDPR-MES-001</td>
+                <td>Registro Trattamenti GDPR</td>
+                <td><code>http://gestionale/gdpr_registro_trattamenti.html</code></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="doc-footer">
+        <div>DOC-ROLE-MES-001 v2.0 &mdash; MES Grafica Nappa</div>
+        <div>Documento riservato ad uso interno &mdash; Grafica Nappa S.r.l.</div>
+        <div>Stampato il: ___/___/______</div>
+    </div>
+</div>
+
+</body>
+</html>

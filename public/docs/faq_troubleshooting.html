@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MES Grafica Nappa v2.0 — FAQ e Risoluzione Problemi</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 15mm 15mm 20mm 15mm;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 10.5pt;
+            color: #1a1a1a;
+            line-height: 1.55;
+            background: #fff;
+            padding: 15mm;
+        }
+        .header {
+            background: #d11317;
+            color: #fff;
+            padding: 18px 24px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .header h1 { font-size: 21pt; font-weight: 700; }
+        .header .subtitle { font-size: 10pt; opacity: 0.9; }
+        .header .version {
+            background: rgba(255,255,255,0.2);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 10pt;
+            font-weight: 600;
+        }
+        h2 {
+            color: #d11317;
+            font-size: 13pt;
+            margin: 22px 0 12px 0;
+            padding-bottom: 4px;
+            border-bottom: 2px solid #d11317;
+        }
+        .faq-item {
+            margin-bottom: 16px;
+            page-break-inside: avoid;
+        }
+        .faq-question {
+            background: #fef2f2;
+            border-left: 4px solid #d11317;
+            padding: 10px 14px;
+            border-radius: 0 6px 6px 0;
+            font-weight: 700;
+            font-size: 11pt;
+            color: #b91c1c;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .faq-question .q-icon {
+            background: #d11317;
+            color: #fff;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 26px;
+            font-size: 14pt;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .faq-answer {
+            padding: 10px 14px 10px 54px;
+            color: #333;
+        }
+        .faq-answer strong { color: #1a1a1a; }
+        .info-box {
+            background: #f3f4f6;
+            border-left: 4px solid #6b7280;
+            padding: 10px 16px;
+            border-radius: 0 6px 6px 0;
+            margin: 8px 0 8px 54px;
+            font-size: 9.5pt;
+            color: #444;
+        }
+        .info-box.warning {
+            background: #fffbeb;
+            border-left-color: #f59e0b;
+        }
+        .info-box.success {
+            background: #f0fdf4;
+            border-left-color: #16a34a;
+        }
+        .code {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 9.5pt;
+            margin: 6px 0 6px 54px;
+            overflow-x: auto;
+            display: block;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0;
+            font-size: 10pt;
+        }
+        table th {
+            background: #d11317;
+            color: #fff;
+            padding: 8px 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+        table td {
+            padding: 7px 12px;
+            border-bottom: 1px solid #e5e5e5;
+        }
+        table tr:nth-child(even) { background: #f9f9f9; }
+        .category-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 8pt;
+            font-weight: 600;
+            color: #fff;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+        .tag-auth { background: #7c3aed; }
+        .tag-ui { background: #2563eb; }
+        .tag-sync { background: #0891b2; }
+        .tag-infra { background: #64748b; }
+        .tag-print { background: #ea580c; }
+        .contact-box {
+            background: #f0f9ff;
+            border: 2px solid #2563eb;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin-top: 20px;
+            text-align: center;
+        }
+        .contact-box .contact-name {
+            font-size: 14pt;
+            font-weight: 700;
+            color: #1e40af;
+        }
+        .contact-box .contact-role {
+            font-size: 10pt;
+            color: #64748b;
+        }
+        .footer {
+            margin-top: 24px;
+            padding-top: 10px;
+            border-top: 1px solid #ddd;
+            font-size: 8pt;
+            color: #888;
+            text-align: center;
+        }
+        .steps-list {
+            margin: 6px 0 6px 54px;
+            padding-left: 20px;
+        }
+        .steps-list li {
+            margin-bottom: 4px;
+        }
+        @media print {
+            body { padding: 0; }
+            .faq-item { break-inside: avoid; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div>
+        <h1>FAQ e Risoluzione Problemi</h1>
+        <div class="subtitle">MES Grafica Nappa</div>
+    </div>
+    <div class="version">v2.0</div>
+</div>
+
+<!-- SEZIONE: AUTENTICAZIONE E ACCESSO -->
+<h2>Autenticazione e Accesso</h2>
+
+<div class="faq-item">
+    <div class="faq-question">
+        <span class="q-icon">?</span>
+        "419 Page Expired" quando premo un pulsante
+        <span class="category-tag tag-auth">Auth</span>
+    </div>
+    <div class="faq-answer">
+        <strong>Causa:</strong> Il token CSRF della pagina e scaduto. Il sistema lo rinnova automaticamente ogni 30 minuti, ma se la pagina e rimasta aperta a lungo senza interazione puo scadere.<br><br>
+        <strong>Soluzione:</strong>
+    </div>
+    <ol class="steps-list">
+        <li><strong>Ricarica la pagina</strong> (F5 o tira giu per aggiornare su mobile)</li>
+        <li>Se il problema persiste, chiudi e riapri il browser</li>
+        <li>Su mobile/VPN: verifica che il dominio di sessione sia configurato correttamente</li>
+    </ol>
+    <div class="info-box">
+        Il sistema v2.0 gestisce automaticamente il refresh del token CSRF e il ripristino con le frecce avanti/indietro del browser (evento <code>pageshow</code>).
+    </div>
+</div>
+
+<div class="faq-item">
+    <div class="faq-question">
+        <span class="q-icon">?</span>
+        "Non vedo le mie fasi" nella dashboard
+        <span class="category-tag tag-ui">UI</span>
+    </div>
+    <div class="faq-answer">
+        <strong>Causa:</strong> Il tuo operatore potrebbe non essere assegnato al reparto corretto, oppure le fasi sono state marcate come "esterno".<br><br>
+        <strong>Soluzione:</strong>
+    </div>
+    <ol class="steps-list">
+        <li>Verifica con l'amministratore il <strong>reparto assegnato</strong> al tuo codice operatore</li>
+        <li>Controlla che le fasi non siano in stato 5 (Esterno — EXT)</li>
+        <li>Usa la funzione <strong>Cerca</strong> (lente) per verificare che la commessa esista nel sistema</li>
+    </ol>
+</div>
+
+<div class="faq-item">
+    <div class="faq-question">
+        <span class="q-icon">?</span>
+        "La fase non si avvia" — il pulsante non risponde
+        <span class="category-tag tag-ui">UI</span>
+    </div>
+    <div class="faq-answer">
+        <strong>Causa:</strong> Le fasi seguono una sequenza obbligatoria. Una fase non puo essere avviata se le fasi precedenti nel ciclo produttivo non sono ancora <strong>terminate</strong> (stato 3).<br><br>
+        <strong>Soluzione:</strong>
+    </div>
+    <ol class="steps-list">
+        <li>Apri il <strong>dettaglio commessa</strong> e verifica lo stato delle fasi precedenti</li>
+        <li>Se una fase precedente e bloccata, contatta l'operatore del reparto interessato</li>
+        <li>Se la fase precedente e esterna (stato 5), contatta l'amministratore</li>
+    </ol>
+    <div class="info-box warning">
+        <strong>Sequenza fasi tipica:</strong> Stampa &rarr; Plastica &rarr; Caldo &rarr; Finitura &rarr; Taglio &rarr; Fustella &rarr; Piegaincolla &rarr; Legatoria &rarr; Allestimento &rarr; Spedizione
+    </div>
+</div>
+
+<!-- SEZIONE: SINCRONIZZAZIONE -->
+<h2>Sincronizzazione e Integrazioni</h2>
+
+<div class="faq-item">
+    <div class="faq-question">
+        <span class="q-icon">?</span>
+        "Il sync Onda da errore" o commesse mancanti
+        <span class="category-tag tag-sync">Sync</span>
+    </div>
+    <div class="faq-answer">
+        <strong>Causa:</strong> Problemi di connessione al SQL Server di Onda, oppure timeout sulla query SOAP.<br><br>
+        <strong>Soluzione (solo admin):</strong>
+    </div>
+    <ol class="steps-list">
+        <li>Verificare la connessione al server Onda (SQL Server)</li>
+        <li>Il timeout e stato aumentato a <strong>120 secondi</strong> nella v2.0</li>
+        <li>Per sincronizzare una singola commessa:</li>
+    </ol>
+    <code class="code">php artisan onda:sync 66575</code>
+    <div class="info-box">
+        Il sync Onda avviene automaticamente ogni ora. Il sync Excel bidirezionale ogni 2 minuti.
+    </div>
+</div>
+
+<div class="faq-item">
+    <div class="faq-question">
+        <span class="q-icon">?</span>
+        "Le presenze non si aggiornano"
+        <span class="category-tag tag-sync">Sync</span>
+    </div>
+    <div class="faq-answer">
+        <strong>Causa:</strong> Problema di connessione alla share NetTime (\\192.168.1.253) o task schedulato non attivo.<br><br>
+        <strong>Soluzione (solo admin):</strong>
+    </div>
+    <ol class="steps-list">
+        <li>Verificare che la share <code>\\192.168.1.253</code> sia raggiungibile dal server .60</li>
+        <li>Controllare le credenziali <code>NETTIME_SHARE_USER</code> / <code>NETTIME_SHARE_PASS</code> nel file <code>.env</code></li>
+        <li>Verificare che il task schedulato sia attivo (ogni 5 minuti)</li>
+    </ol>
+</div>
+
+<div class="faq-item">
+    <div class="faq-question">
+        <span class="q-icon">?</span>
+        "Il Gantt e vuoto" — nessun dato visualizzato
+        <span class="category-tag tag-ui">UI</span>
+    </div>
+    <div class="faq-answer">
+        <strong>Causa:</strong> Lo scheduler Mossa 37 non ha ancora generato il piano di produzione.<br><br>
+        <strong>Soluzione (solo admin):</strong>
+    </div>
+    <code class="code">php artisan scheduler:run</code>
+    <div class="info-box">
+        Lo scheduler calcola automaticamente la schedulazione basata su disponibilita macchine, urgenza, batch affinity e sequenza ciclo.
+    </div>
+</div>
+
+<!-- SEZIONE: INTERFACCIA -->
+<h2>Interfaccia e Funzionalita</h2>
+
+<div class="faq-item">
+    <div class="faq-question">
+        <span class="q-icon">?</span>
+        "La chat non funziona" — messaggi non arrivano
+        <span class="category-tag tag-ui">UI</span>
+    </div>
+    <div class="faq-answer">
+        <strong>Causa:</strong> Il polling della chat (ogni 10 secondi) potrebbe essere interrotto da problemi di rete o sessione scaduta.<br><br>
+        <strong>Soluzione:</strong>
+    </div>
+    <ol class="steps-list">
+        <li>Ricarica la pagina (F5)</li>
+        <li>Verifica di essere connesso alla rete aziendale</li>
+        <li>Se il problema persiste, effettua logout e rientra</li>
+    </ol>
+</div>
+
+<div class="faq-item">
+    <div class="faq-question">
+        <span class="q-icon">?</span>
+        "Dark mode non si salva" — torna chiaro dopo ricarica
+        <span class="category-tag tag-ui">UI</span>
+    </div>
+    <div class="faq-answer">
+        <strong>Causa:</strong> La preferenza del tema e salvata nel <code>localStorage</code> del browser. Se e disabilitato o in modalita privata, la preferenza non persiste.<br><br>
+        <strong>Soluzione:</strong>
+    </div>
+    <ol class="steps-list">
+        <li>Verifica che il browser non sia in <strong>modalita privata/incognito</strong></li>
+        <li>Nelle impostazioni del browser, assicurati che <code>localStorage</code> sia abilitato</li>
+        <li>Non cancellare i dati del sito per <code>192.168.1.60</code></li>
+    </ol>
+</div>
+
+<!-- SEZIONE: STAMPA E DOCUMENTI -->
+<h2>Stampa e Documenti</h2>
+
+<div class="faq-item">
+    <div class="faq-question">
+        <span class="q-icon">?</span>
+        "L'etichetta da errore 500"
+        <span class="category-tag tag-print">Stampa</span>
+    </div>
+    <div class="faq-answer">
+        <strong>Causa:</strong> Il nome del cliente non corrisponde (variabile <code>clienteLower</code>) o dati mancanti nell'ordine.<br><br>
+        <strong>Soluzione (solo admin):</strong>
+    </div>
+    <ol class="steps-list">
+        <li>Verificare nel log Laravel: <code>storage/logs/laravel.log</code></li>
+        <li>Controllare che il nome cliente nell'ordine corrisponda al formato atteso</li>
+        <li>Verificare che l'ordine abbia tutti i campi richiesti (GTIN, quantita)</li>
+    </ol>
+</div>
+
+<div class="faq-item">
+    <div class="faq-question">
+        <span class="q-icon">?</span>
+        "Il PDF DDT e vuoto" — nessun contenuto nel documento
+        <span class="category-tag tag-print">Stampa</span>
+    </div>
+    <div class="faq-answer">
+        <strong>Causa:</strong> Il file sorgente Excel non e presente nella cartella condivisa.<br><br>
+        <strong>Soluzione:</strong>
+    </div>
+    <ol class="steps-list">
+        <li>Verificare che il file <code>ORDINE ASTUCCI.xlsx</code> sia presente in <code>C:\condivisa\mes\</code></li>
+        <li>Controllare che il file non sia aperto in esclusiva da un altro programma</li>
+        <li>Il DDT viene generato automaticamente al sync Onda — rieseguire il sync se necessario</li>
+    </ol>
+</div>
+
+<!-- TABELLA RIEPILOGO ERRORI COMUNI -->
+<h2>Riepilogo Rapido</h2>
+
+<table>
+    <tr>
+        <th>Errore</th>
+        <th>Azione Rapida</th>
+        <th>Chi</th>
+    </tr>
+    <tr>
+        <td>419 Page Expired</td>
+        <td>Ricarica pagina (F5)</td>
+        <td>Tutti</td>
+    </tr>
+    <tr>
+        <td>Fasi non visibili</td>
+        <td>Controlla reparto con admin</td>
+        <td>Tutti</td>
+    </tr>
+    <tr>
+        <td>Fase non si avvia</td>
+        <td>Verifica fasi precedenti</td>
+        <td>Tutti</td>
+    </tr>
+    <tr>
+        <td>Chat non funziona</td>
+        <td>Ricarica pagina</td>
+        <td>Tutti</td>
+    </tr>
+    <tr>
+        <td>Sync Onda errore</td>
+        <td><code>php artisan onda:sync</code></td>
+        <td>Admin</td>
+    </tr>
+    <tr>
+        <td>Gantt vuoto</td>
+        <td><code>php artisan scheduler:run</code></td>
+        <td>Admin</td>
+    </tr>
+    <tr>
+        <td>Presenze bloccate</td>
+        <td>Verifica share NetTime</td>
+        <td>Admin</td>
+    </tr>
+    <tr>
+        <td>DDT vuoto</td>
+        <td>Verifica Excel in condivisa</td>
+        <td>Admin</td>
+    </tr>
+</table>
+
+<!-- CONTATTO -->
+<div class="contact-box">
+    <div class="contact-name">Giovanni Pietropaolo</div>
+    <div class="contact-role">Responsabile IT &mdash; Grafica Nappa</div>
+    <div style="margin-top:6px; font-size:10pt; color:#475569;">
+        Per problemi non risolvibili con questa guida, contattare direttamente.
+    </div>
+</div>
+
+<div class="footer">
+    MES Grafica Nappa v2.0 &mdash; FAQ e Risoluzione Problemi &mdash; Aprile 2026<br>
+    Documento: DOC-FAQ-001 &mdash; Responsabile IT: Giovanni Pietropaolo
+</div>
+
+</body>
+</html>

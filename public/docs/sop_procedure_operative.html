@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOP - Procedure Operative Standard | MES Grafica Nappa v2.0</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 20mm 15mm 20mm 15mm;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 11pt;
+            line-height: 1.5;
+            color: #333;
+            background: #fff;
+        }
+        .page {
+            page-break-after: always;
+            padding: 0;
+        }
+        .page:last-child {
+            page-break-after: avoid;
+        }
+
+        /* Header */
+        .doc-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 3px solid #d11317;
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+        }
+        .doc-header .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .doc-header .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: #d11317;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 700;
+            font-size: 14pt;
+        }
+        .doc-header h1 {
+            font-size: 18pt;
+            color: #d11317;
+            font-weight: 700;
+        }
+        .doc-header .subtitle {
+            font-size: 9pt;
+            color: #666;
+        }
+        .doc-header .doc-info {
+            text-align: right;
+            font-size: 8pt;
+            color: #666;
+            line-height: 1.6;
+        }
+        .doc-header .doc-code {
+            font-size: 10pt;
+            font-weight: 600;
+            color: #d11317;
+        }
+
+        /* SOP Block */
+        .sop-block {
+            margin-bottom: 28px;
+        }
+        .sop-title {
+            background: #d11317;
+            color: #fff;
+            padding: 10px 16px;
+            font-size: 13pt;
+            font-weight: 600;
+            border-radius: 4px 4px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .sop-title .sop-code {
+            font-size: 10pt;
+            background: rgba(255,255,255,0.2);
+            padding: 2px 10px;
+            border-radius: 3px;
+        }
+        .sop-body {
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+            padding: 16px;
+        }
+        .sop-meta {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+            font-size: 9pt;
+            color: #666;
+        }
+        .sop-meta strong {
+            color: #333;
+        }
+
+        /* Steps */
+        .steps {
+            counter-reset: step;
+            list-style: none;
+            padding: 0;
+        }
+        .steps li {
+            counter-increment: step;
+            padding: 8px 0 8px 44px;
+            position: relative;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .steps li:last-child {
+            border-bottom: none;
+        }
+        .steps li::before {
+            content: counter(step);
+            position: absolute;
+            left: 0;
+            top: 8px;
+            width: 28px;
+            height: 28px;
+            background: #d11317;
+            color: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10pt;
+            font-weight: 600;
+        }
+        .steps li strong {
+            color: #d11317;
+        }
+
+        /* Notes */
+        .note {
+            background: #fff8e1;
+            border-left: 4px solid #f9a825;
+            padding: 10px 14px;
+            margin: 10px 0;
+            font-size: 10pt;
+            border-radius: 0 4px 4px 0;
+        }
+        .note::before {
+            content: "NOTA: ";
+            font-weight: 700;
+            color: #f57f17;
+        }
+        .warning {
+            background: #fce4ec;
+            border-left: 4px solid #d11317;
+            padding: 10px 14px;
+            margin: 10px 0;
+            font-size: 10pt;
+            border-radius: 0 4px 4px 0;
+        }
+        .warning::before {
+            content: "ATTENZIONE: ";
+            font-weight: 700;
+            color: #d11317;
+        }
+        .tip {
+            background: #e8f5e9;
+            border-left: 4px solid #43a047;
+            padding: 10px 14px;
+            margin: 10px 0;
+            font-size: 10pt;
+            border-radius: 0 4px 4px 0;
+        }
+        .tip::before {
+            content: "SUGGERIMENTO: ";
+            font-weight: 700;
+            color: #2e7d32;
+        }
+
+        code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 10pt;
+            color: #c62828;
+        }
+
+        /* Footer */
+        .doc-footer {
+            margin-top: 30px;
+            padding-top: 10px;
+            border-top: 2px solid #d11317;
+            display: flex;
+            justify-content: space-between;
+            font-size: 8pt;
+            color: #999;
+        }
+
+        /* Table of Contents */
+        .toc {
+            margin: 16px 0 24px 0;
+        }
+        .toc-title {
+            font-size: 13pt;
+            font-weight: 600;
+            color: #d11317;
+            margin-bottom: 10px;
+        }
+        .toc-list {
+            list-style: none;
+            padding: 0;
+        }
+        .toc-list li {
+            padding: 6px 0;
+            border-bottom: 1px dotted #ccc;
+            font-size: 10.5pt;
+        }
+        .toc-list li span.code {
+            display: inline-block;
+            width: 70px;
+            font-weight: 600;
+            color: #d11317;
+        }
+
+        /* Approval */
+        .approval-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 9pt;
+        }
+        .approval-table th {
+            background: #d11317;
+            color: #fff;
+            padding: 8px 12px;
+            text-align: left;
+        }
+        .approval-table td {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+        }
+
+        @media print {
+            body { margin: 0; }
+            .page { page-break-after: always; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- PAGE 1: Cover + TOC + SOP-001 -->
+<div class="page">
+    <div class="doc-header">
+        <div class="logo-area">
+            <div class="logo-icon">MES</div>
+            <div>
+                <h1>Procedure Operative Standard</h1>
+                <div class="subtitle">MES Grafica Nappa v2.0 &mdash; Manufacturing Execution System</div>
+            </div>
+        </div>
+        <div class="doc-info">
+            <div class="doc-code">DOC-SOP-MES-001</div>
+            Versione: 2.0<br>
+            Data: 08/04/2026<br>
+            Classificazione: Uso Interno<br>
+            Autore: Amministrazione MES
+        </div>
+    </div>
+
+    <div class="toc">
+        <div class="toc-title">Indice Procedure</div>
+        <ul class="toc-list">
+            <li><span class="code">SOP-001</span> Avvio giornaliero del sistema</li>
+            <li><span class="code">SOP-002</span> Sincronizzazione Onda</li>
+            <li><span class="code">SOP-003</span> Gestione fase produttiva (operatore)</li>
+            <li><span class="code">SOP-004</span> Spedizione ordine</li>
+            <li><span class="code">SOP-005</span> Gestione lavorazioni esterne</li>
+            <li><span class="code">SOP-006</span> Scheduler produzione</li>
+            <li><span class="code">SOP-007</span> Backup giornaliero</li>
+            <li><span class="code">SOP-008</span> Gestione turni</li>
+        </ul>
+    </div>
+
+    <!-- SOP-001 -->
+    <div class="sop-block">
+        <div class="sop-title">
+            Avvio giornaliero del sistema
+            <span class="sop-code">SOP-001</span>
+        </div>
+        <div class="sop-body">
+            <div class="sop-meta">
+                <div><strong>Ruoli:</strong> Admin, Owner</div>
+                <div><strong>Frequenza:</strong> Giornaliera (inizio turno)</div>
+                <div><strong>Tempo stimato:</strong> 5 minuti</div>
+            </div>
+            <ol class="steps">
+                <li>
+                    <strong>Verificare che il server .60 sia acceso.</strong><br>
+                    Il server di produzione si trova all'indirizzo <code>192.168.1.60</code>. Verificare che sia raggiungibile tramite ping o accesso diretto.
+                </li>
+                <li>
+                    <strong>Verificare che Apache sia attivo.</strong><br>
+                    Aprire un browser e accedere a <code>http://192.168.1.60</code>. Se la pagina non si carica, accedere al server e avviare il servizio Apache.
+                </li>
+                <li>
+                    <strong>Controllare lo stato di salute del MES.</strong><br>
+                    Accedere a <code>http://192.168.1.60/health</code>. La risposta deve essere <strong>"MES OK"</strong>. Se il messaggio non appare, verificare i log in <code>storage/logs/laravel.log</code>.
+                </li>
+                <li>
+                    <strong>Eseguire la sincronizzazione Onda.</strong><br>
+                    Dalla dashboard owner, cliccare su <em>"Sincronizza Onda"</em> nella sidebar per importare le nuove commesse registrate nel gestionale Onda.
+                </li>
+                <li>
+                    <strong>Verificare la dashboard.</strong><br>
+                    Controllare che le commesse del giorno siano visibili e che i reparti mostrino le fasi assegnate correttamente.
+                </li>
+            </ol>
+            <div class="note">
+                Se il server non risponde, contattare l'amministratore di rete. Il MES dipende dal database MySQL sul server .60; senza connessione nessuna operazione e' possibile.
+            </div>
+        </div>
+    </div>
+
+    <!-- SOP-002 -->
+    <div class="sop-block">
+        <div class="sop-title">
+            Sincronizzazione Onda
+            <span class="sop-code">SOP-002</span>
+        </div>
+        <div class="sop-body">
+            <div class="sop-meta">
+                <div><strong>Ruoli:</strong> Owner, Admin, Prestampa</div>
+                <div><strong>Frequenza:</strong> Automatica ogni ora / Manuale a richiesta</div>
+                <div><strong>Tempo stimato:</strong> 1-2 minuti</div>
+            </div>
+            <ol class="steps">
+                <li>
+                    <strong>Accedere alla dashboard owner.</strong><br>
+                    Dalla sidebar sinistra, individuare il bottone <em>"Sincronizza Onda"</em>.
+                </li>
+                <li>
+                    <strong>Avviare la sincronizzazione.</strong><br>
+                    Cliccare il bottone e attendere il messaggio di conferma. La sincronizzazione importa le commesse dal gestionale Onda via protocollo SOAP.
+                </li>
+                <li>
+                    <strong>Verificare l'importazione.</strong><br>
+                    Controllare che le nuove commesse siano visibili nella lista commesse. Le commesse appena importate avranno tutte le fasi nello stato 0 (non iniziata).
+                </li>
+                <li>
+                    <strong>Gestire eventuali errori.</strong><br>
+                    In caso di errore timeout, riprovare dopo qualche secondo. Il timeout e' stato impostato a <strong>120 secondi</strong> per gestire sincronizzazioni di grandi volumi.
+                </li>
+            </ol>
+            <div class="tip">
+                Per sincronizzare una singola commessa specifica, eseguire sul server: <code>php artisan onda:sync [numero_commessa]</code>
+            </div>
+            <div class="note">
+                La sincronizzazione automatica avviene ogni ora. La sincronizzazione Excel bidirezionale avviene ogni 2 minuti, quella Fiery ogni minuto.
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- PAGE 2: SOP-003 + SOP-004 -->
+<div class="page">
+    <div class="doc-header">
+        <div class="logo-area">
+            <div class="logo-icon">MES</div>
+            <div>
+                <h1>Procedure Operative Standard</h1>
+                <div class="subtitle">MES Grafica Nappa v2.0</div>
+            </div>
+        </div>
+        <div class="doc-info">
+            <div class="doc-code">DOC-SOP-MES-001</div>
+            Pagina 2 di 5
+        </div>
+    </div>
+
+    <!-- SOP-003 -->
+    <div class="sop-block">
+        <div class="sop-title">
+            Gestione fase produttiva (operatore)
+            <span class="sop-code">SOP-003</span>
+        </div>
+        <div class="sop-body">
+            <div class="sop-meta">
+                <div><strong>Ruoli:</strong> Operatore</div>
+                <div><strong>Frequenza:</strong> Continuativa durante il turno</div>
+                <div><strong>Tempo stimato:</strong> Variabile</div>
+            </div>
+            <ol class="steps">
+                <li>
+                    <strong>Accedere con il proprio codice operatore.</strong><br>
+                    Dalla schermata di login, inserire il codice personale assegnato. Il sistema ridireziona automaticamente alla dashboard del proprio reparto.
+                </li>
+                <li>
+                    <strong>Identificare la fase piu' urgente.</strong><br>
+                    Le fasi sono ordinate per priorita' (valore piu' basso = piu' urgente). Le commesse con <strong>priorita' manuale</strong> sono sempre in cima alla lista. Verificare la colonna "Priorita'" e scegliere la prima fase disponibile.
+                </li>
+                <li>
+                    <strong>Avviare la lavorazione.</strong><br>
+                    Cliccare il pulsante <em>"Avvia"</em> sulla fase selezionata. Lo stato passa da 0/1 (non iniziata/pronta) a <strong>2 (avviata)</strong>. Il cronometro parte automaticamente.
+                </li>
+                <li>
+                    <strong>Gestire eventuali pause.</strong><br>
+                    In caso di interruzione, cliccare <em>"Pausa"</em> e selezionare il motivo dal menu a tendina (es. cambio lastra, attesa materiale, manutenzione). Il tempo di pausa viene registrato separatamente.
+                </li>
+                <li>
+                    <strong>Terminare la fase.</strong><br>
+                    Al completamento, cliccare <em>"Termina"</em>. Inserire la <strong>quantita' prodotta</strong> e gli eventuali <strong>scarti</strong>. Lo stato passa a <strong>3 (terminata)</strong>.
+                </li>
+                <li>
+                    <strong>Verificare le prossime fasi.</strong><br>
+                    La sezione "Prossime commesse" mostra le lavorazioni successive ordinate per urgenza nel proprio reparto. Procedere con la fase successiva.
+                </li>
+            </ol>
+            <div class="warning">
+                Non lasciare fasi in stato "avviata" a fine turno. Il sistema rileva automaticamente fasi abbandonate (attive da piu' di 4 ore in un giorno diverso) e le termina con dati potenzialmente incorretti.
+            </div>
+            <div class="note">
+                Gli operatori del reparto Prestampa vengono rediretti automaticamente alla dashboard prestampa dedicata (<code>/operatore/prestampa</code>).
+            </div>
+        </div>
+    </div>
+
+    <!-- SOP-004 -->
+    <div class="sop-block">
+        <div class="sop-title">
+            Spedizione ordine
+            <span class="sop-code">SOP-004</span>
+        </div>
+        <div class="sop-body">
+            <div class="sop-meta">
+                <div><strong>Ruoli:</strong> Spedizione</div>
+                <div><strong>Frequenza:</strong> A completamento ordini</div>
+                <div><strong>Tempo stimato:</strong> 5-10 minuti per ordine</div>
+            </div>
+            <ol class="steps">
+                <li>
+                    <strong>Accedere alla dashboard spedizione.</strong><br>
+                    Verificare la sezione <em>"Da consegnare"</em>: contiene le commesse con tutte le fasi in stato 3 (terminata) o superiore.
+                </li>
+                <li>
+                    <strong>Selezionare la commessa da spedire.</strong><br>
+                    Usare la sidebar con anchor per navigare rapidamente tra le sezioni (Da consegnare, Parziali, ecc.).
+                </li>
+                <li>
+                    <strong>Confermare la consegna.</strong><br>
+                    Scegliere tra consegna <strong>Totale</strong> (tutto l'ordine) o <strong>Parziale</strong> (quantita' ridotta). Lo stato delle fasi passa a <strong>4 (consegnato)</strong>.
+                </li>
+                <li>
+                    <strong>Generare il DDT.</strong><br>
+                    Cliccare il pulsante <em>"PDF"</em> per generare il Documento di Trasporto in formato PDF stampabile.
+                </li>
+                <li>
+                    <strong>Verificare il tracking BRT.</strong><br>
+                    Se la spedizione avviene tramite corriere BRT, verificare il numero di tracking nella colonna dedicata. Le spedizioni multi-collo (esito -22) sono escluse dalle notifiche di ritardo.
+                </li>
+            </ol>
+            <div class="note">
+                Le note consegne sono bidirezionali tra owner e spedizione. Utilizzare il campo note per comunicazioni urgenti: il destinatario riceve notifica push e segnale acustico.
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- PAGE 3: SOP-005 + SOP-006 -->
+<div class="page">
+    <div class="doc-header">
+        <div class="logo-area">
+            <div class="logo-icon">MES</div>
+            <div>
+                <h1>Procedure Operative Standard</h1>
+                <div class="subtitle">MES Grafica Nappa v2.0</div>
+            </div>
+        </div>
+        <div class="doc-info">
+            <div class="doc-code">DOC-SOP-MES-001</div>
+            Pagina 3 di 5
+        </div>
+    </div>
+
+    <!-- SOP-005 -->
+    <div class="sop-block">
+        <div class="sop-title">
+            Gestione lavorazioni esterne
+            <span class="sop-code">SOP-005</span>
+        </div>
+        <div class="sop-body">
+            <div class="sop-meta">
+                <div><strong>Ruoli:</strong> Owner, Admin</div>
+                <div><strong>Frequenza:</strong> Al bisogno</div>
+                <div><strong>Tempo stimato:</strong> 2-3 minuti</div>
+            </div>
+            <ol class="steps">
+                <li>
+                    <strong>Identificare la fase da esternalizzare.</strong><br>
+                    Dalla dashboard owner, individuare la fase che deve essere inviata a un fornitore esterno (es. plastificazione, stampa a caldo, UV spot).
+                </li>
+                <li>
+                    <strong>Impostare come lavorazione esterna.</strong><br>
+                    Selezionare la fase e indicare <em>"Inviato a: [nome fornitore]"</em>. Lo stato cambia a <strong>5 (Esterno)</strong>. La fase viene marcata con il flag <code>esterno = true</code> e appare con il badge <strong>"EXT"</strong> viola nella dashboard.
+                </li>
+                <li>
+                    <strong>Monitorare lo stato.</strong><br>
+                    Le fasi esterne sono visibili nella sezione <em>"Lavorazioni Esterne"</em> accessibile dalla sidebar. Qui si puo' visualizzare il fornitore, la data di invio e lo stato corrente.
+                </li>
+                <li>
+                    <strong>Registrare il rientro.</strong><br>
+                    Quando il materiale rientra dal fornitore, accedere alla pagina Esterne e cliccare il bottone <em>"Rientro"</em>. La fase torna nello stato 3 (terminata) e il flusso produttivo prosegue.
+                </li>
+            </ol>
+            <div class="note">
+                Le fasi esterne sono escluse dalla dashboard operatore. L'operatore non vedra' fasi marcate come esterne nella propria lista lavorazioni.
+            </div>
+        </div>
+    </div>
+
+    <!-- SOP-006 -->
+    <div class="sop-block">
+        <div class="sop-title">
+            Scheduler produzione
+            <span class="sop-code">SOP-006</span>
+        </div>
+        <div class="sop-body">
+            <div class="sop-meta">
+                <div><strong>Ruoli:</strong> Owner, Admin</div>
+                <div><strong>Frequenza:</strong> Giornaliera o al bisogno</div>
+                <div><strong>Tempo stimato:</strong> 3-5 minuti</div>
+            </div>
+            <ol class="steps">
+                <li>
+                    <strong>Accedere alla sezione Scheduling.</strong><br>
+                    Dalla dashboard owner, cliccare su <em>"Scheduling"</em> nella sidebar sinistra per accedere alla vista pianificazione.
+                </li>
+                <li>
+                    <strong>Eseguire lo scheduler.</strong><br>
+                    Sul server, eseguire il comando: <code>php artisan scheduler:run</code>. Lo scheduler calcola le priorita' basandosi su 4 livelli: disponibilita', urgenza reale, affinita' batch e sequenza ciclo.
+                </li>
+                <li>
+                    <strong>Verificare il diagramma Gantt.</strong><br>
+                    Dopo l'esecuzione, il Gantt viene aggiornato con le date pianificate per ogni fase e macchina. Verificare che le assegnazioni siano coerenti con la capacita' produttiva.
+                </li>
+                <li>
+                    <strong>Consultare il piano Excel.</strong><br>
+                    Il piano di produzione aggiornato e' disponibile nella cartella condivisa:<br>
+                    <code>C:\condivisa\mes\piano_produzione.xlsx</code>
+                </li>
+            </ol>
+            <div class="note">
+                Sequenza fasi standard: Stampa(10) &rarr; Digitale(11) &rarr; Plastica(20) &rarr; Caldo JOH(30) &rarr; Plastica Lux(31) &rarr; Finitura Dig.(35) &rarr; Taglio(37) &rarr; Rilievi BOBST(39) &rarr; Fustella(40) &rarr; Finestratura(100) &rarr; Piegaincolla(110) &rarr; Legatoria(120) &rarr; Allestimento(700) &rarr; Spedizione(999).
+            </div>
+            <div class="tip">
+                Colli di bottiglia principali: JOH &gt; BOBST &gt; Piegaincolla. Pianificare di conseguenza, eventualmente con turno notturno per JOH.
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- PAGE 4: SOP-007 + SOP-008 -->
+<div class="page">
+    <div class="doc-header">
+        <div class="logo-area">
+            <div class="logo-icon">MES</div>
+            <div>
+                <h1>Procedure Operative Standard</h1>
+                <div class="subtitle">MES Grafica Nappa v2.0</div>
+            </div>
+        </div>
+        <div class="doc-info">
+            <div class="doc-code">DOC-SOP-MES-001</div>
+            Pagina 4 di 5
+        </div>
+    </div>
+
+    <!-- SOP-007 -->
+    <div class="sop-block">
+        <div class="sop-title">
+            Backup giornaliero
+            <span class="sop-code">SOP-007</span>
+        </div>
+        <div class="sop-body">
+            <div class="sop-meta">
+                <div><strong>Ruoli:</strong> Admin</div>
+                <div><strong>Frequenza:</strong> Giornaliera (automatica)</div>
+                <div><strong>Tempo stimato:</strong> Automatico / 5 min verifica</div>
+            </div>
+            <ol class="steps">
+                <li>
+                    <strong>Verifica del backup automatico.</strong><br>
+                    Il database MySQL <code>grafica_nappa</code> viene sottoposto a backup automatico giornaliero tramite cron job sul server .60.
+                </li>
+                <li>
+                    <strong>Controllo del file di backup.</strong><br>
+                    Verificare la presenza del file di backup del giorno corrente. Il formato del nome file e':<br>
+                    <code>backup_YYYYMMDD.sql</code> (es. <code>backup_20260408.sql</code>).
+                </li>
+                <li>
+                    <strong>Esecuzione manuale (se necessario).</strong><br>
+                    Per eseguire un backup manuale, collegarsi al server ed eseguire:<br>
+                    <code>mysqldump grafica_nappa > backup_YYYYMMDD.sql</code>
+                </li>
+                <li>
+                    <strong>Rotazione dei backup.</strong><br>
+                    Conservare gli <strong>ultimi 7 backup</strong>. Eliminare i file piu' vecchi per risparmiare spazio disco. Verificare periodicamente che la rotazione automatica funzioni.
+                </li>
+                <li>
+                    <strong>Test di ripristino (mensile).</strong><br>
+                    Almeno una volta al mese, verificare l'integrita' del backup tentando un ripristino su un database di test.
+                </li>
+            </ol>
+            <div class="warning">
+                Il database risiede esclusivamente sul server .60. In caso di guasto al server senza backup, tutti i dati di produzione saranno persi. Assicurarsi che i backup vengano eseguiti e verificati regolarmente.
+            </div>
+        </div>
+    </div>
+
+    <!-- SOP-008 -->
+    <div class="sop-block">
+        <div class="sop-title">
+            Gestione turni
+            <span class="sop-code">SOP-008</span>
+        </div>
+        <div class="sop-body">
+            <div class="sop-meta">
+                <div><strong>Ruoli:</strong> Admin</div>
+                <div><strong>Frequenza:</strong> Settimanale</div>
+                <div><strong>Tempo stimato:</strong> 10-15 minuti</div>
+            </div>
+            <ol class="steps">
+                <li>
+                    <strong>Accedere alla gestione turni.</strong><br>
+                    Dalla dashboard admin, selezionare la voce <em>"Turni"</em> nel menu.
+                </li>
+                <li>
+                    <strong>Selezionare la settimana.</strong><br>
+                    Navigare alla settimana da pianificare utilizzando i controlli di navigazione.
+                </li>
+                <li>
+                    <strong>Inserire i turni per ogni dipendente.</strong><br>
+                    Per ciascun giorno della settimana, assegnare il codice turno appropriato:
+                    <table style="margin: 10px 0; border-collapse: collapse; width: 100%;">
+                        <tr style="background: #d11317; color: #fff;">
+                            <th style="padding: 6px 12px; text-align: left;">Codice</th>
+                            <th style="padding: 6px 12px; text-align: left;">Significato</th>
+                            <th style="padding: 6px 12px; text-align: left;">Orario</th>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #ddd;">
+                            <td style="padding: 6px 12px;"><strong>T</strong></td>
+                            <td style="padding: 6px 12px;">Tutto il giorno</td>
+                            <td style="padding: 6px 12px;">06:00 - 22:00</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #ddd; background: #f9f9f9;">
+                            <td style="padding: 6px 12px;"><strong>1</strong></td>
+                            <td style="padding: 6px 12px;">Turno 1 (mattina)</td>
+                            <td style="padding: 6px 12px;">06:00 - 14:00</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #ddd;">
+                            <td style="padding: 6px 12px;"><strong>2</strong></td>
+                            <td style="padding: 6px 12px;">Turno 2 (pomeriggio)</td>
+                            <td style="padding: 6px 12px;">14:00 - 22:00</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #ddd; background: #f9f9f9;">
+                            <td style="padding: 6px 12px;"><strong>3</strong></td>
+                            <td style="padding: 6px 12px;">Turno 3 (notte)</td>
+                            <td style="padding: 6px 12px;">22:00 - 06:00</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #ddd;">
+                            <td style="padding: 6px 12px;"><strong>F</strong></td>
+                            <td style="padding: 6px 12px;">Ferie</td>
+                            <td style="padding: 6px 12px;">-</td>
+                        </tr>
+                        <tr style="background: #f9f9f9;">
+                            <td style="padding: 6px 12px;"><strong>R</strong></td>
+                            <td style="padding: 6px 12px;">Riposo</td>
+                            <td style="padding: 6px 12px;">-</td>
+                        </tr>
+                    </table>
+                </li>
+                <li>
+                    <strong>Salvare e verificare.</strong><br>
+                    Dopo l'inserimento, salvare le modifiche. I turni vengono utilizzati dal sistema per il calcolo delle presenze e per identificare eventuali ritardi tramite integrazione NetTime.
+                </li>
+            </ol>
+            <div class="note">
+                La macchina XL106 opera su 3 turni (24h, lun-ven). Le altre macchine operano normalmente su 2 turni (06:00-22:00, lun-ven). Pianificare i turni di conseguenza.
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- PAGE 5: Revisioni + Approvazioni -->
+<div class="page">
+    <div class="doc-header">
+        <div class="logo-area">
+            <div class="logo-icon">MES</div>
+            <div>
+                <h1>Procedure Operative Standard</h1>
+                <div class="subtitle">MES Grafica Nappa v2.0</div>
+            </div>
+        </div>
+        <div class="doc-info">
+            <div class="doc-code">DOC-SOP-MES-001</div>
+            Pagina 5 di 5
+        </div>
+    </div>
+
+    <h2 style="color: #d11317; font-size: 14pt; margin-bottom: 16px; border-bottom: 2px solid #d11317; padding-bottom: 8px;">Storico Revisioni</h2>
+
+    <table class="approval-table">
+        <thead>
+            <tr>
+                <th>Versione</th>
+                <th>Data</th>
+                <th>Autore</th>
+                <th>Descrizione Modifica</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>1.0</td>
+                <td>10/03/2026</td>
+                <td>Amministrazione MES</td>
+                <td>Prima stesura delle procedure operative standard</td>
+            </tr>
+            <tr>
+                <td>2.0</td>
+                <td>08/04/2026</td>
+                <td>Amministrazione MES</td>
+                <td>Aggiornamento per v2.0: aggiunta SOP-006 (Scheduler), revisione SOP-003 (priorita' manuale), aggiunta codici turno</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2 style="color: #d11317; font-size: 14pt; margin: 28px 0 16px 0; border-bottom: 2px solid #d11317; padding-bottom: 8px;">Approvazioni</h2>
+
+    <table class="approval-table">
+        <thead>
+            <tr>
+                <th>Ruolo</th>
+                <th>Nome</th>
+                <th>Firma</th>
+                <th>Data</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Redatto da</td>
+                <td style="width: 200px;"></td>
+                <td style="width: 180px; height: 50px;"></td>
+                <td style="width: 120px;"></td>
+            </tr>
+            <tr>
+                <td>Verificato da</td>
+                <td></td>
+                <td style="height: 50px;"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>Approvato da</td>
+                <td></td>
+                <td style="height: 50px;"></td>
+                <td></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2 style="color: #d11317; font-size: 14pt; margin: 28px 0 16px 0; border-bottom: 2px solid #d11317; padding-bottom: 8px;">Riferimenti</h2>
+
+    <table class="approval-table">
+        <thead>
+            <tr>
+                <th>Codice</th>
+                <th>Documento</th>
+                <th>Ubicazione</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>DOC-SEC-MES-001</td>
+                <td>Protocolli di Sicurezza</td>
+                <td><code>http://gestionale/security_protocols.html</code></td>
+            </tr>
+            <tr>
+                <td>DOC-GDPR-MES-001</td>
+                <td>Registro Trattamenti GDPR</td>
+                <td><code>http://gestionale/gdpr_registro_trattamenti.html</code></td>
+            </tr>
+            <tr>
+                <td>DOC-ROLE-MES-001</td>
+                <td>Matrice Ruoli e Permessi</td>
+                <td><code>http://gestionale/docs/matrice_ruoli_permessi.html</code></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="doc-footer">
+        <div>DOC-SOP-MES-001 v2.0 &mdash; MES Grafica Nappa</div>
+        <div>Documento riservato ad uso interno &mdash; Grafica Nappa S.r.l.</div>
+        <div>Stampato il: ___/___/______</div>
+    </div>
+</div>
+
+</body>
+</html>

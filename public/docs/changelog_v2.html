@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MES Grafica Nappa — Changelog v1.2 → v2.0</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 14mm 14mm 18mm 14mm;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 10pt;
+            color: #1a1a1a;
+            line-height: 1.5;
+            background: #fff;
+            padding: 14mm;
+        }
+        .header {
+            background: #d11317;
+            color: #fff;
+            padding: 16px 24px;
+            border-radius: 6px;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .header h1 { font-size: 20pt; font-weight: 700; }
+        .header .subtitle { font-size: 10pt; opacity: 0.9; }
+        .header .version {
+            background: rgba(255,255,255,0.2);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 10pt;
+            font-weight: 600;
+        }
+        .version-section {
+            margin-bottom: 22px;
+            page-break-inside: avoid;
+        }
+        .version-header {
+            background: linear-gradient(135deg, #d11317 0%, #991b1b 100%);
+            color: #fff;
+            padding: 12px 18px;
+            border-radius: 6px 6px 0 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .version-header h2 {
+            font-size: 15pt;
+            font-weight: 700;
+            margin: 0;
+        }
+        .version-header .date {
+            font-size: 9.5pt;
+            opacity: 0.9;
+            background: rgba(255,255,255,0.15);
+            padding: 3px 12px;
+            border-radius: 12px;
+        }
+        .version-body {
+            border: 1px solid #e5e5e5;
+            border-top: none;
+            border-radius: 0 0 6px 6px;
+            padding: 14px 18px;
+        }
+        h3 {
+            color: #d11317;
+            font-size: 11pt;
+            margin: 14px 0 8px 0;
+            padding-bottom: 3px;
+            border-bottom: 1px solid #fecaca;
+        }
+        h3:first-child { margin-top: 0; }
+        .change-list {
+            list-style: none;
+            padding: 0;
+        }
+        .change-list li {
+            padding: 5px 0 5px 8px;
+            border-bottom: 1px solid #f5f5f5;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+        .change-list li:last-child { border-bottom: none; }
+        .badge {
+            display: inline-block;
+            padding: 1px 8px;
+            border-radius: 10px;
+            font-size: 7.5pt;
+            font-weight: 700;
+            color: #fff;
+            flex-shrink: 0;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            margin-top: 2px;
+            min-width: 75px;
+            text-align: center;
+        }
+        .badge-nuovo { background: #2563eb; }
+        .badge-miglioramento { background: #16a34a; }
+        .badge-fix { background: #ea580c; }
+        .badge-sicurezza { background: #dc2626; }
+        .badge-performance { background: #7c3aed; }
+        .info-box {
+            background: #f3f4f6;
+            border-left: 4px solid #d11317;
+            padding: 10px 14px;
+            border-radius: 0 6px 6px 0;
+            margin: 10px 0;
+            font-size: 9.5pt;
+        }
+        .info-box strong { color: #d11317; }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin: 12px 0;
+        }
+        .stat-card {
+            text-align: center;
+            padding: 10px 8px;
+            border-radius: 6px;
+            border: 1px solid #e5e5e5;
+        }
+        .stat-card .stat-num {
+            font-size: 20pt;
+            font-weight: 800;
+            display: block;
+        }
+        .stat-card .stat-label {
+            font-size: 8pt;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .stat-nuovo .stat-num { color: #2563eb; }
+        .stat-miglioramento .stat-num { color: #16a34a; }
+        .stat-fix .stat-num { color: #ea580c; }
+        .stat-sicurezza .stat-num { color: #dc2626; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+            font-size: 9.5pt;
+        }
+        table th {
+            background: #d11317;
+            color: #fff;
+            padding: 7px 10px;
+            text-align: left;
+            font-weight: 600;
+        }
+        table td {
+            padding: 6px 10px;
+            border-bottom: 1px solid #e5e5e5;
+        }
+        table tr:nth-child(even) { background: #f9f9f9; }
+        .footer {
+            margin-top: 20px;
+            padding-top: 10px;
+            border-top: 1px solid #ddd;
+            font-size: 8pt;
+            color: #888;
+            text-align: center;
+        }
+        .highlight-box {
+            background: #fef2f2;
+            border: 2px solid #d11317;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin: 12px 0;
+        }
+        .highlight-box h4 {
+            color: #d11317;
+            margin-bottom: 6px;
+        }
+        @media print {
+            body { padding: 0; }
+            .version-section { break-inside: avoid; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div>
+        <h1>Changelog</h1>
+        <div class="subtitle">MES Grafica Nappa &mdash; Storico versioni v1.2 &rarr; v2.0</div>
+    </div>
+    <div class="version">v2.0</div>
+</div>
+
+<!-- LEGENDA BADGE -->
+<div class="info-box">
+    <strong>Legenda:</strong>
+    <span class="badge badge-nuovo">Nuovo</span> Funzionalita completamente nuova &nbsp;
+    <span class="badge badge-miglioramento">Miglioramento</span> Evoluzione di funzionalita esistente &nbsp;
+    <span class="badge badge-fix">Fix</span> Correzione bug &nbsp;
+    <span class="badge badge-sicurezza">Sicurezza</span> Patch di sicurezza &nbsp;
+    <span class="badge badge-performance">Performance</span> Ottimizzazione prestazioni
+</div>
+
+<!-- ======================== v2.0 ======================== -->
+<div class="version-section">
+    <div class="version-header">
+        <h2>v2.0 &mdash; Enterprise Edition</h2>
+        <span class="date">Aprile 2026</span>
+    </div>
+    <div class="version-body">
+
+        <div class="stats-grid">
+            <div class="stat-card stat-nuovo"><span class="stat-num">18</span><span class="stat-label">Nuove funzionalita</span></div>
+            <div class="stat-card stat-miglioramento"><span class="stat-num">12</span><span class="stat-label">Miglioramenti</span></div>
+            <div class="stat-card stat-fix"><span class="stat-num">9</span><span class="stat-label">Bug risolti</span></div>
+            <div class="stat-card stat-sicurezza"><span class="stat-num">6</span><span class="stat-label">Patch sicurezza</span></div>
+        </div>
+
+        <!-- UI Enterprise -->
+        <h3>UI Enterprise &mdash; Riprogettazione Completa</h3>
+        <ul class="change-list">
+            <li><span class="badge badge-nuovo">Nuovo</span> Layout <code>layouts.mes</code> con sidebar collassabile + topbar unificata per tutte le viste</li>
+            <li><span class="badge badge-nuovo">Nuovo</span> Dark mode con toggle in alto a destra, preferenza salvata in localStorage</li>
+            <li><span class="badge badge-nuovo">Nuovo</span> Font Inter per l'intera applicazione, tipografia professionale SaaS-ready</li>
+            <li><span class="badge badge-miglioramento">Miglioramento</span> Tutte le viste (operatore, owner, spedizione, prestampa) convertite al nuovo layout</li>
+            <li><span class="badge badge-miglioramento">Miglioramento</span> Responsive design: hamburger mobile con touch target 44px, z-index 100, padding 12px</li>
+            <li><span class="badge badge-miglioramento">Miglioramento</span> Meta viewport configurato per pagine normali; dashboard owner senza viewport (default browser)</li>
+        </ul>
+
+        <!-- Scheduler Mossa 37 -->
+        <h3>Scheduler Mossa 37 &mdash; Pianificazione Produzione</h3>
+        <ul class="change-list">
+            <li><span class="badge badge-nuovo">Nuovo</span> Motore di simulazione eventi discreti con propagazione automatica delle fasi</li>
+            <li><span class="badge badge-nuovo">Nuovo</span> Gestione 11 macchine con turni differenziati (XL106: 24h, altre: 6-22 lun-ven)</li>
+            <li><span class="badge badge-nuovo">Nuovo</span> Batching intelligente entro &plusmn;5 giorni di urgenza, urgenza SEMPRE prioritaria</li>
+            <li><span class="badge badge-nuovo">Nuovo</span> Campo <code>disponibile_da</code> calcolato automaticamente per ogni fase</li>
+            <li><span class="badge badge-nuovo">Nuovo</span> Integrazione date BRT (spedizione) nel calcolo scheduler</li>
+            <li><span class="badge badge-miglioramento">Miglioramento</span> BOBST: 1 macchina, 2 configurazioni (rilievi/fustelle), cambio setup 1h con blocchi consecutivi</li>
+            <li><span class="badge badge-miglioramento">Miglioramento</span> Piegaincolla: 1 macchina, 3 configurazioni (PI01/PI02/PI03), blocchi consecutivi</li>
+        </ul>
+
+        <div class="highlight-box">
+            <h4>Sequenza Fasi Produttive (Mossa 37)</h4>
+            <p style="font-size:9pt;">10(Stampa Offset) &rarr; 11(Digitale) &rarr; 20(Plastica) &rarr; 30(Caldo JOH) &rarr; 31(Plastica Lux) &rarr; 35(Finitura Dig.) &rarr; 37(Taglio) &rarr; 39(Rilievi BOBST) &rarr; 40(Fustella) &rarr; 100(Finestratura) &rarr; 110(Piegaincolla) &rarr; 120(Legatoria) &rarr; 700(Allestimento) &rarr; 999(Spedizione)</p>
+        </div>
+
+        <!-- Chat MES -->
+        <h3>Chat MES</h3>
+        <ul class="change-list">
+            <li><span class="badge badge-nuovo">Nuovo</span> Widget chat integrato: bolla blu in basso a destra, presente in tutte le pagine</li>
+            <li><span class="badge badge-nuovo">Nuovo</span> Menzioni con <code>@nome</code> per notificare utenti specifici</li>
+            <li><span class="badge badge-nuovo">Nuovo</span> Canali per reparto con polling ogni 10 secondi</li>
+        </ul>
+
+        <!-- DDT PDF -->
+        <h3>DDT PDF Automatico</h3>
+        <ul class="change-list">
+            <li><span class="badge badge-nuovo">Nuovo</span> Generazione automatica PDF DDT al sync Onda</li>
+            <li><span class="badge badge-nuovo">Nuovo</span> Integrazione RIF ORD MAXTRIS nei documenti</li>
+            <li><span class="badge badge-nuovo">Nuovo</span> Upload automatico su Google Drive</li>
+        </ul>
+
+        <!-- Stati e Fasi -->
+        <h3>Gestione Stati e Fasi</h3>
+        <ul class="change-list">
+            <li><span class="badge badge-nuovo">Nuovo</span> Stato 5 = <strong>Esterno (EXT)</strong>: badge viola nella dashboard owner + filtro dedicato</li>
+            <li><span class="badge badge-nuovo">Nuovo</span> Flag <code>terminata_manualmente</code>: protegge le fasi dalla sovrascrittura automatica Prinect</li>
+            <li><span class="badge badge-miglioramento">Miglioramento</span> Piano produzione Excel auto-aggiornato nella cartella condivisa</li>
+        </ul>
+
+        <!-- PWA -->
+        <h3>PWA &mdash; Progressive Web App</h3>
+        <ul class="change-list">
+            <li><span class="badge badge-nuovo">Nuovo</span> Manifest PWA: installabile come app su mobile e desktop</li>
+            <li><span class="badge badge-nuovo">Nuovo</span> Service Worker per caching risorse statiche</li>
+            <li><span class="badge badge-nuovo">Nuovo</span> Push Notifications native per notifiche critiche (note consegne, menzioni chat)</li>
+        </ul>
+
+        <!-- Performance -->
+        <h3>Performance</h3>
+        <ul class="change-list">
+            <li><span class="badge badge-performance">Performance</span> Lazy-load script: <strong>riduzione -72%</strong> del peso JS iniziale</li>
+            <li><span class="badge badge-performance">Performance</span> Ottimizzazione query: <strong>riduzione -83%</strong> tempo risposta medio</li>
+            <li><span class="badge badge-performance">Performance</span> CSRF refresh automatico ogni 30 minuti + ripristino con <code>pageshow</code></li>
+            <li><span class="badge badge-performance">Performance</span> Indici SQL ottimizzati su tabelle ordini, fasi, operatori</li>
+        </ul>
+
+        <!-- Sicurezza -->
+        <h3>Sicurezza</h3>
+        <ul class="change-list">
+            <li><span class="badge badge-sicurezza">Sicurezza</span> Fix XSS: sanitizzazione input su tutte le viste con output encoding</li>
+            <li><span class="badge badge-sicurezza">Sicurezza</span> Autenticazione endpoint: tutti gli endpoint API protetti con middleware auth</li>
+            <li><span class="badge badge-sicurezza">Sicurezza</span> Validazione input: regole di validazione su tutti i controller</li>
+            <li><span class="badge badge-sicurezza">Sicurezza</span> Security headers configurati (CSP, X-Frame-Options, HSTS)</li>
+        </ul>
+
+    </div>
+</div>
+
+<!-- ======================== v1.3 ======================== -->
+<div class="version-section">
+    <div class="version-header">
+        <h2>v1.3</h2>
+        <span class="date">Marzo 2026</span>
+    </div>
+    <div class="version-body">
+
+        <h3>Presenze e Risorse Umane</h3>
+        <ul class="change-list">
+            <li><span class="badge badge-nuovo">Nuovo</span> Integrazione presenze <strong>NetTime</strong>: timbrature via share di rete, task schedulato ogni 5 minuti</li>
+        </ul>
+
+        <h3>Comunicazione e Note</h3>
+        <ul class="change-list">
+            <li><span class="badge badge-nuovo">Nuovo</span> Note consegne <strong>bidirezionali</strong>: owner &#8596; spedizione con polling 15s, toast 30s, beep AudioContext</li>
+            <li><span class="badge badge-miglioramento">Miglioramento</span> Note unificate: "Informazioni generali / per fasi successive" con nome autore, visibili in operatore e owner</li>
+            <li><span class="badge badge-nuovo">Nuovo</span> Notifiche owner per Note Consegne: polling 1s, badge, browser push, beep, toast</li>
+        </ul>
+
+        <h3>Spedizioni</h3>
+        <ul class="change-list">
+            <li><span class="badge badge-fix">Fix</span> BRT multi-spedizione: esclusa da email ritardi (esito -22)</li>
+            <li><span class="badge badge-miglioramento">Miglioramento</span> Descrizione aggiunta nelle tabelle BRT (spedizione + owner)</li>
+        </ul>
+
+        <h3>Report e Analisi</h3>
+        <ul class="change-list">
+            <li><span class="badge badge-nuovo">Nuovo</span> Report Ore professionale: tema SaaS, 6 KPI, 4 grafici Chart.js, click sforate per dettaglio</li>
+            <li><span class="badge badge-miglioramento">Miglioramento</span> Ore lavorate dashboard owner con priorita Prinect e indicatore "P"</li>
+            <li><span class="badge badge-miglioramento">Miglioramento</span> Ore totali per reparto in Panoramica Reparti owner</li>
+        </ul>
+
+        <h3>Sicurezza e Accessi</h3>
+        <ul class="change-list">
+            <li><span class="badge badge-sicurezza">Sicurezza</span> 2FA (autenticazione a due fattori) per utenti admin</li>
+            <li><span class="badge badge-sicurezza">Sicurezza</span> RBAC con Spatie Permission: ruoli e permessi granulari</li>
+            <li><span class="badge badge-sicurezza">Sicurezza</span> Audit log: tracciamento completo delle azioni utente</li>
+            <li><span class="badge badge-sicurezza">Sicurezza</span> Security headers: CSP, X-Content-Type-Options, Referrer-Policy</li>
+        </ul>
+
+        <h3>Performance</h3>
+        <ul class="change-list">
+            <li><span class="badge badge-performance">Performance</span> Indici database ottimizzati sulle tabelle principali</li>
+            <li><span class="badge badge-miglioramento">Miglioramento</span> Prinect sync esteso a 30 giorni (da 7) per catturare storico completo</li>
+            <li><span class="badge badge-miglioramento">Miglioramento</span> Scrollbar orizzontale sticky nella dashboard owner</li>
+        </ul>
+
+        <h3>Interfaccia</h3>
+        <ul class="change-list">
+            <li><span class="badge badge-nuovo">Nuovo</span> Dashboard Prestampa: lista commesse con campi editabili (descrizione, colori, fustella, note)</li>
+            <li><span class="badge badge-nuovo">Nuovo</span> Note fustelle Mirko: editabili per fase, prefissate con nome, box viola nel dettaglio</li>
+            <li><span class="badge badge-miglioramento">Miglioramento</span> Sidebar spedizione con anchor: click su voci scrolla alla sezione</li>
+            <li><span class="badge badge-miglioramento">Miglioramento</span> Prossime commesse migliorate: tabella con dettagli, ordinate per priorita fasi</li>
+            <li><span class="badge badge-miglioramento">Miglioramento</span> Fustella visibile a tutti i reparti (rimossa condizione nascondimento)</li>
+            <li><span class="badge badge-fix">Fix</span> Consegna pausa: fasi con stato stringa non bloccano piu la spedizione</li>
+            <li><span class="badge badge-fix">Fix</span> Prinect auto-terminazione: protegge fasi attive (&lt;1h), termina abbandonate (&gt;4h)</li>
+            <li><span class="badge badge-fix">Fix</span> CSRF refresh automatico + pageshow per frecce browser</li>
+        </ul>
+
+        <h3>Etichette e Stampa</h3>
+        <ul class="change-list">
+            <li><span class="badge badge-nuovo">Nuovo</span> Etichetta Data Matrix: plain datamatrix, campo A nel GTIN, quantita 8 cifre zero-padded</li>
+        </ul>
+
+    </div>
+</div>
+
+<!-- ======================== v1.2 ======================== -->
+<div class="version-section">
+    <div class="version-header">
+        <h2>v1.2</h2>
+        <span class="date">24 Febbraio 2026</span>
+    </div>
+    <div class="version-body">
+
+        <h3>Operatore</h3>
+        <ul class="change-list">
+            <li><span class="badge badge-nuovo">Nuovo</span> Modal "Termina Fase" con campi quantita prodotta e scarti</li>
+            <li><span class="badge badge-nuovo">Nuovo</span> Pre-fill automatico degli scarti basato sullo storico fase</li>
+            <li><span class="badge badge-miglioramento">Miglioramento</span> Flag <code>priorita_manuale</code>: rispettato nella dashboard operatore</li>
+            <li><span class="badge badge-miglioramento">Miglioramento</span> Flag <code>esterno</code> su ordine_fasi: escluso dalla dashboard operatore</li>
+        </ul>
+
+        <h3>Prinect</h3>
+        <ul class="change-list">
+            <li><span class="badge badge-nuovo">Nuovo</span> Anteprima Prinect: visualizzazione dati workstep nella dashboard</li>
+            <li><span class="badge badge-miglioramento">Miglioramento</span> Integrazione tempo avviamento + esecuzione per Stampa XL da Prinect</li>
+        </ul>
+
+        <h3>Core</h3>
+        <ul class="change-list">
+            <li><span class="badge badge-nuovo">Nuovo</span> <code>ricalcolaCommessa</code>: ricalcolo stati su TUTTI gli ordini della commessa</li>
+            <li><span class="badge badge-fix">Fix</span> Logout GET+POST: <code>Route::match(['get','post'])</code> per evitare 419 CSRF</li>
+            <li><span class="badge badge-miglioramento">Miglioramento</span> Note spedizione persistenti: se oggi non ha nota, carica l'ultima disponibile</li>
+            <li><span class="badge badge-miglioramento">Miglioramento</span> Descrizione stretta: max-width 220px con ellipsis in tutte le tabelle spedizione</li>
+        </ul>
+
+    </div>
+</div>
+
+<!-- RIEPILOGO TECNICO -->
+<div class="highlight-box">
+    <h4>Riepilogo Tecnico v2.0</h4>
+    <table>
+        <tr>
+            <th>Componente</th>
+            <th>Tecnologia</th>
+            <th>Note</th>
+        </tr>
+        <tr>
+            <td>Backend</td>
+            <td>Laravel (PHP 8.x)</td>
+            <td>MySQL su server .60, SOAP Onda</td>
+        </tr>
+        <tr>
+            <td>Frontend</td>
+            <td>Blade + Vanilla JS</td>
+            <td>Layout layouts.mes, Chart.js</td>
+        </tr>
+        <tr>
+            <td>Scheduler</td>
+            <td>Mossa 37 Engine</td>
+            <td>Simulazione eventi discreti</td>
+        </tr>
+        <tr>
+            <td>Integrazioni</td>
+            <td>Onda, Prinect, Fiery, BRT, NetTime</td>
+            <td>SOAP + REST + Share di rete</td>
+        </tr>
+        <tr>
+            <td>Sicurezza</td>
+            <td>Spatie RBAC, 2FA, CSP</td>
+            <td>Audit log completo</td>
+        </tr>
+        <tr>
+            <td>PWA</td>
+            <td>Manifest + Service Worker</td>
+            <td>Push Notifications native</td>
+        </tr>
+    </table>
+</div>
+
+<div class="footer">
+    MES Grafica Nappa &mdash; Changelog v1.2 &rarr; v2.0 &mdash; Aprile 2026<br>
+    Documento: DOC-CHG-001 &mdash; Responsabile IT: Giovanni Pietropaolo
+</div>
+
+</body>
+</html>

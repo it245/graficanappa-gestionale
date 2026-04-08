@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Case Study — MES Grafica Nappa v2.0</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 18mm 20mm 20mm 20mm;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            font-size: 10.5pt;
+            line-height: 1.55;
+            color: #1e293b;
+            background: #fff;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .page {
+            width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto;
+            padding: 18mm 20mm 20mm 20mm;
+            page-break-after: always;
+            position: relative;
+        }
+
+        .page:last-child {
+            page-break-after: auto;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid #1e40af;
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+        }
+
+        .header-left h1 {
+            font-size: 22pt;
+            font-weight: 700;
+            color: #1e40af;
+            letter-spacing: -0.5px;
+        }
+
+        .header-left .subtitle {
+            font-size: 11pt;
+            color: #64748b;
+            margin-top: 2px;
+        }
+
+        .header-right {
+            text-align: right;
+            font-size: 9pt;
+            color: #94a3b8;
+        }
+
+        .header-right .version {
+            font-weight: 600;
+            color: #1e40af;
+            font-size: 10pt;
+        }
+
+        /* Sections */
+        h2 {
+            font-size: 14pt;
+            color: #1e40af;
+            border-left: 4px solid #3b82f6;
+            padding-left: 10px;
+            margin: 22px 0 10px 0;
+        }
+
+        h3 {
+            font-size: 11pt;
+            color: #334155;
+            margin: 12px 0 6px 0;
+        }
+
+        p {
+            margin-bottom: 8px;
+            text-align: justify;
+        }
+
+        ul {
+            margin: 6px 0 10px 18px;
+        }
+
+        ul li {
+            margin-bottom: 4px;
+        }
+
+        /* Highlight box */
+        .highlight-box {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 6px;
+            padding: 14px 16px;
+            margin: 12px 0;
+        }
+
+        .highlight-box.green {
+            background: #f0fdf4;
+            border-color: #bbf7d0;
+        }
+
+        .highlight-box.amber {
+            background: #fffbeb;
+            border-color: #fde68a;
+        }
+
+        /* Stats row */
+        .stats-row {
+            display: flex;
+            gap: 12px;
+            margin: 14px 0;
+        }
+
+        .stat-card {
+            flex: 1;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .stat-card .number {
+            font-size: 20pt;
+            font-weight: 700;
+            color: #1e40af;
+            line-height: 1.1;
+        }
+
+        .stat-card .label {
+            font-size: 8.5pt;
+            color: #64748b;
+            margin-top: 4px;
+        }
+
+        .stat-card.green .number {
+            color: #16a34a;
+        }
+
+        /* Quote */
+        .quote {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            color: #fff;
+            border-radius: 8px;
+            padding: 18px 22px;
+            margin: 16px 0;
+            font-style: italic;
+            font-size: 11pt;
+            line-height: 1.6;
+            position: relative;
+        }
+
+        .quote::before {
+            content: '\201C';
+            font-size: 48pt;
+            position: absolute;
+            top: -6px;
+            left: 12px;
+            opacity: 0.3;
+            font-style: normal;
+        }
+
+        .quote .author {
+            display: block;
+            margin-top: 10px;
+            font-style: normal;
+            font-weight: 600;
+            font-size: 9.5pt;
+            opacity: 0.85;
+        }
+
+        /* Timeline */
+        .timeline {
+            position: relative;
+            margin: 14px 0 14px 16px;
+            padding-left: 24px;
+            border-left: 2px solid #bfdbfe;
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 14px;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -31px;
+            top: 4px;
+            width: 12px;
+            height: 12px;
+            background: #3b82f6;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            box-shadow: 0 0 0 2px #bfdbfe;
+        }
+
+        .timeline-item.current::before {
+            background: #16a34a;
+            box-shadow: 0 0 0 2px #bbf7d0;
+        }
+
+        .timeline-item .date {
+            font-weight: 700;
+            color: #1e40af;
+            font-size: 10pt;
+        }
+
+        .timeline-item .desc {
+            color: #475569;
+            font-size: 9.5pt;
+        }
+
+        /* Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+            font-size: 9.5pt;
+        }
+
+        table th {
+            background: #1e40af;
+            color: #fff;
+            padding: 8px 10px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        table td {
+            padding: 7px 10px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        table tr:nth-child(even) td {
+            background: #f8fafc;
+        }
+
+        /* Footer */
+        .footer {
+            position: absolute;
+            bottom: 16mm;
+            left: 20mm;
+            right: 20mm;
+            display: flex;
+            justify-content: space-between;
+            font-size: 8pt;
+            color: #94a3b8;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 8px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 8pt;
+            font-weight: 600;
+        }
+
+        .badge-blue {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .badge-green {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+
+        .badge-amber {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        @media print {
+            body { background: none; }
+            .page { padding: 0; margin: 0; width: auto; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ============ PAGINA 1 ============ -->
+<div class="page">
+    <div class="header">
+        <div class="header-left">
+            <h1>MES Grafica Nappa</h1>
+            <div class="subtitle">Case Study &mdash; Implementazione Sistema MES per Industria Poligrafica</div>
+        </div>
+        <div class="header-right">
+            <div class="version">v2.0</div>
+            Aprile 2026<br>
+            Documento riservato
+        </div>
+    </div>
+
+    <h2>1. L'Azienda</h2>
+    <p>
+        <strong>Grafica Nappa srl</strong>, fondata nel 1926 ad Aversa (CE), rappresenta un punto di riferimento
+        nel panorama dell'industria poligrafica italiana con quasi un secolo di esperienza.
+        Specializzata in stampa offset, stampa digitale e cartotecnica, l'azienda serve clienti
+        di primo piano nel settore packaging alimentare e cosmetico.
+    </p>
+
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="number">100</div>
+            <div class="label">Anni di attivit&agrave;</div>
+        </div>
+        <div class="stat-card">
+            <div class="number">30+</div>
+            <div class="label">Dipendenti</div>
+        </div>
+        <div class="stat-card">
+            <div class="number">11</div>
+            <div class="label">Macchine / Reparti</div>
+        </div>
+        <div class="stat-card">
+            <div class="number">2</div>
+            <div class="label">Linee di stampa</div>
+        </div>
+    </div>
+
+    <div class="highlight-box">
+        <strong>Parco macchine:</strong> Heidelberg XL106 (offset 24h), HP Indigo (digitale),
+        BOBST (fustella/rilievi), JOH (plastificazione a caldo), piegatrici-incollatrici,
+        macchine per legatoria, finitura digitale (Zund, MGI) e allestimento.
+    </div>
+
+    <p>
+        Tra i clienti principali figura <strong>Italiana Confetti (Maxtris)</strong>, leader nel mercato
+        dei confetti, per cui Grafica Nappa produce packaging di alta qualit&agrave; con lavorazioni
+        complesse: stampa offset a 6+ colori, nobilitazioni a caldo, fustellature di precisione
+        e assemblaggi con finestratura.
+    </p>
+
+    <h2>2. La Sfida</h2>
+    <p>
+        Prima dell'implementazione del MES, la gestione della produzione si basava interamente
+        su <strong>fogli Excel condivisi</strong> e comunicazioni verbali tra reparti. Questa situazione
+        generava una serie di criticit&agrave; significative:
+    </p>
+
+    <table>
+        <tr>
+            <th style="width:35%">Problema</th>
+            <th>Impatto</th>
+        </tr>
+        <tr>
+            <td>Gestione manuale con Excel</td>
+            <td>Dati non aggiornati, errori di trascrizione, versioni conflittuali</td>
+        </tr>
+        <tr>
+            <td>Nessuna visibilit&agrave; real-time</td>
+            <td>Impossibile conoscere lo stato effettivo di una commessa in produzione</td>
+        </tr>
+        <tr>
+            <td>Priorit&agrave; calcolate a mano</td>
+            <td>Il responsabile dedicava ore a riordinare le priorit&agrave; ogni mattina</td>
+        </tr>
+        <tr>
+            <td>Setup BOBST non ottimizzati</td>
+            <td>40+ cambi fustella/giorno con tempi morti di 25 min ciascuno</td>
+        </tr>
+        <tr>
+            <td>Nessun tracciamento tempi</td>
+            <td>Impossibile calcolare costi reali per commessa e identificare inefficienze</td>
+        </tr>
+        <tr>
+            <td>Comunicazione frammentata</td>
+            <td>Informazioni perse tra reparti, ritardi nella risoluzione problemi</td>
+        </tr>
+    </table>
+
+    <div class="highlight-box amber">
+        <strong>Dato critico:</strong> con 40 cambi setup al giorno da 25 minuti sulla BOBST,
+        si perdevano circa <strong>16,7 ore/giorno</strong> solo per i cambi formato &mdash;
+        l'equivalente di 2 turni operatore completi.
+    </div>
+
+    <div class="footer">
+        <span>MES Grafica Nappa &mdash; Case Study v2.0</span>
+        <span>Pagina 1 di 3</span>
+    </div>
+</div>
+
+<!-- ============ PAGINA 2 ============ -->
+<div class="page">
+    <div class="header">
+        <div class="header-left">
+            <h1>MES Grafica Nappa</h1>
+            <div class="subtitle">Case Study &mdash; La Soluzione</div>
+        </div>
+        <div class="header-right">
+            <div class="version">v2.0</div>
+            Aprile 2026
+        </div>
+    </div>
+
+    <h2>3. La Soluzione</h2>
+    <p>
+        Il MES Grafica Nappa &egrave; un sistema di esecuzione della produzione (<em>Manufacturing Execution System</em>)
+        sviluppato internamente e progettato specificamente per le esigenze dell'industria poligrafica.
+        Costruito su framework <strong>Laravel</strong> con architettura modulare, il sistema integra
+        in tempo reale tutte le fonti dati dell'azienda.
+    </p>
+
+    <h3>Integrazioni native</h3>
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="number" style="font-size:14pt;">Prinect</div>
+            <div class="label">Heidelberg &mdash; Stampa Offset</div>
+        </div>
+        <div class="stat-card">
+            <div class="number" style="font-size:14pt;">Fiery</div>
+            <div class="label">EFI &mdash; Stampa Digitale</div>
+        </div>
+        <div class="stat-card">
+            <div class="number" style="font-size:14pt;">Onda</div>
+            <div class="label">ERP &mdash; Sync SOAP oraria</div>
+        </div>
+        <div class="stat-card">
+            <div class="number" style="font-size:14pt;">NetTime</div>
+            <div class="label">Presenze dipendenti</div>
+        </div>
+    </div>
+
+    <h3>Dashboard per ruolo</h3>
+    <table>
+        <tr>
+            <th style="width:22%">Dashboard</th>
+            <th>Funzionalit&agrave; principali</th>
+        </tr>
+        <tr>
+            <td><span class="badge badge-blue">Operatore</span></td>
+            <td>Fasi assegnate con priorit&agrave; calcolata, avvio/pausa/fine fase, note fustelle, prossime commesse</td>
+        </tr>
+        <tr>
+            <td><span class="badge badge-green">Owner</span></td>
+            <td>Panoramica completa, KPI per reparto, ore lavorate, gestione priorit&agrave; manuali, report ore</td>
+        </tr>
+        <tr>
+            <td><span class="badge badge-amber">Spedizione</span></td>
+            <td>DDT PDF automatici, tracking BRT, note consegne bidirezionali, sidebar con anchor</td>
+        </tr>
+        <tr>
+            <td><span class="badge badge-blue">Prestampa</span></td>
+            <td>Gestione commesse in lavorazione, campi editabili, assegnazione operatore</td>
+        </tr>
+    </table>
+
+    <h3>Scheduler Mossa 37 &mdash; Batching Intelligente</h3>
+    <p>
+        Il cuore dell'ottimizzazione risiede nello <strong>scheduler Mossa 37</strong>, un sistema di
+        pianificazione basato su simulazione a eventi discreti con 4 livelli di priorit&agrave;:
+    </p>
+    <ul>
+        <li><strong>Disponibilit&agrave;</strong> &mdash; la fase &egrave; pronta (tutte le precedenti completate)</li>
+        <li><strong>Urgenza reale</strong> &mdash; calcolata dalla data consegna e tempo residuo</li>
+        <li><strong>Batch affinity</strong> &mdash; raggruppamento commesse con stessa configurazione macchina (entro &plusmn;5gg)</li>
+        <li><strong>Sequenza ciclo</strong> &mdash; rispetto dell'ordine naturale delle lavorazioni</li>
+    </ul>
+
+    <div class="highlight-box green">
+        <strong>Batching BOBST:</strong> lo scheduler raggruppa le commesse con la stessa fustella,
+        riducendo i cambi formato da 40 a 8 al giorno. Per la JOH (collo di bottiglia principale),
+        il batching per tipo di plastificazione riduce i tempi di avviamento del 60%.
+    </div>
+
+    <h3>Architettura tecnica</h3>
+    <table>
+        <tr>
+            <th style="width:30%">Componente</th>
+            <th>Tecnologia</th>
+        </tr>
+        <tr>
+            <td>Backend</td>
+            <td>Laravel (PHP 8.x), MySQL, scheduler cron ogni 2 min</td>
+        </tr>
+        <tr>
+            <td>Frontend</td>
+            <td>Blade + Alpine.js, Chart.js, PWA con push notifications</td>
+        </tr>
+        <tr>
+            <td>Comunicazione</td>
+            <td>Chat interna WebSocket, notifiche real-time, beep AudioContext</td>
+        </tr>
+        <tr>
+            <td>Integrazioni</td>
+            <td>SOAP (Onda), REST API (Prinect, Fiery, BRT), share SMB (NetTime)</td>
+        </tr>
+        <tr>
+            <td>Documenti</td>
+            <td>DDT PDF generati automaticamente, etichette Data Matrix</td>
+        </tr>
+    </table>
+
+    <div class="footer">
+        <span>MES Grafica Nappa &mdash; Case Study v2.0</span>
+        <span>Pagina 2 di 3</span>
+    </div>
+</div>
+
+<!-- ============ PAGINA 3 ============ -->
+<div class="page">
+    <div class="header">
+        <div class="header-left">
+            <h1>MES Grafica Nappa</h1>
+            <div class="subtitle">Case Study &mdash; Risultati e Timeline</div>
+        </div>
+        <div class="header-right">
+            <div class="version">v2.0</div>
+            Aprile 2026
+        </div>
+    </div>
+
+    <h2>4. I Risultati</h2>
+
+    <div class="stats-row">
+        <div class="stat-card green">
+            <div class="number">85-93</div>
+            <div class="label">Ore/mese di setup risparmiate</div>
+        </div>
+        <div class="stat-card green">
+            <div class="number">900+</div>
+            <div class="label">Fasi attive monitorate real-time</div>
+        </div>
+        <div class="stat-card green">
+            <div class="number">83%</div>
+            <div class="label">Riduzione query/pagina</div>
+        </div>
+        <div class="stat-card green">
+            <div class="number">0</div>
+            <div class="label">Errori manuali DDT</div>
+        </div>
+    </div>
+
+    <table>
+        <tr>
+            <th style="width:35%">Metrica</th>
+            <th style="width:30%">Prima del MES</th>
+            <th style="width:35%">Dopo il MES</th>
+        </tr>
+        <tr>
+            <td>Cambi setup BOBST/giorno</td>
+            <td>40 (25 min/cambio)</td>
+            <td>8 (10 min/cambio) &mdash; <strong>-80%</strong></td>
+        </tr>
+        <tr>
+            <td>Visibilit&agrave; stato commessa</td>
+            <td>Telefonata al reparto</td>
+            <td>Dashboard real-time istantanea</td>
+        </tr>
+        <tr>
+            <td>Calcolo priorit&agrave;</td>
+            <td>Manuale (1-2h/giorno)</td>
+            <td>Automatico con 4 livelli</td>
+        </tr>
+        <tr>
+            <td>Tracciamento tempi operatore</td>
+            <td>Non esistente</td>
+            <td>Automatico (Prinect + manuale)</td>
+        </tr>
+        <tr>
+            <td>Generazione DDT</td>
+            <td>Manuale in Word</td>
+            <td>PDF automatico con Data Matrix</td>
+        </tr>
+        <tr>
+            <td>Comunicazione reparti</td>
+            <td>Verbale / telefono</td>
+            <td>Chat interna + notifiche push</td>
+        </tr>
+        <tr>
+            <td>Query per pagina</td>
+            <td>116</td>
+            <td>20 &mdash; <strong>-83%</strong></td>
+        </tr>
+    </table>
+
+    <h2>5. Testimonianza</h2>
+
+    <div class="quote">
+        Il MES ci ha permesso di passare da una gestione manuale a un controllo completo
+        della produzione. Oggi sappiamo esattamente quando ogni commessa sar&agrave; pronta
+        per la spedizione. Il batching intelligente sulla BOBST da solo ci ha fatto
+        recuperare quasi 100 ore al mese di setup, tempo che ora dedichiamo alla produzione effettiva.
+        <span class="author">&mdash; Direzione Grafica Nappa srl</span>
+    </div>
+
+    <h2>6. Timeline del Progetto</h2>
+
+    <div class="timeline">
+        <div class="timeline-item">
+            <div class="date">Febbraio 2026 &mdash; v1.0</div>
+            <div class="desc">
+                Sistema base: dashboard operatore e owner, sync Onda SOAP,
+                integrazione Prinect e Fiery, gestione fasi produttive.
+            </div>
+        </div>
+        <div class="timeline-item">
+            <div class="date">Marzo 2026 &mdash; v1.1 / v1.2 / v1.3</div>
+            <div class="desc">
+                Presenze NetTime, audit sicurezza (12 issue risolte),
+                audit performance (query da 116 a 20), report ore con KPI e grafici,
+                DDT PDF automatici, dashboard spedizione e prestampa.
+            </div>
+        </div>
+        <div class="timeline-item current">
+            <div class="date">Aprile 2026 &mdash; v2.0</div>
+            <div class="desc">
+                Scheduler Mossa 37 con batching intelligente, chat interna WebSocket,
+                UI enterprise con PWA e push notifications, interfaccia responsive,
+                Gantt interattivo per visualizzazione piano di produzione.
+            </div>
+        </div>
+    </div>
+
+    <div class="highlight-box">
+        <strong>Prossimi sviluppi:</strong> integrazione Solar-Log per monitoraggio energetico,
+        evoluzione verso piattaforma SaaS multi-tenant per tipografie, branding configurabile,
+        ottimizzazione scheduler con AI (Claude API).
+    </div>
+
+    <div class="footer">
+        <span>MES Grafica Nappa &mdash; Case Study v2.0 &mdash; &copy; 2026 Grafica Nappa srl</span>
+        <span>Pagina 3 di 3</span>
+    </div>
+</div>
+
+</body>
+</html>

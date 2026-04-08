@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ROI Calculator &mdash; MES Grafica Nappa v2.0</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 18mm 20mm 20mm 20mm;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            font-size: 10.5pt;
+            line-height: 1.55;
+            color: #1e293b;
+            background: #f1f5f9;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .page {
+            width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto;
+            padding: 18mm 20mm 20mm 20mm;
+            background: #fff;
+            page-break-after: always;
+            position: relative;
+        }
+
+        .page:last-child {
+            page-break-after: auto;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid #1e40af;
+            padding-bottom: 12px;
+            margin-bottom: 18px;
+        }
+
+        .header-left h1 {
+            font-size: 22pt;
+            font-weight: 700;
+            color: #1e40af;
+            letter-spacing: -0.5px;
+        }
+
+        .header-left .subtitle {
+            font-size: 11pt;
+            color: #64748b;
+            margin-top: 2px;
+        }
+
+        .header-right {
+            text-align: right;
+            font-size: 9pt;
+            color: #94a3b8;
+        }
+
+        .header-right .version {
+            font-weight: 600;
+            color: #1e40af;
+            font-size: 10pt;
+        }
+
+        h2 {
+            font-size: 14pt;
+            color: #1e40af;
+            border-left: 4px solid #3b82f6;
+            padding-left: 10px;
+            margin: 18px 0 12px 0;
+        }
+
+        p {
+            margin-bottom: 8px;
+        }
+
+        /* Form grid */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px 20px;
+            margin: 14px 0;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-size: 9pt;
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 4px;
+        }
+
+        .form-group input {
+            border: 1.5px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 8px 10px;
+            font-size: 11pt;
+            font-family: inherit;
+            color: #1e293b;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+        }
+
+        .form-group .unit {
+            font-size: 8pt;
+            color: #94a3b8;
+            margin-top: 2px;
+        }
+
+        /* Section labels */
+        .section-label {
+            grid-column: 1 / -1;
+            font-size: 10pt;
+            font-weight: 700;
+            color: #334155;
+            padding: 6px 0 2px 0;
+            border-bottom: 1px solid #e2e8f0;
+            margin-top: 4px;
+        }
+
+        /* Results */
+        .results-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            margin: 16px 0;
+        }
+
+        .result-card {
+            border-radius: 8px;
+            padding: 14px 16px;
+            text-align: center;
+        }
+
+        .result-card .label {
+            font-size: 8.5pt;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        .result-card .value {
+            font-size: 20pt;
+            font-weight: 700;
+            line-height: 1.1;
+        }
+
+        .result-card .detail {
+            font-size: 8pt;
+            margin-top: 4px;
+            opacity: 0.8;
+        }
+
+        /* Color variants */
+        .card-green {
+            background: #f0fdf4;
+            border: 1.5px solid #86efac;
+        }
+        .card-green .label { color: #15803d; }
+        .card-green .value { color: #16a34a; }
+        .card-green .detail { color: #166534; }
+
+        .card-blue {
+            background: #eff6ff;
+            border: 1.5px solid #93c5fd;
+        }
+        .card-blue .label { color: #1e40af; }
+        .card-blue .value { color: #2563eb; }
+        .card-blue .detail { color: #1e3a8a; }
+
+        .card-amber {
+            background: #fffbeb;
+            border: 1.5px solid #fcd34d;
+        }
+        .card-amber .label { color: #92400e; }
+        .card-amber .value { color: #d97706; }
+        .card-amber .detail { color: #78350f; }
+
+        .card-purple {
+            background: #faf5ff;
+            border: 1.5px solid #d8b4fe;
+        }
+        .card-purple .label { color: #6b21a8; }
+        .card-purple .value { color: #7c3aed; }
+        .card-purple .detail { color: #581c87; }
+
+        /* Big result */
+        .big-result {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            color: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            margin: 16px 0;
+        }
+
+        .big-result .label {
+            font-size: 10pt;
+            font-weight: 600;
+            opacity: 0.85;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .big-result .value {
+            font-size: 32pt;
+            font-weight: 700;
+            margin: 6px 0;
+        }
+
+        .big-result .detail {
+            font-size: 9.5pt;
+            opacity: 0.75;
+        }
+
+        /* Breakdown table */
+        .breakdown {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0;
+            font-size: 9.5pt;
+        }
+
+        .breakdown th {
+            background: #f8fafc;
+            color: #475569;
+            padding: 8px 10px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .breakdown td {
+            padding: 7px 10px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .breakdown .formula {
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 8.5pt;
+            color: #64748b;
+        }
+
+        .breakdown .result-val {
+            font-weight: 700;
+            color: #16a34a;
+            text-align: right;
+        }
+
+        .breakdown tr.total td {
+            border-top: 2px solid #1e40af;
+            font-weight: 700;
+            color: #1e40af;
+        }
+
+        /* Note */
+        .note {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 12px 14px;
+            font-size: 9pt;
+            color: #64748b;
+            margin-top: 14px;
+        }
+
+        .note strong {
+            color: #475569;
+        }
+
+        /* Footer */
+        .footer {
+            position: absolute;
+            bottom: 16mm;
+            left: 20mm;
+            right: 20mm;
+            display: flex;
+            justify-content: space-between;
+            font-size: 8pt;
+            color: #94a3b8;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 8px;
+        }
+
+        @media print {
+            body { background: none; }
+            .page { padding: 0; margin: 0; width: auto; box-shadow: none; }
+            .form-group input {
+                border: 1px solid #94a3b8;
+            }
+        }
+
+        @media screen {
+            .page {
+                box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+                margin: 20px auto;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ============ PAGINA 1 ============ -->
+<div class="page">
+    <div class="header">
+        <div class="header-left">
+            <h1>ROI Calculator</h1>
+            <div class="subtitle">MES Grafica Nappa v2.0 &mdash; Calcolo Ritorno sull'Investimento</div>
+        </div>
+        <div class="header-right">
+            <div class="version">v2.0</div>
+            Aprile 2026<br>
+            Strumento interattivo
+        </div>
+    </div>
+
+    <p>
+        Inserisci i dati della tua azienda per calcolare il risparmio stimato con l'implementazione
+        del MES. Tutti i valori si aggiornano automaticamente.
+    </p>
+
+    <h2>Parametri Aziendali</h2>
+
+    <div class="form-grid">
+        <div class="form-group">
+            <label for="operatori">Numero operatori</label>
+            <input type="number" id="operatori" value="30" min="1" max="500">
+        </div>
+        <div class="form-group">
+            <label for="costoOrario">Costo orario medio operatore</label>
+            <input type="number" id="costoOrario" value="18" min="1" max="100" step="0.5">
+            <span class="unit">&euro; / ora (lordo aziendale)</span>
+        </div>
+
+        <div class="section-label">Senza MES (situazione attuale)</div>
+        <div class="form-group">
+            <label for="cambiSenza">Cambi setup / giorno</label>
+            <input type="number" id="cambiSenza" value="40" min="0" max="200">
+        </div>
+        <div class="form-group">
+            <label for="minutiSenza">Minuti per cambio setup</label>
+            <input type="number" id="minutiSenza" value="25" min="1" max="120">
+        </div>
+
+        <div class="section-label">Con MES (dopo implementazione)</div>
+        <div class="form-group">
+            <label for="cambiCon">Cambi setup / giorno</label>
+            <input type="number" id="cambiCon" value="8" min="0" max="200">
+        </div>
+        <div class="form-group">
+            <label for="minutiCon">Minuti per cambio setup</label>
+            <input type="number" id="minutiCon" value="10" min="1" max="120">
+        </div>
+
+        <div class="section-label">Ritardi e costi</div>
+        <div class="form-group">
+            <label for="ritardiSenza">Commesse in ritardo / mese (senza MES)</label>
+            <input type="number" id="ritardiSenza" value="15" min="0" max="200">
+        </div>
+        <div class="form-group">
+            <label for="costoRitardo">Costo medio per ritardo</label>
+            <input type="number" id="costoRitardo" value="200" min="0" max="10000" step="10">
+            <span class="unit">&euro; (penali, trasporti urgenti, sconti)</span>
+        </div>
+
+        <div class="form-group">
+            <label for="ritardiCon">Commesse in ritardo / mese (con MES)</label>
+            <input type="number" id="ritardiCon" value="3" min="0" max="200">
+        </div>
+        <div class="form-group">
+            <label for="costoMes">Costo annuale MES (licenza + manutenzione)</label>
+            <input type="number" id="costoMes" value="12000" min="0" max="500000" step="500">
+            <span class="unit">&euro; / anno</span>
+        </div>
+    </div>
+
+    <h2>Risultati</h2>
+
+    <div class="results-grid">
+        <div class="result-card card-green">
+            <div class="label">Ore Setup Risparmiate / Mese</div>
+            <div class="value" id="oreRisparmiateVal">--</div>
+            <div class="detail" id="oreRisparmiateDetail"></div>
+        </div>
+        <div class="result-card card-green">
+            <div class="label">Risparmio Setup Annuale</div>
+            <div class="value" id="risparmioSetupVal">--</div>
+            <div class="detail" id="risparmioSetupDetail"></div>
+        </div>
+        <div class="result-card card-amber">
+            <div class="label">Risparmio Ritardi Annuale</div>
+            <div class="value" id="risparmioRitardiVal">--</div>
+            <div class="detail" id="risparmioRitardiDetail"></div>
+        </div>
+    </div>
+
+    <div class="big-result">
+        <div class="label">Risparmio Totale Annuale Stimato</div>
+        <div class="value" id="risparmioTotaleVal">--</div>
+        <div class="detail" id="risparmioTotaleDetail"></div>
+    </div>
+
+    <div class="results-grid" style="grid-template-columns: 1fr 1fr;">
+        <div class="result-card card-blue">
+            <div class="label">ROI</div>
+            <div class="value" id="roiVal">--</div>
+            <div class="detail" id="roiDetail"></div>
+        </div>
+        <div class="result-card card-purple">
+            <div class="label">Payback Period</div>
+            <div class="value" id="paybackVal">--</div>
+            <div class="detail">Tempo per recuperare l'investimento</div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <span>MES Grafica Nappa &mdash; ROI Calculator v2.0</span>
+        <span>Pagina 1 di 2</span>
+    </div>
+</div>
+
+<!-- ============ PAGINA 2 ============ -->
+<div class="page">
+    <div class="header">
+        <div class="header-left">
+            <h1>ROI Calculator</h1>
+            <div class="subtitle">Dettaglio Calcoli e Metodologia</div>
+        </div>
+        <div class="header-right">
+            <div class="version">v2.0</div>
+            Aprile 2026
+        </div>
+    </div>
+
+    <h2>Dettaglio Calcoli</h2>
+
+    <table class="breakdown">
+        <tr>
+            <th style="width:38%">Voce</th>
+            <th style="width:38%">Formula</th>
+            <th style="width:24%">Risultato</th>
+        </tr>
+        <tr>
+            <td>Minuti setup/giorno <strong>senza</strong> MES</td>
+            <td class="formula" id="fSetupSenza">--</td>
+            <td class="result-val" id="rSetupSenza">--</td>
+        </tr>
+        <tr>
+            <td>Minuti setup/giorno <strong>con</strong> MES</td>
+            <td class="formula" id="fSetupCon">--</td>
+            <td class="result-val" id="rSetupCon">--</td>
+        </tr>
+        <tr>
+            <td>Minuti risparmiati/giorno</td>
+            <td class="formula" id="fMinRisp">--</td>
+            <td class="result-val" id="rMinRisp">--</td>
+        </tr>
+        <tr>
+            <td>Ore risparmiate/mese (22 gg lavorativi)</td>
+            <td class="formula" id="fOreRisp">--</td>
+            <td class="result-val" id="rOreRisp">--</td>
+        </tr>
+        <tr>
+            <td>Risparmio setup annuale</td>
+            <td class="formula" id="fRispSetup">--</td>
+            <td class="result-val" id="rRispSetup" style="color:#16a34a;">--</td>
+        </tr>
+        <tr>
+            <td>Ritardi evitati/mese</td>
+            <td class="formula" id="fRitEvit">--</td>
+            <td class="result-val" id="rRitEvit">--</td>
+        </tr>
+        <tr>
+            <td>Risparmio ritardi annuale</td>
+            <td class="formula" id="fRispRit">--</td>
+            <td class="result-val" id="rRispRit" style="color:#d97706;">--</td>
+        </tr>
+        <tr class="total">
+            <td>Risparmio totale annuale</td>
+            <td>Setup + Ritardi</td>
+            <td class="result-val" id="rTotale" style="color:#1e40af;">--</td>
+        </tr>
+        <tr class="total">
+            <td>ROI annuale</td>
+            <td class="formula" id="fROI">--</td>
+            <td class="result-val" id="rROI" style="color:#2563eb;">--</td>
+        </tr>
+        <tr class="total">
+            <td>Payback period</td>
+            <td class="formula" id="fPayback">--</td>
+            <td class="result-val" id="rPayback" style="color:#7c3aed;">--</td>
+        </tr>
+    </table>
+
+    <h2>Note Metodologiche</h2>
+
+    <div class="note">
+        <strong>Giorni lavorativi:</strong> il calcolo utilizza 22 giorni lavorativi/mese (264 giorni/anno)
+        come media standard per il settore manifatturiero italiano.
+    </div>
+
+    <div class="note" style="margin-top:8px;">
+        <strong>Risparmi non quantificati:</strong> questo calcolatore considera solo i risparmi diretti
+        su tempi di setup e costi per ritardi. Non include benefici aggiuntivi quali:
+        <br><br>
+        &bull; <strong>Riduzione errori</strong> &mdash; DDT automatici, eliminazione trascrizioni manuali<br>
+        &bull; <strong>Tempo risparmiato dal responsabile</strong> &mdash; calcolo priorit&agrave; automatico (1-2h/giorno)<br>
+        &bull; <strong>Miglior utilizzo macchine</strong> &mdash; OEE in crescita grazie al monitoraggio real-time<br>
+        &bull; <strong>Soddisfazione cliente</strong> &mdash; consegne puntuali, tracciabilit&agrave; completa<br>
+        &bull; <strong>Risparmio energetico</strong> &mdash; meno avviamenti = meno consumo (macchine offset)<br>
+        &bull; <strong>Riduzione scarti</strong> &mdash; setup ottimizzati riducono gli scarti di avviamento
+    </div>
+
+    <div class="note" style="margin-top:8px;">
+        <strong>Caso reale Grafica Nappa:</strong> con i parametri di default (30 operatori, 40 cambi/giorno
+        ridotti a 8), il risparmio effettivo misurato nei primi 2 mesi di utilizzo &egrave; risultato
+        in linea con le stime del calcolatore, confermando un payback period inferiore a 6 mesi.
+    </div>
+
+    <div class="note" style="margin-top:8px;">
+        <strong>Disclaimer:</strong> i risultati del calcolatore sono stime basate sui parametri inseriti.
+        I risparmi effettivi possono variare in base alla tipologia di produzione,
+        alla complessit&agrave; delle commesse e al livello di adozione del sistema da parte degli operatori.
+        Si consiglia un'analisi personalizzata per una valutazione accurata.
+    </div>
+
+    <div class="footer">
+        <span>MES Grafica Nappa &mdash; ROI Calculator v2.0 &mdash; &copy; 2026 Grafica Nappa srl</span>
+        <span>Pagina 2 di 2</span>
+    </div>
+</div>
+
+<script>
+(function() {
+    const ids = [
+        'operatori','costoOrario','cambiSenza','minutiSenza',
+        'cambiCon','minutiCon','ritardiSenza','costoRitardo',
+        'ritardiCon','costoMes'
+    ];
+
+    const el = {};
+    ids.forEach(id => { el[id] = document.getElementById(id); });
+
+    function fmt(n) {
+        return new Intl.NumberFormat('it-IT', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(Math.round(n));
+    }
+
+    function fmtDec(n, d) {
+        return new Intl.NumberFormat('it-IT', {
+            minimumFractionDigits: d || 1,
+            maximumFractionDigits: d || 1
+        }).format(n);
+    }
+
+    function calculate() {
+        const v = {};
+        ids.forEach(id => { v[id] = parseFloat(el[id].value) || 0; });
+
+        // Setup calculations
+        const minSenza = v.cambiSenza * v.minutiSenza;
+        const minCon = v.cambiCon * v.minutiCon;
+        const minRispGiorno = Math.max(0, minSenza - minCon);
+        const oreRispMese = minRispGiorno * 22 / 60;
+        const rispSetupAnno = oreRispMese * v.costoOrario * 12;
+
+        // Delay savings
+        const ritardiEvitati = Math.max(0, v.ritardiSenza - v.ritardiCon);
+        const rispRitardiAnno = ritardiEvitati * v.costoRitardo * 12;
+
+        // Totals
+        const rispTotale = rispSetupAnno + rispRitardiAnno;
+        const roi = v.costoMes > 0 ? (rispTotale / v.costoMes * 100) : 0;
+        const paybackMesi = rispTotale > 0 ? (v.costoMes / (rispTotale / 12)) : 999;
+
+        // Page 1 cards
+        document.getElementById('oreRisparmiateVal').textContent = fmtDec(oreRispMese);
+        document.getElementById('oreRisparmiateDetail').textContent = fmtDec(minRispGiorno) + ' min/giorno x 22 gg';
+
+        document.getElementById('risparmioSetupVal').textContent = '\u20AC ' + fmt(rispSetupAnno);
+        document.getElementById('risparmioSetupDetail').textContent = fmtDec(oreRispMese) + ' ore x \u20AC' + fmt(v.costoOrario) + ' x 12 mesi';
+
+        document.getElementById('risparmioRitardiVal').textContent = '\u20AC ' + fmt(rispRitardiAnno);
+        document.getElementById('risparmioRitardiDetail').textContent = ritardiEvitati + ' ritardi evitati/mese x \u20AC' + fmt(v.costoRitardo);
+
+        document.getElementById('risparmioTotaleVal').textContent = '\u20AC ' + fmt(rispTotale);
+        document.getElementById('risparmioTotaleDetail').textContent =
+            'Setup \u20AC' + fmt(rispSetupAnno) + ' + Ritardi \u20AC' + fmt(rispRitardiAnno) +
+            ' | Costo MES \u20AC' + fmt(v.costoMes) + '/anno';
+
+        document.getElementById('roiVal').textContent = fmt(roi) + '%';
+        document.getElementById('roiDetail').textContent = 'Risparmio / Costo MES x 100';
+
+        if (paybackMesi < 1) {
+            document.getElementById('paybackVal').textContent = '< 1 mese';
+        } else if (paybackMesi > 60) {
+            document.getElementById('paybackVal').textContent = '> 5 anni';
+        } else {
+            document.getElementById('paybackVal').textContent = fmtDec(paybackMesi) + ' mesi';
+        }
+
+        // Page 2 breakdown
+        document.getElementById('fSetupSenza').textContent = v.cambiSenza + ' x ' + v.minutiSenza + ' min';
+        document.getElementById('rSetupSenza').textContent = fmt(minSenza) + ' min';
+
+        document.getElementById('fSetupCon').textContent = v.cambiCon + ' x ' + v.minutiCon + ' min';
+        document.getElementById('rSetupCon').textContent = fmt(minCon) + ' min';
+
+        document.getElementById('fMinRisp').textContent = fmt(minSenza) + ' - ' + fmt(minCon);
+        document.getElementById('rMinRisp').textContent = fmt(minRispGiorno) + ' min';
+
+        document.getElementById('fOreRisp').textContent = fmt(minRispGiorno) + ' x 22 / 60';
+        document.getElementById('rOreRisp').textContent = fmtDec(oreRispMese) + ' ore';
+
+        document.getElementById('fRispSetup').textContent = fmtDec(oreRispMese) + ' x \u20AC' + fmt(v.costoOrario) + ' x 12';
+        document.getElementById('rRispSetup').textContent = '\u20AC ' + fmt(rispSetupAnno);
+
+        document.getElementById('fRitEvit').textContent = v.ritardiSenza + ' - ' + v.ritardiCon;
+        document.getElementById('rRitEvit').textContent = ritardiEvitati + ' ritardi';
+
+        document.getElementById('fRispRit').textContent = ritardiEvitati + ' x \u20AC' + fmt(v.costoRitardo) + ' x 12';
+        document.getElementById('rRispRit').textContent = '\u20AC ' + fmt(rispRitardiAnno);
+
+        document.getElementById('rTotale').textContent = '\u20AC ' + fmt(rispTotale);
+
+        document.getElementById('fROI').textContent = '\u20AC' + fmt(rispTotale) + ' / \u20AC' + fmt(v.costoMes) + ' x 100';
+        document.getElementById('rROI').textContent = fmt(roi) + '%';
+
+        document.getElementById('fPayback').textContent = '\u20AC' + fmt(v.costoMes) + ' / (\u20AC' + fmt(rispTotale) + ' / 12)';
+        document.getElementById('rPayback').textContent = paybackMesi > 60 ? '> 60 mesi' : fmtDec(paybackMesi) + ' mesi';
+    }
+
+    // Attach listeners
+    ids.forEach(id => {
+        el[id].addEventListener('input', calculate);
+    });
+
+    // Initial calculation
+    calculate();
+})();
+</script>
+
+</body>
+</html>
