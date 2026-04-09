@@ -31,15 +31,46 @@ class MagazzinoMovimentoController extends Controller
     public function registraCarico(Request $request)
     {
         $request->validate([
-            'articolo_id' => 'required|exists:magazzino_articoli,id',
             'quantita' => 'required|integer|min:1',
         ]);
 
         $operatore = $request->attributes->get('operatore') ?? auth()->guard('operatore')->user();
 
+        // Se non selezionato un articolo esistente, creane uno nuovo
+        $articoloId = $request->articolo_id;
+        if (!$articoloId) {
+            $tipoCarta = trim($request->tipo_carta ?? '');
+            $formato = trim($request->formato ?? '');
+            $grammatura = $request->grammatura ? (int) $request->grammatura : null;
+
+            if (!$tipoCarta) {
+                return back()->withInput()->with('error', 'Seleziona un articolo esistente o compila il tipo carta.');
+            }
+
+            // Genera codice da tipo carta + formato + grammatura
+            $codice = strtoupper(preg_replace('/[^A-Z0-9]/', '', $tipoCarta));
+            if ($formato) $codice .= '.' . str_replace('x', 'X', $formato);
+            if ($grammatura) $codice .= '.' . $grammatura;
+
+            $descrizione = $tipoCarta;
+            if ($formato) $descrizione .= ' ' . $formato;
+            if ($grammatura) $descrizione .= ' ' . $grammatura . 'g';
+
+            $articolo = MagazzinoArticolo::firstOrCreate(
+                ['codice' => $codice],
+                [
+                    'descrizione' => $descrizione,
+                    'tipo_carta' => $tipoCarta,
+                    'formato' => $formato ?: null,
+                    'grammatura' => $grammatura,
+                    'fornitore' => $request->fornitore,
+                ]
+            );
+            $articoloId = $articolo->id;
+        }
+
         $result = MagazzinoService::registraCarico([
-            'articolo_id' => $request->articolo_id,
-            'ubicazione_id' => $request->ubicazione_id,
+            'articolo_id' => $articoloId,
             'quantita' => $request->quantita,
             'lotto' => $request->lotto,
             'fornitore' => $request->fornitore,

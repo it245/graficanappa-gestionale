@@ -50,37 +50,57 @@
                     @csrf
 
                     <div class="row g-3">
-                        {{-- Articolo --}}
+                        {{-- Articolo esistente O nuovo --}}
                         <div class="col-12">
-                            <label class="form-label">Articolo (tipo carta)</label>
-                            <select name="articolo_id" class="form-select" required id="selArticolo">
-                                <option value="">-- Seleziona articolo --</option>
+                            <label class="form-label">Articolo esistente</label>
+                            <select name="articolo_id" class="form-select" id="selArticolo">
+                                <option value="">-- Nuovo articolo (compila sotto) --</option>
                                 @foreach($articoli as $art)
-                                    <option value="{{ $art->id }}" data-codice="{{ $art->codice }}"
-                                        {{ old('articolo_id') == $art->id ? 'selected' : '' }}>
+                                    <option value="{{ $art->id }}">
                                         {{ $art->codice }} — {{ $art->descrizione }}
                                     </option>
                                 @endforeach
                             </select>
-                            <div class="form-text">Oppure <a href="{{ route('magazzino.articoli', ['op_token' => request('op_token')]) }}">crea nuovo articolo</a></div>
+                            <div class="form-text">Se l'articolo esiste gia, selezionalo. Altrimenti lascia vuoto e compila i campi sotto.</div>
+                        </div>
+
+                        {{-- Campi nuovo articolo (pre-compilati da OCR) --}}
+                        <div id="nuovoArticoloFields">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Tipo carta</label>
+                                    <input type="text" name="tipo_carta" class="form-control"
+                                        value="{{ old('tipo_carta', $ocrDati['tipo_carta'] ?? '') }}" placeholder="es. ALASKA PLUS GC2 FSC">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Formato</label>
+                                    <input type="text" name="formato" class="form-control"
+                                        value="{{ old('formato', $ocrDati['formato'] ?? '') }}" placeholder="es. 58x80">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Grammatura</label>
+                                    <input type="number" name="grammatura" class="form-control"
+                                        value="{{ old('grammatura', $ocrDati['grammatura'] ?? '') }}" placeholder="es. 270">
+                                </div>
+                            </div>
                         </div>
 
                         {{-- Quantita --}}
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label">Quantita</label>
                             <input type="number" name="quantita" class="form-control" min="1" required
                                 value="{{ old('quantita', $ocrDati['quantita'] ?? '') }}">
                         </div>
 
                         {{-- Fornitore --}}
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label">Fornitore</label>
                             <input type="text" name="fornitore" class="form-control"
                                 value="{{ old('fornitore', $ocrDati['fornitore'] ?? '') }}">
                         </div>
 
                         {{-- Lotto --}}
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label">Lotto</label>
                             <input type="text" name="lotto" class="form-control"
                                 value="{{ old('lotto', $ocrDati['lotto'] ?? '') }}">
@@ -101,4 +121,11 @@
         </div>
     </div>
 </div>
+
+<script>
+document.getElementById('selArticolo')?.addEventListener('change', function() {
+    const fields = document.getElementById('nuovoArticoloFields');
+    fields.style.display = this.value ? 'none' : 'block';
+});
+</script>
 @endsection
