@@ -14,6 +14,7 @@ class OcrBollaService
     {
         try {
             $ocr = new TesseractOCR($imagePath);
+            $ocr->executable(env('TESSERACT_PATH', 'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'));
             $ocr->lang('ita');
             $ocr->psm(6); // Assume un blocco di testo uniforme
             $testo = $ocr->run();
