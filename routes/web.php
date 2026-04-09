@@ -234,6 +234,15 @@ Route::middleware(['magazzino.auth'])->prefix('magazzino')->group(function () {
 
     // Alert
     Route::get('/alert', [MagazzinoController::class, 'alertSoglia'])->name('magazzino.alert');
+
+    // Fabbisogno materiali
+    Route::get('/fabbisogno', [MagazzinoController::class, 'fabbisogno'])->name('magazzino.fabbisogno');
+    Route::get('/fabbisogno/check/{commessa}', function ($commessa) {
+        return response()->json(\App\Services\FabbisognoService::verificaDisponibilita($commessa));
+    })->name('magazzino.fabbisogno.check');
+
+    // Ordini di acquisto
+    Route::get('/ordini-acquisto', [MagazzinoController::class, 'ordiniAcquisto'])->name('magazzino.ordiniAcquisto');
 });
 
 // Operatore: prelievo dalla propria dashboard (scansione QR)

@@ -7,6 +7,7 @@ use App\Models\MagazzinoArticolo;
 use App\Models\MagazzinoGiacenza;
 use App\Models\MagazzinoMovimento;
 use App\Services\MagazzinoService;
+use App\Services\FabbisognoService;
 
 class MagazzinoController extends Controller
 {
@@ -169,6 +170,43 @@ class MagazzinoController extends Controller
         return view('magazzino.alert', [
             'operatore' => $operatore,
             'alert' => $alert,
+        ]);
+    }
+
+    /**
+     * Fabbisogno materiali: fabbisogno carta per commesse in attesa di stampa.
+     */
+    public function fabbisogno(Request $request)
+    {
+        $operatore = $request->attributes->get('operatore') ?? auth()->guard('operatore')->user();
+
+        $fabbisogno = FabbisognoService::calcolaFabbisogno();
+
+        $totFabbisogno = collect($fabbisogno)->sum('fabbisogno_totale');
+        $totDisponibile = collect($fabbisogno)->where('deficit', '<=', 0)->count();
+        $totMancante = collect($fabbisogno)->where('deficit', '>', 0)->count();
+
+        return view('magazzino.fabbisogno', [
+            'operatore' => $operatore,
+            'fabbisogno' => $fabbisogno,
+            'totFabbisogno' => $totFabbisogno,
+            'totDisponibile' => $totDisponibile,
+            'totMancante' => $totMancante,
+        ]);
+    }
+
+    /**
+     * Ordini di acquisto: lista carta da ordinare raggruppata per fornitore.
+     */
+    public function ordiniAcquisto(Request $request)
+    {
+        $operatore = $request->attributes->get('operatore') ?? auth()->guard('operatore')->user();
+
+        $ordini = FabbisognoService::generaOrdiniAcquisto();
+
+        return view('magazzino.ordini_acquisto', [
+            'operatore' => $operatore,
+            'ordini' => $ordini,
         ]);
     }
 }
