@@ -59,7 +59,7 @@ class MagazzinoController extends Controller
         $query = MagazzinoArticolo::query();
 
         if ($request->filled('cerca')) {
-            $cerca = $request->input('cerca');
+            $cerca = str_replace(['%', '_'], ['\%', '\_'], $request->input('cerca'));
             $query->where(function ($q) use ($cerca) {
                 $q->where('codice', 'LIKE', "%{$cerca}%")
                   ->orWhere('descrizione', 'LIKE', "%{$cerca}%")

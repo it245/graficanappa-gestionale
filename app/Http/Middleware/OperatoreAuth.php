@@ -15,7 +15,7 @@ class OperatoreAuth
 
         if ($token) {
             $record = OperatoreToken::valido()->where('token', $token)->with('operatore')->first();
-            if ($record && $record->operatore) {
+            if ($record && $record->operatore && $record->operatore->attivo) {
                 $op = $record->operatore;
                 $request->attributes->set('operatore', $op);
                 $request->attributes->set('operatore_id', $op->id);

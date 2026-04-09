@@ -63,15 +63,16 @@ class DashboardAdminController extends Controller
         $iniziali = strtoupper($nome[0] . $cognome[0]);
         $codice = $iniziali . str_pad($numero, 3, '0', STR_PAD_LEFT);
 
-        $operatore = Operatore::create([
+        $operatore = new Operatore([
             'nome' => $nome,
             'cognome' => $cognome,
             'codice_operatore' => $codice,
-            'ruolo' => $request->ruolo,
-            'attivo' => 1,
             'reparto_id' => $request->reparto_principale,
-            'password' => $request->password ? Hash::make($request->password) : null,
         ]);
+        $operatore->ruolo = $request->ruolo;
+        $operatore->attivo = 1;
+        $operatore->password = $request->password ? Hash::make($request->password) : null;
+        $operatore->save();
 
         $reparti = array_filter([$request->reparto_principale, $request->reparto_secondario]);
         $operatore->reparti()->sync($reparti);
@@ -1496,7 +1497,8 @@ class DashboardAdminController extends Controller
             $query->where('action', $request->azione);
         }
         if ($request->filled('utente')) {
-            $query->where('user_name', 'like', '%' . $request->utente . '%');
+            $utente = str_replace(['%', '_'], ['\%', '\_'], $request->utente);
+            $query->where('user_name', 'like', '%' . $utente . '%');
         }
         if ($request->filled('data')) {
             $query->whereDate('created_at', $request->data);

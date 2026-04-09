@@ -777,7 +777,8 @@ class DashboardOwnerController extends Controller
             FaseStatoService::ricalcolaTutti();
             return redirect()->route('owner.dashboard')->with('success', 'Ordini importati correttamente.');
         } catch (\Exception $e) {
-            return redirect()->route('owner.dashboard')->with('error', 'Errore importazione: ' . $e->getMessage());
+            \Illuminate\Support\Facades\Log::error('Import ordini fallito', ['error' => $e->getMessage()]);
+            return redirect()->route('owner.dashboard')->with('error', 'Errore importazione. Controlla il file e riprova.');
         }
     }
 
@@ -1021,16 +1022,17 @@ class DashboardOwnerController extends Controller
                 \Illuminate\Support\Facades\Log::warning('Piano produzione Excel: ' . $e->getMessage());
             }
             $redirectUrl = request('redirect');
-            if ($redirectUrl) {
+            if ($redirectUrl && str_starts_with($redirectUrl, '/')) {
                 return redirect($redirectUrl)->with('success', $msg);
             }
             return redirect()->route('owner.dashboard')->with('success', $msg);
         } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Sync Onda fallita', ['error' => $e->getMessage()]);
             $redirectUrl = request('redirect');
-            if ($redirectUrl) {
-                return redirect($redirectUrl)->with('error', 'Errore sync Onda: ' . $e->getMessage());
+            if ($redirectUrl && str_starts_with($redirectUrl, '/')) {
+                return redirect($redirectUrl)->with('error', 'Errore sync Onda. Riprova.');
             }
-            return redirect()->route('owner.dashboard')->with('error', 'Errore sync Onda: ' . $e->getMessage());
+            return redirect()->route('owner.dashboard')->with('error', 'Errore sync Onda. Riprova.');
         }
     }
 
@@ -1500,7 +1502,8 @@ class DashboardOwnerController extends Controller
             $query->where('action', $request->azione);
         }
         if ($request->filled('utente')) {
-            $query->where('user_name', 'like', '%' . $request->utente . '%');
+            $utente = str_replace(['%', '_'], ['\%', '\_'], $request->utente);
+            $query->where('user_name', 'like', '%' . $utente . '%');
         }
         if ($request->filled('data')) {
             $query->whereDate('created_at', $request->data);

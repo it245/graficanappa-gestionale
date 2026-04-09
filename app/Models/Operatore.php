@@ -14,7 +14,10 @@ class Operatore extends Authenticatable
      
     protected $table = 'operatori'; 
 
-    protected $fillable = ['nome','cognome','codice_operatore','ruolo','attivo','reparto','reparto_id','password'];
+    protected $fillable = ['nome','cognome','codice_operatore','reparto','reparto_id'];
+
+    /** ruolo, attivo e password vanno settati esplicitamente per evitare privilege escalation */
+    protected $guarded = ['ruolo', 'attivo', 'password'];
 
     protected $hidden = ['password'];
      public function ordini()

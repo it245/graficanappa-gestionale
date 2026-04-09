@@ -209,7 +209,7 @@ Route::middleware('operatore.auth')->prefix('chat')->group(function () {
 });
 
 // Magazzino Carta — accessibile da spedizione (Emanuele), owner e admin
-Route::middleware(['operatore.auth'])->prefix('magazzino')->group(function () {
+Route::middleware(['owner.or.admin:spedizione'])->prefix('magazzino')->group(function () {
     Route::get('/', [MagazzinoController::class, 'dashboard'])->name('magazzino.dashboard');
     Route::get('/articoli', [MagazzinoController::class, 'articoli'])->name('magazzino.articoli');
     Route::post('/articoli', [MagazzinoController::class, 'storeArticolo'])->name('magazzino.articoli.store');
@@ -244,11 +244,11 @@ Route::middleware(['operatore.auth'])->group(function () {
     Route::post('/operatore/preleva-carta', [MagazzinoScannerController::class, 'prelievoOperatore'])->name('operatore.prelevaCarta.store');
 });
 
-// CSRF token refresh (mantiene sessione viva)
-Route::get('/csrf-refresh', fn() => response()->json(['token' => csrf_token()]));
+// CSRF token refresh (mantiene sessione viva — richiede auth)
+Route::get('/csrf-refresh', fn() => response()->json(['token' => csrf_token()]))->middleware('operatore.auth');
 
-// Prinect API Explorer
-Route::get('/prinect-explorer', fn() => view('prinect_explorer'));
+// Prinect API Explorer (protetto)
+Route::get('/prinect-explorer', fn() => view('prinect_explorer'))->middleware('owner.or.admin');
 
 // Health check
 // Push notifications

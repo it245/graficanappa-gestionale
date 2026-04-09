@@ -18,7 +18,7 @@ class OwnerOrAdmin
 
         if ($token) {
             $record = OperatoreToken::valido()->where('token', $token)->with('operatore')->first();
-            if ($record && $record->operatore && in_array($record->operatore->ruolo, $allowedRoles)) {
+            if ($record && $record->operatore && $record->operatore->attivo && in_array($record->operatore->ruolo, $allowedRoles)) {
                 $op = $record->operatore;
                 $request->attributes->set('operatore', $op);
                 $request->attributes->set('operatore_id', $op->id);

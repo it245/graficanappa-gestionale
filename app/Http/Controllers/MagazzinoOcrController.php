@@ -13,12 +13,12 @@ class MagazzinoOcrController extends Controller
     public function processaBolla(Request $request)
     {
         $request->validate([
-            'foto_bolla' => 'required|image|max:10240', // max 10MB
+            'foto_bolla' => 'required|image|mimes:jpeg,png,jpg,webp|max:10240',
         ]);
 
         $file = $request->file('foto_bolla');
-        $path = $file->store('bolle', 'public');
-        $fullPath = storage_path('app/public/' . $path);
+        $path = $file->store('bolle'); // storage privato, NON public
+        $fullPath = storage_path('app/' . $path);
 
         $dati = OcrBollaService::leggi($fullPath);
 

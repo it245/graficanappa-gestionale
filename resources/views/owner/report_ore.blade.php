@@ -476,9 +476,9 @@ function toggleDetail(id) {
 }
 
 // === Dati per grafici ===
-var repartiLabels = {!! json_encode($orePerReparto->keys()->values()) !!};
-var repartiPreviste = {!! json_encode($orePerReparto->pluck('previste')->values()) !!};
-var repartiLavorate = {!! json_encode($orePerReparto->pluck('lavorate')->values()) !!};
+var repartiLabels = {!! json_encode($orePerReparto->keys()->values(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!};
+var repartiPreviste = {!! json_encode($orePerReparto->pluck('previste')->values(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!};
+var repartiLavorate = {!! json_encode($orePerReparto->pluck('lavorate')->values(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!};
 
 @php
     $fontePrinect = $commesse->flatMap(fn($c) => $c->fasi)->where('fonte_ore', 'Prinect')->sum('ore_lavorate');
@@ -537,7 +537,7 @@ if (ctxF) {
 }
 
 // Grafico orizzontale: top commesse sforate
-var sforateLabels = {!! json_encode($sforate->pluck('commessa')->values()) !!};
+var sforateLabels = {!! json_encode($sforate->pluck('commessa')->values(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!};
 var ctxS = document.getElementById('chartSforate');
 if (ctxS) {
     var chartSforate = new Chart(ctxS, {
@@ -546,7 +546,7 @@ if (ctxS) {
             labels: sforateLabels,
             datasets: [{
                 label: 'Ore extra',
-                data: {!! json_encode($sforate->map(fn($c) => round($c->ore_lavorate - $c->ore_previste, 1))->values()) !!},
+                data: {!! json_encode($sforate->map(fn($c) => round($c->ore_lavorate - $c->ore_previste, 1))->values(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!},
                 backgroundColor: '#ef4444',
                 borderRadius: 4,
                 barPercentage: 0.7
