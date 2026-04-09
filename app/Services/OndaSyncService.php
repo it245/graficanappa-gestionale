@@ -33,7 +33,25 @@ class OndaSyncService
             "SELECT CodMacchina, OC_FogliScartoIniz FROM PRDMacchinari WHERE OC_FogliScartoIniz > 0"
         ))->pluck('OC_FogliScartoIniz', 'CodMacchina')->toArray();
 
-        // 1. Query tutti gli ordini aperti (TipoDocumento=2, non chiusi)
+        // Commesse gia completate nel MES (tutte le fasi stato >= 4) — le escludiamo dalla sync
+        $commesseCompletate = DB::table('ordini')
+            ->whereNotExists(function ($q) {
+                $q->select(DB::raw(1))
+                    ->from('ordine_fasi')
+                    ->whereColumn('ordine_fasi.ordine_id', 'ordini.id')
+                    ->whereRaw("CAST(ordine_fasi.stato AS UNSIGNED) < 4");
+            })
+            ->whereExists(function ($q) {
+                $q->select(DB::raw(1))
+                    ->from('ordine_fasi')
+                    ->whereColumn('ordine_fasi.ordine_id', 'ordini.id');
+            })
+            ->pluck('commessa')
+            ->toArray();
+
+        Log::info("OndaSync: " . count($commesseCompletate) . " commesse completate escluse dalla sync");
+
+        // 1. Query ordini da Onda: solo quelli ancora attivi nel MES o nuovi
         $righeOnda = DB::connection('onda')->select("
             SELECT
                 t.CodCommessa,
@@ -82,6 +100,18 @@ class OndaSyncService
             WHERE t.TipoDocumento = '2'
               AND t.DataRegistrazione >= CAST('20260227' AS datetime)
         ");
+
+        if (empty($righeOnda)) {
+            return ['ordini_creati' => 0, 'ordini_aggiornati' => 0, 'fasi_create' => 0];
+        }
+
+        // Filtra via le commesse gia completate nel MES
+        if (!empty($commesseCompletate)) {
+            $completateSet = array_flip($commesseCompletate);
+            $prima = count($righeOnda);
+            $righeOnda = array_values(array_filter($righeOnda, fn($r) => !isset($completateSet[$r->CodCommessa])));
+            Log::info("OndaSync: filtrate " . ($prima - count($righeOnda)) . " righe di commesse completate, restano " . count($righeOnda));
+        }
 
         if (empty($righeOnda)) {
             return ['ordini_creati' => 0, 'ordini_aggiornati' => 0, 'fasi_create' => 0];
