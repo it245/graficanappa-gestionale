@@ -18,7 +18,7 @@ class MagazzinoOcrController extends Controller
 
         $file = $request->file('foto_bolla');
         $path = $file->store('bolle'); // storage privato, NON public
-        $fullPath = storage_path('app/' . $path);
+        $fullPath = storage_path('app/private/' . $path);
 
         $dati = OcrBollaService::leggi($fullPath);
 
