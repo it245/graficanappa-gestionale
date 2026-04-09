@@ -31,8 +31,8 @@ class QrEtichettaService
         ];
 
         $pdf = Pdf::loadView('magazzino.etichetta', $data);
-        // Etichetta 100x70mm
-        $pdf->setPaper([0, 0, 283.46, 198.43], 'landscape');
+        // Etichetta 100x150mm (10x15cm)
+        $pdf->setPaper([0, 0, 283.46, 425.20], 'portrait');
 
         return $pdf;
     }

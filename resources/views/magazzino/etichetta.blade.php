@@ -8,8 +8,8 @@
 
         .etichetta {
             width: 100mm;
-            height: 70mm;
-            padding: 3mm;
+            height: 150mm;
+            padding: 5mm;
         }
 
         .header {
