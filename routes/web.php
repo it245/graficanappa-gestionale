@@ -209,7 +209,7 @@ Route::middleware('operatore.auth')->prefix('chat')->group(function () {
 });
 
 // Magazzino Carta — accessibile da spedizione (Emanuele), owner e admin
-Route::middleware(['owner.or.admin:spedizione'])->prefix('magazzino')->group(function () {
+Route::middleware(['magazzino.auth'])->prefix('magazzino')->group(function () {
     Route::get('/', [MagazzinoController::class, 'dashboard'])->name('magazzino.dashboard');
     Route::get('/articoli', [MagazzinoController::class, 'articoli'])->name('magazzino.articoli');
     Route::post('/articoli', [MagazzinoController::class, 'storeArticolo'])->name('magazzino.articoli.store');

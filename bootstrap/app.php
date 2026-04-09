@@ -39,6 +39,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'owner' => \App\Http\Middleware\OwnerMiddleware::class,
             'admin' => AdminAuth::class,
             'owner.or.admin' => OwnerOrAdmin::class,
+            'magazzino.auth' => \App\Http\Middleware\MagazzinoAuth::class,
         ]);
     })
     ->withExceptions(function ($exceptions) {
