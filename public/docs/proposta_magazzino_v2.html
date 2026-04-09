@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Proposta Magazzino Carta — MES v2.0</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 11pt; color: #1e293b; line-height: 1.6; }
+        .page { max-width: 210mm; margin: 0 auto; padding: 20mm 18mm; }
+
+        .header { text-align: center; margin-bottom: 10mm; border-bottom: 2px solid #2563eb; padding-bottom: 5mm; }
+        .header h1 { font-size: 18pt; color: #2563eb; margin-bottom: 2mm; }
+        .header .subtitle { font-size: 11pt; color: #64748b; }
+        .header .date { font-size: 9pt; color: #94a3b8; margin-top: 2mm; }
+
+        .logo-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5mm; }
+        .logo-row img { height: 40px; }
+
+        h2 { font-size: 14pt; color: #1e293b; margin-top: 8mm; margin-bottom: 3mm; border-left: 4px solid #2563eb; padding-left: 3mm; }
+        h3 { font-size: 12pt; color: #334155; margin-top: 5mm; margin-bottom: 2mm; }
+
+        p { margin-bottom: 3mm; text-align: justify; }
+        ul, ol { margin-left: 8mm; margin-bottom: 3mm; }
+        li { margin-bottom: 1.5mm; }
+
+        .highlight { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 4px; padding: 4mm; margin: 4mm 0; }
+        .highlight-green { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 4px; padding: 4mm; margin: 4mm 0; }
+        .highlight-amber { background: #fffbeb; border: 1px solid #fde68a; border-radius: 4px; padding: 4mm; margin: 4mm 0; }
+
+        table { width: 100%; border-collapse: collapse; margin: 4mm 0; font-size: 10pt; }
+        th { background: #f1f5f9; border: 1px solid #cbd5e1; padding: 2.5mm 3mm; text-align: left; font-weight: 600; }
+        td { border: 1px solid #cbd5e1; padding: 2.5mm 3mm; }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+
+        .badge { display: inline-block; padding: 1mm 3mm; border-radius: 3px; font-size: 8pt; font-weight: 600; }
+        .badge-green { background: #dcfce7; color: #166534; }
+        .badge-blue { background: #dbeafe; color: #1e40af; }
+        .badge-amber { background: #fef3c7; color: #92400e; }
+        .badge-red { background: #fee2e2; color: #991b1b; }
+
+        .footer { margin-top: 15mm; padding-top: 5mm; border-top: 1px solid #e2e8f0; font-size: 8pt; color: #94a3b8; text-align: center; }
+
+        .firma { margin-top: 15mm; display: flex; justify-content: space-between; }
+        .firma-box { width: 45%; text-align: center; }
+        .firma-line { border-top: 1px solid #334155; margin-top: 15mm; padding-top: 2mm; font-size: 9pt; }
+
+        .nota { font-size: 9pt; color: #64748b; font-style: italic; margin-top: 2mm; }
+
+        @media print {
+            .page { padding: 15mm; }
+            body { font-size: 10pt; }
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+
+    <div class="header">
+        <h1>Proposta Sistema Magazzino Carta</h1>
+        <div class="subtitle">MES Grafica Nappa — Versione 2.0</div>
+        <div class="date">Aversa, 9 aprile 2026 — Documento interno, uso riservato</div>
+    </div>
+
+    <!-- ============================================ -->
+    <h2>1. Premessa</h2>
+    <p>
+        Nell'ambito dello sviluppo della versione 2.0 del MES (Manufacturing Execution System) aziendale,
+        e' stato progettato e sviluppato un modulo di <strong>gestione magazzino carta</strong> integrato nel sistema.
+        L'obiettivo e' fornire tracciabilita completa della materia prima dalla ricezione della bolla fornitore
+        fino al prelievo per la produzione, eliminando la gestione manuale su fogli/quaderni e riducendo gli errori
+        di inventario.
+    </p>
+    <p>
+        Il presente documento illustra lo stato attuale del sistema, le tecnologie utilizzate, i limiti attuali
+        e alcune <strong>proposte migliorative</strong> da valutare per il futuro.
+    </p>
+
+    <!-- ============================================ -->
+    <h2>2. Come funziona oggi</h2>
+
+    <h3>2.1 Flusso operativo</h3>
+    <ol>
+        <li><strong>Arrivo merce</strong> — Il fornitore consegna la carta con bolla cartacea</li>
+        <li><strong>Registrazione</strong> — L'addetto fotografa la bolla con telefono/tablet. Il sistema analizza la foto con OCR (riconoscimento testo) ed estrae automaticamente: fornitore, tipo carta, formato, grammatura, quantita</li>
+        <li><strong>Conferma</strong> — L'addetto verifica/corregge i dati estratti in un form e conferma il carico</li>
+        <li><strong>Etichetta QR</strong> — Il sistema genera automaticamente un'etichetta con QR code da attaccare al bancale</li>
+        <li><strong>Prelievo</strong> — Quando un operatore deve prelevare carta per una commessa, il sistema registra lo scarico</li>
+        <li><strong>Inventario</strong> — Dashboard con giacenze in tempo reale, alert sotto soglia, storico movimenti</li>
+    </ol>
+
+    <h3>2.2 Tecnologia OCR attuale: Tesseract</h3>
+    <div class="highlight">
+        <p>
+            Il sistema utilizza <strong>Tesseract OCR</strong>, un motore di riconoscimento testo open-source sviluppato
+            originariamente da HP e oggi mantenuto da Google. E' gratuito, installato localmente sul server,
+            e non richiede connessione internet o abbonamenti.
+        </p>
+    </div>
+
+    <p><strong>Vantaggi di Tesseract:</strong></p>
+    <ul>
+        <li>Gratuito e open-source — nessun costo ricorrente</li>
+        <li>Funziona offline, dati restano sul server aziendale</li>
+        <li>Supporta lingua italiana</li>
+        <li>Buona precisione su bolle stampate in modo pulito (Stratosfera, Fedrigoni, MM Board)</li>
+    </ul>
+
+    <p><strong>Limiti di Tesseract:</strong></p>
+    <ul>
+        <li>Precisione ridotta con foto mosse, in angolo o con ombre</li>
+        <li>Non comprende il contesto — estrae testo ma non "capisce" cosa sta leggendo</li>
+        <li>Richiede regex (regole di estrazione) specifiche per ogni formato di bolla</li>
+        <li>Non riesce a leggere testo scritto a mano</li>
+        <li>Accuratezza stimata: <strong>70-85%</strong> sui dati strutturati delle bolle reali testate</li>
+    </ul>
+
+    <div class="highlight-amber">
+        <strong>Nota:</strong> L'OCR e' un <em>aiuto</em> alla compilazione, non un sistema autonomo.
+        L'addetto deve sempre verificare e confermare i dati prima di registrare il carico.
+        Questo garantisce il 100% di accuratezza nel sistema.
+    </div>
+
+    <!-- ============================================ -->
+    <h2>3. Evoluzione possibile: OCR con Intelligenza Artificiale</h2>
+
+    <p>
+        Esistono tecnologie di OCR basate su Intelligenza Artificiale (AI) che offrono risultati significativamente
+        superiori a Tesseract. In particolare, i modelli di visione AI come <strong>Claude (Anthropic)</strong> o
+        <strong>GPT-4 Vision (OpenAI)</strong> sono in grado di:
+    </p>
+
+    <ul>
+        <li><strong>Comprendere il contesto</strong> — riconoscono che un documento e' una bolla e sanno dove cercare i dati</li>
+        <li><strong>Gestire foto imperfette</strong> — angolazioni, ombre, pieghe, scarsa illuminazione</li>
+        <li><strong>Leggere qualsiasi formato</strong> — non servono regole specifiche per ogni fornitore</li>
+        <li><strong>Estrarre dati strutturati</strong> — restituiscono direttamente: fornitore, tipo carta, quantita, ecc.</li>
+        <li><strong>Leggere testo a mano</strong> — note manoscritte, firme, annotazioni</li>
+    </ul>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Caratteristica</th>
+                <th>Tesseract (attuale)</th>
+                <th>AI Vision (proposta)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Costo</td>
+                <td><span class="badge badge-green">Gratuito</span></td>
+                <td><span class="badge badge-amber">~15-30 EUR/mese</span></td>
+            </tr>
+            <tr>
+                <td>Accuratezza bolle stampate</td>
+                <td>70-85%</td>
+                <td>95-99%</td>
+            </tr>
+            <tr>
+                <td>Foto imperfette</td>
+                <td><span class="badge badge-red">Scarsa</span></td>
+                <td><span class="badge badge-green">Eccellente</span></td>
+            </tr>
+            <tr>
+                <td>Nuovi fornitori</td>
+                <td>Richiede configurazione</td>
+                <td>Funziona subito</td>
+            </tr>
+            <tr>
+                <td>Testo a mano</td>
+                <td><span class="badge badge-red">No</span></td>
+                <td><span class="badge badge-green">Si</span></td>
+            </tr>
+            <tr>
+                <td>Connessione internet</td>
+                <td>Non richiesta</td>
+                <td>Richiesta</td>
+            </tr>
+            <tr>
+                <td>Privacy dati</td>
+                <td><span class="badge badge-green">Tutto locale</span></td>
+                <td><span class="badge badge-amber">Dati inviati al cloud</span></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="highlight-green">
+        <strong>Raccomandazione:</strong> Per ora Tesseract e' sufficiente perche l'addetto verifica sempre i dati.
+        L'upgrade ad AI Vision si puo valutare in futuro se il volume di bolle aumenta o se si vuole ridurre
+        il tempo di verifica manuale.
+    </div>
+
+    <!-- ============================================ -->
+    <h2>4. Proposte di acquisto hardware</h2>
+
+    <p>
+        Per rendere il sistema pienamente operativo, si elencano alcune <strong>proposte di acquisto</strong>
+        da valutare. Si tratta di suggerimenti, non di richieste vincolanti.
+    </p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Articolo</th>
+                <th>Utilizzo</th>
+                <th class="text-center">Priorita</th>
+                <th class="text-right">Costo stimato</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Tablet a parete per magazzino</strong><br><span class="nota">Samsung Galaxy Tab A9 o similare, 10", con supporto a muro</span></td>
+                <td>Postazione fissa al magazzino per registrare carichi, scansionare QR, verificare giacenze</td>
+                <td class="text-center"><span class="badge badge-blue">Utile</span></td>
+                <td class="text-right">150-200 EUR</td>
+            </tr>
+            <tr>
+                <td><strong>Supporto tablet a parete</strong><br><span class="nota">Staffa con chiusura di sicurezza</span></td>
+                <td>Fissaggio sicuro del tablet in magazzino</td>
+                <td class="text-center"><span class="badge badge-blue">Utile</span></td>
+                <td class="text-right">30-50 EUR</td>
+            </tr>
+            <tr>
+                <td><strong>Pistola barcode Bluetooth</strong><br><span class="nota">Lettore QR 2D Bluetooth, es. Netum C750</span></td>
+                <td>Scansione rapida QR bancali al magazzino (alternativa alla fotocamera)</td>
+                <td class="text-center"><span class="badge badge-amber">Opzionale</span></td>
+                <td class="text-right">30-50 EUR</td>
+            </tr>
+            <tr>
+                <td><strong>Stampante etichette termica</strong><br><span class="nota">Se non gia presente, es. Zebra GK420d o Brother QL-820NWB</span></td>
+                <td>Stampa etichette QR 10x15cm da attaccare ai bancali</td>
+                <td class="text-center"><span class="badge badge-amber">Opzionale</span></td>
+                <td class="text-right">150-300 EUR</td>
+            </tr>
+            <tr>
+                <td><strong>Abbonamento Claude AI Vision</strong><br><span class="nota">API Anthropic, piano a consumo</span></td>
+                <td>OCR avanzato con intelligenza artificiale per lettura bolle (futuro)</td>
+                <td class="text-center"><span class="badge badge-amber">Futuro</span></td>
+                <td class="text-right">15-30 EUR/mese</td>
+            </tr>
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="3"><strong>Investimento iniziale stimato (senza AI)</strong></td>
+                <td class="text-right"><strong>180-300 EUR</strong></td>
+            </tr>
+        </tfoot>
+    </table>
+
+    <p class="nota">
+        * I prezzi sono indicativi e soggetti a variazione. La stampante etichette potrebbe non essere necessaria
+        se si utilizza quella gia presente in azienda per le etichette EAN.
+    </p>
+
+    <!-- ============================================ -->
+    <h2>5. Funzionalita gia disponibili nel MES v2.0</h2>
+
+    <table>
+        <thead>
+            <tr><th>Funzionalita</th><th>Stato</th><th>Descrizione</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Dashboard magazzino</td>
+                <td><span class="badge badge-green">Completata</span></td>
+                <td>KPI, giacenze sotto soglia, ultimi movimenti</td>
+            </tr>
+            <tr>
+                <td>Registrazione bolla con OCR</td>
+                <td><span class="badge badge-green">Completata</span></td>
+                <td>Foto bolla → estrazione automatica dati → conferma</td>
+            </tr>
+            <tr>
+                <td>Anagrafica articoli carta</td>
+                <td><span class="badge badge-green">Completata</span></td>
+                <td>Creazione automatica da bolla o manuale</td>
+            </tr>
+            <tr>
+                <td>Etichette QR bancali</td>
+                <td><span class="badge badge-green">Completata</span></td>
+                <td>PDF 10x15cm con QR code, codice, tipo carta</td>
+            </tr>
+            <tr>
+                <td>Scanner QR da fotocamera</td>
+                <td><span class="badge badge-green">Completata</span></td>
+                <td>Scansione QR bancali via telefono/tablet/webcam</td>
+            </tr>
+            <tr>
+                <td>Prelievo per produzione</td>
+                <td><span class="badge badge-green">Completata</span></td>
+                <td>Scarico carta associato a commessa (solo fase STAMPA)</td>
+            </tr>
+            <tr>
+                <td>Storico movimenti</td>
+                <td><span class="badge badge-green">Completata</span></td>
+                <td>Carico, scarico, reso, rettifica con filtri</td>
+            </tr>
+            <tr>
+                <td>Alert sotto soglia</td>
+                <td><span class="badge badge-green">Completata</span></td>
+                <td>Avviso quando la giacenza scende sotto il minimo</td>
+            </tr>
+            <tr>
+                <td>Sicurezza accesso</td>
+                <td><span class="badge badge-green">Completata</span></td>
+                <td>Accesso limitato a ruolo spedizione, owner e admin</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- ============================================ -->
+    <h2>6. Conclusioni</h2>
+
+    <p>
+        Il sistema di gestione magazzino carta e' operativo nella versione 2.0 del MES con tutte le funzionalita
+        di base. L'OCR con Tesseract consente di velocizzare la registrazione delle bolle, pur richiedendo
+        la verifica manuale da parte dell'operatore.
+    </p>
+    <p>
+        Le proposte di acquisto hardware sono opzionali e finalizzate a migliorare l'esperienza d'uso.
+        Il sistema funziona gia con le dotazioni attuali (telefono personale per foto, stampante esistente per etichette).
+    </p>
+    <p>
+        L'eventuale upgrade all'OCR con intelligenza artificiale puo essere valutato in un secondo momento,
+        quando il sistema sara rodato e si avra un quadro chiaro dei volumi di utilizzo.
+    </p>
+
+    <!-- Firme -->
+    <div class="firma">
+        <div class="firma-box">
+            <div class="firma-line">Giovanni Pietropaolo<br>Sviluppo MES</div>
+        </div>
+        <div class="firma-box">
+            <div class="firma-line">Direzione Grafica Nappa</div>
+        </div>
+    </div>
+
+    <div class="footer">
+        Grafica Nappa srl — Via Antonio Gramsci, 19 — 81031 Aversa (CE)<br>
+        Documento interno — Proposta sistema magazzino MES v2.0 — Aprile 2026
+    </div>
+
+</div>
+</body>
+</html>
