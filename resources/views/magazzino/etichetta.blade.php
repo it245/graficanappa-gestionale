@@ -9,33 +9,28 @@
         .etichetta {
             width: 100mm;
             height: 70mm;
-            padding: 4mm;
-            border: 1px solid #333;
-            display: table;
-        }
-
-        .qr-col {
-            display: table-cell;
-            vertical-align: top;
-            width: 30mm;
-            padding-right: 4mm;
-        }
-
-        .info-col {
-            display: table-cell;
-            vertical-align: top;
+            padding: 3mm;
         }
 
         .header {
             font-weight: bold;
-            font-size: 10pt;
+            font-size: 9pt;
             margin-bottom: 2mm;
-            line-height: 1.3;
+            text-align: center;
+        }
+
+        .content {
+            margin-top: 2mm;
+        }
+
+        .qr {
+            text-align: center;
+            margin-bottom: 2mm;
         }
 
         .field {
             font-size: 8pt;
-            margin-bottom: 1.5mm;
+            margin-bottom: 1mm;
             line-height: 1.3;
         }
 
@@ -49,30 +44,31 @@
         }
 
         .qta-big {
-            font-size: 14pt;
+            font-size: 13pt;
             font-weight: bold;
+            text-align: center;
             margin: 2mm 0;
         }
     </style>
 </head>
 <body>
     <div class="etichetta">
-        <div class="qr-col">
-            <img src="data:image/png;base64,{{ $qrPng }}" style="width:26mm; height:26mm;" alt="QR">
+        <div class="header">
+            GRAFICA NAPPA — MAGAZZINO CARTA
         </div>
-        <div class="info-col">
-            <div class="header">
-                GRAFICA NAPPA<br>
-                MAGAZZINO CARTA
-            </div>
 
+        <div class="qr">
+            <img src="data:image/png;base64,{{ $qrPng }}" style="width:22mm; height:22mm;" alt="QR">
+        </div>
+
+        <div class="content">
             <div class="field">
                 <span class="field-label">Cod:</span>
-                <span class="field-value">{{ $articolo->codice }}</span>
+                <span class="field-value">{{ Str::limit($articolo->codice, 30) }}</span>
             </div>
 
             <div class="field">
-                {{ $articolo->descrizione }}
+                {{ Str::limit($articolo->descrizione, 40) }}
             </div>
 
             <div class="field">
@@ -90,13 +86,6 @@
             <div class="field">
                 <span class="field-label">Lotto:</span>
                 <span class="field-value">{{ $etichetta->lotto }}</span>
-            </div>
-            @endif
-
-            @if($ubicazione)
-            <div class="field">
-                <span class="field-label">Ubicazione:</span>
-                <span class="field-value">{{ $ubicazione->codice }}</span>
             </div>
             @endif
 
