@@ -103,34 +103,38 @@ class OcrBollaService
         }
 
         // === GRAMMATURA ===
-        // Cerca "300g", "300 g/m", "300 gsm", "300 gr", "Grammatura 210"
-        if (preg_match('/\b(\d{2,4})\s*(?:g(?:r|rammi|sm)?(?:\/m2?)?)\b/i', $testo, $m)) {
+        // Prima cerca "Grammatura NNN" (piu affidabile)
+        if (preg_match('/(?:grammatura|grammage|basis\s*weight)[:\s]*(\d{2,4})/i', $testo, $m)) {
+            $result['grammatura'] = (int) $m[1];
+        }
+        // Poi "NNNg", "NNN gsm", "NNN gr", "NNN g/m2"
+        if (!$result['grammatura'] && preg_match('/\b(\d{2,4})\s*(?:g(?:r|rammi|sm)?(?:\/m2?)?)\b/i', $testo, $m)) {
             $g = (int) $m[1];
             if ($g >= 50 && $g <= 600) {
                 $result['grammatura'] = $g;
             }
         }
-        // Fallback: "Grammatura NNN" o dopo "grm" "gsm"
-        if (!$result['grammatura'] && preg_match('/(?:grammatura|grammage|basis\s*weight)[:\s]*(\d{2,4})/i', $testo, $m)) {
-            $result['grammatura'] = (int) $m[1];
-        }
 
         // === QUANTITA ===
-        // Fogli: "1876 fogli" o colonna "Fogli" con numero
-        if (preg_match('/(\d[\d\.]*)\s*(?:fogli|fg)\b/i', $testo, $m)) {
-            $result['quantita'] = (int) str_replace('.', '', $m[1]);
+        // NR: "NR 13,098" o "NR 13.098" (fogli Stratosfera)
+        if (preg_match('/\bNR\s+([\d\.,]+)/i', $testo, $m)) {
+            $result['quantita'] = (int) preg_replace('/[^\d]/', '', $m[1]);
         }
-        // KG: "243 KG" — prendi il primo match
-        if (!$result['quantita'] && preg_match('/\b(\d[\d\.]*)\s*(?:kg|KG)\b/', $testo, $m)) {
-            $result['quantita'] = (int) str_replace('.', '', $m[1]);
+        // Fogli: "1876 fogli" o "1.876 fg"
+        if (!$result['quantita'] && preg_match('/([\d\.,]+)\s*(?:fogli|fg)\b/i', $testo, $m)) {
+            $result['quantita'] = (int) preg_replace('/[^\d]/', '', $m[1]);
         }
-        // PZ/Colli: "1.000" + pz/pezzi/colli
-        if (!$result['quantita'] && preg_match('/(\d[\d\.]*)\s*(?:pz|pezzi|colli|scatole)\b/i', $testo, $m)) {
-            $result['quantita'] = (int) str_replace('.', '', $m[1]);
+        // KG: "243 KG"
+        if (!$result['quantita'] && preg_match('/\b([\d\.,]+)\s*(?:kg|KG)\b/', $testo, $m)) {
+            $result['quantita'] = (int) preg_replace('/[^\d]/', '', $m[1]);
+        }
+        // PZ/Colli: "1.000 pz"
+        if (!$result['quantita'] && preg_match('/([\d\.,]+)\s*(?:pz|pezzi|colli|scatole)\b/i', $testo, $m)) {
+            $result['quantita'] = (int) preg_replace('/[^\d]/', '', $m[1]);
         }
         // Generico: dopo "Quantità" o "Qta"
-        if (!$result['quantita'] && preg_match('/(?:quantit[àa]|qta)[:\s]*(\d[\d\.]*)/i', $testo, $m)) {
-            $result['quantita'] = (int) str_replace('.', '', $m[1]);
+        if (!$result['quantita'] && preg_match('/(?:quantit[àa]|qta)[:\s]*([\d\.,]+)/i', $testo, $m)) {
+            $result['quantita'] = (int) preg_replace('/[^\d]/', '', $m[1]);
         }
 
         // === LOTTO ===
