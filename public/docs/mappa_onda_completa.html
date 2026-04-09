@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Mappa Database Onda — MES Grafica Nappa</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 10pt; color: #1e293b; line-height: 1.6; }
+        .page { max-width: 210mm; margin: 0 auto; padding: 15mm 18mm; }
+        .header { text-align: center; margin-bottom: 8mm; border-bottom: 2px solid #2563eb; padding-bottom: 5mm; }
+        .header h1 { font-size: 16pt; color: #2563eb; margin-bottom: 2mm; }
+        .header .subtitle { font-size: 10pt; color: #64748b; }
+        h2 { font-size: 13pt; color: #1e293b; margin-top: 8mm; margin-bottom: 3mm; border-left: 4px solid #2563eb; padding-left: 3mm; }
+        h3 { font-size: 11pt; color: #334155; margin-top: 5mm; margin-bottom: 2mm; }
+        p { margin-bottom: 3mm; text-align: justify; }
+        table { width: 100%; border-collapse: collapse; margin: 3mm 0; font-size: 9pt; }
+        th { background: #f1f5f9; border: 1px solid #cbd5e1; padding: 2mm 3mm; text-align: left; font-weight: 600; }
+        td { border: 1px solid #cbd5e1; padding: 2mm 3mm; }
+        .text-right { text-align: right; }
+        .badge { display: inline-block; padding: 1mm 3mm; border-radius: 3px; font-size: 8pt; font-weight: 600; }
+        .badge-green { background: #dcfce7; color: #166534; }
+        .badge-blue { background: #dbeafe; color: #1e40af; }
+        .badge-amber { background: #fef3c7; color: #92400e; }
+        .badge-red { background: #fee2e2; color: #991b1b; }
+        .badge-gray { background: #f1f5f9; color: #475569; }
+        .highlight { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 4px; padding: 3mm; margin: 3mm 0; }
+        .footer { margin-top: 10mm; padding-top: 5mm; border-top: 1px solid #e2e8f0; text-align: center; font-size: 8pt; color: #94a3b8; }
+        @media print { .page { padding: 10mm; } }
+    </style>
+</head>
+<body>
+<div class="page">
+
+<div class="header">
+    <h1>Mappa Completa Database Onda (ERP)</h1>
+    <div class="subtitle">Grafica Nappa srl — Esplorazione 9 aprile 2026 — Server 192.168.1.253</div>
+</div>
+
+<div class="highlight">
+    <strong>Obiettivo:</strong> Mappare tutte le funzionalita di Onda per pianificare la sostituzione progressiva con il MES proprietario.
+    Il database contiene <strong>863 tabelle/viste</strong> e oltre <strong>7 milioni di righe</strong> di dati storici.
+</div>
+
+<h2>1. Panoramica per area funzionale</h2>
+
+<table>
+    <thead><tr>
+        <th>Area</th><th>Tabelle principali</th><th class="text-right">Righe</th><th>Nel MES?</th><th>Difficolta sostituzione</th>
+    </tr></thead>
+    <tbody>
+        <tr>
+            <td><strong>Ordini/Commesse</strong></td>
+            <td>ATTDocTeste, ATTDocRighe, ATTDocCoda</td>
+            <td class="text-right">1.250.000</td>
+            <td><span class="badge badge-green">Si (sync)</span></td>
+            <td><span class="badge badge-green">Facile</span></td>
+        </tr>
+        <tr>
+            <td><strong>Produzione</strong></td>
+            <td>PRDDocTeste, PRDDocFasi, PRDDocRighe</td>
+            <td class="text-right">402.000</td>
+            <td><span class="badge badge-green">Si (sync)</span></td>
+            <td><span class="badge badge-green">Gia fatto</span></td>
+        </tr>
+        <tr>
+            <td><strong>Anagrafiche</strong></td>
+            <td>STDAnagrafiche, STDAnagIndirizzi</td>
+            <td class="text-right">13.200</td>
+            <td><span class="badge badge-blue">Lettura</span></td>
+            <td><span class="badge badge-green">Facile</span></td>
+        </tr>
+        <tr>
+            <td><strong>Magazzino</strong></td>
+            <td>MAGAnagraficaArticoli, MAGMovRighe, MAGGiacenze</td>
+            <td class="text-right">500.000</td>
+            <td><span class="badge badge-blue">Nostro modulo</span></td>
+            <td><span class="badge badge-green">Fatto (v2.0)</span></td>
+        </tr>
+        <tr>
+            <td><strong>Ciclo passivo</strong></td>
+            <td>PASDocTeste, PASDocRighe</td>
+            <td class="text-right">292.000</td>
+            <td><span class="badge badge-gray">No</span></td>
+            <td><span class="badge badge-amber">Media</span></td>
+        </tr>
+        <tr>
+            <td><strong>Dati grafici</strong></td>
+            <td>OC_ATTDocRigheExt (colori, lastre, resa)</td>
+            <td class="text-right">1.105.000</td>
+            <td><span class="badge badge-gray">No</span></td>
+            <td><span class="badge badge-amber">Media</span></td>
+        </tr>
+        <tr>
+            <td><strong>Cartotecnica</strong></td>
+            <td>OC_ATTDocCartotecnica*, Lav, Mat, Attr</td>
+            <td class="text-right">257.000</td>
+            <td><span class="badge badge-gray">No</span></td>
+            <td><span class="badge badge-amber">Media</span></td>
+        </tr>
+        <tr>
+            <td><strong>Contabilita</strong></td>
+            <td>COGPrimeNoteRCont, COGScadenze, COGIva*</td>
+            <td class="text-right">478.000</td>
+            <td><span class="badge badge-gray">No</span></td>
+            <td><span class="badge badge-red">Difficile</span></td>
+        </tr>
+        <tr>
+            <td><strong>Fatturazione</strong></td>
+            <td>TEL* (fattura elettronica)</td>
+            <td class="text-right">Vuote</td>
+            <td><span class="badge badge-gray">No</span></td>
+            <td><span class="badge badge-red">Difficile</span></td>
+        </tr>
+        <tr>
+            <td><strong>Contabilita analitica</strong></td>
+            <td>ANACommesse, ANAMovCommessa*</td>
+            <td class="text-right">158.000</td>
+            <td><span class="badge badge-gray">No</span></td>
+            <td><span class="badge badge-red">Difficile</span></td>
+        </tr>
+        <tr>
+            <td><strong>CRM</strong></td>
+            <td>CRM* (quasi vuote)</td>
+            <td class="text-right">100</td>
+            <td><span class="badge badge-gray">No</span></td>
+            <td><span class="badge badge-green">Facile</span></td>
+        </tr>
+        <tr>
+            <td><strong>Listini/Prezzi</strong></td>
+            <td>STDListini*, STDCondizioniPagamento*</td>
+            <td class="text-right">320</td>
+            <td><span class="badge badge-gray">No</span></td>
+            <td><span class="badge badge-green">Facile</span></td>
+        </tr>
+        <tr>
+            <td><strong>Cespiti</strong></td>
+            <td>CSP*</td>
+            <td class="text-right">200</td>
+            <td><span class="badge badge-gray">No</span></td>
+            <td><span class="badge badge-amber">Media</span></td>
+        </tr>
+    </tbody>
+</table>
+
+<h2>2. Tabelle gia usate dal MES</h2>
+
+<table>
+    <thead><tr><th>Tabella Onda</th><th>Righe</th><th>Cosa leggiamo</th><th>Dove nel MES</th></tr></thead>
+    <tbody>
+        <tr><td>ATTDocTeste</td><td class="text-right">124.320</td><td>CodCommessa, DataRegistrazione, TotMerce, note prestampa, responsabile</td><td>OndaSyncService, DdtPdfService</td></tr>
+        <tr><td>ATTDocRighe</td><td class="text-right">1.124.568</td><td>CodArt, Descrizione per match fasi + righe DDT</td><td>OndaSyncService, DdtPdfService</td></tr>
+        <tr><td>ATTDocCoda</td><td class="text-right">124.320</td><td>Trasporto, peso, colli, destinazione per DDT</td><td>DdtPdfService</td></tr>
+        <tr><td>PRDDocTeste</td><td class="text-right">76.926</td><td>CodCommessa, CodArt, OC_Descrizione, QtaDaProdurre, DataPresConsegna</td><td>OndaSyncService</td></tr>
+        <tr><td>PRDDocFasi</td><td class="text-right">239.860</td><td>CodFase, CodMacchina, QtaDaLavorare, TipoRiga</td><td>OndaSyncService</td></tr>
+        <tr><td>PRDDocRighe</td><td class="text-right">85.274</td><td>Carta (CodArt, Qta, UM) + costo materiali</td><td>OndaSyncService</td></tr>
+        <tr><td>STDAnagrafiche</td><td class="text-right">5.872</td><td>RagioneSociale, Indirizzo, P.IVA, CF</td><td>OndaSyncService, DdtPdfService</td></tr>
+        <tr><td>STDAnagIndirizzi</td><td class="text-right">7.311</td><td>Indirizzi secondari (destinazione DDT)</td><td>DdtPdfService</td></tr>
+        <tr><td>PRDMacchinari</td><td class="text-right">38</td><td>OC_FogliScartoIniz (scarti per macchina)</td><td>OndaSyncService</td></tr>
+    </tbody>
+</table>
+
+<h2>3. Tabelle utili NON ancora usate</h2>
+
+<table>
+    <thead><tr><th>Tabella</th><th>Righe</th><th>A cosa serve</th><th>Per quale versione MES</th></tr></thead>
+    <tbody>
+        <tr><td>MAGAnagraficaArticoli</td><td class="text-right">12.832</td><td>Anagrafica completa articoli/carta</td><td>v2.5 — import automatico</td></tr>
+        <tr><td>MAGGiacenze</td><td class="text-right">19.534</td><td>Giacenze attuali Onda (confronto)</td><td>v2.5 — verifica</td></tr>
+        <tr><td>PASDocTeste/Righe</td><td class="text-right">292.000</td><td>DDT fornitori, bolle acquisto</td><td>v2.5 — ordini acquisto</td></tr>
+        <tr><td>OC_ATTDocRigheExt</td><td class="text-right">1.105.738</td><td>Colori, lastre, resa, velocita stampa</td><td>v3.0 — preventivazione</td></tr>
+        <tr><td>COGScadenze</td><td class="text-right">81.313</td><td>Scadenze pagamenti clienti/fornitori</td><td>v3.0 — BI, cash flow</td></tr>
+        <tr><td>PRDDocFeedback</td><td class="text-right">26.555</td><td>Tempi e scarti reali produzione</td><td>v3.0 — analisi predittiva</td></tr>
+        <tr><td>ANACommesse</td><td class="text-right">45.242</td><td>Commesse in contabilita analitica</td><td>v6.0 — contabilita</td></tr>
+        <tr><td>OC_ATTDocCartotecnicaLav</td><td class="text-right">72.693</td><td>Lavorazioni cartotecniche dettagliate</td><td>v4.0 — scheduling AI</td></tr>
+        <tr><td>STDAnagraficaClienti</td><td class="text-right">3.736</td><td>Dettagli clienti (listino, pagamento)</td><td>v3.0 — CRM</td></tr>
+        <tr><td>STDCondizioniPagamentoTeste</td><td class="text-right">194</td><td>Condizioni di pagamento</td><td>v3.0 — CRM</td></tr>
+    </tbody>
+</table>
+
+<h2>4. Piano di sostituzione Onda</h2>
+
+<table>
+    <thead><tr><th>Fase</th><th>Versione MES</th><th>Cosa si sostituisce</th><th>Onda rimane per</th></tr></thead>
+    <tbody>
+        <tr>
+            <td><strong>Oggi</strong></td>
+            <td>v2.0</td>
+            <td>Produzione, magazzino carta, DDT vendita</td>
+            <td>Tutto il resto</td>
+        </tr>
+        <tr>
+            <td><strong>Fase 2</strong></td>
+            <td>v2.5</td>
+            <td>+ Fabbisogno materiali, ordini acquisto</td>
+            <td>Ordini, contabilita, fatturazione</td>
+        </tr>
+        <tr>
+            <td><strong>Fase 3</strong></td>
+            <td>v3.0</td>
+            <td>+ CRM, preventivi, anagrafica autonoma, BI</td>
+            <td>Contabilita, fatturazione</td>
+        </tr>
+        <tr>
+            <td><strong>Fase 4</strong></td>
+            <td>v6.0</td>
+            <td>+ Contabilita analitica, consuntivo</td>
+            <td>Solo fatturazione e contabilita generale</td>
+        </tr>
+        <tr>
+            <td><strong>Fase 5</strong></td>
+            <td>v9.0</td>
+            <td>+ Fatturazione elettronica SDI, contabilita</td>
+            <td><strong>Onda dismesso</strong></td>
+        </tr>
+    </tbody>
+</table>
+
+<h2>5. Statistiche</h2>
+
+<table>
+    <tr><td>Tabelle totali</td><td class="text-right"><strong>863</strong></td></tr>
+    <tr><td>Tabelle con dati (righe > 0)</td><td class="text-right">~350</td></tr>
+    <tr><td>Tabelle vuote / template / report</td><td class="text-right">~500</td></tr>
+    <tr><td>Top tabella per righe</td><td class="text-right">ATTDocRighe: 1.124.568</td></tr>
+    <tr><td>Stored procedures</td><td class="text-right">~20</td></tr>
+    <tr><td>Foreign keys</td><td class="text-right">Da verificare</td></tr>
+</table>
+
+<div class="footer">
+    Grafica Nappa srl — Mappa database Onda — Aprile 2026<br>
+    Documento generato automaticamente dall'esplorazione del server 192.168.1.253
+</div>
+
+</div>
+</body>
+</html>

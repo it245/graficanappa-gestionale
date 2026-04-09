@@ -809,6 +809,46 @@
     <strong>Stack tecnologico previsto (v2.0&ndash;v10.0):</strong> AI Open Source (LLaMA / Mistral / Gemma via Ollama) &middot; Laravel Reverb (WebSocket) &middot; PWA / Service Workers &middot; Redis (cache AI) &middot; MQTT (IoT) &middot; REST API pubblica (OpenAPI) &middot; Telegram Bot API &middot; Three.js (Digital Twin 3D) &middot; App nativa (React Native/Flutter)
 </div>
 
+<!-- ========== SOSTITUZIONE ONDA ========== -->
+<h3>Piano di sostituzione Onda (ERP)</h3>
+<p>Obiettivo a lungo termine: rendere il MES completamente autonomo, eliminando la dipendenza da Onda IQ. Il database Onda contiene <strong>863 tabelle</strong> e oltre <strong>7 milioni di righe</strong>. La sostituzione avviene per fasi, partendo dalle aree gia coperte dal MES.</p>
+
+<table>
+    <tr><th>Fase</th><th>Versione MES</th><th>Cosa si sostituisce</th><th>Onda rimane per</th></tr>
+    <tr>
+        <td><strong>Oggi</strong></td>
+        <td>v2.0</td>
+        <td>Produzione, magazzino carta, DDT vendita PDF</td>
+        <td>Tutto il resto (ordini, contabilit&agrave;, fatturazione, anagrafiche)</td>
+    </tr>
+    <tr>
+        <td><strong>Fase 2</strong></td>
+        <td>v2.5</td>
+        <td>+ Fabbisogno materiali, ordini acquisto</td>
+        <td>Ordini, contabilit&agrave;, fatturazione</td>
+    </tr>
+    <tr>
+        <td><strong>Fase 3</strong></td>
+        <td>v3.0</td>
+        <td>+ CRM, preventivi, anagrafica clienti/fornitori autonoma, BI</td>
+        <td>Solo contabilit&agrave; e fatturazione</td>
+    </tr>
+    <tr>
+        <td><strong>Fase 4</strong></td>
+        <td>v6.0</td>
+        <td>+ Contabilit&agrave; analitica, consuntivo avanzato</td>
+        <td>Solo fatturazione e contabilit&agrave; generale</td>
+    </tr>
+    <tr>
+        <td><strong>Fase 5</strong></td>
+        <td>v9.0</td>
+        <td>+ Fatturazione elettronica SDI, contabilit&agrave; generale, prima nota</td>
+        <td><strong>Onda dismesso completamente</strong></td>
+    </tr>
+</table>
+
+<p><strong>Documento completo:</strong> <a href="docs/mappa_onda_completa.html">Mappa database Onda</a> &mdash; analisi di tutte le 863 tabelle con piano di migrazione.</p>
+
 <!-- ========== BRANCH ========== -->
 <h3>Branch di sviluppo</h3>
 
