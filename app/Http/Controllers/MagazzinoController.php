@@ -6,7 +6,6 @@ use Illuminate\Http\Request;
 use App\Models\MagazzinoArticolo;
 use App\Models\MagazzinoGiacenza;
 use App\Models\MagazzinoMovimento;
-use App\Models\MagazzinoUbicazione;
 use App\Services\MagazzinoService;
 
 class MagazzinoController extends Controller
@@ -101,7 +100,7 @@ class MagazzinoController extends Controller
     {
         $operatore = $request->attributes->get('operatore') ?? auth()->guard('operatore')->user();
 
-        $query = MagazzinoGiacenza::with(['articolo', 'ubicazione']);
+        $query = MagazzinoGiacenza::with(['articolo']);
 
         if ($request->filled('tipo_carta')) {
             $query->whereHas('articolo', fn($q) => $q->where('tipo_carta', $request->tipo_carta));
@@ -112,9 +111,6 @@ class MagazzinoController extends Controller
         if ($request->filled('grammatura')) {
             $query->whereHas('articolo', fn($q) => $q->where('grammatura', $request->grammatura));
         }
-        if ($request->filled('ubicazione_id')) {
-            $query->where('ubicazione_id', $request->ubicazione_id);
-        }
 
         $giacenze = $query->orderBy('articolo_id')->paginate(30);
 
@@ -122,7 +118,6 @@ class MagazzinoController extends Controller
             'tipiCarta' => MagazzinoArticolo::whereNotNull('tipo_carta')->distinct()->pluck('tipo_carta'),
             'formati' => MagazzinoArticolo::whereNotNull('formato')->distinct()->pluck('formato'),
             'grammature' => MagazzinoArticolo::whereNotNull('grammatura')->distinct()->pluck('grammatura'),
-            'ubicazioni' => MagazzinoUbicazione::orderBy('codice')->get(),
         ];
 
         return view('magazzino.giacenze', [
@@ -160,41 +155,6 @@ class MagazzinoController extends Controller
             'operatore' => $operatore,
             'movimenti' => $movimenti,
         ]);
-    }
-
-    /**
-     * Gestione ubicazioni.
-     */
-    public function ubicazioni(Request $request)
-    {
-        $operatore = $request->attributes->get('operatore') ?? auth()->guard('operatore')->user();
-
-        $ubicazioni = MagazzinoUbicazione::orderBy('codice')->get();
-
-        return view('magazzino.ubicazioni', [
-            'operatore' => $operatore,
-            'ubicazioni' => $ubicazioni,
-        ]);
-    }
-
-    /**
-     * Salva ubicazione.
-     */
-    public function storeUbicazione(Request $request)
-    {
-        $request->validate([
-            'codice' => 'required|string|max:50',
-            'corridoio' => 'required|string|max:10',
-            'scaffale' => 'required|string|max:10',
-        ]);
-
-        MagazzinoUbicazione::updateOrCreate(
-            ['codice' => $request->input('codice')],
-            $request->only(['codice', 'corridoio', 'scaffale', 'piano', 'note'])
-        );
-
-        return redirect()->route('magazzino.ubicazioni', ['op_token' => $request->get('op_token')])
-            ->with('success', 'Ubicazione salvata');
     }
 
     /**

@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\MagazzinoArticolo;
-use App\Models\MagazzinoUbicazione;
 use App\Models\MagazzinoGiacenza;
 use App\Services\MagazzinoService;
 
@@ -18,12 +17,10 @@ class MagazzinoMovimentoController extends Controller
         $operatore = $request->attributes->get('operatore') ?? auth()->guard('operatore')->user();
 
         $articoli = MagazzinoArticolo::where('attivo', true)->orderBy('descrizione')->get();
-        $ubicazioni = MagazzinoUbicazione::orderBy('codice')->get();
 
         return view('magazzino.carico', [
             'operatore' => $operatore,
             'articoli' => $articoli,
-            'ubicazioni' => $ubicazioni,
             'ocrDati' => session('ocrDati', []),
         ]);
     }

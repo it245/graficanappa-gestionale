@@ -65,19 +65,6 @@
                             <div class="form-text">Oppure <a href="{{ route('magazzino.articoli', ['op_token' => request('op_token')]) }}">crea nuovo articolo</a></div>
                         </div>
 
-                        {{-- Ubicazione --}}
-                        <div class="col-md-6">
-                            <label class="form-label">Ubicazione</label>
-                            <select name="ubicazione_id" class="form-select">
-                                <option value="">-- Nessuna --</option>
-                                @foreach($ubicazioni as $ub)
-                                    <option value="{{ $ub->id }}" {{ old('ubicazione_id') == $ub->id ? 'selected' : '' }}>
-                                        {{ $ub->codice }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-
                         {{-- Quantita --}}
                         <div class="col-md-6">
                             <label class="form-label">Quantita</label>

@@ -41,15 +41,6 @@
                 </select>
             </div>
             <div class="col-auto">
-                <label class="form-label small mb-0">Ubicazione</label>
-                <select name="ubicazione_id" class="form-select form-select-sm">
-                    <option value="">Tutte</option>
-                    @foreach($filtri['ubicazioni'] as $u)
-                        <option value="{{ $u->id }}" {{ request('ubicazione_id') == $u->id ? 'selected' : '' }}>{{ $u->codice }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-auto">
                 <button class="btn btn-sm btn-primary">Filtra</button>
                 <a href="{{ route('magazzino.giacenze', ['op_token' => request('op_token')]) }}" class="btn btn-sm btn-outline-secondary">Reset</a>
             </div>
@@ -65,7 +56,7 @@
                 <thead><tr>
                     <th>Codice</th><th>Descrizione</th><th>Formato</th><th>g</th>
                     <th class="text-end">Giacenza</th><th class="text-end">Soglia</th>
-                    <th>Ubicazione</th><th>Lotto</th><th>Ultimo carico</th>
+                    <th>Lotto</th><th>Ultimo carico</th>
                 </tr></thead>
                 <tbody>
                 @foreach($giacenze as $g)
@@ -79,13 +70,12 @@
                             {{ number_format($g->quantita, 0, ',', '.') }}
                         </td>
                         <td class="text-end">{{ $g->articolo && $g->articolo->soglia_minima > 0 ? number_format($g->articolo->soglia_minima, 0, ',', '.') : '-' }}</td>
-                        <td>{{ $g->ubicazione->codice ?? '-' }}</td>
                         <td>{{ $g->lotto ?? '-' }}</td>
                         <td>{{ $g->data_ultimo_carico ? $g->data_ultimo_carico->format('d/m/Y') : '-' }}</td>
                     </tr>
                 @endforeach
                 @if($giacenze->isEmpty())
-                    <tr><td colspan="9" class="text-center text-muted py-3">Nessuna giacenza trovata</td></tr>
+                    <tr><td colspan="8" class="text-center text-muted py-3">Nessuna giacenza trovata</td></tr>
                 @endif
                 </tbody>
             </table>

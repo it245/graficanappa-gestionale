@@ -21,11 +21,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
         Giacenze
     </a>
-    <a href="{{ route('magazzino.ubicazioni', ['op_token' => request('op_token')]) }}" class="mes-sidebar-item {{ request()->routeIs('magazzino.ubicazioni') ? 'active' : '' }}">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-        Ubicazioni
-    </a>
-    <a href="{{ route('magazzino.movimenti', ['op_token' => request('op_token')]) }}" class="mes-sidebar-item {{ request()->routeIs('magazzino.movimenti') ? 'active' : '' }}">
+<a href="{{ route('magazzino.movimenti', ['op_token' => request('op_token')]) }}" class="mes-sidebar-item {{ request()->routeIs('magazzino.movimenti') ? 'active' : '' }}">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
         Movimenti
     </a>

@@ -215,8 +215,6 @@ Route::middleware(['magazzino.auth'])->prefix('magazzino')->group(function () {
     Route::post('/articoli', [MagazzinoController::class, 'storeArticolo'])->name('magazzino.articoli.store');
     Route::get('/giacenze', [MagazzinoController::class, 'giacenze'])->name('magazzino.giacenze');
     Route::get('/movimenti', [MagazzinoController::class, 'movimenti'])->name('magazzino.movimenti');
-    Route::get('/ubicazioni', [MagazzinoController::class, 'ubicazioni'])->name('magazzino.ubicazioni');
-    Route::post('/ubicazioni', [MagazzinoController::class, 'storeUbicazione'])->name('magazzino.ubicazioni.store');
 
     // Carico da bolla
     Route::get('/carico', [MagazzinoMovimentoController::class, 'formCarico'])->name('magazzino.carico');
