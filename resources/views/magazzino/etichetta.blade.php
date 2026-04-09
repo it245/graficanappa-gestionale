@@ -58,7 +58,7 @@
         </div>
 
         <div class="qr">
-            <img src="data:image/png;base64,{{ $qrPng }}" style="width:22mm; height:22mm;" alt="QR">
+            <img src="data:image/svg+xml;base64,{{ $qrPng }}" style="width:22mm; height:22mm;" alt="QR">
         </div>
 
         <div class="content">
