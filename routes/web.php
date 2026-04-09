@@ -18,6 +18,11 @@ use App\Http\Controllers\PushController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\TwoFactorController;
 use App\Http\Controllers\DdtPdfController;
+use App\Http\Controllers\MagazzinoController;
+use App\Http\Controllers\MagazzinoMovimentoController;
+use App\Http\Controllers\MagazzinoOcrController;
+use App\Http\Controllers\MagazzinoEtichettaController;
+use App\Http\Controllers\MagazzinoScannerController;
 
 // Operatori
 Route::prefix('operatore')->group(function() {
@@ -201,6 +206,42 @@ Route::middleware('operatore.auth')->prefix('chat')->group(function () {
     Route::get('/', [ChatController::class, 'index'])->name('chat.index');
     Route::post('/invia', [ChatController::class, 'invia'])->name('chat.invia');
     Route::get('/messaggi', [ChatController::class, 'messaggi'])->name('chat.messaggi');
+});
+
+// Magazzino Carta — accessibile da spedizione (Emanuele), owner e admin
+Route::middleware(['operatore.auth'])->prefix('magazzino')->group(function () {
+    Route::get('/', [MagazzinoController::class, 'dashboard'])->name('magazzino.dashboard');
+    Route::get('/articoli', [MagazzinoController::class, 'articoli'])->name('magazzino.articoli');
+    Route::post('/articoli', [MagazzinoController::class, 'storeArticolo'])->name('magazzino.articoli.store');
+    Route::get('/giacenze', [MagazzinoController::class, 'giacenze'])->name('magazzino.giacenze');
+    Route::get('/movimenti', [MagazzinoController::class, 'movimenti'])->name('magazzino.movimenti');
+    Route::get('/ubicazioni', [MagazzinoController::class, 'ubicazioni'])->name('magazzino.ubicazioni');
+    Route::post('/ubicazioni', [MagazzinoController::class, 'storeUbicazione'])->name('magazzino.ubicazioni.store');
+
+    // Carico da bolla
+    Route::get('/carico', [MagazzinoMovimentoController::class, 'formCarico'])->name('magazzino.carico');
+    Route::post('/carico/ocr', [MagazzinoOcrController::class, 'processaBolla'])->name('magazzino.ocr');
+    Route::post('/carico', [MagazzinoMovimentoController::class, 'registraCarico'])->name('magazzino.carico.store');
+
+    // Scarico/Prelievo
+    Route::get('/prelievo', [MagazzinoMovimentoController::class, 'formPrelievo'])->name('magazzino.prelievo');
+    Route::post('/prelievo', [MagazzinoMovimentoController::class, 'registraPrelievo'])->name('magazzino.prelievo.store');
+
+    // Scanner QR
+    Route::get('/scan', [MagazzinoScannerController::class, 'scanner'])->name('magazzino.scanner');
+    Route::post('/scan/lookup', [MagazzinoScannerController::class, 'lookup'])->name('magazzino.scan.lookup');
+
+    // Etichette
+    Route::get('/etichetta/{id}', [MagazzinoEtichettaController::class, 'stampa'])->name('magazzino.etichetta.stampa');
+
+    // Alert
+    Route::get('/alert', [MagazzinoController::class, 'alertSoglia'])->name('magazzino.alert');
+});
+
+// Operatore: prelievo dalla propria dashboard (scansione QR)
+Route::middleware(['operatore.auth'])->group(function () {
+    Route::get('/operatore/preleva-carta', [MagazzinoScannerController::class, 'scannerOperatore'])->name('operatore.prelevaCarta');
+    Route::post('/operatore/preleva-carta', [MagazzinoScannerController::class, 'prelievoOperatore'])->name('operatore.prelevaCarta.store');
 });
 
 // CSRF token refresh (mantiene sessione viva)
