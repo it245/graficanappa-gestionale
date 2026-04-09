@@ -16,9 +16,15 @@ class QrEtichettaService
 
         $qrUrl = url("/magazzino/scan?qr={$etichetta->qr_code}");
 
+        // Genera QR come PNG base64 (dompdf non supporta SVG inline)
+        $qrPng = base64_encode(
+            \SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')->size(150)->generate($qrUrl)
+        );
+
         $data = [
             'etichetta' => $etichetta,
             'qrUrl' => $qrUrl,
+            'qrPng' => $qrPng,
             'articolo' => $etichetta->articolo,
             'ubicazione' => $etichetta->ubicazione,
         ];

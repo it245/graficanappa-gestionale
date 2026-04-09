@@ -58,10 +58,7 @@
 <body>
     <div class="etichetta">
         <div class="qr-col">
-            {{-- QR Code generato come immagine SVG inline --}}
-            <div style="width:26mm; height:26mm;">
-                {!! QrCode::size(98)->generate($qrUrl) !!}
-            </div>
+            <img src="data:image/png;base64,{{ $qrPng }}" style="width:26mm; height:26mm;" alt="QR">
         </div>
         <div class="info-col">
             <div class="header">
