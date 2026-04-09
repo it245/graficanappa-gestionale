@@ -107,7 +107,7 @@
     <h1>ROADMAP SVILUPPO</h1>
     <h2>Sistema Gestionale MES &mdash; Grafica Nappa srl</h2>
     <div class="piano">Piano biennale (AI-Assisted): Febbraio 2026 &mdash; Febbraio 2028</div>
-    <div class="date">Aggiornata al 16 Marzo 2026</div>
+    <div class="date">Aggiornata al 9 Aprile 2026</div>
     <div class="author">Giovanni Pietropaolo &mdash; Tirocinante Sistemi Informativi</div>
 </div>
 
@@ -162,13 +162,19 @@
             <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
         </tr>
         <tr>
-            <td class="version-col">v2.0 Scheduler Mossa 37</td>
+            <td class="version-col">v2.0 Scheduler + Magazzino + OCR</td>
+            <td><div class="bar bar-done">&nbsp;</div></td>
             <td><div class="bar bar-current">&nbsp;</div></td>
+            <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+        </tr>
+        <tr>
+            <td class="version-col">v2.5 Fabbisogno + Ordini Acquisto</td>
+            <td></td>
             <td><div class="bar bar-next">&nbsp;</div></td>
             <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
         </tr>
         <tr>
-            <td class="version-col">v3.0 AI Intelligence (Open Source)</td>
+            <td class="version-col">v3.0 CRM + BI + AI Intelligence</td>
             <td></td><td></td>
             <td><div class="bar bar-ai">&nbsp;</div></td>
             <td></td><td></td><td></td><td></td><td></td><td></td>
@@ -186,7 +192,7 @@
             <td></td><td></td><td></td><td></td>
         </tr>
         <tr>
-            <td class="version-col">v6.0 Magazzino &amp; Materiali</td>
+            <td class="version-col">v6.0 Contabilit&agrave; Analitica &amp; Consuntivo</td>
             <td></td><td></td><td></td><td></td><td></td>
             <td><div class="bar bar-future">&nbsp;</div></td>
             <td></td><td></td><td></td>
@@ -487,33 +493,75 @@
     <li class="todo">Integrazione catalogo clich&eacute;: gestione e consultazione clich&eacute; per fustelle e stampa a caldo</li>
 </ul>
 
-<h4>Magazzino Base &amp; Logistica (da sviluppare)</h4>
-<p>Gestione magazzino standalone (indipendente da Onda) con scarico materiali tramite lettore QR code USB/Bluetooth.</p>
+<h4>Magazzino Carta con OCR Intelligente</h4>
+<p>Sistema completo di gestione magazzino carta con tracciabilit&agrave; dalla ricezione bolla fornitore al prelievo per produzione. OCR con Tesseract per lettura automatica bolle (predisposto per upgrade a AI Vision).</p>
 <ul class="checklist">
-    <li class="todo">Anagrafica materiali: carta, lastre, inchiostri, fustelle, plastificazione &mdash; codice interno, unit&agrave; di misura, formato, fornitore, soglia minima</li>
-    <li class="todo">Movimenti di magazzino: carico (arrivo merce + DDT fornitore), scarico (prelievo per produzione), rettifica inventario con motivazione</li>
-    <li class="todo">Scarico tramite QR code: etichette QR generate dal MES, scansione con lettore USB/Bluetooth &rarr; campo input identifica materiale, operatore inserisce quantit&agrave; e commessa</li>
-    <li class="todo">Generazione e stampa etichette QR per ogni materiale (QR + nome leggibile + codice)</li>
-    <li class="todo">Dashboard magazzino: giacenza attuale, materiali sotto soglia (evidenziati rosso), ultimi movimenti, filtri per categoria/fornitore/periodo</li>
-    <li class="todo">Alert soglia minima sul dashboard owner: &ldquo;X materiali sotto scorta&rdquo;</li>
-    <li class="todo">Report consumo materiali per periodo e per commessa</li>
+    <li class="done">Anagrafica articoli carta: codice, tipo carta, formato, grammatura, spessore, UM, soglia minima, fornitore, certificazioni</li>
+    <li class="done">Registrazione bolla con OCR Tesseract: foto bolla &rarr; estrazione automatica fornitore, tipo carta, formato, grammatura, quantit&agrave;</li>
+    <li class="done">Creazione automatica articolo da dati OCR se non presente in anagrafica</li>
+    <li class="done">Movimenti magazzino: carico (da bolla), scarico (prelievo per commessa), reso, rettifica inventariale</li>
+    <li class="done">Scarico carta SOLO per fase STAMPA (offset o digitale) &mdash; fasi successive lavorano sullo stesso foglio</li>
+    <li class="done">Etichette QR 10x15cm: PDF con QR code + codice articolo + tipo carta + formato + grammatura</li>
+    <li class="done">Scanner QR da fotocamera browser (html5-qrcode) con fallback input manuale</li>
+    <li class="done">Dashboard magazzino: 4 KPI, giacenze sotto soglia, ultimi movimenti</li>
+    <li class="done">Giacenze con filtri: tipo carta, formato, grammatura</li>
+    <li class="done">Storico movimenti con filtri: tipo, periodo, articolo</li>
+    <li class="done">Alert automatico sotto soglia minima</li>
+    <li class="done">Accesso limitato: reparto spedizione, owner, admin (middleware dedicato MagazzinoAuth)</li>
+    <li class="done">Parser OCR adattato ai fornitori reali: Stratosfera, Fedrigoni, MM Board &amp; Paper, Canon</li>
+    <li class="done">Predisposto per upgrade a AI Vision (Gemini/Claude) per accuratezza 95%+</li>
 </ul>
 
 <div class="section-box">
-    <strong>Hardware consigliato per QR:</strong> Lettore Bluetooth portatile (es. Netum C750, ~40&euro;) &mdash; si comporta come tastiera, compatibile con qualsiasi PC/tablet senza fotocamera. Consigliati 2-3 unit&agrave; per coprire magazzino e reparti.
+    <strong>Proposte hardware:</strong> Tablet a parete per postazione magazzino + pistola barcode Bluetooth per scansione QR + stampante etichette WiFi (oppure stampante attuale collegata via Ethernet a ripetitore). Documento proposta dettagliato disponibile.
 </div>
 
+<h4>Sicurezza v2.0 (aprile 2026)</h4>
+<ul class="checklist">
+    <li class="done">Audit automatico: 4 agenti paralleli (SQL injection, auth bypass, XSS/file upload, exposed routes)</li>
+    <li class="done">Fix magazzino: middleware MagazzinoAuth controlla reparto spedizione</li>
+    <li class="done">Fix open redirect: validazione URL solo percorsi interni</li>
+    <li class="done">Fix file upload: storage privato + validazione MIME types</li>
+    <li class="done">Fix SQL injection LIKE: escape wildcards in 3 controller</li>
+    <li class="done">Fix CSRF endpoint e Prinect explorer: aggiunto middleware auth</li>
+    <li class="done">Fix token auth: verifica operatore attivo nei middleware</li>
+    <li class="done">Fix mass assignment: ruolo/attivo/password in $guarded su Operatore</li>
+    <li class="done">Fix exception messages: log server-side, messaggio generico all'utente</li>
+    <li class="done">Fix JSON XSS: flag HEX nei json_encode delle viste Blade</li>
+</ul>
+
+<h4>Performance Sync Onda (aprile 2026)</h4>
+<ul class="checklist">
+    <li class="done">Sync Onda ottimizzata: esclude commesse completate (tutte fasi stato &ge; 4)</li>
+    <li class="done">Riduzione progressiva righe da processare man mano che gli ordini si completano</li>
+</ul>
+
+<!-- ========== v2.5 ========== -->
+<h3><span class="version-badge badge-next">v2.5</span> Fabbisogno Materiali &amp; Ordini Acquisto <span class="timeline-badge">Mag-Giu 2026</span></h3>
+<p>Collegamento automatico tra commesse e magazzino carta: calcolo fabbisogno, verifica disponibilit&agrave;, generazione ordini di acquisto e blocco/rilascio produzione. Ispirati all'analisi di sistemi MES di riferimento nel settore tipografico.</p>
+
+<ul class="checklist">
+    <li class="todo"><strong>Fabbisogno materiali:</strong> dalla commessa calcola automaticamente quanta carta serve (tipo, formato, grammatura, quantit&agrave;) e verifica la giacenza disponibile</li>
+    <li class="todo"><strong>Ordine di acquisto:</strong> quando la giacenza scende sotto soglia o il fabbisogno supera la disponibilit&agrave;, genera automaticamente proposta d'ordine al fornitore</li>
+    <li class="todo"><strong>Blocco/Rilascio produzione:</strong> impedisce l'avvio di una fase STAMPA se il materiale non &egrave; disponibile a magazzino, con avviso all'operatore</li>
+    <li class="todo"><strong>Impegno materiale:</strong> quando una commessa &egrave; confermata, la carta necessaria viene &ldquo;impegnata&rdquo; (riservata) per quella commessa</li>
+    <li class="todo">Mappa flussi: Commessa &rarr; Fabbisogno &rarr; Verifica giacenza &rarr; Ordine acquisto o Prelievo</li>
+</ul>
+
 <!-- ========== v3.0 ========== -->
-<h3><span class="version-badge badge-ai">v3.0</span> AI Intelligence (Open Source) <span class="timeline-badge">Lug-Set 2026</span></h3>
+<h3><span class="version-badge badge-ai">v3.0</span> CRM, Business Intelligence &amp; AI <span class="timeline-badge">Lug-Set 2026</span></h3>
 
 <div class="ai-box">
-    <strong>SUPER INTEGRAZIONE: Intelligenza Artificiale nel MES</strong><br>
-    Integrazione di un modello AI open-source e gratuito (es. LLaMA, Mistral, Gemma) eseguito in locale o via API free-tier.
+    <strong>SUPER INTEGRAZIONE: CRM + BI + Intelligenza Artificiale nel MES</strong><br>
+    Gestione completa del ciclo commerciale (offerta &rarr; ordine), business intelligence avanzata e integrazione AI open-source per analisi predittiva.
     L'AI analizza dati di produzione storici e in tempo reale per fornire insight, previsioni e suggerimenti operativi,
     senza costi di licenza ricorrenti.
 </div>
 
 <ul class="checklist">
+    <li class="todo"><strong>CRM &amp; Gestione Offerte:</strong> flusso completo richiesta offerta &rarr; preventivo &rarr; accettazione &rarr; conferma ordine &rarr; commessa</li>
+    <li class="todo"><strong>Preventivazione:</strong> costo stimato commessa (fabbisogno materiali + ore macchina stimate + conto lavoro) con confronto consuntivo</li>
+    <li class="todo"><strong>Business Intelligence:</strong> dashboard analisi avanzata con drill-down per cliente/macchina/operatore, trend, KPI configurabili</li>
     <li class="todo">Integrazione modello AI open-source (LLaMA / Mistral / Gemma) via Ollama o API free-tier</li>
     <li class="todo"><strong>Assistente AI per il titolare:</strong> chat in linguaggio naturale per interrogare i dati di produzione
         <ul class="sub-section">
@@ -526,7 +574,6 @@
     <li class="todo"><strong>Ottimizzazione tempi stimati:</strong> AI ricalibra avviamento e copie/ora in base ai dati reali accumulati</li>
     <li class="todo"><strong>Report AI generati:</strong> il report settimanale include osservazioni, anomalie e raccomandazioni scritte dall'AI</li>
     <li class="todo"><strong>Anomaly detection:</strong> segnalazione automatica di tempi anomali (fase troppo lunga/corta rispetto allo storico)</li>
-    <li class="todo">Cache intelligente delle risposte AI (Redis) per ottimizzare le performance</li>
 </ul>
 
 <!-- ========== v4.0 ========== -->
