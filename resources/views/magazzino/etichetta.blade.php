@@ -78,21 +78,12 @@
                 @endif
             </div>
 
-            <div class="qta-big">
-                Qta: {{ number_format($etichetta->quantita_iniziale, 0, ',', '.') }} {{ $articolo->um }}
-            </div>
-
             @if($etichetta->lotto)
             <div class="field">
                 <span class="field-label">Lotto:</span>
                 <span class="field-value">{{ $etichetta->lotto }}</span>
             </div>
             @endif
-
-            <div class="field">
-                <span class="field-label">Data:</span>
-                {{ $etichetta->created_at->format('d/m/Y') }}
-            </div>
         </div>
     </div>
 </body>
