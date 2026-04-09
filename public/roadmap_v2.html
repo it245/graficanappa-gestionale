@@ -71,7 +71,7 @@
     <div class="azienda">GRAFICA NAPPA S.R.L.</div>
     <div class="titolo">ROADMAP SISTEMA MES</div>
     <div class="sottotitolo">Piano di Sviluppo — Aggiornamento v2.0</div>
-    <div class="data">Marzo 2026 — Redatto da Giovanni Pietropaolo</div>
+    <div class="data">Aprile 2026 — Redatto da Giovanni Pietropaolo</div>
 </div>
 
 <!-- KPI -->
@@ -130,7 +130,7 @@
     <tr><td><strong>v1.0</strong></td><td>MES Completo — Produzione, Onda, Prinect, Fiery, BRT, Costi</td><td>81</td><td><span class="badge badge-done">Operativa</span></td></tr>
     <tr><td><strong>v1.1</strong></td><td>Presenze, Notifiche, Report Ore, Etichette, Kiosk TV</td><td>45</td><td><span class="badge badge-done">Operativa</span></td></tr>
     <tr><td><strong>v1.2</strong></td><td>Sicurezza: RBAC, Audit Log, 2FA, Rate Limiting, Headers, GDPR</td><td>11</td><td><span class="badge badge-done">Operativa</span></td></tr>
-    <tr><td><strong>v2.0</strong></td><td>Scheduler, PWA, WebSocket, Push, UI Enterprise, Responsive</td><td>19</td><td><span class="badge badge-new">Rilascio Apr 2026</span></td></tr>
+    <tr><td><strong>v2.0</strong></td><td>Scheduler, PWA, WebSocket, Push, UI Enterprise, Magazzino Carta, OCR AI</td><td>28</td><td><span class="badge badge-new">Rilascio Apr 2026</span></td></tr>
 </table>
 
 <!-- V2.0 DETTAGLIO -->
@@ -188,6 +188,23 @@
     <li>Comunicazione in tempo reale tra operatori, owner e spedizione</li>
 </ul>
 
+<h3>2.7 Magazzino Carta con OCR Intelligente</h3>
+<div class="ai-box">
+    <strong>NUOVA FUNZIONALIT&Agrave;: Gestione Magazzino Carta con AI Vision</strong><br>
+    Sistema completo di tracciabilit&agrave; materia prima: dalla ricezione bolla fornitore, al prelievo per produzione, fino all'inventario in tempo reale. L'OCR con AI (Google Gemini Vision) legge automaticamente le bolle dei fornitori ed estrae i dati.
+</div>
+<ul>
+    <li><strong>Registrazione bolla con AI</strong> — foto della bolla &rarr; Gemini Vision estrae: fornitore, tipo carta, formato, grammatura, quantit&agrave; (precisione 95%+)</li>
+    <li><strong>Anagrafica articoli automatica</strong> — il sistema crea l'articolo in automatico dalla bolla se non esiste</li>
+    <li><strong>Etichette QR</strong> — generazione PDF 10x15cm con QR code per ogni bancale ricevuto</li>
+    <li><strong>Prelievo per produzione</strong> — scarico carta associato a commessa (solo fase STAMPA, come da regola aziendale)</li>
+    <li><strong>Giacenze in tempo reale</strong> — dashboard con filtri per tipo carta, formato, grammatura</li>
+    <li><strong>Alert sotto soglia</strong> — avviso automatico quando un articolo scende sotto la scorta minima</li>
+    <li><strong>Storico movimenti</strong> — carico, scarico, reso, rettifica con filtri temporali</li>
+    <li><strong>Scanner QR</strong> — scansione bancali via fotocamera o pistola Bluetooth</li>
+    <li><strong>Sicurezza</strong> — accesso limitato al reparto spedizione, owner e admin</li>
+</ul>
+
 <!-- SICUREZZA -->
 <div class="page-break"></div>
 <h2>3. Sicurezza Informatica (gi&agrave; operativa)</h2>
@@ -226,8 +243,65 @@
 
 <!-- PIANO FUTURO -->
 <div class="page-break"></div>
-<h2>5. Piano di Sviluppo Futuro</h2>
-<p>Il sistema MES seguir&agrave; un piano di evoluzione continua. Ogni versione aggiunge funzionalit&agrave; strategiche che aumentano l'efficienza produttiva, la qualit&agrave; del prodotto e la competitivit&agrave; aziendale.</p>
+<h2>5. Mappa Flussi — Come si collegano i moduli</h2>
+<p>Il diagramma seguente mostra come i moduli del MES si collegano tra loro, dal ricevimento dell'ordine fino alla consegna e fatturazione. I blocchi <span class="badge badge-done">verdi</span> sono gi&agrave; operativi, quelli <span class="badge badge-new">blu</span> sono in sviluppo nella v2.0, quelli <span class="badge badge-future">grigi</span> sono pianificati.</p>
+
+<table>
+    <tr><th>Flusso</th><th>Blocchi collegati</th><th>Stato</th></tr>
+    <tr>
+        <td><strong>Ordine &rarr; Produzione</strong></td>
+        <td>Conferma ordine (Onda) &rarr; Commessa &rarr; Fasi produttive &rarr; Operatore &rarr; Terminazione</td>
+        <td><span class="badge badge-done">Operativo</span></td>
+    </tr>
+    <tr>
+        <td><strong>Commessa &rarr; Magazzino</strong></td>
+        <td>Commessa &rarr; Fabbisogno carta &rarr; Verifica giacenza &rarr; Prelievo &rarr; Scarico magazzino</td>
+        <td><span class="badge badge-new">v2.0</span></td>
+    </tr>
+    <tr>
+        <td><strong>Bolla fornitore &rarr; Magazzino</strong></td>
+        <td>Foto bolla &rarr; OCR AI (Gemini) &rarr; Registrazione carico &rarr; Etichetta QR &rarr; Giacenza aggiornata</td>
+        <td><span class="badge badge-new">v2.0</span></td>
+    </tr>
+    <tr>
+        <td><strong>Magazzino &rarr; Ordine acquisto</strong></td>
+        <td>Giacenza sotto soglia &rarr; Alert &rarr; Ordine di acquisto al fornitore</td>
+        <td><span class="badge badge-future">v2.5</span></td>
+    </tr>
+    <tr>
+        <td><strong>Produzione &rarr; Spedizione</strong></td>
+        <td>Fase completata &rarr; DDT vendita &rarr; BRT tracking &rarr; Consegna a cliente</td>
+        <td><span class="badge badge-done">Operativo</span></td>
+    </tr>
+    <tr>
+        <td><strong>Conto Lavoro</strong></td>
+        <td>Commessa &rarr; Fase esterna &rarr; DDT invio conto lavoro &rarr; DDT ritorno &rarr; Rientro in produzione</td>
+        <td><span class="badge badge-done">Operativo</span></td>
+    </tr>
+    <tr>
+        <td><strong>Consuntivo &rarr; Report</strong></td>
+        <td>Ore lavorate (Prinect/manuale) &rarr; Costi reparto &rarr; Report ore &rarr; Margini commessa</td>
+        <td><span class="badge badge-done">Operativo</span></td>
+    </tr>
+    <tr>
+        <td><strong>CRM &rarr; Offerte &rarr; Ordine</strong></td>
+        <td>Richiesta offerta &rarr; Preventivo &rarr; Accettazione &rarr; Conferma ordine &rarr; Commessa</td>
+        <td><span class="badge badge-future">v3.0</span></td>
+    </tr>
+    <tr>
+        <td><strong>Business Intelligence</strong></td>
+        <td>Tutti i dati confluiscono &rarr; Dashboard BI &rarr; Analisi trend, KPI avanzati, previsioni</td>
+        <td><span class="badge badge-future">v3.0</span></td>
+    </tr>
+    <tr>
+        <td><strong>Preventivazione</strong></td>
+        <td>Fabbisogno materiali + Ore macchina stimate + Conto lavoro &rarr; Costo previsto commessa</td>
+        <td><span class="badge badge-future">v3.0</span></td>
+    </tr>
+</table>
+
+<h2>6. Piano di Sviluppo Futuro</h2>
+<p>Il sistema MES seguir&agrave; un piano di evoluzione continua. I nuovi moduli sono ispirati all'analisi di sistemi MES di riferimento nel settore tipografico e integrati con la nostra architettura.</p>
 
 <div class="timeline">
     <div class="timeline-item">
@@ -241,21 +315,28 @@
         <div class="timeline-dot" style="background:#0d6efd;"></div>
         <div class="timeline-content">
             <span class="version">v2.0</span> — <span class="badge badge-new">Aprile 2026</span>
-            <div class="desc">Scheduler produzione, PWA, WebSocket, push notifications, UI enterprise, responsive</div>
+            <div class="desc">Scheduler produzione, PWA, WebSocket, push, UI enterprise, <strong>Magazzino Carta con OCR AI</strong>, etichette QR, scanner</div>
+        </div>
+    </div>
+    <div class="timeline-item">
+        <div class="timeline-dot" style="background:#17a2b8;"></div>
+        <div class="timeline-content">
+            <span class="version">v2.5</span> — <span class="badge badge-ready">Maggio-Giugno 2026</span>
+            <div class="desc"><strong>Fabbisogno materiali</strong> (calcolo automatico carta necessaria per commessa), <strong>Ordine di acquisto</strong> (generazione automatica quando sotto soglia), <strong>Blocco/Rilascio produzione</strong> (blocco commessa se materiale non disponibile)</div>
         </div>
     </div>
     <div class="timeline-item">
         <div class="timeline-dot" style="background:#7c3aed;"></div>
         <div class="timeline-content">
             <span class="version">v3.0</span> — <span class="badge badge-ai">AI</span> Luglio-Settembre 2026
-            <div class="desc">Assistente AI per il titolare, analisi predittiva ritardi, report generati dall'AI, anomaly detection</div>
+            <div class="desc"><strong>CRM e Gestione Offerte</strong> (richiesta offerta &rarr; preventivo &rarr; accettazione &rarr; commessa), <strong>Preventivazione</strong> (costo stimato commessa: materiali + ore + conto lavoro), <strong>Business Intelligence</strong> (dashboard analisi avanzata, trend, drill-down), Assistente AI per il titolare</div>
         </div>
     </div>
     <div class="timeline-item">
         <div class="timeline-dot" style="background:#7c3aed;"></div>
         <div class="timeline-content">
             <span class="version">v4.0</span> — <span class="badge badge-ai">AI</span> Ottobre-Dicembre 2026
-            <div class="desc">Scheduling AI-powered, simulazione what-if, assegnazione intelligente operatori, drag &amp; drop Gantt</div>
+            <div class="desc">Scheduling AI-powered, simulazione what-if, assegnazione intelligente operatori, drag &amp; drop Gantt, <strong>Istruzioni reparto</strong> (schede lavoro digitali per fase/macchina)</div>
         </div>
     </div>
     <div class="timeline-item">
@@ -269,7 +350,7 @@
         <div class="timeline-dot" style="background:#6c757d;"></div>
         <div class="timeline-content">
             <span class="version">v6.0</span> — Aprile-Giugno 2027
-            <div class="desc">Magazzino e materiali: giacenze, scorta minima, scarico automatico da produzione, costo medio ponderato</div>
+            <div class="desc"><strong>Contabilit&agrave; analitica</strong> (integrazione bidirezionale con Onda per fatture attive/passive, costo medio ponderato materiali), <strong>Consuntivo avanzato</strong> (confronto preventivo vs consuntivo per commessa)</div>
         </div>
     </div>
     <div class="timeline-item">
@@ -283,14 +364,14 @@
         <div class="timeline-dot" style="background:#6c757d;"></div>
         <div class="timeline-content">
             <span class="version">v8.0</span> — Ottobre-Dicembre 2027
-            <div class="desc">Business Intelligence avanzata: drill-down, benchmark, previsioni fatturato, analisi ABC clienti</div>
+            <div class="desc">Business Intelligence avanzata: drill-down per cliente/macchina/operatore, benchmark, previsioni fatturato, analisi ABC clienti</div>
         </div>
     </div>
     <div class="timeline-item">
         <div class="timeline-dot" style="background:#6c757d;"></div>
         <div class="timeline-content">
             <span class="version">v9.0</span> — 2027-2028
-            <div class="desc">Portale clienti, API pubblica, webhook, integrazione contabile, SSO</div>
+            <div class="desc">Portale clienti (stato commessa online), API pubblica, webhook, integrazione contabile completa, SSO</div>
         </div>
     </div>
     <div class="timeline-item">
@@ -325,6 +406,8 @@
     <tr><td>Operatori</td><td>Notifiche push</td><td>Avvisi immediati senza controllare lo schermo</td></tr>
     <tr><td>Spedizione</td><td>Tracking BRT integrato</td><td>Stato consegna visibile senza cambiare sistema</td></tr>
     <tr><td>Sicurezza</td><td>11 protocolli attivi + documentazione</td><td>Conformit&agrave; GDPR, tracciabilit&agrave; completa</td></tr>
+    <tr><td>Magazzino</td><td>Tracciabilit&agrave; carta con QR e AI</td><td>Inventario in tempo reale, zero errori di giacenza</td></tr>
+    <tr><td>Magazzino</td><td>OCR bolle con Gemini AI</td><td>Registrazione bolla in 15 secondi invece di 3 minuti</td></tr>
     <tr><td>Costi</td><td>Zero licenze software</td><td>Sistema 100% proprietario, nessun vendor lock-in</td></tr>
     <tr><td>Competitivit&agrave;</td><td>Specializzazione tipografica</td><td>Nessun MES generico offre queste funzionalit&agrave;</td></tr>
 </table>
