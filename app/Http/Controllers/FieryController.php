@@ -306,8 +306,24 @@ class FieryController extends Controller
             $totColore = (int) $row['colore'];
             $totBn = (int) $row['bn'];
 
-            $totFogli = $foglioGrande + $foglioPiccolo;
-            if ($totFogli === 0) continue;
+            if ($foglioGrande + $foglioPiccolo === 0) continue;
+
+            // Verifica se la commessa ha banner (lato > 700mm)
+            $isBanner = false;
+            foreach ($row['formati'] ?? [] as $f) {
+                if (preg_match('/(\d+)\s*x\s*(\d+)/', $f, $m)) {
+                    if (max((int)$m[1], (int)$m[2]) > 700) {
+                        $isBanner = true;
+                        break;
+                    }
+                }
+            }
+
+            // Se e' una commessa banner, tutti i fogli grandi vanno in Banner (non in A3)
+            if ($isBanner) {
+                $report['banner'] += $foglioGrande;
+                $foglioGrande = 0;
+            }
 
             $totPagine = $totColore + $totBn;
             if ($totPagine === 0) {
@@ -321,16 +337,6 @@ class FieryController extends Controller
                 $report['bn_a4']     += round($foglioPiccolo * $pctBn);
                 $report['colore_a3'] += round($foglioGrande * $pctColore);
                 $report['bn_a3']     += round($foglioGrande * $pctBn);
-            }
-
-            // Banner: foglio lungo (lato > 700mm)
-            foreach ($row['formati'] ?? [] as $f) {
-                if (preg_match('/(\d+)\s*x\s*(\d+)/', $f, $m)) {
-                    if (max((int)$m[1], (int)$m[2]) > 700) {
-                        $report['banner'] += $foglioGrande;
-                        break;
-                    }
-                }
             }
         }
 
