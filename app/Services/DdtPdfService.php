@@ -92,8 +92,13 @@ class DdtPdfService
               AND YEAR(t.DataDocumento) = YEAR(GETDATE())
         ", [$numeroPadded]);
 
-        // Fallback: se non trovato nell'anno corrente, cerca il più recente
+        // Se non trovato nell'anno corrente → 404 (no fallback ad anni precedenti)
         if (!$testa) {
+            return null;
+        }
+
+        // Codice morto rimosso — era il fallback che prendeva DDT di anni precedenti
+        if (false) {
             $testa = DB::connection('onda')->selectOne("
                 SELECT t.IdDoc, t.NumeroDocumento, t.DataDocumento, t.DataRegistrazione,
                        a.RagioneSociale AS ClienteNome,
@@ -119,14 +124,19 @@ class DdtPdfService
                    c.DataTrasporto, c.OraTrasporto,
                    c.CodTrasporto AS TrasportoACura,
                    c.CausaleTrasporto,
-                   c.RagSocSped AS DestNome,
-                   c.IndirizzoSped AS DestIndirizzo,
-                   c.CapSped AS DestCap, c.CittaSped AS DestCitta,
-                   c.ProvSped AS DestProvincia,
+                   COALESCE(NULLIF(LTRIM(RTRIM(c.RagSocSped)), ''), dest.RagioneSociale) AS DestNome,
+                   COALESCE(NULLIF(LTRIM(RTRIM(c.IndirizzoSped)), ''), dest.Indirizzo) AS DestIndirizzo,
+                   COALESCE(NULLIF(LTRIM(RTRIM(c.CapSped)), ''), dest.Cap) AS DestCap,
+                   COALESCE(NULLIF(LTRIM(RTRIM(c.CittaSped)), ''), dest.Citta) AS DestCitta,
+                   COALESCE(NULLIF(LTRIM(RTRIM(c.ProvSped)), ''), dest.Provincia) AS DestProvincia,
+                   dest.RagioneSociale2 AS DestTelefono,
                    v.RagioneSociale AS VettoreNome,
                    v.Indirizzo AS VettoreIndirizzo, v.Citta AS VettoreCitta
             FROM ATTDocCoda c
             LEFT JOIN STDAnagrafiche v ON c.IdVettore1 = v.IdAnagrafica
+            LEFT JOIN ATTDocTeste t2 ON c.IdDoc = t2.IdDoc
+            LEFT JOIN STDAnagIndirizzi dest ON dest.IdAnagrafica = t2.IdAnagrafica
+                AND CAST(dest.IdIndirizzo AS VARCHAR) = CAST(c.IdIndirizzoMerce AS VARCHAR)
             WHERE c.IdDoc = ?
         ", [$testa->IdDoc]);
 
@@ -175,11 +185,12 @@ class DdtPdfService
             $causale = $causaliMap[$coda->CausaleTrasporto] ?? $coda->CausaleTrasporto;
         }
 
-        // Note: righe testo escluse intestazioni Rif. Ord.Cli.
+        // Note: righe testo escluse intestazioni Rif. Ord.Cli. e disclaimer
         $noteRighe = collect($righe)
             ->filter(fn($r) => $r->TipoRiga == 3
                 && !empty(trim($r->Descrizione ?? ''))
-                && !str_starts_with(trim($r->Descrizione), 'Rif. Ord.Cli.'))
+                && !str_starts_with(trim($r->Descrizione), 'Rif. Ord.Cli.')
+                && !str_contains(strtolower($r->Descrizione ?? ''), 'contestazioni'))
             ->pluck('Descrizione')
             ->implode("\n");
 

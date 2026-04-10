@@ -280,7 +280,7 @@ class FieryController extends Controller
         $clickPerCommessa = $this->getClickPerCommessa($fiery, $da, $a);
 
         // Report mensile per categoria (B/N A4, Colore A4, B/N A3, Colore A3, Banner)
-        $reportCategorie = $this->getReportCategorie($fiery, $da, $a);
+        $reportCategorie = $this->getReportCategorie($da, $a);
 
         return view('fiery.contatori', compact('live', 'storico', 'clickPerCommessa', 'da', 'a', 'reportCategorie'));
     }
@@ -293,25 +293,22 @@ class FieryController extends Controller
         set_time_limit(180);
         $da = $request->get('da', now()->subDays(30)->format('Y-m-d'));
         $a = $request->get('a', now()->format('Y-m-d'));
-        $reportCategorie = $this->getReportCategorie($fiery, $da, $a);
+        $reportCategorie = $this->getReportCategorie($da, $a);
 
         return view('fiery.report_categorie_pdf', compact('reportCategorie', 'da', 'a'));
     }
 
     /**
      * Report scatti per categoria nel periodo (formato fattura SAE).
-     * Categorie: B/N A4, Colore A4, B/N A3, Colore A3, Banner.
+     * Usa contatori SNMP storici (snapshot inizio/fine periodo).
      */
-    private function getReportCategorie(FieryService $fiery, string $da, string $a): array
+    private function getReportCategorie(string $da, string $a): array
     {
-        // Usa contatori SNMP storici (come fa SAE in fattura)
-        // Trova snapshot piu vicino a $da (lettura iniziale) e a $a (lettura finale)
         $iniziale = ContatoreStampante::where('stampante', 'Canon iPR V900')
             ->whereDate('rilevato_at', '<=', $da)
             ->orderByDesc('rilevato_at')
             ->first();
 
-        // Se non c'e' snapshot prima di $da, prendi il primo disponibile
         if (!$iniziale) {
             $iniziale = ContatoreStampante::where('stampante', 'Canon iPR V900')
                 ->orderBy('rilevato_at')
@@ -338,8 +335,7 @@ class FieryController extends Controller
             return $report;
         }
 
-        // Differenza tra letture (in lati stampati = impressioni SNMP)
-        // SAE conta in fogli, quindi dividiamo per 2 (duplex)
+        // Differenza tra letture (lati stampati / 2 = fogli)
         $report['bn_a4']     = max(0, (int) round(($finale->nero_piccolo   - $iniziale->nero_piccolo)   / 2));
         $report['colore_a4'] = max(0, (int) round(($finale->colore_piccolo - $iniziale->colore_piccolo) / 2));
         $report['bn_a3']     = max(0, (int) round(($finale->nero_grande    - $iniziale->nero_grande)    / 2));

@@ -230,12 +230,7 @@
 {{-- Report Scatti per Categoria (formato fattura SAE) --}}
 @if(!empty($reportCategorie) && $reportCategorie['totale'] > 0)
 <div class="fc">
-    <div class="fc-label" style="display:flex; justify-content:space-between; align-items:center;">
-        <span>Report Scatti per Categoria — Periodo {{ \Carbon\Carbon::parse($da)->format('d/m/Y') }} - {{ \Carbon\Carbon::parse($a)->format('d/m/Y') }}</span>
-        <a href="{{ route('mes.fiery.contatori.reportCategorie', ['da' => $da, 'a' => $a]) }}" target="_blank" style="background:#2563eb; color:#fff; padding:6px 14px; border-radius:4px; text-decoration:none; font-size:12px;">
-            Stampa PDF
-        </a>
-    </div>
+    <div class="fc-label">Report Scatti per Categoria — Periodo {{ \Carbon\Carbon::parse($da)->format('d/m/Y') }} - {{ \Carbon\Carbon::parse($a)->format('d/m/Y') }}</div>
     <table style="width:100%; max-width:500px; border-collapse:collapse; font-size:13px;">
         <thead>
             <tr style="background:#f1f5f9;">
