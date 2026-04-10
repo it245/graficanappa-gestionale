@@ -308,11 +308,11 @@ class FieryController extends Controller
 
             if ($foglioGrande + $foglioPiccolo === 0) continue;
 
-            // Verifica se la commessa ha banner (lato > 700mm)
+            // Verifica se la commessa ha banner (lato > 487mm = oltre SRA3, secondo specifiche Canon V900)
             $isBanner = false;
             foreach ($row['formati'] ?? [] as $f) {
                 if (preg_match('/(\d+)\s*x\s*(\d+)/', $f, $m)) {
-                    if (max((int)$m[1], (int)$m[2]) > 700) {
+                    if (max((int)$m[1], (int)$m[2]) > 487) {
                         $isBanner = true;
                         break;
                     }
