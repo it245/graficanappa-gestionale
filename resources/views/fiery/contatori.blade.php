@@ -227,6 +227,32 @@
     @endif
 </div>
 
+{{-- Report Scatti per Categoria (formato fattura SAE) --}}
+@if(!empty($reportCategorie) && $reportCategorie['totale'] > 0)
+<div class="fc">
+    <div class="fc-label">Report Scatti per Categoria — Periodo {{ \Carbon\Carbon::parse($da)->format('d/m/Y') }} - {{ \Carbon\Carbon::parse($a)->format('d/m/Y') }}</div>
+    <table style="width:100%; max-width:500px; border-collapse:collapse; font-size:13px;">
+        <thead>
+            <tr style="background:#f1f5f9;">
+                <th style="padding:8px; text-align:left; border:1px solid #cbd5e1;">Contatore</th>
+                <th style="padding:8px; text-align:right; border:1px solid #cbd5e1;">Scatti</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td style="padding:6px 8px; border:1px solid #cbd5e1;">B/N A4</td><td style="padding:6px 8px; text-align:right; border:1px solid #cbd5e1;">{{ number_format($reportCategorie['bn_a4'], 0, ',', '.') }}</td></tr>
+            <tr><td style="padding:6px 8px; border:1px solid #cbd5e1;">Colore A4</td><td style="padding:6px 8px; text-align:right; border:1px solid #cbd5e1;">{{ number_format($reportCategorie['colore_a4'], 0, ',', '.') }}</td></tr>
+            <tr><td style="padding:6px 8px; border:1px solid #cbd5e1;">B/N A3</td><td style="padding:6px 8px; text-align:right; border:1px solid #cbd5e1;">{{ number_format($reportCategorie['bn_a3'], 0, ',', '.') }}</td></tr>
+            <tr><td style="padding:6px 8px; border:1px solid #cbd5e1;">Colore A3</td><td style="padding:6px 8px; text-align:right; border:1px solid #cbd5e1;">{{ number_format($reportCategorie['colore_a3'], 0, ',', '.') }}</td></tr>
+            <tr><td style="padding:6px 8px; border:1px solid #cbd5e1;">Banner</td><td style="padding:6px 8px; text-align:right; border:1px solid #cbd5e1;">{{ number_format($reportCategorie['banner'], 0, ',', '.') }}</td></tr>
+            <tr style="background:#fef9c3; font-weight:bold;">
+                <td style="padding:8px; border:1px solid #cbd5e1;">TOTALE</td>
+                <td style="padding:8px; text-align:right; border:1px solid #cbd5e1;">{{ number_format($reportCategorie['totale'], 0, ',', '.') }}</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+@endif
+
 {{-- Click per Commessa --}}
 <div class="fc">
     <div class="fc-label">Click per Commessa (Fiery Accounting)</div>
