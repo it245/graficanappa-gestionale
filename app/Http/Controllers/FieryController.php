@@ -290,6 +290,7 @@ class FieryController extends Controller
      */
     public function reportCategoriePdf(Request $request, FieryService $fiery)
     {
+        set_time_limit(180);
         $da = $request->get('da', now()->subDays(30)->format('Y-m-d'));
         $a = $request->get('a', now()->format('Y-m-d'));
         $reportCategorie = $this->getReportCategorie($fiery, $da, $a);
