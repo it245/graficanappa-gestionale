@@ -28,16 +28,6 @@ class MagazzinoController extends Controller
             ->limit(20)
             ->get();
 
-        $giacenzeBasse = MagazzinoGiacenza::with(['articolo', 'ubicazione'])
-            ->whereHas('articolo', fn($q) => $q->where('attivo', true)->where('soglia_minima', '>', 0))
-            ->get()
-            ->filter(function ($g) {
-                $totale = MagazzinoGiacenza::where('articolo_id', $g->articolo_id)->sum('quantita');
-                return $totale < $g->articolo->soglia_minima;
-            })
-            ->unique('articolo_id')
-            ->take(10);
-
         return view('magazzino.dashboard', [
             'operatore' => $operatore,
             'totArticoli' => $totArticoli,
@@ -45,7 +35,6 @@ class MagazzinoController extends Controller
             'movOggi' => $movOggi,
             'alertSoglia' => $alertSoglia,
             'ultimiMovimenti' => $ultimiMovimenti,
-            'giacenzeBasse' => $giacenzeBasse,
         ]);
     }
 

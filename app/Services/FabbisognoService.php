@@ -154,6 +154,9 @@ class FabbisognoService
             $qtaNecessaria = (int) ($ordine->qta_carta ?? $ordine->qta_richiesta ?? 0);
 
             $articolo = MagazzinoArticolo::where('codice', $codCarta)->first();
+            if (!$articolo) {
+                $articolo = MagazzinoArticolo::where('codice', 'LIKE', "%{$codCarta}%")->first();
+            }
             $giacenza = 0;
             if ($articolo) {
                 $giacenza = MagazzinoGiacenza::where('articolo_id', $articolo->id)->sum('quantita');

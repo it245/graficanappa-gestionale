@@ -121,8 +121,8 @@ class MagazzinoMovimentoController extends Controller
         try {
             MagazzinoService::registraScarico([
                 'articolo_id' => $request->articolo_id,
-                'ubicazione_id' => $request->ubicazione_id,
-                'lotto' => $request->lotto,
+                'ubicazione_id' => $request->ubicazione_id ?: null,
+                'lotto' => $request->lotto ?: null,
                 'quantita' => $request->quantita,
                 'commessa' => $request->commessa,
                 'fase' => $request->fase ?? 'STAMPA',
