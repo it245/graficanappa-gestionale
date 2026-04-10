@@ -159,6 +159,7 @@ Route::middleware(['owner.or.admin'])->prefix('mes/fiery')->group(function() {
 Route::middleware(['owner.or.admin:fiery_contatori'])->prefix('mes/fiery')->group(function() {
     Route::get('/contatori', [FieryController::class, 'contatori'])->name('mes.fiery.contatori');
     Route::get('/contatori/json', [FieryController::class, 'contatoriJson'])->name('mes.fiery.contatori.json');
+    Route::get('/contatori/report-categorie', [FieryController::class, 'reportCategoriePdf'])->name('mes.fiery.contatori.reportCategorie');
 });
 
 // Produzione

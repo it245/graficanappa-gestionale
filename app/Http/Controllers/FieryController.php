@@ -286,6 +286,18 @@ class FieryController extends Controller
     }
 
     /**
+     * Vista stampabile (HTML print-friendly) del solo report categorie.
+     */
+    public function reportCategoriePdf(Request $request, FieryService $fiery)
+    {
+        $da = $request->get('da', now()->subDays(30)->format('Y-m-d'));
+        $a = $request->get('a', now()->format('Y-m-d'));
+        $reportCategorie = $this->getReportCategorie($fiery, $da, $a);
+
+        return view('fiery.report_categorie_pdf', compact('reportCategorie', 'da', 'a'));
+    }
+
+    /**
      * Report scatti per categoria nel periodo (formato fattura SAE).
      * Categorie: B/N A4, Colore A4, B/N A3, Colore A3, Banner.
      */
