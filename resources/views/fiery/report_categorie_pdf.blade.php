@@ -101,6 +101,12 @@
     <div class="periodo">
         Periodo: {{ \Carbon\Carbon::parse($da)->format('d/m/Y') }} - {{ \Carbon\Carbon::parse($a)->format('d/m/Y') }}
     </div>
+    @if(!empty($reportCategorie['lettura_iniziale_at']) && !empty($reportCategorie['lettura_finale_at']))
+    <div style="font-size:9pt; color:#666; margin-top:4px;">
+        Lettura iniziale: {{ $reportCategorie['lettura_iniziale_at'] }} —
+        Lettura finale: {{ $reportCategorie['lettura_finale_at'] }}
+    </div>
+    @endif
 </div>
 
 <table>
