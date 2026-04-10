@@ -753,6 +753,18 @@ class PrinectSyncService
                     if (!$deveTerminare && $qtaCarta > 0 && $totaleFogliWs >= $qtaCarta) $deveTerminare = true;
                 }
 
+                // Regola 7: workstep WAITING ma il job e' chiaramente finito da tempo
+                // Condizioni: fogli prodotti > 0, nessuna attivita Prinect recente da 4h,
+                // ultima attivita registrata da almeno 24h
+                if (!$deveTerminare && $anyWaiting && $totaleBuoniWs > 0) {
+                    $ultimaAttivitaTimestamp = $ultimaAttivita ? Carbon::parse($ultimaAttivita) : null;
+                    if ($ultimaAttivitaTimestamp
+                        && $ultimaAttivitaTimestamp->diffInHours(now()) >= 24
+                        && $ultimaAttivitaTimestamp->diffInMinutes(now()) >= 240) {
+                        $deveTerminare = true;
+                    }
+                }
+
                 if (!$deveTerminare) continue;
 
                 $lastEnd = $worksteps->map(fn($ws) => $ws['actualEndDate'] ?? null)
