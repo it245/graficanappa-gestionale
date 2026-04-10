@@ -304,7 +304,24 @@ class FieryController extends Controller
      */
     private function getReportCategorie(FieryService $fiery, string $da, string $a): array
     {
-        $clickPerCommessa = $this->getClickPerCommessa($fiery, $da, $a);
+        // Usa contatori SNMP storici (come fa SAE in fattura)
+        // Trova snapshot piu vicino a $da (lettura iniziale) e a $a (lettura finale)
+        $iniziale = ContatoreStampante::where('stampante', 'Canon iPR V900')
+            ->whereDate('rilevato_at', '<=', $da)
+            ->orderByDesc('rilevato_at')
+            ->first();
+
+        // Se non c'e' snapshot prima di $da, prendi il primo disponibile
+        if (!$iniziale) {
+            $iniziale = ContatoreStampante::where('stampante', 'Canon iPR V900')
+                ->orderBy('rilevato_at')
+                ->first();
+        }
+
+        $finale = ContatoreStampante::where('stampante', 'Canon iPR V900')
+            ->whereDate('rilevato_at', '<=', $a)
+            ->orderByDesc('rilevato_at')
+            ->first();
 
         $report = [
             'bn_a4' => 0,
@@ -313,48 +330,21 @@ class FieryController extends Controller
             'colore_a3' => 0,
             'banner' => 0,
             'totale' => 0,
+            'lettura_iniziale_at' => $iniziale?->rilevato_at?->format('d/m/Y H:i'),
+            'lettura_finale_at' => $finale?->rilevato_at?->format('d/m/Y H:i'),
         ];
 
-        foreach ($clickPerCommessa as $row) {
-            $foglioGrande = (int) $row['fogli_grande'];
-            $foglioPiccolo = (int) $row['fogli_piccolo'];
-            $totColore = (int) $row['colore'];
-            $totBn = (int) $row['bn'];
-
-            if ($foglioGrande + $foglioPiccolo === 0) continue;
-
-            // Verifica se la commessa ha banner (lato > 487mm = oltre SRA3, secondo specifiche Canon V900)
-            $isBanner = false;
-            foreach ($row['formati'] ?? [] as $f) {
-                if (preg_match('/(\d+)\s*x\s*(\d+)/', $f, $m)) {
-                    if (max((int)$m[1], (int)$m[2]) > 487) {
-                        $isBanner = true;
-                        break;
-                    }
-                }
-            }
-
-            // Se e' una commessa banner, tutti i fogli grandi vanno in Banner
-            if ($isBanner) {
-                $report['banner'] += $foglioGrande;
-                $foglioGrande = 0; // gia conteggiati, non vanno in A3
-            }
-
-            // Distribuisci colore/bn proporzionalmente sui fogli rimanenti
-            $totPagine = $totColore + $totBn;
-            if ($totPagine === 0) {
-                $report['colore_a4'] += $foglioPiccolo;
-                $report['colore_a3'] += $foglioGrande;
-            } else {
-                $pctColore = $totColore / $totPagine;
-                $pctBn = $totBn / $totPagine;
-
-                $report['colore_a4'] += round($foglioPiccolo * $pctColore);
-                $report['bn_a4']     += round($foglioPiccolo * $pctBn);
-                $report['colore_a3'] += round($foglioGrande * $pctColore);
-                $report['bn_a3']     += round($foglioGrande * $pctBn);
-            }
+        if (!$iniziale || !$finale || $iniziale->id === $finale->id) {
+            return $report;
         }
+
+        // Differenza tra letture (in lati stampati = impressioni SNMP)
+        // SAE conta in fogli, quindi dividiamo per 2 (duplex)
+        $report['bn_a4']     = max(0, (int) round(($finale->nero_piccolo   - $iniziale->nero_piccolo)   / 2));
+        $report['colore_a4'] = max(0, (int) round(($finale->colore_piccolo - $iniziale->colore_piccolo) / 2));
+        $report['bn_a3']     = max(0, (int) round(($finale->nero_grande    - $iniziale->nero_grande)    / 2));
+        $report['colore_a3'] = max(0, (int) round(($finale->colore_grande  - $iniziale->colore_grande)  / 2));
+        $report['banner']    = max(0, (int) round(($finale->foglio_lungo   - $iniziale->foglio_lungo)   / 2));
 
         $report['totale'] = $report['bn_a4'] + $report['colore_a4'] + $report['bn_a3'] + $report['colore_a3'] + $report['banner'];
 
