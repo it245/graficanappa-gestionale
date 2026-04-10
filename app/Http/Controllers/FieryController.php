@@ -302,20 +302,34 @@ class FieryController extends Controller
             'totale' => 0,
         ];
 
-        // Per ogni commessa, distribuisci fogli grande/piccolo tra colore/bn
         foreach ($clickPerCommessa as $row) {
             $foglioGrande = (int) $row['fogli_grande'];
             $foglioPiccolo = (int) $row['fogli_piccolo'];
-            $totFogli = $foglioGrande + $foglioPiccolo;
             $totColore = (int) $row['colore'];
             $totBn = (int) $row['bn'];
 
-            if ($totFogli === 0) continue;
+            if ($foglioGrande + $foglioPiccolo === 0) continue;
 
-            // Stima fogli colore/bn per ogni dimensione (proporzionalmente)
+            // Verifica se la commessa ha banner (lato > 700mm)
+            $isBanner = false;
+            foreach ($row['formati'] ?? [] as $f) {
+                if (preg_match('/(\d+)\s*x\s*(\d+)/', $f, $m)) {
+                    if (max((int)$m[1], (int)$m[2]) > 700) {
+                        $isBanner = true;
+                        break;
+                    }
+                }
+            }
+
+            // Se e' una commessa banner, tutti i fogli grandi vanno in Banner
+            if ($isBanner) {
+                $report['banner'] += $foglioGrande;
+                $foglioGrande = 0; // gia conteggiati, non vanno in A3
+            }
+
+            // Distribuisci colore/bn proporzionalmente sui fogli rimanenti
             $totPagine = $totColore + $totBn;
             if ($totPagine === 0) {
-                // Tutti come colore se non specificato
                 $report['colore_a4'] += $foglioPiccolo;
                 $report['colore_a3'] += $foglioGrande;
             } else {
@@ -326,16 +340,6 @@ class FieryController extends Controller
                 $report['bn_a4']     += round($foglioPiccolo * $pctBn);
                 $report['colore_a3'] += round($foglioGrande * $pctColore);
                 $report['bn_a3']     += round($foglioGrande * $pctBn);
-            }
-
-            // Banner: foglio lungo (se nei formati c'e' una dimensione > 480mm)
-            foreach ($row['formati'] ?? [] as $f) {
-                if (preg_match('/(\d+)\s*x\s*(\d+)/', $f, $m)) {
-                    if (max((int)$m[1], (int)$m[2]) > 700) {
-                        $report['banner'] += $foglioGrande;
-                        break;
-                    }
-                }
             }
         }
 
