@@ -603,10 +603,22 @@ class OndaSyncService
                     ['reparto_id' => $reparto->id]
                 );
 
-                // Dedup fustella per commessa: 1 sola per commessa per fase_catalogo
+                // Dedup fustella cilindrica per ordine (1 fase per cod_art, non per commessa)
+                // Commesse vecchie gia deduplicate non vengono toccate
+                if ($repartoNome === 'fustella cilindrica') {
+                    $chiaveDedup = $commessa . '|fustcil|' . $faseNome . '|' . $codArt;
+                    if (isset($dedupPerCommessa[$chiaveDedup])) continue;
+                    $existsInOrdine = OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
+                        ->where('ordine_id', $ordine->id)
+                        ->exists();
+                    $dedupPerCommessa[$chiaveDedup] = true;
+                    if ($existsInOrdine) continue;
+                }
+
+                // Dedup fustella piana/generica per commessa: 1 sola per commessa per fase_catalogo
                 // (FUSTBOBST75X106 e FUSTBOBSTRILIEVI sono fasi diverse → possono coesistere)
                 // qta_fase = somma delle qta distinte di tutti gli articoli
-                if (in_array($repartoNome, ['fustella piana', 'fustella cilindrica', 'fustella'])) {
+                if (in_array($repartoNome, ['fustella piana', 'fustella'])) {
                     $chiaveDedup = $commessa . '|fust|' . $faseNome;
                     $qtaRiga = (int)($riga->QtaDaLavorare ?? 0);
 
@@ -1184,8 +1196,18 @@ class OndaSyncService
                     ['reparto_id' => $reparto->id]
                 );
 
-                // Dedup per commessa (fustella, digitale, stampa offset, stampa a caldo, BRT)
-                if (in_array($repartoNome, ['fustella piana', 'fustella cilindrica', 'fustella'])) {
+                // Dedup fustella cilindrica per ordine (1 fase per cod_art)
+                if ($repartoNome === 'fustella cilindrica') {
+                    $chiaveDedup = $commessa . '|fustcil|' . $faseNome . '|' . $codArt;
+                    if (isset($dedupPerCommessa[$chiaveDedup])) continue;
+                    $existsInOrdine = OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
+                        ->where('ordine_id', $ordine->id)->exists();
+                    $dedupPerCommessa[$chiaveDedup] = true;
+                    if ($existsInOrdine) continue;
+                }
+
+                // Dedup fustella piana/generica per commessa
+                if (in_array($repartoNome, ['fustella piana', 'fustella'])) {
                     $chiaveDedup = $commessa . '|fust|' . $faseNome;
                     if (isset($dedupPerCommessa[$chiaveDedup])) continue;
                     $existsInCommessa = OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
