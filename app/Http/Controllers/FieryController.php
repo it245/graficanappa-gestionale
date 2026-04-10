@@ -279,7 +279,69 @@ class FieryController extends Controller
         $a = $request->get('a', now()->format('Y-m-d'));
         $clickPerCommessa = $this->getClickPerCommessa($fiery, $da, $a);
 
-        return view('fiery.contatori', compact('live', 'storico', 'clickPerCommessa', 'da', 'a'));
+        // Report mensile per categoria (B/N A4, Colore A4, B/N A3, Colore A3, Banner)
+        $reportCategorie = $this->getReportCategorie($fiery, $da, $a);
+
+        return view('fiery.contatori', compact('live', 'storico', 'clickPerCommessa', 'da', 'a', 'reportCategorie'));
+    }
+
+    /**
+     * Report scatti per categoria nel periodo (formato fattura SAE).
+     * Categorie: B/N A4, Colore A4, B/N A3, Colore A3, Banner.
+     */
+    private function getReportCategorie(FieryService $fiery, string $da, string $a): array
+    {
+        $clickPerCommessa = $this->getClickPerCommessa($fiery, $da, $a);
+
+        $report = [
+            'bn_a4' => 0,
+            'colore_a4' => 0,
+            'bn_a3' => 0,
+            'colore_a3' => 0,
+            'banner' => 0,
+            'totale' => 0,
+        ];
+
+        // Per ogni commessa, distribuisci fogli grande/piccolo tra colore/bn
+        foreach ($clickPerCommessa as $row) {
+            $foglioGrande = (int) $row['fogli_grande'];
+            $foglioPiccolo = (int) $row['fogli_piccolo'];
+            $totFogli = $foglioGrande + $foglioPiccolo;
+            $totColore = (int) $row['colore'];
+            $totBn = (int) $row['bn'];
+
+            if ($totFogli === 0) continue;
+
+            // Stima fogli colore/bn per ogni dimensione (proporzionalmente)
+            $totPagine = $totColore + $totBn;
+            if ($totPagine === 0) {
+                // Tutti come colore se non specificato
+                $report['colore_a4'] += $foglioPiccolo;
+                $report['colore_a3'] += $foglioGrande;
+            } else {
+                $pctColore = $totColore / $totPagine;
+                $pctBn = $totBn / $totPagine;
+
+                $report['colore_a4'] += round($foglioPiccolo * $pctColore);
+                $report['bn_a4']     += round($foglioPiccolo * $pctBn);
+                $report['colore_a3'] += round($foglioGrande * $pctColore);
+                $report['bn_a3']     += round($foglioGrande * $pctBn);
+            }
+
+            // Banner: foglio lungo (se nei formati c'e' una dimensione > 480mm)
+            foreach ($row['formati'] ?? [] as $f) {
+                if (preg_match('/(\d+)\s*x\s*(\d+)/', $f, $m)) {
+                    if (max((int)$m[1], (int)$m[2]) > 700) {
+                        $report['banner'] += $foglioGrande;
+                        break;
+                    }
+                }
+            }
+        }
+
+        $report['totale'] = $report['bn_a4'] + $report['colore_a4'] + $report['bn_a3'] + $report['colore_a3'] + $report['banner'];
+
+        return $report;
     }
 
     /**
