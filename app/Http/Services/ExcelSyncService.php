@@ -68,14 +68,27 @@ class ExcelSyncService
             file_put_contents(self::getExportedIdsPath(), json_encode($exportedIds));
 
             $content = Excel::raw(new DashboardMesExport, \Maatwebsite\Excel\Excel::XLSX);
-            file_put_contents($path, $content);
+
+            // Scrivi su file temporaneo, poi copia sul file principale
+            // Questo funziona anche se il file e' aperto in Excel (lettura)
+            $tempPath = $path . '.tmp';
+            file_put_contents($tempPath, $content);
+
+            if (!@copy($tempPath, $path)) {
+                // Se anche copy fallisce (file in scrittura), prova rename
+                if (!@rename($tempPath, $path)) {
+                    Log::debug('ExcelSync: file bloccato, salvato come .tmp');
+                }
+            } else {
+                @unlink($tempPath);
+            }
 
             // Salva hash del file esportato (per rilevare modifiche esterne)
             file_put_contents(self::getHashPath(), md5($content));
             // Salva anche timestamp per backward compatibility
             file_put_contents(self::getTimestampPath(), time());
         } catch (\Throwable $e) {
-            // File aperto in Excel da un utente (lock Windows) → skip silenzioso
+            // Errore imprevisto → log
             Log::debug('ExcelSync export skip: ' . $e->getMessage());
         } finally {
             error_reporting($previousReporting);
