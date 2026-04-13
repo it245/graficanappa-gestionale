@@ -13,6 +13,8 @@ class FieryController extends Controller
 {
     public function index(FieryService $fiery, FierySyncService $syncService)
     {
+        set_time_limit(120);
+
         $status = $fiery->getServerStatus();
 
         if ($status) {
@@ -39,6 +41,8 @@ class FieryController extends Controller
 
     public function statusJson(FieryService $fiery, FierySyncService $syncService)
     {
+        set_time_limit(120);
+
         $status = $fiery->getServerStatus();
 
         if (!$status) {
@@ -265,6 +269,8 @@ class FieryController extends Controller
      */
     public function contatori(Request $request, FieryService $fiery)
     {
+        set_time_limit(120);
+
         // Lettura live SNMP
         $live = $this->leggiContatoriSnmp();
 
