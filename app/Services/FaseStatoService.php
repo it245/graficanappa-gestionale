@@ -36,7 +36,7 @@ class FaseStatoService
 
             // STAMPA XL (offset) non viene MAI promossa automaticamente a stato 1
             $faseUpper = strtoupper($fase->fase ?? '');
-            if (str_starts_with($faseUpper, 'STAMPAXL106') || str_starts_with($faseUpper, 'STAMPA XL') || str_starts_with($faseUpper, 'STAMPA')) continue;
+            if (str_starts_with($faseUpper, 'STAMPAXL106') || str_starts_with($faseUpper, 'STAMPA XL') || $faseUpper === 'STAMPA') continue;
 
             // Predecessori basati sul flusso produttivo reale (config)
             // Cerca in tutta la commessa per trovare fasi su altri ordini
@@ -163,7 +163,7 @@ class FaseStatoService
 
             // STAMPA XL (offset) non viene MAI promossa automaticamente a stato 1
             $faseUpper = strtoupper($fase->fase ?? '');
-            if (str_starts_with($faseUpper, 'STAMPAXL106') || str_starts_with($faseUpper, 'STAMPA XL') || str_starts_with($faseUpper, 'STAMPA')) continue;
+            if (str_starts_with($faseUpper, 'STAMPAXL106') || str_starts_with($faseUpper, 'STAMPA XL') || $faseUpper === 'STAMPA') continue;
 
             // Ordine nel flusso produttivo reale (dalla config)
             $mioOrdine = $flusso[strtoupper($fase->fase)] ?? 500;
