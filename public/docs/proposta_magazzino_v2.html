@@ -116,17 +116,20 @@
     </ul>
 
     <div class="highlight-amber">
-        <strong>Nota:</strong> L'OCR e' un <em>aiuto</em> alla compilazione, non un sistema autonomo.
-        L'addetto deve sempre verificare e confermare i dati prima di registrare il carico.
-        Questo garantisce il 100% di accuratezza nel sistema.
+        <strong>Valutazione:</strong> Tesseract e' una tecnologia OCR degli anni '80 (sviluppata da HP nel 1985, poi mantenuta da Google).
+        Pur essendo gratuito, si tratta di un sistema <strong>non adeguato</strong> per un gestionale MES gia avviato e in produzione come il nostro.
+        I test effettuati sulle bolle reali dei fornitori (Stratosfera, Fedrigoni, MM Board &amp; Paper) hanno evidenziato
+        un'accuratezza insufficiente nella lettura di tabelle numeriche, formati con decimali e documenti fotografati in condizioni reali.
+        L'addetto e' costretto a verificare e correggere manualmente quasi tutti i campi estratti, annullando di fatto il vantaggio dell'automazione.
     </div>
 
     <!-- ============================================ -->
-    <h2>3. Evoluzione possibile: OCR con Intelligenza Artificiale</h2>
+    <h2>3. Raccomandazione: OCR con Intelligenza Artificiale</h2>
 
     <p>
-        Esistono tecnologie di OCR basate su Intelligenza Artificiale (AI) che offrono risultati significativamente
-        superiori a Tesseract. In particolare, i modelli di visione AI come <strong>Claude (Anthropic)</strong> o
+        Per un sistema gia avviato e operativo come il nostro MES, l'adozione di tecnologie OCR basate su
+        <strong>Intelligenza Artificiale (AI Vision)</strong> rappresenta la scelta naturale e necessaria.
+        I modelli di visione AI come <strong>Google Gemini</strong>, <strong>Claude (Anthropic)</strong> o
         <strong>GPT-4 Vision (OpenAI)</strong> sono in grado di:
     </p>
 
@@ -185,10 +188,12 @@
         </tbody>
     </table>
 
-    <div class="highlight-green">
-        <strong>Raccomandazione:</strong> Per ora Tesseract e' sufficiente perche l'addetto verifica sempre i dati.
-        L'upgrade ad AI Vision si puo valutare in futuro se il volume di bolle aumenta o se si vuole ridurre
-        il tempo di verifica manuale.
+    <div class="highlight">
+        <strong>Raccomandazione:</strong> L'adozione di AI Vision e' fortemente consigliata per un sistema MES gia operativo
+        come il nostro. Tesseract, essendo una tecnologia retro e non piu adeguata ai requisiti di precisione richiesti
+        dalla gestione magazzino industriale, non garantisce l'affidabilita necessaria per l'automazione della registrazione bolle.
+        L'investimento in AI Vision (con costo mensile contenuto) eliminerebbe la necessita di verifica manuale,
+        riducendo il tempo di registrazione bolla da 2-3 minuti a pochi secondi con accuratezza superiore al 95%.
     </div>
 
     <!-- ============================================ -->

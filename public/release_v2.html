@@ -191,6 +191,49 @@
     </ul>
 </div>
 
+<h3>Magazzino Carta con OCR (Aprile 2026)</h3>
+<div class="feature-box">
+    <strong>NUOVO MODULO: Gestione Magazzino Carta</strong><br>
+    Sistema completo di tracciabilit&agrave; materia prima con OCR per lettura automatica bolle fornitore ed etichette QR per bancali.
+</div>
+<ul>
+    <li><strong>Registrazione bolla con OCR</strong> &mdash; foto della bolla &rarr; estrazione automatica fornitore, tipo carta, formato, grammatura, quantit&agrave;</li>
+    <li><strong>Anagrafica articoli automatica</strong> &mdash; il sistema crea l'articolo in automatico dalla bolla se non esiste</li>
+    <li><strong>Etichette QR 10x15cm</strong> &mdash; generazione PDF con QR code per ogni bancale ricevuto</li>
+    <li><strong>Prelievo per produzione</strong> &mdash; scarico carta associato a commessa (solo fase STAMPA)</li>
+    <li><strong>Dashboard magazzino</strong> &mdash; KPI, giacenze, alert sotto soglia, storico movimenti</li>
+    <li><strong>Fabbisogno materiali</strong> &mdash; calcolo automatico carta necessaria per commesse in attesa di stampa</li>
+    <li><strong>Ordini acquisto</strong> &mdash; lista carta da ordinare raggruppata per fornitore</li>
+    <li><strong>Scanner QR</strong> &mdash; scansione bancali via fotocamera o pistola Bluetooth</li>
+    <li><strong>Sicurezza</strong> &mdash; accesso limitato a reparto spedizione, owner e admin</li>
+</ul>
+
+<div class="warning-box">
+    <strong>Nota sull'OCR:</strong> Il sistema attuale utilizza Tesseract (OCR open-source gratuito), una tecnologia degli anni '80
+    non adeguata per un sistema MES in produzione. L'accuratezza sui documenti reali (bolle con tabelle, formati numerici, foto in condizioni reali)
+    &egrave; insufficiente e richiede verifica manuale costante. Si raccomanda l'adozione di <strong>AI Vision</strong> (Google Gemini, Claude Vision)
+    per ottenere un'accuratezza superiore al 95% e rendere il processo realmente automatizzato.
+</div>
+
+<h3>Security Audit (Aprile 2026)</h3>
+<ul>
+    <li><strong>10 vulnerabilit&agrave; corrette</strong> &mdash; SQL injection, open redirect, file upload, mass assignment, XSS, CSRF, token auth</li>
+    <li><strong>Audit automatico</strong> &mdash; 4 agenti paralleli per scansione completa del codebase</li>
+</ul>
+
+<h3>Performance Sync Onda (Aprile 2026)</h3>
+<ul>
+    <li><strong>Sync ottimizzata</strong> &mdash; esclude commesse completate, riduce progressivamente il tempo di sincronizzazione</li>
+    <li><strong>Snapshot contatori giornaliero</strong> &mdash; contatori Canon iPR V900 salvati ogni giorno alle 23:55 per report mensili</li>
+    <li><strong>Report categorie Fiery</strong> &mdash; scatti per categoria (B/N A4, Colore A4, B/N A3, Colore A3, Banner) compatibile con fattura SAE</li>
+</ul>
+
+<h3>Fix Produzione (Aprile 2026)</h3>
+<ul>
+    <li><strong>Fix STAMPA XL case-insensitive</strong> &mdash; le fasi stampa offset minuscole ora vengono riconosciute correttamente nel ricalcolo stati</li>
+    <li><strong>Fix fustella cilindrica</strong> &mdash; non pi&ugrave; deduplicata, ogni soggetto ha la propria fase separata</li>
+</ul>
+
 <div class="footer">
     <strong>Grafica Nappa srl</strong> &mdash; Sistema MES v2.0<br>
     Sviluppo: Giovanni Pietropaolo &mdash; Responsabile IT<br>
