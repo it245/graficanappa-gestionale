@@ -13,18 +13,11 @@ class FieryController extends Controller
 {
     public function index(FieryService $fiery, FierySyncService $syncService)
     {
-        set_time_limit(120);
+        set_time_limit(60);
 
         $status = $fiery->getServerStatus();
 
-        if ($status) {
-            try {
-                $syncService->sincronizza();
-            } catch (\Exception $e) {
-                // Non bloccare la dashboard se il sync fallisce
-            }
-        }
-
+        // Sync gira già ogni minuto via cron — non bloccare il page load
         if ($status) {
             $status['commessa'] = $this->cercaCommessa($status['stampa']['documento'] ?? null);
         }
@@ -34,14 +27,15 @@ class FieryController extends Controller
         $accounting = $fiery->getAccountingPerCommessa();
         $jobData = $this->organizzaJobs($jobs, $accounting);
 
-        $snmp = $this->leggiContatoriSnmp();
+        // SNMP cachato 30s per evitare rallentamenti
+        $snmp = \Cache::remember('fiery_snmp_live', 30, fn() => $this->leggiContatoriSnmp());
 
         return view('fiery.dashboard', compact('status', 'jobData', 'snmp'));
     }
 
     public function statusJson(FieryService $fiery, FierySyncService $syncService)
     {
-        set_time_limit(120);
+        set_time_limit(60);
 
         $status = $fiery->getServerStatus();
 
@@ -53,20 +47,13 @@ class FieryController extends Controller
             ]);
         }
 
-        try {
-            $syncService->sincronizza();
-        } catch (\Exception $e) {
-            // Non bloccare il polling
-        }
-
         $status['commessa'] = $this->cercaCommessa($status['stampa']['documento'] ?? null);
 
         // Job list da API v5
-        $fieryService = app(FieryService::class);
-        $jobs = $fieryService->getJobs();
-        $accounting = $fieryService->getAccountingPerCommessa();
+        $jobs = $fiery->getJobs();
+        $accounting = $fiery->getAccountingPerCommessa();
         $status['jobs'] = $this->organizzaJobs($jobs, $accounting);
-        $status['snmp'] = $this->leggiContatoriSnmp();
+        $status['snmp'] = \Cache::remember('fiery_snmp_live', 30, fn() => $this->leggiContatoriSnmp());
 
         return response()->json($status);
     }

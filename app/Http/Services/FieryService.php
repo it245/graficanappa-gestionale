@@ -151,7 +151,7 @@ class FieryService
 
         try {
             $response = $this->http()
-                ->timeout(30)
+                ->timeout(10)
                 ->withCookies($cookies, $this->host)
                 ->get($this->baseUrl . $endpoint, $query);
 
@@ -162,7 +162,7 @@ class FieryService
                 if (!$cookies) return null;
 
                 $response = $this->http()
-                    ->timeout(30)
+                    ->timeout(10)
                     ->withCookies($cookies, $this->host)
                     ->get($this->baseUrl . $endpoint, $query);
             }
