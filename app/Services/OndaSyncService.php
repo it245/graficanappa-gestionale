@@ -780,6 +780,7 @@ class OndaSyncService
                 }
 
                 // Dedup TAGLIACARTE per ordine: 1 sola per ordine_id per fase_catalogo
+                // Include withTrashed per non ricreare fasi eliminate manualmente
                 if ($repartoNome === 'tagliacarte') {
                     $chiaveDedup = $ordine->id . '|tagliacarte|' . $faseNome;
                     $qtaRiga = (int)($riga->QtaDaLavorare ?? 0);
@@ -795,7 +796,8 @@ class OndaSyncService
                         continue;
                     }
 
-                    $existsInCommessa = OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
+                    $existsInCommessa = OrdineFase::withTrashed()
+                        ->where('fase_catalogo_id', $faseCatalogo->id)
                         ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
                         ->exists();
 
@@ -1252,10 +1254,12 @@ class OndaSyncService
                 }
 
                 // Dedup TAGLIACARTE per ordine: 1 sola per ordine_id per fase_catalogo
+                // Include withTrashed per non ricreare fasi eliminate manualmente
                 if ($repartoNome === 'tagliacarte') {
                     $chiaveDedup = $ordine->id . '|tagliacarte|' . $faseNome;
                     if (isset($dedupPerCommessa[$chiaveDedup])) continue;
-                    $existsInCommessa = OrdineFase::where('fase_catalogo_id', $faseCatalogo->id)
+                    $existsInCommessa = OrdineFase::withTrashed()
+                        ->where('fase_catalogo_id', $faseCatalogo->id)
                         ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))->exists();
                     $dedupPerCommessa[$chiaveDedup] = true;
                     if ($existsInCommessa) continue;
