@@ -200,8 +200,8 @@ class DashboardOwnerController extends Controller
         'STAMPA' => ['avviamento' => 0, 'copieh' => 1000],
         'STAMPA.OFFSET11.EST' => ['avviamento' => 72, 'copieh' => 1000],
         'STAMPABUSTE.EST' => ['avviamento' => 72, 'copieh' => 1000],
-        'STAMPACALDOJOH' => ['avviamento' => 1, 'copieh' => 1300],
-        'STAMPACALDOJOH0,1' => ['avviamento' => 1, 'copieh' => 1300],
+        'STAMPACALDOJOH' => ['avviamento' => 1, 'copieh' => 1500],
+        'STAMPACALDOJOH0,1' => ['avviamento' => 1, 'copieh' => 1500],
         'STAMPAINDIGO' => ['avviamento' => 0.5, 'copieh' => 1000],
         'STAMPAINDIGOBN' => ['avviamento' => 0.5, 'copieh' => 1000],
         'STAMPAXL106' => ['avviamento' => 0.65, 'copieh' => 3900],
@@ -224,13 +224,13 @@ class DashboardOwnerController extends Controller
         'APPL.CORDONCINO0,035' => ['avviamento' => 0.02, 'copieh' => 50],
         // Nuove fasi (valori da fasi simili)
         '4graph' => ['avviamento' => 0.5, 'copieh' => 100],           // come Allest.Manuale (esterno)
-        'stampalaminaoro' => ['avviamento' => 1, 'copieh' => 1300],   // come STAMPACALDOJOH
+        'stampalaminaoro' => ['avviamento' => 1, 'copieh' => 1500],   // come STAMPACALDOJOH
         'STAMPALAMINAORO' => ['avviamento' => 1, 'copieh' => 2200],
         'ALL.COFANETTO.ISMAsrl' => ['avviamento' => 0.5, 'copieh' => 100], // come Allest.Manuale (esterno)
         'PMDUPLO36COP' => ['avviamento' => 0.5, 'copieh' => 100],    // esterno generico
         'FINESTRATURA.MANUALE' => ['avviamento' => 0.5, 'copieh' => 100], // come FINESTRATURA.INT
         'FINESTRATURA.INT' => ['avviamento' => 0.5, 'copieh' => 100],
-        'STAMPACALDOJOHEST' => ['avviamento' => 72, 'copieh' => 1300], // come STAMPACALDOJOH ma est (avv.72)
+        'STAMPACALDOJOHEST' => ['avviamento' => 72, 'copieh' => 1500], // come STAMPACALDOJOH ma est (avv.72)
         'BROSSFRESATA/A5EST' => ['avviamento' => 72, 'copieh' => 1000], // come BROSSFILOREFE/A5EST
         'PIEGA6ANTESINGOLO' => ['avviamento' => 0.5, 'copieh' => 500], // come PIEGA3ANTESINGOLO
         'ALLESTIMENTO.ESPOSITORI' => ['avviamento' => 0.5, 'copieh' => 100], // come Allest.Manuale
@@ -238,7 +238,7 @@ class DashboardOwnerController extends Controller
         'FUSTELLATURA72X51' => ['avviamento' => 0.5, 'copieh' => 1500], // come FUSTSTELG33.44
 
         // Fasi "est" (esterno) — avviamento 72, copieh come fase interna corrispondente
-        'est STAMPACALDOJOH' => ['avviamento' => 72, 'copieh' => 1300],
+        'est STAMPACALDOJOH' => ['avviamento' => 72, 'copieh' => 1500],
         'est FUSTSTELG33.44' => ['avviamento' => 72, 'copieh' => 1500],
         'est FUSTBOBST75X106' => ['avviamento' => 72, 'copieh' => 3000],
         'STAMPA.ESTERNA' => ['avviamento' => 72, 'copieh' => 1000],
@@ -783,89 +783,128 @@ public function calcolaOreEPriorita($fase)
     $soloOggi = $request->boolean('oggi');
     $oggi = Carbon::today();
 
-    $query = OrdineFase::with([
-            'ordine.reparto',
-            'faseCatalogo.reparto',
-            'operatori'
-        ])
-        ->whereIn('stato', [3, 4]);
+    $baseQuery = OrdineFase::whereIn('stato', [3, 4]);
 
     if ($soloOggi) {
-        $query->where(function ($q) use ($oggi) {
+        $baseQuery->where(function ($q) use ($oggi) {
             $q->whereHas('operatori', fn($q2) => $q2->whereDate('fase_operatore.data_fine', $oggi))
               ->orWhereDate('data_fine', $oggi);
         });
     }
 
-    $fasiTerminate = $query->get()
-        ->map(function ($fase) {
+    // KPI via DB (senza caricare tutti i record)
+    $kpiTotale = (clone $baseQuery)->count();
+    $kpiCommesse = (clone $baseQuery)
+        ->join('ordini', 'ordine_fasi.ordine_id', '=', 'ordini.id')
+        ->distinct('ordini.commessa')
+        ->count('ordini.commessa');
+    $kpiOggi = (clone $baseQuery)->where(function ($q) use ($oggi) {
+        $q->whereDate('ordine_fasi.data_fine', $oggi)
+          ->orWhereHas('operatori', fn($q2) => $q2->whereDate('fase_operatore.data_fine', $oggi));
+    })->count();
 
-            // Calcolo ore e priorità
-            $fase = $this->calcolaOreEPriorita($fase);
+    // Filtri dropdown via DB (valori unici da TUTTI i record, non solo pagina corrente)
+    $repartiUnici = \DB::table('ordine_fasi')
+        ->join('fasi_catalogo', 'ordine_fasi.fase_catalogo_id', '=', 'fasi_catalogo.id')
+        ->join('reparti', 'fasi_catalogo.reparto_id', '=', 'reparti.id')
+        ->whereIn('ordine_fasi.stato', [3, 4])
+        ->distinct()
+        ->orderBy('reparti.nome')
+        ->pluck('reparti.nome');
 
-            // Reparto: da faseCatalogo (piu affidabile) oppure da ordine
-            $fase->reparto_nome = $fase->faseCatalogo->reparto->nome
-                ?? $fase->ordine->reparto->nome
-                ?? '-';
+    $fasiUniche = \DB::table('ordine_fasi')
+        ->leftJoin('fasi_catalogo', 'ordine_fasi.fase_catalogo_id', '=', 'fasi_catalogo.id')
+        ->whereIn('ordine_fasi.stato', [3, 4])
+        ->selectRaw('COALESCE(fasi_catalogo.nome_display, ordine_fasi.fase) as nome_fase')
+        ->distinct()
+        ->orderBy('nome_fase')
+        ->pluck('nome_fase')
+        ->filter();
 
-            // DATA INIZIO: dalla pivot operatore, fallback dal campo ordine_fasi
-            $dataInizioOriginale = $fase->getAttributes()['data_inizio'] ?? null;
-            $carbonInizio = null;
-            $fase->data_inizio = null;
+    $operatoriUnici = \DB::table('fase_operatore')
+        ->join('ordine_fasi', 'fase_operatore.ordine_fase_id', '=', 'ordine_fasi.id')
+        ->join('operatori', 'fase_operatore.operatore_id', '=', 'operatori.id')
+        ->whereIn('ordine_fasi.stato', [3, 4])
+        ->selectRaw("CONCAT(operatori.nome, ' ', operatori.cognome) as nome_completo")
+        ->distinct()
+        ->orderBy('nome_completo')
+        ->pluck('nome_completo');
 
-            if ($fase->operatori->isNotEmpty()) {
-                $primaDataInizio = $fase->operatori
-                    ->whereNotNull('pivot.data_inizio')
-                    ->sortBy('pivot.data_inizio')
-                    ->first()?->pivot->data_inizio;
+    // Paginazione con eager loading
+    $fasiTerminate = (clone $baseQuery)
+        ->with(['ordine.reparto', 'faseCatalogo.reparto', 'operatori'])
+        ->orderBy('priorita')
+        ->paginate(50)
+        ->withQueryString();
 
-                if ($primaDataInizio) {
-                    $carbonInizio = Carbon::parse($primaDataInizio);
-                    $fase->data_inizio = $carbonInizio->format('Y-m-d H:i:s');
-                }
-            }
+    // Processa ogni record della pagina corrente (come prima)
+    $fasiTerminate->getCollection()->transform(function ($fase) {
 
-            // Fallback: data_inizio dal campo ordine_fasi (impostato da Prinect sync)
-            if (!$fase->data_inizio && $dataInizioOriginale) {
-                $carbonInizio = Carbon::parse($dataInizioOriginale);
+        // Calcolo ore e priorità
+        $fase = $this->calcolaOreEPriorita($fase);
+
+        // Reparto: da faseCatalogo (piu affidabile) oppure da ordine
+        $fase->reparto_nome = $fase->faseCatalogo->reparto->nome
+            ?? $fase->ordine->reparto->nome
+            ?? '-';
+
+        // DATA INIZIO: dalla pivot operatore, fallback dal campo ordine_fasi
+        $dataInizioOriginale = $fase->getAttributes()['data_inizio'] ?? null;
+        $carbonInizio = null;
+        $fase->data_inizio = null;
+
+        if ($fase->operatori->isNotEmpty()) {
+            $primaDataInizio = $fase->operatori
+                ->whereNotNull('pivot.data_inizio')
+                ->sortBy('pivot.data_inizio')
+                ->first()?->pivot->data_inizio;
+
+            if ($primaDataInizio) {
+                $carbonInizio = Carbon::parse($primaDataInizio);
                 $fase->data_inizio = $carbonInizio->format('Y-m-d H:i:s');
             }
+        }
 
-            // DATA FINE: dalla pivot operatore, fallback dal campo ordine_fasi
-            $dataFineOriginale = $fase->getAttributes()['data_fine'] ?? null;
-            $carbonFine = null;
-            $fase->data_fine = null;
+        // Fallback: data_inizio dal campo ordine_fasi (impostato da Prinect sync)
+        if (!$fase->data_inizio && $dataInizioOriginale) {
+            $carbonInizio = Carbon::parse($dataInizioOriginale);
+            $fase->data_inizio = $carbonInizio->format('Y-m-d H:i:s');
+        }
 
-            if ($fase->operatori->isNotEmpty()) {
-                $primaDataFine = $fase->operatori
-                    ->whereNotNull('pivot.data_fine')
-                    ->sortBy('pivot.data_fine')
-                    ->first()?->pivot->data_fine;
+        // DATA FINE: dalla pivot operatore, fallback dal campo ordine_fasi
+        $dataFineOriginale = $fase->getAttributes()['data_fine'] ?? null;
+        $carbonFine = null;
+        $fase->data_fine = null;
 
-                if ($primaDataFine) {
-                    $carbonFine = Carbon::parse($primaDataFine);
-                    $fase->data_fine = $carbonFine->format('Y-m-d H:i:s');
-                }
-            }
+        if ($fase->operatori->isNotEmpty()) {
+            $primaDataFine = $fase->operatori
+                ->whereNotNull('pivot.data_fine')
+                ->sortBy('pivot.data_fine')
+                ->first()?->pivot->data_fine;
 
-            // Fallback: data_fine dal campo ordine_fasi (impostato da Prinect sync)
-            if (!$fase->data_fine && $dataFineOriginale) {
-                $carbonFine = Carbon::parse($dataFineOriginale);
+            if ($primaDataFine) {
+                $carbonFine = Carbon::parse($primaDataFine);
                 $fase->data_fine = $carbonFine->format('Y-m-d H:i:s');
             }
+        }
 
-            // Calcolo ore lavorate e pausa
-            $fase->secondi_pausa_totale = $fase->operatori->sum(fn($op) => $op->pivot->secondi_pausa ?? 0);
-            $fase->secondi_lordo = 0;
-            if ($carbonInizio && $carbonFine) {
-                $fase->secondi_lordo = abs($carbonFine->getTimestamp() - $carbonInizio->getTimestamp());
-            }
+        // Fallback: data_fine dal campo ordine_fasi (impostato da Prinect sync)
+        if (!$fase->data_fine && $dataFineOriginale) {
+            $carbonFine = Carbon::parse($dataFineOriginale);
+            $fase->data_fine = $carbonFine->format('Y-m-d H:i:s');
+        }
 
-            return $fase;
-        })
-        ->sortBy('priorita');
+        // Calcolo ore lavorate e pausa
+        $fase->secondi_pausa_totale = $fase->operatori->sum(fn($op) => $op->pivot->secondi_pausa ?? 0);
+        $fase->secondi_lordo = 0;
+        if ($carbonInizio && $carbonFine) {
+            $fase->secondi_lordo = abs($carbonFine->getTimestamp() - $carbonInizio->getTimestamp());
+        }
 
-    return view('owner.fasi_terminate', compact('fasiTerminate', 'soloOggi'));
+        return $fase;
+    });
+
+    return view('owner.fasi_terminate', compact('fasiTerminate', 'soloOggi', 'kpiTotale', 'kpiCommesse', 'kpiOggi', 'repartiUnici', 'fasiUniche', 'operatoriUnici'));
 }
 
     public function dettaglioCommessa($commessa, PrinectService $prinect, PrinectSyncService $syncService)
