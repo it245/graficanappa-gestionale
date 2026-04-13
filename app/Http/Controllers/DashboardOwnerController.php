@@ -200,8 +200,8 @@ class DashboardOwnerController extends Controller
         'STAMPA' => ['avviamento' => 0, 'copieh' => 1000],
         'STAMPA.OFFSET11.EST' => ['avviamento' => 72, 'copieh' => 1000],
         'STAMPABUSTE.EST' => ['avviamento' => 72, 'copieh' => 1000],
-        'STAMPACALDOJOH' => ['avviamento' => 1, 'copieh' => 2200],
-        'STAMPACALDOJOH0,1' => ['avviamento' => 1, 'copieh' => 2200],
+        'STAMPACALDOJOH' => ['avviamento' => 1, 'copieh' => 1300],
+        'STAMPACALDOJOH0,1' => ['avviamento' => 1, 'copieh' => 1300],
         'STAMPAINDIGO' => ['avviamento' => 0.5, 'copieh' => 1000],
         'STAMPAINDIGOBN' => ['avviamento' => 0.5, 'copieh' => 1000],
         'STAMPAXL106' => ['avviamento' => 0.65, 'copieh' => 3900],
@@ -224,13 +224,13 @@ class DashboardOwnerController extends Controller
         'APPL.CORDONCINO0,035' => ['avviamento' => 0.02, 'copieh' => 50],
         // Nuove fasi (valori da fasi simili)
         '4graph' => ['avviamento' => 0.5, 'copieh' => 100],           // come Allest.Manuale (esterno)
-        'stampalaminaoro' => ['avviamento' => 1, 'copieh' => 2200],   // come STAMPACALDOJOH
+        'stampalaminaoro' => ['avviamento' => 1, 'copieh' => 1300],   // come STAMPACALDOJOH
         'STAMPALAMINAORO' => ['avviamento' => 1, 'copieh' => 2200],
         'ALL.COFANETTO.ISMAsrl' => ['avviamento' => 0.5, 'copieh' => 100], // come Allest.Manuale (esterno)
         'PMDUPLO36COP' => ['avviamento' => 0.5, 'copieh' => 100],    // esterno generico
         'FINESTRATURA.MANUALE' => ['avviamento' => 0.5, 'copieh' => 100], // come FINESTRATURA.INT
         'FINESTRATURA.INT' => ['avviamento' => 0.5, 'copieh' => 100],
-        'STAMPACALDOJOHEST' => ['avviamento' => 72, 'copieh' => 2200], // come STAMPACALDOJOH ma est (avv.72)
+        'STAMPACALDOJOHEST' => ['avviamento' => 72, 'copieh' => 1300], // come STAMPACALDOJOH ma est (avv.72)
         'BROSSFRESATA/A5EST' => ['avviamento' => 72, 'copieh' => 1000], // come BROSSFILOREFE/A5EST
         'PIEGA6ANTESINGOLO' => ['avviamento' => 0.5, 'copieh' => 500], // come PIEGA3ANTESINGOLO
         'ALLESTIMENTO.ESPOSITORI' => ['avviamento' => 0.5, 'copieh' => 100], // come Allest.Manuale
@@ -238,7 +238,7 @@ class DashboardOwnerController extends Controller
         'FUSTELLATURA72X51' => ['avviamento' => 0.5, 'copieh' => 1500], // come FUSTSTELG33.44
 
         // Fasi "est" (esterno) — avviamento 72, copieh come fase interna corrispondente
-        'est STAMPACALDOJOH' => ['avviamento' => 72, 'copieh' => 2200],
+        'est STAMPACALDOJOH' => ['avviamento' => 72, 'copieh' => 1300],
         'est FUSTSTELG33.44' => ['avviamento' => 72, 'copieh' => 1500],
         'est FUSTBOBST75X106' => ['avviamento' => 72, 'copieh' => 3000],
         'STAMPA.ESTERNA' => ['avviamento' => 72, 'copieh' => 1000],
