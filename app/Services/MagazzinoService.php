@@ -75,10 +75,10 @@ class MagazzinoService
     public static function registraScarico(array $data): MagazzinoMovimento
     {
         return DB::transaction(function () use ($data) {
-            $giacenza = MagazzinoGiacenza::where('articolo_id', $data['articolo_id'])
-                ->where('ubicazione_id', $data['ubicazione_id'] ?? null)
-                ->where('lotto', $data['lotto'] ?? null)
-                ->firstOrFail();
+            $query = MagazzinoGiacenza::where('articolo_id', $data['articolo_id']);
+            empty($data['ubicazione_id']) ? $query->whereNull('ubicazione_id') : $query->where('ubicazione_id', $data['ubicazione_id']);
+            empty($data['lotto']) ? $query->whereNull('lotto') : $query->where('lotto', $data['lotto']);
+            $giacenza = $query->firstOrFail();
 
             if ($giacenza->quantita < $data['quantita']) {
                 throw new \RuntimeException("Giacenza insufficiente: disponibili {$giacenza->quantita}, richiesti {$data['quantita']}");
@@ -166,13 +166,18 @@ class MagazzinoService
      */
     public static function alertSottoSoglia(): array
     {
+        // Una sola query: somma giacenze per articolo e confronta con soglia
+        $giacenzePerArticolo = MagazzinoGiacenza::selectRaw('articolo_id, SUM(quantita) as totale')
+            ->groupBy('articolo_id')
+            ->pluck('totale', 'articolo_id');
+
         $articoli = MagazzinoArticolo::where('attivo', true)
             ->where('soglia_minima', '>', 0)
             ->get();
 
         $alert = [];
         foreach ($articoli as $art) {
-            $totale = $art->giacenzaTotale();
+            $totale = (int) ($giacenzePerArticolo[$art->id] ?? 0);
             if ($totale < $art->soglia_minima) {
                 $alert[] = [
                     'articolo' => $art,

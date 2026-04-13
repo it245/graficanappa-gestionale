@@ -70,18 +70,24 @@ class FabbisognoService
             ];
         }
 
+        // Pre-carica giacenze per tutti gli articoli (1 sola query, no N+1)
+        $giacenzePerArticolo = MagazzinoGiacenza::selectRaw('articolo_id, SUM(quantita) as totale')
+            ->groupBy('articolo_id')
+            ->pluck('totale', 'articolo_id');
+
+        // Pre-carica tutti gli articoli magazzino
+        $tuttiArticoli = MagazzinoArticolo::all()->keyBy('codice');
+
         // Confronta con giacenza magazzino
         foreach ($perCarta as $codCarta => &$item) {
-            // Cerca articolo per codice esatto o parziale
-            $articolo = MagazzinoArticolo::where('codice', $codCarta)->first();
+            $articolo = $tuttiArticoli[$codCarta] ?? null;
             if (!$articolo) {
-                // Prova match parziale (il cod_carta Onda potrebbe essere diverso dal codice magazzino)
                 $articolo = MagazzinoArticolo::where('codice', 'LIKE', "%{$codCarta}%")->first();
             }
 
             if ($articolo) {
                 $item['articolo_magazzino'] = $articolo;
-                $item['giacenza'] = MagazzinoGiacenza::where('articolo_id', $articolo->id)->sum('quantita');
+                $item['giacenza'] = (int) ($giacenzePerArticolo[$articolo->id] ?? 0);
             }
 
             $item['deficit'] = $item['fabbisogno_totale'] - $item['giacenza'];
@@ -109,7 +115,7 @@ class FabbisognoService
         foreach ($fabbisogno as $item) {
             if ($item['deficit'] <= 0) continue; // carta sufficiente
 
-            $fornitore = $item['articolo_magazzino']->fornitore ?? 'Fornitore non assegnato';
+            $fornitore = $item['articolo_magazzino']?->fornitore ?? 'Fornitore non assegnato';
 
             if (!isset($perFornitore[$fornitore])) {
                 $perFornitore[$fornitore] = [
