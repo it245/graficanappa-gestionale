@@ -48,6 +48,8 @@ class ExcelSyncService
      */
     public static function exportToExcel(): void
     {
+        set_time_limit(120);
+
         if (!env('EXCEL_SYNC_ENABLED', false)) {
             return;
         }
@@ -432,6 +434,8 @@ class ExcelSyncService
      */
     public static function syncIfModified(): void
     {
+        set_time_limit(120);
+
         if (!env('EXCEL_SYNC_ENABLED', false)) {
             return;
         }
