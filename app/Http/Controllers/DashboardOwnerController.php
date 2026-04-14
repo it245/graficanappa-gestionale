@@ -331,25 +331,47 @@ public function calcolaOreEPriorita($fase)
             // Prinect non disponibile, continua senza sync
         }
 
+        // Pre-calcola oggi per evitare ripetizioni
+        $oggiTs = Carbon::today()->timestamp;
+        $fasiPriorita = config('fasi_priorita', []);
+
         $fasi = OrdineFase::with(['ordine', 'faseCatalogo.reparto', 'operatori' => fn($q) => $q->select('operatori.id', 'nome')])
             ->where('stato', '<', 4)
             ->whereHas('ordine')
-            ->get()
-            ->map(function ($fase) {
-                $fase = $this->calcolaOreEPriorita($fase);
+            ->orderBy('priorita')
+            ->get();
 
-                $fase->reparto_nome = $fase->faseCatalogo->reparto->nome ?? '-';
+        // Batch processing: ricalcola ore e priorità in un unico loop (no metodo per ogni fase)
+        foreach ($fasi as $fase) {
+            // Ore previste
+            $qta_carta = $fase->ordine->qta_carta ?: 0;
+            $infoFase = $this->fasiInfo[$fase->fase] ?? ['avviamento' => 0.5, 'copieh' => 1000];
+            $copieh = $infoFase['copieh'] ?: 1000;
+            $fase->ore = $infoFase['avviamento'] + ($qta_carta / $copieh);
 
-                if ($fase->operatori->isNotEmpty()) {
-                    $primaData = $fase->operatori->sortBy('pivot.data_inizio')->first()->pivot->data_inizio;
-                    $fase->data_inizio = $primaData ? Carbon::parse($primaData)->format('Y-m-d H:i:s') : null;
-                } else {
-                    $fase->data_inizio = null;
+            // Priorità (skip se manuale)
+            if (!$fase->priorita_manuale && !($fase->priorita <= -901 && $fase->priorita >= -999)) {
+                $giorni_rimasti = 0;
+                if ($fase->ordine->data_prevista_consegna) {
+                    $consegnaTs = strtotime($fase->ordine->data_prevista_consegna);
+                    $giorni_rimasti = ($consegnaTs - $oggiTs) / 86400;
                 }
+                $fp = $fasiPriorita[$fase->fase] ?? 500;
+                $fase->priorita = round($giorni_rimasti - ($fase->ore / 24) + ($fp / 100), 2);
+            }
 
-                return $fase;
-            })
-            ->sortBy('priorita');
+            // Reparto
+            $fase->reparto_nome = $fase->faseCatalogo->reparto->nome ?? '-';
+
+            // Data inizio (senza Carbon::parse se non necessario)
+            $fase->data_inizio = null;
+            if ($fase->operatori->isNotEmpty()) {
+                $primaData = $fase->operatori->sortBy('pivot.data_inizio')->first()->pivot->data_inizio;
+                $fase->data_inizio = $primaData ?: null;
+            }
+        }
+
+        $fasi = $fasi->sortBy('priorita');
 
         $reparti = Reparto::orderBy('nome')->pluck('nome', 'id');
         $fasiCatalogo = FasiCatalogo::all();
@@ -450,6 +472,7 @@ public function calcolaOreEPriorita($fase)
                 })
                 ->with(['ordine', 'faseCatalogo', 'operatori'])
                 ->orderByDesc('data_fine')
+                ->limit(200)
                 ->get();
         }
 
@@ -784,12 +807,12 @@ public function calcolaOreEPriorita($fase)
     $soloOggi = $request->boolean('oggi');
     $oggi = Carbon::today();
 
-    $baseQuery = OrdineFase::whereIn('stato', [3, 4]);
+    $baseQuery = OrdineFase::whereIn('ordine_fasi.stato', [3, 4]);
 
     if ($soloOggi) {
         $baseQuery->where(function ($q) use ($oggi) {
             $q->whereHas('operatori', fn($q2) => $q2->whereDate('fase_operatore.data_fine', $oggi))
-              ->orWhereDate('data_fine', $oggi);
+              ->orWhereDate('ordine_fasi.data_fine', $oggi);
         });
     }
 
@@ -816,14 +839,14 @@ public function calcolaOreEPriorita($fase)
     $fasiUniche = \DB::table('ordine_fasi')
         ->leftJoin('fasi_catalogo', 'ordine_fasi.fase_catalogo_id', '=', 'fasi_catalogo.id')
         ->whereIn('ordine_fasi.stato', [3, 4])
-        ->selectRaw('COALESCE(fasi_catalogo.nome_display, ordine_fasi.fase) as nome_fase')
+        ->selectRaw('COALESCE(fasi_catalogo.nome, ordine_fasi.fase) as nome_fase')
         ->distinct()
         ->orderBy('nome_fase')
         ->pluck('nome_fase')
         ->filter();
 
     $operatoriUnici = \DB::table('fase_operatore')
-        ->join('ordine_fasi', 'fase_operatore.ordine_fase_id', '=', 'ordine_fasi.id')
+        ->join('ordine_fasi', 'fase_operatore.fase_id', '=', 'ordine_fasi.id')
         ->join('operatori', 'fase_operatore.operatore_id', '=', 'operatori.id')
         ->whereIn('ordine_fasi.stato', [3, 4])
         ->selectRaw("CONCAT(operatori.nome, ' ', operatori.cognome) as nome_completo")
@@ -831,8 +854,38 @@ public function calcolaOreEPriorita($fase)
         ->orderBy('nome_completo')
         ->pluck('nome_completo');
 
+    // Filtri server-side (funzionano su TUTTE le pagine, non solo quella corrente)
+    $filteredQuery = clone $baseQuery;
+
+    if ($request->filled('cerca')) {
+        $cerca = $request->get('cerca');
+        $filteredQuery->whereHas('ordine', function ($q) use ($cerca) {
+            $q->where('commessa', 'LIKE', "%{$cerca}%")
+              ->orWhere('cliente_nome', 'LIKE', "%{$cerca}%")
+              ->orWhere('descrizione', 'LIKE', "%{$cerca}%");
+        });
+    }
+
+    if ($request->filled('reparto')) {
+        $reparto = $request->get('reparto');
+        $filteredQuery->whereHas('faseCatalogo.reparto', fn($q) => $q->where('nome', $reparto));
+    }
+
+    if ($request->filled('fase')) {
+        $faseFilter = $request->get('fase');
+        $filteredQuery->where(function ($q) use ($faseFilter) {
+            $q->whereHas('faseCatalogo', fn($sub) => $sub->where('nome', $faseFilter))
+              ->orWhere('ordine_fasi.fase', $faseFilter);
+        });
+    }
+
+    if ($request->filled('operatore')) {
+        $opFilter = $request->get('operatore');
+        $filteredQuery->whereHas('operatori', fn($q) => $q->whereRaw("CONCAT(nome, ' ', cognome) = ?", [$opFilter]));
+    }
+
     // Paginazione con eager loading
-    $fasiTerminate = (clone $baseQuery)
+    $fasiTerminate = $filteredQuery
         ->with(['ordine.reparto', 'faseCatalogo.reparto', 'operatori'])
         ->orderBy('priorita')
         ->paginate(50)

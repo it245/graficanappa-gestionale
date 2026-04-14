@@ -144,63 +144,49 @@ tr.percorso-completo td { background-color: #f8d7da !important; }
 <div class="row mx-1 mb-2">
     <div class="col-md-4">
         <div class="kpi-box">
-            <h3>{{ $fasiTerminate->count() }}</h3>
+            <h3>{{ number_format($kpiTotale) }}</h3>
             <small>Totale fasi terminate</small>
         </div>
     </div>
     <div class="col-md-4">
         <div class="kpi-box">
-            <h3>{{ $fasiTerminate->unique(function($f) { return $f->ordine->commessa ?? ''; })->count() }}</h3>
+            <h3>{{ number_format($kpiCommesse) }}</h3>
             <small>Commesse coinvolte</small>
         </div>
     </div>
     <div class="col-md-4">
         <div class="kpi-box">
-            <h3>{{ $fasiTerminate->filter(function($f) {
-                if (!$f->data_fine) return false;
-                try {
-                    return \Carbon\Carbon::createFromFormat('d/m/Y H:i:s', $f->data_fine)?->isToday() ?? \Carbon\Carbon::parse($f->data_fine)->isToday();
-                } catch (\Exception $e) {
-                    try { return \Carbon\Carbon::parse($f->data_fine)->isToday(); } catch (\Exception $e2) { return false; }
-                }
-            })->count() }}</h3>
+            <h3>{{ number_format($kpiOggi) }}</h3>
             <small>Terminate oggi</small>
         </div>
     </div>
 </div>
 
-<!-- Filtri -->
-<div id="searchBox" style="margin: 6px 4px; display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
-    <input type="text" id="searchInput" class="form-control form-control-sm" style="max-width:250px;" placeholder="Cerca commessa o cliente...">
-    <select id="filterReparto" class="form-control form-control-sm" style="max-width:180px;" onchange="filtraTabella()">
+<!-- Filtri (server-side: cercano su TUTTE le fasi, non solo la pagina corrente) -->
+<form method="GET" action="{{ route('owner.fasiTerminate') }}" id="searchBox" style="margin: 6px 4px; display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+    @if(!empty($soloOggi))<input type="hidden" name="oggi" value="1">@endif
+    <input type="text" name="cerca" class="form-control form-control-sm" style="max-width:250px;" placeholder="Cerca commessa, cliente, descrizione..." value="{{ request('cerca') }}">
+    <select name="reparto" class="form-control form-control-sm" style="max-width:180px;" onchange="this.form.submit()">
         <option value="">Tutti i reparti</option>
-        @php
-            $repartiUnici = $fasiTerminate->pluck('reparto_nome')->filter()->unique()->sort();
-        @endphp
         @foreach($repartiUnici as $rep)
-            <option value="{{ $rep }}">{{ ucfirst($rep) }}</option>
+            <option value="{{ $rep }}" {{ request('reparto') == $rep ? 'selected' : '' }}>{{ ucfirst($rep) }}</option>
         @endforeach
     </select>
-    <select id="filterFase" class="form-control form-control-sm" style="max-width:200px;" onchange="filtraTabella()">
+    <select name="fase" class="form-control form-control-sm" style="max-width:200px;" onchange="this.form.submit()">
         <option value="">Tutte le fasi</option>
-        @php
-            $fasiUniche = $fasiTerminate->map(fn($f) => $f->faseCatalogo->nome_display ?? $f->fase ?? '')->filter()->unique()->sort();
-        @endphp
         @foreach($fasiUniche as $fase)
-            <option value="{{ $fase }}">{{ $fase }}</option>
+            <option value="{{ $fase }}" {{ request('fase') == $fase ? 'selected' : '' }}>{{ $fase }}</option>
         @endforeach
     </select>
-    <select id="filterOperatore" class="form-control form-control-sm" style="max-width:180px;" onchange="filtraTabella()">
+    <select name="operatore" class="form-control form-control-sm" style="max-width:180px;" onchange="this.form.submit()">
         <option value="">Tutti gli operatori</option>
-        @php
-            $operatoriUnici = $fasiTerminate->flatMap(fn($f) => $f->operatori->map(fn($op) => $op->nome . ' ' . $op->cognome))->filter()->unique()->sort();
-        @endphp
         @foreach($operatoriUnici as $op)
-            <option value="{{ $op }}">{{ $op }}</option>
+            <option value="{{ $op }}" {{ request('operatore') == $op ? 'selected' : '' }}>{{ $op }}</option>
         @endforeach
     </select>
-    <button class="btn btn-sm btn-outline-secondary" onclick="resetFiltri()">Reset</button>
-</div>
+    <button type="submit" class="btn btn-sm btn-dark">Filtra</button>
+    <a href="{{ route('owner.fasiTerminate', $soloOggi ? ['oggi' => 1] : []) }}" class="btn btn-sm btn-outline-secondary">Reset</a>
+</form>
 
 <!-- Tabella -->
 <div class="table-wrapper">
@@ -327,6 +313,26 @@ tr.percorso-completo td { background-color: #f8d7da !important; }
     </table>
 </div>
 
+<!-- Paginazione -->
+<div style="margin: 8px 4px; display:flex; justify-content:space-between; align-items:center;">
+    <span style="font-size:12px; color:var(--text-secondary, #6c757d);">
+        Pagina {{ $fasiTerminate->currentPage() }} di {{ $fasiTerminate->lastPage() }}
+        ({{ number_format($fasiTerminate->total()) }} totali)
+    </span>
+    <div>
+        @if($fasiTerminate->onFirstPage())
+            <span class="btn btn-sm btn-outline-secondary disabled">&laquo; Prec</span>
+        @else
+            <a href="{{ $fasiTerminate->previousPageUrl() }}" class="btn btn-sm btn-outline-dark">&laquo; Prec</a>
+        @endif
+        @if($fasiTerminate->hasMorePages())
+            <a href="{{ $fasiTerminate->nextPageUrl() }}" class="btn btn-sm btn-outline-dark">Succ &raquo;</a>
+        @else
+            <span class="btn btn-sm btn-outline-secondary disabled">Succ &raquo;</span>
+        @endif
+    </div>
+</div>
+
 <script>
 function csrfToken() {
     return document.querySelector('meta[name="csrf-token"]')?.content || '';
@@ -362,37 +368,12 @@ function aggiornaStato(faseId, testo) {
     .catch(e => alert('Errore di rete'));
 }
 
-document.getElementById('searchInput').addEventListener('keyup', filtraTabella);
-
-function filtraTabella() {
-    const testo = document.getElementById('searchInput').value.toLowerCase();
-    const reparto = document.getElementById('filterReparto').value.toLowerCase();
-    const fase = document.getElementById('filterFase').value.toLowerCase();
-    const operatore = document.getElementById('filterOperatore').value.toLowerCase();
-
-    document.querySelectorAll('tbody tr').forEach(riga => {
-        const commessa = riga.cells[0]?.innerText.toLowerCase() || '';
-        const cliente = riga.cells[1]?.innerText.toLowerCase() || '';
-        const desc = riga.cells[3]?.innerText.toLowerCase() || '';
-        const repartoRiga = riga.dataset.reparto || '';
-        const faseRiga = riga.dataset.fase || '';
-        const opRiga = riga.dataset.operatori || '';
-
-        const matchTesto = !testo || commessa.includes(testo) || cliente.includes(testo) || desc.includes(testo);
-        const matchReparto = !reparto || repartoRiga === reparto;
-        const matchFase = !fase || faseRiga === fase;
-        const matchOp = !operatore || opRiga.includes(operatore);
-
-        riga.style.display = (matchTesto && matchReparto && matchFase && matchOp) ? '' : 'none';
-    });
-}
-
-function resetFiltri() {
-    document.getElementById('searchInput').value = '';
-    document.getElementById('filterReparto').value = '';
-    document.getElementById('filterFase').value = '';
-    document.getElementById('filterOperatore').value = '';
-    filtraTabella();
-}
+// Ricerca live con debounce (300ms dopo l'ultima digitazione)
+let cercaTimer = null;
+document.querySelector('input[name="cerca"]')?.addEventListener('input', function() {
+    clearTimeout(cercaTimer);
+    const form = this.form;
+    cercaTimer = setTimeout(() => form.submit(), 300);
+});
 </script>
 @endsection
