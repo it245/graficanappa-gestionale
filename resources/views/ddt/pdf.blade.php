@@ -88,11 +88,6 @@
         </div>
     </div>
 
-    {{-- INTRO --}}
-    <div class="intro-text">
-        Ci pregiamo di consegnarVi quanto segue da Voi ordinatoci con riserva di inviarVi regolare fattura.
-    </div>
-
     {{-- TABELLA ARTICOLI --}}
     <table class="articoli">
         <thead>
