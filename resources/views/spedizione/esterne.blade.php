@@ -80,7 +80,7 @@
                     <td style="white-space:nowrap;">
                         @if($statoFase == 0 || $statoFase == 1)
                             <button class="btn btn-sm btn-success fw-bold" onclick="esternoAvvia({{ $fase->id }}, this)">Avvia</button>
-                        @elseif($statoFase == 2)
+                        @elseif($statoFase == 2 || $statoFase == 5)
                             <button class="btn btn-sm btn-success fw-bold"
                                     data-qta-fase="{{ $fase->qta_fase ?? 0 }}"
                                     data-fogli-buoni="{{ $fase->fogli_buoni ?? 0 }}"
@@ -102,6 +102,8 @@
                             <span class="badge bg-secondary">Da fare</span>
                         @elseif($statoFase == 1)
                             <span class="badge bg-info">Pronto</span>
+                        @elseif($statoFase == 5)
+                            <span class="badge" style="background:#7c3aed;color:#fff;">EXT</span>
                         @elseif($statoFase == 2)
                             <span class="badge bg-primary">In corso</span>
                         @elseif($inPausa)
