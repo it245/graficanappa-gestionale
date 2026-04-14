@@ -2289,7 +2289,7 @@ function caricaPresenti() {
     _presentiInterval = setInterval(fetchPresenti, 60000);
 }
 function fetchPresenti() {
-    fetch('{{ route("owner.presenti") }}')
+    fetch(urlToken('{{ route("owner.presenti") }}'))
         .then(function(r) { return r.json(); })
         .then(function(d) {
             document.getElementById('presentiLoading').style.display = 'none';
@@ -2321,7 +2321,7 @@ document.getElementById('modalPresenti').addEventListener('hidden.bs.modal', fun
     if (_presentiInterval) { clearInterval(_presentiInterval); _presentiInterval = null; }
 });
 // Carica badge presenti al load della pagina
-fetch('{{ route("owner.presenti") }}')
+fetch(urlToken('{{ route("owner.presenti") }}'))
     .then(function(r) { return r.json(); })
     .then(function(d) {
         var badge = document.getElementById('presentiCount');
