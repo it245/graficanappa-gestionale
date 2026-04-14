@@ -313,11 +313,11 @@ public function calcolaOreEPriorita($fase)
 
     public function index(Request $request, PrinectService $prinect, PrinectSyncService $syncService)
     {
-        // Sync Excel: importa eventuali modifiche dal file
-        ExcelSyncService::syncIfModified();
+        // Sync Excel e Prinect girano via cron (excel:sync ogni 2min, prinect ogni minuto)
+        // NON bloccare il page load con sync sincroni
 
-        // Sync live Prinect: aggiorna fasi stampa da attivita di oggi
-        try {
+        // Sync live Prinect: solo se richiesto esplicitamente (?sync=1)
+        if ($request->boolean('sync')) try {
             $deviceId = env('PRINECT_DEVICE_XL106_ID', '4001');
             $oggi = Carbon::today()->format('Y-m-d\TH:i:sP');
             $ora = Carbon::now()->format('Y-m-d\TH:i:sP');

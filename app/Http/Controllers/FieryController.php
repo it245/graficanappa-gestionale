@@ -75,44 +75,44 @@ class FieryController extends Controller
         $queue = [];
         $completed = [];
 
+        // Pre-carica tutti gli ordini e fasi in 2 query (invece di N+1)
+        $commesseCodes = array_unique(array_filter(array_column($jobs, 'commessa')));
+        $ordiniMap = !empty($commesseCodes)
+            ? Ordine::with('fasi')->whereIn('commessa', $commesseCodes)->get()->keyBy('commessa')
+            : collect();
+
         foreach ($jobs as $job) {
             // Aggiungi info commessa dal MES
             $job['mes'] = null;
-            if ($job['commessa']) {
-                $ordine = Ordine::where('commessa', $job['commessa'])->first();
-                if ($ordine) {
-                    // Fasi della commessa
-                    $fasi = OrdineFase::where('ordine_id', $ordine->id)
-                        ->orderBy('priorita')
-                        ->get()
-                        ->map(fn($f) => [
-                            'fase' => $f->fase,
-                            'stato' => $f->stato,
-                            'qta_fase' => $f->qta_fase,
-                            'qta_prod' => $f->qta_prod,
-                            'esterno' => $f->esterno,
-                        ])->toArray();
+            if ($job['commessa'] && $ordiniMap->has($job['commessa'])) {
+                $ordine = $ordiniMap[$job['commessa']];
+                $fasi = $ordine->fasi->sortBy('priorita')->map(fn($f) => [
+                    'fase' => $f->fase,
+                    'stato' => $f->stato,
+                    'qta_fase' => $f->qta_fase,
+                    'qta_prod' => $f->qta_prod,
+                    'esterno' => $f->esterno,
+                ])->values()->toArray();
 
-                    $job['mes'] = [
-                        'commessa' => $ordine->commessa,
-                        'cliente' => $ordine->cliente_nome,
-                        'cod_art' => $ordine->cod_art,
-                        'descrizione' => $ordine->descrizione,
-                        'qta_richiesta' => $ordine->qta_richiesta,
-                        'qta_carta' => $ordine->qta_carta,
-                        'cod_carta' => $ordine->cod_carta,
-                        'carta' => $ordine->carta,
-                        'data_prevista' => $ordine->data_prevista_consegna
-                            ? (is_string($ordine->data_prevista_consegna)
-                                ? date('d/m/Y', strtotime($ordine->data_prevista_consegna))
-                                : $ordine->data_prevista_consegna->format('d/m/Y'))
-                            : null,
-                        'note_prestampa' => $ordine->note_prestampa,
-                        'note_fasi' => $ordine->note_fasi_successive,
-                        'responsabile' => $ordine->responsabile,
-                        'fasi' => $fasi,
-                    ];
-                }
+                $job['mes'] = [
+                    'commessa' => $ordine->commessa,
+                    'cliente' => $ordine->cliente_nome,
+                    'cod_art' => $ordine->cod_art,
+                    'descrizione' => $ordine->descrizione,
+                    'qta_richiesta' => $ordine->qta_richiesta,
+                    'qta_carta' => $ordine->qta_carta,
+                    'cod_carta' => $ordine->cod_carta,
+                    'carta' => $ordine->carta,
+                    'data_prevista' => $ordine->data_prevista_consegna
+                        ? (is_string($ordine->data_prevista_consegna)
+                            ? date('d/m/Y', strtotime($ordine->data_prevista_consegna))
+                            : $ordine->data_prevista_consegna->format('d/m/Y'))
+                        : null,
+                    'note_prestampa' => $ordine->note_prestampa,
+                    'note_fasi' => $ordine->note_fasi_successive,
+                    'responsabile' => $ordine->responsabile,
+                    'fasi' => $fasi,
+                ];
             }
 
             if ($job['state'] === 'printing') {
