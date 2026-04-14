@@ -331,25 +331,47 @@ public function calcolaOreEPriorita($fase)
             // Prinect non disponibile, continua senza sync
         }
 
+        // Pre-calcola oggi per evitare ripetizioni
+        $oggiTs = Carbon::today()->timestamp;
+        $fasiPriorita = config('fasi_priorita', []);
+
         $fasi = OrdineFase::with(['ordine', 'faseCatalogo.reparto', 'operatori' => fn($q) => $q->select('operatori.id', 'nome')])
             ->where('stato', '<', 4)
             ->whereHas('ordine')
-            ->get()
-            ->map(function ($fase) {
-                $fase = $this->calcolaOreEPriorita($fase);
+            ->orderBy('priorita')
+            ->get();
 
-                $fase->reparto_nome = $fase->faseCatalogo->reparto->nome ?? '-';
+        // Batch processing: ricalcola ore e priorità in un unico loop (no metodo per ogni fase)
+        foreach ($fasi as $fase) {
+            // Ore previste
+            $qta_carta = $fase->ordine->qta_carta ?: 0;
+            $infoFase = $this->fasiInfo[$fase->fase] ?? ['avviamento' => 0.5, 'copieh' => 1000];
+            $copieh = $infoFase['copieh'] ?: 1000;
+            $fase->ore = $infoFase['avviamento'] + ($qta_carta / $copieh);
 
-                if ($fase->operatori->isNotEmpty()) {
-                    $primaData = $fase->operatori->sortBy('pivot.data_inizio')->first()->pivot->data_inizio;
-                    $fase->data_inizio = $primaData ? Carbon::parse($primaData)->format('Y-m-d H:i:s') : null;
-                } else {
-                    $fase->data_inizio = null;
+            // Priorità (skip se manuale)
+            if (!$fase->priorita_manuale && !($fase->priorita <= -901 && $fase->priorita >= -999)) {
+                $giorni_rimasti = 0;
+                if ($fase->ordine->data_prevista_consegna) {
+                    $consegnaTs = strtotime($fase->ordine->data_prevista_consegna);
+                    $giorni_rimasti = ($consegnaTs - $oggiTs) / 86400;
                 }
+                $fp = $fasiPriorita[$fase->fase] ?? 500;
+                $fase->priorita = round($giorni_rimasti - ($fase->ore / 24) + ($fp / 100), 2);
+            }
 
-                return $fase;
-            })
-            ->sortBy('priorita');
+            // Reparto
+            $fase->reparto_nome = $fase->faseCatalogo->reparto->nome ?? '-';
+
+            // Data inizio (senza Carbon::parse se non necessario)
+            $fase->data_inizio = null;
+            if ($fase->operatori->isNotEmpty()) {
+                $primaData = $fase->operatori->sortBy('pivot.data_inizio')->first()->pivot->data_inizio;
+                $fase->data_inizio = $primaData ?: null;
+            }
+        }
+
+        $fasi = $fasi->sortBy('priorita');
 
         $reparti = Reparto::orderBy('nome')->pluck('nome', 'id');
         $fasiCatalogo = FasiCatalogo::all();
@@ -450,6 +472,7 @@ public function calcolaOreEPriorita($fase)
                 })
                 ->with(['ordine', 'faseCatalogo', 'operatori'])
                 ->orderByDesc('data_fine')
+                ->limit(200)
                 ->get();
         }
 
