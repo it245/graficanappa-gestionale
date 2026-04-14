@@ -260,23 +260,24 @@ class FieryController extends Controller
      */
     public function contatori(Request $request, FieryService $fiery)
     {
-        set_time_limit(120);
+        set_time_limit(60);
 
-        // Lettura live SNMP
-        $live = $this->leggiContatoriSnmp();
+        // SNMP: se stampante spenta, usa cache o array vuoto (non bloccare la pagina)
+        $live = \Cache::remember('fiery_snmp_live', 30, fn() => $this->leggiContatoriSnmp());
 
-        // Storico dal DB
+        // Storico dal DB (sempre disponibile, non dipende dalla stampante)
         $storico = ContatoreStampante::where('stampante', 'Canon iPR V900')
             ->orderByDesc('rilevato_at')
             ->limit(52)
             ->get();
 
-        // Click per commessa da Accounting API
         $da = $request->get('da', now()->subDays(30)->format('Y-m-d'));
         $a = $request->get('a', now()->format('Y-m-d'));
-        $clickPerCommessa = $this->getClickPerCommessa($fiery, $da, $a);
 
-        // Report mensile per categoria (B/N A4, Colore A4, B/N A3, Colore A3, Banner)
+        // Click per commessa: solo se Fiery online (evita 20s di timeout)
+        $clickPerCommessa = $fiery->isOnline() ? $this->getClickPerCommessa($fiery, $da, $a) : [];
+
+        // Report mensile per categoria (usa snapshot DB, non dipende dalla stampante)
         $reportCategorie = $this->getReportCategorie($da, $a);
 
         return view('fiery.contatori', compact('live', 'storico', 'clickPerCommessa', 'da', 'a', 'reportCategorie'));
@@ -349,7 +350,8 @@ class FieryController extends Controller
      */
     public function contatoriJson()
     {
-        return response()->json($this->leggiContatoriSnmp());
+        $data = \Cache::remember('fiery_snmp_live', 30, fn() => $this->leggiContatoriSnmp());
+        return response()->json($data);
     }
 
     /**
