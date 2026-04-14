@@ -784,12 +784,12 @@ public function calcolaOreEPriorita($fase)
     $soloOggi = $request->boolean('oggi');
     $oggi = Carbon::today();
 
-    $baseQuery = OrdineFase::whereIn('stato', [3, 4]);
+    $baseQuery = OrdineFase::whereIn('ordine_fasi.stato', [3, 4]);
 
     if ($soloOggi) {
         $baseQuery->where(function ($q) use ($oggi) {
             $q->whereHas('operatori', fn($q2) => $q2->whereDate('fase_operatore.data_fine', $oggi))
-              ->orWhereDate('data_fine', $oggi);
+              ->orWhereDate('ordine_fasi.data_fine', $oggi);
         });
     }
 
