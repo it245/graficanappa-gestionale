@@ -575,6 +575,8 @@ tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !imp
                         <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#fff3cd;border:1px solid #ffc107;border-radius:2px;"></span> 2 Avviato</div>
                         <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#d1e7dd;border:1px solid #198754;border-radius:2px;"></span> 3 Terminato</div>
                         <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#c3c3c3;border:1px solid #999;border-radius:2px;"></span> 4 Consegnato</div>
+                        <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#ede9fe;border:1px solid #7c3aed;border-radius:2px;"></span> EXT Da inviare</div>
+                        <div class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;background:#d1fae5;border:1px solid #065f46;border-radius:2px;"></span> EXT Inviato</div>
                     </div>
                 </div>
                 <div style="border-left:1px solid #dee2e6; padding-left:12px;">
@@ -1261,7 +1263,7 @@ tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !imp
 // Sidebar menu
 function salvaNotaTv() {
     var nota = document.getElementById('notaTvInput').value.trim();
-    fetch('/kiosk/nota', {
+    fetch(urlToken('/kiosk/nota'), {
         method: 'POST',
         headers: {'X-CSRF-TOKEN': csrfToken(), 'Content-Type': 'application/json'},
         body: JSON.stringify({nota: nota})
@@ -1275,7 +1277,7 @@ function salvaNotaTv() {
     });
 }
 // Carica nota TV corrente
-fetch('/kiosk/nota').then(r => r.json()).then(d => {
+fetch(urlToken('/kiosk/nota')).then(r => r.json()).then(d => {
     if (d.nota) document.getElementById('notaTvInput').value = d.nota;
 });
 
