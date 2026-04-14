@@ -284,29 +284,31 @@ th:nth-child(24), td:nth-child(24) {
     </div>
 </div>
 
-<!-- Filtri -->
-<div id="searchBox" style="margin: 6px 4px; display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
-    <input type="text" id="searchInput" class="form-control form-control-sm" style="max-width:250px;" placeholder="Cerca commessa o cliente...">
-    <select id="filterReparto" class="form-control form-control-sm" style="max-width:180px;" onchange="filtraTabella()">
+<!-- Filtri (server-side: cercano su TUTTE le fasi, non solo la pagina corrente) -->
+<form method="GET" action="{{ route('owner.fasiTerminate') }}" id="searchBox" style="margin: 6px 4px; display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+    @if(!empty($soloOggi))<input type="hidden" name="oggi" value="1">@endif
+    <input type="text" name="cerca" class="form-control form-control-sm" style="max-width:250px;" placeholder="Cerca commessa, cliente, descrizione..." value="{{ request('cerca') }}">
+    <select name="reparto" class="form-control form-control-sm" style="max-width:180px;" onchange="this.form.submit()">
         <option value="">Tutti i reparti</option>
         @foreach($repartiUnici as $rep)
-            <option value="{{ $rep }}">{{ ucfirst($rep) }}</option>
+            <option value="{{ $rep }}" {{ request('reparto') == $rep ? 'selected' : '' }}>{{ ucfirst($rep) }}</option>
         @endforeach
     </select>
-    <select id="filterFase" class="form-control form-control-sm" style="max-width:200px;" onchange="filtraTabella()">
+    <select name="fase" class="form-control form-control-sm" style="max-width:200px;" onchange="this.form.submit()">
         <option value="">Tutte le fasi</option>
         @foreach($fasiUniche as $fase)
-            <option value="{{ $fase }}">{{ $fase }}</option>
+            <option value="{{ $fase }}" {{ request('fase') == $fase ? 'selected' : '' }}>{{ $fase }}</option>
         @endforeach
     </select>
-    <select id="filterOperatore" class="form-control form-control-sm" style="max-width:180px;" onchange="filtraTabella()">
+    <select name="operatore" class="form-control form-control-sm" style="max-width:180px;" onchange="this.form.submit()">
         <option value="">Tutti gli operatori</option>
         @foreach($operatoriUnici as $op)
-            <option value="{{ $op }}">{{ $op }}</option>
+            <option value="{{ $op }}" {{ request('operatore') == $op ? 'selected' : '' }}>{{ $op }}</option>
         @endforeach
     </select>
-    <button class="btn btn-sm btn-outline-secondary" onclick="resetFiltri()">Reset</button>
-</div>
+    <button type="submit" class="btn btn-sm btn-dark">Filtra</button>
+    <a href="{{ route('owner.fasiTerminate', $soloOggi ? ['oggi' => 1] : []) }}" class="btn btn-sm btn-outline-secondary">Reset</a>
+</form>
 
 <!-- Tabella -->
 <div class="table-wrapper">
@@ -489,37 +491,9 @@ function aggiornaStato(faseId, testo) {
     .catch(e => alert('Errore di rete'));
 }
 
-document.getElementById('searchInput').addEventListener('keyup', filtraTabella);
-
-function filtraTabella() {
-    const testo = document.getElementById('searchInput').value.toLowerCase();
-    const reparto = document.getElementById('filterReparto').value.toLowerCase();
-    const fase = document.getElementById('filterFase').value.toLowerCase();
-    const operatore = document.getElementById('filterOperatore').value.toLowerCase();
-
-    document.querySelectorAll('tbody tr').forEach(riga => {
-        const commessa = riga.cells[0]?.innerText.toLowerCase() || '';
-        const cliente = riga.cells[1]?.innerText.toLowerCase() || '';
-        const desc = riga.cells[3]?.innerText.toLowerCase() || '';
-        const repartoRiga = riga.dataset.reparto || '';
-        const faseRiga = riga.dataset.fase || '';
-        const opRiga = riga.dataset.operatori || '';
-
-        const matchTesto = !testo || commessa.includes(testo) || cliente.includes(testo) || desc.includes(testo);
-        const matchReparto = !reparto || repartoRiga === reparto;
-        const matchFase = !fase || faseRiga === fase;
-        const matchOp = !operatore || opRiga.includes(operatore);
-
-        riga.style.display = (matchTesto && matchReparto && matchFase && matchOp) ? '' : 'none';
-    });
-}
-
-function resetFiltri() {
-    document.getElementById('searchInput').value = '';
-    document.getElementById('filterReparto').value = '';
-    document.getElementById('filterFase').value = '';
-    document.getElementById('filterOperatore').value = '';
-    filtraTabella();
-}
+// Invio ricerca con Enter
+document.querySelector('input[name="cerca"]')?.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') this.form.submit();
+});
 </script>
 @endsection

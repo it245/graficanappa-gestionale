@@ -831,8 +831,38 @@ public function calcolaOreEPriorita($fase)
         ->orderBy('nome_completo')
         ->pluck('nome_completo');
 
+    // Filtri server-side (funzionano su TUTTE le pagine, non solo quella corrente)
+    $filteredQuery = clone $baseQuery;
+
+    if ($request->filled('cerca')) {
+        $cerca = $request->get('cerca');
+        $filteredQuery->whereHas('ordine', function ($q) use ($cerca) {
+            $q->where('commessa', 'LIKE', "%{$cerca}%")
+              ->orWhere('cliente_nome', 'LIKE', "%{$cerca}%")
+              ->orWhere('descrizione', 'LIKE', "%{$cerca}%");
+        });
+    }
+
+    if ($request->filled('reparto')) {
+        $reparto = $request->get('reparto');
+        $filteredQuery->whereHas('faseCatalogo.reparto', fn($q) => $q->where('nome', $reparto));
+    }
+
+    if ($request->filled('fase')) {
+        $faseFilter = $request->get('fase');
+        $filteredQuery->where(function ($q) use ($faseFilter) {
+            $q->whereHas('faseCatalogo', fn($sub) => $sub->where('nome', $faseFilter))
+              ->orWhere('ordine_fasi.fase', $faseFilter);
+        });
+    }
+
+    if ($request->filled('operatore')) {
+        $opFilter = $request->get('operatore');
+        $filteredQuery->whereHas('operatori', fn($q) => $q->whereRaw("CONCAT(nome, ' ', cognome) = ?", [$opFilter]));
+    }
+
     // Paginazione con eager loading
-    $fasiTerminate = (clone $baseQuery)
+    $fasiTerminate = $filteredQuery
         ->with(['ordine.reparto', 'faseCatalogo.reparto', 'operatori'])
         ->orderBy('priorita')
         ->paginate(50)
