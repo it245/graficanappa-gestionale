@@ -336,7 +336,7 @@ public function calcolaOreEPriorita($fase)
         $fasiPriorita = config('fasi_priorita', []);
 
         $fasi = OrdineFase::with(['ordine', 'faseCatalogo.reparto', 'operatori' => fn($q) => $q->select('operatori.id', 'nome')])
-            ->where('stato', '<', 4)
+            ->where(fn($q) => $q->where('stato', '<', 4)->orWhere('stato', 5))
             ->whereHas('ordine')
             ->orderBy('priorita')
             ->get();
