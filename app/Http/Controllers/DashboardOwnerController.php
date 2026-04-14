@@ -823,7 +823,7 @@ public function calcolaOreEPriorita($fase)
         ->filter();
 
     $operatoriUnici = \DB::table('fase_operatore')
-        ->join('ordine_fasi', 'fase_operatore.ordine_fase_id', '=', 'ordine_fasi.id')
+        ->join('ordine_fasi', 'fase_operatore.fase_id', '=', 'ordine_fasi.id')
         ->join('operatori', 'fase_operatore.operatore_id', '=', 'operatori.id')
         ->whereIn('ordine_fasi.stato', [3, 4])
         ->selectRaw("CONCAT(operatori.nome, ' ', operatori.cognome) as nome_completo")
