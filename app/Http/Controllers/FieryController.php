@@ -274,8 +274,8 @@ class FieryController extends Controller
         $da = $request->get('da', now()->subDays(30)->format('Y-m-d'));
         $a = $request->get('a', now()->format('Y-m-d'));
 
-        // Click per commessa: solo se Fiery online (evita 20s di timeout)
-        $clickPerCommessa = $fiery->isOnline() ? $this->getClickPerCommessa($fiery, $da, $a) : [];
+        // Click per commessa dal DB (salvati dal cron fiery:sync)
+        $clickPerCommessa = $this->getClickPerCommessaFromDb($da, $a);
 
         // Report mensile per categoria (usa snapshot DB, non dipende dalla stampante)
         $reportCategorie = $this->getReportCategorie($da, $a);
@@ -465,6 +465,53 @@ class FieryController extends Controller
         $result['alert'] = $alert !== false ? trim(preg_replace('/^.*:\s*"?|"$/s', '', $alert)) : null;
 
         return $result;
+    }
+
+    /**
+     * Click per commessa dal DB (dati salvati dal cron fiery:sync)
+     */
+    private function getClickPerCommessaFromDb(string $da, string $a): array
+    {
+        $rows = \App\Models\FieryAccounting::whereBetween('data_stampa', [$da, $a])
+            ->get();
+
+        if ($rows->isEmpty()) return [];
+
+        $perCommessa = [];
+        foreach ($rows as $row) {
+            $key = $row->commessa ?: '__senza_commessa__';
+
+            if (!isset($perCommessa[$key])) {
+                $ordine = $key !== '__senza_commessa__' ? Ordine::where('commessa', $key)->first() : null;
+                $perCommessa[$key] = [
+                    'commessa' => $key === '__senza_commessa__' ? '(Senza commessa)' : $key,
+                    'cliente' => $ordine->cliente_nome ?? '',
+                    'descrizione' => $ordine ? \Illuminate\Support\Str::limit($ordine->descrizione ?? '', 60) : ($key === '__senza_commessa__' ? 'Test, calibrazione, prove colore' : ''),
+                    'fogli' => 0,
+                    'colore' => 0,
+                    'bn' => 0,
+                    'copie' => 0,
+                    'run' => 0,
+                    'fogli_grande' => 0,
+                    'fogli_piccolo' => 0,
+                    'formati' => [],
+                ];
+            }
+
+            $perCommessa[$key]['fogli'] += $row->fogli;
+            $perCommessa[$key]['colore'] += $row->pagine_colore;
+            $perCommessa[$key]['bn'] += $row->pagine_bn;
+            $perCommessa[$key]['copie'] += $row->copie;
+            $perCommessa[$key]['run']++;
+            $perCommessa[$key]['fogli_' . $row->tipo_formato] += $row->fogli;
+            if ($row->formato && !in_array($row->formato, $perCommessa[$key]['formati'])) {
+                $perCommessa[$key]['formati'][] = $row->formato;
+            }
+        }
+
+        usort($perCommessa, fn($a, $b) => $b['fogli'] - $a['fogli']);
+
+        return $perCommessa;
     }
 
     /**
