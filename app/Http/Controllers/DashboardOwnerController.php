@@ -428,10 +428,10 @@ public function calcolaOreEPriorita($fase)
                 return $op;
             });
 
-        $commesseSpediteOggi = OrdineFase::where('stato', 4)
+        $commesseSpediteOggi = OrdineFase::where('ordine_fasi.stato', 4)
             ->where(function ($q) use ($oggi) {
                 $q->whereHas('operatori', fn($q2) => $q2->whereDate('fase_operatore.data_fine', $oggi))
-                  ->orWhereDate('data_fine', $oggi);
+                  ->orWhereDate('ordine_fasi.data_fine', $oggi);
             })
             ->join('ordini', 'ordine_fasi.ordine_id', '=', 'ordini.id')
             ->distinct('ordini.commessa')
