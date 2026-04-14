@@ -266,26 +266,19 @@ th:nth-child(24), td:nth-child(24) {
 <div class="row mx-1 mb-2">
     <div class="col-md-4">
         <div class="kpi-box">
-            <h3>{{ $fasiTerminate->count() }}</h3>
+            <h3>{{ number_format($kpiTotale) }}</h3>
             <small>Totale fasi terminate</small>
         </div>
     </div>
     <div class="col-md-4">
         <div class="kpi-box">
-            <h3>{{ $fasiTerminate->unique(function($f) { return $f->ordine->commessa ?? ''; })->count() }}</h3>
+            <h3>{{ number_format($kpiCommesse) }}</h3>
             <small>Commesse coinvolte</small>
         </div>
     </div>
     <div class="col-md-4">
         <div class="kpi-box">
-            <h3>{{ $fasiTerminate->filter(function($f) {
-                if (!$f->data_fine) return false;
-                try {
-                    return \Carbon\Carbon::createFromFormat('d/m/Y H:i:s', $f->data_fine)?->isToday() ?? \Carbon\Carbon::parse($f->data_fine)->isToday();
-                } catch (\Exception $e) {
-                    try { return \Carbon\Carbon::parse($f->data_fine)->isToday(); } catch (\Exception $e2) { return false; }
-                }
-            })->count() }}</h3>
+            <h3>{{ number_format($kpiOggi) }}</h3>
             <small>Terminate oggi</small>
         </div>
     </div>
@@ -296,27 +289,18 @@ th:nth-child(24), td:nth-child(24) {
     <input type="text" id="searchInput" class="form-control form-control-sm" style="max-width:250px;" placeholder="Cerca commessa o cliente...">
     <select id="filterReparto" class="form-control form-control-sm" style="max-width:180px;" onchange="filtraTabella()">
         <option value="">Tutti i reparti</option>
-        @php
-            $repartiUnici = $fasiTerminate->pluck('reparto_nome')->filter()->unique()->sort();
-        @endphp
         @foreach($repartiUnici as $rep)
             <option value="{{ $rep }}">{{ ucfirst($rep) }}</option>
         @endforeach
     </select>
     <select id="filterFase" class="form-control form-control-sm" style="max-width:200px;" onchange="filtraTabella()">
         <option value="">Tutte le fasi</option>
-        @php
-            $fasiUniche = $fasiTerminate->map(fn($f) => $f->faseCatalogo->nome_display ?? $f->fase ?? '')->filter()->unique()->sort();
-        @endphp
         @foreach($fasiUniche as $fase)
             <option value="{{ $fase }}">{{ $fase }}</option>
         @endforeach
     </select>
     <select id="filterOperatore" class="form-control form-control-sm" style="max-width:180px;" onchange="filtraTabella()">
         <option value="">Tutti gli operatori</option>
-        @php
-            $operatoriUnici = $fasiTerminate->flatMap(fn($f) => $f->operatori->map(fn($op) => $op->nome . ' ' . $op->cognome))->filter()->unique()->sort();
-        @endphp
         @foreach($operatoriUnici as $op)
             <option value="{{ $op }}">{{ $op }}</option>
         @endforeach
@@ -447,6 +431,26 @@ th:nth-child(24), td:nth-child(24) {
             @endforelse
         </tbody>
     </table>
+</div>
+
+<!-- Paginazione -->
+<div style="margin: 8px 4px; display:flex; justify-content:space-between; align-items:center;">
+    <span style="font-size:12px; color:#6c757d;">
+        Pagina {{ $fasiTerminate->currentPage() }} di {{ $fasiTerminate->lastPage() }}
+        ({{ number_format($fasiTerminate->total()) }} totali)
+    </span>
+    <div>
+        @if($fasiTerminate->onFirstPage())
+            <span class="btn btn-sm btn-outline-secondary disabled">&laquo; Prec</span>
+        @else
+            <a href="{{ $fasiTerminate->previousPageUrl() }}" class="btn btn-sm btn-outline-dark">&laquo; Prec</a>
+        @endif
+        @if($fasiTerminate->hasMorePages())
+            <a href="{{ $fasiTerminate->nextPageUrl() }}" class="btn btn-sm btn-outline-dark">Succ &raquo;</a>
+        @else
+            <span class="btn btn-sm btn-outline-secondary disabled">Succ &raquo;</span>
+        @endif
+    </div>
 </div>
 </div>
 
