@@ -100,17 +100,19 @@ h2, p {
 
 .sidebar-menu {
     position: fixed;
-    top: 0; left: -300px;
+    top: 0; left: 0;
     width: 280px;
     height: 100%;
     background: #fff;
     z-index: 9999;
     box-shadow: 2px 0 12px rgba(0,0,0,0.2);
-    transition: left 0.25s ease;
+    transform: translateX(-300px);
+    transition: transform 0.2s ease;
     overflow-y: auto;
     padding-top: 15px;
+    will-change: transform;
 }
-.sidebar-menu.open { left: 0; }
+.sidebar-menu.open { transform: translateX(0); }
 
 .sidebar-menu .sidebar-header {
     display: flex;
