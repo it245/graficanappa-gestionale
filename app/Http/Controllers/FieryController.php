@@ -13,32 +13,34 @@ class FieryController extends Controller
 {
     public function index(FieryService $fiery, FierySyncService $syncService)
     {
+        set_time_limit(60);
+
         $status = $fiery->getServerStatus();
 
-        if ($status) {
-            try {
-                $syncService->sincronizza();
-            } catch (\Exception $e) {
-                // Non bloccare la dashboard se il sync fallisce
-            }
+        // Se Fiery offline, non tentare altre chiamate API (risparmia 15s+ di timeout)
+        if (!$status) {
+            $jobData = ['printing' => null, 'queue' => [], 'completed' => [], 'total' => 0];
+            $snmp = \Cache::get('fiery_snmp_live', []);
+            return view('fiery.dashboard', compact('status', 'jobData', 'snmp'));
         }
 
-        if ($status) {
-            $status['commessa'] = $this->cercaCommessa($status['stampa']['documento'] ?? null);
-        }
+        $status['commessa'] = $this->cercaCommessa($status['stampa']['documento'] ?? null);
 
         // Job list da API v5
         $jobs = $fiery->getJobs();
         $accounting = $fiery->getAccountingPerCommessa();
         $jobData = $this->organizzaJobs($jobs, $accounting);
 
-        $snmp = $this->leggiContatoriSnmp();
+        // SNMP cachato 30s
+        $snmp = \Cache::remember('fiery_snmp_live', 30, fn() => $this->leggiContatoriSnmp());
 
         return view('fiery.dashboard', compact('status', 'jobData', 'snmp'));
     }
 
     public function statusJson(FieryService $fiery, FierySyncService $syncService)
     {
+        set_time_limit(60);
+
         $status = $fiery->getServerStatus();
 
         if (!$status) {
@@ -49,20 +51,13 @@ class FieryController extends Controller
             ]);
         }
 
-        try {
-            $syncService->sincronizza();
-        } catch (\Exception $e) {
-            // Non bloccare il polling
-        }
-
         $status['commessa'] = $this->cercaCommessa($status['stampa']['documento'] ?? null);
 
         // Job list da API v5
-        $fieryService = app(FieryService::class);
-        $jobs = $fieryService->getJobs();
-        $accounting = $fieryService->getAccountingPerCommessa();
+        $jobs = $fiery->getJobs();
+        $accounting = $fiery->getAccountingPerCommessa();
         $status['jobs'] = $this->organizzaJobs($jobs, $accounting);
-        $status['snmp'] = $this->leggiContatoriSnmp();
+        $status['snmp'] = \Cache::remember('fiery_snmp_live', 30, fn() => $this->leggiContatoriSnmp());
 
         return response()->json($status);
     }
@@ -80,44 +75,44 @@ class FieryController extends Controller
         $queue = [];
         $completed = [];
 
+        // Pre-carica tutti gli ordini e fasi in 2 query (invece di N+1)
+        $commesseCodes = array_unique(array_filter(array_column($jobs, 'commessa')));
+        $ordiniMap = !empty($commesseCodes)
+            ? Ordine::with('fasi')->whereIn('commessa', $commesseCodes)->get()->keyBy('commessa')
+            : collect();
+
         foreach ($jobs as $job) {
             // Aggiungi info commessa dal MES
             $job['mes'] = null;
-            if ($job['commessa']) {
-                $ordine = Ordine::where('commessa', $job['commessa'])->first();
-                if ($ordine) {
-                    // Fasi della commessa
-                    $fasi = OrdineFase::where('ordine_id', $ordine->id)
-                        ->orderBy('priorita')
-                        ->get()
-                        ->map(fn($f) => [
-                            'fase' => $f->fase,
-                            'stato' => $f->stato,
-                            'qta_fase' => $f->qta_fase,
-                            'qta_prod' => $f->qta_prod,
-                            'esterno' => $f->esterno,
-                        ])->toArray();
+            if ($job['commessa'] && $ordiniMap->has($job['commessa'])) {
+                $ordine = $ordiniMap[$job['commessa']];
+                $fasi = $ordine->fasi->sortBy('priorita')->map(fn($f) => [
+                    'fase' => $f->fase,
+                    'stato' => $f->stato,
+                    'qta_fase' => $f->qta_fase,
+                    'qta_prod' => $f->qta_prod,
+                    'esterno' => $f->esterno,
+                ])->values()->toArray();
 
-                    $job['mes'] = [
-                        'commessa' => $ordine->commessa,
-                        'cliente' => $ordine->cliente_nome,
-                        'cod_art' => $ordine->cod_art,
-                        'descrizione' => $ordine->descrizione,
-                        'qta_richiesta' => $ordine->qta_richiesta,
-                        'qta_carta' => $ordine->qta_carta,
-                        'cod_carta' => $ordine->cod_carta,
-                        'carta' => $ordine->carta,
-                        'data_prevista' => $ordine->data_prevista_consegna
-                            ? (is_string($ordine->data_prevista_consegna)
-                                ? date('d/m/Y', strtotime($ordine->data_prevista_consegna))
-                                : $ordine->data_prevista_consegna->format('d/m/Y'))
-                            : null,
-                        'note_prestampa' => $ordine->note_prestampa,
-                        'note_fasi' => $ordine->note_fasi_successive,
-                        'responsabile' => $ordine->responsabile,
-                        'fasi' => $fasi,
-                    ];
-                }
+                $job['mes'] = [
+                    'commessa' => $ordine->commessa,
+                    'cliente' => $ordine->cliente_nome,
+                    'cod_art' => $ordine->cod_art,
+                    'descrizione' => $ordine->descrizione,
+                    'qta_richiesta' => $ordine->qta_richiesta,
+                    'qta_carta' => $ordine->qta_carta,
+                    'cod_carta' => $ordine->cod_carta,
+                    'carta' => $ordine->carta,
+                    'data_prevista' => $ordine->data_prevista_consegna
+                        ? (is_string($ordine->data_prevista_consegna)
+                            ? date('d/m/Y', strtotime($ordine->data_prevista_consegna))
+                            : $ordine->data_prevista_consegna->format('d/m/Y'))
+                        : null,
+                    'note_prestampa' => $ordine->note_prestampa,
+                    'note_fasi' => $ordine->note_fasi_successive,
+                    'responsabile' => $ordine->responsabile,
+                    'fasi' => $fasi,
+                ];
             }
 
             if ($job['state'] === 'printing') {
@@ -265,21 +260,24 @@ class FieryController extends Controller
      */
     public function contatori(Request $request, FieryService $fiery)
     {
-        // Lettura live SNMP
-        $live = $this->leggiContatoriSnmp();
+        set_time_limit(60);
 
-        // Storico dal DB
+        // SNMP: se stampante spenta, usa cache o array vuoto (non bloccare la pagina)
+        $live = \Cache::remember('fiery_snmp_live', 30, fn() => $this->leggiContatoriSnmp());
+
+        // Storico dal DB (sempre disponibile, non dipende dalla stampante)
         $storico = ContatoreStampante::where('stampante', 'Canon iPR V900')
             ->orderByDesc('rilevato_at')
             ->limit(52)
             ->get();
 
-        // Click per commessa da Accounting API
         $da = $request->get('da', now()->subDays(30)->format('Y-m-d'));
         $a = $request->get('a', now()->format('Y-m-d'));
-        $clickPerCommessa = $this->getClickPerCommessa($fiery, $da, $a);
 
-        // Report mensile per categoria (B/N A4, Colore A4, B/N A3, Colore A3, Banner)
+        // Click per commessa dal DB (salvati dal cron fiery:sync)
+        $clickPerCommessa = $this->getClickPerCommessaFromDb($da, $a);
+
+        // Report mensile per categoria (usa snapshot DB, non dipende dalla stampante)
         $reportCategorie = $this->getReportCategorie($da, $a);
 
         return view('fiery.contatori', compact('live', 'storico', 'clickPerCommessa', 'da', 'a', 'reportCategorie'));
@@ -352,7 +350,8 @@ class FieryController extends Controller
      */
     public function contatoriJson()
     {
-        return response()->json($this->leggiContatoriSnmp());
+        $data = \Cache::remember('fiery_snmp_live', 30, fn() => $this->leggiContatoriSnmp());
+        return response()->json($data);
     }
 
     /**
@@ -361,11 +360,21 @@ class FieryController extends Controller
     private function leggiContatoriSnmp(): array
     {
         if (!function_exists('snmpget')) {
-            return ['errore' => 'Estensione SNMP non abilitata'];
+            return ['errore' => 'Estensione SNMP non abilitata', 'offline' => true];
         }
 
         $ip = config('fiery.host', '192.168.1.206');
         $community = 'public';
+        // Timeout SNMP: 500ms (500000 microsec), 1 retry — se spenta fallisce in ~1s
+        $snmpTimeout = 500000;
+        $snmpRetries = 1;
+
+        // Quick check: una sola chiamata SNMP per verificare se la stampante risponde
+        $testVal = @snmpget($ip, $community, '.1.3.6.1.2.1.1.1.0', $snmpTimeout, $snmpRetries);
+        if ($testVal === false) {
+            return ['ip' => $ip, 'timestamp' => now()->format('d/m/Y H:i:s'), 'offline' => true];
+        }
+
         $base = '.1.3.6.1.4.1.1602.1.11.1.3.1.4.';
         $oids = [
             101 => 'totale_1',
@@ -377,21 +386,20 @@ class FieryController extends Controller
             471 => 'foglio_lungo',
         ];
 
-        $result = ['ip' => $ip, 'timestamp' => now()->format('d/m/Y H:i:s')];
+        $result = ['ip' => $ip, 'timestamp' => now()->format('d/m/Y H:i:s'), 'offline' => false];
 
         foreach ($oids as $oid => $field) {
-            $val = @snmpget($ip, $community, $base . $oid);
+            $val = @snmpget($ip, $community, $base . $oid, $snmpTimeout, $snmpRetries);
             $result[$field] = $val !== false ? (int) preg_replace('/^.*:\s*/', '', $val) : null;
         }
 
         // Livelli toner (Printer MIB .43.11.1.1)
-        // .6 = nome, .8 = max, .9 = livello attuale (percentuale su max)
         $tonerBase = '.1.3.6.1.2.1.43.11.1.1.';
         $tonerNomi = [1 => 'Nero', 2 => 'Cyan', 3 => 'Magenta', 4 => 'Yellow', 5 => 'Waste Toner', 6 => 'ADF Kit'];
         $toner = [];
         foreach ($tonerNomi as $idx => $nome) {
-            $livello = @snmpget($ip, $community, $tonerBase . '9.1.' . $idx);
-            $max = @snmpget($ip, $community, $tonerBase . '8.1.' . $idx);
+            $livello = @snmpget($ip, $community, $tonerBase . '9.1.' . $idx, $snmpTimeout, $snmpRetries);
+            $max = @snmpget($ip, $community, $tonerBase . '8.1.' . $idx, $snmpTimeout, $snmpRetries);
             if ($livello !== false && $max !== false) {
                 $lv = (int) preg_replace('/^.*:\s*/', '', $livello);
                 $mx = (int) preg_replace('/^.*:\s*/', '', $max);
@@ -406,24 +414,22 @@ class FieryController extends Controller
         $result['toner'] = $toner;
 
         // Vassoi carta (Printer MIB .43.8.2.1)
-        // .13 = nome, .9 = capacità max, .10 = livello attuale, .21 = tipo media
         $vassoi = [];
         for ($i = 1; $i <= 5; $i++) {
-            $nomeV = @snmpget($ip, $community, '.1.3.6.1.2.1.43.8.2.1.13.1.' . $i);
-            $capV = @snmpget($ip, $community, '.1.3.6.1.2.1.43.8.2.1.9.1.' . $i);
-            $livV = @snmpget($ip, $community, '.1.3.6.1.2.1.43.8.2.1.10.1.' . $i);
-            $tipoV = @snmpget($ip, $community, '.1.3.6.1.2.1.43.8.2.1.21.1.' . $i);
+            $nomeV = @snmpget($ip, $community, '.1.3.6.1.2.1.43.8.2.1.13.1.' . $i, $snmpTimeout, $snmpRetries);
+            $capV = @snmpget($ip, $community, '.1.3.6.1.2.1.43.8.2.1.9.1.' . $i, $snmpTimeout, $snmpRetries);
+            $livV = @snmpget($ip, $community, '.1.3.6.1.2.1.43.8.2.1.10.1.' . $i, $snmpTimeout, $snmpRetries);
+            $tipoV = @snmpget($ip, $community, '.1.3.6.1.2.1.43.8.2.1.21.1.' . $i, $snmpTimeout, $snmpRetries);
             if ($nomeV !== false) {
                 $cap = (int) preg_replace('/^.*:\s*/', '', $capV ?: '0');
                 $liv = (int) preg_replace('/^.*:\s*/', '', $livV ?: '0');
                 $nome = trim(preg_replace('/^.*:\s*"?|"$/s', '', $nomeV));
                 $tipo = trim(preg_replace('/^.*:\s*"?|"$/s', '', $tipoV ?: ''));
-                // -3 = livello sconosciuto ma presente, -2 = sconosciuto
                 $pct = null;
                 if ($liv >= 0 && $cap > 0) {
                     $pct = round(($liv / $cap) * 100);
                 } elseif ($liv == -3) {
-                    $pct = -1; // presente ma livello sconosciuto
+                    $pct = -1;
                 }
                 $vassoi[] = [
                     'nome' => $nome,
@@ -437,12 +443,11 @@ class FieryController extends Controller
         $result['vassoi'] = $vassoi;
 
         // Finisher - punti (Printer MIB .43.31.1.1)
-        // .5 = nome, .7 = max, .8 = livello
         $punti = [];
         for ($i = 1; $i <= 2; $i++) {
-            $nomeP = @snmpget($ip, $community, '.1.3.6.1.2.1.43.31.1.1.5.1.' . $i);
-            $maxP = @snmpget($ip, $community, '.1.3.6.1.2.1.43.31.1.1.7.1.' . $i);
-            $livP = @snmpget($ip, $community, '.1.3.6.1.2.1.43.31.1.1.8.1.' . $i);
+            $nomeP = @snmpget($ip, $community, '.1.3.6.1.2.1.43.31.1.1.5.1.' . $i, $snmpTimeout, $snmpRetries);
+            $maxP = @snmpget($ip, $community, '.1.3.6.1.2.1.43.31.1.1.7.1.' . $i, $snmpTimeout, $snmpRetries);
+            $livP = @snmpget($ip, $community, '.1.3.6.1.2.1.43.31.1.1.8.1.' . $i, $snmpTimeout, $snmpRetries);
             if ($nomeP !== false) {
                 $nome = trim(preg_replace('/^.*:\s*"?|"$/s', '', $nomeP));
                 $mx = (int) preg_replace('/^.*:\s*/', '', $maxP ?: '0');
@@ -456,10 +461,57 @@ class FieryController extends Controller
         $result['punti'] = $punti;
 
         // Alert attivo
-        $alert = @snmpget($ip, $community, '.1.3.6.1.2.1.43.16.5.1.2.1.1');
+        $alert = @snmpget($ip, $community, '.1.3.6.1.2.1.43.16.5.1.2.1.1', $snmpTimeout, $snmpRetries);
         $result['alert'] = $alert !== false ? trim(preg_replace('/^.*:\s*"?|"$/s', '', $alert)) : null;
 
         return $result;
+    }
+
+    /**
+     * Click per commessa dal DB (dati salvati dal cron fiery:sync)
+     */
+    private function getClickPerCommessaFromDb(string $da, string $a): array
+    {
+        $rows = \App\Models\FieryAccounting::whereBetween('data_stampa', [$da, $a])
+            ->get();
+
+        if ($rows->isEmpty()) return [];
+
+        $perCommessa = [];
+        foreach ($rows as $row) {
+            $key = $row->commessa ?: '__senza_commessa__';
+
+            if (!isset($perCommessa[$key])) {
+                $ordine = $key !== '__senza_commessa__' ? Ordine::where('commessa', $key)->first() : null;
+                $perCommessa[$key] = [
+                    'commessa' => $key === '__senza_commessa__' ? '(Senza commessa)' : $key,
+                    'cliente' => $ordine->cliente_nome ?? '',
+                    'descrizione' => $ordine ? \Illuminate\Support\Str::limit($ordine->descrizione ?? '', 60) : ($key === '__senza_commessa__' ? 'Test, calibrazione, prove colore' : ''),
+                    'fogli' => 0,
+                    'colore' => 0,
+                    'bn' => 0,
+                    'copie' => 0,
+                    'run' => 0,
+                    'fogli_grande' => 0,
+                    'fogli_piccolo' => 0,
+                    'formati' => [],
+                ];
+            }
+
+            $perCommessa[$key]['fogli'] += $row->fogli;
+            $perCommessa[$key]['colore'] += $row->pagine_colore;
+            $perCommessa[$key]['bn'] += $row->pagine_bn;
+            $perCommessa[$key]['copie'] += $row->copie;
+            $perCommessa[$key]['run']++;
+            $perCommessa[$key]['fogli_' . $row->tipo_formato] += $row->fogli;
+            if ($row->formato && !in_array($row->formato, $perCommessa[$key]['formati'])) {
+                $perCommessa[$key]['formati'][] = $row->formato;
+            }
+        }
+
+        usort($perCommessa, fn($a, $b) => $b['fogli'] - $a['fogli']);
+
+        return $perCommessa;
     }
 
     /**

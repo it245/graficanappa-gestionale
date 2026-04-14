@@ -35,7 +35,7 @@ class FieryService
     public function getServerStatus(): ?array
     {
         try {
-            $response = $this->http()->get($this->baseUrl . '/wt4/home/get_server_status', [
+            $response = $this->http()->timeout(2)->get($this->baseUrl . '/wt4/home/get_server_status', [
                 'client_locale' => 'it_IT',
             ]);
 
@@ -151,7 +151,7 @@ class FieryService
 
         try {
             $response = $this->http()
-                ->timeout(30)
+                ->timeout(10)
                 ->withCookies($cookies, $this->host)
                 ->get($this->baseUrl . $endpoint, $query);
 
@@ -162,7 +162,7 @@ class FieryService
                 if (!$cookies) return null;
 
                 $response = $this->http()
-                    ->timeout(30)
+                    ->timeout(10)
                     ->withCookies($cookies, $this->host)
                     ->get($this->baseUrl . $endpoint, $query);
             }

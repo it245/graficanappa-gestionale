@@ -200,8 +200,8 @@ class DashboardOwnerController extends Controller
         'STAMPA' => ['avviamento' => 0, 'copieh' => 1000],
         'STAMPA.OFFSET11.EST' => ['avviamento' => 72, 'copieh' => 1000],
         'STAMPABUSTE.EST' => ['avviamento' => 72, 'copieh' => 1000],
-        'STAMPACALDOJOH' => ['avviamento' => 1, 'copieh' => 1300],
-        'STAMPACALDOJOH0,1' => ['avviamento' => 1, 'copieh' => 1300],
+        'STAMPACALDOJOH' => ['avviamento' => 1, 'copieh' => 1500],
+        'STAMPACALDOJOH0,1' => ['avviamento' => 1, 'copieh' => 1500],
         'STAMPAINDIGO' => ['avviamento' => 0.5, 'copieh' => 1000],
         'STAMPAINDIGOBN' => ['avviamento' => 0.5, 'copieh' => 1000],
         'STAMPAXL106' => ['avviamento' => 0.65, 'copieh' => 3900],
@@ -224,13 +224,13 @@ class DashboardOwnerController extends Controller
         'APPL.CORDONCINO0,035' => ['avviamento' => 0.02, 'copieh' => 50],
         // Nuove fasi (valori da fasi simili)
         '4graph' => ['avviamento' => 0.5, 'copieh' => 100],           // come Allest.Manuale (esterno)
-        'stampalaminaoro' => ['avviamento' => 1, 'copieh' => 1300],   // come STAMPACALDOJOH
+        'stampalaminaoro' => ['avviamento' => 1, 'copieh' => 1500],   // come STAMPACALDOJOH
         'STAMPALAMINAORO' => ['avviamento' => 1, 'copieh' => 2200],
         'ALL.COFANETTO.ISMAsrl' => ['avviamento' => 0.5, 'copieh' => 100], // come Allest.Manuale (esterno)
         'PMDUPLO36COP' => ['avviamento' => 0.5, 'copieh' => 100],    // esterno generico
         'FINESTRATURA.MANUALE' => ['avviamento' => 0.5, 'copieh' => 100], // come FINESTRATURA.INT
         'FINESTRATURA.INT' => ['avviamento' => 0.5, 'copieh' => 100],
-        'STAMPACALDOJOHEST' => ['avviamento' => 72, 'copieh' => 1300], // come STAMPACALDOJOH ma est (avv.72)
+        'STAMPACALDOJOHEST' => ['avviamento' => 72, 'copieh' => 1500], // come STAMPACALDOJOH ma est (avv.72)
         'BROSSFRESATA/A5EST' => ['avviamento' => 72, 'copieh' => 1000], // come BROSSFILOREFE/A5EST
         'PIEGA6ANTESINGOLO' => ['avviamento' => 0.5, 'copieh' => 500], // come PIEGA3ANTESINGOLO
         'ALLESTIMENTO.ESPOSITORI' => ['avviamento' => 0.5, 'copieh' => 100], // come Allest.Manuale
@@ -238,7 +238,7 @@ class DashboardOwnerController extends Controller
         'FUSTELLATURA72X51' => ['avviamento' => 0.5, 'copieh' => 1500], // come FUSTSTELG33.44
 
         // Fasi "est" (esterno) — avviamento 72, copieh come fase interna corrispondente
-        'est STAMPACALDOJOH' => ['avviamento' => 72, 'copieh' => 1300],
+        'est STAMPACALDOJOH' => ['avviamento' => 72, 'copieh' => 1500],
         'est FUSTSTELG33.44' => ['avviamento' => 72, 'copieh' => 1500],
         'est FUSTBOBST75X106' => ['avviamento' => 72, 'copieh' => 3000],
         'STAMPA.ESTERNA' => ['avviamento' => 72, 'copieh' => 1000],
@@ -268,16 +268,15 @@ class DashboardOwnerController extends Controller
         // Altre fasi nuove
         'DEKIA-semplice' => ['avviamento' => 0.5, 'copieh' => 200],    // come DEKIA-Difficile
         'STAMPASECCO' => ['avviamento' => 0.5, 'copieh' => 2000],      // come RILIEVOASECCOJOH
-        'STAMPACALDO04' => ['avviamento' => 1, 'copieh' => 2200],      // come STAMPACALDOJOH
-        'STAMPACALDOBR' => ['avviamento' => 1, 'copieh' => 2200],      // come STAMPACALDOJOH
+        'STAMPACALDO04' => ['avviamento' => 1, 'copieh' => 1500],      // come STAMPACALDOJOH
+        'STAMPACALDOBR' => ['avviamento' => 1, 'copieh' => 1500],      // come STAMPACALDOJOH
         'STAMPAINDIGOBIANCO' => ['avviamento' => 0.5, 'copieh' => 1000], // come STAMPAINDIGO
     ];
 
-    public function calcolaOreEPriorita($fase)
+public function calcolaOreEPriorita($fase)
     {
         $qta_carta = $fase->ordine->qta_carta ?: 0;
-        $fasiOre = config('fasi_ore', []);
-        $infoFase = $fasiOre[$fase->fase] ?? ['avviamento' => 0.5, 'copieh' => 1000];
+        $infoFase = $this->fasiInfo[$fase->fase] ?? ['avviamento' => 0.5, 'copieh' => 1000];
         $copieh = $infoFase['copieh'] ?: 1000;
 
         // ore = avviamento + qtaCarta / copieh (pezzi da fare / pezzi all'ora)
@@ -314,11 +313,11 @@ class DashboardOwnerController extends Controller
 
     public function index(Request $request, PrinectService $prinect, PrinectSyncService $syncService)
     {
-        // Sync Excel: importa eventuali modifiche dal file
-        ExcelSyncService::syncIfModified();
+        // Sync Excel e Prinect girano via cron (excel:sync ogni 2min, prinect ogni minuto)
+        // NON bloccare il page load con sync sincroni
 
-        // Sync live Prinect: aggiorna fasi stampa da attivita di oggi
-        try {
+        // Sync live Prinect: solo se richiesto esplicitamente (?sync=1)
+        if ($request->boolean('sync')) try {
             $deviceId = env('PRINECT_DEVICE_XL106_ID', '4001');
             $oggi = Carbon::today()->format('Y-m-d\TH:i:sP');
             $ora = Carbon::now()->format('Y-m-d\TH:i:sP');
@@ -429,16 +428,14 @@ class DashboardOwnerController extends Controller
                 return $op;
             });
 
-        $commesseSpediteOggi = OrdineFase::where('stato', 4)
+        $commesseSpediteOggi = OrdineFase::where('ordine_fasi.stato', 4)
             ->where(function ($q) use ($oggi) {
                 $q->whereHas('operatori', fn($q2) => $q2->whereDate('fase_operatore.data_fine', $oggi))
-                  ->orWhereDate('data_fine', $oggi);
+                  ->orWhereDate('ordine_fasi.data_fine', $oggi);
             })
-            ->with('ordine')
-            ->get()
-            ->pluck('ordine.commessa')
-            ->unique()
-            ->count();
+            ->join('ordini', 'ordine_fasi.ordine_id', '=', 'ordini.id')
+            ->distinct('ordini.commessa')
+            ->count('ordini.commessa');
 
         $fasiAttive = OrdineFase::where('stato', 2)->count();
 
@@ -469,28 +466,29 @@ class DashboardOwnerController extends Controller
             ->get()
             ->groupBy('numero_ddt');
 
-        // Progresso fasi per commessa — singola query aggregata (invece di caricare tutte le fasi in memoria)
-        $progressoRaw = DB::table('ordine_fasi')
-            ->join('ordini', 'ordini.id', '=', 'ordine_fasi.ordine_id')
+        // Progresso fasi per commessa — via SQL aggregate (non carica tutti i record)
+        $progressoCommesse = [];
+        $progressoRows = DB::table('ordine_fasi')
+            ->join('ordini', 'ordine_fasi.ordine_id', '=', 'ordini.id')
             ->whereNull('ordine_fasi.deleted_at')
-            ->selectRaw("ordini.commessa,
-                COUNT(*) as totale,
-                SUM(CASE WHEN ordine_fasi.stato >= 3 THEN 1 ELSE 0 END) as terminate,
-                SUM(CASE WHEN ordine_fasi.stato = 2 THEN 1 ELSE 0 END) as avviate")
+            ->select(
+                'ordini.commessa',
+                DB::raw('COUNT(*) as totale'),
+                DB::raw("SUM(CASE WHEN ordine_fasi.stato >= 3 THEN 1 ELSE 0 END) as terminate"),
+                DB::raw("SUM(CASE WHEN ordine_fasi.stato = 2 THEN 1 ELSE 0 END) as avviate")
+            )
             ->groupBy('ordini.commessa')
             ->get();
-        $progressoCommesse = [];
-        foreach ($progressoRaw as $p) {
-            $progressoCommesse[$p->commessa] = [
-                'totale' => $p->totale,
-                'terminate' => $p->terminate,
-                'avviate' => $p->avviate,
-                'percentuale' => $p->totale > 0 ? round(($p->terminate / $p->totale) * 100) : 0,
+        foreach ($progressoRows as $row) {
+            $progressoCommesse[$row->commessa] = [
+                'totale' => $row->totale,
+                'terminate' => $row->terminate,
+                'avviate' => $row->avviate,
+                'percentuale' => $row->totale > 0 ? round(($row->terminate / $row->totale) * 100) : 0,
             ];
         }
 
-        // Sync Excel: aggiorna il file con i dati freschi
-        ExcelSyncService::exportToExcel();
+        // Excel export gira via cron ogni 2 minuti (excel:sync) — non bloccare il page load
 
         $operatore = $request->attributes->get('operatore') ?? auth()->guard('operatore')->user();
         $isReadonly = $this->isReadonly();
@@ -777,8 +775,7 @@ class DashboardOwnerController extends Controller
             FaseStatoService::ricalcolaTutti();
             return redirect()->route('owner.dashboard')->with('success', 'Ordini importati correttamente.');
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Import ordini fallito', ['error' => $e->getMessage()]);
-            return redirect()->route('owner.dashboard')->with('error', 'Errore importazione. Controlla il file e riprova.');
+            return redirect()->route('owner.dashboard')->with('error', 'Errore importazione: ' . $e->getMessage());
         }
     }
 
@@ -787,89 +784,128 @@ class DashboardOwnerController extends Controller
     $soloOggi = $request->boolean('oggi');
     $oggi = Carbon::today();
 
-    $query = OrdineFase::with([
-            'ordine.reparto',
-            'faseCatalogo.reparto',
-            'operatori'
-        ])
-        ->whereIn('stato', [3, 4]);
+    $baseQuery = OrdineFase::whereIn('stato', [3, 4]);
 
     if ($soloOggi) {
-        $query->where(function ($q) use ($oggi) {
+        $baseQuery->where(function ($q) use ($oggi) {
             $q->whereHas('operatori', fn($q2) => $q2->whereDate('fase_operatore.data_fine', $oggi))
               ->orWhereDate('data_fine', $oggi);
         });
     }
 
-    $fasiTerminate = $query->get()
-        ->map(function ($fase) {
+    // KPI via DB (senza caricare tutti i record)
+    $kpiTotale = (clone $baseQuery)->count();
+    $kpiCommesse = (clone $baseQuery)
+        ->join('ordini', 'ordine_fasi.ordine_id', '=', 'ordini.id')
+        ->distinct('ordini.commessa')
+        ->count('ordini.commessa');
+    $kpiOggi = (clone $baseQuery)->where(function ($q) use ($oggi) {
+        $q->whereDate('ordine_fasi.data_fine', $oggi)
+          ->orWhereHas('operatori', fn($q2) => $q2->whereDate('fase_operatore.data_fine', $oggi));
+    })->count();
 
-            // Calcolo ore e priorità
-            $fase = $this->calcolaOreEPriorita($fase);
+    // Filtri dropdown via DB (valori unici da TUTTI i record, non solo pagina corrente)
+    $repartiUnici = \DB::table('ordine_fasi')
+        ->join('fasi_catalogo', 'ordine_fasi.fase_catalogo_id', '=', 'fasi_catalogo.id')
+        ->join('reparti', 'fasi_catalogo.reparto_id', '=', 'reparti.id')
+        ->whereIn('ordine_fasi.stato', [3, 4])
+        ->distinct()
+        ->orderBy('reparti.nome')
+        ->pluck('reparti.nome');
 
-            // Reparto: da faseCatalogo (piu affidabile) oppure da ordine
-            $fase->reparto_nome = $fase->faseCatalogo->reparto->nome
-                ?? $fase->ordine->reparto->nome
-                ?? '-';
+    $fasiUniche = \DB::table('ordine_fasi')
+        ->leftJoin('fasi_catalogo', 'ordine_fasi.fase_catalogo_id', '=', 'fasi_catalogo.id')
+        ->whereIn('ordine_fasi.stato', [3, 4])
+        ->selectRaw('COALESCE(fasi_catalogo.nome_display, ordine_fasi.fase) as nome_fase')
+        ->distinct()
+        ->orderBy('nome_fase')
+        ->pluck('nome_fase')
+        ->filter();
 
-            // DATA INIZIO: dalla pivot operatore, fallback dal campo ordine_fasi
-            $dataInizioOriginale = $fase->getAttributes()['data_inizio'] ?? null;
-            $carbonInizio = null;
-            $fase->data_inizio = null;
+    $operatoriUnici = \DB::table('fase_operatore')
+        ->join('ordine_fasi', 'fase_operatore.ordine_fase_id', '=', 'ordine_fasi.id')
+        ->join('operatori', 'fase_operatore.operatore_id', '=', 'operatori.id')
+        ->whereIn('ordine_fasi.stato', [3, 4])
+        ->selectRaw("CONCAT(operatori.nome, ' ', operatori.cognome) as nome_completo")
+        ->distinct()
+        ->orderBy('nome_completo')
+        ->pluck('nome_completo');
 
-            if ($fase->operatori->isNotEmpty()) {
-                $primaDataInizio = $fase->operatori
-                    ->whereNotNull('pivot.data_inizio')
-                    ->sortBy('pivot.data_inizio')
-                    ->first()?->pivot->data_inizio;
+    // Paginazione con eager loading
+    $fasiTerminate = (clone $baseQuery)
+        ->with(['ordine.reparto', 'faseCatalogo.reparto', 'operatori'])
+        ->orderBy('priorita')
+        ->paginate(50)
+        ->withQueryString();
 
-                if ($primaDataInizio) {
-                    $carbonInizio = Carbon::parse($primaDataInizio);
-                    $fase->data_inizio = $carbonInizio->format('Y-m-d H:i:s');
-                }
-            }
+    // Processa ogni record della pagina corrente (come prima)
+    $fasiTerminate->getCollection()->transform(function ($fase) {
 
-            // Fallback: data_inizio dal campo ordine_fasi (impostato da Prinect sync)
-            if (!$fase->data_inizio && $dataInizioOriginale) {
-                $carbonInizio = Carbon::parse($dataInizioOriginale);
+        // Calcolo ore e priorità
+        $fase = $this->calcolaOreEPriorita($fase);
+
+        // Reparto: da faseCatalogo (piu affidabile) oppure da ordine
+        $fase->reparto_nome = $fase->faseCatalogo->reparto->nome
+            ?? $fase->ordine->reparto->nome
+            ?? '-';
+
+        // DATA INIZIO: dalla pivot operatore, fallback dal campo ordine_fasi
+        $dataInizioOriginale = $fase->getAttributes()['data_inizio'] ?? null;
+        $carbonInizio = null;
+        $fase->data_inizio = null;
+
+        if ($fase->operatori->isNotEmpty()) {
+            $primaDataInizio = $fase->operatori
+                ->whereNotNull('pivot.data_inizio')
+                ->sortBy('pivot.data_inizio')
+                ->first()?->pivot->data_inizio;
+
+            if ($primaDataInizio) {
+                $carbonInizio = Carbon::parse($primaDataInizio);
                 $fase->data_inizio = $carbonInizio->format('Y-m-d H:i:s');
             }
+        }
 
-            // DATA FINE: dalla pivot operatore, fallback dal campo ordine_fasi
-            $dataFineOriginale = $fase->getAttributes()['data_fine'] ?? null;
-            $carbonFine = null;
-            $fase->data_fine = null;
+        // Fallback: data_inizio dal campo ordine_fasi (impostato da Prinect sync)
+        if (!$fase->data_inizio && $dataInizioOriginale) {
+            $carbonInizio = Carbon::parse($dataInizioOriginale);
+            $fase->data_inizio = $carbonInizio->format('Y-m-d H:i:s');
+        }
 
-            if ($fase->operatori->isNotEmpty()) {
-                $primaDataFine = $fase->operatori
-                    ->whereNotNull('pivot.data_fine')
-                    ->sortBy('pivot.data_fine')
-                    ->first()?->pivot->data_fine;
+        // DATA FINE: dalla pivot operatore, fallback dal campo ordine_fasi
+        $dataFineOriginale = $fase->getAttributes()['data_fine'] ?? null;
+        $carbonFine = null;
+        $fase->data_fine = null;
 
-                if ($primaDataFine) {
-                    $carbonFine = Carbon::parse($primaDataFine);
-                    $fase->data_fine = $carbonFine->format('Y-m-d H:i:s');
-                }
-            }
+        if ($fase->operatori->isNotEmpty()) {
+            $primaDataFine = $fase->operatori
+                ->whereNotNull('pivot.data_fine')
+                ->sortBy('pivot.data_fine')
+                ->first()?->pivot->data_fine;
 
-            // Fallback: data_fine dal campo ordine_fasi (impostato da Prinect sync)
-            if (!$fase->data_fine && $dataFineOriginale) {
-                $carbonFine = Carbon::parse($dataFineOriginale);
+            if ($primaDataFine) {
+                $carbonFine = Carbon::parse($primaDataFine);
                 $fase->data_fine = $carbonFine->format('Y-m-d H:i:s');
             }
+        }
 
-            // Calcolo ore lavorate e pausa
-            $fase->secondi_pausa_totale = $fase->operatori->sum(fn($op) => $op->pivot->secondi_pausa ?? 0);
-            $fase->secondi_lordo = 0;
-            if ($carbonInizio && $carbonFine) {
-                $fase->secondi_lordo = abs($carbonFine->getTimestamp() - $carbonInizio->getTimestamp());
-            }
+        // Fallback: data_fine dal campo ordine_fasi (impostato da Prinect sync)
+        if (!$fase->data_fine && $dataFineOriginale) {
+            $carbonFine = Carbon::parse($dataFineOriginale);
+            $fase->data_fine = $carbonFine->format('Y-m-d H:i:s');
+        }
 
-            return $fase;
-        })
-        ->sortBy('priorita');
+        // Calcolo ore lavorate e pausa
+        $fase->secondi_pausa_totale = $fase->operatori->sum(fn($op) => $op->pivot->secondi_pausa ?? 0);
+        $fase->secondi_lordo = 0;
+        if ($carbonInizio && $carbonFine) {
+            $fase->secondi_lordo = abs($carbonFine->getTimestamp() - $carbonInizio->getTimestamp());
+        }
 
-    return view('owner.fasi_terminate', compact('fasiTerminate', 'soloOggi'));
+        return $fase;
+    });
+
+    return view('owner.fasi_terminate', compact('fasiTerminate', 'soloOggi', 'kpiTotale', 'kpiCommesse', 'kpiOggi', 'repartiUnici', 'fasiUniche', 'operatoriUnici'));
 }
 
     public function dettaglioCommessa($commessa, PrinectService $prinect, PrinectSyncService $syncService)
@@ -1015,26 +1051,17 @@ class DashboardOwnerController extends Controller
             if ($duplicatiRimossi > 0) {
                 $msg .= " ($duplicatiRimossi ordini duplicati rimossi)";
             }
-
-            // Rigenera piano produzione Excel nella condivisa
-            try {
-                $excelPath = env('EXCEL_SYNC_PATH', storage_path('app/excel_sync'));
-                \App\Services\SchedulerExportService::export(rtrim($excelPath, '/\\') . DIRECTORY_SEPARATOR . 'piano_produzione.xlsx');
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::warning('Piano produzione Excel: ' . $e->getMessage());
-            }
             $redirectUrl = request('redirect');
-            if ($redirectUrl && str_starts_with($redirectUrl, '/')) {
+            if ($redirectUrl) {
                 return redirect($redirectUrl)->with('success', $msg);
             }
             return redirect()->route('owner.dashboard')->with('success', $msg);
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Sync Onda fallita', ['error' => $e->getMessage()]);
             $redirectUrl = request('redirect');
-            if ($redirectUrl && str_starts_with($redirectUrl, '/')) {
-                return redirect($redirectUrl)->with('error', 'Errore sync Onda. Riprova.');
+            if ($redirectUrl) {
+                return redirect($redirectUrl)->with('error', 'Errore sync Onda: ' . $e->getMessage());
             }
-            return redirect()->route('owner.dashboard')->with('error', 'Errore sync Onda. Riprova.');
+            return redirect()->route('owner.dashboard')->with('error', 'Errore sync Onda: ' . $e->getMessage());
         }
     }
 
@@ -1122,7 +1149,7 @@ class DashboardOwnerController extends Controller
             ->map(function ($fase) {
                 // Ore previste
                 $qta_carta = $fase->ordine->qta_carta ?? 0;
-                $infoFase = config('fasi_ore')[$fase->fase] ?? ['avviamento' => 0.5, 'copieh' => 1000];
+                $infoFase = $this->fasiInfo[$fase->fase] ?? ['avviamento' => 0.5, 'copieh' => 1000];
                 $copieh = $infoFase['copieh'] ?: 1000;
                 $fase->ore_previste = round($infoFase['avviamento'] + ($qta_carta / $copieh), 2);
 
@@ -1238,19 +1265,50 @@ class DashboardOwnerController extends Controller
             $syncService->sincronizzaDaLive($rawOggi);
         } catch (\Exception $e) {}
 
-        // Calcola tempi medi storici per tipo fase — singola query aggregata
-        $tempiMedi = DB::table('ordine_fasi')
+        // Calcola tempi medi storici per tipo fase (da Prinect e operatori)
+        $tempiMediPerFase = [];
+        $fasiCompletate = OrdineFase::with(['ordine', 'operatori'])
             ->where('stato', '>=', 3)
             ->where('data_fine', '>=', Carbon::now()->subDays(90))
-            ->where(function ($q) {
-                $q->whereRaw('(COALESCE(tempo_avviamento_sec, 0) + COALESCE(tempo_esecuzione_sec, 0)) > 60');
-            })
-            ->selectRaw('fase, AVG((COALESCE(tempo_avviamento_sec, 0) + COALESCE(tempo_esecuzione_sec, 0)) / 3600.0) as ore_medie')
-            ->groupBy('fase')
-            ->havingRaw('COUNT(*) >= 2')
-            ->pluck('ore_medie', 'fase')
-            ->map(fn($v) => round((float)$v, 3))
-            ->toArray();
+            ->get();
+        foreach ($fasiCompletate as $fc) {
+            $tipo = $fc->fase;
+            $qtaCarta = $fc->ordine->qta_carta ?? 0;
+            if ($qtaCarta <= 0) continue;
+
+            // Ore effettive: prima Prinect, poi pivot operatore
+            $ore = null;
+            $secP = ($fc->tempo_avviamento_sec ?? 0) + ($fc->tempo_esecuzione_sec ?? 0);
+            if ($secP > 60) {
+                $ore = $secP / 3600;
+            } else {
+                // Calcola da operatori pivot
+                if ($fc->operatori->isNotEmpty()) {
+                    $secOp = 0;
+                    foreach ($fc->operatori as $op) {
+                        if ($op->pivot->data_inizio && $op->pivot->data_fine) {
+                            $s = Carbon::parse($op->pivot->data_fine)->diffInSeconds(Carbon::parse($op->pivot->data_inizio));
+                            $s -= ($op->pivot->secondi_pausa ?? 0);
+                            if ($s > 0) $secOp += $s;
+                        }
+                    }
+                    if ($secOp > 60) $ore = $secOp / 3600;
+                }
+            }
+            if ($ore && $ore > 0.01 && $ore < 200) {
+                if (!isset($tempiMediPerFase[$tipo])) $tempiMediPerFase[$tipo] = ['totOre' => 0, 'totQta' => 0, 'count' => 0];
+                $tempiMediPerFase[$tipo]['totOre'] += $ore;
+                $tempiMediPerFase[$tipo]['totQta'] += $qtaCarta;
+                $tempiMediPerFase[$tipo]['count']++;
+            }
+        }
+        // Calcola ore medie per foglio e avviamento medio
+        $tempiMedi = [];
+        foreach ($tempiMediPerFase as $tipo => $dati) {
+            if ($dati['count'] >= 2 && $dati['totQta'] > 0) {
+                $tempiMedi[$tipo] = round($dati['totOre'] / $dati['count'], 3); // ore medie per job
+            }
+        }
 
         $fasi = OrdineFase::with(['ordine', 'faseCatalogo.reparto', 'operatori'])
             ->where('stato', '<', 3)
@@ -1321,13 +1379,6 @@ class DashboardOwnerController extends Controller
                 'reparto_id' => $fase->faseCatalogo?->reparto_id ?? 0,
                 'reparto' => ucfirst($fase->faseCatalogo?->reparto?->nome ?? 'generico'),
                 'data_inizio_reale' => $dataInizio,
-                // Dati scheduler Mossa 37
-                'sched_inizio' => $fase->sched_inizio,
-                'sched_fine' => $fase->sched_fine,
-                'sched_macchina' => $fase->sched_macchina,
-                'sched_posizione' => $fase->sched_posizione,
-                'sched_setup_tipo' => $fase->sched_setup_tipo,
-                'sched_batch_group' => $fase->sched_batch_group,
             ];
         })->values();
 
@@ -1353,21 +1404,6 @@ class DashboardOwnerController extends Controller
         }
 
         return response()->download($filePath, 'dashboard_mes.xlsx');
-    }
-
-    public function schedulingExcel()
-    {
-        $excelPath = env('EXCEL_SYNC_PATH', storage_path('app/excel_sync'));
-        $filePath = rtrim($excelPath, '/\\') . DIRECTORY_SEPARATOR . 'piano_produzione.xlsx';
-
-        // Rigenera sempre (dati freschi)
-        \App\Services\SchedulerExportService::export($filePath);
-
-        if (!file_exists($filePath)) {
-            return redirect()->back()->with('error', 'Errore generazione piano produzione.');
-        }
-
-        return response()->download($filePath, 'piano_produzione_' . now()->format('Y-m-d') . '.xlsx');
     }
 
     public function esterne()
@@ -1504,8 +1540,7 @@ class DashboardOwnerController extends Controller
             $query->where('action', $request->azione);
         }
         if ($request->filled('utente')) {
-            $utente = str_replace(['%', '_'], ['\%', '\_'], $request->utente);
-            $query->where('user_name', 'like', '%' . $utente . '%');
+            $query->where('user_name', 'like', '%' . $request->utente . '%');
         }
         if ($request->filled('data')) {
             $query->whereDate('created_at', $request->data);

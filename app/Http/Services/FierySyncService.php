@@ -114,7 +114,9 @@ class FierySyncService
                     $fase->save();
                 }
             } elseif ($fase->stato == 3) {
-                // Fase terminata ma job ancora in stampa → ripristina a stato 2
+                // Fase terminata manualmente dall'utente → NON toccare
+                if ($fase->terminata_manualmente) continue;
+                // Fase terminata automaticamente ma job ancora in stampa → ripristina a stato 2
                 $fase->stato = 2;
                 $fase->data_fine = null;
                 if ($copieFatte > 0) {

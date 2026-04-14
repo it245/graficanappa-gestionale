@@ -23,7 +23,7 @@ class DashboardMesExport implements WithMultipleSheets
     {
         return [
             new DashboardMesSheet('<', 3, 'tutto'),
-            new DashboardMesSheet('=', 3, 'Terminate'),
+            new DashboardMesSheet('>=', 3, 'Terminate'), // include stato 3 + 4 (consegnate)
         ];
     }
 }
@@ -88,10 +88,13 @@ class DashboardMesSheet implements FromCollection, WithHeadings, WithMapping, Wi
         // Operatori
         $operatoriNomi = $fase->operatori->pluck('nome')->implode(', ');
 
+        // Nel foglio Terminate, mostra stato 4 (consegnato) come 3 (terminato)
+        $statoExcel = ($this->titolo === 'Terminate' && $fase->stato == 4) ? 3 : $fase->stato;
+
         return [
             $fase->id,
             $ordine->commessa ?? '',
-            $fase->stato,
+            $statoExcel,
             $ordine->cliente_nome ?? '',
             $ordine->cod_art ?? '',
             $ordine->descrizione ?? '',
