@@ -268,8 +268,8 @@ class DashboardOwnerController extends Controller
         // Altre fasi nuove
         'DEKIA-semplice' => ['avviamento' => 0.5, 'copieh' => 200],    // come DEKIA-Difficile
         'STAMPASECCO' => ['avviamento' => 0.5, 'copieh' => 2000],      // come RILIEVOASECCOJOH
-        'STAMPACALDO04' => ['avviamento' => 1, 'copieh' => 2200],      // come STAMPACALDOJOH
-        'STAMPACALDOBR' => ['avviamento' => 1, 'copieh' => 2200],      // come STAMPACALDOJOH
+        'STAMPACALDO04' => ['avviamento' => 1, 'copieh' => 1500],      // come STAMPACALDOJOH
+        'STAMPACALDOBR' => ['avviamento' => 1, 'copieh' => 1500],      // come STAMPACALDOJOH
         'STAMPAINDIGOBIANCO' => ['avviamento' => 0.5, 'copieh' => 1000], // come STAMPAINDIGO
     ];
 
