@@ -17,17 +17,21 @@ class FieryController extends Controller
 
         $status = $fiery->getServerStatus();
 
-        // Sync gira già ogni minuto via cron — non bloccare il page load
-        if ($status) {
-            $status['commessa'] = $this->cercaCommessa($status['stampa']['documento'] ?? null);
+        // Se Fiery offline, non tentare altre chiamate API (risparmia 15s+ di timeout)
+        if (!$status) {
+            $jobData = ['printing' => null, 'queue' => [], 'completed' => [], 'total' => 0];
+            $snmp = \Cache::get('fiery_snmp_live', []);
+            return view('fiery.dashboard', compact('status', 'jobData', 'snmp'));
         }
+
+        $status['commessa'] = $this->cercaCommessa($status['stampa']['documento'] ?? null);
 
         // Job list da API v5
         $jobs = $fiery->getJobs();
         $accounting = $fiery->getAccountingPerCommessa();
         $jobData = $this->organizzaJobs($jobs, $accounting);
 
-        // SNMP cachato 30s per evitare rallentamenti
+        // SNMP cachato 30s
         $snmp = \Cache::remember('fiery_snmp_live', 30, fn() => $this->leggiContatoriSnmp());
 
         return view('fiery.dashboard', compact('status', 'jobData', 'snmp'));
