@@ -1346,7 +1346,7 @@ tr:hover td {
 // Sidebar menu
 function salvaNotaTv() {
     var nota = document.getElementById('notaTvInput').value.trim();
-    fetch('/kiosk/nota', {
+    fetch(urlToken('/kiosk/nota'), {
         method: 'POST',
         headers: {'X-CSRF-TOKEN': csrfToken(), 'Content-Type': 'application/json'},
         body: JSON.stringify({nota: nota})
@@ -1360,7 +1360,7 @@ function salvaNotaTv() {
     });
 }
 // Carica nota TV corrente
-fetch('/kiosk/nota').then(r => r.json()).then(d => {
+fetch(urlToken('/kiosk/nota')).then(r => r.json()).then(d => {
     if (d.nota) document.getElementById('notaTvInput').value = d.nota;
 });
 
