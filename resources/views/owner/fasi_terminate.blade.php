@@ -491,9 +491,12 @@ function aggiornaStato(faseId, testo) {
     .catch(e => alert('Errore di rete'));
 }
 
-// Invio ricerca con Enter
-document.querySelector('input[name="cerca"]')?.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') this.form.submit();
+// Ricerca live con debounce (300ms dopo l'ultima digitazione)
+let cercaTimer = null;
+document.querySelector('input[name="cerca"]')?.addEventListener('input', function() {
+    clearTimeout(cercaTimer);
+    const form = this.form;
+    cercaTimer = setTimeout(() => form.submit(), 300);
 });
 </script>
 @endsection
