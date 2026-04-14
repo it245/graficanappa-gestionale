@@ -331,7 +331,7 @@ public function calcolaOreEPriorita($fase)
             // Prinect non disponibile, continua senza sync
         }
 
-        $fasi = OrdineFase::with(['ordine.fasi.faseCatalogo', 'faseCatalogo.reparto', 'operatori' => fn($q) => $q->select('operatori.id', 'nome')])
+        $fasi = OrdineFase::with(['ordine', 'faseCatalogo.reparto', 'operatori' => fn($q) => $q->select('operatori.id', 'nome')])
             ->where('stato', '<', 4)
             ->whereHas('ordine')
             ->get()
@@ -433,11 +433,9 @@ public function calcolaOreEPriorita($fase)
                 $q->whereHas('operatori', fn($q2) => $q2->whereDate('fase_operatore.data_fine', $oggi))
                   ->orWhereDate('data_fine', $oggi);
             })
-            ->with('ordine')
-            ->get()
-            ->pluck('ordine.commessa')
-            ->unique()
-            ->count();
+            ->join('ordini', 'ordine_fasi.ordine_id', '=', 'ordini.id')
+            ->distinct('ordini.commessa')
+            ->count('ordini.commessa');
 
         $fasiAttive = OrdineFase::where('stato', 2)->count();
 
@@ -468,26 +466,29 @@ public function calcolaOreEPriorita($fase)
             ->get()
             ->groupBy('numero_ddt');
 
-        // Progresso fasi per commessa (tutte le fasi, incluse stato >= 4)
-        $tutteFasiCommesse = OrdineFase::with('ordine')
-            ->whereHas('ordine')
-            ->get()
-            ->groupBy(fn($f) => $f->ordine->commessa ?? '');
+        // Progresso fasi per commessa — via SQL aggregate (non carica tutti i record)
         $progressoCommesse = [];
-        foreach ($tutteFasiCommesse as $comm => $fasiComm) {
-            $totale = $fasiComm->count();
-            $terminate = $fasiComm->where('stato', '>=', 3)->count();
-            $avviate = $fasiComm->where('stato', 2)->count();
-            $progressoCommesse[$comm] = [
-                'totale' => $totale,
-                'terminate' => $terminate,
-                'avviate' => $avviate,
-                'percentuale' => $totale > 0 ? round(($terminate / $totale) * 100) : 0,
+        $progressoRows = DB::table('ordine_fasi')
+            ->join('ordini', 'ordine_fasi.ordine_id', '=', 'ordini.id')
+            ->whereNull('ordine_fasi.deleted_at')
+            ->select(
+                'ordini.commessa',
+                DB::raw('COUNT(*) as totale'),
+                DB::raw("SUM(CASE WHEN ordine_fasi.stato >= 3 THEN 1 ELSE 0 END) as terminate"),
+                DB::raw("SUM(CASE WHEN ordine_fasi.stato = 2 THEN 1 ELSE 0 END) as avviate")
+            )
+            ->groupBy('ordini.commessa')
+            ->get();
+        foreach ($progressoRows as $row) {
+            $progressoCommesse[$row->commessa] = [
+                'totale' => $row->totale,
+                'terminate' => $row->terminate,
+                'avviate' => $row->avviate,
+                'percentuale' => $row->totale > 0 ? round(($row->terminate / $row->totale) * 100) : 0,
             ];
         }
 
-        // Sync Excel: aggiorna il file con i dati freschi
-        ExcelSyncService::exportToExcel();
+        // Excel export gira via cron ogni 2 minuti (excel:sync) — non bloccare il page load
 
         $operatore = $request->attributes->get('operatore') ?? auth()->guard('operatore')->user();
         $isReadonly = $this->isReadonly();
