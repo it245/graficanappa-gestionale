@@ -88,44 +88,6 @@
         </div>
     </div>
 
-    {{-- Destinazione rimossa: non necessaria per DDT su carta intestata --}}
-
-    {{-- BLOCCO DDT --}}
-    <table style="width:100%; border-collapse:collapse; margin-bottom:0;">
-        <tr>
-            <td style="width:40%; border:1px solid #999; padding:2mm 3mm;">
-                <span class="label">DOCUMENTO DI TRASPORTO N.</span>
-            </td>
-            <td style="width:20%; border:1px solid #999; padding:2mm 3mm; text-align:center;">
-                <span class="value">{{ $numeroDdt }}</span>
-            </td>
-            <td style="width:5%; border:1px solid #999; padding:2mm 3mm; text-align:center; font-weight:bold;">DEL</td>
-            <td style="width:35%; border:1px solid #999; padding:2mm 3mm;">
-                <span class="value">{{ $dataDdt }}</span>
-            </td>
-        </tr>
-        <tr>
-            <td colspan="2" style="border:1px solid #999; padding:2mm 3mm; vertical-align:top;">
-                <span class="label">TRASPORTO A CURA DEL</span><br>
-                <table style="border:none; border-collapse:collapse; margin-top:1mm;"><tr>
-                    <td style="border:none; padding:0 3mm 0 0;"><span class="checkbox {{ $trasportoCura === 'Cedente' ? 'checked' : '' }}">{{ $trasportoCura === 'Cedente' ? 'x' : '' }}</span> Cedente</td>
-                    <td style="border:none; padding:0 3mm 0 0;"><span class="checkbox {{ $trasportoCura === 'Cessionario' ? 'checked' : '' }}">{{ $trasportoCura === 'Cessionario' ? 'x' : '' }}</span> Cessionario</td>
-                    <td style="border:none; padding:0;"><span class="checkbox {{ $trasportoCura === 'Vettore' ? 'checked' : '' }}">{{ $trasportoCura === 'Vettore' ? 'x' : '' }}</span> Vettore</td>
-                </tr></table>
-            </td>
-            <td colspan="2" style="border:1px solid #999; padding:2mm 3mm; vertical-align:top;">
-                <span class="label">INIZIO DEL TRASPORTO O CONSEGNA</span><br><br>
-                Data <strong>{{ $dataTrasporto }}</strong> &nbsp;&nbsp;&nbsp;&nbsp; Ora <strong>{{ $oraTrasporto }}</strong>
-            </td>
-        </tr>
-        <tr>
-            <td colspan="4" style="border:1px solid #999; padding:2mm 3mm;">
-                <span class="label">CAUSALE DEL TRASPORTO</span><br>
-                <strong>{{ $causale }}</strong>
-            </td>
-        </tr>
-    </table>
-
     {{-- INTRO --}}
     <div class="intro-text">
         Ci pregiamo di consegnarVi quanto segue da Voi ordinatoci con riserva di inviarVi regolare fattura.
