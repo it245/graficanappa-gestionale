@@ -15,6 +15,7 @@ class Ordine extends Model
         'qta_richiesta', 'qta_prodotta', 'um', 'stato', 'priorita',
         'data_registrazione', 'data_prevista_consegna', 'pronto_consegna', 'note',
         'ore_lavorate', 'timeout_macchina','cod_carta','carta','qta_carta','UM_carta',
+        'supp_base_cm', 'supp_altezza_cm', 'resa', 'tot_supporti',
         'valore_ordine', 'costo_materiali',
         'note_prestampa', 'responsabile', 'commento_produzione', 'note_fasi_successive', 'ordine_cliente',
         'ddt_vendita_id', 'numero_ddt_vendita', 'vettore_ddt', 'qta_ddt_vendita',
