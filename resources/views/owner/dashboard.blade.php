@@ -836,7 +836,16 @@ tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !imp
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'priorita', this.innerText)">{{ $fase->priorita !== null ? number_format($fase->priorita, 2) : '-' }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'fase', this.innerText)">{{ $fase->faseCatalogo->nome_display ?? '-' }}</td>
                     <td>{{ $fase->faseCatalogo->reparto->nome ?? '-' }}</td>
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'carta', this.innerText)">{{ $fase->ordine->carta ?? '-' }}</td>
+                    @php
+                        $cartaDesc = $fase->ordine->carta ?? '-';
+                        // Se formato supporto reale disponibile, sostituisci le dimensioni nella descrizione
+                        if (($fase->ordine->supp_base_cm ?? 0) > 0 && ($fase->ordine->supp_altezza_cm ?? 0) > 0) {
+                            $formatoReale = intval($fase->ordine->supp_base_cm) . ' X ' . intval($fase->ordine->supp_altezza_cm);
+                            // Sostituisci dimensioni tipo "64 X 100" o "64X100" con formato reale
+                            $cartaDesc = preg_replace('/\d+\s*[Xx]\s*\d+/', $formatoReale, $cartaDesc, 1);
+                        }
+                    @endphp
+                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'carta', this.innerText)">{{ $cartaDesc }}</td>
                     @php
                         $umFase = strtoupper(trim($fase->um ?? 'FG'));
                         $isPezzi = in_array($umFase, ['TR', 'PZ', 'KG']);
