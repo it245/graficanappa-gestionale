@@ -135,8 +135,14 @@ class FaseStatoService
             ->exists();
 
         if ($brtConsegnato) {
+            // Fasi con stato numerico (0,1,2,3,5 → 4)
             OrdineFase::whereIn('ordine_id', $ordineIds)
                 ->whereRaw("stato REGEXP '^[0-9]+$' AND (stato < 4 OR stato = 5)")
+                ->update(['stato' => 4, 'data_fine' => now()->format('Y-m-d H:i:s')]);
+
+            // Fasi in pausa (stato stringa come "fine turno") → 4
+            OrdineFase::whereIn('ordine_id', $ordineIds)
+                ->whereRaw("stato NOT REGEXP '^[0-9]+$'")
                 ->update(['stato' => 4, 'data_fine' => now()->format('Y-m-d H:i:s')]);
         }
     }
