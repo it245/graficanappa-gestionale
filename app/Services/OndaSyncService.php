@@ -72,6 +72,10 @@ class OndaSyncService
                 t.OC_CommentoProduz AS CommentoProduzione,
                 t.ncpordinecliente AS OrdineCliente,
                 materiali.CostoMateriali,
+                supporto.OC_SuppBaseCM AS SuppBaseCM,
+                supporto.OC_SuppAltezzaCM AS SuppAltezzaCM,
+                supporto.OC_Resa AS Resa,
+                supporto.OC_TotSupporti AS TotSupporti,
                 f.CodFase,
                 f.CodMacchina,
                 f.QtaDaLavorare,
@@ -97,6 +101,12 @@ class OndaSyncService
                 SELECT SUM(r2.Totale) AS CostoMateriali
                 FROM PRDDocRighe r2 WHERE r2.IdDoc = p.IdDoc
             ) materiali
+            OUTER APPLY (
+                SELECT TOP 1 e.OC_SuppBaseCM, e.OC_SuppAltezzaCM, e.OC_Resa, e.OC_TotSupporti
+                FROM OC_ATTDocRigheExt e
+                WHERE e.OC_IdDoc = t.IdDoc
+                  AND e.OC_CodArtSupporto IS NOT NULL AND e.OC_CodArtSupporto != ''
+            ) supporto
             WHERE t.TipoDocumento = '2'
               AND t.DataRegistrazione >= CAST('20260227' AS datetime)
         ");
@@ -466,6 +476,10 @@ class OndaSyncService
                 'carta'                  => trim($prima->DescrizioneCarta ?? ''),
                 'qta_carta'              => $prima->QtaCarta ?? 0,
                 'UM_carta'               => trim($prima->UMCarta ?? ''),
+                'supp_base_cm'           => ($prima->SuppBaseCM ?? 0) > 0 ? (float) $prima->SuppBaseCM : null,
+                'supp_altezza_cm'        => ($prima->SuppAltezzaCM ?? 0) > 0 ? (float) $prima->SuppAltezzaCM : null,
+                'resa'                   => ($prima->Resa ?? 0) > 0 ? (int) $prima->Resa : null,
+                'tot_supporti'           => ($prima->TotSupporti ?? 0) > 0 ? (int) $prima->TotSupporti : null,
                 'note_prestampa'         => trim($prima->NotePrestampa ?? ''),
                 'responsabile'           => trim($prima->Responsabile ?? ''),
                 'commento_produzione'    => trim($prima->CommentoProduzione ?? ''),
@@ -1004,6 +1018,10 @@ class OndaSyncService
                 t.OC_CommentoProduz AS CommentoProduzione,
                 t.ncpordinecliente AS OrdineCliente,
                 materiali.CostoMateriali,
+                supporto.OC_SuppBaseCM AS SuppBaseCM,
+                supporto.OC_SuppAltezzaCM AS SuppAltezzaCM,
+                supporto.OC_Resa AS Resa,
+                supporto.OC_TotSupporti AS TotSupporti,
                 f.CodFase,
                 f.CodMacchina,
                 f.QtaDaLavorare,
@@ -1029,6 +1047,12 @@ class OndaSyncService
                 SELECT SUM(r2.Totale) AS CostoMateriali
                 FROM PRDDocRighe r2 WHERE r2.IdDoc = p.IdDoc
             ) materiali
+            OUTER APPLY (
+                SELECT TOP 1 e.OC_SuppBaseCM, e.OC_SuppAltezzaCM, e.OC_Resa, e.OC_TotSupporti
+                FROM OC_ATTDocRigheExt e
+                WHERE e.OC_IdDoc = t.IdDoc
+                  AND e.OC_CodArtSupporto IS NOT NULL AND e.OC_CodArtSupporto != ''
+            ) supporto
             WHERE t.TipoDocumento = '2'
               AND t.CodCommessa = ?
         ", [$codCommessa]);
@@ -1095,6 +1119,10 @@ class OndaSyncService
                 'carta'                  => trim($prima->DescrizioneCarta ?? ''),
                 'qta_carta'              => $prima->QtaCarta ?? 0,
                 'UM_carta'               => trim($prima->UMCarta ?? ''),
+                'supp_base_cm'           => ($prima->SuppBaseCM ?? 0) > 0 ? (float) $prima->SuppBaseCM : null,
+                'supp_altezza_cm'        => ($prima->SuppAltezzaCM ?? 0) > 0 ? (float) $prima->SuppAltezzaCM : null,
+                'resa'                   => ($prima->Resa ?? 0) > 0 ? (int) $prima->Resa : null,
+                'tot_supporti'           => ($prima->TotSupporti ?? 0) > 0 ? (int) $prima->TotSupporti : null,
                 'note_prestampa'         => trim($prima->NotePrestampa ?? ''),
                 'responsabile'           => trim($prima->Responsabile ?? ''),
                 'commento_produzione'    => trim($prima->CommentoProduzione ?? ''),
