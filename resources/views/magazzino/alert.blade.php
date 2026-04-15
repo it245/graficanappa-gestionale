@@ -30,7 +30,7 @@
                     <tr style="background:rgba(220,38,38,0.08);">
                         <td><code>{{ $a['articolo']->codice }}</code></td>
                         <td>{{ $a['articolo']->descrizione }}</td>
-                        <td>{{ $a['articolo']->tipo_carta ?? '-' }}</td>
+                        <td>{{ $a['articolo']->categoria ?? '-' }}</td>
                         <td>{{ $a['articolo']->formato ?? '-' }}</td>
                         <td class="text-end fw-bold text-danger">{{ number_format($a['giacenza'], 0, ',', '.') }}</td>
                         <td class="text-end">{{ number_format($a['soglia'], 0, ',', '.') }}</td>

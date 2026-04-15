@@ -52,7 +52,7 @@ class MagazzinoController extends Controller
             $query->where(function ($q) use ($cerca) {
                 $q->where('codice', 'LIKE', "%{$cerca}%")
                   ->orWhere('descrizione', 'LIKE', "%{$cerca}%")
-                  ->orWhere('tipo_carta', 'LIKE', "%{$cerca}%");
+                  ->orWhere('categoria', 'LIKE', "%{$cerca}%");
             });
         }
 
@@ -76,7 +76,7 @@ class MagazzinoController extends Controller
 
         MagazzinoArticolo::updateOrCreate(
             ['codice' => $request->input('codice')],
-            $request->only(['codice', 'descrizione', 'tipo_carta', 'formato', 'grammatura', 'spessore', 'um', 'soglia_minima', 'fornitore', 'certificazioni'])
+            $request->only(['codice', 'descrizione', 'categoria', 'formato', 'grammatura', 'spessore', 'um', 'soglia_minima', 'fornitore', 'certificazioni'])
         );
 
         return redirect()->route('magazzino.articoli', ['op_token' => $request->get('op_token')])
@@ -92,8 +92,8 @@ class MagazzinoController extends Controller
 
         $query = MagazzinoGiacenza::with(['articolo']);
 
-        if ($request->filled('tipo_carta')) {
-            $query->whereHas('articolo', fn($q) => $q->where('tipo_carta', $request->tipo_carta));
+        if ($request->filled('categoria')) {
+            $query->whereHas('articolo', fn($q) => $q->where('categoria', $request->categoria));
         }
         if ($request->filled('formato')) {
             $query->whereHas('articolo', fn($q) => $q->where('formato', $request->formato));
@@ -105,7 +105,7 @@ class MagazzinoController extends Controller
         $giacenze = $query->orderBy('articolo_id')->paginate(30);
 
         $filtri = [
-            'tipiCarta' => MagazzinoArticolo::whereNotNull('tipo_carta')->distinct()->pluck('tipo_carta'),
+            'categorie' => MagazzinoArticolo::CATEGORIE,
             'formati' => MagazzinoArticolo::whereNotNull('formato')->distinct()->pluck('formato'),
             'grammature' => MagazzinoArticolo::whereNotNull('grammatura')->distinct()->pluck('grammatura'),
         ];

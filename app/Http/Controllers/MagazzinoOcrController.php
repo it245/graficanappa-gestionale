@@ -32,7 +32,7 @@ class MagazzinoOcrController extends Controller
                 'grammatura' => null,
                 'formato' => '',
                 'lotto' => '',
-                'tipo_carta' => '',
+                'categoria' => '',
             ];
         }
 

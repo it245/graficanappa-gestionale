@@ -34,7 +34,7 @@ class OcrBollaService
                 'grammatura' => null,
                 'formato' => '',
                 'lotto' => '',
-                'tipo_carta' => '',
+                'categoria' => '',
                 'errore' => $e->getMessage(),
             ];
         }
@@ -52,7 +52,7 @@ class OcrBollaService
             'grammatura' => null,
             'formato' => '',
             'lotto' => '',
-            'tipo_carta' => '',
+            'categoria' => '',
         ];
 
         // === FORNITORE ===
@@ -80,7 +80,7 @@ class OcrBollaService
         ];
         foreach ($tipiCarta as $pattern) {
             if (preg_match('/\b(' . $pattern . ')\b/i', $testo, $m)) {
-                $result['tipo_carta'] = trim($m[1]);
+                $result['categoria'] = trim($m[1]);
                 break;
             }
         }

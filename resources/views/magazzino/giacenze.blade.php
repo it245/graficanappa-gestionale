@@ -14,11 +14,11 @@
         <form method="GET" class="row g-2 align-items-end">
             <input type="hidden" name="op_token" value="{{ request('op_token') }}">
             <div class="col-auto">
-                <label class="form-label small mb-0">Tipo carta</label>
-                <select name="tipo_carta" class="form-select form-select-sm">
+                <label class="form-label small mb-0">Categoria</label>
+                <select name="categoria" class="form-select form-select-sm">
                     <option value="">Tutti</option>
-                    @foreach($filtri['tipiCarta'] as $t)
-                        <option value="{{ $t }}" {{ request('tipo_carta') == $t ? 'selected' : '' }}>{{ $t }}</option>
+                    @foreach($filtri['categorie'] as $t)
+                        <option value="{{ $t }}" {{ request('categoria') == $t ? 'selected' : '' }}>{{ $t }}</option>
                     @endforeach
                 </select>
             </div>

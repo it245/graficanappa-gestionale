@@ -8,8 +8,10 @@ class MagazzinoArticolo extends Model
 {
     protected $table = 'magazzino_articoli';
 
+    const CATEGORIE = ['carta', 'foil', 'scatoloni'];
+
     protected $fillable = [
-        'codice', 'descrizione', 'tipo_carta', 'formato', 'grammatura',
+        'codice', 'descrizione', 'categoria', 'formato', 'grammatura',
         'spessore', 'um', 'soglia_minima', 'fornitore', 'certificazioni', 'attivo',
     ];
 

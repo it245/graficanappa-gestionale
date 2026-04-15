@@ -1,7 +1,7 @@
 @extends('layouts.mes')
 
-@section('page-title', 'Magazzino Carta')
-@section('topbar-title', 'Magazzino Carta')
+@section('page-title', 'Magazzino')
+@section('topbar-title', 'Magazzino')
 
 @section('sidebar-items')
     @include('magazzino._sidebar')

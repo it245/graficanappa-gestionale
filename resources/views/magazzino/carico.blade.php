@@ -68,9 +68,9 @@
                         <div id="nuovoArticoloFields">
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <label class="form-label">Tipo carta</label>
-                                    <input type="text" name="tipo_carta" class="form-control"
-                                        value="{{ old('tipo_carta', $ocrDati['tipo_carta'] ?? '') }}" placeholder="es. ALASKA PLUS GC2 FSC">
+                                    <label class="form-label">Categoria</label>
+                                    <input type="text" name="categoria" class="form-control"
+                                        value="{{ old('categoria', $ocrDati['categoria'] ?? '') }}" placeholder="es. ALASKA PLUS GC2 FSC">
                                 </div>
                                 <div class="col-md-3">
                                     <label class="form-label">Formato</label>

@@ -43,7 +43,7 @@ class MagazzinoScannerController extends Controller
                 'id' => $etichetta->articolo->id,
                 'codice' => $etichetta->articolo->codice,
                 'descrizione' => $etichetta->articolo->descrizione,
-                'tipo_carta' => $etichetta->articolo->tipo_carta,
+                'categoria' => $etichetta->articolo->categoria,
                 'formato' => $etichetta->articolo->formato,
                 'grammatura' => $etichetta->articolo->grammatura,
             ],

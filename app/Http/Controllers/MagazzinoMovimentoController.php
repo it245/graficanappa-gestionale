@@ -39,7 +39,7 @@ class MagazzinoMovimentoController extends Controller
         // Se non selezionato un articolo esistente, creane uno nuovo
         $articoloId = $request->articolo_id;
         if (!$articoloId) {
-            $tipoCarta = trim($request->tipo_carta ?? '');
+            $tipoCarta = trim($request->categoria ?? '');
             $formato = trim($request->formato ?? '');
             $grammatura = $request->grammatura ? (int) $request->grammatura : null;
 
@@ -60,7 +60,7 @@ class MagazzinoMovimentoController extends Controller
                 ['codice' => $codice],
                 [
                     'descrizione' => $descrizione,
-                    'tipo_carta' => $tipoCarta,
+                    'categoria' => $tipoCarta,
                     'formato' => $formato ?: null,
                     'grammatura' => $grammatura,
                     'fornitore' => $request->fornitore,

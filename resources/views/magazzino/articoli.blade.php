@@ -28,8 +28,8 @@
                     </div>
                     <div class="row g-2 mb-2">
                         <div class="col-6">
-                            <label class="form-label small">Tipo carta</label>
-                            <input type="text" name="tipo_carta" class="form-control form-control-sm" placeholder="GC1">
+                            <label class="form-label small">Categoria</label>
+                            <input type="text" name="categoria" class="form-control form-control-sm" placeholder="GC1">
                         </div>
                         <div class="col-6">
                             <label class="form-label small">Formato</label>
@@ -96,7 +96,7 @@
                             <tr>
                                 <td><code style="font-size:11px;">{{ $art->codice }}</code></td>
                                 <td>{{ Str::limit($art->descrizione, 35) }}</td>
-                                <td>{{ $art->tipo_carta ?? '-' }}</td>
+                                <td>{{ $art->categoria ?? '-' }}</td>
                                 <td>{{ $art->formato ?? '-' }}</td>
                                 <td>{{ $art->grammatura ?? '-' }}</td>
                                 <td>{{ $art->um }}</td>
