@@ -69,8 +69,12 @@
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label class="form-label">Categoria</label>
-                                    <input type="text" name="categoria" class="form-control"
-                                        value="{{ old('categoria', $ocrDati['categoria'] ?? '') }}" placeholder="es. ALASKA PLUS GC2 FSC">
+                                    <select name="categoria" class="form-select">
+                                        <option value="">-- Seleziona --</option>
+                                        @foreach(\App\Models\MagazzinoArticolo::CATEGORIE as $cat)
+                                            <option value="{{ $cat }}" {{ old('categoria', $ocrDati['categoria'] ?? '') == $cat ? 'selected' : '' }}>{{ ucfirst($cat) }}</option>
+                                        @endforeach
+                                    </select>
                                 </div>
                                 <div class="col-md-3">
                                     <label class="form-label">Formato</label>

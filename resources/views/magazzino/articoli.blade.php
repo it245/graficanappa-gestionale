@@ -29,7 +29,12 @@
                     <div class="row g-2 mb-2">
                         <div class="col-6">
                             <label class="form-label small">Categoria</label>
-                            <input type="text" name="categoria" class="form-control form-control-sm" placeholder="GC1">
+                            <select name="categoria" class="form-select form-select-sm">
+                                <option value="">-- Seleziona --</option>
+                                @foreach(\App\Models\MagazzinoArticolo::CATEGORIE as $cat)
+                                    <option value="{{ $cat }}">{{ ucfirst($cat) }}</option>
+                                @endforeach
+                            </select>
                         </div>
                         <div class="col-6">
                             <label class="form-label small">Formato</label>
