@@ -1422,6 +1422,71 @@ document.querySelectorAll('.sidebar-menu a.sidebar-item').forEach(function(el) {
     });
 });
 
+// === Cerca commessa completa (incluso stato 4) via AJAX ===
+var _fetchingCommessa = false;
+function fetchCommessaCompleta(query) {
+    if (_fetchingCommessa) return;
+    _fetchingCommessa = true;
+
+    fetch(urlToken('{{ route("owner.cercaCommessa") }}?q=' + encodeURIComponent(query)), {
+        headers: {'Accept': 'application/json'}
+    })
+    .then(r => r.json())
+    .then(fasi => {
+        _fetchingCommessa = false;
+        if (!fasi || fasi.length === 0) return;
+
+        var tbody = document.querySelector('table tbody');
+        if (!tbody) return;
+
+        var statoBg = {0:'#e9ecef', 1:'#cfe2ff', 2:'#fff3cd', 3:'#d1e7dd', 4:'#c3c3c3', 5:'#e0cffc'};
+
+        fasi.forEach(f => {
+            var tr = document.createElement('tr');
+            tr.className = 'ajax-row';
+            tr.dataset.id = f.id;
+            tr.style.borderLeft = '3px solid #0d6efd';
+
+            var statoVal = f.stato;
+            var bg = statoBg[statoVal] || '#e9ecef';
+            var isPausa = (isNaN(statoVal) && statoVal !== 'ext') || (!isNaN(statoVal) && parseInt(statoVal) > 5);
+            if (isPausa) bg = '#e9ecef';
+
+            tr.innerHTML = `
+                <td><a href="${urlToken('/owner/commessa/' + f.commessa)}" style="color:#000;font-weight:bold;text-decoration:underline;">${f.commessa}</a></td>
+                <td contenteditable onblur="aggiornaStato(${f.id}, this.innerText)" style="background:${bg}!important;font-weight:bold;text-align:center;">${f.stato}</td>
+                <td>${f.cliente}</td>
+                <td>${f.cod_art}</td>
+                <td style="font-size:10px;">${f.colori || ''}</td>
+                <td style="font-size:10px;">${f.fustella || ''}</td>
+                <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;">${f.descrizione}</td>
+                <td style="text-align:center;">${f.qta ? Number(f.qta).toLocaleString('it') : '-'}</td>
+                <td style="text-align:center;">${f.um || ''}</td>
+                <td style="text-align:center;">${f.priorita || '-'}</td>
+                <td>${f.fase}</td>
+                <td>${f.reparto}</td>
+                <td>${f.carta}</td>
+                <td style="text-align:center;">${f.qta_carta ? Number(f.qta_carta).toLocaleString('it') : '-'}</td>
+                <td>${f.data_consegna || '-'}</td>
+                <td style="font-size:10px;">${f.cod_carta || '-'}</td>
+                <td style="text-align:center;">${f.um_carta || '-'}</td>
+                <td>${f.operatori || '-'}</td>
+                <td style="text-align:center;">${f.qta_prod ? Number(f.qta_prod).toLocaleString('it') : '-'}</td>
+                <td>${f.esterno ? 'EXT' : '-'}</td>
+                <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;">${f.note || '-'}</td>
+                <td>${f.data_inizio || '-'}</td>
+                <td>${f.data_fine || '-'}</td>
+                <td style="text-align:center;">${f.ore_prev ? f.ore_prev + 'h' : '-'}</td>
+                <td>-</td>
+                <td>${f.data_reg || '-'}</td>
+                <td>-</td>
+            `;
+            tbody.prepend(tr);
+        });
+    })
+    .catch(() => { _fetchingCommessa = false; });
+}
+
 // === Token per fetch autenticate ===
 var _opToken = '{{ $opToken ?? request()->query("op_token", "") }}';
 function urlToken(url) {
@@ -1945,19 +2010,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (match) visibili++;
             });
 
-            // Se cerchi una commessa e non trovi nulla, mostra link al dettaglio
+            // Se cerchi una commessa e non trovi nulla, cerca anche stato 4 via AJAX
             var hint = document.getElementById('commessaNotFoundHint');
             if (hint) hint.remove();
-            if (visibili === 0 && commesse.include.length > 0) {
-                var num = commesse.include[0].replace(/[^0-9]/g, '');
-                if (num.length >= 4) {
-                    var codice = '00' + num.padStart(5, '0') + '-26';
-                    var div = document.createElement('div');
-                    div.id = 'commessaNotFoundHint';
-                    div.style.cssText = 'padding:12px;margin:8px 4px;background:#fff3cd;border:1px solid #ffc107;border-radius:6px;font-size:13px;';
-                    div.innerHTML = 'Commessa non trovata tra quelle attive. <a href="' + urlToken('/owner/commessa/' + codice) + '" style="font-weight:bold;color:#0d6efd;">Apri dettaglio ' + codice + '</a> (potrebbe essere consegnata)';
-                    document.getElementById('filterBox').after(div);
-                }
+            // Rimuovi righe AJAX precedenti
+            document.querySelectorAll('tr.ajax-row').forEach(r => r.remove());
+
+            if (visibili === 0 && commesse.include.length > 0 && commesse.include[0].length >= 3) {
+                fetchCommessaCompleta(commesse.include[0]);
             }
         });
     }

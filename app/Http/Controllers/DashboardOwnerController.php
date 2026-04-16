@@ -1073,6 +1073,77 @@ public function calcolaOreEPriorita($fase)
         return response()->json(['success' => true, 'messaggio' => 'Stato aggiornato']);
     }
 
+    /**
+     * Cerca fasi di una commessa specifica (tutti gli stati, incluso 4).
+     * Usato dal filtro commessa per mostrare fasi consegnate on-demand.
+     */
+    public function cercaCommessa(Request $request)
+    {
+        $q = trim($request->get('q', ''));
+        if (strlen($q) < 3) return response()->json([]);
+
+        // Costruisci codice commessa se l'utente ha scritto solo il numero
+        $commessa = $q;
+        if (preg_match('/^\d{4,7}$/', $q)) {
+            $commessa = str_pad($q, 7, '0', STR_PAD_LEFT) . '-26';
+        }
+
+        $fasi = OrdineFase::with(['ordine', 'faseCatalogo.reparto', 'operatori' => fn($q) => $q->select('operatori.id', 'nome')])
+            ->whereHas('ordine', fn($qb) => $qb->where('commessa', 'LIKE', "%{$commessa}%"))
+            ->get();
+
+        if ($fasi->isEmpty()) return response()->json([]);
+
+        $fasiPriorita = config('fasi_priorita', []);
+        $oggiTs = \Carbon\Carbon::today()->timestamp;
+        $result = [];
+
+        foreach ($fasi as $fase) {
+            // Calcolo priorità inline
+            $qta_carta = $fase->ordine->qta_carta ?: 0;
+            $infoFase = $this->fasiInfo[$fase->fase] ?? ['avviamento' => 0.5, 'copieh' => 1000];
+            $copieh = $infoFase['copieh'] ?: 1000;
+            $ore = $infoFase['avviamento'] + ($qta_carta / $copieh);
+
+            $dataInizio = null;
+            if ($fase->operatori->isNotEmpty()) {
+                $primaData = $fase->operatori->sortBy('pivot.data_inizio')->first()->pivot->data_inizio;
+                $dataInizio = $primaData ?: null;
+            }
+
+            $result[] = [
+                'id' => $fase->id,
+                'commessa' => $fase->ordine->commessa ?? '',
+                'stato' => $fase->stato,
+                'cliente' => $fase->ordine->cliente_nome ?? '',
+                'cod_art' => $fase->ordine->cod_art ?? '',
+                'colori' => \App\Helpers\DescrizioneParser::parseColori($fase->ordine->descrizione ?? '', $fase->ordine->cliente_nome ?? '', $fase->faseCatalogo->reparto->nome ?? ''),
+                'fustella' => \App\Helpers\DescrizioneParser::parseFustella($fase->ordine->descrizione ?? '', $fase->ordine->cliente_nome ?? '', $fase->ordine->note_prestampa ?? ''),
+                'descrizione' => $fase->ordine->descrizione ?? '',
+                'qta' => $fase->ordine->qta_richiesta ?? 0,
+                'um' => $fase->ordine->um ?? '',
+                'priorita' => $fase->priorita ?? '',
+                'fase' => $fase->faseCatalogo->nome_display ?? $fase->fase ?? '',
+                'reparto' => $fase->faseCatalogo->reparto->nome ?? '',
+                'carta' => $fase->ordine->carta ?? '',
+                'qta_carta' => $fase->ordine->qta_carta ?? 0,
+                'data_consegna' => $fase->ordine->data_prevista_consegna ? \Carbon\Carbon::parse($fase->ordine->data_prevista_consegna)->format('d/m/Y') : '',
+                'cod_carta' => $fase->ordine->cod_carta ?? '',
+                'um_carta' => $fase->ordine->UM_carta ?? '',
+                'operatori' => $fase->operatori->pluck('nome')->implode(', '),
+                'qta_prod' => $fase->qta_prod ?? 0,
+                'esterno' => $fase->esterno ? 1 : 0,
+                'note' => $fase->note ?? '',
+                'data_inizio' => $dataInizio,
+                'data_fine' => $fase->getAttributes()['data_fine'] ?? '',
+                'ore_prev' => round($ore, 1),
+                'data_reg' => $fase->ordine->data_registrazione ? \Carbon\Carbon::parse($fase->ordine->data_registrazione)->format('d/m/Y') : '',
+            ];
+        }
+
+        return response()->json($result);
+    }
+
     public function ricalcolaStati()
     {
         if ($deny = $this->denyIfReadonly()) return $deny;
