@@ -25,19 +25,21 @@ return new class extends Migration
             $table->decimal('quantita', 12, 2)->default(0)->change();
         });
 
-        // Rimuovi FK su ubicazione_id prima di droppare UNIQUE, poi ricrea
-        Schema::table('magazzino_giacenze', function (Blueprint $table) {
-            $table->dropForeign(['ubicazione_id']);
-        });
+        // Disabilita FK check temporaneamente per poter droppare UNIQUE
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
+
         Schema::table('magazzino_giacenze', function (Blueprint $table) {
             $table->dropUnique(['articolo_id', 'ubicazione_id', 'lotto']);
         });
-        // Imposta ubicazione_id=0 dove è NULL per evitare duplicati
+
         DB::table('magazzino_giacenze')->whereNull('ubicazione_id')->update(['ubicazione_id' => 0]);
+
         Schema::table('magazzino_giacenze', function (Blueprint $table) {
             $table->unsignedBigInteger('ubicazione_id')->nullable(false)->default(0)->change();
             $table->unique(['articolo_id', 'ubicazione_id', 'lotto'], 'mag_giac_art_ub_lotto_unique');
         });
+
+        DB::statement('SET FOREIGN_KEY_CHECKS=1');
 
         // 3. magazzino_movimenti: quantita da integer a decimal
         Schema::table('magazzino_movimenti', function (Blueprint $table) {
