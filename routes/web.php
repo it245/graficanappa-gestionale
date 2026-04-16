@@ -66,7 +66,7 @@ Route::post('/owner/aggiorna-stato', [DashboardOwnerController::class, 'aggiorna
 Route::post('/owner/ricalcola-stati', [DashboardOwnerController::class, 'ricalcolaStati'])->name('owner.ricalcolaStati');
 Route::post('/owner/elimina-fase', [DashboardOwnerController::class, 'eliminaFase'])->name('owner.eliminaFase');
 Route::get('/owner/scheduling', [DashboardOwnerController::class, 'scheduling'])->name('owner.scheduling');
-Route::get('/owner/scheduling/excel', [DashboardOwnerController::class, 'schedulingExcel'])->name('owner.schedulingExcel');
+// Route schedulingExcel rimossa — metodo non implementato
 Route::get('/owner/report-ore', [DashboardOwnerController::class, 'reportOre'])->name('owner.reportOre');
 Route::get('/owner/excel-download', [DashboardOwnerController::class, 'downloadExcel'])->name('owner.downloadExcel');
 Route::get('/owner/esterne', [DashboardOwnerController::class, 'esterne'])->name('owner.esterne');
@@ -166,7 +166,7 @@ Route::middleware(['owner.or.admin:fiery_contatori'])->prefix('mes/fiery')->grou
 Route::prefix('produzione')->middleware(['operatore.auth'])->group(function() {
     Route::get('/', [ProduzioneController::class, 'index']);
     Route::post('/avvia', [ProduzioneController::class, 'avviaFase'])->name('produzione.avvia');
-    Route::post('/aggiungi', [ProduzioneController::class, 'aggiungiProduzione'])->name('produzione.aggiungi');
+    // Route aggiungiProduzione rimossa — metodo non implementato
     Route::post('/termina', [ProduzioneController::class, 'terminaFase'])->name('produzione.termina');
     Route::post('/pausa', [ProduzioneController::class, 'pausaFase'])->name('produzione.pausa');
     Route::post('/riprendi', [ProduzioneController::class, 'riprendiFase'])->name('produzione.riprendi');
