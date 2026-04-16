@@ -31,7 +31,7 @@ class MagazzinoMovimentoController extends Controller
     public function registraCarico(Request $request)
     {
         $request->validate([
-            'quantita' => 'required|integer|min:1',
+            'quantita' => 'required|numeric|min:0.01',
         ]);
 
         $operatore = $request->attributes->get('operatore') ?? auth()->guard('operatore')->user();
@@ -106,13 +106,99 @@ class MagazzinoMovimentoController extends Controller
     }
 
     /**
+     * Form reso (rientro fogli avanzati).
+     */
+    public function formReso(Request $request)
+    {
+        $operatore = $request->attributes->get('operatore') ?? auth()->guard('operatore')->user();
+
+        $articoli = MagazzinoArticolo::where('attivo', true)->orderBy('descrizione')->get();
+
+        return view('magazzino.reso', [
+            'operatore' => $operatore,
+            'articoli' => $articoli,
+        ]);
+    }
+
+    /**
+     * Registra reso.
+     */
+    public function registraReso(Request $request)
+    {
+        $request->validate([
+            'articolo_id' => 'required|exists:magazzino_articoli,id',
+            'quantita' => 'required|numeric|min:0.01',
+            'commessa' => 'nullable|string',
+        ]);
+
+        $operatore = $request->attributes->get('operatore') ?? auth()->guard('operatore')->user();
+
+        MagazzinoService::registraReso([
+            'articolo_id' => $request->articolo_id,
+            'quantita' => $request->quantita,
+            'lotto' => $request->lotto ?: null,
+            'commessa' => $request->commessa,
+            'operatore_id' => $operatore?->id,
+            'note' => $request->note,
+        ]);
+
+        return redirect()->route('magazzino.dashboard', ['op_token' => $request->get('op_token')])
+            ->with('success', 'Reso registrato');
+    }
+
+    /**
+     * Form rettifica inventariale.
+     */
+    public function formRettifica(Request $request)
+    {
+        $operatore = $request->attributes->get('operatore') ?? auth()->guard('operatore')->user();
+
+        $giacenze = MagazzinoGiacenza::with(['articolo'])
+            ->orderBy('articolo_id')
+            ->get();
+
+        return view('magazzino.rettifica', [
+            'operatore' => $operatore,
+            'giacenze' => $giacenze,
+        ]);
+    }
+
+    /**
+     * Registra rettifica.
+     */
+    public function registraRettifica(Request $request)
+    {
+        $request->validate([
+            'giacenza_id' => 'required|exists:magazzino_giacenze,id',
+            'nuova_quantita' => 'required|numeric|min:0',
+            'note' => 'nullable|string',
+        ]);
+
+        $operatore = $request->attributes->get('operatore') ?? auth()->guard('operatore')->user();
+
+        try {
+            MagazzinoService::rettifica(
+                $request->giacenza_id,
+                $request->nuova_quantita,
+                $operatore?->id,
+                $request->note
+            );
+
+            return redirect()->route('magazzino.giacenze', ['op_token' => $request->get('op_token')])
+                ->with('success', 'Rettifica registrata');
+        } catch (\RuntimeException $e) {
+            return back()->withInput()->with('error', $e->getMessage());
+        }
+    }
+
+    /**
      * Registra prelievo (scarico per STAMPA).
      */
     public function registraPrelievo(Request $request)
     {
         $request->validate([
             'articolo_id' => 'required|exists:magazzino_articoli,id',
-            'quantita' => 'required|integer|min:1',
+            'quantita' => 'required|numeric|min:0.01',
             'commessa' => 'required|string',
         ]);
 

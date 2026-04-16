@@ -20,15 +20,23 @@ class MagazzinoService
         return DB::transaction(function () use ($data) {
             $articolo = MagazzinoArticolo::findOrFail($data['articolo_id']);
 
-            // Trova o crea giacenza per articolo+ubicazione+lotto
-            $giacenza = MagazzinoGiacenza::firstOrCreate(
-                [
+            // Trova o crea giacenza per articolo+lotto (lockForUpdate per evitare race condition)
+            $giacenza = MagazzinoGiacenza::where('articolo_id', $data['articolo_id'])
+                ->where(function ($q) use ($data) {
+                    empty($data['lotto']) ? $q->whereNull('lotto') : $q->where('lotto', $data['lotto']);
+                })
+                ->whereNull('ubicazione_id')
+                ->lockForUpdate()
+                ->first();
+
+            if (!$giacenza) {
+                $giacenza = MagazzinoGiacenza::create([
                     'articolo_id' => $data['articolo_id'],
-                    'ubicazione_id' => $data['ubicazione_id'] ?? null,
+                    'ubicazione_id' => null,
                     'lotto' => $data['lotto'] ?? null,
-                ],
-                ['quantita' => 0]
-            );
+                    'quantita' => 0,
+                ]);
+            }
 
             $giacenza->quantita += $data['quantita'];
             $giacenza->data_ultimo_carico = now()->toDateString();
@@ -37,7 +45,7 @@ class MagazzinoService
             // Registra movimento
             $movimento = MagazzinoMovimento::create([
                 'articolo_id' => $data['articolo_id'],
-                'ubicazione_id' => $data['ubicazione_id'] ?? null,
+                'ubicazione_id' => null,
                 'tipo' => 'carico',
                 'quantita' => $data['quantita'],
                 'giacenza_dopo' => $giacenza->quantita,
@@ -54,7 +62,7 @@ class MagazzinoService
             $etichetta = MagazzinoEtichetta::create([
                 'qr_code' => $qrCode,
                 'articolo_id' => $data['articolo_id'],
-                'ubicazione_id' => $data['ubicazione_id'] ?? null,
+                'ubicazione_id' => null,
                 'giacenza_id' => $giacenza->id,
                 'lotto' => $data['lotto'] ?? null,
                 'quantita_iniziale' => $data['quantita'],
@@ -70,15 +78,22 @@ class MagazzinoService
 
     /**
      * Registra uno scarico (prelievo per produzione).
-     * Lo scarico avviene SOLO per fase STAMPA.
+     * Lo scarico avviene SOLO per fase STAMPA (validazione server-side).
      */
     public static function registraScarico(array $data): MagazzinoMovimento
     {
+        // Validazione server: scarico solo per fase STAMPA
+        $fase = strtoupper(trim($data['fase'] ?? ''));
+        if (!str_starts_with($fase, 'STAMPA')) {
+            throw new \RuntimeException('Scarico consentito solo per fasi di stampa (STAMPA, STAMPAXL106, STAMPAINDIGO, ecc.)');
+        }
+
         return DB::transaction(function () use ($data) {
+            // lockForUpdate per evitare race condition tra due tablet
             $query = MagazzinoGiacenza::where('articolo_id', $data['articolo_id']);
-            empty($data['ubicazione_id']) ? $query->whereNull('ubicazione_id') : $query->where('ubicazione_id', $data['ubicazione_id']);
+            $query->whereNull('ubicazione_id');
             empty($data['lotto']) ? $query->whereNull('lotto') : $query->where('lotto', $data['lotto']);
-            $giacenza = $query->firstOrFail();
+            $giacenza = $query->lockForUpdate()->firstOrFail();
 
             if ($giacenza->quantita < $data['quantita']) {
                 throw new \RuntimeException("Giacenza insufficiente: disponibili {$giacenza->quantita}, richiesti {$data['quantita']}");
@@ -90,7 +105,7 @@ class MagazzinoService
 
             return MagazzinoMovimento::create([
                 'articolo_id' => $data['articolo_id'],
-                'ubicazione_id' => $data['ubicazione_id'] ?? null,
+                'ubicazione_id' => null,
                 'tipo' => 'scarico',
                 'quantita' => -$data['quantita'],
                 'giacenza_dopo' => $giacenza->quantita,
@@ -109,14 +124,22 @@ class MagazzinoService
     public static function registraReso(array $data): MagazzinoMovimento
     {
         return DB::transaction(function () use ($data) {
-            $giacenza = MagazzinoGiacenza::firstOrCreate(
-                [
+            $giacenza = MagazzinoGiacenza::where('articolo_id', $data['articolo_id'])
+                ->where(function ($q) use ($data) {
+                    empty($data['lotto']) ? $q->whereNull('lotto') : $q->where('lotto', $data['lotto']);
+                })
+                ->whereNull('ubicazione_id')
+                ->lockForUpdate()
+                ->first();
+
+            if (!$giacenza) {
+                $giacenza = MagazzinoGiacenza::create([
                     'articolo_id' => $data['articolo_id'],
-                    'ubicazione_id' => $data['ubicazione_id'] ?? null,
+                    'ubicazione_id' => null,
                     'lotto' => $data['lotto'] ?? null,
-                ],
-                ['quantita' => 0]
-            );
+                    'quantita' => 0,
+                ]);
+            }
 
             $giacenza->quantita += $data['quantita'];
             $giacenza->data_ultimo_carico = now()->toDateString();
@@ -124,7 +147,7 @@ class MagazzinoService
 
             return MagazzinoMovimento::create([
                 'articolo_id' => $data['articolo_id'],
-                'ubicazione_id' => $data['ubicazione_id'] ?? null,
+                'ubicazione_id' => null,
                 'tipo' => 'reso',
                 'quantita' => $data['quantita'],
                 'giacenza_dopo' => $giacenza->quantita,
@@ -137,12 +160,16 @@ class MagazzinoService
     }
 
     /**
-     * Rettifica inventariale.
+     * Rettifica inventariale — con validazione no negativi.
      */
-    public static function rettifica(int $giacenzaId, int $nuovaQta, ?int $operatoreId = null, ?string $note = null): MagazzinoMovimento
+    public static function rettifica(int $giacenzaId, float $nuovaQta, ?int $operatoreId = null, ?string $note = null): MagazzinoMovimento
     {
+        if ($nuovaQta < 0) {
+            throw new \RuntimeException('La quantità non può essere negativa');
+        }
+
         return DB::transaction(function () use ($giacenzaId, $nuovaQta, $operatoreId, $note) {
-            $giacenza = MagazzinoGiacenza::findOrFail($giacenzaId);
+            $giacenza = MagazzinoGiacenza::lockForUpdate()->findOrFail($giacenzaId);
             $differenza = $nuovaQta - $giacenza->quantita;
 
             $giacenza->quantita = $nuovaQta;
@@ -166,7 +193,6 @@ class MagazzinoService
      */
     public static function alertSottoSoglia(): array
     {
-        // Una sola query: somma giacenze per articolo e confronta con soglia
         $giacenzePerArticolo = MagazzinoGiacenza::selectRaw('articolo_id, SUM(quantita) as totale')
             ->groupBy('articolo_id')
             ->pluck('totale', 'articolo_id');
@@ -177,7 +203,7 @@ class MagazzinoService
 
         $alert = [];
         foreach ($articoli as $art) {
-            $totale = (int) ($giacenzePerArticolo[$art->id] ?? 0);
+            $totale = (float) ($giacenzePerArticolo[$art->id] ?? 0);
             if ($totale < $art->soglia_minima) {
                 $alert[] = [
                     'articolo' => $art,
@@ -192,13 +218,20 @@ class MagazzinoService
     }
 
     /**
-     * Cerca bancale da QR code.
+     * Cerca bancale da QR code. Log se etichetta trovata ma disattivata.
      */
     public static function lookupQr(string $qrCode): ?MagazzinoEtichetta
     {
-        return MagazzinoEtichetta::with(['articolo', 'ubicazione', 'giacenza'])
+        // Check se esiste ma disattivata
+        $etichetta = MagazzinoEtichetta::with(['articolo', 'ubicazione', 'giacenza'])
             ->where('qr_code', $qrCode)
-            ->where('attiva', true)
             ->first();
+
+        if ($etichetta && !$etichetta->attiva) {
+            \Log::info("QR scansionato ma etichetta disattivata: {$qrCode}");
+            return null;
+        }
+
+        return $etichetta;
     }
 }

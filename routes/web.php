@@ -226,6 +226,14 @@ Route::middleware(['magazzino.auth'])->prefix('magazzino')->group(function () {
     Route::get('/prelievo', [MagazzinoMovimentoController::class, 'formPrelievo'])->name('magazzino.prelievo');
     Route::post('/prelievo', [MagazzinoMovimentoController::class, 'registraPrelievo'])->name('magazzino.prelievo.store');
 
+    // Reso
+    Route::get('/reso', [MagazzinoMovimentoController::class, 'formReso'])->name('magazzino.reso');
+    Route::post('/reso', [MagazzinoMovimentoController::class, 'registraReso'])->name('magazzino.reso.store');
+
+    // Rettifica
+    Route::get('/rettifica', [MagazzinoMovimentoController::class, 'formRettifica'])->name('magazzino.rettifica');
+    Route::post('/rettifica', [MagazzinoMovimentoController::class, 'registraRettifica'])->name('magazzino.rettifica.store');
+
     // Scanner QR
     Route::get('/scan', [MagazzinoScannerController::class, 'scanner'])->name('magazzino.scanner');
     Route::post('/scan/lookup', [MagazzinoScannerController::class, 'lookup'])->name('magazzino.scan.lookup');

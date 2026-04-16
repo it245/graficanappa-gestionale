@@ -14,6 +14,7 @@ class MagazzinoGiacenza extends Model
     ];
 
     protected $casts = [
+        'quantita' => 'float',
         'data_ultimo_carico' => 'date',
         'data_ultimo_scarico' => 'date',
     ];
