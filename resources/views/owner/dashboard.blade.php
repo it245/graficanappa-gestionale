@@ -734,6 +734,12 @@ tr:hover td {
         </button>
     </div>
 
+        {{-- CERCA COMMESSA DIRETTA (anche stato 4/consegnate) --}}
+<div style="display:flex; align-items:center; gap:8px; margin-bottom:8px; padding:4px 0;">
+    <input type="text" id="cercaCommessaDiretta" class="form-control form-control-sm" placeholder="Vai a commessa (es. 66818)..." style="max-width:200px; font-size:13px;" onkeydown="if(event.key==='Enter'){event.preventDefault(); vaiACommessa();}">
+    <button class="btn btn-sm btn-dark" onclick="vaiACommessa()" style="font-size:12px;">Vai</button>
+</div>
+
         {{-- FILTRI --}}
 <div class="mb-3" id="filterBox" style="display:none;">
     <!-- Filtri multi-valore (virgola) -->
@@ -1421,6 +1427,18 @@ document.querySelectorAll('.sidebar-menu a.sidebar-item').forEach(function(el) {
         if (e.key === 'Enter' || e.keyCode === 13) { e.preventDefault(); this.click(); }
     });
 });
+
+// === Cerca commessa diretta (anche consegnate/stato 4) ===
+function vaiACommessa() {
+    var input = document.getElementById('cercaCommessaDiretta').value.trim();
+    if (!input) return;
+    // Se scrive solo il numero (es. 66818), costruisci il codice completo
+    var commessa = input;
+    if (/^\d{4,6}$/.test(input)) {
+        commessa = '00' + input.padStart(5, '0') + '-26';
+    }
+    window.location.href = urlToken('/owner/commessa/' + encodeURIComponent(commessa));
+}
 
 // === Token per fetch autenticate ===
 var _opToken = '{{ $opToken ?? request()->query("op_token", "") }}';
