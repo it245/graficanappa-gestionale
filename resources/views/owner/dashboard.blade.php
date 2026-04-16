@@ -1935,7 +1935,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if(clienti.include.length || clienti.exclude.length) match = match && matchField(data.cliente, clienti);
                 if(descrizioni.include.length || descrizioni.exclude.length) match = match && matchField(data.descrizione, descrizioni);
                 if(stati.length) {
-                    var isInPausa = isNaN(data.stato) && data.stato !== 'ext';
+                    var isInPausa = (isNaN(data.stato) && data.stato !== 'ext') || (!isNaN(data.stato) && parseInt(data.stato) > 5);
                     match = match && (isInPausa || stati.includes(data.stato));
                 }
                 if(fasi.length) match = match && fasi.some(f => data.fase.includes(f));
