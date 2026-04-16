@@ -17,7 +17,7 @@ class MagazzinoArticolo extends Model
 
     protected $casts = [
         'attivo' => 'boolean',
-        'soglia_minima' => 'float',
+        'soglia_minima' => 'decimal:2',
     ];
 
     public function giacenze()

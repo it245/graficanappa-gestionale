@@ -15,6 +15,7 @@ class MagazzinoEtichetta extends Model
 
     protected $casts = [
         'attiva' => 'boolean',
+        'quantita_iniziale' => 'decimal:2',
     ];
 
     public function articolo()

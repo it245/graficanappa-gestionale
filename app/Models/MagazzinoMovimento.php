@@ -14,6 +14,11 @@ class MagazzinoMovimento extends Model
         'note', 'foto_bolla', 'ocr_raw',
     ];
 
+    protected $casts = [
+        'quantita' => 'decimal:2',
+        'giacenza_dopo' => 'decimal:2',
+    ];
+
     public function articolo()
     {
         return $this->belongsTo(MagazzinoArticolo::class, 'articolo_id');

@@ -3,6 +3,10 @@
 @section('page-title', 'Rettifica Inventariale')
 @section('topbar-title', 'Magazzino — Rettifica')
 
+@section('sidebar-items')
+    @include('magazzino._sidebar')
+@endsection
+
 @section('content')
 <div class="container" style="max-width:800px;">
     <h4 class="mb-3">Rettifica Inventariale</h4>

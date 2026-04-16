@@ -3,6 +3,10 @@
 @section('page-title', 'Reso Materiale')
 @section('topbar-title', 'Magazzino — Reso')
 
+@section('sidebar-items')
+    @include('magazzino._sidebar')
+@endsection
+
 @section('content')
 <div class="container" style="max-width:700px;">
     <h4 class="mb-3">Reso Materiale (rientro fogli/materiale avanzato)</h4>

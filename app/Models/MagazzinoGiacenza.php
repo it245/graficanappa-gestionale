@@ -14,7 +14,7 @@ class MagazzinoGiacenza extends Model
     ];
 
     protected $casts = [
-        'quantita' => 'float',
+        'quantita' => 'decimal:2',
         'data_ultimo_carico' => 'date',
         'data_ultimo_scarico' => 'date',
     ];
@@ -26,7 +26,8 @@ class MagazzinoGiacenza extends Model
 
     public function ubicazione()
     {
-        return $this->belongsTo(MagazzinoUbicazione::class, 'ubicazione_id');
+        return $this->belongsTo(MagazzinoUbicazione::class, 'ubicazione_id')
+            ->where('id', '>', 0); // ubicazione_id=0 = nessuna ubicazione (workaround UNIQUE NULL)
     }
 
     public function etichette()
