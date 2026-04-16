@@ -904,7 +904,7 @@ tr:hover td {
                     @elseif($fase->esterno && ((int)$statoVal === 5 || $statoVal < 3))
                     <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)" style="background:#ede9fe !important;font-weight:bold;text-align:center;color:#7c3aed;font-size:10px;" title="Esterno - da inviare">EXT</td>
                     @elseif($isPausa)
-                    <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)" style="background:#fef3c7 !important;font-weight:bold;text-align:center;color:#92400e;font-size:10px;" title="In pausa">⏸ {{ $statoVal }}</td>
+                    <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)" style="background:#e9ecef !important;font-weight:bold;text-align:center;font-size:10px;" title="In pausa">{{ $statoVal }}</td>
                     @else
                     <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)" style="background:{{ $statoBg[$statoVal] ?? '#e9ecef' }} !important;font-weight:bold;text-align:center;">{{ $statoVal }}</td>
                     @endif
