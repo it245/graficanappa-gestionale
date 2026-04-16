@@ -734,12 +734,6 @@ tr:hover td {
         </button>
     </div>
 
-        {{-- CERCA COMMESSA DIRETTA (anche stato 4/consegnate) --}}
-<div style="display:flex; align-items:center; gap:8px; margin-bottom:8px; padding:4px 0;">
-    <input type="text" id="cercaCommessaDiretta" class="form-control form-control-sm" placeholder="Vai a commessa (es. 66818)..." style="max-width:200px; font-size:13px;" onkeydown="if(event.key==='Enter'){event.preventDefault(); vaiACommessa();}">
-    <button class="btn btn-sm btn-dark" onclick="vaiACommessa()" style="font-size:12px;">Vai</button>
-</div>
-
         {{-- FILTRI --}}
 <div class="mb-3" id="filterBox" style="display:none;">
     <!-- Filtri multi-valore (virgola) -->
@@ -1428,18 +1422,6 @@ document.querySelectorAll('.sidebar-menu a.sidebar-item').forEach(function(el) {
     });
 });
 
-// === Cerca commessa diretta (anche consegnate/stato 4) ===
-function vaiACommessa() {
-    var input = document.getElementById('cercaCommessaDiretta').value.trim();
-    if (!input) return;
-    // Se scrive solo il numero (es. 66818), costruisci il codice completo
-    var commessa = input;
-    if (/^\d{4,6}$/.test(input)) {
-        commessa = '00' + input.padStart(5, '0') + '-26';
-    }
-    window.location.href = urlToken('/owner/commessa/' + encodeURIComponent(commessa));
-}
-
 // === Token per fetch autenticate ===
 var _opToken = '{{ $opToken ?? request()->query("op_token", "") }}';
 function urlToken(url) {
@@ -1946,6 +1928,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const fasi = getSelectedOptions(fFase);
         const reparti = getSelectedOptions(fReparto);
 
+        let visibili = 0;
         requestAnimationFrame(() => {
             rowData.forEach(data => {
                 let match = true;
@@ -1959,7 +1942,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 if(fasi.length) match = match && fasi.some(f => data.fase.includes(f));
                 if(reparti.length) match = match && reparti.includes(data.reparto);
                 data.row.style.display = match ? '' : 'none';
+                if (match) visibili++;
             });
+
+            // Se cerchi una commessa e non trovi nulla, mostra link al dettaglio
+            var hint = document.getElementById('commessaNotFoundHint');
+            if (hint) hint.remove();
+            if (visibili === 0 && commesse.include.length > 0) {
+                var num = commesse.include[0].replace(/[^0-9]/g, '');
+                if (num.length >= 4) {
+                    var codice = '00' + num.padStart(5, '0') + '-26';
+                    var div = document.createElement('div');
+                    div.id = 'commessaNotFoundHint';
+                    div.style.cssText = 'padding:12px;margin:8px 4px;background:#fff3cd;border:1px solid #ffc107;border-radius:6px;font-size:13px;';
+                    div.innerHTML = 'Commessa non trovata tra quelle attive. <a href="' + urlToken('/owner/commessa/' + codice) + '" style="font-weight:bold;color:#0d6efd;">Apri dettaglio ' + codice + '</a> (potrebbe essere consegnata)';
+                    document.getElementById('filterBox').after(div);
+                }
+            }
         });
     }
 
