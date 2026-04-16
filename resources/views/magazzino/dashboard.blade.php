@@ -21,7 +21,7 @@
     <div class="col-6 col-md-3">
         <div class="card border-0 shadow-sm h-100" style="background:var(--bg-card);">
             <div class="card-body text-center">
-                <div style="font-size:2rem; font-weight:700; color:var(--success);">{{ number_format($totGiacenza, 0, ',', '.') }}</div>
+                <div style="font-size:2rem; font-weight:700; color:var(--success);">{{ number_format($totGiacenza, 2, ',', '.') }}</div>
                 <div class="text-muted small">Giacenza totale (fg)</div>
             </div>
         </div>
@@ -64,8 +64,8 @@
                             <tr style="background:rgba(220,38,38,0.08);">
                                 <td><code>{{ $a['articolo']->codice }}</code></td>
                                 <td>{{ Str::limit($a['articolo']->descrizione, 30) }}</td>
-                                <td class="text-end fw-bold text-danger">{{ number_format($a['giacenza'], 0, ',', '.') }}</td>
-                                <td class="text-end">{{ number_format($a['soglia'], 0, ',', '.') }}</td>
+                                <td class="text-end fw-bold text-danger">{{ number_format($a['giacenza'], 2, ',', '.') }}</td>
+                                <td class="text-end">{{ number_format($a['soglia'], 2, ',', '.') }}</td>
                             </tr>
                         @endforeach
                         </tbody>
@@ -107,7 +107,7 @@
                                     <span class="badge {{ $badge[0] }}" style="font-size:10px;">{{ $badge[1] }}</span>
                                 </td>
                                 <td>{{ Str::limit($mov->articolo->descrizione ?? '-', 25) }}</td>
-                                <td class="text-end fw-bold">{{ number_format(abs($mov->quantita), 0, ',', '.') }}</td>
+                                <td class="text-end fw-bold">{{ number_format(abs($mov->quantita), 2, ',', '.') }}</td>
                                 <td>{{ $mov->operatore?->nome ?? '-' }}</td>
                                 <td>{{ $mov->created_at->format('d/m H:i') }}</td>
                             </tr>

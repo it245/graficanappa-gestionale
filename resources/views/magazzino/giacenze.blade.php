@@ -67,9 +67,9 @@
                         <td>{{ $g->articolo->formato ?? '-' }}</td>
                         <td>{{ $g->articolo->grammatura ?? '-' }}</td>
                         <td class="text-end fw-bold {{ $sottoSoglia ? 'text-danger' : '' }}">
-                            {{ number_format($g->quantita, 0, ',', '.') }}
+                            {{ number_format($g->quantita, 2, ',', '.') }}
                         </td>
-                        <td class="text-end">{{ $g->articolo && $g->articolo->soglia_minima > 0 ? number_format($g->articolo->soglia_minima, 0, ',', '.') : '-' }}</td>
+                        <td class="text-end">{{ $g->articolo && $g->articolo->soglia_minima > 0 ? number_format($g->articolo->soglia_minima, 2, ',', '.') : '-' }}</td>
                         <td>{{ $g->lotto ?? '-' }}</td>
                         <td>{{ $g->data_ultimo_carico ? $g->data_ultimo_carico->format('d/m/Y') : '-' }}</td>
                     </tr>

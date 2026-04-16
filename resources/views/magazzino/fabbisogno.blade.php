@@ -64,16 +64,16 @@
                     <tr style="{{ $mancante ? 'background:rgba(220,38,38,0.08);' : '' }}">
                         <td><code style="font-size:11px;">{{ $item['cod_carta'] }}</code></td>
                         <td>{{ Str::limit($item['descrizione_carta'], 35) }}</td>
-                        <td class="text-end fw-bold">{{ number_format($item['fabbisogno_totale'], 0, ',', '.') }}</td>
+                        <td class="text-end fw-bold">{{ number_format($item['fabbisogno_totale'], 2, ',', '.') }}</td>
                         <td class="text-end">
                             @if($item['articolo_magazzino'])
-                                {{ number_format($item['giacenza'], 0, ',', '.') }}
+                                {{ number_format($item['giacenza'], 2, ',', '.') }}
                             @else
                                 <span class="text-muted">non in mag.</span>
                             @endif
                         </td>
                         <td class="text-end fw-bold {{ $mancante ? 'text-danger' : 'text-success' }}">
-                            {{ $mancante ? '-' . number_format($item['deficit'], 0, ',', '.') : 'OK' }}
+                            {{ $mancante ? '-' . number_format($item['deficit'], 2, ',', '.') : 'OK' }}
                         </td>
                         <td>
                             @if($mancante)
@@ -85,7 +85,7 @@
                         <td>
                             @foreach($item['commesse'] as $c)
                                 <span class="badge bg-light text-dark" style="font-size:10px;">
-                                    {{ $c['commessa'] }} ({{ number_format($c['qta_carta'], 0, ',', '.') }} {{ $c['um'] }})
+                                    {{ $c['commessa'] }} ({{ number_format($c['qta_carta'], 2, ',', '.') }} {{ $c['um'] }})
                                 </span>
                             @endforeach
                         </td>

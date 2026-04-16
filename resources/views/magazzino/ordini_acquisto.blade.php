@@ -50,9 +50,9 @@
                         <tr>
                             <td><code style="font-size:11px;">{{ $art['cod_carta'] }}</code></td>
                             <td>{{ $art['descrizione'] }}</td>
-                            <td class="text-end">{{ number_format($art['fabbisogno'], 0, ',', '.') }}</td>
-                            <td class="text-end">{{ number_format($art['giacenza'], 0, ',', '.') }}</td>
-                            <td class="text-end fw-bold text-danger">{{ number_format($art['da_ordinare'], 0, ',', '.') }}</td>
+                            <td class="text-end">{{ number_format($art['fabbisogno'], 2, ',', '.') }}</td>
+                            <td class="text-end">{{ number_format($art['giacenza'], 2, ',', '.') }}</td>
+                            <td class="text-end fw-bold text-danger">{{ number_format($art['da_ordinare'], 2, ',', '.') }}</td>
                             <td><span class="text-muted" style="font-size:11px;">{{ $art['commesse'] }}</span></td>
                         </tr>
                     @endforeach

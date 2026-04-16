@@ -66,8 +66,8 @@
                             <span class="badge {{ $badge[0] }}" style="font-size:10px;">{{ $badge[1] }}</span>
                         </td>
                         <td>{{ Str::limit($mov->articolo->descrizione ?? '-', 25) }}</td>
-                        <td class="text-end fw-bold">{{ $mov->quantita > 0 ? '+' : '' }}{{ number_format($mov->quantita, 0, ',', '.') }}</td>
-                        <td class="text-end">{{ number_format($mov->giacenza_dopo, 0, ',', '.') }}</td>
+                        <td class="text-end fw-bold">{{ $mov->quantita > 0 ? '+' : '' }}{{ number_format($mov->quantita, 2, ',', '.') }}</td>
+                        <td class="text-end">{{ number_format($mov->giacenza_dopo, 2, ',', '.') }}</td>
                         <td>{{ $mov->commessa ?? '-' }}</td>
                         <td>{{ $mov->lotto ?? '-' }}</td>
                         <td>{{ $mov->operatore?->nome ?? '-' }}</td>

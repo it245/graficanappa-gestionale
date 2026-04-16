@@ -32,7 +32,7 @@
                                         data-giacenza="{{ $g->quantita }}"
                                         {{ request('articolo_id') == $g->articolo_id ? 'selected' : '' }}>
                                         {{ $g->articolo->codice }} — {{ $g->articolo->descrizione }}
-                                        ({{ number_format($g->quantita, 0, ',', '.') }} {{ $g->articolo->um }})
+                                        ({{ number_format($g->quantita, 2, ',', '.') }} {{ $g->articolo->um }})
                                         @if($g->ubicazione) [{{ $g->ubicazione->codice }}] @endif
                                         @if($g->lotto) Lotto: {{ $g->lotto }} @endif
                                     </option>
@@ -52,7 +52,7 @@
                         {{-- Quantita --}}
                         <div class="col-md-4">
                             <label class="form-label">Quantita da prelevare</label>
-                            <input type="number" name="quantita" class="form-control" min="1" required>
+                            <input type="number" name="quantita" class="form-control" min="0.01" step="0.01" required>
                         </div>
 
                         {{-- Commessa --}}
