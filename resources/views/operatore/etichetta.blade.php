@@ -520,14 +520,19 @@
                 <input type="hidden" id="pausaFaseId">
                 <div class="mb-3">
                     <label class="form-label fw-bold">Motivo della pausa</label>
-                    <select id="pausaMotivoSelect" class="form-select" onchange="document.getElementById('pausaAltroWrap').style.display=this.value==='__altro__'?'':'none'">
+                    <select id="pausaMotivoSelect" class="form-select" onchange="togglePausaExtra()">
                         <option value="">-- Seleziona --</option>
                         <option>Attesa materiale</option>
                         <option>Problema macchina</option>
                         <option>Pranzo</option>
                         <option>Fine turno</option>
+                        <option value="Acconto">Acconto (quantità prodotta)</option>
                         <option value="__altro__">Altro...</option>
                     </select>
+                </div>
+                <div class="mb-3" id="pausaAccontoWrap" style="display:none;">
+                    <label class="form-label fw-bold">Quantità prodotta finora</label>
+                    <input type="number" id="pausaAccontoQta" class="form-control" placeholder="es. 22522" min="0">
                 </div>
                 <div class="mb-3" id="pausaAltroWrap" style="display:none;">
                     <label class="form-label fw-bold">Specifica motivo</label>
@@ -997,16 +1002,31 @@ document.getElementById('modalPausa').addEventListener('hidden.bs.modal', functi
     if (cb) cb.checked = false;
 });
 
+function togglePausaExtra() {
+    var sel = document.getElementById('pausaMotivoSelect').value;
+    document.getElementById('pausaAccontoWrap').style.display = sel === 'Acconto' ? '' : 'none';
+    document.getElementById('pausaAltroWrap').style.display = sel === '__altro__' ? '' : 'none';
+}
+
 function confermaPausaEt() {
     var sel = document.getElementById('pausaMotivoSelect').value;
     var motivo = sel === '__altro__' ? (document.getElementById('pausaAltroInput').value.trim() || 'Altro') : sel;
     if (!motivo) { alert('Seleziona un motivo'); return; }
     var faseId = document.getElementById('pausaFaseId').value;
+    var body = {fase_id: faseId, motivo: motivo};
+
+    // Acconto: salva anche la qta prodotta
+    if (sel === 'Acconto') {
+        var qta = parseInt(document.getElementById('pausaAccontoQta').value) || 0;
+        if (qta <= 0) { alert('Inserisci la quantità prodotta'); return; }
+        body.qta_prodotta = qta;
+    }
+
     bootstrap.Modal.getInstance(document.getElementById('modalPausa')).hide();
     fetch('{{ route("produzione.pausa") }}', {
         method: 'POST',
         headers: {'X-CSRF-TOKEN': csrfTokenEt(), 'Content-Type': 'application/json'},
-        body: JSON.stringify({fase_id: faseId, motivo: motivo})
+        body: JSON.stringify(body)
     }).then(r => r.json()).then(data => {
         if (data.success) { updateBadgeEt(faseId, data.nuovo_stato); }
         else alert('Errore: ' + (data.messaggio || 'operazione fallita'));

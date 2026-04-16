@@ -183,6 +183,11 @@ class ProduzioneController extends Controller
             'data_ora'     => now(),
         ]);
 
+        // Acconto: salva la quantità prodotta finora
+        if ($motivo === 'Acconto' && $request->filled('qta_prodotta')) {
+            $fase->qta_prod = (int) $request->input('qta_prodotta');
+        }
+
         $fase->stato = $motivo;
         $fase->timeout = now();
         $fase->save();
