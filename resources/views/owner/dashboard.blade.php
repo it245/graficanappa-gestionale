@@ -895,12 +895,18 @@ tr:hover td {
                 @endphp
                 <tr class="{{ $rowClass }}" data-id="{{ $fase->id }}">
                     <td><a href="{{ route('owner.dettaglioCommessa', $fase->ordine->commessa ?? '-') }}" style="color:#000;font-weight:bold;text-decoration:underline;">{{ $fase->ordine->commessa ?? '-' }}</a></td>
-                    @if($fase->esterno && ((int)$fase->stato === 5 || $fase->stato < 3) && ($fase->ddt_fornitore_id || (int)$fase->stato === 5))
+                    @php
+                        $statoVal = $fase->stato;
+                        $isPausa = (!is_numeric($statoVal) || (is_numeric($statoVal) && (int)$statoVal > 5));
+                    @endphp
+                    @if($fase->esterno && ((int)$statoVal === 5 || $statoVal < 3) && ($fase->ddt_fornitore_id || (int)$statoVal === 5))
                     <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)" style="background:#d1fae5 !important;font-weight:bold;text-align:center;color:#065f46;font-size:10px;" title="Inviato al fornitore">EXT</td>
-                    @elseif($fase->esterno && ((int)$fase->stato === 5 || $fase->stato < 3))
+                    @elseif($fase->esterno && ((int)$statoVal === 5 || $statoVal < 3))
                     <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)" style="background:#ede9fe !important;font-weight:bold;text-align:center;color:#7c3aed;font-size:10px;" title="Esterno - da inviare">EXT</td>
+                    @elseif($isPausa)
+                    <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)" style="background:#fef3c7 !important;font-weight:bold;text-align:center;color:#92400e;font-size:10px;" title="In pausa">⏸ {{ $statoVal }}</td>
                     @else
-                    <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)" style="background:{{ $statoBg[$fase->stato] ?? '#e9ecef' }} !important;font-weight:bold;text-align:center;">{{ $fase->stato }}</td>
+                    <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)" style="background:{{ $statoBg[$statoVal] ?? '#e9ecef' }} !important;font-weight:bold;text-align:center;">{{ $statoVal }}</td>
                     @endif
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'cliente_nome', this.innerText)">{{ $fase->ordine->cliente_nome ?? '-' }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'cod_art', this.innerText)">{{ $fase->ordine->cod_art ?? '-' }}</td>
