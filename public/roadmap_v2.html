@@ -77,23 +77,23 @@
 <!-- KPI -->
 <div class="kpi-row">
     <div class="kpi-card">
-        <div class="numero">522</div>
+        <div class="numero">700+</div>
         <div class="label">Commesse gestite</div>
     </div>
     <div class="kpi-card">
-        <div class="numero">3.824</div>
+        <div class="numero">5.500+</div>
         <div class="label">Fasi tracciate</div>
     </div>
     <div class="kpi-card">
-        <div class="numero">2,6M</div>
+        <div class="numero">3,5M+</div>
         <div class="label">Fogli stampati monitorati</div>
     </div>
     <div class="kpi-card">
-        <div class="numero">108</div>
+        <div class="numero">130+</div>
         <div class="label">Clienti gestiti</div>
     </div>
     <div class="kpi-card">
-        <div class="numero">54.619</div>
+        <div class="numero">55.000+</div>
         <div class="label">Timbrature registrate</div>
     </div>
 </div>
@@ -112,25 +112,26 @@
         <div class="label">Reparti</div>
     </div>
     <div class="kpi-card">
-        <div class="numero">2.437</div>
+        <div class="numero">4.000+</div>
         <div class="label">Attivit&agrave; Prinect</div>
     </div>
     <div class="kpi-card">
-        <div class="numero">1 mese</div>
+        <div class="numero">7 settimane</div>
         <div class="label">Operativo dal 27/02</div>
     </div>
 </div>
 
 <!-- STATO ATTUALE -->
 <h2>1. Stato Attuale del Sistema</h2>
-<p>Il sistema MES di Grafica Nappa &egrave; operativo dal 27 Febbraio 2026 e in un solo mese ha gestito <strong>522 commesse</strong> per <strong>108 clienti</strong>, tracciando <strong>3.824 fasi di produzione</strong> e monitorando oltre <strong>2,6 milioni di fogli stampati</strong>. Il sistema &egrave; sviluppato internamente con il supporto di intelligenza artificiale (Claude Code, Anthropic).</p>
+<p>Il sistema MES di Grafica Nappa &egrave; operativo dal 27 Febbraio 2026 e in meno di 2 mesi ha gestito oltre <strong>700 commesse</strong> per <strong>130+ clienti</strong>, tracciando <strong>5.500+ fasi di produzione</strong> e monitorando oltre <strong>3,5 milioni di fogli stampati</strong>. Il sistema &egrave; sviluppato internamente con il supporto di intelligenza artificiale (Claude Code, Anthropic).</p>
 
 <table>
     <tr><th>Versione</th><th>Contenuto</th><th>Funzionalit&agrave;</th><th>Stato</th></tr>
     <tr><td><strong>v1.0</strong></td><td>MES Completo — Produzione, Onda, Prinect, Fiery, BRT, Costi</td><td>81</td><td><span class="badge badge-done">Operativa</span></td></tr>
     <tr><td><strong>v1.1</strong></td><td>Presenze, Notifiche, Report Ore, Etichette, Kiosk TV</td><td>45</td><td><span class="badge badge-done">Operativa</span></td></tr>
     <tr><td><strong>v1.2</strong></td><td>Sicurezza: RBAC, Audit Log, 2FA, Rate Limiting, Headers, GDPR</td><td>11</td><td><span class="badge badge-done">Operativa</span></td></tr>
-    <tr><td><strong>v2.0</strong></td><td>Scheduler, PWA, WebSocket, Push, UI Enterprise, Magazzino Carta, OCR AI</td><td>28</td><td><span class="badge badge-new">Rilascio Apr 2026</span></td></tr>
+    <tr><td><strong>v1.3</strong></td><td>Performance: indici DB, paginazione, cache, timeout, sync ottimizzato</td><td>15</td><td><span class="badge badge-done">Operativa</span></td></tr>
+    <tr><td><strong>v2.0</strong></td><td>Scheduler, PWA, WebSocket, Push, UI Enterprise, Magazzino, Chat, Turni, Fiery Accounting DB</td><td>42</td><td><span class="badge badge-new">Rilascio Apr 2026</span></td></tr>
 </table>
 
 <!-- V2.0 DETTAGLIO -->
@@ -188,21 +189,51 @@
     <li>Comunicazione in tempo reale tra operatori, owner e spedizione</li>
 </ul>
 
-<h3>2.7 Magazzino Carta con OCR Intelligente</h3>
+<h3>2.7 Magazzino Materiali con OCR Intelligente</h3>
 <div class="ai-box">
-    <strong>NUOVA FUNZIONALIT&Agrave;: Gestione Magazzino Carta con AI Vision</strong><br>
-    Sistema completo di tracciabilit&agrave; materia prima: dalla ricezione bolla fornitore, al prelievo per produzione, fino all'inventario in tempo reale. L'OCR con AI (Google Gemini Vision) legge automaticamente le bolle dei fornitori ed estrae i dati.
+    <strong>NUOVA FUNZIONALIT&Agrave;: Gestione Magazzino Materiali con OCR</strong><br>
+    Sistema completo di tracciabilit&agrave; materia prima: dalla ricezione bolla fornitore, al prelievo per produzione, fino all'inventario in tempo reale. 5 categorie: <strong>carta, foil, scatoloni, inchiostro, vernici</strong>. Supporta quantit&agrave; decimali (kg per inchiostri/vernici).
 </div>
 <ul>
-    <li><strong>Registrazione bolla con AI</strong> — foto della bolla &rarr; Gemini Vision estrae: fornitore, tipo carta, formato, grammatura, quantit&agrave; (precisione 95%+)</li>
-    <li><strong>Anagrafica articoli automatica</strong> — il sistema crea l'articolo in automatico dalla bolla se non esiste</li>
-    <li><strong>Etichette QR</strong> — generazione PDF 10x15cm con QR code per ogni bancale ricevuto</li>
-    <li><strong>Prelievo per produzione</strong> — scarico carta associato a commessa (solo fase STAMPA, come da regola aziendale)</li>
-    <li><strong>Giacenze in tempo reale</strong> — dashboard con filtri per tipo carta, formato, grammatura</li>
-    <li><strong>Alert sotto soglia</strong> — avviso automatico quando un articolo scende sotto la scorta minima</li>
-    <li><strong>Storico movimenti</strong> — carico, scarico, reso, rettifica con filtri temporali</li>
-    <li><strong>Scanner QR</strong> — scansione bancali via fotocamera o pistola Bluetooth</li>
-    <li><strong>Sicurezza</strong> — accesso limitato al reparto spedizione, owner e admin</li>
+    <li><strong>5 categorie materiali</strong> — carta (fg), foil (mt), scatoloni (pz), inchiostro (kg), vernici (kg)</li>
+    <li><strong>Registrazione bolla con OCR</strong> — foto della bolla &rarr; Tesseract OCR estrae: fornitore, tipo, formato, grammatura, quantit&agrave;</li>
+    <li><strong>Check plausibilit&agrave; OCR</strong> — alert automatico se quantit&agrave; anomala (&gt;10.000)</li>
+    <li><strong>Etichette QR</strong> — generazione QR code per ogni bancale ricevuto</li>
+    <li><strong>Prelievo per produzione</strong> — scarico associato a commessa (solo fase STAMPA, validazione server)</li>
+    <li><strong>Reso materiale</strong> — rientro fogli/materiale avanzato con form dedicato</li>
+    <li><strong>Rettifica inventariale</strong> — correzione giacenza con audit trail</li>
+    <li><strong>Giacenze in tempo reale</strong> — dashboard con filtri per categoria, formato, grammatura</li>
+    <li><strong>Alert sotto soglia</strong> — avviso automatico sotto scorta minima (supporta decimali)</li>
+    <li><strong>Scanner QR</strong> — scansione bancali via fotocamera</li>
+    <li><strong>Fabbisogno materiali</strong> — calcolo automatico carta necessaria per commesse in produzione</li>
+    <li><strong>Ordini acquisto</strong> — generazione ordini per materiali sotto soglia</li>
+    <li><strong>Race condition protection</strong> — lock pessimistico su carico/scarico (2+ tablet simultanei)</li>
+    <li><strong>ON DELETE RESTRICT</strong> — protezione storico movimenti da cancellazioni accidentali</li>
+    <li><strong>Sicurezza</strong> — middleware dedicato, accesso reparto spedizione + owner + admin</li>
+</ul>
+
+<h3>2.8 Turni Settimanali</h3>
+<ul>
+    <li><strong>Griglia turni</strong> — tabella settimanale per tutti i dipendenti</li>
+    <li><strong>Modifica inline</strong> — click sulla cella per cambiare turno (T, 1, 2, 3, R, F)</li>
+    <li><strong>Navigazione settimanale</strong> — avanti/indietro per settimana</li>
+</ul>
+
+<h3>2.9 Fiery Accounting nel DB</h3>
+<ul>
+    <li><strong>Click per commessa</strong> — dati Fiery Accounting salvati nel DB (disponibili offline)</li>
+    <li><strong>Contatori SNMP</strong> — timeout 500ms, quick check (pagina carica in 2s anche con stampante spenta)</li>
+    <li><strong>Report categorie SAE</strong> — B/N A4, Colore A4, B/N A3, Colore A3, Banner</li>
+</ul>
+
+<h3>2.10 Performance</h3>
+<ul>
+    <li><strong>Sync rimossi dal page load</strong> — Excel, Prinect, Fiery girano solo via cron</li>
+    <li><strong>Indici DB v2</strong> — 6 indici aggiuntivi su tabelle critiche</li>
+    <li><strong>Paginazione fasi terminate</strong> — 50 per pagina con filtri server-side</li>
+    <li><strong>progressoCommesse via SQL</strong> — da PHP groupBy a SQL GROUP BY</li>
+    <li><strong>Sidebar GPU-accelerated</strong> — transform invece di left per evitare repaint</li>
+    <li><strong>Tempo caricamento owner</strong> — da 60s+ a ~5s</li>
 </ul>
 
 <!-- SICUREZZA -->
