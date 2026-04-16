@@ -25,15 +25,17 @@ return new class extends Migration
             $table->decimal('quantita', 12, 2)->default(0)->change();
         });
 
-        // Rimuovi UNIQUE vecchia (con NULL) e ricrea con workaround
-        // MySQL: NULL non conta in UNIQUE — usiamo un valore default 0 per ubicazione_id
+        // Rimuovi FK su ubicazione_id prima di droppare UNIQUE, poi ricrea
+        Schema::table('magazzino_giacenze', function (Blueprint $table) {
+            $table->dropForeign(['ubicazione_id']);
+        });
         Schema::table('magazzino_giacenze', function (Blueprint $table) {
             $table->dropUnique(['articolo_id', 'ubicazione_id', 'lotto']);
         });
         // Imposta ubicazione_id=0 dove è NULL per evitare duplicati
         DB::table('magazzino_giacenze')->whereNull('ubicazione_id')->update(['ubicazione_id' => 0]);
         Schema::table('magazzino_giacenze', function (Blueprint $table) {
-            $table->foreignId('ubicazione_id')->nullable(false)->default(0)->change();
+            $table->unsignedBigInteger('ubicazione_id')->nullable(false)->default(0)->change();
             $table->unique(['articolo_id', 'ubicazione_id', 'lotto'], 'mag_giac_art_ub_lotto_unique');
         });
 
