@@ -92,8 +92,11 @@
                         {{-- Quantita --}}
                         <div class="col-md-4">
                             <label class="form-label">Quantita</label>
-                            <input type="number" name="quantita" class="form-control" min="1" required
-                                value="{{ old('quantita', $ocrDati['quantita'] ?? '') }}">
+                            <input type="number" name="quantita" id="inputQuantita" class="form-control" min="0.01" step="0.01" required
+                                value="{{ old('quantita', $ocrDati['quantita'] ?? '') }}" onchange="checkPlausibilita()">
+                            <div id="alertPlausibilita" class="alert alert-warning mt-1 py-1 px-2 d-none" style="font-size:12px;">
+                                <strong>Attenzione:</strong> quantita molto alta! Verificare il valore OCR.
+                            </div>
                         </div>
 
                         {{-- Fornitore --}}
@@ -131,5 +134,13 @@ document.getElementById('selArticolo')?.addEventListener('change', function() {
     const fields = document.getElementById('nuovoArticoloFields');
     fields.style.display = this.value ? 'none' : 'block';
 });
+
+function checkPlausibilita() {
+    var qta = parseFloat(document.getElementById('inputQuantita').value) || 0;
+    var alert = document.getElementById('alertPlausibilita');
+    alert.classList.toggle('d-none', qta <= 10000);
+}
+// Check iniziale (se OCR ha pre-compilato)
+checkPlausibilita();
 </script>
 @endsection

@@ -29,7 +29,7 @@
                     <div class="row g-2 mb-2">
                         <div class="col-6">
                             <label class="form-label small">Categoria</label>
-                            <select name="categoria" class="form-select form-select-sm">
+                            <select name="categoria" class="form-select form-select-sm" onchange="autoUM(this.value)">
                                 <option value="">-- Seleziona --</option>
                                 @foreach(\App\Models\MagazzinoArticolo::CATEGORIE as $cat)
                                     <option value="{{ $cat }}">{{ ucfirst($cat) }}</option>
@@ -56,6 +56,9 @@
                                 <option value="fg">fg</option>
                                 <option value="mq">mq</option>
                                 <option value="kg">kg</option>
+                                <option value="lt">lt</option>
+                                <option value="mt">mt</option>
+                                <option value="pz">pz</option>
                             </select>
                         </div>
                     </div>
@@ -117,4 +120,20 @@
         </div>
     </div>
 </div>
+<script>
+function autoUM(categoria) {
+    var umSelect = document.querySelector('select[name="um"]');
+    if (!umSelect) return;
+    var map = {carta:'fg', foil:'mt', scatoloni:'pz', inchiostro:'kg', vernici:'kg'};
+    var um = map[categoria] || 'fg';
+    // Aggiungi opzione se non esiste
+    var exists = Array.from(umSelect.options).some(o => o.value === um);
+    if (!exists) {
+        var opt = document.createElement('option');
+        opt.value = um; opt.text = um;
+        umSelect.add(opt);
+    }
+    umSelect.value = um;
+}
+</script>
 @endsection
