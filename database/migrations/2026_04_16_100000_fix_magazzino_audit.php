@@ -25,21 +25,27 @@ return new class extends Migration
             $table->decimal('quantita', 12, 2)->default(0)->change();
         });
 
-        // Disabilita FK check temporaneamente per poter droppare UNIQUE
-        DB::statement('SET FOREIGN_KEY_CHECKS=0');
+        // Drop UNIQUE + FK via raw SQL (Laravel Schema non riesce con FK composte)
+        // Prima lista le FK sulla tabella per trovare quella su ubicazione_id
+        $fks = DB::select("
+            SELECT CONSTRAINT_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+            WHERE TABLE_SCHEMA = DATABASE()
+              AND TABLE_NAME = 'magazzino_giacenze'
+              AND REFERENCED_TABLE_NAME IS NOT NULL
+        ");
+        foreach ($fks as $fk) {
+            DB::statement("ALTER TABLE magazzino_giacenze DROP FOREIGN KEY `{$fk->CONSTRAINT_NAME}`");
+        }
 
-        Schema::table('magazzino_giacenze', function (Blueprint $table) {
-            $table->dropUnique(['articolo_id', 'ubicazione_id', 'lotto']);
-        });
-
+        DB::statement("ALTER TABLE magazzino_giacenze DROP INDEX `magazzino_giacenze_articolo_id_ubicazione_id_lotto_unique`");
         DB::table('magazzino_giacenze')->whereNull('ubicazione_id')->update(['ubicazione_id' => 0]);
+        DB::statement("ALTER TABLE magazzino_giacenze MODIFY `ubicazione_id` BIGINT UNSIGNED NOT NULL DEFAULT 0");
+        DB::statement("ALTER TABLE magazzino_giacenze ADD UNIQUE `mag_giac_art_ub_lotto_unique` (`articolo_id`, `ubicazione_id`, `lotto`)");
 
+        // Ricrea FK articolo_id (ubicazione_id non ha più FK dato che 0 non è un ID valido)
         Schema::table('magazzino_giacenze', function (Blueprint $table) {
-            $table->unsignedBigInteger('ubicazione_id')->nullable(false)->default(0)->change();
-            $table->unique(['articolo_id', 'ubicazione_id', 'lotto'], 'mag_giac_art_ub_lotto_unique');
+            $table->foreign('articolo_id')->references('id')->on('magazzino_articoli');
         });
-
-        DB::statement('SET FOREIGN_KEY_CHECKS=1');
 
         // 3. magazzino_movimenti: quantita da integer a decimal
         Schema::table('magazzino_movimenti', function (Blueprint $table) {
