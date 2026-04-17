@@ -1690,7 +1690,7 @@ document.addEventListener('DOMContentLoaded', function(){
 <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
 {{-- JS --}}
 <script>
-function aggiornaCampo(faseId, campo, valore){
+function aggiornaCampo(faseId, campo, valore, targetEl){
     valore = valore.trim();
 
     // Se il campo è numerico o priorità, sostituisci la virgola con punto
@@ -1703,6 +1703,13 @@ function aggiornaCampo(faseId, campo, valore){
         }
     }
 
+    // Usa event.target se non passato
+    var cell = targetEl || (typeof event !== 'undefined' && event.target) || null;
+    if (cell) {
+        cell.style.transition = 'background 0.3s';
+        cell.style.background = '#fff8e1'; // giallo = in salvataggio
+    }
+
     fetch(urlToken('{{ route("owner.aggiornaCampo") }}'), {
         method: 'POST',
         headers: {'X-CSRF-TOKEN': csrfToken(), 'Content-Type': 'application/json'},
@@ -1711,13 +1718,19 @@ function aggiornaCampo(faseId, campo, valore){
     .then(r => r.json())
     .then(d => {
         if (!d.success) {
+            if (cell) cell.style.background = '#f8d7da'; // rosso = errore
             alert('Errore salvataggio: ' + (d.messaggio || ''));
-        } else if (d.reload) {
-            window.location.reload();
+        } else {
+            if (cell) {
+                cell.style.background = '#d1e7dd'; // verde = ok
+                setTimeout(function() { cell.style.background = ''; }, 1200);
+            }
+            if (d.reload) window.location.reload();
         }
     })
     .catch(err => {
         console.error(err);
+        if (cell) cell.style.background = '#f8d7da';
         alert('Errore di connessione');
     });
 }
