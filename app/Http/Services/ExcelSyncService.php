@@ -242,7 +242,8 @@ class ExcelSyncService
             }
 
             // I - Priorita
-            if (self::isNumericChanged($row['I'] ?? null, $fase->priorita)) {
+            // Skip se DB ha priorita_manuale=true (cambio UI più recente dell'Excel)
+            if (!$fase->priorita_manuale && self::isNumericChanged($row['I'] ?? null, $fase->priorita)) {
                 $nuovaPriorita = self::parseNumeric($row['I'] ?? null);
                 Log::info("ExcelSync: priorità fase #{$id} cambiata: {$fase->priorita} → {$nuovaPriorita}");
                 $fase->priorita = $nuovaPriorita;
