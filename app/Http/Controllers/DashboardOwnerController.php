@@ -742,7 +742,7 @@ public function calcolaOreEPriorita($fase)
             return response()->json(['success' => false, 'messaggio' => 'Campo non aggiornabile'], 422);
         }
 
-        app()->terminating(fn() => ExcelSyncService::exportToExcel());
+        // NOTA: ExcelSync NON eseguito qui (costoso) - cron ogni 2min lo fa
         return response()->json(['success' => true]);
     }
 
