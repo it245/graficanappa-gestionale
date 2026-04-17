@@ -31,7 +31,12 @@ const SYNONYM = [
     'CUBO'       => 'CUBO',
 ];
 
-const STOPLIST = ['DI', 'LA', 'IL', 'E', 'DEL', 'DELLA', 'CON', 'AL', 'ALLA', 'DA'];
+const STOPLIST = [
+    // articoli/preposizioni
+    'DI', 'LA', 'IL', 'E', 'DEL', 'DELLA', 'CON', 'AL', 'ALLA', 'DA',
+    // categorie prodotto/parole neutre nel matching
+    'NUANCE',
+];
 
 function stripAccenti(string $s): string {
     return strtr($s, [
