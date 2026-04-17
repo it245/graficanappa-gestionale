@@ -1691,7 +1691,7 @@ document.addEventListener('DOMContentLoaded', function(){
 {{-- JS --}}
 <script>
 function aggiornaCampo(faseId, campo, valore, targetEl){
-    console.log('[aggiornaCampo]', {faseId, campo, valore});
+    console.log('[aggiornaCampo]', {faseId, campo, valore, targetEl});
     valore = valore.trim();
 
     const campiNumerici = ['qta_richiesta','qta_prod','priorita','qta_carta','ore'];
@@ -1721,6 +1721,7 @@ function aggiornaCampo(faseId, campo, valore, targetEl){
         return r.json();
     })
     .then(function(d) {
+        console.log('[aggiornaCampo response]', d);
         if (!d.success) {
             if (cell) cell.style.background = '#f8d7da';
             alert('Errore salvataggio: ' + (d.messaggio || ''));
@@ -1735,8 +1736,12 @@ function aggiornaCampo(faseId, campo, valore, targetEl){
                 var row = cell.closest('tr');
                 var commessaCell = row ? row.querySelector('td:first-child') : null;
                 var commessa = commessaCell ? commessaCell.innerText.trim() : '';
+                console.log('[popover] commessa:', commessa, 'valore:', valore, 'cell:', cell);
                 if (commessa) mostraPopoverApplicaTutte(cell, commessa, valore);
+                else console.warn('[popover] commessa vuota');
             } catch (e) { console.error('[popover]', e); }
+        } else if (campo === 'priorita' && !cell) {
+            console.warn('[popover] cell undefined, skip');
         }
         if (d.reload) window.location.reload();
     })
