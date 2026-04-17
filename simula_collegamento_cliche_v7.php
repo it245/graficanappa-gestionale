@@ -34,8 +34,11 @@ const SYNONYM = [
 const STOPLIST = [
     // articoli/preposizioni
     'DI', 'LA', 'IL', 'E', 'DEL', 'DELLA', 'CON', 'AL', 'ALLA', 'DA',
-    // categorie prodotto/parole neutre nel matching
-    'NUANCE',
+];
+
+// Stoplist contestuale: rimuovi token SOLO se tutti gli "if" presenti nel contesto
+const CONTEXTUAL_STOPLIST = [
+    'NUANCE' => ['ENZO', 'MICCIO'], // NUANCE ignorato solo in presenza di ENZO MICCIO
 ];
 
 function stripAccenti(string $s): string {
@@ -75,10 +78,25 @@ function stripRumoreMes(string $s): string {
 
 function tokenize(string $norm): array {
     $toks = preg_split('/\s+/u', trim($norm));
-    $out = [];
+    // Pass 1: filter stoplist globale + sinonimi
+    $pass1 = [];
     foreach ($toks as $t) {
         if ($t === '' || in_array($t, STOPLIST, true)) continue;
-        $out[] = SYNONYM[$t] ?? $t;
+        $pass1[] = SYNONYM[$t] ?? $t;
+    }
+    // Pass 2: applica stoplist contestuale (rimuove solo se tutti requisiti presenti)
+    $set = array_flip($pass1);
+    $out = [];
+    foreach ($pass1 as $t) {
+        if (isset(CONTEXTUAL_STOPLIST[$t])) {
+            $reqs = CONTEXTUAL_STOPLIST[$t];
+            $allPresent = true;
+            foreach ($reqs as $r) {
+                if (!isset($set[$r])) { $allPresent = false; break; }
+            }
+            if ($allPresent) continue; // scarta token contestuale
+        }
+        $out[] = $t;
     }
     return $out;
 }
