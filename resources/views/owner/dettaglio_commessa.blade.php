@@ -202,7 +202,7 @@
                 <span class="badge" style="background:#8d6e63; color:white; font-size:12px;">Scatola {{ $clicheOrd->scatola }}</span>
             @endif
         @else
-            <small class="text-muted">Non collegato</small>
+            <small class="text-muted">Cliché non impostato</small>
         @endif
     </div>
 </div>
