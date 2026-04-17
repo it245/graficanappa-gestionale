@@ -337,13 +337,23 @@
         </thead>
         <tbody>
         @foreach($fasi as $fase)
+            @php
+                $isEsterno = $fase->esterno || $fase->ddt_fornitore_id;
+                $ddtInviato = (bool) $fase->ddt_fornitore_id;
+            @endphp
             <tr id="fase-row-{{ $fase->id }}" data-id="{{ $fase->id }}">
                 <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'priorita', this.innerText)">{{ $fase->priorita !== null ? number_format($fase->priorita, 2) : '-' }}</td>
-                <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)">
-                    <span class="stato-badge" style="background:{{ $statoBg[$fase->stato] ?? '#e9ecef' }};color:{{ $statoColor[$fase->stato] ?? '#333' }}">
-                        {{ $fase->stato }}
-                    </span>
-                </td>
+                @if($isEsterno && (int)$fase->stato < 3)
+                    <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)"
+                        style="background:{{ $ddtInviato ? '#d1fae5' : '#ede9fe' }};color:{{ $ddtInviato ? '#065f46' : '#7c3aed' }};font-weight:bold;text-align:center;font-size:10px;"
+                        title="{{ $ddtInviato ? 'Inviato al fornitore (DDT creato)' : 'Esterno - da inviare' }}">EXT</td>
+                @else
+                    <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)">
+                        <span class="stato-badge" style="background:{{ $statoBg[$fase->stato] ?? '#e9ecef' }};color:{{ $statoColor[$fase->stato] ?? '#333' }}">
+                            {{ $fase->stato }}
+                        </span>
+                    </td>
+                @endif
                 <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'fase', this.innerText)">{{ $fase->faseCatalogo->nome_display ?? $fase->fase ?? '-' }}</td>
                 <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'reparto', this.innerText)">{{ $fase->reparto_nome ?? '-' }}</td>
                 @php

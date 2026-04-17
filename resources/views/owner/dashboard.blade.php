@@ -899,9 +899,10 @@ tr:hover td {
                         $statoVal = $fase->stato;
                         $isPausa = (!is_numeric($statoVal) || (is_numeric($statoVal) && (int)$statoVal > 5));
                     @endphp
-                    @if($fase->esterno && ((int)$statoVal === 5 || $statoVal < 3) && ($fase->ddt_fornitore_id || (int)$statoVal === 5))
-                    <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)" style="background:#d1fae5 !important;font-weight:bold;text-align:center;color:#065f46;font-size:10px;" title="Inviato al fornitore">EXT</td>
-                    @elseif($fase->esterno && ((int)$statoVal === 5 || $statoVal < 3))
+                    @php $isEsternoAny = $fase->esterno || $fase->ddt_fornitore_id; @endphp
+                    @if($isEsternoAny && ((int)$statoVal === 5 || $statoVal < 3) && $fase->ddt_fornitore_id)
+                    <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)" style="background:#d1fae5 !important;font-weight:bold;text-align:center;color:#065f46;font-size:10px;" title="Inviato al fornitore (DDT creato)">EXT</td>
+                    @elseif($isEsternoAny && ((int)$statoVal === 5 || $statoVal < 3))
                     <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)" style="background:#ede9fe !important;font-weight:bold;text-align:center;color:#7c3aed;font-size:10px;" title="Esterno - da inviare">EXT</td>
                     @elseif($isPausa)
                     <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)" style="background:#e9ecef !important;font-weight:bold;text-align:center;font-size:10px;" title="In pausa">{{ $statoVal }}</td>
