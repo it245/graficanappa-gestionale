@@ -501,7 +501,7 @@
                     <input type="number" id="terminaScarti" class="form-control" min="0" value="0">
                 </div>
                 <div class="mb-3" id="terminaTiroWrap" style="display:none;">
-                    <label class="form-label fw-bold">Tiro <span class="text-danger">*</span></label>
+                    <label class="form-label fw-bold">Tiro (cm) <span class="text-danger">*</span></label>
                     <input type="number" id="terminaTiro" class="form-control" min="1">
                 </div>
             </div>

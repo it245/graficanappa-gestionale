@@ -1783,6 +1783,32 @@ public function calcolaOreEPriorita($fase)
             ->get()
             ->groupBy('cliche_numero');
 
-        return view('owner.report_cliche', compact('rows', 'breakdown'));
+        // Vista per commessa: tutte le commesse con cliché collegato
+        $perCommessa = DB::table('ordini as o')
+            ->join('cliche_anagrafica as c', 'c.numero', '=', 'o.cliche_numero')
+            ->leftJoin('ordine_fasi as f', function ($j) {
+                $j->on('f.ordine_id', '=', 'o.id')
+                  ->whereNull('f.deleted_at')
+                  ->whereIn('f.fase', ['STAMPACALDOJOH', 'STAMPACALDOJOHEST', 'STAMPALAMINAORO']);
+            })
+            ->select(
+                'o.commessa',
+                'o.cliente_nome',
+                'o.descrizione',
+                'o.data_prevista_consegna',
+                'o.qta_richiesta',
+                'c.numero AS cliche_numero',
+                'c.scatola',
+                'c.descrizione_raw AS cliche_desc',
+                DB::raw('COALESCE(SUM(f.tiro), 0) AS tiro'),
+                DB::raw('COALESCE(SUM(f.scarti), 0) AS scarti'),
+                DB::raw('COALESCE(SUM(f.qta_prod), 0) AS qta_prod')
+            )
+            ->groupBy('o.commessa', 'o.cliente_nome', 'o.descrizione', 'o.data_prevista_consegna',
+                     'o.qta_richiesta', 'c.numero', 'c.scatola', 'c.descrizione_raw')
+            ->orderBy('o.data_prevista_consegna', 'desc')
+            ->get();
+
+        return view('owner.report_cliche', compact('rows', 'breakdown', 'perCommessa'));
     }
 }
