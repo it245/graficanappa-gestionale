@@ -285,16 +285,16 @@ class KioskController extends Controller
                 ->value('sec');
 
             // D. Pause di oggi per questo reparto (sottrarre dal totale)
+            // JOIN diretto pausa→ordine_fasi per ordine_id+fase (no duplicati cross-commessa)
             $secPauseOggi = DB::table('pausa_operatores')
-                ->join('ordini', 'pausa_operatores.ordine_id', '=', 'ordini.id')
                 ->join('ordine_fasi', function ($j) {
-                    $j->on('ordine_fasi.ordine_id', '=', 'ordini.id')
+                    $j->on('ordine_fasi.ordine_id', '=', 'pausa_operatores.ordine_id')
                       ->on('ordine_fasi.fase', '=', 'pausa_operatores.fase');
                 })
                 ->join('fasi_catalogo', 'ordine_fasi.fase_catalogo_id', '=', 'fasi_catalogo.id')
                 ->whereIn('fasi_catalogo.reparto_id', $repartoIds)
                 ->whereNull('ordine_fasi.deleted_at')
-                ->whereDate('pausa_operatores.data_ora', $oggi)
+                ->where('pausa_operatores.data_ora', '>=', $inizioTurno)
                 ->selectRaw("SUM(TIMESTAMPDIFF(SECOND, GREATEST(pausa_operatores.data_ora, ?), COALESCE(pausa_operatores.fine, NOW()))) as sec", [$inizioTurno])
                 ->value('sec');
 

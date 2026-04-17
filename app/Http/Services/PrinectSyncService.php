@@ -330,9 +330,16 @@ class PrinectSyncService
 
         // Aggiorna fasi di stampa per ogni commessa
         foreach ($perCommessa as $commessa => $attivitaList) {
-            // Terminata solo se: non e la corrente E ha almeno una attivita di Produzione
-            $haProduzione = collect($attivitaList)->contains(fn($a) => ($a['name'] ?? '') !== 'Avviamento');
-            $terminata = ($commessa !== $commessaCorrente && count($perCommessa) > 1 && $haProduzione);
+            $attColl = collect($attivitaList);
+            $haProduzione = $attColl->contains(fn($a) => ($a['name'] ?? '') !== 'Avviamento');
+
+            // Se l'unica attività è un avviamento (richiamo mattutino della sera prima),
+            // non considerare questa commessa come "corrente" — è solo un richiamo
+            $soloAvviamento = !$haProduzione;
+            $eCorrente = ($commessa === $commessaCorrente && count($perCommessa) > 1);
+
+            // Terminata se: non è corrente, oppure è corrente ma ha solo avviamenti (richiamo)
+            $terminata = (!$eCorrente || $soloAvviamento) && $haProduzione;
             $dataFine = $terminata ? ($ultimaAttivitaPerCommessa[$commessa]['lastEnd'] ?? null) : null;
             $this->aggiornaFaseStampaDaApi($commessa, $attivitaList, $terminata, $dataFine);
         }

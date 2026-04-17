@@ -98,16 +98,48 @@
                 $cliente = $ordine->cliente_nome ?? '';
                 $coloriCalc = \App\Helpers\DescrizioneParser::parseColori($tutteDescOp, $cliente);
                 $fustellaCalc = \App\Helpers\DescrizioneParser::parseFustella($tutteDescOp, $cliente, $ordine->note_prestampa ?? '');
+                $clicheGruppiOp = $ordini->filter(fn($o) => $o->cliche)->groupBy('cliche_numero');
             @endphp
             <p><strong>Cliente:</strong> {{ $ordine->cliente_nome }}</p>
             <p><strong>Descrizione:</strong> {{ $ordine->descrizione }}</p>
             <p><strong>Quantita totale:</strong> {{ $ordine->qta_richiesta }} {{ $ordine->um }}</p>
-            <p>
-                <strong>Colori:</strong> {{ $coloriCalc }}
-                @if($fustellaCalc)
-                    &nbsp; <strong>Fustella:</strong> {{ $fustellaCalc }}
+
+            {{-- Box Colori/Fustella/Cliché (stile uniforme) --}}
+            <div class="d-flex gap-2 mb-2 flex-wrap">
+                @if($coloriCalc)
+                <div class="border rounded p-2 d-flex align-items-center gap-2" style="background:#e8f5e9; border-color:#66bb6a !important;">
+                    <strong style="color:#2e7d32; font-size:13px;">🎨 Colori:</strong>
+                    <span class="badge" style="background:#2e7d32; color:white; font-size:12px;">{{ $coloriCalc }}</span>
+                </div>
                 @endif
-            </p>
+                @if($fustellaCalc)
+                <div class="border rounded p-2 d-flex align-items-center gap-2" style="background:#e3f2fd; border-color:#42a5f5 !important;">
+                    <strong style="color:#1565c0; font-size:13px;">✂️ Fustella:</strong>
+                    <span class="badge" style="background:#1565c0; color:white; font-size:12px;">{{ $fustellaCalc }}</span>
+                </div>
+                @endif
+                @if($clicheGruppiOp->isNotEmpty())
+                    @foreach($clicheGruppiOp as $numeroCl => $gruppoCl)
+                    @php $clOp = $gruppoCl->first()->cliche; $descrCl = $gruppoCl->pluck('descrizione')->filter()->unique(); @endphp
+                    <div class="border rounded p-2 d-flex align-items-center gap-2 flex-wrap" style="background:#fff8e1; border-color:#fbc02d !important;">
+                        <strong style="color:#f57f17; font-size:13px;">🏷️ Cliché:</strong>
+                        <span class="badge" style="background:#f57f17; color:white; font-size:12px;">{{ $clOp->numero }}</span>
+                        @if($clOp->scatola)
+                            <span class="badge" style="background:#8d6e63; color:white; font-size:12px;">Scatola {{ $clOp->scatola }}</span>
+                        @endif
+                        @if($clOp->qta)
+                            <span class="badge" style="background:#6c757d; color:white; font-size:12px;">Qta Cliché {{ $clOp->qta }}</span>
+                        @endif
+                        <small class="text-muted" style="font-size:11px;">→ {{ $descrCl->implode(' | ') }}</small>
+                    </div>
+                    @endforeach
+                @else
+                <div class="border rounded p-2 d-flex align-items-center gap-2" style="background:#fff8e1; border-color:#fbc02d !important;">
+                    <strong style="color:#f57f17; font-size:13px;">🏷️ Cliché:</strong>
+                    <small class="text-muted">Cliché non impostato</small>
+                </div>
+                @endif
+            </div>
             <div class="row mt-2 g-2">
                 <div class="col-md-4">
                     <div class="border rounded p-2 h-100" style="background:#f8f9fa">
@@ -241,6 +273,7 @@
                                    data-fogli-buoni="{{ $fase->fogli_buoni ?? 0 }}"
                                    data-fogli-scarto="{{ $fase->fogli_scarto ?? 0 }}"
                                    data-qta-prod="{{ $fase->qta_prod ?? 0 }}"
+                                   data-fase-nome="{{ $fase->fase ?? '' }}"
                                    onchange="aggiornaStato({{ $fase->id }}, 'termina', this.checked)">
                             <label for="termina-{{ $fase->id }}" class="badge-termina">Termina</label>
                         </div>
@@ -396,6 +429,10 @@
                     <label class="form-label fw-bold">Scarti</label>
                     <input type="number" id="terminaScarti" class="form-control" min="0" value="0">
                 </div>
+                <div class="mb-3" id="terminaTiroWrap" style="display:none;">
+                    <label class="form-label fw-bold">Tiro <span class="text-danger">*</span></label>
+                    <input type="number" id="terminaTiro" class="form-control" min="1">
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
@@ -529,15 +566,19 @@ function apriModalTermina(faseId) {
     var fogliBuoni = parseInt(cb ? cb.getAttribute('data-fogli-buoni') : 0) || 0;
     var fogliScarto = parseInt(cb ? cb.getAttribute('data-fogli-scarto') : 0) || 0;
     var qtaProd = parseInt(cb ? cb.getAttribute('data-qta-prod') : 0) || 0;
+    var faseNome = (cb ? cb.getAttribute('data-fase-nome') || '' : '').toUpperCase();
 
     document.getElementById('terminaFaseId').value = faseId;
 
-    // Pre-fill: fogli_buoni se > 0, altrimenti qta_prod se > 0, altrimenti vuoto
     var prefillQta = fogliBuoni > 0 ? fogliBuoni : (qtaProd > 0 ? qtaProd : '');
     document.getElementById('terminaQtaProdotta').value = prefillQta;
-
-    // Pre-fill scarti da fogli_scarto se > 0
     document.getElementById('terminaScarti').value = fogliScarto > 0 ? fogliScarto : 0;
+
+    // Tiro visibile solo per stampa a caldo
+    var caldoFasi = ['STAMPACALDOJOH', 'STAMPACALDOJOHEST', 'STAMPALAMINAORO'];
+    var isCaldo = caldoFasi.indexOf(faseNome) !== -1;
+    document.getElementById('terminaTiroWrap').style.display = isCaldo ? '' : 'none';
+    document.getElementById('terminaTiro').value = '';
 
     new bootstrap.Modal(document.getElementById('modalTermina')).show();
 }
@@ -546,18 +587,29 @@ function confermaTermina() {
     var faseId = document.getElementById('terminaFaseId').value;
     var qtaProdotta = document.getElementById('terminaQtaProdotta').value;
     var scarti = document.getElementById('terminaScarti').value;
+    var tiroWrap = document.getElementById('terminaTiroWrap');
+    var isCaldo = tiroWrap.style.display !== 'none';
+    var tiro = document.getElementById('terminaTiro').value;
 
     if (qtaProdotta === '' || parseInt(qtaProdotta) <= 0) {
         alert('Inserire la quantita prodotta (deve essere maggiore di 0)');
         return;
     }
+    if (isCaldo && (tiro === '' || parseInt(tiro) <= 0)) {
+        alert('Inserire il tiro (cm foil consumato)');
+        document.getElementById('terminaTiro').focus();
+        return;
+    }
 
     bootstrap.Modal.getInstance(document.getElementById('modalTermina')).hide();
+
+    var payload = {fase_id: faseId, qta_prodotta: parseInt(qtaProdotta), scarti: parseInt(scarti) || 0};
+    if (isCaldo) payload.tiro = parseInt(tiro);
 
     fetch('{{ route("produzione.termina") }}', {
         method:'POST',
         headers:{'X-CSRF-TOKEN':csrfToken(),'Content-Type':'application/json'},
-        body:JSON.stringify({fase_id: faseId, qta_prodotta: parseInt(qtaProdotta), scarti: parseInt(scarti) || 0})
+        body: JSON.stringify(payload)
     })
     .then(res=>res.json())
     .then(data=>{

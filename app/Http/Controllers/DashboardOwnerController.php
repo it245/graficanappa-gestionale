@@ -336,7 +336,7 @@ public function calcolaOreEPriorita($fase)
         $fasiPriorita = config('fasi_priorita', []);
 
         $fasi = OrdineFase::with(['ordine', 'faseCatalogo.reparto', 'operatori' => fn($q) => $q->select('operatori.id', 'nome')])
-            ->where(fn($q) => $q->where('stato', '<', 4)->orWhere('stato', 5))
+            ->where('stato', '!=', 4)
             ->whereHas('ordine')
             ->orderBy('priorita')
             ->get();
@@ -978,7 +978,7 @@ public function calcolaOreEPriorita($fase)
             // Prinect non disponibile, continua senza sync
         }
 
-        $ordini = Ordine::where('commessa', $commessa)->with('fasi.faseCatalogo.reparto', 'fasi.operatori')->get();
+        $ordini = Ordine::where('commessa', $commessa)->with('fasi.faseCatalogo.reparto', 'fasi.operatori', 'cliche')->get();
         if ($ordini->isEmpty()) abort(404, 'Commessa non trovata');
 
         $fasi = $ordini->flatMap(function ($ordine) {
@@ -1038,6 +1038,20 @@ public function calcolaOreEPriorita($fase)
         if (!$fase) return response()->json(['success' => false, 'messaggio' => 'Fase non trovata']);
 
         $nuovoStato = (int) $request->stato;
+
+        // Tiro obbligatorio per fasi di stampa a caldo quando si termina (stato=3)
+        $fasiCaldo = ['STAMPACALDOJOH', 'STAMPACALDOJOHEST', 'STAMPALAMINAORO'];
+        if ($nuovoStato === 3 && in_array(strtoupper($fase->fase ?? ''), $fasiCaldo, true)) {
+            if ($request->tiro === null || $request->tiro === '' || (int) $request->tiro <= 0) {
+                return response()->json([
+                    'success' => false,
+                    'messaggio' => 'Tiro (cm foil) obbligatorio per stampa a caldo.',
+                    'need_tiro' => true,
+                ], 422);
+            }
+            $fase->tiro = (int) $request->tiro;
+        }
+
         $fase->stato = $nuovoStato;
 
         if ($nuovoStato == 3 && !$fase->data_fine) {
@@ -1071,6 +1085,77 @@ public function calcolaOreEPriorita($fase)
 
         app()->terminating(fn() => ExcelSyncService::exportToExcel());
         return response()->json(['success' => true, 'messaggio' => 'Stato aggiornato']);
+    }
+
+    /**
+     * Cerca fasi di una commessa specifica (tutti gli stati, incluso 4).
+     * Usato dal filtro commessa per mostrare fasi consegnate on-demand.
+     */
+    public function cercaCommessa(Request $request)
+    {
+        $q = trim($request->get('q', ''));
+        if (strlen($q) < 3) return response()->json([]);
+
+        // Costruisci codice commessa se l'utente ha scritto solo il numero
+        $commessa = $q;
+        if (preg_match('/^\d{4,7}$/', $q)) {
+            $commessa = str_pad($q, 7, '0', STR_PAD_LEFT) . '-26';
+        }
+
+        $fasi = OrdineFase::with(['ordine', 'faseCatalogo.reparto', 'operatori' => fn($q) => $q->select('operatori.id', 'nome')])
+            ->whereHas('ordine', fn($qb) => $qb->where('commessa', 'LIKE', "%{$commessa}%"))
+            ->get();
+
+        if ($fasi->isEmpty()) return response()->json([]);
+
+        $fasiPriorita = config('fasi_priorita', []);
+        $oggiTs = \Carbon\Carbon::today()->timestamp;
+        $result = [];
+
+        foreach ($fasi as $fase) {
+            // Calcolo priorità inline
+            $qta_carta = $fase->ordine->qta_carta ?: 0;
+            $infoFase = $this->fasiInfo[$fase->fase] ?? ['avviamento' => 0.5, 'copieh' => 1000];
+            $copieh = $infoFase['copieh'] ?: 1000;
+            $ore = $infoFase['avviamento'] + ($qta_carta / $copieh);
+
+            $dataInizio = null;
+            if ($fase->operatori->isNotEmpty()) {
+                $primaData = $fase->operatori->sortBy('pivot.data_inizio')->first()->pivot->data_inizio;
+                $dataInizio = $primaData ?: null;
+            }
+
+            $result[] = [
+                'id' => $fase->id,
+                'commessa' => $fase->ordine->commessa ?? '',
+                'stato' => $fase->stato,
+                'cliente' => $fase->ordine->cliente_nome ?? '',
+                'cod_art' => $fase->ordine->cod_art ?? '',
+                'colori' => \App\Helpers\DescrizioneParser::parseColori($fase->ordine->descrizione ?? '', $fase->ordine->cliente_nome ?? '', $fase->faseCatalogo->reparto->nome ?? ''),
+                'fustella' => \App\Helpers\DescrizioneParser::parseFustella($fase->ordine->descrizione ?? '', $fase->ordine->cliente_nome ?? '', $fase->ordine->note_prestampa ?? ''),
+                'descrizione' => $fase->ordine->descrizione ?? '',
+                'qta' => $fase->ordine->qta_richiesta ?? 0,
+                'um' => $fase->ordine->um ?? '',
+                'priorita' => $fase->priorita ?? '',
+                'fase' => $fase->faseCatalogo->nome_display ?? $fase->fase ?? '',
+                'reparto' => $fase->faseCatalogo->reparto->nome ?? '',
+                'carta' => $fase->ordine->carta ?? '',
+                'qta_carta' => $fase->ordine->qta_carta ?? 0,
+                'data_consegna' => $fase->ordine->data_prevista_consegna ? \Carbon\Carbon::parse($fase->ordine->data_prevista_consegna)->format('d/m/Y') : '',
+                'cod_carta' => $fase->ordine->cod_carta ?? '',
+                'um_carta' => $fase->ordine->UM_carta ?? '',
+                'operatori' => $fase->operatori->pluck('nome')->implode(', '),
+                'qta_prod' => $fase->qta_prod ?? 0,
+                'esterno' => $fase->esterno ? 1 : 0,
+                'note' => $fase->note ?? '',
+                'data_inizio' => $dataInizio,
+                'data_fine' => $fase->getAttributes()['data_fine'] ?? '',
+                'ore_prev' => round($ore, 1),
+                'data_reg' => $fase->ordine->data_registrazione ? \Carbon\Carbon::parse($fase->ordine->data_registrazione)->format('d/m/Y') : '',
+            ];
+        }
+
+        return response()->json($result);
     }
 
     public function ricalcolaStati()
@@ -1604,5 +1689,100 @@ public function calcolaOreEPriorita($fase)
         $azioni = DB::table('audit_logs')->distinct()->pluck('action');
 
         return view('owner.audit_log', compact('logs', 'azioni'));
+    }
+
+    /**
+     * Imposta manualmente il numero di cliché su un ordine (override).
+     */
+    public function setCliche(Request $request)
+    {
+        $this->denyIfReadonly();
+        $ordineId = (int) $request->input('ordine_id');
+        $numero = $request->input('cliche_numero');
+        $ordine = \App\Models\Ordine::find($ordineId);
+        if (!$ordine) return response()->json(['ok' => false, 'error' => 'Ordine non trovato'], 404);
+
+        if ($numero === null || $numero === '') {
+            return response()->json(['ok' => false, 'error' => 'Numero cliché richiesto'], 422);
+        }
+        $numero = (int) $numero;
+
+        $cliche = \App\Models\ClicheAnagrafica::where('numero', $numero)->first();
+        if (!$cliche) return response()->json(['ok' => false, 'error' => 'Cliché non esistente'], 404);
+
+        $ordine->cliche_numero = $numero;
+        $ordine->cliche_match_type = 'manual';
+        $ordine->cliche_matched_at = now();
+        $ordine->save();
+
+        return response()->json(['ok' => true, 'label' => $cliche->label()]);
+    }
+
+    /**
+     * Rimuove il collegamento cliché (torna ad auto al prossimo match).
+     */
+    public function clearCliche(Request $request)
+    {
+        $this->denyIfReadonly();
+        $ordineId = (int) $request->input('ordine_id');
+        $ordine = \App\Models\Ordine::find($ordineId);
+        if (!$ordine) return response()->json(['ok' => false], 404);
+        $ordine->cliche_numero = null;
+        $ordine->cliche_match_type = null;
+        $ordine->cliche_matched_at = null;
+        $ordine->save();
+        return response()->json(['ok' => true]);
+    }
+
+    /**
+     * Report aggregato per cliché: commesse, tiro totale foil, scarti medi.
+     * Include breakdown per commessa (drill-down espandibile).
+     */
+    public function reportCliche(Request $request)
+    {
+        $rows = DB::table('cliche_anagrafica as c')
+            ->leftJoin('ordini as o', 'o.cliche_numero', '=', 'c.numero')
+            ->leftJoin('ordine_fasi as f', function ($j) {
+                $j->on('f.ordine_id', '=', 'o.id')
+                  ->whereNull('f.deleted_at')
+                  ->whereIn('f.fase', ['STAMPACALDOJOH', 'STAMPACALDOJOHEST', 'STAMPALAMINAORO']);
+            })
+            ->select(
+                'c.numero', 'c.descrizione_raw', 'c.scatola', 'c.qta',
+                DB::raw('COUNT(DISTINCT o.id) AS n_commesse'),
+                DB::raw('COALESCE(SUM(f.tiro), 0) AS tiro_totale'),
+                DB::raw('COALESCE(AVG(f.tiro), 0) AS tiro_medio'),
+                DB::raw('COALESCE(SUM(f.scarti), 0) AS scarti_totali'),
+                DB::raw('COALESCE(AVG(f.scarti), 0) AS scarti_medi'),
+                DB::raw('COALESCE(SUM(f.qta_prod), 0) AS qta_prod_totale')
+            )
+            ->groupBy('c.numero', 'c.descrizione_raw', 'c.scatola', 'c.qta')
+            ->orderBy('c.numero')
+            ->get();
+
+        // Breakdown per commessa (raggruppato per cliché)
+        $breakdown = DB::table('ordini as o')
+            ->leftJoin('ordine_fasi as f', function ($j) {
+                $j->on('f.ordine_id', '=', 'o.id')
+                  ->whereNull('f.deleted_at')
+                  ->whereIn('f.fase', ['STAMPACALDOJOH', 'STAMPACALDOJOHEST', 'STAMPALAMINAORO']);
+            })
+            ->whereNotNull('o.cliche_numero')
+            ->select(
+                'o.cliche_numero',
+                'o.commessa',
+                'o.cliente_nome',
+                'o.descrizione',
+                'o.data_prevista_consegna',
+                DB::raw('COALESCE(SUM(f.tiro), 0) AS tiro'),
+                DB::raw('COALESCE(SUM(f.scarti), 0) AS scarti'),
+                DB::raw('COALESCE(SUM(f.qta_prod), 0) AS qta_prod')
+            )
+            ->groupBy('o.cliche_numero', 'o.commessa', 'o.cliente_nome', 'o.descrizione', 'o.data_prevista_consegna')
+            ->orderBy('o.data_prevista_consegna', 'desc')
+            ->get()
+            ->groupBy('cliche_numero');
+
+        return view('owner.report_cliche', compact('rows', 'breakdown'));
     }
 }

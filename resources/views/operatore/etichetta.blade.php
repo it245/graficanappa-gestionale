@@ -492,6 +492,7 @@
                    data-fogli-buoni="{{ $fase->fogli_buoni ?? 0 }}"
                    data-fogli-scarto="{{ $fase->fogli_scarto ?? 0 }}"
                    data-qta-prod="{{ $fase->qta_prod ?? 0 }}"
+                   data-fase-nome="{{ $fase->fase ?? '' }}"
                    onchange="aggiornaStatoEt({{ $fase->id }}, 'termina', this.checked)">
             <label for="termina-{{ $fase->id }}" class="badge-termina">Termina</label>
         </div>
@@ -517,6 +518,10 @@
                     <label class="form-label fw-bold">Scarti</label>
                     <input type="number" id="terminaScarti" class="form-control" min="0" value="0">
                 </div>
+                <div class="mb-3" id="terminaTiroWrap" style="display:none;">
+                    <label class="form-label fw-bold">Tiro <span class="text-danger">*</span></label>
+                    <input type="number" id="terminaTiro" class="form-control" min="1">
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
@@ -538,14 +543,19 @@
                 <input type="hidden" id="pausaFaseId">
                 <div class="mb-3">
                     <label class="form-label fw-bold">Motivo della pausa</label>
-                    <select id="pausaMotivoSelect" class="form-select" onchange="document.getElementById('pausaAltroWrap').style.display=this.value==='__altro__'?'':'none'">
+                    <select id="pausaMotivoSelect" class="form-select" onchange="togglePausaExtra()">
                         <option value="">-- Seleziona --</option>
                         <option>Attesa materiale</option>
                         <option>Problema macchina</option>
                         <option>Pranzo</option>
                         <option>Fine turno</option>
+                        <option value="Acconto">Acconto (quantità prodotta)</option>
                         <option value="__altro__">Altro...</option>
                     </select>
+                </div>
+                <div class="mb-3" id="pausaAccontoWrap" style="display:none;">
+                    <label class="form-label fw-bold">Quantità prodotta finora</label>
+                    <input type="number" id="pausaAccontoQta" class="form-control" placeholder="es. 22522" min="0">
                 </div>
                 <div class="mb-3" id="pausaAltroWrap" style="display:none;">
                     <label class="form-label fw-bold">Specifica motivo</label>
@@ -962,9 +972,16 @@ function aggiornaStatoEt(faseId, azione, checked) {
         var fogliBuoni = parseInt(cb?.getAttribute('data-fogli-buoni') || 0) || 0;
         var fogliScarto = parseInt(cb?.getAttribute('data-fogli-scarto') || 0) || 0;
         var qtaProd = parseInt(cb?.getAttribute('data-qta-prod') || 0) || 0;
+        var faseNome = (cb?.getAttribute('data-fase-nome') || '').toUpperCase();
         document.getElementById('terminaFaseId').value = faseId;
         document.getElementById('terminaQtaProdotta').value = fogliBuoni > 0 ? fogliBuoni : (qtaProd > 0 ? qtaProd : '');
         document.getElementById('terminaScarti').value = fogliScarto > 0 ? fogliScarto : 0;
+        // Tiro: obbligatorio solo per stampa a caldo
+        var caldoFasi = ['STAMPACALDOJOH', 'STAMPACALDOJOHEST', 'STAMPALAMINAORO'];
+        var isCaldo = caldoFasi.indexOf(faseNome) !== -1;
+        document.getElementById('terminaTiroWrap').style.display = isCaldo ? '' : 'none';
+        document.getElementById('terminaTiro').value = '';
+        document.getElementById('terminaTiro').required = isCaldo;
         new bootstrap.Modal(document.getElementById('modalTermina')).show();
         return;
     }
@@ -982,12 +999,19 @@ function confermaTerminaEt() {
     var faseId = document.getElementById('terminaFaseId').value;
     var qta = document.getElementById('terminaQtaProdotta').value;
     var scarti = document.getElementById('terminaScarti').value;
+    var tiroInput = document.getElementById('terminaTiro');
+    var tiroWrap = document.getElementById('terminaTiroWrap');
+    var isCaldo = tiroWrap.style.display !== 'none';
+    var tiro = tiroInput.value;
     if (qta === '' || parseInt(qta) <= 0) { alert('Inserire la quantità prodotta'); return; }
+    if (isCaldo && (tiro === '' || parseInt(tiro) <= 0)) { alert('Inserire il tiro (cm foil consumato)'); tiroInput.focus(); return; }
     bootstrap.Modal.getInstance(document.getElementById('modalTermina')).hide();
+    var payload = {fase_id: faseId, qta_prodotta: parseInt(qta), scarti: parseInt(scarti) || 0};
+    if (isCaldo) payload.tiro = parseInt(tiro);
     fetch('{{ route("produzione.termina") }}', {
         method: 'POST',
         headers: {'X-CSRF-TOKEN': csrfTokenEt(), 'Content-Type': 'application/json'},
-        body: JSON.stringify({fase_id: faseId, qta_prodotta: parseInt(qta), scarti: parseInt(scarti) || 0})
+        body: JSON.stringify(payload)
     }).then(r => r.json()).then(data => {
         if (data.success) { updateBadgeEt(faseId, 3); }
         else { alert('Errore: ' + (data.messaggio || 'operazione fallita')); document.getElementById('termina-'+faseId).checked = false; }
@@ -1015,16 +1039,31 @@ document.getElementById('modalPausa').addEventListener('hidden.bs.modal', functi
     if (cb) cb.checked = false;
 });
 
+function togglePausaExtra() {
+    var sel = document.getElementById('pausaMotivoSelect').value;
+    document.getElementById('pausaAccontoWrap').style.display = sel === 'Acconto' ? '' : 'none';
+    document.getElementById('pausaAltroWrap').style.display = sel === '__altro__' ? '' : 'none';
+}
+
 function confermaPausaEt() {
     var sel = document.getElementById('pausaMotivoSelect').value;
     var motivo = sel === '__altro__' ? (document.getElementById('pausaAltroInput').value.trim() || 'Altro') : sel;
     if (!motivo) { alert('Seleziona un motivo'); return; }
     var faseId = document.getElementById('pausaFaseId').value;
+    var body = {fase_id: faseId, motivo: motivo};
+
+    // Acconto: salva anche la qta prodotta
+    if (sel === 'Acconto') {
+        var qta = parseInt(document.getElementById('pausaAccontoQta').value) || 0;
+        if (qta <= 0) { alert('Inserisci la quantità prodotta'); return; }
+        body.qta_prodotta = qta;
+    }
+
     bootstrap.Modal.getInstance(document.getElementById('modalPausa')).hide();
     fetch('{{ route("produzione.pausa") }}', {
         method: 'POST',
         headers: {'X-CSRF-TOKEN': csrfTokenEt(), 'Content-Type': 'application/json'},
-        body: JSON.stringify({fase_id: faseId, motivo: motivo})
+        body: JSON.stringify(body)
     }).then(r => r.json()).then(data => {
         if (data.success) { updateBadgeEt(faseId, data.nuovo_stato); }
         else alert('Errore: ' + (data.messaggio || 'operazione fallita'));

@@ -179,8 +179,13 @@
                         <option>Problema macchina</option>
                         <option>Pranzo</option>
                         <option>Fine turno</option>
+                        <option value="Acconto">Acconto (quantità prodotta)</option>
                         <option value="__altro__">Altro...</option>
                     </select>
+                </div>
+                <div class="mb-3" id="pausaAccontoWrap" style="display:none;">
+                    <label class="form-label fw-bold">Quantità prodotta finora</label>
+                    <input type="number" id="pausaAccontoQta" class="form-control" placeholder="es. 22522" min="0">
                 </div>
                 <div class="mb-3" id="pausaAltroWrap" style="display:none;">
                     <label class="form-label fw-bold">Specifica motivo</label>
@@ -317,8 +322,9 @@ function esternoPausa(faseId, btn) {
 }
 
 function toggleAltroPausa() {
-    document.getElementById('pausaAltroWrap').style.display =
-        document.getElementById('pausaMotivoSelect').value === '__altro__' ? '' : 'none';
+    var sel = document.getElementById('pausaMotivoSelect').value;
+    document.getElementById('pausaAltroWrap').style.display = sel === '__altro__' ? '' : 'none';
+    document.getElementById('pausaAccontoWrap').style.display = sel === 'Acconto' ? '' : 'none';
 }
 
 function confermaPausa() {
@@ -326,10 +332,16 @@ function confermaPausa() {
     var motivo = sel === '__altro__' ? (document.getElementById('pausaAltroInput').value.trim() || 'Altro') : sel;
     if (!motivo) { alert('Seleziona un motivo'); return; }
     var faseId = document.getElementById('pausaEsternoFaseId').value;
+    var body = { fase_id: faseId, motivo: motivo };
+    if (sel === 'Acconto') {
+        var qta = parseInt(document.getElementById('pausaAccontoQta').value) || 0;
+        if (qta <= 0) { alert('Inserisci la quantità prodotta'); return; }
+        body.qta_prodotta = qta;
+    }
     bootstrap.Modal.getInstance(document.getElementById('modalPausaEsterno')).hide();
     fetch('{{ route("produzione.pausa") }}', {
         method: 'POST', headers: getHdrs(),
-        body: JSON.stringify({ fase_id: faseId, motivo: motivo })
+        body: JSON.stringify(body)
     })
     .then(parseResponse)
     .then(data => {

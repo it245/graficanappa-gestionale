@@ -175,20 +175,47 @@
 </div>
 @endif
 
-{{-- Colori e Fustella --}}
+{{-- Colori, Fustella e Cliché (box affiancati) --}}
 @if($ordine)
 @php
     $tutteDescDett = $ordini->pluck('descrizione')->filter()->unique()->implode(' | ');
     $coloriDett = \App\Helpers\DescrizioneParser::parseColori($tutteDescDett, $ordine->cliente_nome ?? '');
     $fustellaDett = \App\Helpers\DescrizioneParser::parseFustella($tutteDescDett, $ordine->cliente_nome ?? '', $ordine->note_prestampa ?? '');
+    // Raggruppa ordini per cliche_numero (dedup). Un box per cliché con lista articoli.
+    $clicheGruppi = $ordini->filter(fn($o) => $o->cliche)->groupBy('cliche_numero');
 @endphp
-<div class="row g-2 mb-2" style="font-size:13px;">
-    <div class="col-auto">
-        <strong>Colori:</strong> {{ $coloriDett }}
+<div class="d-flex gap-2 mb-3 flex-wrap align-items-stretch">
+    @if($coloriDett)
+    <div class="border rounded p-2 d-flex align-items-center gap-2" style="background:#e8f5e9; border-color:#66bb6a !important;">
+        <strong style="color:#2e7d32; font-size:13px;">🎨 Colori:</strong>
+        <span class="badge" style="background:#2e7d32; color:white; font-size:12px;">{{ $coloriDett }}</span>
     </div>
+    @endif
     @if($fustellaDett)
-    <div class="col-auto">
-        <strong>Fustella:</strong> {{ $fustellaDett }}
+    <div class="border rounded p-2 d-flex align-items-center gap-2" style="background:#e3f2fd; border-color:#42a5f5 !important;">
+        <strong style="color:#1565c0; font-size:13px;">✂️ Fustella:</strong>
+        <span class="badge" style="background:#1565c0; color:white; font-size:12px;">{{ $fustellaDett }}</span>
+    </div>
+    @endif
+    @if($clicheGruppi->isNotEmpty())
+        @foreach($clicheGruppi as $numero => $gruppo)
+        @php $cl = $gruppo->first()->cliche; $descrizioni = $gruppo->pluck('descrizione')->filter()->unique(); @endphp
+        <div class="border rounded p-2 d-flex align-items-center gap-2 flex-wrap" style="background:#fff8e1; border-color:#fbc02d !important;">
+            <strong style="color:#f57f17; font-size:13px;">🏷️ Cliché:</strong>
+            <span class="badge" style="background:#f57f17; color:white; font-size:12px;">{{ $cl->numero }}</span>
+            @if($cl->scatola)
+                <span class="badge" style="background:#8d6e63; color:white; font-size:12px;">Scatola {{ $cl->scatola }}</span>
+            @endif
+            @if($cl->qta)
+                <span class="badge" style="background:#6c757d; color:white; font-size:12px;">Qta Cliché {{ $cl->qta }}</span>
+            @endif
+            <small class="text-muted" style="font-size:11px;">→ {{ $descrizioni->implode(' | ') }}</small>
+        </div>
+        @endforeach
+    @else
+    <div class="border rounded p-2 d-flex align-items-center gap-2" style="background:#fff8e1; border-color:#fbc02d !important;">
+        <strong style="color:#f57f17; font-size:13px;">🏷️ Cliché:</strong>
+        <small class="text-muted">Cliché non impostato</small>
     </div>
     @endif
 </div>
@@ -340,13 +367,23 @@
         </thead>
         <tbody>
         @foreach($fasi as $fase)
-            <tr id="fase-row-{{ $fase->id }}" data-id="{{ $fase->id }}">
+            @php
+                $isEsterno = $fase->esterno || $fase->ddt_fornitore_id;
+                $ddtInviato = (bool) $fase->ddt_fornitore_id;
+            @endphp
+            <tr id="fase-row-{{ $fase->id }}" data-id="{{ $fase->id }}" data-fase-nome="{{ $fase->fase ?? '' }}">
                 <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'priorita', this.innerText)">{{ $fase->priorita !== null ? number_format($fase->priorita, 2) : '-' }}</td>
-                <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)">
-                    <span class="stato-badge" style="background:{{ $statoBg[$fase->stato] ?? '#e9ecef' }};color:{{ $statoColor[$fase->stato] ?? '#333' }}">
-                        {{ $fase->stato }}
-                    </span>
-                </td>
+                @if($isEsterno && (int)$fase->stato < 3)
+                    <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)"
+                        style="background:{{ $ddtInviato ? '#d1fae5' : '#ede9fe' }};color:{{ $ddtInviato ? '#065f46' : '#7c3aed' }};font-weight:bold;text-align:center;font-size:10px;"
+                        title="{{ $ddtInviato ? 'Inviato al fornitore (DDT creato)' : 'Esterno - da inviare' }}">EXT</td>
+                @else
+                    <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)">
+                        <span class="stato-badge" style="background:{{ $statoBg[$fase->stato] ?? '#e9ecef' }};color:{{ $statoColor[$fase->stato] ?? '#333' }}">
+                            {{ $fase->stato }}
+                        </span>
+                    </td>
+                @endif
                 <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'fase', this.innerText)">{{ $fase->faseCatalogo->nome_display ?? $fase->fase ?? '-' }}</td>
                 <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'reparto', this.innerText)">{{ $fase->reparto_nome ?? '-' }}</td>
                 @php
@@ -524,5 +561,6 @@ function eliminaFase(faseId) {
     })
     .catch(err => { console.error(err); alert('Errore di connessione'); });
 }
+
 </script>
 @endsection

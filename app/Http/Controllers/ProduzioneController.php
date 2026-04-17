@@ -70,6 +70,7 @@ class ProduzioneController extends Controller
         'fase_id'       => 'required',
         'qta_prodotta'  => 'nullable|integer|min:0',
         'scarti'        => 'nullable|integer|min:0',
+        'tiro'          => 'nullable|integer|min:0',
     ]);
 
     if ($validator->fails()) {
@@ -83,6 +84,17 @@ class ProduzioneController extends Controller
     $fase = OrdineFase::with('operatori')->find($request->fase_id);
     if (!$fase) {
         return response()->json(['success' => false, 'messaggio' => 'Fase non trovata']);
+    }
+
+    // Tiro obbligatorio per stampa a caldo (cm foil consumato)
+    $fasiCaldo = ['STAMPACALDOJOH', 'STAMPACALDOJOHEST', 'STAMPALAMINAORO'];
+    if (in_array(strtoupper($fase->fase ?? ''), $fasiCaldo, true)) {
+        if ($request->tiro === null || $request->tiro === '' || (int) $request->tiro <= 0) {
+            return response()->json([
+                'success' => false,
+                'messaggio' => 'Tiro (cm foil) obbligatorio per stampa a caldo.',
+            ], 422);
+        }
     }
 
     $operatoreId = $request->attributes->get('operatore_id') ?? session('operatore_id');
@@ -116,6 +128,9 @@ class ProduzioneController extends Controller
     }
     $fase->qta_prod = $qtaProdotta;
     $fase->scarti = $request->scarti ?? 0;
+    if ($request->tiro !== null && $request->tiro !== '') {
+        $fase->tiro = (int) $request->tiro;
+    }
     $fase->timeout = null;
 
     // Rientro da esterno con lavorazioni aggiuntive: stato 1 + rimuovi flag esterno
@@ -182,6 +197,11 @@ class ProduzioneController extends Controller
             'motivo'       => $motivo,
             'data_ora'     => now(),
         ]);
+
+        // Acconto: salva la quantità prodotta finora
+        if ($motivo === 'Acconto' && $request->filled('qta_prodotta')) {
+            $fase->qta_prod = (int) $request->input('qta_prodotta');
+        }
 
         $fase->stato = $motivo;
         $fase->timeout = now();

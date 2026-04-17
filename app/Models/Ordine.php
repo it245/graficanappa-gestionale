@@ -19,7 +19,17 @@ class Ordine extends Model
         'valore_ordine', 'costo_materiali',
         'note_prestampa', 'responsabile', 'commento_produzione', 'note_fasi_successive', 'ordine_cliente',
         'ddt_vendita_id', 'numero_ddt_vendita', 'vettore_ddt', 'qta_ddt_vendita',
+        'cliche_numero', 'cliche_match_type', 'cliche_matched_at',
     ];
+
+    protected $casts = [
+        'cliche_matched_at' => 'datetime',
+    ];
+
+    public function cliche()
+    {
+        return $this->belongsTo(\App\Models\ClicheAnagrafica::class, 'cliche_numero', 'numero');
+    }
 
     public function articoli()
     {

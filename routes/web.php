@@ -63,6 +63,7 @@ Route::post('/owner/aggiungi-riga', [DashboardOwnerController::class, 'aggiungiR
 Route::get('owner/fasi-terminate',[DashboardOwnerController::class, 'fasiTerminate'])->name('owner.fasiTerminate');
 Route::get('/owner/commessa/{commessa}', [DashboardOwnerController::class, 'dettaglioCommessa'])->name('owner.dettaglioCommessa');
 Route::post('/owner/aggiorna-stato', [DashboardOwnerController::class, 'aggiornaStato'])->name('owner.aggiornaStato');
+Route::get('/owner/cerca-commessa', [DashboardOwnerController::class, 'cercaCommessa'])->name('owner.cercaCommessa');
 Route::post('/owner/ricalcola-stati', [DashboardOwnerController::class, 'ricalcolaStati'])->name('owner.ricalcolaStati');
 Route::post('/owner/elimina-fase', [DashboardOwnerController::class, 'eliminaFase'])->name('owner.eliminaFase');
 Route::get('/owner/scheduling', [DashboardOwnerController::class, 'scheduling'])->name('owner.scheduling');
@@ -79,6 +80,9 @@ Route::get('/owner/note-spedizione', [DashboardSpedizioneController::class, 'not
 Route::post('/owner/note-spedizione', [DashboardSpedizioneController::class, 'salvaNotaGiornaliera'])->name('owner.salvaNotaSpedizione');
 Route::get('/owner/note-spedizione-check', [DashboardSpedizioneController::class, 'noteUltimoAggiornamento'])->name('owner.noteSpedizioneCheck');
 Route::get('/owner/audit-log', [DashboardOwnerController::class, 'auditLog'])->name('owner.auditLog');
+Route::post('/owner/cliche/set', [DashboardOwnerController::class, 'setCliche'])->name('owner.setCliche');
+Route::post('/owner/cliche/clear', [DashboardOwnerController::class, 'clearCliche'])->name('owner.clearCliche');
+Route::get('/owner/report-cliche', [DashboardOwnerController::class, 'reportCliche'])->name('owner.reportCliche');
 });
 
 // Alert ritardi (protetto con middleware owner)

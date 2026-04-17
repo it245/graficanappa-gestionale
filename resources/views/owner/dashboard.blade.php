@@ -812,12 +812,19 @@ tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !imp
                 @endphp
                 <tr class="{{ $rowClass }}" data-id="{{ $fase->id }}">
                     <td><a href="{{ route('owner.dettaglioCommessa', $fase->ordine->commessa ?? '-') }}" style="color:#000;font-weight:bold;text-decoration:underline;">{{ $fase->ordine->commessa ?? '-' }}</a></td>
-                    @if($fase->esterno && ((int)$fase->stato === 5 || $fase->stato < 3) && ($fase->ddt_fornitore_id || (int)$fase->stato === 5))
-                    <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)" style="background:#d1fae5 !important;font-weight:bold;text-align:center;color:#065f46;font-size:10px;" title="Inviato al fornitore">EXT</td>
-                    @elseif($fase->esterno && ((int)$fase->stato === 5 || $fase->stato < 3))
+                    @php
+                        $statoVal = $fase->stato;
+                        $isPausa = (!is_numeric($statoVal) || (is_numeric($statoVal) && (int)$statoVal > 5));
+                    @endphp
+                    @php $isEsternoAny = $fase->esterno || $fase->ddt_fornitore_id; @endphp
+                    @if($isEsternoAny && ((int)$statoVal === 5 || $statoVal < 3) && $fase->ddt_fornitore_id)
+                    <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)" style="background:#d1fae5 !important;font-weight:bold;text-align:center;color:#065f46;font-size:10px;" title="Inviato al fornitore (DDT creato)">EXT</td>
+                    @elseif($isEsternoAny && ((int)$statoVal === 5 || $statoVal < 3))
                     <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)" style="background:#ede9fe !important;font-weight:bold;text-align:center;color:#7c3aed;font-size:10px;" title="Esterno - da inviare">EXT</td>
+                    @elseif($isPausa)
+                    <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)" style="background:#e9ecef !important;font-weight:bold;text-align:center;font-size:10px;" title="In pausa">{{ $statoVal }}</td>
                     @else
-                    <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)" style="background:{{ $statoBg[$fase->stato] ?? '#e9ecef' }} !important;font-weight:bold;text-align:center;">{{ $fase->stato }}</td>
+                    <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)" style="background:{{ $statoBg[$statoVal] ?? '#e9ecef' }} !important;font-weight:bold;text-align:center;">{{ $statoVal }}</td>
                     @endif
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'cliente_nome', this.innerText)">{{ $fase->ordine->cliente_nome ?? '-' }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'cod_art', this.innerText)">{{ $fase->ordine->cod_art ?? '-' }}</td>
@@ -1321,6 +1328,71 @@ document.getElementById('filtro-storico')?.addEventListener('input', function() 
     });
 });
 // Sidebar ora è nel layout MES (mes.blade.php)
+
+// === Cerca commessa completa (incluso stato 4) via AJAX ===
+var _fetchingCommessa = false;
+function fetchCommessaCompleta(query) {
+    if (_fetchingCommessa) return;
+    _fetchingCommessa = true;
+
+    fetch(urlToken('{{ route("owner.cercaCommessa") }}?q=' + encodeURIComponent(query)), {
+        headers: {'Accept': 'application/json'}
+    })
+    .then(r => r.json())
+    .then(fasi => {
+        _fetchingCommessa = false;
+        if (!fasi || fasi.length === 0) return;
+
+        var tbody = document.querySelector('table tbody');
+        if (!tbody) return;
+
+        var statoBg = {0:'#e9ecef', 1:'#cfe2ff', 2:'#fff3cd', 3:'#d1e7dd', 4:'#c3c3c3', 5:'#e0cffc'};
+
+        fasi.forEach(f => {
+            var tr = document.createElement('tr');
+            tr.className = 'ajax-row';
+            tr.dataset.id = f.id;
+            tr.style.borderLeft = '3px solid #0d6efd';
+
+            var statoVal = f.stato;
+            var bg = statoBg[statoVal] || '#e9ecef';
+            var isPausa = (isNaN(statoVal) && statoVal !== 'ext') || (!isNaN(statoVal) && parseInt(statoVal) > 5);
+            if (isPausa) bg = '#e9ecef';
+
+            tr.innerHTML = `
+                <td><a href="${urlToken('/owner/commessa/' + f.commessa)}" style="color:#000;font-weight:bold;text-decoration:underline;">${f.commessa}</a></td>
+                <td contenteditable onblur="aggiornaStato(${f.id}, this.innerText)" style="background:${bg}!important;font-weight:bold;text-align:center;">${f.stato}</td>
+                <td>${f.cliente}</td>
+                <td>${f.cod_art}</td>
+                <td style="font-size:10px;">${f.colori || ''}</td>
+                <td style="font-size:10px;">${f.fustella || ''}</td>
+                <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;">${f.descrizione}</td>
+                <td style="text-align:center;">${f.qta ? Number(f.qta).toLocaleString('it') : '-'}</td>
+                <td style="text-align:center;">${f.um || ''}</td>
+                <td style="text-align:center;">${f.priorita || '-'}</td>
+                <td>${f.fase}</td>
+                <td>${f.reparto}</td>
+                <td>${f.carta}</td>
+                <td style="text-align:center;">${f.qta_carta ? Number(f.qta_carta).toLocaleString('it') : '-'}</td>
+                <td>${f.data_consegna || '-'}</td>
+                <td style="font-size:10px;">${f.cod_carta || '-'}</td>
+                <td style="text-align:center;">${f.um_carta || '-'}</td>
+                <td>${f.operatori || '-'}</td>
+                <td style="text-align:center;">${f.qta_prod ? Number(f.qta_prod).toLocaleString('it') : '-'}</td>
+                <td>${f.esterno ? 'EXT' : '-'}</td>
+                <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;">${f.note || '-'}</td>
+                <td>${f.data_inizio || '-'}</td>
+                <td>${f.data_fine || '-'}</td>
+                <td style="text-align:center;">${f.ore_prev ? f.ore_prev + 'h' : '-'}</td>
+                <td>-</td>
+                <td>${f.data_reg || '-'}</td>
+                <td>-</td>
+            `;
+            tbody.prepend(tr);
+        });
+    })
+    .catch(() => { _fetchingCommessa = false; });
+}
 
 // === Token per fetch autenticate ===
 var _opToken = '{{ $opToken ?? request()->query("op_token", "") }}';
@@ -1832,6 +1904,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const fasi = getSelectedOptions(fFase);
         const reparti = getSelectedOptions(fReparto);
 
+        let visibili = 0;
         requestAnimationFrame(() => {
             rowData.forEach(data => {
                 let match = true;
@@ -1839,13 +1912,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 if(clienti.include.length || clienti.exclude.length) match = match && matchField(data.cliente, clienti);
                 if(descrizioni.include.length || descrizioni.exclude.length) match = match && matchField(data.descrizione, descrizioni);
                 if(stati.length) {
-                    var isInPausa = isNaN(data.stato) && data.stato !== 'ext';
+                    var isInPausa = (isNaN(data.stato) && data.stato !== 'ext') || (!isNaN(data.stato) && parseInt(data.stato) > 5);
                     match = match && (isInPausa || stati.includes(data.stato));
                 }
                 if(fasi.length) match = match && fasi.some(f => data.fase.includes(f));
                 if(reparti.length) match = match && reparti.includes(data.reparto);
                 data.row.style.display = match ? '' : 'none';
+                if (match) visibili++;
             });
+
+            // Se cerchi una commessa e non trovi nulla, cerca anche stato 4 via AJAX
+            var hint = document.getElementById('commessaNotFoundHint');
+            if (hint) hint.remove();
+            // Rimuovi righe AJAX precedenti
+            document.querySelectorAll('tr.ajax-row').forEach(r => r.remove());
+
+            if (visibili === 0 && commesse.include.length > 0 && commesse.include[0].length >= 3) {
+                fetchCommessaCompleta(commesse.include[0]);
+            }
         });
     }
 
