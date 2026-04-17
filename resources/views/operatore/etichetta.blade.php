@@ -474,6 +474,7 @@
                    data-fogli-buoni="{{ $fase->fogli_buoni ?? 0 }}"
                    data-fogli-scarto="{{ $fase->fogli_scarto ?? 0 }}"
                    data-qta-prod="{{ $fase->qta_prod ?? 0 }}"
+                   data-fase-nome="{{ $fase->fase ?? '' }}"
                    onchange="aggiornaStatoEt({{ $fase->id }}, 'termina', this.checked)">
             <label for="termina-{{ $fase->id }}" class="badge-termina">Termina</label>
         </div>
@@ -498,6 +499,10 @@
                 <div class="mb-3">
                     <label class="form-label fw-bold">Scarti</label>
                     <input type="number" id="terminaScarti" class="form-control" min="0" value="0">
+                </div>
+                <div class="mb-3" id="terminaTiroWrap" style="display:none;">
+                    <label class="form-label fw-bold">Tiro (cm foil consumato) <span class="text-danger">*</span></label>
+                    <input type="number" id="terminaTiro" class="form-control" min="1" placeholder="es. 250">
                 </div>
             </div>
             <div class="modal-footer">
@@ -949,9 +954,16 @@ function aggiornaStatoEt(faseId, azione, checked) {
         var fogliBuoni = parseInt(cb?.getAttribute('data-fogli-buoni') || 0) || 0;
         var fogliScarto = parseInt(cb?.getAttribute('data-fogli-scarto') || 0) || 0;
         var qtaProd = parseInt(cb?.getAttribute('data-qta-prod') || 0) || 0;
+        var faseNome = (cb?.getAttribute('data-fase-nome') || '').toUpperCase();
         document.getElementById('terminaFaseId').value = faseId;
         document.getElementById('terminaQtaProdotta').value = fogliBuoni > 0 ? fogliBuoni : (qtaProd > 0 ? qtaProd : '');
         document.getElementById('terminaScarti').value = fogliScarto > 0 ? fogliScarto : 0;
+        // Tiro: obbligatorio solo per stampa a caldo
+        var caldoFasi = ['STAMPACALDOJOH', 'STAMPACALDOJOHEST', 'STAMPALAMINAORO'];
+        var isCaldo = caldoFasi.indexOf(faseNome) !== -1;
+        document.getElementById('terminaTiroWrap').style.display = isCaldo ? '' : 'none';
+        document.getElementById('terminaTiro').value = '';
+        document.getElementById('terminaTiro').required = isCaldo;
         new bootstrap.Modal(document.getElementById('modalTermina')).show();
         return;
     }
@@ -969,12 +981,19 @@ function confermaTerminaEt() {
     var faseId = document.getElementById('terminaFaseId').value;
     var qta = document.getElementById('terminaQtaProdotta').value;
     var scarti = document.getElementById('terminaScarti').value;
+    var tiroInput = document.getElementById('terminaTiro');
+    var tiroWrap = document.getElementById('terminaTiroWrap');
+    var isCaldo = tiroWrap.style.display !== 'none';
+    var tiro = tiroInput.value;
     if (qta === '' || parseInt(qta) <= 0) { alert('Inserire la quantità prodotta'); return; }
+    if (isCaldo && (tiro === '' || parseInt(tiro) <= 0)) { alert('Inserire il tiro (cm foil consumato)'); tiroInput.focus(); return; }
     bootstrap.Modal.getInstance(document.getElementById('modalTermina')).hide();
+    var payload = {fase_id: faseId, qta_prodotta: parseInt(qta), scarti: parseInt(scarti) || 0};
+    if (isCaldo) payload.tiro = parseInt(tiro);
     fetch('{{ route("produzione.termina") }}', {
         method: 'POST',
         headers: {'X-CSRF-TOKEN': csrfTokenEt(), 'Content-Type': 'application/json'},
-        body: JSON.stringify({fase_id: faseId, qta_prodotta: parseInt(qta), scarti: parseInt(scarti) || 0})
+        body: JSON.stringify(payload)
     }).then(r => r.json()).then(data => {
         if (data.success) { updateBadgeEt(faseId, 3); }
         else { alert('Errore: ' + (data.messaggio || 'operazione fallita')); document.getElementById('termina-'+faseId).checked = false; }
