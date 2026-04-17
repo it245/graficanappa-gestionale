@@ -178,8 +178,8 @@
     $tutteDescDett = $ordini->pluck('descrizione')->filter()->unique()->implode(' | ');
     $coloriDett = \App\Helpers\DescrizioneParser::parseColori($tutteDescDett, $ordine->cliente_nome ?? '');
     $fustellaDett = \App\Helpers\DescrizioneParser::parseFustella($tutteDescDett, $ordine->cliente_nome ?? '', $ordine->note_prestampa ?? '');
-    $clicheOrd = $ordine->cliche ?? null;
-    $clicheType = $ordine->cliche_match_type ?? null;
+    // Un box cliché per ogni ordine della commessa (varianti articolo)
+    $clicheOrdini = $ordini->filter(fn($o) => $o->cliche);
 @endphp
 <div class="d-flex gap-2 mb-3 flex-wrap align-items-stretch">
     @if($coloriDett)
@@ -194,20 +194,26 @@
         <span class="badge" style="background:#1565c0; color:white; font-size:12px;">{{ $fustellaDett }}</span>
     </div>
     @endif
+    @if($clicheOrdini->isNotEmpty())
+        @foreach($clicheOrdini as $o)
+        <div class="border rounded p-2 d-flex align-items-center gap-2 flex-wrap" style="background:#fff8e1; border-color:#fbc02d !important;">
+            <strong style="color:#f57f17; font-size:13px;">🏷️ Cliché:</strong>
+            <span class="badge" style="background:#f57f17; color:white; font-size:12px;">{{ $o->cliche->numero }}</span>
+            @if($o->cliche->scatola)
+                <span class="badge" style="background:#8d6e63; color:white; font-size:12px;">Scatola {{ $o->cliche->scatola }}</span>
+            @endif
+            @if($o->cliche->qta)
+                <span class="badge" style="background:#6c757d; color:white; font-size:12px;">Qta Cliché {{ $o->cliche->qta }}</span>
+            @endif
+            <small class="text-muted" style="font-size:11px;">→ {{ $o->descrizione }}</small>
+        </div>
+        @endforeach
+    @else
     <div class="border rounded p-2 d-flex align-items-center gap-2" style="background:#fff8e1; border-color:#fbc02d !important;">
         <strong style="color:#f57f17; font-size:13px;">🏷️ Cliché:</strong>
-        @if($clicheOrd)
-            <span class="badge" style="background:#f57f17; color:white; font-size:12px;">{{ $clicheOrd->numero }}</span>
-            @if($clicheOrd->scatola)
-                <span class="badge" style="background:#8d6e63; color:white; font-size:12px;">Scatola {{ $clicheOrd->scatola }}</span>
-            @endif
-            @if($clicheOrd->qta)
-                <span class="badge" style="background:#6c757d; color:white; font-size:12px;">Qta Cliché {{ $clicheOrd->qta }}</span>
-            @endif
-        @else
-            <small class="text-muted">Cliché non impostato</small>
-        @endif
+        <small class="text-muted">Cliché non impostato</small>
     </div>
+    @endif
 </div>
 @endif
 
