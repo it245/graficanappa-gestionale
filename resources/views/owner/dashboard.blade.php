@@ -1708,54 +1708,43 @@ function aggiornaCampo(faseId, campo, valore, targetEl){
         cell.style.background = '#fff8e1';
     }
 
-    function doFetch(retry) {
-        fetch(urlToken('{{ route("owner.aggiornaCampo") }}'), {
-            method: 'POST',
-            headers: {'X-CSRF-TOKEN': csrfToken(), 'Content-Type': 'application/json', 'Accept': 'application/json'},
-            body: JSON.stringify({ fase_id: faseId, campo: campo, valore: valore })
-        })
-        .then(function(r) {
-            if (r.status === 419) {
-                alert('Sessione scaduta. Ricarica la pagina (F5).');
-                throw new Error('csrf');
-            }
-            if (!r.ok) throw new Error('http-' + r.status);
-            return r.json();
-        })
-        .then(function(d) {
-            if (!d.success) {
-                if (cell) cell.style.background = '#f8d7da';
-                alert('Errore salvataggio: ' + (d.messaggio || ''));
-                return;
-            }
-            if (cell) {
-                cell.style.background = '#d1e7dd';
-                setTimeout(function() { cell.style.background = ''; }, 1200);
-            }
-            if (campo === 'priorita' && cell) {
-                try {
-                    var row = cell.closest('tr');
-                    var commessaCell = row ? row.querySelector('td:first-child') : null;
-                    var commessa = commessaCell ? commessaCell.innerText.trim() : '';
-                    console.log('[popover] commessa:', commessa, 'valore:', valore);
-                    if (commessa) mostraPopoverApplicaTutte(cell, commessa, valore);
-                } catch (e) { console.error('[popover]', e); }
-            }
-            if (d.reload) window.location.reload();
-        })
-        .catch(function(err) {
-            console.error('aggiornaCampo fetch error:', err);
-            if (err.message === 'csrf') return;
-            if (retry > 0) {
-                console.warn('retry aggiornaCampo...');
-                setTimeout(function() { doFetch(retry - 1); }, 800);
-                return;
-            }
+    fetch(urlToken('{{ route("owner.aggiornaCampo") }}'), {
+        method: 'POST',
+        headers: {'X-CSRF-TOKEN': csrfToken(), 'Content-Type': 'application/json', 'Accept': 'application/json'},
+        body: JSON.stringify({ fase_id: faseId, campo: campo, valore: valore })
+    })
+    .then(function(r) {
+        if (r.status === 419) { alert('Sessione scaduta. Ricarica la pagina (F5).'); throw new Error('csrf'); }
+        if (r.status === 429) { alert('Troppe richieste. Attendi qualche secondo.'); throw new Error('throttle'); }
+        if (!r.ok) throw new Error('http-' + r.status);
+        return r.json();
+    })
+    .then(function(d) {
+        if (!d.success) {
             if (cell) cell.style.background = '#f8d7da';
-            alert('Errore di connessione (rete lenta o server non risponde)');
-        });
-    }
-    doFetch(1);
+            alert('Errore salvataggio: ' + (d.messaggio || ''));
+            return;
+        }
+        if (cell) {
+            cell.style.background = '#d1e7dd';
+            setTimeout(function() { cell.style.background = ''; }, 1200);
+        }
+        if (campo === 'priorita' && cell) {
+            try {
+                var row = cell.closest('tr');
+                var commessaCell = row ? row.querySelector('td:first-child') : null;
+                var commessa = commessaCell ? commessaCell.innerText.trim() : '';
+                if (commessa) mostraPopoverApplicaTutte(cell, commessa, valore);
+            } catch (e) { console.error('[popover]', e); }
+        }
+        if (d.reload) window.location.reload();
+    })
+    .catch(function(err) {
+        console.error('aggiornaCampo:', err);
+        if (err.message === 'csrf' || err.message === 'throttle') return;
+        if (cell) cell.style.background = '#f8d7da';
+        alert('Errore salvataggio (server)');
+    });
 }
 
 function mostraPopoverApplicaTutte(cell, commessa, priorita) {
