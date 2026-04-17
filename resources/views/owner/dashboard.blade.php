@@ -1691,6 +1691,7 @@ document.addEventListener('DOMContentLoaded', function(){
 {{-- JS --}}
 <script>
 function aggiornaCampo(faseId, campo, valore, targetEl){
+    console.log('[aggiornaCampo]', {faseId, campo, valore});
     valore = valore.trim();
 
     const campiNumerici = ['qta_richiesta','qta_prod','priorita','qta_carta','ore'];
