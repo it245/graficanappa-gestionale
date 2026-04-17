@@ -917,8 +917,8 @@ tr:hover td {
                     @else
                     <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)" style="background:{{ $statoBg[$statoVal] ?? '#e9ecef' }} !important;font-weight:bold;text-align:center;">{{ $statoVal }}</td>
                     @endif
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'cliente_nome', this.innerText)">{{ $fase->ordine->cliente_nome ?? '-' }}</td>
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'cod_art', this.innerText)">{{ $fase->ordine->cod_art ?? '-' }}</td>
+                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'cliente_nome', this.innerText, this)">{{ $fase->ordine->cliente_nome ?? '-' }}</td>
+                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'cod_art', this.innerText, this)">{{ $fase->ordine->cod_art ?? '-' }}</td>
                     @php
                         $descOwner = $fase->ordine->descrizione ?? '';
                         $clienteOwner = $fase->ordine->cliente_nome ?? '';
@@ -928,11 +928,11 @@ tr:hover td {
                     @endphp
                     <td>{{ $coloriOwner ?: '-' }}{{ str_contains(strtolower($clienteOwner), 'tifata') ? ' - IML' : '' }}</td>
                     <td>{{ $fustellaOwner ?: '-' }}</td>
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'descrizione', this.innerText)">{{ $fase->ordine->descrizione ?? '-' }}</td>
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'qta_richiesta', this.innerText)">{{ $fase->ordine->qta_richiesta ?? '-' }}</td>
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'um', this.innerText)">{{ $fase->ordine->um ?? '-' }}</td>
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'priorita', this.innerText)">{{ $fase->priorita !== null ? number_format($fase->priorita, 2) : '-' }}</td>
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'fase', this.innerText)">{{ $fase->faseCatalogo->nome_display ?? '-' }}</td>
+                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'descrizione', this.innerText, this)">{{ $fase->ordine->descrizione ?? '-' }}</td>
+                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'qta_richiesta', this.innerText, this)">{{ $fase->ordine->qta_richiesta ?? '-' }}</td>
+                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'um', this.innerText, this)">{{ $fase->ordine->um ?? '-' }}</td>
+                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'priorita', this.innerText, this)">{{ $fase->priorita !== null ? number_format($fase->priorita, 2) : '-' }}</td>
+                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'fase', this.innerText, this)">{{ $fase->faseCatalogo->nome_display ?? '-' }}</td>
                     <td>{{ $fase->faseCatalogo->reparto->nome ?? '-' }}</td>
                     @php
                         $cartaDesc = $fase->ordine->carta ?? '-';
@@ -943,7 +943,7 @@ tr:hover td {
                             $cartaDesc = preg_replace('/\d+\s*[Xx]\s*\d+/', $formatoReale, $cartaDesc, 1);
                         }
                     @endphp
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'carta', this.innerText)">{{ $cartaDesc }}</td>
+                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'carta', this.innerText, this)">{{ $cartaDesc }}</td>
                     @php
                         $umFase = strtoupper(trim($fase->um ?? 'FG'));
                         $isPezzi = in_array($umFase, ['TR', 'PZ', 'KG']);
@@ -954,9 +954,9 @@ tr:hover td {
                             $qtaFaseVal = $fase->qta_fase ?: ($isPezzi ? ($fase->ordine->qta_richiesta ?? 0) : ($fase->ordine->qta_carta ?? 0));
                         }
                     @endphp
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'qta_fase', this.innerText)">{{ $qtaFaseVal ? number_format($qtaFaseVal, 0, ',', '.') : '-' }}</td>
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_prevista_consegna', this.innerText)">{{ formatItalianDate($fase->ordine->data_prevista_consegna) }}</td>
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'cod_carta', this.innerText)">{{ $fase->ordine->cod_carta ?? '-' }}</td>
+                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'qta_fase', this.innerText, this)">{{ $qtaFaseVal ? number_format($qtaFaseVal, 0, ',', '.') : '-' }}</td>
+                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_prevista_consegna', this.innerText, this)">{{ formatItalianDate($fase->ordine->data_prevista_consegna) }}</td>
+                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'cod_carta', this.innerText, this)">{{ $fase->ordine->cod_carta ?? '-' }}</td>
                     <td style="font-weight:600;color:{{ $isPezzi ? '#2563eb' : '#059669' }}">{{ $umLabel }}</td>
                     <td>
                         @forelse($fase->operatori as $op)
@@ -965,7 +965,7 @@ tr:hover td {
                             -
                         @endforelse
                     </td>
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'qta_prod', this.innerText)">{{ $fase->qta_prod ?? '-' }}</td>
+                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'qta_prod', this.innerText, this)">{{ $fase->qta_prod ?? '-' }}</td>
                     @php
                         $fornitoreEsterno = preg_match('/Inviato a:\s*(.+)/i', $fase->note ?? '', $mEst) ? trim($mEst[1]) : null;
                         $notePulitaOwner = preg_replace('/,?\s*Inviato a:\s*.+/i', '', $fase->note ?? '');
@@ -983,10 +983,10 @@ tr:hover td {
                             @endforeach
                             @if($notePulitaOwner)<br>@endif
                         @endif
-                        <span contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'note', this.innerText)">{{ $notePulitaOwner ?? '-' }}</span>
+                        <span contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'note', this.innerText, this)">{{ $notePulitaOwner ?? '-' }}</span>
                     </td>
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_inizio', this.innerText)">{{ formatItalianDate($fase->data_inizio, true) }}</td>
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_fine', this.innerText)">{{ formatItalianDate($fase->data_fine, true) }}</td>
+                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_inizio', this.innerText, this)">{{ formatItalianDate($fase->data_inizio, true) }}</td>
+                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_fine', this.innerText, this)">{{ formatItalianDate($fase->data_fine, true) }}</td>
                     @php
                         // Ore previste: avviamento + qta_carta / copieh
                         $fasiInfoOw = config('fasi_ore');
@@ -1044,7 +1044,7 @@ tr:hover td {
                             -
                         @endif
                     </td>
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_registrazione', this.innerText)">{{ formatItalianDate($fase->ordine->data_registrazione) }}</td>
+                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_registrazione', this.innerText, this)">{{ formatItalianDate($fase->ordine->data_registrazione) }}</td>
                     @php
                         $prog = $progressoCommesse[$fase->ordine->commessa ?? ''] ?? ['totale'=>0,'terminate'=>0,'avviate'=>0,'percentuale'=>0];
                         $progPerc = $prog['percentuale'];
