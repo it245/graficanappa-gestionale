@@ -1719,6 +1719,37 @@ public function calcolaOreEPriorita($fase)
     }
 
     /**
+     * Applica una priorità a tutte le fasi di una commessa (stato < 3).
+     * Imposta priorita_manuale=true per proteggere dai ricalcoli automatici.
+     */
+    public function applicaPrioritaCommessa(Request $request)
+    {
+        if ($deny = $this->denyIfReadonly()) return $deny;
+        $commessa = trim((string) $request->input('commessa'));
+        $priorita = $request->input('priorita');
+        if ($commessa === '' || $priorita === null || $priorita === '') {
+            return response()->json(['success' => false, 'messaggio' => 'commessa o priorita mancanti'], 422);
+        }
+        $priorita = (float) str_replace(',', '.', (string) $priorita);
+
+        $ordiniIds = \App\Models\Ordine::where('commessa', $commessa)->pluck('id');
+        if ($ordiniIds->isEmpty()) {
+            return response()->json(['success' => false, 'messaggio' => 'commessa non trovata'], 404);
+        }
+
+        $count = OrdineFase::whereIn('ordine_id', $ordiniIds)
+            ->where('stato', '<', 3)
+            ->whereNull('deleted_at')
+            ->update([
+                'priorita' => $priorita,
+                'priorita_manuale' => true,
+                'updated_at' => now(),
+            ]);
+
+        return response()->json(['success' => true, 'count' => $count]);
+    }
+
+    /**
      * Rimuove il collegamento cliché (torna ad auto al prossimo match).
      */
     public function clearCliche(Request $request)

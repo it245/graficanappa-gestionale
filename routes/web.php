@@ -75,6 +75,7 @@ Route::get('/owner/audit-log', [DashboardOwnerController::class, 'auditLog'])->n
 Route::post('/owner/cliche/set', [DashboardOwnerController::class, 'setCliche'])->name('owner.setCliche');
 Route::post('/owner/cliche/clear', [DashboardOwnerController::class, 'clearCliche'])->name('owner.clearCliche');
 Route::get('/owner/report-cliche', [DashboardOwnerController::class, 'reportCliche'])->name('owner.reportCliche');
+Route::post('/owner/applica-priorita-commessa', [DashboardOwnerController::class, 'applicaPrioritaCommessa'])->name('owner.applicaPrioritaCommessa');
 });
 
 // Alert ritardi (API senza auth per polling dashboard)

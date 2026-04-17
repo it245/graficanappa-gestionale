@@ -1693,7 +1693,6 @@ document.addEventListener('DOMContentLoaded', function(){
 function aggiornaCampo(faseId, campo, valore, targetEl){
     valore = valore.trim();
 
-    // Se il campo è numerico o priorità, sostituisci la virgola con punto
     const campiNumerici = ['qta_richiesta','qta_prod','priorita','qta_carta','ore'];
     if(campiNumerici.includes(campo)){
         valore = valore.replace(',', '.');
@@ -1703,11 +1702,10 @@ function aggiornaCampo(faseId, campo, valore, targetEl){
         }
     }
 
-    // Usa event.target se non passato
     var cell = targetEl || (typeof event !== 'undefined' && event.target) || null;
     if (cell) {
         cell.style.transition = 'background 0.3s';
-        cell.style.background = '#fff8e1'; // giallo = in salvataggio
+        cell.style.background = '#fff8e1';
     }
 
     fetch(urlToken('{{ route("owner.aggiornaCampo") }}'), {
@@ -1718,12 +1716,19 @@ function aggiornaCampo(faseId, campo, valore, targetEl){
     .then(r => r.json())
     .then(d => {
         if (!d.success) {
-            if (cell) cell.style.background = '#f8d7da'; // rosso = errore
+            if (cell) cell.style.background = '#f8d7da';
             alert('Errore salvataggio: ' + (d.messaggio || ''));
         } else {
             if (cell) {
-                cell.style.background = '#d1e7dd'; // verde = ok
+                cell.style.background = '#d1e7dd';
                 setTimeout(function() { cell.style.background = ''; }, 1200);
+            }
+            // Popover "applica a tutte" per cambio priorità
+            if (campo === 'priorita' && cell) {
+                const row = cell.closest('tr');
+                const commessaCell = row ? row.querySelector('td:first-child') : null;
+                const commessa = commessaCell ? commessaCell.innerText.trim() : null;
+                if (commessa) mostraPopoverApplicaTutte(cell, commessa, valore);
             }
             if (d.reload) window.location.reload();
         }
@@ -1733,6 +1738,45 @@ function aggiornaCampo(faseId, campo, valore, targetEl){
         if (cell) cell.style.background = '#f8d7da';
         alert('Errore di connessione');
     });
+}
+
+function mostraPopoverApplicaTutte(cell, commessa, priorita) {
+    var existing = document.getElementById('popApplicaTutte');
+    if (existing) existing.remove();
+
+    var rect = cell.getBoundingClientRect();
+    var pop = document.createElement('div');
+    pop.id = 'popApplicaTutte';
+    pop.style.cssText = 'position:fixed; z-index:9999; background:#fff; border:2px solid #f57f17; border-radius:6px; padding:8px 12px; box-shadow:0 4px 12px rgba(0,0,0,0.2); font-size:13px;';
+    pop.style.top = (rect.bottom + 4) + 'px';
+    pop.style.left = rect.left + 'px';
+    pop.innerHTML = '<button class="btn btn-sm btn-warning fw-bold" onclick="applicaPrioritaATutte(\'' + commessa + '\', ' + priorita + ')">Applica ' + priorita + ' a tutte le fasi di ' + commessa + '</button> <button class="btn btn-sm btn-link text-muted p-0 ms-2" onclick="document.getElementById(\'popApplicaTutte\').remove()">✕</button>';
+    document.body.appendChild(pop);
+    setTimeout(function() {
+        var p = document.getElementById('popApplicaTutte');
+        if (p) p.remove();
+    }, 8000);
+}
+
+function applicaPrioritaATutte(commessa, priorita) {
+    var pop = document.getElementById('popApplicaTutte');
+    if (pop) pop.remove();
+    if (!confirm('Applicare priorità ' + priorita + ' a TUTTE le fasi (stato <3) della commessa ' + commessa + '?')) return;
+    fetch('{{ route("owner.applicaPrioritaCommessa") }}', {
+        method: 'POST',
+        headers: {'X-CSRF-TOKEN': csrfToken(), 'Content-Type': 'application/json'},
+        body: JSON.stringify({ commessa: commessa, priorita: priorita })
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (d.success) {
+            alert('Priorità applicata a ' + d.count + ' fasi');
+            window.location.reload();
+        } else {
+            alert('Errore: ' + (d.messaggio || ''));
+        }
+    })
+    .catch(() => alert('Errore di connessione'));
 }
 
 function aggiornaStato(faseId, testo) {
