@@ -29,6 +29,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'owner/sync-onda',
             'owner/import',
             'owner/aggiorna-campo',
+            'owner/cliche/set',
+            'owner/cliche/clear',
             'operatore/prestampa/aggiorna-campo',
             'spedizione/sync-onda',
         ]);

@@ -48,7 +48,7 @@ class DashboardMesSheet implements FromCollection, WithHeadings, WithMapping, Wi
 
     public function collection()
     {
-        return OrdineFase::with(['ordine', 'faseCatalogo.reparto', 'operatori' => fn($q) => $q->select('operatori.id', 'nome')])
+        return OrdineFase::with(['ordine.cliche', 'faseCatalogo.reparto', 'operatori' => fn($q) => $q->select('operatori.id', 'nome')])
             ->where('stato', $this->operatore, $this->stato)
             ->get();
     }
@@ -63,7 +63,7 @@ class DashboardMesSheet implements FromCollection, WithHeadings, WithMapping, Wi
             'Qta Prod', 'Note', 'Data Inizio', 'Data Fine',
             'Ordine Cliente', 'N. DDT Vendita', 'Vettore DDT', 'Qta DDT', 'Note Fasi Successive',
             'Colori', 'Fustella', 'Esterno', 'Ore Prev.', 'Ore Lav.',
-            'Scarti', 'Scarti Prev.',
+            'Scarti', 'Scarti Prev.', 'Cliché',
         ];
     }
 
@@ -158,6 +158,8 @@ class DashboardMesSheet implements FromCollection, WithHeadings, WithMapping, Wi
             $fase->scarti ?? '',
             // Scarti Previsti (da Onda, sola lettura)
             $fase->scarti_previsti ?? '',
+            // Cliché (auto/manual, sola lettura)
+            $ordine && $ordine->cliche ? $ordine->cliche->label() : '',
         ];
     }
 
@@ -201,16 +203,17 @@ class DashboardMesSheet implements FromCollection, WithHeadings, WithMapping, Wi
             'AI' => 10, // Ore Lav.
             'AJ' => 10, // Scarti
             'AK' => 12, // Scarti Prev.
+            'AL' => 12, // Cliché
         ];
     }
 
     public function styles(Worksheet $sheet)
     {
         $lastRow = $sheet->getHighestRow();
-        $nonEditabili = ['A', 'B', 'S', 'T', 'U', 'AE', 'AF', 'AG', 'AH', 'AI', 'AK'];
+        $nonEditabili = ['A', 'B', 'S', 'T', 'U', 'AE', 'AF', 'AG', 'AH', 'AI', 'AK', 'AL'];
 
         // Header: sfondo nero, testo bianco, grassetto
-        $sheet->getStyle('A1:AK1')->applyFromArray([
+        $sheet->getStyle('A1:AL1')->applyFromArray([
             'font' => [
                 'bold' => true,
                 'color' => ['rgb' => 'FFFFFF'],
@@ -239,7 +242,7 @@ class DashboardMesSheet implements FromCollection, WithHeadings, WithMapping, Wi
         }
 
         // Auto-filtro sulla riga header
-        $sheet->setAutoFilter('A1:AK1');
+        $sheet->setAutoFilter('A1:AL1');
 
         return [];
     }

@@ -45,6 +45,9 @@ Schedule::command('presenze:export-excel')->everyFifteenMinutes()->weekdays()->b
 // Pulizia audit log: mantieni ultimi 90 giorni
 Schedule::command('audit:pulisci')->dailyAt('03:00');
 
+// Match automatico cliché ogni 10 minuti (dopo sync Onda)
+Schedule::command('cliche:match')->everyTenMinutes()->withoutOverlapping();
+
 // Scheduler Mossa 37 — DISABILITATO (in attesa approvazione capo)
 // Schedule::command('scheduler:run')->everyFifteenMinutes()->weekdays()->between('6:00', '22:00')->withoutOverlapping();
 

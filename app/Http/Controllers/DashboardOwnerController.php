@@ -1676,4 +1676,47 @@ public function calcolaOreEPriorita($fase)
 
         return view('owner.audit_log', compact('logs', 'azioni'));
     }
+
+    /**
+     * Imposta manualmente il numero di cliché su un ordine (override).
+     */
+    public function setCliche(Request $request)
+    {
+        $this->denyIfReadonly();
+        $ordineId = (int) $request->input('ordine_id');
+        $numero = $request->input('cliche_numero');
+        $ordine = \App\Models\Ordine::find($ordineId);
+        if (!$ordine) return response()->json(['ok' => false, 'error' => 'Ordine non trovato'], 404);
+
+        if ($numero === null || $numero === '') {
+            return response()->json(['ok' => false, 'error' => 'Numero cliché richiesto'], 422);
+        }
+        $numero = (int) $numero;
+
+        $cliche = \App\Models\ClicheAnagrafica::where('numero', $numero)->first();
+        if (!$cliche) return response()->json(['ok' => false, 'error' => 'Cliché non esistente'], 404);
+
+        $ordine->cliche_numero = $numero;
+        $ordine->cliche_match_type = 'manual';
+        $ordine->cliche_matched_at = now();
+        $ordine->save();
+
+        return response()->json(['ok' => true, 'label' => $cliche->label()]);
+    }
+
+    /**
+     * Rimuove il collegamento cliché (torna ad auto al prossimo match).
+     */
+    public function clearCliche(Request $request)
+    {
+        $this->denyIfReadonly();
+        $ordineId = (int) $request->input('ordine_id');
+        $ordine = \App\Models\Ordine::find($ordineId);
+        if (!$ordine) return response()->json(['ok' => false], 404);
+        $ordine->cliche_numero = null;
+        $ordine->cliche_match_type = null;
+        $ordine->cliche_matched_at = null;
+        $ordine->save();
+        return response()->json(['ok' => true]);
+    }
 }
