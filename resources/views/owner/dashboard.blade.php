@@ -1715,10 +1715,14 @@ function aggiornaCampo(faseId, campo, valore, targetEl){
         body: JSON.stringify({ fase_id: faseId, campo: campo, valore: valore })
     })
     .then(function(r) {
+        alert('DEBUG step1 status=' + r.status);
         if (r.status === 419) { alert('Sessione scaduta. Ricarica la pagina (F5).'); throw new Error('csrf'); }
         if (r.status === 429) { alert('Troppe richieste. Attendi qualche secondo.'); throw new Error('throttle'); }
         if (!r.ok) throw new Error('http-' + r.status);
-        return r.json();
+        return r.text().then(function(txt) {
+            alert('DEBUG step2 body=' + txt);
+            try { return JSON.parse(txt); } catch(e) { alert('DEBUG JSON parse fail: ' + e); throw e; }
+        });
     })
     .then(function(d) {
         console.log('[aggiornaCampo response]', d);
