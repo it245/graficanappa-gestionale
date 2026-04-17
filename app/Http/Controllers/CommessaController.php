@@ -12,7 +12,7 @@ class CommessaController extends Controller
     {
         // Carica TUTTI gli ordini con questa commessa (fondente, latte, ecc.)
         $ordini = Ordine::where('commessa', $commessa)
-                        ->with(['fasi.faseCatalogo.reparto', 'fasi.operatori'])
+                        ->with(['fasi.faseCatalogo.reparto', 'fasi.operatori', 'cliche'])
                         ->get();
 
         if ($ordini->isEmpty()) {

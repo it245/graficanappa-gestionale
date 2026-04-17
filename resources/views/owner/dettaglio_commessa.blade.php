@@ -361,7 +361,7 @@
                 $isEsterno = $fase->esterno || $fase->ddt_fornitore_id;
                 $ddtInviato = (bool) $fase->ddt_fornitore_id;
             @endphp
-            <tr id="fase-row-{{ $fase->id }}" data-id="{{ $fase->id }}">
+            <tr id="fase-row-{{ $fase->id }}" data-id="{{ $fase->id }}" data-fase-nome="{{ $fase->fase ?? '' }}">
                 <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'priorita', this.innerText)">{{ $fase->priorita !== null ? number_format($fase->priorita, 2) : '-' }}</td>
                 @if($isEsterno && (int)$fase->stato < 3)
                     <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)"

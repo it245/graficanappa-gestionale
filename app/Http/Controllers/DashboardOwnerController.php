@@ -1038,6 +1038,20 @@ public function calcolaOreEPriorita($fase)
         if (!$fase) return response()->json(['success' => false, 'messaggio' => 'Fase non trovata']);
 
         $nuovoStato = (int) $request->stato;
+
+        // Tiro obbligatorio per fasi di stampa a caldo quando si termina (stato=3)
+        $fasiCaldo = ['STAMPACALDOJOH', 'STAMPACALDOJOHEST', 'STAMPALAMINAORO'];
+        if ($nuovoStato === 3 && in_array(strtoupper($fase->fase ?? ''), $fasiCaldo, true)) {
+            if ($request->tiro === null || $request->tiro === '' || (int) $request->tiro <= 0) {
+                return response()->json([
+                    'success' => false,
+                    'messaggio' => 'Tiro (cm foil) obbligatorio per stampa a caldo.',
+                    'need_tiro' => true,
+                ], 422);
+            }
+            $fase->tiro = (int) $request->tiro;
+        }
+
         $fase->stato = $nuovoStato;
 
         if ($nuovoStato == 3 && !$fase->data_fine) {
