@@ -1722,6 +1722,7 @@ function aggiornaCampo(faseId, campo, valore, targetEl){
     })
     .then(function(d) {
         console.log('[aggiornaCampo response]', d);
+        if (campo === 'priorita') alert('DEBUG response priorità: success=' + d.success);
         if (!d.success) {
             if (cell) cell.style.background = '#f8d7da';
             alert('Errore salvataggio: ' + (d.messaggio || ''));
