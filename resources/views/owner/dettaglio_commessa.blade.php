@@ -112,30 +112,6 @@
     </div>
 </div>
 
-{{-- Box cliché --}}
-@php
-    $clicheOrd = $ordine->cliche ?? null;
-    $clicheLabel = $clicheOrd ? $clicheOrd->label() : null;
-    $clicheType = $ordine->cliche_match_type ?? null;
-@endphp
-<div class="mb-3">
-    <div class="border rounded p-2 d-flex align-items-center gap-3 flex-wrap" style="background:#fff8e1; border-color:#fbc02d !important;">
-        <strong style="color:#f57f17; font-size:13px;">🏷️ Cliché:</strong>
-        @if($clicheLabel)
-            <span class="badge" style="background:#f57f17; color:white; font-size:13px;">{{ $clicheLabel }}</span>
-            <small class="text-muted">{{ $clicheOrd->descrizione_raw }}</small>
-            <small class="badge bg-{{ $clicheType === 'manual' ? 'info' : 'secondary' }}">{{ $clicheType === 'manual' ? 'Manuale' : 'Auto' }}</small>
-            <button class="btn btn-sm btn-outline-secondary" onclick="clearCliche({{ $ordine->id }})">Rimuovi</button>
-        @else
-            <small class="text-muted">Non collegato</small>
-        @endif
-        <div class="ms-auto d-flex gap-1 align-items-center">
-            <input type="number" id="clicheInputManuale" class="form-control form-control-sm" style="width:100px;" placeholder="N° cliché">
-            <button class="btn btn-sm btn-warning" onclick="setCliche({{ $ordine->id }})">Imposta</button>
-        </div>
-    </div>
-</div>
-
 {{-- Box invio esterno --}}
 <div id="invioEsternoBox" style="display:none;" class="mb-3 mt-2">
     <div class="border rounded p-3" style="background:#e8f4f8;">
@@ -196,14 +172,16 @@
 </div>
 @endif
 
-{{-- Colori e Fustella (box stile cliché) --}}
+{{-- Colori, Fustella e Cliché (box affiancati) --}}
 @if($ordine)
 @php
     $tutteDescDett = $ordini->pluck('descrizione')->filter()->unique()->implode(' | ');
     $coloriDett = \App\Helpers\DescrizioneParser::parseColori($tutteDescDett, $ordine->cliente_nome ?? '');
     $fustellaDett = \App\Helpers\DescrizioneParser::parseFustella($tutteDescDett, $ordine->cliente_nome ?? '', $ordine->note_prestampa ?? '');
+    $clicheOrd = $ordine->cliche ?? null;
+    $clicheType = $ordine->cliche_match_type ?? null;
 @endphp
-<div class="d-flex gap-2 mb-3 flex-wrap">
+<div class="d-flex gap-2 mb-3 flex-wrap align-items-stretch">
     @if($coloriDett)
     <div class="border rounded p-2 d-flex align-items-center gap-2" style="background:#e8f5e9; border-color:#66bb6a !important;">
         <strong style="color:#2e7d32; font-size:13px;">🎨 Colori:</strong>
@@ -216,6 +194,19 @@
         <span class="badge" style="background:#1565c0; color:white; font-size:12px;">{{ $fustellaDett }}</span>
     </div>
     @endif
+    <div class="border rounded p-2 d-flex align-items-center gap-2 flex-wrap" style="background:#fff8e1; border-color:#fbc02d !important;">
+        <strong style="color:#f57f17; font-size:13px;">🏷️ Cliché:</strong>
+        @if($clicheOrd)
+            <span class="badge" style="background:#f57f17; color:white; font-size:12px;">{{ $clicheOrd->numero }}</span>
+            @if($clicheOrd->scatola)
+                <span class="badge" style="background:#8d6e63; color:white; font-size:12px;">📦 Scatola {{ $clicheOrd->scatola }}</span>
+            @endif
+            <small class="badge bg-{{ $clicheType === 'manual' ? 'info' : 'secondary' }}">{{ $clicheType === 'manual' ? 'Man' : 'Auto' }}</small>
+            <button class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size:11px;" onclick="clearCliche({{ $ordine->id }})" title="Rimuovi">×</button>
+        @else
+            <small class="text-muted">Non collegato</small>
+        @endif
+    </div>
 </div>
 @endif
 
