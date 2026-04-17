@@ -1725,10 +1725,14 @@ function aggiornaCampo(faseId, campo, valore, targetEl){
             }
             // Popover "applica a tutte" per cambio priorità
             if (campo === 'priorita' && cell) {
-                const row = cell.closest('tr');
-                const commessaCell = row ? row.querySelector('td:first-child') : null;
-                const commessa = commessaCell ? commessaCell.innerText.trim() : null;
-                if (commessa) mostraPopoverApplicaTutte(cell, commessa, valore);
+                try {
+                    const row = cell.closest('tr');
+                    const commessaCell = row ? row.querySelector('td:first-child') : null;
+                    const commessa = commessaCell ? commessaCell.innerText.trim() : '';
+                    console.log('[popover] commessa rilevata:', commessa, 'valore:', valore);
+                    if (commessa) mostraPopoverApplicaTutte(cell, commessa, valore);
+                    else console.warn('[popover] commessa vuota, skip');
+                } catch (e) { console.error('[popover] errore', e); }
             }
             if (d.reload) window.location.reload();
         }
