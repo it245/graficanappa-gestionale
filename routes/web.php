@@ -74,6 +74,7 @@ Route::get('/owner/note-spedizione-check', [DashboardSpedizioneController::class
 Route::get('/owner/audit-log', [DashboardOwnerController::class, 'auditLog'])->name('owner.auditLog');
 Route::post('/owner/cliche/set', [DashboardOwnerController::class, 'setCliche'])->name('owner.setCliche');
 Route::post('/owner/cliche/clear', [DashboardOwnerController::class, 'clearCliche'])->name('owner.clearCliche');
+Route::get('/owner/report-cliche', [DashboardOwnerController::class, 'reportCliche'])->name('owner.reportCliche');
 });
 
 // Alert ritardi (API senza auth per polling dashboard)

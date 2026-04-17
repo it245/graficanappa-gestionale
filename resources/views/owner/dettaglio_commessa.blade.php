@@ -112,6 +112,30 @@
     </div>
 </div>
 
+{{-- Box cliché --}}
+@php
+    $clicheOrd = $ordine->cliche ?? null;
+    $clicheLabel = $clicheOrd ? $clicheOrd->label() : null;
+    $clicheType = $ordine->cliche_match_type ?? null;
+@endphp
+<div class="mb-3">
+    <div class="border rounded p-2 d-flex align-items-center gap-3 flex-wrap" style="background:#fff8e1; border-color:#fbc02d !important;">
+        <strong style="color:#f57f17; font-size:13px;">🏷️ Cliché:</strong>
+        @if($clicheLabel)
+            <span class="badge" style="background:#f57f17; color:white; font-size:13px;">{{ $clicheLabel }}</span>
+            <small class="text-muted">{{ $clicheOrd->descrizione_raw }}</small>
+            <small class="badge bg-{{ $clicheType === 'manual' ? 'info' : 'secondary' }}">{{ $clicheType === 'manual' ? 'Manuale' : 'Auto' }}</small>
+            <button class="btn btn-sm btn-outline-secondary" onclick="clearCliche({{ $ordine->id }})">Rimuovi</button>
+        @else
+            <small class="text-muted">Non collegato</small>
+        @endif
+        <div class="ms-auto d-flex gap-1 align-items-center">
+            <input type="number" id="clicheInputManuale" class="form-control form-control-sm" style="width:100px;" placeholder="N° cliché">
+            <button class="btn btn-sm btn-warning" onclick="setCliche({{ $ordine->id }})">Imposta</button>
+        </div>
+    </div>
+</div>
+
 {{-- Box invio esterno --}}
 <div id="invioEsternoBox" style="display:none;" class="mb-3 mt-2">
     <div class="border rounded p-3" style="background:#e8f4f8;">
@@ -172,20 +196,24 @@
 </div>
 @endif
 
-{{-- Colori e Fustella --}}
+{{-- Colori e Fustella (box stile cliché) --}}
 @if($ordine)
 @php
     $tutteDescDett = $ordini->pluck('descrizione')->filter()->unique()->implode(' | ');
     $coloriDett = \App\Helpers\DescrizioneParser::parseColori($tutteDescDett, $ordine->cliente_nome ?? '');
     $fustellaDett = \App\Helpers\DescrizioneParser::parseFustella($tutteDescDett, $ordine->cliente_nome ?? '', $ordine->note_prestampa ?? '');
 @endphp
-<div class="row g-2 mb-2" style="font-size:13px;">
-    <div class="col-auto">
-        <strong>Colori:</strong> {{ $coloriDett }}
+<div class="d-flex gap-2 mb-3 flex-wrap">
+    @if($coloriDett)
+    <div class="border rounded p-2 d-flex align-items-center gap-2" style="background:#e8f5e9; border-color:#66bb6a !important;">
+        <strong style="color:#2e7d32; font-size:13px;">🎨 Colori:</strong>
+        <span class="badge" style="background:#2e7d32; color:white; font-size:12px;">{{ $coloriDett }}</span>
     </div>
+    @endif
     @if($fustellaDett)
-    <div class="col-auto">
-        <strong>Fustella:</strong> {{ $fustellaDett }}
+    <div class="border rounded p-2 d-flex align-items-center gap-2" style="background:#e3f2fd; border-color:#42a5f5 !important;">
+        <strong style="color:#1565c0; font-size:13px;">✂️ Fustella:</strong>
+        <span class="badge" style="background:#1565c0; color:white; font-size:12px;">{{ $fustellaDett }}</span>
     </div>
     @endif
 </div>
@@ -531,6 +559,31 @@ function eliminaFase(faseId) {
         }
     })
     .catch(err => { console.error(err); alert('Errore di connessione'); });
+}
+
+function setCliche(ordineId) {
+    var num = document.getElementById('clicheInputManuale').value.trim();
+    if (!num || parseInt(num) <= 0) { alert('Inserisci un numero cliché valido'); return; }
+    fetch('{{ route("owner.setCliche") }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+        body: JSON.stringify({ ordine_id: ordineId, cliche_numero: parseInt(num) })
+    })
+    .then(r => r.json())
+    .then(d => { if (d.ok) location.reload(); else alert('Errore: ' + (d.error || 'salvataggio fallito')); })
+    .catch(() => alert('Errore di connessione'));
+}
+
+function clearCliche(ordineId) {
+    if (!confirm('Rimuovere cliché da questa commessa?')) return;
+    fetch('{{ route("owner.clearCliche") }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+        body: JSON.stringify({ ordine_id: ordineId })
+    })
+    .then(r => r.json())
+    .then(d => { if (d.ok) location.reload(); })
+    .catch(() => alert('Errore di connessione'));
 }
 </script>
 @endsection

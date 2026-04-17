@@ -978,7 +978,7 @@ public function calcolaOreEPriorita($fase)
             // Prinect non disponibile, continua senza sync
         }
 
-        $ordini = Ordine::where('commessa', $commessa)->with('fasi.faseCatalogo.reparto', 'fasi.operatori')->get();
+        $ordini = Ordine::where('commessa', $commessa)->with('fasi.faseCatalogo.reparto', 'fasi.operatori', 'cliche')->get();
         if ($ordini->isEmpty()) abort(404, 'Commessa non trovata');
 
         $fasi = $ordini->flatMap(function ($ordine) {
@@ -1718,5 +1718,33 @@ public function calcolaOreEPriorita($fase)
         $ordine->cliche_matched_at = null;
         $ordine->save();
         return response()->json(['ok' => true]);
+    }
+
+    /**
+     * Report aggregato per cliché: commesse, tiro totale foil, scarti medi.
+     */
+    public function reportCliche(Request $request)
+    {
+        $rows = DB::table('cliche_anagrafica as c')
+            ->leftJoin('ordini as o', 'o.cliche_numero', '=', 'c.numero')
+            ->leftJoin('ordine_fasi as f', function ($j) {
+                $j->on('f.ordine_id', '=', 'o.id')
+                  ->whereNull('f.deleted_at')
+                  ->whereIn('f.fase', ['STAMPACALDOJOH', 'STAMPACALDOJOHEST', 'STAMPALAMINAORO']);
+            })
+            ->select(
+                'c.numero', 'c.descrizione_raw', 'c.scatola', 'c.qta',
+                DB::raw('COUNT(DISTINCT o.id) AS n_commesse'),
+                DB::raw('COALESCE(SUM(f.tiro), 0) AS tiro_totale'),
+                DB::raw('COALESCE(AVG(f.tiro), 0) AS tiro_medio'),
+                DB::raw('COALESCE(SUM(f.scarti), 0) AS scarti_totali'),
+                DB::raw('COALESCE(AVG(f.scarti), 0) AS scarti_medi'),
+                DB::raw('COALESCE(SUM(f.qta_prod), 0) AS qta_prod_totale')
+            )
+            ->groupBy('c.numero', 'c.descrizione_raw', 'c.scatola', 'c.qta')
+            ->orderBy('c.numero')
+            ->get();
+
+        return view('owner.report_cliche', compact('rows'));
     }
 }
