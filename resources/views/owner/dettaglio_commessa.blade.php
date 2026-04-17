@@ -201,6 +201,9 @@
             @if($clicheOrd->scatola)
                 <span class="badge" style="background:#8d6e63; color:white; font-size:12px;">Scatola {{ $clicheOrd->scatola }}</span>
             @endif
+            @if($clicheOrd->qta)
+                <span class="badge" style="background:#6c757d; color:white; font-size:12px;">Qta {{ $clicheOrd->qta }}</span>
+            @endif
         @else
             <small class="text-muted">Cliché non impostato</small>
         @endif
