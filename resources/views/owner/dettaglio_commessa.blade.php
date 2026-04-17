@@ -178,8 +178,8 @@
     $tutteDescDett = $ordini->pluck('descrizione')->filter()->unique()->implode(' | ');
     $coloriDett = \App\Helpers\DescrizioneParser::parseColori($tutteDescDett, $ordine->cliente_nome ?? '');
     $fustellaDett = \App\Helpers\DescrizioneParser::parseFustella($tutteDescDett, $ordine->cliente_nome ?? '', $ordine->note_prestampa ?? '');
-    // Un box cliché per ogni ordine della commessa (varianti articolo)
-    $clicheOrdini = $ordini->filter(fn($o) => $o->cliche);
+    // Raggruppa ordini per cliche_numero (dedup). Un box per cliché con lista articoli.
+    $clicheGruppi = $ordini->filter(fn($o) => $o->cliche)->groupBy('cliche_numero');
 @endphp
 <div class="d-flex gap-2 mb-3 flex-wrap align-items-stretch">
     @if($coloriDett)
@@ -194,18 +194,19 @@
         <span class="badge" style="background:#1565c0; color:white; font-size:12px;">{{ $fustellaDett }}</span>
     </div>
     @endif
-    @if($clicheOrdini->isNotEmpty())
-        @foreach($clicheOrdini as $o)
+    @if($clicheGruppi->isNotEmpty())
+        @foreach($clicheGruppi as $numero => $gruppo)
+        @php $cl = $gruppo->first()->cliche; $descrizioni = $gruppo->pluck('descrizione')->filter()->unique(); @endphp
         <div class="border rounded p-2 d-flex align-items-center gap-2 flex-wrap" style="background:#fff8e1; border-color:#fbc02d !important;">
             <strong style="color:#f57f17; font-size:13px;">🏷️ Cliché:</strong>
-            <span class="badge" style="background:#f57f17; color:white; font-size:12px;">{{ $o->cliche->numero }}</span>
-            @if($o->cliche->scatola)
-                <span class="badge" style="background:#8d6e63; color:white; font-size:12px;">Scatola {{ $o->cliche->scatola }}</span>
+            <span class="badge" style="background:#f57f17; color:white; font-size:12px;">{{ $cl->numero }}</span>
+            @if($cl->scatola)
+                <span class="badge" style="background:#8d6e63; color:white; font-size:12px;">Scatola {{ $cl->scatola }}</span>
             @endif
-            @if($o->cliche->qta)
-                <span class="badge" style="background:#6c757d; color:white; font-size:12px;">Qta Cliché {{ $o->cliche->qta }}</span>
+            @if($cl->qta)
+                <span class="badge" style="background:#6c757d; color:white; font-size:12px;">Qta Cliché {{ $cl->qta }}</span>
             @endif
-            <small class="text-muted" style="font-size:11px;">→ {{ $o->descrizione }}</small>
+            <small class="text-muted" style="font-size:11px;">→ {{ $descrizioni->implode(' | ') }}</small>
         </div>
         @endforeach
     @else
