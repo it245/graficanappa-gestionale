@@ -63,6 +63,7 @@ class DashboardMesSheet implements FromCollection, WithHeadings, WithMapping, Wi
             'Qta Prod', 'Note', 'Data Inizio', 'Data Fine',
             'Ordine Cliente', 'N. DDT Vendita', 'Vettore DDT', 'Qta DDT', 'Note Fasi Successive',
             'Colori', 'Fustella', 'Esterno', 'Ore Prev.', 'Ore Lav.',
+            'Scarti', 'Scarti Prev.',
         ];
     }
 
@@ -153,6 +154,10 @@ class DashboardMesSheet implements FromCollection, WithHeadings, WithMapping, Wi
                 }
                 return '';
             })(),
+            // Scarti (editabile)
+            $fase->scarti ?? '',
+            // Scarti Previsti (da Onda, sola lettura)
+            $fase->scarti_previsti ?? '',
         ];
     }
 
@@ -194,16 +199,18 @@ class DashboardMesSheet implements FromCollection, WithHeadings, WithMapping, Wi
             'AG' => 18, // Esterno
             'AH' => 10, // Ore Prev.
             'AI' => 10, // Ore Lav.
+            'AJ' => 10, // Scarti
+            'AK' => 12, // Scarti Prev.
         ];
     }
 
     public function styles(Worksheet $sheet)
     {
         $lastRow = $sheet->getHighestRow();
-        $nonEditabili = ['A', 'B', 'S', 'T', 'U', 'AE', 'AF', 'AG', 'AH', 'AI'];
+        $nonEditabili = ['A', 'B', 'S', 'T', 'U', 'AE', 'AF', 'AG', 'AH', 'AI', 'AK'];
 
         // Header: sfondo nero, testo bianco, grassetto
-        $sheet->getStyle('A1:AI1')->applyFromArray([
+        $sheet->getStyle('A1:AK1')->applyFromArray([
             'font' => [
                 'bold' => true,
                 'color' => ['rgb' => 'FFFFFF'],
@@ -232,7 +239,7 @@ class DashboardMesSheet implements FromCollection, WithHeadings, WithMapping, Wi
         }
 
         // Auto-filtro sulla riga header
-        $sheet->setAutoFilter('A1:AI1');
+        $sheet->setAutoFilter('A1:AK1');
 
         return [];
     }

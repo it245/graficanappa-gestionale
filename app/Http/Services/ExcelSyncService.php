@@ -176,6 +176,7 @@ class ExcelSyncService
                         'fase' => self::normalizeValue($row['S'] ?? null) ?: '-',
                         'stato' => ($excelStato !== '' && is_numeric($excelStato)) ? (int) $excelStato : 0,
                         'qta_prod' => self::parseNumeric($row['V'] ?? null),
+                        'scarti' => self::parseNumeric($row['AJ'] ?? null),
                         'note' => self::normalizeValue($row['W'] ?? null),
                         'priorita' => self::parseNumeric($row['I'] ?? null),
                         'manuale' => true,
@@ -323,6 +324,12 @@ class ExcelSyncService
             $excelQtaProd = self::parseNumeric($row['V'] ?? null);
             if (self::isNumericChanged($row['V'] ?? null, $fase->qta_prod)) {
                 $fase->qta_prod = $excelQtaProd;
+                $changed = true;
+            }
+
+            // AJ - Scarti (editabile)
+            if (self::isNumericChanged($row['AJ'] ?? null, $fase->scarti)) {
+                $fase->scarti = self::parseNumeric($row['AJ'] ?? null);
                 $changed = true;
             }
 
