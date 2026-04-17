@@ -194,19 +194,15 @@
         <span class="badge" style="background:#1565c0; color:white; font-size:12px;">{{ $fustellaDett }}</span>
     </div>
     @endif
-    <div class="border rounded p-2 d-flex align-items-center gap-2 flex-wrap" style="background:#fff8e1; border-color:#fbc02d !important;">
+    @if($clicheOrd)
+    <div class="border rounded p-2 d-flex align-items-center gap-2" style="background:#fff8e1; border-color:#fbc02d !important;">
         <strong style="color:#f57f17; font-size:13px;">🏷️ Cliché:</strong>
-        @if($clicheOrd)
-            <span class="badge" style="background:#f57f17; color:white; font-size:12px;">{{ $clicheOrd->numero }}</span>
-            @if($clicheOrd->scatola)
-                <span class="badge" style="background:#8d6e63; color:white; font-size:12px;">📦 Scatola {{ $clicheOrd->scatola }}</span>
-            @endif
-            <small class="badge bg-{{ $clicheType === 'manual' ? 'info' : 'secondary' }}">{{ $clicheType === 'manual' ? 'Man' : 'Auto' }}</small>
-            <button class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size:11px;" onclick="clearCliche({{ $ordine->id }})" title="Rimuovi">×</button>
-        @else
-            <small class="text-muted">Non collegato</small>
+        <span class="badge" style="background:#f57f17; color:white; font-size:12px;">{{ $clicheOrd->numero }}</span>
+        @if($clicheOrd->scatola)
+            <span class="badge" style="background:#8d6e63; color:white; font-size:12px;">Scatola {{ $clicheOrd->scatola }}</span>
         @endif
     </div>
+    @endif
 </div>
 @endif
 
@@ -552,29 +548,5 @@ function eliminaFase(faseId) {
     .catch(err => { console.error(err); alert('Errore di connessione'); });
 }
 
-function setCliche(ordineId) {
-    var num = document.getElementById('clicheInputManuale').value.trim();
-    if (!num || parseInt(num) <= 0) { alert('Inserisci un numero cliché valido'); return; }
-    fetch('{{ route("owner.setCliche") }}', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
-        body: JSON.stringify({ ordine_id: ordineId, cliche_numero: parseInt(num) })
-    })
-    .then(r => r.json())
-    .then(d => { if (d.ok) location.reload(); else alert('Errore: ' + (d.error || 'salvataggio fallito')); })
-    .catch(() => alert('Errore di connessione'));
-}
-
-function clearCliche(ordineId) {
-    if (!confirm('Rimuovere cliché da questa commessa?')) return;
-    fetch('{{ route("owner.clearCliche") }}', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
-        body: JSON.stringify({ ordine_id: ordineId })
-    })
-    .then(r => r.json())
-    .then(d => { if (d.ok) location.reload(); })
-    .catch(() => alert('Errore di connessione'));
-}
 </script>
 @endsection
