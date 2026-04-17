@@ -1736,6 +1736,7 @@ public function calcolaOreEPriorita($fase)
 
     /**
      * Report aggregato per cliché: commesse, tiro totale foil, scarti medi.
+     * Include breakdown per commessa (drill-down espandibile).
      */
     public function reportCliche(Request $request)
     {
@@ -1759,6 +1760,29 @@ public function calcolaOreEPriorita($fase)
             ->orderBy('c.numero')
             ->get();
 
-        return view('owner.report_cliche', compact('rows'));
+        // Breakdown per commessa (raggruppato per cliché)
+        $breakdown = DB::table('ordini as o')
+            ->leftJoin('ordine_fasi as f', function ($j) {
+                $j->on('f.ordine_id', '=', 'o.id')
+                  ->whereNull('f.deleted_at')
+                  ->whereIn('f.fase', ['STAMPACALDOJOH', 'STAMPACALDOJOHEST', 'STAMPALAMINAORO']);
+            })
+            ->whereNotNull('o.cliche_numero')
+            ->select(
+                'o.cliche_numero',
+                'o.commessa',
+                'o.cliente_nome',
+                'o.descrizione',
+                'o.data_prevista_consegna',
+                DB::raw('COALESCE(SUM(f.tiro), 0) AS tiro'),
+                DB::raw('COALESCE(SUM(f.scarti), 0) AS scarti'),
+                DB::raw('COALESCE(SUM(f.qta_prod), 0) AS qta_prod')
+            )
+            ->groupBy('o.cliche_numero', 'o.commessa', 'o.cliente_nome', 'o.descrizione', 'o.data_prevista_consegna')
+            ->orderBy('o.data_prevista_consegna', 'desc')
+            ->get()
+            ->groupBy('cliche_numero');
+
+        return view('owner.report_cliche', compact('rows', 'breakdown'));
     }
 }
