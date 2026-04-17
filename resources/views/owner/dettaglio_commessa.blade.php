@@ -194,15 +194,17 @@
         <span class="badge" style="background:#1565c0; color:white; font-size:12px;">{{ $fustellaDett }}</span>
     </div>
     @endif
-    @if($clicheOrd)
     <div class="border rounded p-2 d-flex align-items-center gap-2" style="background:#fff8e1; border-color:#fbc02d !important;">
         <strong style="color:#f57f17; font-size:13px;">🏷️ Cliché:</strong>
-        <span class="badge" style="background:#f57f17; color:white; font-size:12px;">{{ $clicheOrd->numero }}</span>
-        @if($clicheOrd->scatola)
-            <span class="badge" style="background:#8d6e63; color:white; font-size:12px;">Scatola {{ $clicheOrd->scatola }}</span>
+        @if($clicheOrd)
+            <span class="badge" style="background:#f57f17; color:white; font-size:12px;">{{ $clicheOrd->numero }}</span>
+            @if($clicheOrd->scatola)
+                <span class="badge" style="background:#8d6e63; color:white; font-size:12px;">Scatola {{ $clicheOrd->scatola }}</span>
+            @endif
+        @else
+            <small class="text-muted">Non collegato</small>
         @endif
     </div>
-    @endif
 </div>
 @endif
 
