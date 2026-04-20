@@ -36,10 +36,10 @@ class DashboardOperatoreController extends Controller
         $fasiVisibili = OrdineFase::where(function ($q) use ($reparti) {
                 // Fasi attive (stato < 3)
                 $q->where('stato', '<', 3);
-                // + fasi stampa offset chiuse da meno di 1h (per inserire scarti reali)
+                // + fasi stampa offset terminate SENZA scarti dichiarati (spariscono solo dopo inserimento)
                 $q->orWhere(function ($q2) use ($reparti) {
                     $q2->where('stato', 3)
-                        ->where('data_fine', '>=', Carbon::now()->subHour())
+                        ->where(fn($qs) => $qs->whereNull('scarti')->orWhere('scarti', 0))
                         ->whereHas('faseCatalogo', function ($q3) {
                             $q3->whereHas('reparto', fn($r) => $r->where('nome', 'stampa offset'));
                         });

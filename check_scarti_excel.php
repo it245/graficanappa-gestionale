@@ -21,6 +21,7 @@ if (!file_exists($path)) die("File non trovato: $path\n");
 echo "=== Excel: $path ===\n\n";
 
 $ss = IOFactory::load($path);
+echo "Fogli presenti: " . implode(', ', array_map(fn($s) => $s->getTitle(), $ss->getAllSheets())) . "\n\n";
 
 $target = [
     '0066830-26', '0067106-26', '0067061-26', '0066944-26',
@@ -33,6 +34,7 @@ echo str_repeat('-', 100) . "\n";
 foreach ($ss->getAllSheets() as $sheet) {
     $title = $sheet->getTitle();
     $rows = $sheet->toArray(null, false, false, true);
+    echo "-- Foglio {$title}: " . count($rows) . " righe --\n";
     $first = true;
     foreach ($rows as $r) {
         if ($first) { $first = false; continue; }
