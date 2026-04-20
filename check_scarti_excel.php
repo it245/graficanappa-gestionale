@@ -20,41 +20,40 @@ if (!file_exists($path)) die("File non trovato: $path\n");
 
 echo "=== Excel: $path ===\n\n";
 
-// Leggi Excel foglio "tutto" (prima sheet)
 $ss = IOFactory::load($path);
-$sheet = $ss->getSheetByName('tutto') ?? $ss->getSheetByName('Terminate') ?? $ss->getActiveSheet();
-echo "Foglio: " . $sheet->getTitle() . "\n\n";
 
-$rows = $sheet->toArray(null, false, false, true);
-
-// Commesse target (da Prinect riepilogo)
 $target = [
     '0066830-26', '0067106-26', '0067061-26', '0066944-26',
     '0067019-26', '0067100-26', '0067055-26',
 ];
 
-echo sprintf("%-14s %-20s %10s %15s %15s\n", "Commessa", "Fase", "Scarti(AJ)", "ScartiPrev(AK)", "DB fogli_scarto");
-echo str_repeat('-', 80) . "\n";
+echo sprintf("%-10s %-14s %-22s %10s %15s %15s\n", "Foglio", "Commessa", "Fase", "Scarti(AJ)", "ScartiPrev(AK)", "DB fogli_scarto");
+echo str_repeat('-', 100) . "\n";
 
-$first = true;
-foreach ($rows as $r) {
-    if ($first) { $first = false; continue; }
-    $comm = trim((string)($r['B'] ?? ''));
-    $fase = trim((string)($r['S'] ?? ''));
-    if (!in_array($comm, $target)) continue;
-    if (!str_starts_with(strtoupper($fase), 'STAMPA')) continue;
+foreach ($ss->getAllSheets() as $sheet) {
+    $title = $sheet->getTitle();
+    $rows = $sheet->toArray(null, false, false, true);
+    $first = true;
+    foreach ($rows as $r) {
+        if ($first) { $first = false; continue; }
+        $comm = trim((string)($r['B'] ?? ''));
+        $fase = trim((string)($r['S'] ?? ''));
+        if (!in_array($comm, $target)) continue;
+        if (!str_starts_with(strtoupper($fase), 'STAMPA')) continue;
 
-    $scarti = $r['AJ'] ?? '';
-    $scartiPrev = $r['AK'] ?? '';
+        $scarti = $r['AJ'] ?? '';
+        $scartiPrev = $r['AK'] ?? '';
 
-    // Check DB fogli_scarto
-    $faseId = $r['A'] ?? null;
-    $dbFogliScarto = null;
-    if (is_numeric($faseId)) {
-        $dbFogliScarto = DB::table('ordine_fasi')->where('id', $faseId)->value('fogli_scarto');
+        $faseId = $r['A'] ?? null;
+        $dbFogliScarto = null;
+        if (is_numeric($faseId)) {
+            $dbFogliScarto = DB::table('ordine_fasi')->where('id', $faseId)->value('fogli_scarto');
+        }
+
+        printf("%-10s %-14s %-22s %10s %15s %15s\n",
+            $title, $comm, substr($fase, 0, 22),
+            $scarti !== '' ? $scarti : '-',
+            $scartiPrev !== '' ? $scartiPrev : '-',
+            $dbFogliScarto ?? 'NULL');
     }
-
-    printf("%-14s %-20s %10s %15s %15s\n",
-        $comm, substr($fase, 0, 20), $scarti ?: '-',
-        $scartiPrev ?: '-', $dbFogliScarto ?? 'NULL');
 }
