@@ -156,8 +156,14 @@ class DashboardMesSheet implements FromCollection, WithHeadings, WithMapping, Wi
             })(),
             // Scarti (editabile)
             $fase->scarti ?? '',
-            // Scarti Previsti (da Onda, sola lettura)
-            $fase->scarti_previsti ?? '',
+            // Scarti Previsti: per reparto "stampa offset" usa fogli_scarto da Prinect; altrimenti scarti_previsti da Onda
+            (function() use ($fase) {
+                $reparto = strtolower($fase->faseCatalogo->reparto->nome ?? '');
+                if ($reparto === 'stampa offset' && ($fase->fogli_scarto ?? 0) > 0) {
+                    return $fase->fogli_scarto;
+                }
+                return $fase->scarti_previsti ?? '';
+            })(),
             // Cliché (auto/manual, sola lettura)
             $ordine && $ordine->cliche ? $ordine->cliche->label() : '',
         ];
