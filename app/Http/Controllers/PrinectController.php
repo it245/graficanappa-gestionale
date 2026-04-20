@@ -423,7 +423,50 @@ class PrinectController extends Controller
             });
         }
 
+        // Detect bianca+volta (B/V): coppie worksteps con stesso base e suffissi 0/4 + 4/0
+        // Es: "FB 001 0/4" + "FB 001 4/0" = stampa fronte+retro in 2 passaggi → fogli conteggiati 2 volte
+        $nomiWorkstep = $perWorkstep->keys()->toArray();
+        $coppie = [];
+        foreach ($nomiWorkstep as $n) {
+            if (preg_match('/^(.+?)\s*0\/4\s*$/', $n, $m)) {
+                $base = trim($m[1]);
+                $gemello = null;
+                foreach ($nomiWorkstep as $x) {
+                    if (preg_match('/^(.+?)\s*4\/0\s*$/', $x, $m2) && trim($m2[1]) === $base) {
+                        $gemello = $x;
+                        break;
+                    }
+                }
+                if ($gemello) $coppie[] = [$n, $gemello];
+            }
+        }
+        $isBV = count($coppie) > 0;
+
+        $totBuoniReali = $totBuoni;
+        $totScartoReali = $totScarto;
+        if ($isBV) {
+            // Fogli reali = somma di UNO dei due lati per ogni coppia + worksteps non-coppia
+            $nomiCoppie = collect($coppie)->flatten()->toArray();
+            $buoniCoppie = 0;
+            $scartoCoppie = 0;
+            foreach ($coppie as [$a, $b]) {
+                // Usa max dei due lati (entrambi dovrebbero essere simili, ma teniamo il più alto)
+                $buoniCoppie += max($perWorkstep[$a]->buoni ?? 0, $perWorkstep[$b]->buoni ?? 0);
+                $scartoCoppie += max($perWorkstep[$a]->scarto ?? 0, $perWorkstep[$b]->scarto ?? 0);
+            }
+            $buoniAltri = 0;
+            $scartoAltri = 0;
+            foreach ($perWorkstep as $n => $ws) {
+                if (in_array($n, $nomiCoppie)) continue;
+                $buoniAltri += $ws->buoni ?? 0;
+                $scartoAltri += $ws->scarto ?? 0;
+            }
+            $totBuoniReali = $buoniCoppie + $buoniAltri;
+            $totScartoReali = $scartoCoppie + $scartoAltri;
+        }
+
         $totFogli = $totBuoni + $totScarto;
+        $totFogliReali = $totBuoniReali + $totScartoReali;
         $percScarto = $totFogli > 0 ? round(($totScarto / $totFogli) * 100, 1) : 0;
         $tempoTotaleSec = $tempoAvviamentoSec + $tempoProduzioneSec;
 
@@ -454,6 +497,7 @@ class PrinectController extends Controller
         return view('mes.prinect_report_commessa', compact(
             'commessa', 'jobName', 'jobId',
             'totBuoni', 'totScarto', 'totFogli', 'percScarto',
+            'totBuoniReali', 'totScartoReali', 'totFogliReali', 'isBV', 'coppie',
             'tempoAvviamentoSec', 'tempoProduzioneSec', 'tempoTotaleSec',
             'perWorkstep', 'perOperatore', 'attivita', 'chartData'
         ));
