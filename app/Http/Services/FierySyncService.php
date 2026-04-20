@@ -69,18 +69,32 @@ class FierySyncService
         $this->terminaFasiPrecedenti($operatore, $ordineIds);
 
         // Trova fasi digitali per TUTTI gli ordini della commessa corrente
+        // NON dedup per nome: ordini diversi = fasi distinte (corpo + copertina ecc.)
         $fasiDigitali = collect();
-        $fasiGiaViste = [];
         foreach ($ordini as $ordine) {
             $fasi = $this->troveFasiDigitali($ordine);
             foreach ($fasi as $fase) {
-                if (!isset($fasiGiaViste[$fase->fase])) {
-                    $fasiDigitali->push($fase);
-                    $fasiGiaViste[$fase->fase] = true;
-                }
+                $fasiDigitali->push($fase);
             }
         }
         if ($fasiDigitali->isEmpty()) return null;
+
+        // Smart match: se ci sono più fasi con stesso nome, preferisci quella con
+        // qta_fase/qta_carta più vicina a copieFatte (= stampa attuale). Evita di avviare
+        // per errore la fase corpo quando Fiery sta stampando la copertina.
+        $fasiDaStessoNome = $fasiDigitali->groupBy('fase');
+        $fasiOrdinate = collect();
+        foreach ($fasiDaStessoNome as $gruppo) {
+            if ($gruppo->count() > 1 && $copieFatte > 0) {
+                // Ordina per distanza da copieFatte: target qta_fase ∈ [copieFatte × 0.5, × 2]
+                $gruppo = $gruppo->sortBy(function ($f) use ($copieFatte) {
+                    $target = $f->qta_fase ?: ($f->ordine->qta_carta ?? 0);
+                    return abs(($target ?: 0) - $copieFatte);
+                })->values();
+            }
+            foreach ($gruppo as $f) $fasiOrdinate->push($f);
+        }
+        $fasiDigitali = $fasiOrdinate;
 
         // Avvia le fasi digitali della commessa corrente
         $faseAvviata = null;
