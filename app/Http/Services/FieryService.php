@@ -273,11 +273,22 @@ class FieryService
      */
     public function isOnline(): bool
     {
+        // Prima prova WebTools (legacy)
         try {
-            $response = $this->http()->timeout(5)->get($this->baseUrl . '/wt4/home/get_server_status', [
+            $response = $this->http()->timeout(3)->get($this->baseUrl . '/wt4/home/get_server_status', [
                 'client_locale' => 'it_IT',
             ]);
-            return $response->successful();
+            if ($response->successful()) return true;
+        } catch (\Exception $e) {}
+
+        // Fallback: prova API v5 login (accetta anche 401 = server raggiungibile)
+        try {
+            $response = $this->http()->timeout(5)->post($this->baseUrl . '/live/api/v5/login', [
+                'username' => config('fiery.username'),
+                'password' => config('fiery.password'),
+                'accessrights' => config('fiery.api_key'),
+            ]);
+            return $response->status() < 500;
         } catch (\Exception $e) {
             return false;
         }
