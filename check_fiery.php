@@ -13,10 +13,10 @@ if ($n > 0) {
     $max = DB::table('fiery_accounting')->max('data_stampa');
     echo "Periodo: {$min} → {$max}\n";
 
-    $last = DB::table('fiery_accounting')->orderByDesc('data_stampa')->limit(5)->get(['data_stampa', 'commessa', 'copie', 'pagine', 'click']);
+    $last = DB::table('fiery_accounting')->orderByDesc('data_stampa')->limit(5)->get(['data_stampa', 'commessa', 'copie', 'fogli', 'pagine_colore', 'pagine_bn']);
     echo "\nUltimi 5 job:\n";
     foreach ($last as $r) {
-        echo "  {$r->data_stampa} commessa={$r->commessa} copie={$r->copie} click={$r->click}\n";
+        echo "  {$r->data_stampa} commessa={$r->commessa} copie={$r->copie} fogli={$r->fogli} col={$r->pagine_colore} bn={$r->pagine_bn}\n";
     }
 
     $last7gg = DB::table('fiery_accounting')->where('data_stampa', '>=', now()->subDays(30))->count();
