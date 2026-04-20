@@ -959,15 +959,8 @@ class OndaSyncService
             }
         }
 
-        // Ricalcola priorità e ore per tutte le fasi (solo se cambia, evita save inutili)
-        $controller = app(\App\Http\Controllers\DashboardOwnerController::class);
-        $tutteLeFasi = OrdineFase::with('ordine')->get();
-        foreach ($tutteLeFasi as $fase) {
-            $controller->calcolaOreEPriorita($fase);
-            if ($fase->isDirty(['priorita', 'ore'])) {
-                $fase->save();
-            }
-        }
+        // NOTA: ricalcolo priorità/ore NON in sync Onda (lento).
+        // DashboardOwnerController::index() calcola in memoria al page load.
 
         // Ricalcola stati (promuove fasi con predecessori terminati, rispetta modifiche manuali)
         FaseStatoService::ricalcolaTutti();
