@@ -959,12 +959,14 @@ class OndaSyncService
             }
         }
 
-        // Ricalcola priorità e ore per tutte le fasi
+        // Ricalcola priorità e ore per tutte le fasi (solo se cambia, evita save inutili)
         $controller = app(\App\Http\Controllers\DashboardOwnerController::class);
         $tutteLeFasi = OrdineFase::with('ordine')->get();
         foreach ($tutteLeFasi as $fase) {
             $controller->calcolaOreEPriorita($fase);
-            $fase->save();
+            if ($fase->isDirty(['priorita', 'ore'])) {
+                $fase->save();
+            }
         }
 
         // Ricalcola stati (promuove fasi con predecessori terminati, rispetta modifiche manuali)
