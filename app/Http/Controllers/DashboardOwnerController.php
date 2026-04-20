@@ -647,14 +647,19 @@ public function calcolaOreEPriorita($fase)
             $fase->fase_catalogo_id = $faseCat->id;
             $fase->save();
         } elseif (in_array($campo, $campiFase)) {
+            $valorePrima = $fase->{$campo};
             $fase->{$campo} = $valore;
 
             // Se priorità cambiata manualmente, segnala come manuale
             if ($campo === 'priorita') {
                 $fase->priorita_manuale = true;
+                \Log::info("aggiornaCampo priorita: fase_id={$fase->id} commessa=" . ($fase->ordine->commessa ?? '-') . " fase={$fase->fase} {$valorePrima}→{$valore} manuale=true");
             }
 
-            $fase->save();
+            $saved = $fase->save();
+            if ($campo === 'priorita' && !$saved) {
+                \Log::warning("aggiornaCampo priorita SAVE FAILED fase_id={$fase->id}");
+            }
 
             // Se aggiornata qta_prod, controlla completamento automatico
             if ($campo === 'qta_prod') {
