@@ -1479,7 +1479,7 @@ class OndaSyncService
             JOIN ATTDocRighe r ON t.IdDoc = r.IdDoc
             LEFT JOIN STDAnagrafiche a ON t.IdAnagrafica = a.IdAnagrafica
             WHERE t.TipoDocumento = 7
-              AND t.DataRegistrazione >= DATEADD(day, -60, GETDATE())
+              AND t.DataRegistrazione >= DATEADD(day, -30, GETDATE())
         ");
 
         if (empty($righeDDT)) return 0;
