@@ -369,6 +369,43 @@ class DashboardSpedizioneController extends Controller
         }
     }
 
+    /**
+     * Ricerca DDT associati a una commessa (anche vecchia). Usato dal search in dashboard.
+     */
+    public function ricercaDdt(Request $request)
+    {
+        $q = trim($request->get('q', ''));
+        if (strlen($q) < 3) return response()->json(['ok' => true, 'ddt' => []]);
+
+        // Se l'utente ha scritto solo numero, prova a formattarlo
+        $commessaPattern = $q;
+        if (preg_match('/^\d{4,7}$/', $q)) {
+            $commessaPattern = str_pad($q, 7, '0', STR_PAD_LEFT);
+        }
+
+        $ddts = DdtSpedizione::where(function($qb) use ($q, $commessaPattern) {
+                $qb->where('commessa', 'LIKE', "%{$commessaPattern}%")
+                   ->orWhere('numero_ddt', 'LIKE', "%{$q}%")
+                   ->orWhere('cliente_nome', 'LIKE', "%{$q}%");
+            })
+            ->with('ordine:id,descrizione')
+            ->orderByDesc('data_ddt')
+            ->limit(50)
+            ->get()
+            ->map(fn($d) => [
+                'numero_ddt' => $d->numero_ddt,
+                'data_ddt'   => $d->data_ddt ? \Carbon\Carbon::parse($d->data_ddt)->format('d/m/Y') : '-',
+                'commessa'   => $d->commessa,
+                'cliente'    => $d->cliente_nome,
+                'vettore'    => $d->vettore,
+                'qta'        => $d->qta,
+                'descrizione' => $d->ordine->descrizione ?? '',
+                'pdf_url'    => route('ddt.pdf', $d->numero_ddt),
+            ]);
+
+        return response()->json(['ok' => true, 'ddt' => $ddts]);
+    }
+
     public function recuperaConsegna(Request $request)
     {
         try {
