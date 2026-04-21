@@ -321,38 +321,35 @@ class FieryService
                 $r = $http->get($this->baseUrl . '/live/api/v5/consumables');
                 if (!$r->successful()) return null;
 
-                // Prova varianti struttura Fiery: data.items / data.item / data direttamente
-                $items = $r->json('data.items')
-                    ?? $r->json('data.item.consumables')
-                    ?? $r->json('data.item')
-                    ?? $r->json('items')
-                    ?? [];
+                $item = $r->json('data.item', []);
 
-                // Se è un oggetto singolo con chiavi di tipo toner, normalizza
-                if (!empty($items) && !array_is_list($items) && !isset($items[0])) {
-                    $newItems = [];
-                    foreach ($items as $key => $val) {
-                        if (is_array($val)) {
-                            $newItems[] = array_merge(['name' => $key], $val);
-                        }
-                    }
-                    $items = $newItems;
-                }
-
-                $norm = [];
-                foreach ($items as $c) {
-                    if (!is_array($c)) continue;
-                    $norm[] = [
-                        'name' => $c['name'] ?? $c['color'] ?? $c['type'] ?? '-',
-                        'type' => $c['type'] ?? $c['category'] ?? '-',
-                        'color' => strtolower($c['color'] ?? ''),
-                        'level' => (int) ($c['level'] ?? $c['percent'] ?? $c['remaining'] ?? 0),
-                        'max' => (int) ($c['maxCapacity'] ?? $c['max'] ?? 100),
-                        'unit' => $c['unit'] ?? '%',
-                        'status' => $c['status'] ?? 'ok',
+                // Toner/colorants
+                $toners = [];
+                foreach (($item['colorants'] ?? []) as $c) {
+                    $toners[] = [
+                        'name' => $c['i18n'] ?? $c['name'] ?? '-',
+                        'type' => 'toner',
+                        'color_hex' => $c['color'] ?? '#999',
+                        'level' => (int) ($c['level'] ?? 0),
+                        'unit' => '%',
                     ];
                 }
-                return $norm;
+
+                // Vassoi carta
+                $trays = [];
+                foreach (($item['trays'] ?? []) as $t) {
+                    $dim = $t['dimensions'] ?? [];
+                    $trays[] = [
+                        'name' => $t['i18n'] ?? $t['name'] ?? '-',
+                        'trayid' => $t['trayid'] ?? null,
+                        'level' => (int) ($t['level'] ?? 0),
+                        'media_type' => $t['attributes']['EFMediaType'] ?? '-',
+                        'page_size' => $t['attributes']['EFPrintSize'] ?? ($t['attributes']['PageSize'] ?? '-'),
+                        'dimensions_mm' => !empty($dim) ? round($dim[0] / 2.834) . 'x' . round($dim[1] / 2.834) : '-',
+                    ];
+                }
+
+                return ['toners' => $toners, 'trays' => $trays];
             } catch (\Exception $e) {
                 return null;
             }

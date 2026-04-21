@@ -51,17 +51,19 @@ class FieryController extends Controller
         if ($consumables === null) {
             return response()->json(['success' => false, 'msg' => 'Fiery non raggiungibile']);
         }
-        // Calcola alert auto (< 10% = warning, < 5% = critical)
+        // Alert auto toner e vassoi
         $alerts = [];
-        foreach ($consumables as $c) {
-            if ($c['type'] === 'toner' || str_contains(strtolower($c['name']), 'toner')) {
-                if ($c['level'] < 5) $alerts[] = "TONER CRITICO: {$c['name']} al {$c['level']}%";
-                elseif ($c['level'] < 10) $alerts[] = "Toner basso: {$c['name']} al {$c['level']}%";
-            }
+        foreach (($consumables['toners'] ?? []) as $t) {
+            if ($t['level'] < 5) $alerts[] = ['livello' => 'critico', 'msg' => "TONER {$t['name']} al {$t['level']}% — ordina ricambio"];
+            elseif ($t['level'] < 15) $alerts[] = ['livello' => 'warning', 'msg' => "Toner {$t['name']} basso ({$t['level']}%)"];
+        }
+        foreach (($consumables['trays'] ?? []) as $tr) {
+            if ($tr['level'] === 0) $alerts[] = ['livello' => 'info', 'msg' => "Vassoio {$tr['name']} vuoto"];
         }
         return response()->json([
             'success' => true,
-            'consumables' => $consumables,
+            'toners' => $consumables['toners'] ?? [],
+            'trays' => $consumables['trays'] ?? [],
             'alerts' => $alerts,
             'updated_at' => now()->format('H:i:s'),
         ]);
