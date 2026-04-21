@@ -106,7 +106,7 @@ class DashboardMesSheet implements FromCollection, WithHeadings, WithMapping, Wi
             'Qta Prod', 'Note', 'Data Inizio', 'Data Fine',
             'Ordine Cliente', 'N. DDT Vendita', 'Vettore DDT', 'Qta DDT', 'Note Fasi Successive',
             'Colori', 'Fustella', 'Esterno', 'Ore Prev.', 'Ore Lav.',
-            'Scarti', 'Scarti Prinect', 'Cliché', 'Qta Prod. Prinect', 'Scarti Onda',
+            'Scarti', 'Scarti Prinect', 'Cliché', 'Qta Prod. Prinect', 'Scarti Reali',
         ];
     }
 
@@ -211,7 +211,7 @@ class DashboardMesSheet implements FromCollection, WithHeadings, WithMapping, Wi
             $ordine && $ordine->cliche ? $ordine->cliche->label() : '',
             // Qta Prodotta Prinect (fogli_buoni, sola lettura)
             $fase->fogli_buoni ?? '',
-            // Scarti Onda (OC_TotScarti da preventivo articoli lavorazione, sola lettura)
+            // Scarti Reali (OC_TotScarti da Onda preventivo articoli lavorazione, sola lettura)
             (function() use ($fase, $ordine) {
                 $map = $this->caricaScartiOnda();
                 $commessa = $ordine->commessa ?? '';
@@ -275,7 +275,7 @@ class DashboardMesSheet implements FromCollection, WithHeadings, WithMapping, Wi
             'AK' => 12, // Scarti Prev.
             'AL' => 12, // Cliché
             'AM' => 14, // Qta Prod. Prinect
-            'AN' => 14, // Scarti Onda
+            'AN' => 14, // Scarti Reali
         ];
     }
 

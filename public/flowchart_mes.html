@@ -19,9 +19,9 @@
     .header .sub { font-size: 11pt; color: #555; margin-top: 4px; }
 
     .chart-wrap { background: #fff; padding: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-radius: 6px; overflow-x: auto; }
-    .mermaid { min-width: 1800px; font-size: 16px; }
-    .mermaid .nodeLabel { font-size: 14px !important; line-height: 1.4 !important; }
-    .mermaid .cluster-label { font-size: 15px !important; font-weight: 700 !important; }
+    .mermaid { min-width: 1300px; font-size: 12px; }
+    .mermaid .nodeLabel { font-size: 11px !important; line-height: 1.3 !important; }
+    .mermaid .cluster-label { font-size: 13px !important; font-weight: 700 !important; }
 
     .legend { margin-top: 18px; padding: 14px 18px; background: #fff; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); display: flex; gap: 18px; flex-wrap: wrap; justify-content: center; font-size: 9.5pt; }
     .legend-item { display: flex; align-items: center; gap: 6px; }
@@ -53,57 +53,57 @@ flowchart LR
 %% ============== INTEGRAZIONI ESTERNE ==============
 subgraph EXT [🔵 INTEGRAZIONI ESTERNE]
     direction TB
-    ONDA["<b>Onda ERP</b><br/>SOAP · SQL Server .253<br/>━━━━━━━━━━<br/>• Commesse · ordini<br/>• Anagrafiche clienti/fornitori<br/>• DDT fornitore 30gg<br/>• Articoli lavorazione<br/>• Scarti previsti (OC_TotScarti)"]
-    PRIN["<b>Prinect API</b><br/>REST · Heidelberg XL106<br/>━━━━━━━━━━<br/>• Worksteps · activities<br/>• Fogli buoni/scarto live<br/>• Tempo avv/esecuzione<br/>• Ink · preview · quality<br/>• Milestones · devices"]
-    FIER["<b>Fiery API</b><br/>EFI P400 · Indigo<br/>━━━━━━━━━━<br/>• Accounting API v5<br/>• WebTools fallback<br/>• Smart match multi-fase<br/>• Login + timeout 120s"]
-    BRT["<b>BRT API</b><br/>Tracking spedizioni<br/>━━━━━━━━━━<br/>• Stato consegna real-time<br/>• Multi-spedizione<br/>• Email ritardi auto<br/>• PDF bolle"]
-    NTIME["<b>NetTime</b><br/>Presenze · share .253<br/>━━━━━━━━━━<br/>• Timbrature dipendenti<br/>• Task ogni 5 min<br/>• Import badge"]
-    SOLAR["<b>Solar-Log</b><br/>Fotovoltaico 180 kWp<br/>━━━━━━━━━━<br/>• 7 inverter PVI-TRIO<br/>• Portale web scrape<br/>• Rendimenti giornalieri"]
-    XLS["<b>Excel condiviso</b><br/>Sync bidirezionale 2 min<br/>━━━━━━━━━━<br/>• Import/export fasi<br/>• Rispetta priorità manuale<br/>• isDirty per performance"]
-    VPN["<b>VPN MikroTik</b><br/>WireGuard integrato<br/>━━━━━━━━━━<br/>• Peer per utente<br/>• Endpoint mynetname.net<br/>• Accesso remoto sicuro"]
+    ONDA["<b>Onda ERP</b><br/><i>SOAP · SQL Server</i><br/>Commesse · DDT · articoli"]
+    PRIN["<b>Prinect API</b><br/><i>REST · XL106</i><br/>Worksteps · fogli live · tempi"]
+    FIER["<b>Fiery API</b><br/><i>EFI P400 · Indigo</i><br/>Accounting v5 · smart match"]
+    BRT["<b>BRT API</b><br/><i>Tracking</i><br/>Multi-spedizione · email ritardi"]
+    NTIME["<b>NetTime</b><br/><i>Share .253</i><br/>Timbrature · task 5min"]
+    SOLAR["<b>Solar-Log</b><br/><i>180 kWp</i><br/>Scrape portale · rendimenti"]
+    XLS["<b>Excel condiviso</b><br/><i>Sync bidir. 2min</i><br/>Rispetta priorità · isDirty"]
+    VPN["<b>VPN MikroTik</b><br/><i>WireGuard</i><br/>Peer per utente · mynetname"]
 end
 
 %% ============== PRODUZIONE ==============
 subgraph PROD [🟡 PRODUZIONE · COMMESSE]
     direction TB
-    ORD["<b>Ordini / Fasi</b><br/>Core MES · ordine_fasi<br/>━━━━━━━━━━<br/>• Stati 0/1/2/3/4/EXT<br/>• Priorità manuale + flag<br/>• Popover applica a tutte<br/>• Dedup whitespace<br/>• Rimappa STAMPA generico<br/>• Flag esterno per reparto"]
-    PRE["<b>Prestampa</b><br/>Dashboard dedicata<br/>━━━━━━━━━━<br/>• Redirect auto operatori<br/>• Campi editabili: desc, cliente<br/>• Qta · colori · fustella · note<br/>• Assegna operatore prestampa<br/>• Commento produzione"]
-    OPER["<b>Dashboard Operatore</b><br/>Touch tablet reparto<br/>━━━━━━━━━━<br/>• Avvia · Pausa · Termina<br/>• Motivi pausa (6 opzioni)<br/>• Taglio per fase successiva<br/>• Etichette Data Matrix<br/>• Scarti + tiro obbligatori<br/>• Stato 3 stampa rimane visibile"]
-    FIN["<b>Finitura · Legatoria</b><br/>Reparti produzione<br/>━━━━━━━━━━<br/>• Fustella BOBST · Iberica<br/>• Piega-incolla PI01/02/03<br/>• Brossura · punti metallici<br/>• UV spot · plastifica · foil<br/>• Rilievi a secco · ZUND<br/>• Note fustelle Mirko"]
-    SPED["<b>Spedizione</b><br/>Dashboard dedicata<br/>━━━━━━━━━━<br/>• DDT · corriere · BRT<br/>• PDF archivio vecchio<br/>• Ricerca DDT commesse<br/>• Parziali · consegnate<br/>• Note consegne persistenti<br/>• Descrizione stretta 220px"]
-    CLIC["<b>Cliché Offset</b><br/>Gestione stampa a caldo<br/>━━━━━━━━━━<br/>• Import Excel<br/>• Match v7 token synonym<br/>• AST/ASTUCCIO stoplist<br/>• Tiro (cm foil consumato)<br/>• 89 match · zero falsi<br/>• Report per commessa"]
-    ROP["<b>Ricalcolo Priorità</b><br/>FaseStatoService<br/>━━━━━━━━━━<br/>• config/fasi_priorita.php<br/>• Sequenza fasi 10→999<br/>• Ricalcolo su cambio stato<br/>• PhaseCompleted event"]
+    ORD["<b>Ordini / Fasi</b><br/>Stati 0→4 · EXT<br/>Priorità manuale · dedup"]
+    PRE["<b>Prestampa</b><br/>Dashboard dedicata<br/>Campi editabili · note"]
+    OPER["<b>Dashboard Operatore</b><br/>Touch tablet reparto<br/>Avvia · Pausa · Termina"]
+    FIN["<b>Finitura · Legatoria</b><br/>Fustella · piega · brossura<br/>UV · foil · rilievi"]
+    SPED["<b>Spedizione</b><br/>DDT · BRT · PDF archivio<br/>Note consegne · ricerca"]
+    CLIC["<b>Cliché Offset</b><br/>Match v7 · 89 hit<br/>Tiro foil · report"]
+    ROP["<b>Ricalcolo Priorità</b><br/>FaseStatoService<br/>Sequenza fasi 10→999"]
 end
 
 %% ============== STAMPA REAL-TIME ==============
 subgraph STAMPA [🔴 STAMPA · SYNC REAL-TIME]
     direction TB
-    PSYNC["<b>PrinectSync</b><br/>Sync live XL106<br/>━━━━━━━━━━<br/>• Worksteps + activities<br/>• Filter status COMPLETED<br/>• Auto-terminazione >4h<br/>• Protezione fasi attive<br/>• Ripristino stato 3→2<br/>• Cron 5 min"]
-    FSYNC["<b>FierySync</b><br/>Sync live Indigo<br/>━━━━━━━━━━<br/>• Accounting API v5<br/>• Smart match qta_fase<br/>• Multi STAMPAINDIGO<br/>• Auto-term no stampa<br/>• Cron 1 min · timeout 120s"]
-    RPRI["<b>Report Prinect</b><br/>KPI commessa<br/>━━━━━━━━━━<br/>• Detect bianca/volta (B/V)<br/>• Coppie 0/4 + 4/0<br/>• OEE · tempo avv/esec<br/>• Per workstep + operatore<br/>• Chart timeline"]
-    FOGLI["<b>Fogli buoni / scarto</b><br/>Dati fase · storico<br/>━━━━━━━━━━<br/>• fogli_buoni · fogli_scarto<br/>• Sync DB auto<br/>• Retrofit storico<br/>• Sanity guard 100k"]
-    INK["<b>Ink · Preview · Quality</b><br/>Dettaglio workstep<br/>━━━━━━━━━━<br/>• Consumo inchiostro CMYK<br/>• Anteprima pagina<br/>• Color measurements<br/>• Elementi · lastre"]
+    PSYNC["<b>PrinectSync</b><br/>Worksteps + activities<br/>Auto-term >4h · cron 5min"]
+    FSYNC["<b>FierySync</b><br/>Accounting v5 · cron 1min<br/>Smart match qta_fase"]
+    RPRI["<b>Report Prinect</b><br/>Detect B/V · OEE<br/>Tempo avv/esec · timeline"]
+    FOGLI["<b>Fogli buoni / scarto</b><br/>Sync DB · retrofit storico<br/>Sanity guard 100k"]
+    INK["<b>Ink · Preview · Quality</b><br/>Consumo CMYK · anteprima<br/>Color measurements"]
 end
 
 %% ============== DASHBOARD ==============
 subgraph DASH [🟡 DASHBOARD · REPORT]
     direction TB
-    DOWN["<b>Dashboard Owner</b><br/>Controllo produzione<br/>━━━━━━━━━━<br/>• Real-time stato fasi<br/>• Filtri · ricerca · notifiche<br/>• Ore lavorate (P=Prinect)<br/>• Scrollbar sticky<br/>• EXT badge viola<br/>• Priorità manuale UI"]
-    DPRE["<b>Dashboard Prestampa</b><br/>Area dedicata<br/>━━━━━━━━━━<br/>• Lista commesse prestampa<br/>• Campi editabili<br/>• Assegnazione operatori<br/>• Note persistenti"]
-    DSPED["<b>Dashboard Spedizione</b><br/>Area Emanuele<br/>━━━━━━━━━━<br/>• Da consegnare · parziali<br/>• Sidebar anchor sezioni<br/>• Ricerca PDF DDT<br/>• Note ultima data<br/>• BRT multi-spedizione"]
-    RORE["<b>Report Ore</b><br/>Lavorate vs previste<br/>━━━━━━━━━━<br/>• 6 KPI · 4 Chart.js<br/>• Ore da Prinect (stampa)<br/>• Fallback pivot operatore<br/>• Click sforate → dettaglio<br/>• Solo stato &gt; 2"]
-    RDIR["<b>Report Direzione</b><br/>KPI strategici<br/>━━━━━━━━━━<br/>• KPI per reparto<br/>• Scarti · ore totali<br/>• Excel + PDF<br/>• Grafici storici<br/>• NetTime presenze"]
-    XLEXP["<b>Export Excel Dashboard</b><br/>DashboardMesExport<br/>━━━━━━━━━━<br/>• 40+ colonne<br/>• Qta Prod. Prinect<br/>• Scarti Prinect · Onda<br/>• Cliché · ore previste<br/>• 2 sheet (attive · terminate)"]
-    NCON["<b>Note Consegne</b><br/>Owner ↔ Spedizione<br/>━━━━━━━━━━<br/>• Polling 1-15s<br/>• Badge rosso<br/>• Browser push<br/>• Beep AudioContext<br/>• Toast 30s bidirezionale"]
-    SEC["<b>Security · Audit</b><br/>Accesso e log<br/>━━━━━━━━━━<br/>• Spatie Permission<br/>• RBAC 5 ruoli<br/>• CSRF refresh 30min<br/>• Logout GET+POST<br/>• Session 8h turno"]
-    ETIC["<b>Etichette Data Matrix</b><br/>Stampa da operatore<br/>━━━━━━━━━━<br/>• Plain DataMatrix<br/>• A nel GTIN<br/>• Qty 8 cifre zero-padded<br/>• bwip-js generator"]
+    DOWN["<b>Dashboard Owner</b><br/>Real-time fasi · filtri<br/>Ore lavorate · EXT · priorità"]
+    DPRE["<b>Dashboard Prestampa</b><br/>Lista commesse<br/>Campi editabili · assegnazioni"]
+    DSPED["<b>Dashboard Spedizione</b><br/>Da consegnare · parziali<br/>Ricerca DDT · BRT multi"]
+    RORE["<b>Report Ore</b><br/>Lav. vs prev. · 4 Chart.js<br/>Click sforate → dettaglio"]
+    RDIR["<b>Report Direzione</b><br/>KPI reparto · ore · scarti<br/>Excel + PDF · NetTime"]
+    XLEXP["<b>Export Excel</b><br/>40+ colonne · 2 sheet<br/>Prinect · Onda · Cliché"]
+    NCON["<b>Note Consegne</b><br/>Polling · badge · push<br/>Beep · toast 30s bidir."]
+    SEC["<b>Security · Audit</b><br/>Spatie · RBAC 5 ruoli<br/>CSRF · session 8h"]
+    ETIC["<b>Etichette Data Matrix</b><br/>Plain · A nel GTIN<br/>bwip-js · 8 cifre"]
 end
 
 %% ============== INFRASTRUTTURA ==============
 subgraph INFRA [⚙️ INFRASTRUTTURA]
     direction TB
-    CRON["<b>Scheduler Cron</b><br/>Laravel Schedule<br/>━━━━━━━━━━<br/>• OndaSync · ogni ora<br/>• ExcelSync · ogni 2 min<br/>• PrinectSync · 5 min<br/>• FierySync · 1 min<br/>• NetTime · 5 min<br/>• Cleanup · giornaliero"]
-    LARAVEL["<b>Laravel 12 · MySQL</b><br/>Stack backend<br/>━━━━━━━━━━<br/>• PHP 8.5<br/>• Server Windows .60<br/>• SOAP BRT + Onda<br/>• SQL Server connection<br/>• Blade + Bootstrap 5"]
+    CRON["<b>Scheduler Cron</b><br/>Onda 1h · Excel 2min<br/>Prinect 5min · Fiery 1min"]
+    LARAVEL["<b>Laravel 12 · MySQL</b><br/>PHP 8.5 · server .60<br/>SOAP · SQL Server · Blade"]
 end
 
 %% ============== FLUSSI PRINCIPALI ==============
@@ -190,15 +190,15 @@ class CRON,LARAVEL infra
         theme: 'base',
         flowchart: {
             curve: 'basis',
-            padding: 25,
-            nodeSpacing: 70,
-            rankSpacing: 120,
-            useMaxWidth: false,
+            padding: 12,
+            nodeSpacing: 35,
+            rankSpacing: 60,
+            useMaxWidth: true,
             htmlLabels: true
         },
         themeVariables: {
             fontFamily: 'Segoe UI, Tahoma, sans-serif',
-            fontSize: '15px',
+            fontSize: '11px',
             primaryColor: '#fff',
             primaryBorderColor: '#333',
             lineColor: '#4a4a4a'
