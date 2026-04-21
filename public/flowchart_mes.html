@@ -19,10 +19,11 @@
     .header .sub { font-size: 11pt; color: #555; margin-top: 4px; }
 
     .chart-wrap { background: #fff; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-radius: 6px; overflow: auto; max-height: 85vh; }
-    .mermaid { font-size: 13px; display: flex; justify-content: center; transform-origin: top left; }
-    .mermaid svg { min-width: 1200px; }
-    .mermaid .nodeLabel { font-size: 12px !important; line-height: 1.4 !important; }
-    .mermaid .cluster-label { font-size: 14px !important; font-weight: 700 !important; }
+    .mermaid { font-size: 15px; display: flex; justify-content: center; transform-origin: top left; }
+    .mermaid svg { min-width: 1400px; }
+    .mermaid .nodeLabel { font-size: 14px !important; line-height: 1.45 !important; font-weight: 500 !important; }
+    .mermaid .cluster-label { font-size: 16px !important; font-weight: 800 !important; }
+    .mermaid .node rect, .mermaid .node polygon { stroke-width: 2px !important; }
 
     .zoom-controls { display: inline-flex; gap: 6px; margin-left: auto; }
     .zoom-controls button { padding: 4px 10px; font-size: 10pt; }
@@ -96,7 +97,7 @@ end
 
 %% ============== DASHBOARD ==============
 subgraph DASH [🟡 DASHBOARD · REPORT]
-    direction LR
+    direction TB
     DOWN["<b>Dashboard Owner</b><br/>Real-time fasi · filtri<br/>Ore lavorate · EXT · priorità"]
     DPRE["<b>Dashboard Prestampa</b><br/>Lista commesse<br/>Campi editabili · assegnazioni"]
     DSPED["<b>Dashboard Spedizione</b><br/>Da consegnare · parziali<br/>Ricerca DDT · BRT multi"]
@@ -199,15 +200,15 @@ class CRON,LARAVEL infra
         theme: 'base',
         flowchart: {
             curve: 'basis',
-            padding: 12,
-            nodeSpacing: 35,
-            rankSpacing: 60,
-            useMaxWidth: true,
+            padding: 18,
+            nodeSpacing: 18,
+            rankSpacing: 45,
+            useMaxWidth: false,
             htmlLabels: true
         },
         themeVariables: {
             fontFamily: 'Segoe UI, Tahoma, sans-serif',
-            fontSize: '11px',
+            fontSize: '14px',
             primaryColor: '#fff',
             primaryBorderColor: '#333',
             lineColor: '#4a4a4a'
