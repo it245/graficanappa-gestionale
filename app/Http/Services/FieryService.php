@@ -34,44 +34,38 @@ class FieryService
      */
     public function getServerStatus(): ?array
     {
-        // Primo tentativo: WebTools legacy (senza client_locale, causa SSL error su Canon V900)
-        try {
-            $response = $this->http()->timeout(3)->get($this->baseUrl . '/wt4/home/get_server_status');
+        // Cache 15s per evitare N chiamate API in ogni request dashboard
+        return Cache::remember('fiery_server_status', 15, function () {
+            // API v5 authenticated (WebTools legacy da Canon V900 ha SSL bug)
+            try {
+                $http = $this->loginAndGetHttp();
+                if (!$http) return null;
+                $response = $http->get($this->baseUrl . '/live/api/v5/server/status');
+                if (!$response->successful()) return null;
 
-            if ($response->successful()) {
-                $json = $response->json();
-                if (!empty($json) && isset($json['device_status'])) {
-                    return $this->parseServerStatus($json);
-                }
-            }
-        } catch (\Exception $e) {}
-
-        // Fallback: API v5 (endpoint moderno Canon V900)
-        try {
-            $response = $this->http()->timeout(3)->get($this->baseUrl . '/live/api/v5/server/status');
-            if ($response->successful()) {
                 $data = $response->json('data.item', []);
-                if (!empty($data)) {
-                    $fiery = strtolower($data['fiery'] ?? '');
-                    $ext = strtolower($data['fieryExtendedStatus'] ?? 'none');
-                    $stato = match (true) {
-                        str_contains($fiery, 'print') => 'stampa',
-                        $fiery === 'running' && $ext === 'none' => 'idle',
-                        $fiery === 'running' => 'idle',
-                        default => 'offline',
-                    };
-                    return [
-                        'stato' => $stato,
-                        'stampa' => ['documento' => null, 'pagine' => 0],
-                        'rip' => ['idle' => true, 'documento' => null, 'count' => 0],
-                        'avviso' => $ext !== 'none' ? $ext : null,
-                        'raw' => $data,
-                    ];
-                }
-            }
-        } catch (\Exception $e) {}
+                if (empty($data)) return null;
 
-        return null;
+                $fiery = strtolower($data['fiery'] ?? '');
+                $ext = strtolower($data['fieryExtendedStatus'] ?? 'none');
+                $stato = match (true) {
+                    str_contains($fiery, 'print') => 'stampa',
+                    $fiery === 'running' && $ext === 'none' => 'idle',
+                    $fiery === 'running' => 'idle',
+                    default => 'offline',
+                };
+
+                return [
+                    'stato' => $stato,
+                    'stampa' => ['documento' => null, 'pagine' => 0],
+                    'rip' => ['idle' => true, 'documento' => null, 'count' => 0],
+                    'avviso' => $ext !== 'none' ? $ext : null,
+                    'raw' => $data,
+                ];
+            } catch (\Exception $e) {
+                return null;
+            }
+        });
     }
 
     /**
