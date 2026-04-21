@@ -252,25 +252,26 @@
     }
 
     @media print {
-        @page { size: A3 landscape; margin: 0.8cm; }
-        html, body { background: #fff; padding: 0; margin: 0; width: 420mm; height: 297mm; }
+        @page { size: A3 landscape; margin: 6mm; }
+        html, body { background: #fff; padding: 0; margin: 0; }
+        body { zoom: 0.62; }
         .toolbar { display: none; }
-        .header { margin-bottom: 14px; }
-        .header h1 { font-size: 22pt; }
-        .header .sub { font-size: 10pt; margin-top: 3px; }
-        .canvas-wrap, .canvas { max-width: 100% !important; }
-        .canvas { gap: 35px !important; }
-        .col-title { padding: 8px 12px; font-size: 10pt; }
-        .card { padding: 8px 12px; break-inside: avoid; box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important; }
-        .card h3 { font-size: 9pt; margin-bottom: 2px; }
-        .card .tag { font-size: 7pt; margin-bottom: 4px; }
-        .card ul li { font-size: 7.5pt; padding: 1px 0 1px 12px; line-height: 1.2; }
-        .infra-row { margin-top: 14px; padding: 10px 16px; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-        .infra-row .infra-item h4 { font-size: 8.5pt; }
-        .infra-row .infra-item p { font-size: 7pt; }
-        .legend { margin-top: 10px; padding: 8px 12px; font-size: 7.5pt; gap: 12px; }
-        .footer { margin-top: 10px; font-size: 7pt; }
-        .connections { display: none; } /* nascosti in stampa, layout pulito */
+        .header { margin-bottom: 12px; }
+        .header h1 { font-size: 28pt; }
+        .header .sub { font-size: 11pt; margin-top: 3px; }
+        .canvas-wrap, .canvas { max-width: 100% !important; page-break-inside: avoid; }
+        .canvas { gap: 24px !important; }
+        .col-title { padding: 10px 14px; font-size: 12pt; }
+        .card { padding: 10px 14px; break-inside: avoid; box-shadow: 0 1px 3px rgba(0,0,0,0.12) !important; }
+        .card h3 { font-size: 11pt; margin-bottom: 3px; }
+        .card .tag { font-size: 8.5pt; margin-bottom: 5px; }
+        .card ul li { font-size: 9pt; padding: 1px 0 1px 14px; line-height: 1.25; }
+        .infra-row { margin-top: 16px; padding: 12px 18px; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+        .infra-row .infra-item h4 { font-size: 10pt; }
+        .infra-row .infra-item p { font-size: 8pt; }
+        .legend { margin-top: 12px; padding: 10px 14px; font-size: 8pt; gap: 14px; }
+        .footer { margin-top: 12px; font-size: 7.5pt; }
+        .connections { display: none; }
         * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
     }
 </style>
