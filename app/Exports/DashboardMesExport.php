@@ -16,6 +16,7 @@ use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Font;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use App\Helpers\DescrizioneParser;
+use Illuminate\Support\Facades\DB;
 
 class DashboardMesExport implements WithMultipleSheets
 {
@@ -33,12 +34,54 @@ class DashboardMesSheet implements FromCollection, WithHeadings, WithMapping, Wi
     private string $operatore;
     private int $stato;
     private string $titolo;
+    private ?array $scartiOnda = null;
 
     public function __construct(string $operatore, int $stato, string $titolo)
     {
         $this->operatore = $operatore;
         $this->stato = $stato;
         $this->titolo = $titolo;
+    }
+
+    /**
+     * Pre-fetch scarti da Onda (OC_TotScarti) mappati per commessa + codice macchina.
+     * Mappa: ["commessa|CodMacchina" => SUM(OC_TotScarti)]
+     * Inoltre mappa la fase MES (es. STAMPAXL106.1) alla macchina Onda (XL106-1) via PRDDocFasi.
+     */
+    private function caricaScartiOnda(): array
+    {
+        if ($this->scartiOnda !== null) return $this->scartiOnda;
+
+        $map = [];
+        try {
+            $rows = DB::connection('onda')->select("
+                SELECT
+                    t.CodCommessa AS commessa,
+                    f.CodFase AS cod_fase,
+                    ext.OC_CodMacchina AS cod_macchina,
+                    SUM(ext.OC_TotScarti) AS tot_scarti
+                FROM ATTDocTeste t
+                INNER JOIN PRDDocTeste p ON t.CodCommessa = p.CodCommessa
+                INNER JOIN PRDDocFasi f ON p.IdDoc = f.IdDoc
+                INNER JOIN OC_ATTDocRigheExt ext
+                    ON ext.OC_IdDoc = t.IdDoc
+                   AND ext.OC_CodMacchina = f.CodMacchina
+                WHERE t.TipoDocumento = '2'
+                  AND ext.OC_TotScarti > 0
+                GROUP BY t.CodCommessa, f.CodFase, ext.OC_CodMacchina
+            ");
+            foreach ($rows as $r) {
+                $commessa = trim($r->commessa);
+                $faseCod = trim($r->cod_fase ?? '');
+                // Chiave per fase Onda (STAMPAXL106.1, ecc.)
+                $map[$commessa . '|' . $faseCod] = (int) $r->tot_scarti;
+            }
+        } catch (\Exception $e) {
+            // Onda non raggiungibile — mappa vuota
+        }
+
+        $this->scartiOnda = $map;
+        return $map;
     }
 
     public function title(): string
@@ -63,7 +106,7 @@ class DashboardMesSheet implements FromCollection, WithHeadings, WithMapping, Wi
             'Qta Prod', 'Note', 'Data Inizio', 'Data Fine',
             'Ordine Cliente', 'N. DDT Vendita', 'Vettore DDT', 'Qta DDT', 'Note Fasi Successive',
             'Colori', 'Fustella', 'Esterno', 'Ore Prev.', 'Ore Lav.',
-            'Scarti', 'Scarti Prinect', 'Cliché', 'Qta Prod. Prinect',
+            'Scarti', 'Scarti Prinect', 'Cliché', 'Qta Prod. Prinect', 'Scarti Onda',
         ];
     }
 
@@ -168,6 +211,12 @@ class DashboardMesSheet implements FromCollection, WithHeadings, WithMapping, Wi
             $ordine && $ordine->cliche ? $ordine->cliche->label() : '',
             // Qta Prodotta Prinect (fogli_buoni, sola lettura)
             $fase->fogli_buoni ?? '',
+            // Scarti Onda (OC_TotScarti da preventivo articoli lavorazione, sola lettura)
+            (function() use ($fase, $ordine) {
+                $map = $this->caricaScartiOnda();
+                $chiave = ($ordine->commessa ?? '') . '|' . ($fase->fase ?? '');
+                return $map[$chiave] ?? '';
+            })(),
         ];
     }
 
@@ -213,16 +262,17 @@ class DashboardMesSheet implements FromCollection, WithHeadings, WithMapping, Wi
             'AK' => 12, // Scarti Prev.
             'AL' => 12, // Cliché
             'AM' => 14, // Qta Prod. Prinect
+            'AN' => 14, // Scarti Onda
         ];
     }
 
     public function styles(Worksheet $sheet)
     {
         $lastRow = $sheet->getHighestRow();
-        $nonEditabili = ['A', 'B', 'S', 'T', 'U', 'AE', 'AF', 'AG', 'AH', 'AI', 'AK', 'AL'];
+        $nonEditabili = ['A', 'B', 'S', 'T', 'U', 'AE', 'AF', 'AG', 'AH', 'AI', 'AK', 'AL', 'AM', 'AN'];
 
         // Header: sfondo nero, testo bianco, grassetto
-        $sheet->getStyle('A1:AL1')->applyFromArray([
+        $sheet->getStyle('A1:AN1')->applyFromArray([
             'font' => [
                 'bold' => true,
                 'color' => ['rgb' => 'FFFFFF'],
@@ -251,7 +301,7 @@ class DashboardMesSheet implements FromCollection, WithHeadings, WithMapping, Wi
         }
 
         // Auto-filtro sulla riga header
-        $sheet->setAutoFilter('A1:AL1');
+        $sheet->setAutoFilter('A1:AN1');
 
         return [];
     }
