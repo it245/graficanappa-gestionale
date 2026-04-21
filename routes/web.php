@@ -149,6 +149,8 @@ Route::middleware(['owner.or.admin'])->prefix('mes/prinect')->group(function() {
 Route::middleware(['owner.or.admin'])->prefix('mes/fiery')->group(function() {
     Route::get('/', [FieryController::class, 'index'])->name('mes.fiery');
     Route::get('/status', [FieryController::class, 'statusJson'])->name('mes.fiery.status');
+    Route::get('/consumables', [FieryController::class, 'consumablesJson'])->name('mes.fiery.consumables');
+    Route::get('/info', [FieryController::class, 'infoJson'])->name('mes.fiery.info');
     Route::get('/debug', [FieryController::class, 'debugSync'])->name('mes.fiery.debug');
 });
 

@@ -294,6 +294,127 @@ class FieryService
     }
 
     /**
+     * Livelli consumabili (toner CMYK, waste, ADF kit, staples).
+     * Cache 60s — non stressare API Fiery.
+     */
+    public function getConsumables(): ?array
+    {
+        return Cache::remember('fiery_consumables', 60, function () {
+            try {
+                $http = $this->loginAndGetHttp();
+                if (!$http) return null;
+                $r = $http->get($this->baseUrl . '/live/api/v5/consumables');
+                if (!$r->successful()) return null;
+
+                $items = $r->json('data.items', []);
+                $norm = [];
+                foreach ($items as $c) {
+                    $norm[] = [
+                        'name' => $c['name'] ?? $c['color'] ?? '-',
+                        'type' => $c['type'] ?? '-',
+                        'color' => strtolower($c['color'] ?? ''),
+                        'level' => (int) ($c['level'] ?? 0),
+                        'max' => (int) ($c['maxCapacity'] ?? 100),
+                        'unit' => $c['unit'] ?? '%',
+                        'status' => $c['status'] ?? 'ok',
+                    ];
+                }
+                return $norm;
+            } catch (\Exception $e) {
+                return null;
+            }
+        });
+    }
+
+    /**
+     * Info estesa server Fiery (capabilities, modello, seriale).
+     * Cache 1h — dati statici.
+     */
+    public function getInfoExtended(): ?array
+    {
+        return Cache::remember('fiery_info_extended', 3600, function () {
+            try {
+                $http = $this->loginAndGetHttp();
+                if (!$http) return null;
+                // v1 ha info più ricca (4612 bytes vs 530 v5)
+                $r = $http->get($this->baseUrl . '/live/api/v1/info');
+                if (!$r->successful()) {
+                    $r = $http->get($this->baseUrl . '/live/api/v5/info');
+                }
+                return $r->successful() ? $r->json('data.item', []) : null;
+            } catch (\Exception $e) {
+                return null;
+            }
+        });
+    }
+
+    /**
+     * Versione firmware Fiery.
+     * Cache 24h.
+     */
+    public function getVersion(): ?string
+    {
+        return Cache::remember('fiery_version', 86400, function () {
+            try {
+                $http = $this->loginAndGetHttp();
+                if (!$http) return null;
+                $r = $http->get($this->baseUrl . '/live/api/v3/version');
+                if ($r->successful()) {
+                    $data = $r->json('data.item', []);
+                    return $data['version'] ?? $data['buildNumber'] ?? json_encode($data);
+                }
+                return null;
+            } catch (\Exception $e) {
+                return null;
+            }
+        });
+    }
+
+    /**
+     * Estrae timing spooling/ripping/printing da un job (campi timestamp).
+     */
+    public function getJobTimings(array $job): array
+    {
+        $ts = fn($key) => isset($job[$key]) && $job[$key] ? strtotime($job[$key]) : null;
+
+        $spoolStart = $ts('timestamp spooling');
+        $spoolDone = $ts('timestamp done spooling');
+        $ripStart = $ts('timestamp ripping');
+        $ripDone = $ts('timestamp done ripping');
+        $printStart = $ts('timestamp printing');
+        $printDone = $ts('timestamp done printing');
+
+        return [
+            'spool_sec' => ($spoolStart && $spoolDone) ? max(0, $spoolDone - $spoolStart) : null,
+            'rip_sec' => ($ripStart && $ripDone) ? max(0, $ripDone - $ripStart) : null,
+            'print_sec' => ($printStart && $printDone) ? max(0, $printDone - $printStart) : null,
+            'total_sec' => ($spoolStart && $printDone) ? max(0, $printDone - $spoolStart) : null,
+        ];
+    }
+
+    /**
+     * Login + ritorna PendingRequest con cookie sessione.
+     * Helper interno per le chiamate API v5/v1/v3 protette.
+     */
+    private function loginAndGetHttp()
+    {
+        $login = $this->http()->post($this->baseUrl . '/live/api/v5/login', [
+            'username' => $this->username,
+            'password' => $this->password,
+            'accessrights' => $this->apiKey,
+        ]);
+        if (!$login->successful()) return null;
+
+        $cookieHeader = '';
+        foreach ((array) ($login->headers()['Set-Cookie'] ?? []) as $sc) {
+            if (preg_match('/^([^=]+)=([^;]+)/', $sc, $m)) {
+                $cookieHeader .= $m[1] . '=' . $m[2] . '; ';
+            }
+        }
+        return $this->http()->withHeaders(['Cookie' => trim($cookieHeader, '; ')]);
+    }
+
+    /**
      * Verifica se il Fiery è raggiungibile
      */
     public function isOnline(): bool

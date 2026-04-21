@@ -37,6 +37,43 @@ class FieryController extends Controller
         return view('fiery.dashboard', compact('status', 'jobData', 'snmp'));
     }
 
+    /**
+     * Endpoint JSON: livelli consumabili (toner, waste, ADF) per widget real-time.
+     */
+    public function consumablesJson(FieryService $fiery)
+    {
+        $consumables = $fiery->getConsumables();
+        if ($consumables === null) {
+            return response()->json(['success' => false, 'msg' => 'Fiery non raggiungibile']);
+        }
+        // Calcola alert auto (< 10% = warning, < 5% = critical)
+        $alerts = [];
+        foreach ($consumables as $c) {
+            if ($c['type'] === 'toner' || str_contains(strtolower($c['name']), 'toner')) {
+                if ($c['level'] < 5) $alerts[] = "TONER CRITICO: {$c['name']} al {$c['level']}%";
+                elseif ($c['level'] < 10) $alerts[] = "Toner basso: {$c['name']} al {$c['level']}%";
+            }
+        }
+        return response()->json([
+            'success' => true,
+            'consumables' => $consumables,
+            'alerts' => $alerts,
+            'updated_at' => now()->format('H:i:s'),
+        ]);
+    }
+
+    /**
+     * Info estesa server Fiery (modello, seriale, firmware, capabilities).
+     */
+    public function infoJson(FieryService $fiery)
+    {
+        return response()->json([
+            'success' => true,
+            'info' => $fiery->getInfoExtended(),
+            'version' => $fiery->getVersion(),
+        ]);
+    }
+
     public function statusJson(FieryService $fiery, FierySyncService $syncService)
     {
         set_time_limit(60);
