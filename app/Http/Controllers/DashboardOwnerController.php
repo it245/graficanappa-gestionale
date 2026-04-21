@@ -636,18 +636,20 @@ public function calcolaOreEPriorita($fase)
             }
             $fase->save();
         } elseif ($campo === 'reparto') {
-            // Sposta SOLO questa fase al nuovo reparto: crea record catalogo dedicato
-            // (nome, reparto_id) se non esiste, altrimenti riusa → NON sovrascrive reparto globale
+            // ATTENZIONE: cambio reparto dalla dashboard è GLOBALE (tutte le fasi con questo
+            // nome cambiano insieme). Richiede conferma esplicita lato UI.
+            // Per spostare SOLO una fase, usare il campo "fase" cambiando nome (es. STAMPAINDIGO → STAMPAXL106).
             $nomeReparto = trim($valore) ?: 'generico';
             $reparto = Reparto::firstOrCreate(['nome' => $nomeReparto]);
             $faseNome = $fase->fase ?: '-';
-            $faseCat = FasiCatalogo::firstOrCreate(
-                ['nome' => $faseNome, 'reparto_id' => $reparto->id]
-            );
             $repartoPrima = $fase->faseCatalogo->reparto->nome ?? '-';
+            $faseCat = FasiCatalogo::updateOrCreate(
+                ['nome' => $faseNome],
+                ['reparto_id' => $reparto->id]
+            );
             $fase->fase_catalogo_id = $faseCat->id;
             $fase->save();
-            \Log::info("aggiornaCampo reparto: fase_id={$fase->id} commessa=" . ($fase->ordine->commessa ?? '-') . " fase={$faseNome} reparto {$repartoPrima}→{$nomeReparto}");
+            \Log::warning("CAMBIO REPARTO GLOBALE: fase={$faseNome} reparto {$repartoPrima}→{$nomeReparto} (tutte le fasi con questo nome spostate) · operatore_id=" . (request()->attributes->get('operatore_id') ?? session('operatore_id') ?? '-'));
         } elseif (in_array($campo, $campiFase)) {
             $valorePrima = $fase->{$campo};
             $fase->{$campo} = $valore;
