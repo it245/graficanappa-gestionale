@@ -294,6 +294,21 @@ class FieryService
     }
 
     /**
+     * Dump raw consumables JSON per debug struttura
+     */
+    public function getConsumablesRaw()
+    {
+        try {
+            $http = $this->loginAndGetHttp();
+            if (!$http) return ['err' => 'login failed'];
+            $r = $http->get($this->baseUrl . '/live/api/v5/consumables');
+            return ['status' => $r->status(), 'body' => $r->json() ?? $r->body()];
+        } catch (\Exception $e) {
+            return ['err' => $e->getMessage()];
+        }
+    }
+
+    /**
      * Livelli consumabili (toner CMYK, waste, ADF kit, staples).
      * Cache 60s — non stressare API Fiery.
      */
@@ -306,15 +321,33 @@ class FieryService
                 $r = $http->get($this->baseUrl . '/live/api/v5/consumables');
                 if (!$r->successful()) return null;
 
-                $items = $r->json('data.items', []);
+                // Prova varianti struttura Fiery: data.items / data.item / data direttamente
+                $items = $r->json('data.items')
+                    ?? $r->json('data.item.consumables')
+                    ?? $r->json('data.item')
+                    ?? $r->json('items')
+                    ?? [];
+
+                // Se è un oggetto singolo con chiavi di tipo toner, normalizza
+                if (!empty($items) && !array_is_list($items) && !isset($items[0])) {
+                    $newItems = [];
+                    foreach ($items as $key => $val) {
+                        if (is_array($val)) {
+                            $newItems[] = array_merge(['name' => $key], $val);
+                        }
+                    }
+                    $items = $newItems;
+                }
+
                 $norm = [];
                 foreach ($items as $c) {
+                    if (!is_array($c)) continue;
                     $norm[] = [
-                        'name' => $c['name'] ?? $c['color'] ?? '-',
-                        'type' => $c['type'] ?? '-',
+                        'name' => $c['name'] ?? $c['color'] ?? $c['type'] ?? '-',
+                        'type' => $c['type'] ?? $c['category'] ?? '-',
                         'color' => strtolower($c['color'] ?? ''),
-                        'level' => (int) ($c['level'] ?? 0),
-                        'max' => (int) ($c['maxCapacity'] ?? 100),
+                        'level' => (int) ($c['level'] ?? $c['percent'] ?? $c['remaining'] ?? 0),
+                        'max' => (int) ($c['maxCapacity'] ?? $c['max'] ?? 100),
                         'unit' => $c['unit'] ?? '%',
                         'status' => $c['status'] ?? 'ok',
                     ];

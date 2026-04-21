@@ -40,8 +40,13 @@ class FieryController extends Controller
     /**
      * Endpoint JSON: livelli consumabili (toner, waste, ADF) per widget real-time.
      */
-    public function consumablesJson(FieryService $fiery)
+    public function consumablesJson(FieryService $fiery, Request $request)
     {
+        // Debug: ?raw=1 torna payload grezzo per scoprire struttura JSON reale
+        if ($request->has('raw')) {
+            return response()->json(['raw' => $fiery->getConsumablesRaw()]);
+        }
+
         $consumables = $fiery->getConsumables();
         if ($consumables === null) {
             return response()->json(['success' => false, 'msg' => 'Fiery non raggiungibile']);
