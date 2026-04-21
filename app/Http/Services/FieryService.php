@@ -34,48 +34,52 @@ class FieryService
      */
     public function getServerStatus(): ?array
     {
-        // Cache 30s per evitare chiamate API ripetute
-        return Cache::remember('fiery_server_status', 30, function () {
-            // API v5 /server/status NON richiede login su Canon V900 — try diretto
-            try {
-                $response = Http::withoutVerifying()
-                    ->withOptions(['verify' => false])
-                    ->timeout(5)
-                    ->get($this->baseUrl . '/live/api/v5/server/status');
+        // Check cache (salvata solo se successo, mai null)
+        $cached = Cache::get('fiery_server_status');
+        if (!empty($cached)) return $cached;
 
-                if (!$response->successful()) return null;
+        try {
+            $response = Http::withoutVerifying()
+                ->withOptions(['verify' => false])
+                ->timeout(5)
+                ->get($this->baseUrl . '/live/api/v5/server/status');
 
-                $data = $response->json('data.item', []);
-                if (empty($data)) return null;
+            if (!$response->successful()) return null;
 
-                $fiery = strtolower($data['fiery'] ?? '');
-                $ext = strtolower($data['fieryExtendedStatus'] ?? 'none');
-                $stato = match (true) {
-                    str_contains($fiery, 'print') => 'stampa',
-                    $fiery === 'running' && $ext === 'none' => 'idle',
-                    $fiery === 'running' => 'idle',
-                    default => 'offline',
-                };
+            $data = $response->json('data.item', []);
+            if (empty($data)) return null;
 
-                return [
-                    'stato' => $stato,
-                    'stampa' => [
-                        'documento' => null,
-                        'pagine' => 0,
-                        'copie_fatte' => 0,
-                        'copie_totali' => 0,
-                        'progresso' => 0,
-                        'utente' => '-',
-                    ],
-                    'rip' => ['idle' => true, 'documento' => null, 'count' => 0],
-                    'avviso' => $ext !== 'none' ? $ext : null,
-                    'ultimo_aggiornamento' => now()->format('H:i:s'),
-                    'raw' => $data,
-                ];
-            } catch (\Exception $e) {
-                return null;
-            }
-        });
+            $fiery = strtolower($data['fiery'] ?? '');
+            $ext = strtolower($data['fieryExtendedStatus'] ?? 'none');
+            $stato = match (true) {
+                str_contains($fiery, 'print') => 'stampa',
+                $fiery === 'running' && $ext === 'none' => 'idle',
+                $fiery === 'running' => 'idle',
+                default => 'offline',
+            };
+
+            $result = [
+                'stato' => $stato,
+                'stampa' => [
+                    'documento' => null,
+                    'pagine' => 0,
+                    'copie_fatte' => 0,
+                    'copie_totali' => 0,
+                    'progresso' => 0,
+                    'utente' => '-',
+                ],
+                'rip' => ['idle' => true, 'documento' => null, 'count' => 0],
+                'avviso' => $ext !== 'none' ? $ext : null,
+                'ultimo_aggiornamento' => now()->format('H:i:s'),
+                'raw' => $data,
+            ];
+
+            // Cache 30s SOLO se successo (evita null cachato che genera "non raggiungibile" per 30s)
+            Cache::put('fiery_server_status', $result, 30);
+            return $result;
+        } catch (\Exception $e) {
+            return null;
+        }
     }
 
     /**
