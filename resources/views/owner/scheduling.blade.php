@@ -402,6 +402,11 @@
         <div class="subtitle">Pianificazione automatica · Gantt lavorazioni attive</div>
     </div>
     <div class="header-right">
+        <a href="{{ route('owner.schedulingExcel') }}?op_token={{ request('op_token') }}"
+           style="background:#059669;color:#fff;border:1px solid #047857;padding:8px 16px;border-radius:25px;text-decoration:none;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px;"
+           title="Scarica piano produzione Excel">
+            ⬇ Excel Piano
+        </a>
         <input type="text" id="searchGlobal" class="search-box" placeholder="Cerca commessa, cliente, fase...">
     </div>
 </div>
