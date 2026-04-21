@@ -40,21 +40,31 @@ class FieryService
 
         // Retry 2 volte con timeout 8s (API Fiery Canon V900 a volte lenta)
         $response = null;
+        $lastErr = null;
         for ($attempt = 1; $attempt <= 2; $attempt++) {
             try {
                 $response = Http::withoutVerifying()
-                    ->withOptions(['verify' => false])
+                    ->withOptions(['verify' => false, 'http_errors' => false])
                     ->timeout(8)
+                    ->connectTimeout(3)
                     ->get($this->baseUrl . '/live/api/v5/server/status');
                 if ($response->successful()) break;
+                $lastErr = 'HTTP ' . $response->status();
+                $response = null;
             } catch (\Exception $e) {
-                if ($attempt === 2) return null;
-                usleep(500000); // 0.5s tra tentativi
+                $lastErr = $e->getMessage();
+                $response = null;
+                if ($attempt === 2) break;
+                usleep(500000);
             }
         }
 
+        if (!$response) {
+            \Log::warning('Fiery getServerStatus fallito: ' . $lastErr);
+            return null;
+        }
+
         try {
-            if (!$response || !$response->successful()) return null;
 
             $data = $response->json('data.item', []);
             if (empty($data)) return null;
