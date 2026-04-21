@@ -1530,6 +1530,27 @@ public function calcolaOreEPriorita($fase)
         ]);
     }
 
+    /**
+     * Genera + scarica Excel piano produzione Mossa 37
+     */
+    public function schedulingExcel()
+    {
+        $filePath = storage_path('app/piano_produzione_' . now()->format('Y-m-d_His') . '.xlsx');
+
+        try {
+            \App\Services\SchedulerExportService::export($filePath);
+        } catch (\Exception $e) {
+            \Log::error('SchedulerExportService export errore: ' . $e->getMessage());
+            return back()->with('error', 'Errore generazione Excel: ' . $e->getMessage());
+        }
+
+        if (!file_exists($filePath)) {
+            return back()->with('error', 'File Excel non generato');
+        }
+
+        return response()->download($filePath, 'piano_produzione_' . now()->format('Y-m-d') . '.xlsx')->deleteFileAfterSend(true);
+    }
+
     public function downloadExcel()
     {
         // Genera file aggiornato
