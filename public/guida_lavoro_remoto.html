@@ -120,8 +120,13 @@ Casa tua (82.xx.xx.xx)          Azienda (93.47.8.102)
 <ul>
     <li>✓ Semplice, veloce, basso costo</li>
     <li>✓ Zero problemi di firewall</li>
-    <li>✗ Tu da casa non raggiungi direttamente il server — serve VPN o RDP</li>
+    <li>✓ Da casa raggiungi il server tramite VPN WireGuard integrata nel router MikroTik aziendale (setup già attivo: tunnel "NappaG", endpoint <code>*.mynetname.net</code>, IP VPN assegnato <code>192.168.216.x</code>)</li>
+    <li>Alternativa secondaria: RDP al tuo PC ufficio e lavori da lì</li>
 </ul>
+
+<div class="ok">
+    <strong>Nota pratica — setup attuale Grafica Nappa.</strong> Il router MikroTik in ufficio ha WireGuard server attivo su porta 27233. Ogni sviluppatore/operatore autorizzato ha un peer dedicato con chiavi proprie. Dal client WireGuard sul PC di casa, <em>Attiva</em> il tunnel "NappaG" → ricevi IP <code>192.168.216.x</code> → puoi raggiungere <code>192.168.1.60</code> (server MES) e tutta la LAN aziendale. Questa è la stessa architettura che proporremo ai clienti.
+</div>
 
 <h3>2.2 Scenario B — MES in cloud (VPS Hetzner/Aruba)</h3>
 <p>Il server MES è su un provider cloud, accessibile via dominio <code>mes.cliente.com</code>. Le macchine del cliente restano in azienda.</p>
