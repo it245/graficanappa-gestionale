@@ -34,13 +34,15 @@ class FieryService
      */
     public function getServerStatus(): ?array
     {
-        // Cache 15s per evitare N chiamate API in ogni request dashboard
-        return Cache::remember('fiery_server_status', 15, function () {
-            // API v5 authenticated (WebTools legacy da Canon V900 ha SSL bug)
+        // Cache 30s per evitare chiamate API ripetute
+        return Cache::remember('fiery_server_status', 30, function () {
+            // API v5 /server/status NON richiede login su Canon V900 — try diretto
             try {
-                $http = $this->loginAndGetHttp();
-                if (!$http) return null;
-                $response = $http->get($this->baseUrl . '/live/api/v5/server/status');
+                $response = Http::withoutVerifying()
+                    ->withOptions(['verify' => false])
+                    ->timeout(5)
+                    ->get($this->baseUrl . '/live/api/v5/server/status');
+
                 if (!$response->successful()) return null;
 
                 $data = $response->json('data.item', []);
