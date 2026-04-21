@@ -19,11 +19,12 @@
     .header .sub { font-size: 11pt; color: #555; margin-top: 4px; }
 
     .chart-wrap { background: #fff; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-radius: 6px; overflow: auto; max-height: 85vh; }
-    .mermaid { font-size: 15px; display: flex; justify-content: center; transform-origin: top left; }
-    .mermaid svg { min-width: 1400px; }
-    .mermaid .nodeLabel { font-size: 14px !important; line-height: 1.45 !important; font-weight: 500 !important; }
-    .mermaid .cluster-label { font-size: 16px !important; font-weight: 800 !important; }
-    .mermaid .node rect, .mermaid .node polygon { stroke-width: 2px !important; }
+    .mermaid { font-size: 18px; display: flex; justify-content: center; transform-origin: top left; }
+    .mermaid svg { min-width: 1700px; }
+    .mermaid .nodeLabel { font-size: 17px !important; line-height: 1.45 !important; font-weight: 600 !important; }
+    .mermaid .cluster-label { font-size: 20px !important; font-weight: 800 !important; }
+    .mermaid .node rect, .mermaid .node polygon { stroke-width: 2.5px !important; }
+    .mermaid .edgeLabel { font-size: 13px !important; }
 
     .zoom-controls { display: inline-flex; gap: 6px; margin-left: auto; }
     .zoom-controls button { padding: 4px 10px; font-size: 10pt; }
@@ -200,15 +201,15 @@ class CRON,LARAVEL infra
         theme: 'base',
         flowchart: {
             curve: 'basis',
-            padding: 18,
-            nodeSpacing: 18,
-            rankSpacing: 45,
+            padding: 25,
+            nodeSpacing: 25,
+            rankSpacing: 55,
             useMaxWidth: false,
             htmlLabels: true
         },
         themeVariables: {
             fontFamily: 'Segoe UI, Tahoma, sans-serif',
-            fontSize: '14px',
+            fontSize: '17px',
             primaryColor: '#fff',
             primaryBorderColor: '#333',
             lineColor: '#4a4a4a'
