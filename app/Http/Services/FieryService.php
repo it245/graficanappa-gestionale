@@ -208,34 +208,37 @@ class FieryService
      */
     public function getJobs(): ?array
     {
-        $json = $this->apiGet('/live/api/v5/jobs');
-        if (!$json) return null;
+        // Cache 30s: dashboard fa 441 job × overhead parsing → risparmio ~2-5s per refresh
+        return Cache::remember('fiery_jobs_parsed', 30, function () {
+            $json = $this->apiGet('/live/api/v5/jobs');
+            if (!$json) return null;
 
-        $items = $json['data']['items'] ?? [];
+            $items = $json['data']['items'] ?? [];
 
-        return collect($items)->map(function ($job) {
-            return [
-                'id' => $job['id'] ?? null,
-                'title' => $job['title'] ?? '',
-                'state' => $job['state'] ?? '',
-                'status' => $job['status'] ?? '',
-                'date' => $job['date'] ?? '',
-                'username' => $job['username'] ?? '',
-                'copies_printed' => (int) ($job['copies printed'] ?? 0),
-                'num_copies' => (int) ($job['num copies'] ?? 0),
-                'total_sheets' => (int) ($job['total sheets printed'] ?? 0),
-                'total_pages' => (int) ($job['total pages printed'] ?? 0),
-                'total_color' => (int) ($job['total color pages printed'] ?? 0),
-                'total_bw' => (int) ($job['total bw pages printed'] ?? 0),
-                'num_pages' => (int) ($job['num pages'] ?? 0),
-                'media_size' => $job['media size'] ?? '',
-                'media_weight' => $job['media weight'] ?? '',
-                'duplex' => ($job['EFDuplex'] ?? 'False') !== 'False',
-                'input_slot' => $job['input slot'] ?? '',
-                'commessa' => $this->estraiCommessaDaTitolo($job['title'] ?? ''),
-                'timings' => $this->getJobTimings($job),
-            ];
-        })->toArray();
+            return collect($items)->map(function ($job) {
+                return [
+                    'id' => $job['id'] ?? null,
+                    'title' => $job['title'] ?? '',
+                    'state' => $job['state'] ?? '',
+                    'status' => $job['status'] ?? '',
+                    'date' => $job['date'] ?? '',
+                    'username' => $job['username'] ?? '',
+                    'copies_printed' => (int) ($job['copies printed'] ?? 0),
+                    'num_copies' => (int) ($job['num copies'] ?? 0),
+                    'total_sheets' => (int) ($job['total sheets printed'] ?? 0),
+                    'total_pages' => (int) ($job['total pages printed'] ?? 0),
+                    'total_color' => (int) ($job['total color pages printed'] ?? 0),
+                    'total_bw' => (int) ($job['total bw pages printed'] ?? 0),
+                    'num_pages' => (int) ($job['num pages'] ?? 0),
+                    'media_size' => $job['media size'] ?? '',
+                    'media_weight' => $job['media weight'] ?? '',
+                    'duplex' => ($job['EFDuplex'] ?? 'False') !== 'False',
+                    'input_slot' => $job['input slot'] ?? '',
+                    'commessa' => $this->estraiCommessaDaTitolo($job['title'] ?? ''),
+                    'timings' => $this->getJobTimings($job),
+                ];
+            })->toArray();
+        });
     }
 
     /**
