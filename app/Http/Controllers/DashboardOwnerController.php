@@ -636,16 +636,18 @@ public function calcolaOreEPriorita($fase)
             }
             $fase->save();
         } elseif ($campo === 'reparto') {
-            // Aggiorna reparto del FasiCatalogo o crea nuovo FasiCatalogo
+            // Sposta SOLO questa fase al nuovo reparto: crea record catalogo dedicato
+            // (nome, reparto_id) se non esiste, altrimenti riusa → NON sovrascrive reparto globale
             $nomeReparto = trim($valore) ?: 'generico';
             $reparto = Reparto::firstOrCreate(['nome' => $nomeReparto]);
             $faseNome = $fase->fase ?: '-';
-            $faseCat = FasiCatalogo::updateOrCreate(
-                ['nome' => $faseNome],
-                ['reparto_id' => $reparto->id]
+            $faseCat = FasiCatalogo::firstOrCreate(
+                ['nome' => $faseNome, 'reparto_id' => $reparto->id]
             );
+            $repartoPrima = $fase->faseCatalogo->reparto->nome ?? '-';
             $fase->fase_catalogo_id = $faseCat->id;
             $fase->save();
+            \Log::info("aggiornaCampo reparto: fase_id={$fase->id} commessa=" . ($fase->ordine->commessa ?? '-') . " fase={$faseNome} reparto {$repartoPrima}→{$nomeReparto}");
         } elseif (in_array($campo, $campiFase)) {
             $valorePrima = $fase->{$campo};
             $fase->{$campo} = $valore;
