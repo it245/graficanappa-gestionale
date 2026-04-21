@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Guida Lavoro Remoto — MES Grafica Nappa</title>
+<style>
+    @page { size: A4 portrait; margin: 1.5cm 1.5cm 2cm 1.5cm; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Georgia, 'Times New Roman', serif; color: #222; line-height: 1.5; padding: 30px 40px; max-width: 210mm; margin: 0 auto; font-size: 10pt; }
+
+    .page-header { text-align: center; border-bottom: 3px solid #0d6efd; padding-bottom: 20px; margin-bottom: 10px; }
+    .page-header .azienda { color: #0d6efd; font-size: 14pt; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 2px; }
+    .page-header .indirizzo { font-size: 8pt; color: #555; }
+    .page-header .titolo { font-size: 17pt; font-weight: 700; color: #111; margin-top: 15px; }
+    .page-header .sottotitolo { font-size: 10pt; color: #333; margin-top: 4px; }
+
+    .meta-table { width: 100%; border-collapse: collapse; margin: 10px 0 20px 0; font-size: 8.5pt; }
+    .meta-table td { padding: 4px 8px; border: 1px solid #ccc; }
+    .meta-table td:first-child { font-weight: 700; width: 160px; background: #f5f5f5; }
+
+    .classificazione { text-align: center; padding: 8px; background: #0d6efd; color: #fff; font-weight: 700; font-size: 10pt; letter-spacing: 0.1em; margin-bottom: 25px; }
+
+    h2 { color: #0d6efd; font-size: 13pt; margin-top: 22px; margin-bottom: 10px; border-bottom: 2px solid #0d6efd; padding-bottom: 3px; page-break-after: avoid; }
+    h3 { color: #333; font-size: 11pt; margin-top: 16px; margin-bottom: 7px; page-break-after: avoid; }
+    h4 { color: #555; font-size: 10pt; margin-top: 10px; margin-bottom: 5px; font-weight: 700; }
+
+    p { margin-bottom: 7px; text-align: justify; }
+    ul, ol { margin: 6px 0 10px 22px; }
+    li { margin-bottom: 4px; }
+
+    .intro { background: #eff6ff; border-left: 4px solid #0d6efd; padding: 10px 14px; margin: 15px 0; font-size: 9.5pt; }
+    .warn { background: #fff3cd; border-left: 4px solid #e6a700; padding: 10px 14px; margin: 10px 0; font-size: 9.5pt; }
+    .ok { background: #d1e7dd; border-left: 4px solid #198754; padding: 10px 14px; margin: 10px 0; font-size: 9.5pt; }
+    .danger { background: #f8d7da; border-left: 4px solid #dc3545; padding: 10px 14px; margin: 10px 0; font-size: 9.5pt; }
+
+    pre, code { font-family: 'Consolas', 'Courier New', monospace; font-size: 9pt; }
+    pre { background: #1e1e1e; color: #d4d4d4; padding: 10px 14px; border-radius: 3px; margin: 8px 0; overflow-x: auto; line-height: 1.4; }
+    code { background: #f0f0f0; padding: 1px 5px; border-radius: 2px; color: #c7254e; }
+    pre code { background: transparent; color: inherit; padding: 0; }
+
+    .diagram { background: #fafafa; border: 1px solid #ddd; padding: 14px; margin: 10px 0; font-family: 'Consolas', monospace; font-size: 9pt; white-space: pre; line-height: 1.3; text-align: center; }
+
+    table.data { width: 100%; border-collapse: collapse; margin: 10px 0 14px 0; font-size: 9pt; font-family: 'Segoe UI', Tahoma, sans-serif; }
+    table.data th { background: #333; color: #fff; padding: 6px 8px; text-align: left; font-weight: 600; }
+    table.data td { padding: 5px 8px; border-bottom: 1px solid #ddd; vertical-align: top; }
+    table.data tr:nth-child(even) { background: #f9f9f9; }
+
+    .step { counter-increment: step-counter; position: relative; padding-left: 45px; margin: 12px 0; page-break-inside: avoid; }
+    .step::before { content: counter(step-counter); position: absolute; left: 0; top: 0; width: 32px; height: 32px; background: #0d6efd; color: #fff; border-radius: 50%; text-align: center; line-height: 32px; font-weight: 700; font-family: 'Segoe UI', sans-serif; }
+    .step-list { counter-reset: step-counter; }
+
+    .glossario { background: #f5f5f5; border: 1px solid #ccc; padding: 12px 16px; margin: 10px 0; font-size: 9pt; page-break-inside: avoid; }
+    .glossario dt { font-weight: 700; color: #0d6efd; margin-top: 6px; }
+    .glossario dd { margin-left: 0; margin-bottom: 4px; }
+
+    .page-break { page-break-before: always; }
+    .footer-note { margin-top: 40px; font-size: 7.5pt; color: #888; text-align: center; border-top: 1px solid #ddd; padding-top: 8px; }
+
+    @media print { body { padding: 0; } h2, h3, pre, .step, .diagram, .glossario { page-break-inside: avoid; } }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+    <div class="azienda">GRAFICA NAPPA srl</div>
+    <div class="indirizzo">Via Saporito, 24 — 81031 Aversa (CE)</div>
+    <div class="titolo">Guida al Lavoro Remoto</div>
+    <div class="sottotitolo">Connessioni, VPN, tunnel e integrazioni macchine industriali per il MES</div>
+</div>
+
+<table class="meta-table">
+    <tr><td>Documento</td><td>DOC-DEV-MES-002</td></tr>
+    <tr><td>Versione</td><td>1.0</td></tr>
+    <tr><td>Destinatario</td><td>Sviluppatore MES (ruolo tirocinante / junior)</td></tr>
+    <tr><td>Data</td><td>21 aprile 2026</td></tr>
+    <tr><td>Scopo</td><td>Capire come lavorare da remoto sul MES e integrarsi con le macchine del cliente</td></tr>
+</table>
+
+<div class="classificazione">USO INTERNO — FORMAZIONE TECNICA</div>
+
+<div class="intro">
+    <strong>A chi serve questa guida.</strong> Sei stato assunto (anche come tirocinante) per sviluppare e manutenere il MES di Grafica Nappa. Con il tempo il MES sarà venduto anche ad altre tipografie. Tu devi poter:<br>
+    — lavorare sul codice da casa o fuori sede<br>
+    — accedere alle macchine del cliente (Prinect, Fiery, ecc.) senza essere fisicamente in azienda<br>
+    — installare e configurare il MES su un nuovo cliente<br>
+    — offrire supporto in caso di problemi, anche alle 22:00<br><br>
+    Questa guida spiega <em>come</em> farlo, nell'ordine corretto e con gli strumenti giusti. Si parte dal concetto di rete, si arriva ai tunnel moderni stile Tailscale. Tutto in italiano, con esempi concreti.
+</div>
+
+<h2>1. Concetti di base — Rete e IP</h2>
+
+<p>Prima di parlare di tunnel, capiamo <em>perché servono</em>. Ogni macchina su una rete ha un indirizzo IP. Esistono due tipi:</p>
+
+<ul>
+    <li><strong>IP privato</strong> (es. <code>192.168.1.60</code>): visibile solo dentro la stessa rete locale (LAN). Il server Grafica Nappa è <code>192.168.1.60</code> e lo raggiungi solo se sei in azienda.</li>
+    <li><strong>IP pubblico</strong> (es. <code>93.47.8.102</code>): assegnato dal provider internet al router. Visibile da tutto il mondo.</li>
+</ul>
+
+<p>Il problema: Prinect, Fiery, server MES hanno IP privati. Da casa tua non puoi chiamarli direttamente. Serve un <strong>ponte</strong> che dalla tua rete ti porti dentro la rete aziendale. Questo ponte si chiama <em>VPN</em> o <em>tunnel</em>.</p>
+
+<div class="diagram">
+Casa tua (82.xx.xx.xx)          Azienda (93.47.8.102)
+   │                                    │
+   │         INTERNET                   │
+   │   ───────────────────              │
+   │   │                 │              │
+   │   │  ┌───────────┐  │              │
+   │   └──┤ VPN / TUN │──┘              │
+   │      └───────────┘                 │
+   │                                    │
+   PC tuo ═══════════════════> Server 192.168.1.60
+                                Prinect 192.168.1.10
+                                Fiery 192.168.1.20
+</div>
+
+<h2>2. Scenari tipici — Dove si trova il MES</h2>
+
+<h3>2.1 Scenario A — MES dentro la rete cliente (on-premise)</h3>
+<p>È la situazione attuale di Grafica Nappa. Il server MES è fisicamente in azienda, stessa rete di Prinect/Fiery. Le chiamate API sono locali e istantanee.</p>
+<ul>
+    <li>✓ Semplice, veloce, basso costo</li>
+    <li>✓ Zero problemi di firewall</li>
+    <li>✗ Tu da casa non raggiungi direttamente il server — serve VPN o RDP</li>
+</ul>
+
+<h3>2.2 Scenario B — MES in cloud (VPS Hetzner/Aruba)</h3>
+<p>Il server MES è su un provider cloud, accessibile via dominio <code>mes.cliente.com</code>. Le macchine del cliente restano in azienda.</p>
+<ul>
+    <li>✓ Tu lavori senza VPN: apri browser, entri</li>
+    <li>✓ Backup e manutenzione gestiti dal provider</li>
+    <li>✗ Il MES cloud deve raggiungere Prinect/Fiery dentro la rete cliente → serve tunnel <em>tra</em> cloud e cliente</li>
+</ul>
+
+<h3>2.3 Scenario C — Ibrido</h3>
+<p>Database e dashboard in cloud, un piccolo "agente" installato nella rete cliente che fa da ponte per le API macchine.</p>
+
+<h2>3. Le tecnologie — VPN, tunnel, mesh network</h2>
+
+<table class="data">
+    <tr>
+        <th>Tecnologia</th>
+        <th>Tipo</th>
+        <th>Quando usarla</th>
+        <th>Difficoltà</th>
+    </tr>
+    <tr>
+        <td><strong>Tailscale</strong></td>
+        <td>Mesh VPN (WireGuard gestito)</td>
+        <td>Dev, supporto remoto, primo cliente</td>
+        <td>★☆☆☆☆ (10 min)</td>
+    </tr>
+    <tr>
+        <td><strong>WireGuard</strong></td>
+        <td>VPN moderna</td>
+        <td>VPN dedicata, pieno controllo</td>
+        <td>★★★☆☆</td>
+    </tr>
+    <tr>
+        <td><strong>OpenVPN</strong></td>
+        <td>VPN classica</td>
+        <td>Ambienti enterprise già configurati</td>
+        <td>★★★☆☆</td>
+    </tr>
+    <tr>
+        <td><strong>VPN site-to-site</strong></td>
+        <td>Router ↔ Router</td>
+        <td>Produzione enterprise, MES cloud ↔ cliente</td>
+        <td>★★★★☆</td>
+    </tr>
+    <tr>
+        <td><strong>Cloudflare Tunnel</strong></td>
+        <td>Reverse tunnel</td>
+        <td>Esporre MES interno senza aprire porte</td>
+        <td>★★☆☆☆</td>
+    </tr>
+    <tr>
+        <td><strong>ngrok</strong></td>
+        <td>Reverse tunnel temporaneo</td>
+        <td>Demo, test rapidi, webhook testing</td>
+        <td>★☆☆☆☆</td>
+    </tr>
+    <tr>
+        <td><strong>RDP / SSH</strong></td>
+        <td>Accesso remoto singolo PC</td>
+        <td>Lavorare direttamente sul server del cliente</td>
+        <td>★★☆☆☆</td>
+    </tr>
+</table>
+
+<div class="page-break"></div>
+
+<h2>4. Tailscale — La soluzione consigliata per iniziare</h2>
+
+<p>Tailscale è una <em>mesh VPN</em> costruita su WireGuard. Si installa in 5 minuti, funziona su qualsiasi dispositivo, è gratis fino a 100 dispositivi. Tutti i nodi della tua "tailnet" si vedono come fossero nella stessa LAN, anche se sono sparsi per il mondo.</p>
+
+<div class="ok">
+    <strong>Perché Tailscale.</strong> Niente port-forwarding, niente firewall da configurare, niente IP pubblico statico. Ogni dispositivo ottiene un IP <code>100.x.x.x</code> privato della rete Tailscale, cifrato end-to-end. Scali da 1 a 100 dispositivi senza cambiare nulla.
+</div>
+
+<h3>4.1 Setup Tailscale per Grafica Nappa</h3>
+
+<div class="step-list">
+
+<div class="step">
+    <h4>Crea account Tailscale</h4>
+    <p>Vai su <code>https://tailscale.com</code> e registrati con Google/GitHub/Microsoft. Account personal gratis include 100 dispositivi, 3 utenti. Per crescere: piano team 6$/mese.</p>
+</div>
+
+<div class="step">
+    <h4>Installa Tailscale sul server Grafica Nappa (.60)</h4>
+<pre><code># Su Windows Server .60:
+# Scarica installer da https://tailscale.com/download/windows
+# Esegui come Admin, login con il tuo account
+# Avvia servizio Tailscale (si avvia da solo)
+
+# Verifica IP assegnato:
+tailscale ip -4
+# Esempio output: 100.112.34.56</code></pre>
+</div>
+
+<div class="step">
+    <h4>Installa Tailscale sul tuo PC di casa</h4>
+<pre><code># Windows/Mac/Linux: scarica client dal sito
+# Login con STESSO account Tailscale
+# Verifica nodi connessi:
+tailscale status
+
+# Ora puoi pingare il server come se fosse in LAN:
+ping 100.112.34.56
+# Oppure dal nome:
+ping graficanappa-server</code></pre>
+</div>
+
+<div class="step">
+    <h4>Apri il MES dal tuo PC di casa</h4>
+<pre><code># Nel browser:
+http://100.112.34.56/
+# Oppure:
+http://graficanappa-server/
+
+# Tutto come se fossi in azienda, senza aprire porte.</code></pre>
+</div>
+
+<div class="step">
+    <h4>Abilita subnet routing (per raggiungere Prinect/Fiery)</h4>
+    <p>Tailscale di default connette solo i dispositivi con l'agent installato. Ma Prinect e Fiery non possono installare Tailscale. Soluzione: il server .60 diventa "router" per gli altri IP della sua LAN.</p>
+<pre><code># Sul server .60 (PowerShell come Admin):
+tailscale up --advertise-routes=192.168.1.0/24
+
+# Poi vai su tailscale.com/admin, vedi subnet in attesa
+# di approvazione → clicca "Approve"
+
+# Ora dal tuo PC di casa:
+ping 192.168.1.10   # Prinect funziona
+ping 192.168.1.20   # Fiery funziona</code></pre>
+</div>
+
+<div class="step">
+    <h4>Abilita MagicDNS (nomi al posto di IP)</h4>
+    <p>Nel pannello Tailscale admin attiva "MagicDNS". D'ora in poi pinga per nome: <code>ping server-60</code>.</p>
+</div>
+
+</div>
+
+<div class="warn">
+    <strong>Nota sicurezza.</strong> Chi ha l'account Tailscale del server vede tutta la rete aziendale. Usa 2FA obbligatorio, chiavi di autenticazione a scadenza, ACL per limitare chi vede cosa. Mai condividere credenziali.
+</div>
+
+<h2>5. VPN classica — WireGuard (alternativa self-hosted)</h2>
+
+<p>Se non vuoi dipendere da un servizio esterno, WireGuard è la VPN moderna self-hosted. Codice minuscolo (~4000 righe), performance native del kernel Linux, cifratura moderna.</p>
+
+<h3>5.1 Quando scegliere WireGuard invece di Tailscale</h3>
+<ul>
+    <li>Vuoi controllo totale (niente server di terzi)</li>
+    <li>Il cliente richiede VPN interna aziendale (es. per compliance)</li>
+    <li>Hai già un server pubblico e sai configurarlo</li>
+</ul>
+
+<h3>5.2 Setup essenziale</h3>
+<pre><code># Sul server pubblico (es. VPS 20€/mese):
+apt install wireguard
+
+# Genera chiavi:
+wg genkey | tee privatekey | wg pubkey > publickey
+
+# Configurazione /etc/wireguard/wg0.conf:
+[Interface]
+Address = 10.10.0.1/24
+ListenPort = 51820
+PrivateKey = &lt;server-private-key&gt;
+
+[Peer]
+PublicKey = &lt;client-public-key&gt;
+AllowedIPs = 10.10.0.2/32
+
+# Avvia:
+wg-quick up wg0
+systemctl enable wg-quick@wg0</code></pre>
+
+<p>Lato client simile, ma con IP cliente e PublicKey del server. La curva di apprendimento è maggiore di Tailscale, ma nessuna dipendenza esterna.</p>
+
+<div class="page-break"></div>
+
+<h2>6. VPN site-to-site — Per produzione seria</h2>
+
+<p>Scenario: MES in cloud (Hetzner), macchine nel cliente (Grafica Nappa). Serve tunnel permanente tra i due siti, trasparente per le applicazioni.</p>
+
+<div class="diagram">
+┌─────────────────────┐          ┌─────────────────────┐
+│   VPS Cloud MES     │          │  Router Cliente     │
+│   IP pubblico       │◄────────►│  (pfSense/MikroTik) │
+│   WireGuard server  │  TUNNEL  │  WireGuard client   │
+│                     │          │                     │
+│   MES app           │          │  LAN 192.168.1.x    │
+│   legge Prinect via │          │  ├─ Prinect .10     │
+│   192.168.1.10 come │          │  ├─ Fiery   .20     │
+│   se fosse locale   │          │  └─ Server  .60     │
+└─────────────────────┘          └─────────────────────┘
+</div>
+
+<h3>Come funziona</h3>
+<ol>
+    <li>Router cliente ha VPN integrata (quasi tutti quelli seri: pfSense, OPNsense, MikroTik, FortiGate, Ubiquiti Unifi Security Gateway)</li>
+    <li>VPS cloud configurato come "peer" WireGuard</li>
+    <li>Router cliente inizia la connessione (outbound) → nessuna porta aperta sul firewall cliente</li>
+    <li>Una volta stabilita, il VPS può chiamare qualsiasi IP della rete cliente</li>
+    <li>L'MES in cloud fa <code>curl http://192.168.1.10/api/status</code> come se fosse in loco</li>
+</ol>
+
+<h3>Pro</h3>
+<ul>
+    <li>Connessione stabile 24/7, riconnessione automatica</li>
+    <li>Zero configurazione sui dispositivi end (Prinect/Fiery non sanno niente)</li>
+    <li>Gestione centralizzata via router</li>
+</ul>
+
+<h3>Contro</h3>
+<ul>
+    <li>Serve router cliente che supporti VPN (il router domestico Fastweb/TIM spesso NO)</li>
+    <li>Setup iniziale richiede competenze di networking</li>
+    <li>Se cambia l'IP pubblico del cliente, tunnel si disconnette (usare DynDNS)</li>
+</ul>
+
+<h2>7. Reverse tunnel — Quando il cliente non ha router moderno</h2>
+
+<p>A volte il cliente ha solo un modem di base, zero controllo sul firewall. Soluzione: <em>reverse tunnel</em>. Un piccolo software dentro la rete cliente apre una connessione <strong>uscente</strong> verso il cloud. Nessuna porta in ingresso, nessun firewall da toccare.</p>
+
+<h3>7.1 Cloudflare Tunnel (raccomandato)</h3>
+<p>Gratis, robusto, integrato con Cloudflare DNS/SSL. Funziona così:</p>
+
+<div class="step-list">
+<div class="step">
+    <h4>Crea account Cloudflare + aggiungi dominio</h4>
+    <p>Serve un dominio (anche 5€/anno su Namecheap). Lo punti a Cloudflare cambiando i nameserver.</p>
+</div>
+<div class="step">
+    <h4>Installa cloudflared sul server cliente</h4>
+<pre><code># Windows: scarica exe da github.com/cloudflare/cloudflared
+# Login:
+cloudflared tunnel login
+
+# Crea tunnel:
+cloudflared tunnel create mes-cliente
+
+# Configura routing:
+cloudflared tunnel route dns mes-cliente mes.dominio.it</code></pre>
+</div>
+<div class="step">
+    <h4>Avvia come servizio</h4>
+<pre><code>cloudflared service install &lt;token&gt;
+# Ora mes.dominio.it → server interno cliente
+# Nessuna porta aperta, HTTPS automatico</code></pre>
+</div>
+</div>
+
+<h3>7.2 ngrok (per demo/test)</h3>
+<p>Strumento veloce per esporre un servizio locale al web. Gratis con limiti (sessione 8h, URL random). Ottimo per far vedere al cliente una feature in 30 secondi senza deploy.</p>
+<pre><code>ngrok http 80
+# Output:
+# Forwarding https://abc123.ngrok.io -> http://localhost:80</code></pre>
+
+<h2>8. Agente locale — Soluzione enterprise</h2>
+
+<p>Se vuoi architettura cloud "pura" senza VPN, installa un piccolo agente sul server del cliente. L'agente:</p>
+<ul>
+    <li>Si collega in uscita al MES cloud tramite WebSocket</li>
+    <li>Riceve comandi dal cloud ("chiamami Prinect", "leggi Fiery status")</li>
+    <li>Esegue in locale, restituisce la risposta</li>
+    <li>Nessuna porta aperta, traffico solo uscente, massima sicurezza</li>
+</ul>
+
+<p>Costo: devi sviluppare tu l'agente (1-2 settimane di lavoro). Lo fai una volta, lo riusi su tutti i clienti.</p>
+
+<h2>9. Macchine che pushano dati (MQTT)</h2>
+
+<p>Le macchine industriali più recenti (BOBST serie iQ, HP Indigo, Konica nuove) supportano <em>pubblicazione</em> via MQTT. Invece che tu interroghi la macchina, la macchina manda i dati a un broker centrale.</p>
+
+<div class="diagram">
+BOBST iQ         ──publish──►  ┌──────────────┐  ◄──subscribe──  MES Cloud
+HP Indigo        ──publish──►  │ MQTT Broker  │  ◄──subscribe──  Dashboard
+Konica AccurioPress──publish──►│  (cloud)     │  ◄──subscribe──  Mobile App
+                               └──────────────┘
+</div>
+
+<p>Solo traffico uscente dal cliente, broker in cloud, ogni app si sottoscrive ai topic che gli interessano. Scala perfettamente. Tecnologie: Mosquitto (open source), HiveMQ, AWS IoT Core.</p>
+
+<div class="page-break"></div>
+
+<h2>10. Flusso di lavoro quotidiano da remoto</h2>
+
+<p>Dopo aver configurato Tailscale, ecco come si svolge una tua giornata tipica:</p>
+
+<h3>10.1 Mattina — Lavoro su nuova feature</h3>
+<pre><code># Dal tuo PC di casa, apri terminale:
+cd /percorso/graficanappa-gestionale
+git pull origin master
+
+# Avvia Tailscale (di solito in autostart)
+# Test connessione al server:
+ping 192.168.1.60
+
+# Connetti MySQL Workbench al server .60 via IP privato
+# Scrivi codice, testa su DB produzione (attenzione!)
+# Oppure usa DB locale per test:
+php artisan serve
+
+# Quando fix è pronto:
+git commit -am "Fix priorità manuale persa"
+git push origin master
+
+# Deploy sul server:
+ssh giovanni@192.168.1.60
+cd /path/to/mes
+git pull
+php artisan migrate --force
+exit</code></pre>
+
+<h3>10.2 Emergenza alle 22:00 — Operatore segnala bug</h3>
+<ol>
+    <li>Ti scrivono su WhatsApp: "MES non risponde"</li>
+    <li>Da casa: <code>ping 192.168.1.60</code> → funziona</li>
+    <li>SSH/RDP al server → controlli log <code>storage/logs/laravel.log</code></li>
+    <li>Trovi errore → fix rapido → deploy → telefoni operatore "è a posto"</li>
+</ol>
+<p>Senza Tailscale/VPN: dovresti andare fisicamente in azienda. Con Tailscale: 10 minuti da casa.</p>
+
+<h3>10.3 Installazione presso nuovo cliente</h3>
+<ol>
+    <li>Prima visita in loco: installi Tailscale sul loro server, testi da remoto</li>
+    <li>Tornato in Nappa: via Tailscale installi MES, configuri, testi</li>
+    <li>Per il cliente cloud: installi anche WireGuard sul router loro → MES cloud parla con Prinect loro</li>
+    <li>Training operatori: in video call + accesso RDP al loro server per troubleshooting</li>
+</ol>
+
+<h2>11. Sicurezza — Regole che non puoi rompere</h2>
+
+<div class="danger">
+    <strong>Mai fare queste cose.</strong> Ogni punto è una potenziale catastrofe.
+</div>
+
+<ul>
+    <li><strong>Mai esporre il MES direttamente a internet</strong> senza HTTPS + autenticazione forte. Apri solo tramite VPN o reverse tunnel con auth.</li>
+    <li><strong>Mai aprire porte di Prinect/Fiery a internet</strong>. Quelle API non hanno autenticazione enterprise, chiunque le raggiunge fa danni.</li>
+    <li><strong>Mai condividere credenziali VPN via WhatsApp/email</strong>. Usa un password manager (Bitwarden, 1Password).</li>
+    <li><strong>Mai commitare file <code>.env</code>, chiavi SSH, token VPN</strong> in git. Usa <code>.gitignore</code>.</li>
+    <li><strong>Mai usare password banali</strong> su account VPN/Tailscale. Minimo 16 caratteri, gestore password + 2FA.</li>
+    <li><strong>Mai lasciare sessioni RDP aperte</strong> quando chiudi il PC. Disconnetti esplicitamente.</li>
+    <li><strong>Mai installare software sul server cliente</strong> senza autorizzazione scritta (email conta).</li>
+</ul>
+
+<h3>11.1 Regole positive da seguire</h3>
+<ul>
+    <li>Attiva 2FA su tutti gli account (GitHub, Tailscale, Cloudflare, email)</li>
+    <li>Password manager obbligatorio, niente <em>password123</em></li>
+    <li>Log accessi: controlla chi è entrato, da dove, quando</li>
+    <li>Key rotation annuale: cambia chiavi SSH/VPN una volta l'anno</li>
+    <li>Backup prima di ogni operazione distruttiva (migration, reset)</li>
+    <li>Ambiente di staging separato dalla produzione — mai testare su dati veri</li>
+    <li>Quando il cliente ti dà accesso, documenta (email) cosa farai e per quanto</li>
+</ul>
+
+<h2>12. Checklist — Cose da avere PRIMA di iniziare</h2>
+
+<h3>Sul tuo PC</h3>
+<ul>
+    <li>Git installato (<code>git --version</code>)</li>
+    <li>PHP 8.5 + Composer (per lavorare in locale)</li>
+    <li>MySQL / Laragon / XAMPP</li>
+    <li>VS Code o PhpStorm</li>
+    <li>Tailscale client</li>
+    <li>Client SSH (Windows Terminal / PuTTY)</li>
+    <li>RDP client (Remote Desktop Connection, nativo Windows)</li>
+    <li>MySQL Workbench o HeidiSQL</li>
+    <li>Password manager (Bitwarden, gratis)</li>
+    <li>Chiave SSH personale (<code>ssh-keygen</code>) caricata su GitHub</li>
+</ul>
+
+<h3>Sui server aziendali</h3>
+<ul>
+    <li>Tailscale installato sul server .60</li>
+    <li>Tailscale con subnet routing attivo per <code>192.168.1.0/24</code></li>
+    <li>Utente SSH/RDP personale (no login condivisi)</li>
+    <li>Il tuo user GitHub con accesso al repo</li>
+    <li>Accesso MySQL via account dedicato (no root in produzione)</li>
+</ul>
+
+<h3>Sul cliente nuovo</h3>
+<ul>
+    <li>Un dominio dedicato (es. mes.cliente.com) o IP pubblico</li>
+    <li>Server dedicato o VPS con Linux/Windows</li>
+    <li>Tailscale installato (dopo firma contratto)</li>
+    <li>Accesso VPN fornito in modo sicuro (Bitwarden share)</li>
+    <li>Contatto tecnico del cliente con permessi admin</li>
+    <li>Backup iniziale dei loro dati (se esistono) prima di importare in MES</li>
+</ul>
+
+<h2>13. Glossario minimo</h2>
+
+<div class="glossario">
+    <dl>
+        <dt>API (Application Programming Interface)</dt>
+        <dd>Modo per far parlare due software. Prinect espone API REST → il MES chiama e ottiene dati.</dd>
+
+        <dt>LAN (Local Area Network)</dt>
+        <dd>Rete locale dell'azienda. Tutti i dispositivi con IP <code>192.168.x.x</code> o <code>10.x.x.x</code>.</dd>
+
+        <dt>NAT (Network Address Translation)</dt>
+        <dd>Meccanismo del router: traduce IP privati in IP pubblico quando esci su internet. Motivo per cui non raggiungi dall'esterno un IP <code>192.168.x</code>.</dd>
+
+        <dt>Port forwarding</dt>
+        <dd>Aprire una porta del router per instradare richieste esterne verso un dispositivo interno. Pericoloso se fatto male. Meglio VPN.</dd>
+
+        <dt>VPN (Virtual Private Network)</dt>
+        <dd>Tunnel cifrato che collega il tuo dispositivo a una rete remota come se fossi lì fisicamente.</dd>
+
+        <dt>WireGuard</dt>
+        <dd>Protocollo VPN moderno, veloce, semplice. Base di Tailscale.</dd>
+
+        <dt>Mesh VPN</dt>
+        <dd>VPN dove ogni dispositivo si connette direttamente a ogni altro (peer-to-peer), non tramite un server centrale. Tailscale è mesh.</dd>
+
+        <dt>Reverse tunnel</dt>
+        <dd>Connessione aperta dall'interno verso l'esterno per esporre un servizio locale al web senza aprire porte.</dd>
+
+        <dt>SSH (Secure Shell)</dt>
+        <dd>Protocollo per connettersi a un server Linux via riga di comando in modo sicuro.</dd>
+
+        <dt>RDP (Remote Desktop Protocol)</dt>
+        <dd>Come SSH ma per Windows, con interfaccia grafica completa.</dd>
+
+        <dt>MQTT</dt>
+        <dd>Protocollo leggero per IoT. Dispositivi pubblicano messaggi a un broker, altri si sottoscrivono ai topic che gli interessano.</dd>
+
+        <dt>OPC-UA</dt>
+        <dd>Standard industriale per comunicare con macchine di produzione. Tipico in fustellatrici BOBST moderne.</dd>
+
+        <dt>JDF (Job Definition Format)</dt>
+        <dd>Formato XML standard nell'industria della stampa per descrivere un lavoro (quantità, colori, finitura). Gestionali generano JDF, macchine lo leggono.</dd>
+    </dl>
+</div>
+
+<h2>14. Letture consigliate (gratis, in italiano/inglese)</h2>
+<ul>
+    <li><strong>Tailscale Docs</strong>: <code>tailscale.com/kb</code> — documentazione chiara, esempi pratici</li>
+    <li><strong>Laravel Deployment</strong>: <code>laravel.com/docs/deployment</code> — come mettere Laravel in produzione</li>
+    <li><strong>WireGuard Quick Start</strong>: <code>wireguard.com/quickstart</code></li>
+    <li><strong>Cloudflare Tunnel Guide</strong>: <code>developers.cloudflare.com/cloudflare-one/connections/connect-networks</code></li>
+    <li><strong>Heidelberg Prinect API</strong>: documentazione tecnica su portale Heidelberg (richiedi accesso al capo)</li>
+    <li><strong>Fiery JDF</strong>: EFI Fiery Developer Portal</li>
+</ul>
+
+<h2>15. Cosa fare adesso — Piano d'azione</h2>
+
+<ol>
+    <li><strong>Oggi</strong>: crea account Tailscale, installa client sul tuo PC, installa sul server .60. Fai pingare da casa.</li>
+    <li><strong>Questa settimana</strong>: configura subnet routing per raggiungere Prinect (.10) e Fiery (.20) da casa. Testa chiamata API da browser esterno.</li>
+    <li><strong>Due settimane</strong>: installa Bitwarden personale, metti dentro tutte le password aziendali. 2FA ovunque.</li>
+    <li><strong>Un mese</strong>: leggi la documentazione Prinect API e Fiery API — capisci cosa il MES già usa e cosa si potrebbe usare in più.</li>
+    <li><strong>Prima del nuovo cliente</strong>: prepara installer script (<code>install.sh</code>) che setta tutto in un comando. Provalo su una VM di test.</li>
+</ol>
+
+<div class="intro">
+    <strong>Conclusione.</strong> Il lavoro remoto sicuro è questione di 3 elementi: <em>un tunnel</em> per entrare nella rete, <em>credenziali sicure</em> per autenticarti, <em>regole di sicurezza</em> per non fare danni. Tailscale ti dà il primo in 10 minuti. Bitwarden il secondo in 20. Le regole del capitolo 11 le memorizzi in una settimana.<br><br>
+    Se hai dubbi su qualunque passaggio: chiedi. Ogni bug introdotto per fretta costa molto più di una domanda.
+</div>
+
+<div class="footer-note">
+    DOC-DEV-MES-002 v1.0 — Guida Lavoro Remoto MES Grafica Nappa<br>
+    Grafica Nappa srl · Via Saporito 24 · 81031 Aversa (CE) · P.IVA 03145680617 · it@graficanappa.com
+</div>
+
+</body>
+</html>
