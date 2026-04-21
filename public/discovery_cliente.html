@@ -588,6 +588,189 @@
     <label class="cb"><input type="checkbox" name="int_oee"> OEE / efficienza</label>
 </div>
 
+<div class="section-title" style="margin-top:8px;">CLIENTI · PRODOTTI · MERCATO</div>
+<table class="info-table">
+    <tr>
+        <td class="lbl" style="width:22%;">Top 3 clienti (nome + %)</td>
+        <td colspan="3"><input type="text" name="top_clienti" placeholder="es. Cliente A 30%, B 20%, C 15%"></td>
+    </tr>
+    <tr>
+        <td class="lbl">Prodotti principali</td>
+        <td colspan="3"><input type="text" name="prodotti_princ" placeholder="astucci farmaceutici, depliant, libri, etichette..."></td>
+    </tr>
+    <tr>
+        <td class="lbl">Tirature tipiche</td>
+        <td><input type="text" name="tirature" placeholder="min/max copie"></td>
+        <td class="lbl">Formati più usati</td>
+        <td><input type="text" name="formati" placeholder="70x100, 72x102..."></td>
+    </tr>
+    <tr>
+        <td class="lbl">Spedizioni estero</td>
+        <td>
+            <label class="cb"><input type="radio" name="estero" value="no"> No</label>
+            <label class="cb"><input type="radio" name="estero" value="ue"> UE occasionali</label>
+            <label class="cb"><input type="radio" name="estero" value="freq"> Frequenti</label>
+        </td>
+        <td class="lbl">Stagionalità (picchi mesi)</td>
+        <td><input type="text" name="stagionalita" placeholder="es. settembre-dicembre"></td>
+    </tr>
+    <tr>
+        <td class="lbl">Fornitori carta principali</td>
+        <td colspan="3"><input type="text" name="fornitori_carta" placeholder="Fedrigoni, Favini, Burgo, Sappi..."></td>
+    </tr>
+    <tr>
+        <td class="lbl">Carte / supporti più usati</td>
+        <td colspan="3"><input type="text" name="carte_tipi" placeholder="GC1, GC2, patinata, adesivo, cartoncino 300g..."></td>
+    </tr>
+    <tr>
+        <td class="lbl">Inchiostri speciali</td>
+        <td colspan="3">
+            <label class="cb"><input type="checkbox" name="ink_pantone"> Pantone</label>
+            <label class="cb"><input type="checkbox" name="ink_fluo"> Fluo</label>
+            <label class="cb"><input type="checkbox" name="ink_metal"> Oro/Argento</label>
+            <label class="cb"><input type="checkbox" name="ink_uv"> UV</label>
+            <label class="cb"><input type="checkbox" name="ink_food"> Food safe</label>
+            <label class="cb"><input type="checkbox" name="ink_eco"> Eco-friendly</label>
+        </td>
+    </tr>
+</table>
+
+<div class="section-title" style="margin-top:8px;">QUALITÀ · MANUTENZIONE · NON CONFORMITÀ</div>
+<table class="info-table">
+    <tr>
+        <td class="lbl" style="width:22%;">Sistema gestione qualità</td>
+        <td><input type="text" name="qms" placeholder="ISO 9001, BRC, nessuno..."></td>
+        <td class="lbl" style="width:18%;">Tasso difettosità medio</td>
+        <td><input type="text" name="difetti" placeholder="es. 0.5%"></td>
+    </tr>
+    <tr>
+        <td class="lbl">Controlli in linea</td>
+        <td colspan="3">
+            <label class="cb"><input type="checkbox" name="ql_spettro"> Spettrofotometro</label>
+            <label class="cb"><input type="checkbox" name="ql_densito"> Densitometro</label>
+            <label class="cb"><input type="checkbox" name="ql_camera"> Camere ispezione</label>
+            <label class="cb"><input type="checkbox" name="ql_manuale"> Solo manuale</label>
+            <label class="cb"><input type="checkbox" name="ql_nessuno"> Nessuno</label>
+        </td>
+    </tr>
+    <tr>
+        <td class="lbl">Procedure rilavorazione</td>
+        <td colspan="3"><input type="text" name="rilavorazione" placeholder="come gestite scarti e non conformità oggi?"></td>
+    </tr>
+    <tr>
+        <td class="lbl">Manutenzione programmata</td>
+        <td>
+            <label class="cb"><input type="radio" name="manut_prog" value="si"> SI</label>
+            <label class="cb"><input type="radio" name="manut_prog" value="no"> NO</label>
+            <label class="cb"><input type="radio" name="manut_prog" value="parz"> Parziale</label>
+        </td>
+        <td class="lbl">Software CMMS</td>
+        <td><input type="text" name="cmms" placeholder="nome o nessuno"></td>
+    </tr>
+    <tr>
+        <td class="lbl">Interventi correttivi/mese</td>
+        <td><input type="number" name="manut_mese"></td>
+        <td class="lbl">Ore fermo macchina/mese</td>
+        <td><input type="number" name="fermo_ore"></td>
+    </tr>
+    <tr>
+        <td class="lbl">Tracciabilità lotti richiesta</td>
+        <td>
+            <label class="cb"><input type="radio" name="lotti" value="si"> SI (food/pharma)</label>
+            <label class="cb"><input type="radio" name="lotti" value="no"> NO</label>
+            <label class="cb"><input type="radio" name="lotti" value="consigl"> Consigliata</label>
+        </td>
+        <td class="lbl">Retention dati (anni)</td>
+        <td><input type="number" name="retention"></td>
+    </tr>
+</table>
+
+<div class="section-title" style="margin-top:8px;">LAVORAZIONI ESTERNE · CONTO LAVORO · MAGAZZINO PF</div>
+<table class="info-table">
+    <tr>
+        <td class="lbl" style="width:22%;">Conto lavoro in uscita</td>
+        <td>
+            <label class="cb"><input type="radio" name="conto_out" value="si"> SI</label>
+            <label class="cb"><input type="radio" name="conto_out" value="no"> NO</label>
+        </td>
+        <td class="lbl" style="width:18%;">Lavorazioni esterne</td>
+        <td><input type="text" name="lav_esterne" placeholder="es. allestimento, stampa caldo, rilievi..."></td>
+    </tr>
+    <tr>
+        <td class="lbl">Conto lavoro in entrata</td>
+        <td>
+            <label class="cb"><input type="radio" name="conto_in" value="si"> SI</label>
+            <label class="cb"><input type="radio" name="conto_in" value="no"> NO</label>
+        </td>
+        <td class="lbl">% fatturato c/lavoro</td>
+        <td><input type="number" name="cl_perc"></td>
+    </tr>
+    <tr>
+        <td class="lbl">Magazzino prodotti finiti</td>
+        <td>
+            <label class="cb"><input type="radio" name="pf" value="si"> SI</label>
+            <label class="cb"><input type="radio" name="pf" value="no"> NO</label>
+            <label class="cb"><input type="radio" name="pf" value="cliente"> Stock cliente</label>
+        </td>
+        <td class="lbl">Software magazzino PF</td>
+        <td><input type="text" name="pf_sw"></td>
+    </tr>
+    <tr>
+        <td class="lbl">Spedizioni parziali frequenti</td>
+        <td>
+            <label class="cb"><input type="radio" name="parziali" value="si"> SI</label>
+            <label class="cb"><input type="radio" name="parziali" value="no"> NO</label>
+        </td>
+        <td class="lbl">UM spedizione</td>
+        <td><input type="text" name="um_sped" placeholder="colli, pallet, kg, pz"></td>
+    </tr>
+</table>
+
+<div class="section-title" style="margin-top:8px;">DATI STORICI E MIGRAZIONE</div>
+<table class="info-table">
+    <tr>
+        <td class="lbl" style="width:22%;">Anni storico da migrare</td>
+        <td><input type="number" name="mig_anni"></td>
+        <td class="lbl" style="width:18%;">Formato sorgente</td>
+        <td><input type="text" name="mig_formato" placeholder="Excel, SQL, CSV, nessuno..."></td>
+    </tr>
+    <tr>
+        <td class="lbl">Commesse aperte da migrare</td>
+        <td><input type="number" name="comm_aperte"></td>
+        <td class="lbl">Anagrafiche (clienti+articoli)</td>
+        <td><input type="number" name="anagrafiche"></td>
+    </tr>
+    <tr>
+        <td class="lbl">Archivio fustelle / cliché</td>
+        <td><input type="number" name="fustelle_num"></td>
+        <td class="lbl">Documenti (DDT, PDF)</td>
+        <td>
+            <label class="cb"><input type="radio" name="docs" value="si"> SI</label>
+            <label class="cb"><input type="radio" name="docs" value="no"> NO</label>
+            <label class="cb"><input type="radio" name="docs" value="solo_nuovi"> Solo nuovi</label>
+        </td>
+    </tr>
+</table>
+
+<div class="section-title" style="margin-top:8px;">KPI MONITORATI OGGI</div>
+<div class="grid-3col">
+    <label class="cb"><input type="checkbox" name="kpi_ore"> Ore macchina</label>
+    <label class="cb"><input type="checkbox" name="kpi_oee"> OEE</label>
+    <label class="cb"><input type="checkbox" name="kpi_scarti"> Scarti %</label>
+    <label class="cb"><input type="checkbox" name="kpi_consegne"> Rispetto consegne</label>
+    <label class="cb"><input type="checkbox" name="kpi_costo"> Costo commessa</label>
+    <label class="cb"><input type="checkbox" name="kpi_margine"> Margine commessa</label>
+    <label class="cb"><input type="checkbox" name="kpi_fatt_rep"> Fatturato per reparto</label>
+    <label class="cb"><input type="checkbox" name="kpi_prod_op"> Produttività operatore</label>
+    <label class="cb"><input type="checkbox" name="kpi_carta"> Carta consumata</label>
+    <label class="cb"><input type="checkbox" name="kpi_ink"> Inchiostro consumato</label>
+    <label class="cb"><input type="checkbox" name="kpi_energia"> Energia kWh</label>
+    <label class="cb"><input type="checkbox" name="kpi_setup"> Tempo setup</label>
+    <label class="cb"><input type="checkbox" name="kpi_nc"> Non conformità</label>
+    <label class="cb"><input type="checkbox" name="kpi_tempi"> Lead time</label>
+    <label class="cb"><input type="checkbox" name="kpi_nessuno"> Nessuno</label>
+</div>
+
 <div class="section-title" style="margin-top:8px;">SICUREZZA — PROTOCOLLI AGGIUNTIVI RICHIESTI</div>
 <div class="grid-3col">
     <label class="cb"><input type="checkbox" name="sec_2fa"> 2FA / MFA per utenti admin</label>
