@@ -59,9 +59,17 @@ class FieryService
 
                 return [
                     'stato' => $stato,
-                    'stampa' => ['documento' => null, 'pagine' => 0],
+                    'stampa' => [
+                        'documento' => null,
+                        'pagine' => 0,
+                        'copie_fatte' => 0,
+                        'copie_totali' => 0,
+                        'progresso' => 0,
+                        'utente' => '-',
+                    ],
                     'rip' => ['idle' => true, 'documento' => null, 'count' => 0],
                     'avviso' => $ext !== 'none' ? $ext : null,
+                    'ultimo_aggiornamento' => now()->format('H:i:s'),
                     'raw' => $data,
                 ];
             } catch (\Exception $e) {
