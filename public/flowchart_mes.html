@@ -252,27 +252,32 @@
     }
 
     @media print {
-        @page { size: 420mm 297mm; margin: 6mm; }
-        html, body { background: #fff; padding: 0; margin: 0; }
-        body { zoom: 0.56; }
+        @page { size: A3 landscape; margin: 4mm; }
+        html, body { background: #fff; padding: 0; margin: 0; width: 100%; }
         .toolbar { display: none; }
-        .header { margin-bottom: 12px; }
-        .header h1 { font-size: 28pt; }
-        .header .sub { font-size: 11pt; margin-top: 3px; }
-        .canvas-wrap, .canvas { max-width: 100% !important; page-break-inside: avoid; }
-        .canvas { gap: 24px !important; }
-        .col-title { padding: 10px 14px; font-size: 12pt; }
-        .card { padding: 10px 14px; break-inside: avoid; box-shadow: 0 1px 3px rgba(0,0,0,0.12) !important; }
-        .card h3 { font-size: 11pt; margin-bottom: 3px; }
-        .card .tag { font-size: 8.5pt; margin-bottom: 5px; }
-        .card ul li { font-size: 9pt; padding: 1px 0 1px 14px; line-height: 1.25; }
-        .infra-row { margin-top: 16px; padding: 12px 18px; grid-template-columns: repeat(4, 1fr); gap: 14px; }
-        .infra-row .infra-item h4 { font-size: 10pt; }
-        .infra-row .infra-item p { font-size: 8pt; }
-        .legend { margin-top: 12px; padding: 10px 14px; font-size: 8pt; gap: 14px; }
-        .footer { margin-top: 12px; font-size: 7.5pt; }
+        .header { margin-bottom: 6px; }
+        .header h1 { font-size: 18pt; }
+        .header .sub { font-size: 8.5pt; margin-top: 2px; }
+        .canvas-wrap { page-break-inside: avoid; max-width: 100% !important; }
+        .canvas {
+            max-width: 100% !important;
+            gap: 12px !important;
+            grid-template-columns: 1fr 1.3fr 1.3fr 1fr !important;
+        }
+        .column { gap: 6px !important; }
+        .col-title { padding: 6px 8px; font-size: 8.5pt; border-top-width: 3px !important; }
+        .card { padding: 6px 8px; break-inside: avoid; box-shadow: 0 1px 2px rgba(0,0,0,0.1) !important; border-left-width: 3px !important; }
+        .card h3 { font-size: 7.5pt; margin-bottom: 1px; }
+        .card .tag { font-size: 6pt; margin-bottom: 2px; }
+        .card ul li { font-size: 6.5pt; padding: 0 0 0 9px; line-height: 1.15; }
+        .card ul li::before { font-size: 6pt; }
+        .infra-row { margin: 8px auto 0 auto; padding: 6px 10px; grid-template-columns: repeat(4, 1fr); gap: 8px; border-left-width: 3px !important; }
+        .infra-row .infra-item h4 { font-size: 7.5pt; }
+        .infra-row .infra-item p { font-size: 6pt; line-height: 1.15; }
+        .legend { margin: 6px auto 0 auto; padding: 5px 10px; font-size: 6pt; gap: 8px; }
+        .footer { margin-top: 4px; font-size: 5.5pt; }
         .connections { display: block !important; }
-        .connections path { opacity: 0.9 !important; stroke-width: 2.5px !important; }
+        .connections path { opacity: 0.85 !important; stroke-width: 2px !important; }
         * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
     }
 </style>
