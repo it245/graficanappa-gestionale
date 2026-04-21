@@ -28,7 +28,8 @@ $fasi = OrdineFase::with('ordine')
     ->get()
     ->groupBy(fn($f) => $f->ordine->commessa ?? '');
 
-$aggiornati = 0; $skip = 0; $err = 0;
+const MAX_FOGLI_SANO = 100000; // soglia sanity: sopra considerato outlier Prinect
+$aggiornati = 0; $skip = 0; $err = 0; $outlier = 0;
 foreach ($fasi as $commessa => $gruppo) {
     $jobId = ltrim(explode('-', $commessa)[0] ?? '', '0');
     if (!$jobId || !is_numeric($jobId)) { $skip++; continue; }
@@ -60,6 +61,14 @@ foreach ($fasi as $commessa => $gruppo) {
             $oldBuoni = $fase->fogli_buoni ?? 0;
             $oldScarto = $fase->fogli_scarto ?? 0;
 
+            // Sanity: scarta valori irrealistici (> 100k fogli singola fase)
+            if ($newBuoni > MAX_FOGLI_SANO || $newScarto > MAX_FOGLI_SANO) {
+                echo sprintf("OUTLIER %s fase=%s [%d] buoni %s→%s, scarto %s→%s [SKIPPED]\n",
+                    $commessa, $fase->fase, $fase->id, $oldBuoni, $newBuoni, $oldScarto, $newScarto);
+                $outlier++;
+                continue;
+            }
+
             if ($newBuoni > $oldBuoni || $newScarto > $oldScarto) {
                 echo sprintf("%s fase=%s [%d] buoni %s→%s, scarto %s→%s%s\n",
                     $commessa, $fase->fase, $fase->id,
@@ -81,5 +90,5 @@ foreach ($fasi as $commessa => $gruppo) {
     }
 }
 
-echo "\nAggiornati: $aggiornati | Skip: $skip | Errori: $err\n";
+echo "\nAggiornati: $aggiornati | Skip: $skip | Outlier: $outlier | Errori: $err\n";
 echo $apply ? "Dati salvati.\n" : "DRY-RUN. Rilancia con --apply per applicare.\n";
