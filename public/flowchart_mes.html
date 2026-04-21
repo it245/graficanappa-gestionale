@@ -57,12 +57,26 @@
         font-weight: 500;
     }
 
+    .canvas-wrap {
+        position: relative;
+        max-width: 1600px;
+        margin: 0 auto;
+    }
     .canvas {
         display: grid;
         grid-template-columns: 1fr 1.3fr 1.3fr 1fr;
-        gap: 20px;
-        max-width: 1600px;
-        margin: 0 auto;
+        gap: 60px;
+        position: relative;
+        z-index: 2;
+    }
+    .connections {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 1;
     }
 
     .column {
@@ -256,13 +270,15 @@
     <div class="sub">Grafica Nappa · Componenti produzione, integrazioni, flussi dati</div>
 </div>
 
+<div class="canvas-wrap">
+<svg class="connections" id="connSvg"></svg>
 <div class="canvas">
 
     <!-- ============== COLONNA 1: INTEGRAZIONI ESTERNE ============== -->
     <div class="column">
         <div class="col-title ext">🔵 Integrazioni Esterne</div>
 
-        <div class="card card-ext">
+        <div class="card card-ext" id="c-onda">
             <h3>Onda ERP</h3>
             <div class="tag">SOAP · SQL Server .253</div>
             <ul>
@@ -272,7 +288,7 @@
             </ul>
         </div>
 
-        <div class="card card-ext">
+        <div class="card card-ext" id="c-prinect">
             <h3>Prinect API</h3>
             <div class="tag">REST · Heidelberg XL106</div>
             <ul>
@@ -282,7 +298,7 @@
             </ul>
         </div>
 
-        <div class="card card-ext">
+        <div class="card card-ext" id="c-fiery">
             <h3>Fiery API</h3>
             <div class="tag">EFI P400 · Indigo</div>
             <ul>
@@ -292,7 +308,7 @@
             </ul>
         </div>
 
-        <div class="card card-ext">
+        <div class="card card-ext" id="c-brt">
             <h3>BRT API</h3>
             <div class="tag">Tracking spedizioni</div>
             <ul>
@@ -302,7 +318,7 @@
             </ul>
         </div>
 
-        <div class="card card-ext">
+        <div class="card card-ext" id="c-nettime">
             <h3>NetTime · Solar-Log</h3>
             <div class="tag">Presenze · fotovoltaico</div>
             <ul>
@@ -312,7 +328,7 @@
             </ul>
         </div>
 
-        <div class="card card-ext">
+        <div class="card card-ext" id="c-excel">
             <h3>Excel Condiviso</h3>
             <div class="tag">Sync bidirezionale 2 min</div>
             <ul>
@@ -337,7 +353,7 @@
     <div class="column">
         <div class="col-title prod">🟡 Produzione · Commesse</div>
 
-        <div class="card card-comm">
+        <div class="card card-comm" id="c-ordini">
             <h3>Ordini / Fasi</h3>
             <div class="tag">Core MES · ordine_fasi</div>
             <ul>
@@ -359,7 +375,7 @@
             </ul>
         </div>
 
-        <div class="card card-comm">
+        <div class="card card-comm" id="c-operatore">
             <h3>Dashboard Operatore</h3>
             <div class="tag">Touch tablet reparto</div>
             <ul>
@@ -381,7 +397,7 @@
             </ul>
         </div>
 
-        <div class="card card-sped">
+        <div class="card card-sped" id="c-spedizione">
             <h3>Spedizione</h3>
             <div class="tag">Dashboard Emanuele</div>
             <ul>
@@ -418,7 +434,7 @@
     <div class="column">
         <div class="col-title stampa">🔴 Stampa · Sync Real-Time</div>
 
-        <div class="card card-stampa">
+        <div class="card card-stampa" id="c-psync">
             <h3>PrinectSync</h3>
             <div class="tag">Sync live XL106 · cron 5 min</div>
             <ul>
@@ -430,7 +446,7 @@
             </ul>
         </div>
 
-        <div class="card card-stampa">
+        <div class="card card-stampa" id="c-fsync">
             <h3>FierySync</h3>
             <div class="tag">Sync live Indigo · cron 1 min</div>
             <ul>
@@ -453,7 +469,7 @@
             </ul>
         </div>
 
-        <div class="card card-stampa">
+        <div class="card card-stampa" id="c-fogli">
             <h3>Fogli Buoni / Scarto</h3>
             <div class="tag">Dati fase · storico</div>
             <ul>
@@ -480,7 +496,7 @@
     <div class="column">
         <div class="col-title dash">🟡 Dashboard · Report</div>
 
-        <div class="card card-dash">
+        <div class="card card-dash" id="c-owner">
             <h3>Dashboard Owner</h3>
             <div class="tag">Controllo produzione</div>
             <ul>
@@ -501,7 +517,7 @@
             </ul>
         </div>
 
-        <div class="card card-dash">
+        <div class="card card-dash" id="c-rdir">
             <h3>Report Direzione</h3>
             <div class="tag">KPI strategici</div>
             <ul>
@@ -511,7 +527,7 @@
             </ul>
         </div>
 
-        <div class="card card-dash">
+        <div class="card card-dash" id="c-xlexp">
             <h3>Export Excel</h3>
             <div class="tag">DashboardMesExport</div>
             <ul>
@@ -521,7 +537,7 @@
             </ul>
         </div>
 
-        <div class="card card-dash">
+        <div class="card card-dash" id="c-dsped">
             <h3>Dashboard Spedizione</h3>
             <div class="tag">Area consegne</div>
             <ul>
@@ -564,6 +580,7 @@
     </div>
 
 </div>
+</div>
 
 <!-- ============== INFRASTRUTTURA ROW ============== -->
 <div class="infra-row">
@@ -599,6 +616,80 @@
 <div class="footer">
     <strong>Grafica Nappa S.r.l.</strong> · Via Saporito 24 · 81031 Aversa (CE) · MES Production Suite (master)
 </div>
+
+<script>
+const connections = [
+    // Integrazioni → Produzione
+    { from: 'c-onda',     to: 'c-ordini',     color: '#0d6efd', style: 'solid' },
+    { from: 'c-excel',    to: 'c-ordini',     color: '#0d6efd', style: 'dashed' },
+    { from: 'c-brt',      to: 'c-spedizione', color: '#7e3bc6', style: 'solid' },
+    // Integrazioni → Stampa
+    { from: 'c-prinect',  to: 'c-psync',      color: '#D11317', style: 'solid' },
+    { from: 'c-fiery',    to: 'c-fsync',      color: '#D11317', style: 'solid' },
+    // Stampa → Produzione (live data)
+    { from: 'c-fogli',    to: 'c-operatore',  color: '#D11317', style: 'dashed' },
+    { from: 'c-fsync',    to: 'c-operatore',  color: '#D11317', style: 'dashed' },
+    // Produzione → Dashboard
+    { from: 'c-ordini',   to: 'c-owner',      color: '#c9a000', style: 'solid' },
+    { from: 'c-operatore',to: 'c-owner',      color: '#c9a000', style: 'solid' },
+    { from: 'c-operatore',to: 'c-xlexp',      color: '#c9a000', style: 'solid' },
+    { from: 'c-spedizione',to:'c-dsped',      color: '#7e3bc6', style: 'solid' },
+    { from: 'c-nettime',  to: 'c-rdir',       color: '#0d6efd', style: 'dashed' }
+];
+
+function drawConnections() {
+    const svg = document.getElementById('connSvg');
+    const wrap = document.querySelector('.canvas-wrap');
+    if (!svg || !wrap) return;
+
+    const rect = wrap.getBoundingClientRect();
+    svg.setAttribute('width', rect.width);
+    svg.setAttribute('height', rect.height);
+    svg.innerHTML = '';
+
+    // marker defs
+    const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+    const colors = [...new Set(connections.map(c => c.color))];
+    colors.forEach(c => {
+        const id = 'arr-' + c.replace('#','');
+        defs.innerHTML += `<marker id="${id}" viewBox="0 -5 10 10" refX="8" refY="0" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,-5L10,0L0,5" fill="${c}"/></marker>`;
+    });
+    svg.appendChild(defs);
+
+    connections.forEach(conn => {
+        const a = document.getElementById(conn.from);
+        const b = document.getElementById(conn.to);
+        if (!a || !b) return;
+        const ra = a.getBoundingClientRect();
+        const rb = b.getBoundingClientRect();
+
+        // Punto uscita destra di a, entrata sinistra di b
+        const x1 = ra.right - rect.left;
+        const y1 = ra.top + ra.height / 2 - rect.top;
+        const x2 = rb.left - rect.left;
+        const y2 = rb.top + rb.height / 2 - rect.top;
+
+        // Bezier curve
+        const midX = (x1 + x2) / 2;
+        const d = `M ${x1} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${x2} ${y2}`;
+
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', d);
+        path.setAttribute('stroke', conn.color);
+        path.setAttribute('stroke-width', '2');
+        path.setAttribute('fill', 'none');
+        path.setAttribute('opacity', '0.6');
+        if (conn.style === 'dashed') path.setAttribute('stroke-dasharray', '5,4');
+        path.setAttribute('marker-end', 'url(#arr-' + conn.color.replace('#','') + ')');
+        svg.appendChild(path);
+    });
+}
+
+window.addEventListener('load', () => {
+    setTimeout(drawConnections, 100);
+});
+window.addEventListener('resize', drawConnections);
+</script>
 
 </body>
 </html>
