@@ -34,17 +34,42 @@ class FieryService
      */
     public function getServerStatus(): ?array
     {
+        // Primo tentativo: WebTools legacy (senza client_locale, causa SSL error su Canon V900)
         try {
-            $response = $this->http()->timeout(2)->get($this->baseUrl . '/wt4/home/get_server_status', [
-                'client_locale' => 'it_IT',
-            ]);
+            $response = $this->http()->timeout(3)->get($this->baseUrl . '/wt4/home/get_server_status');
 
             if ($response->successful()) {
-                return $this->parseServerStatus($response->json());
+                $json = $response->json();
+                if (!empty($json) && isset($json['device_status'])) {
+                    return $this->parseServerStatus($json);
+                }
             }
-        } catch (\Exception $e) {
-            // Fiery non raggiungibile
-        }
+        } catch (\Exception $e) {}
+
+        // Fallback: API v5 (endpoint moderno Canon V900)
+        try {
+            $response = $this->http()->timeout(3)->get($this->baseUrl . '/live/api/v5/server/status');
+            if ($response->successful()) {
+                $data = $response->json('data.item', []);
+                if (!empty($data)) {
+                    $fiery = strtolower($data['fiery'] ?? '');
+                    $ext = strtolower($data['fieryExtendedStatus'] ?? 'none');
+                    $stato = match (true) {
+                        str_contains($fiery, 'print') => 'stampa',
+                        $fiery === 'running' && $ext === 'none' => 'idle',
+                        $fiery === 'running' => 'idle',
+                        default => 'offline',
+                    };
+                    return [
+                        'stato' => $stato,
+                        'stampa' => ['documento' => null, 'pagine' => 0],
+                        'rip' => ['idle' => true, 'documento' => null, 'count' => 0],
+                        'avviso' => $ext !== 'none' ? $ext : null,
+                        'raw' => $data,
+                    ];
+                }
+            }
+        } catch (\Exception $e) {}
 
         return null;
     }
