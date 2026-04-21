@@ -207,10 +207,28 @@ class ProduzioneController extends Controller
         $fase->timeout = now();
         $fase->save();
 
+        // Taglio per fase successiva: promuove la prossima fase dello stesso ordine (stato 0, priorità maggiore) a stato 1
+        $faseSuccessivaId = null;
+        if ($motivo === 'Taglio per fase successiva') {
+            $prioritaCorrente = (float) ($fase->priorita ?? 0);
+            $successiva = OrdineFase::where('ordine_id', $fase->ordine_id)
+                ->where('id', '!=', $fase->id)
+                ->where('stato', 0)
+                ->where('priorita', '>', $prioritaCorrente)
+                ->orderBy('priorita', 'asc')
+                ->first();
+            if ($successiva) {
+                $successiva->stato = 1;
+                $successiva->save();
+                $faseSuccessivaId = $successiva->id;
+            }
+        }
+
         return response()->json([
             'success' => true,
             'nuovo_stato' => $fase->stato,
-            'timeout' => Carbon::parse($fase->timeout)->format('d/m/Y H:i:s')
+            'timeout' => Carbon::parse($fase->timeout)->format('d/m/Y H:i:s'),
+            'fase_successiva_id' => $faseSuccessivaId,
         ]);
     }
 

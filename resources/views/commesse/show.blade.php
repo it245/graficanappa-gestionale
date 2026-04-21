@@ -460,6 +460,7 @@
                         <option>Problema macchina</option>
                         <option>Pranzo</option>
                         <option>Fine turno</option>
+                        <option value="Taglio per fase successiva">Taglio per fase successiva</option>
                         <option value="__altro__">Altro...</option>
                     </select>
                 </div>
