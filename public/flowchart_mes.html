@@ -271,7 +271,8 @@
         .infra-row .infra-item p { font-size: 8pt; }
         .legend { margin-top: 12px; padding: 10px 14px; font-size: 8pt; gap: 14px; }
         .footer { margin-top: 12px; font-size: 7.5pt; }
-        .connections { display: none; }
+        .connections { display: block !important; }
+        .connections path { opacity: 0.9 !important; stroke-width: 2.5px !important; }
         * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
     }
 </style>
@@ -707,6 +708,10 @@ window.addEventListener('load', () => {
     setTimeout(drawConnections, 100);
 });
 window.addEventListener('resize', drawConnections);
+window.addEventListener('beforeprint', () => {
+    setTimeout(drawConnections, 50);
+});
+window.addEventListener('afterprint', drawConnections);
 </script>
 
 </body>
