@@ -16,7 +16,10 @@ use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Font;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use App\Helpers\DescrizioneParser;
+use App\Http\Services\PrinectService;
+use App\Http\Services\PrinectSyncService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 
 class DashboardMesExport implements WithMultipleSheets
 {
@@ -35,6 +38,7 @@ class DashboardMesSheet implements FromCollection, WithHeadings, WithMapping, Wi
     private int $stato;
     private string $titolo;
     private ?array $scartiOnda = null;
+    private array $inkCache = [];
 
     public function __construct(string $operatore, int $stato, string $titolo)
     {
@@ -84,6 +88,45 @@ class DashboardMesSheet implements FromCollection, WithHeadings, WithMapping, Wi
         return $map;
     }
 
+    /**
+     * Inchiostro Prinect (g) totale CMYK per commessa.
+     * Cache per-commessa (24h): non cambia dopo stampa terminata.
+     * Se offline/errore: null.
+     */
+    private function inchiostroPrinect(?string $commessa): ?float
+    {
+        if (!$commessa) return null;
+        $jobId = ltrim(explode('-', $commessa)[0] ?? '', '0');
+        if (!$jobId || !is_numeric($jobId)) return null;
+        if (isset($this->inkCache[$commessa])) return $this->inkCache[$commessa];
+
+        return $this->inkCache[$commessa] = Cache::remember(
+            "prinect_ink_total_{$commessa}",
+            86400,
+            function () use ($jobId) {
+                try {
+                    $service = app(PrinectService::class);
+                    $wsData = $service->getJobWorksteps($jobId);
+                    $worksteps = collect($wsData['worksteps'] ?? [])
+                        ->filter(fn($ws) => in_array('ConventionalPrinting', $ws['types'] ?? []))
+                        ->filter(fn($ws) => ($ws['status'] ?? '') === 'COMPLETED');
+                    if ($worksteps->isEmpty()) return null;
+
+                    $tot = 0;
+                    foreach ($worksteps as $ws) {
+                        $ink = $service->getWorkstepInkConsumption($jobId, $ws['id']);
+                        foreach (($ink['inkConsumptions'] ?? []) as $c) {
+                            $tot += (float) ($c['estimatedConsumption'] ?? 0);
+                        }
+                    }
+                    return round($tot, 2);
+                } catch (\Exception $e) {
+                    return null;
+                }
+            }
+        );
+    }
+
     public function title(): string
     {
         return $this->titolo;
@@ -106,7 +149,7 @@ class DashboardMesSheet implements FromCollection, WithHeadings, WithMapping, Wi
             'Qta Prod', 'Note', 'Data Inizio', 'Data Fine',
             'Ordine Cliente', 'N. DDT Vendita', 'Vettore DDT', 'Qta DDT', 'Note Fasi Successive',
             'Colori', 'Fustella', 'Esterno', 'Ore Prev.', 'Ore Lav.',
-            'Scarti', 'Scarti Prinect', 'Cliché', 'Qta Prod. Prinect', 'Scarti Reali',
+            'Scarti', 'Scarti Prinect', 'Cliché', 'Qta Prod. Prinect', 'Scarti Reali', 'Inchiostro Prinect (g)',
         ];
     }
 
@@ -216,10 +259,8 @@ class DashboardMesSheet implements FromCollection, WithHeadings, WithMapping, Wi
                 $map = $this->caricaScartiOnda();
                 $commessa = $ordine->commessa ?? '';
                 $faseNome = $fase->fase ?? '';
-                // Normalizza suffissi dedup (.1, .2) e prova varianti comuni
                 $faseBase = preg_replace('/\.\d+$/', '', $faseNome);
                 $tentativi = [$faseNome, $faseBase];
-                // Se fase MES è stampa, aggiungi fallback generico "STAMPA" (Onda spesso salva così)
                 if (preg_match('/^STAMPA/i', $faseBase)) {
                     $tentativi[] = 'STAMPA';
                 }
@@ -229,6 +270,13 @@ class DashboardMesSheet implements FromCollection, WithHeadings, WithMapping, Wi
                     if (isset($map[$chiave])) return $map[$chiave];
                 }
                 return '';
+            })(),
+            // Inchiostro Prinect (g): totale CMYK solo per fasi stampa offset (sola lettura)
+            (function() use ($fase, $ordine) {
+                $reparto = strtolower($fase->faseCatalogo->reparto->nome ?? '');
+                if ($reparto !== 'stampa offset') return '';
+                $val = $this->inchiostroPrinect($ordine->commessa ?? null);
+                return $val !== null ? $val : '';
             })(),
         ];
     }
@@ -276,16 +324,17 @@ class DashboardMesSheet implements FromCollection, WithHeadings, WithMapping, Wi
             'AL' => 12, // Cliché
             'AM' => 14, // Qta Prod. Prinect
             'AN' => 14, // Scarti Reali
+            'AO' => 16, // Inchiostro Prinect (g)
         ];
     }
 
     public function styles(Worksheet $sheet)
     {
         $lastRow = $sheet->getHighestRow();
-        $nonEditabili = ['A', 'B', 'S', 'T', 'U', 'AE', 'AF', 'AG', 'AH', 'AI', 'AK', 'AL', 'AM', 'AN'];
+        $nonEditabili = ['A', 'B', 'S', 'T', 'U', 'AE', 'AF', 'AG', 'AH', 'AI', 'AK', 'AL', 'AM', 'AN', 'AO'];
 
         // Header: sfondo nero, testo bianco, grassetto
-        $sheet->getStyle('A1:AN1')->applyFromArray([
+        $sheet->getStyle('A1:AO1')->applyFromArray([
             'font' => [
                 'bold' => true,
                 'color' => ['rgb' => 'FFFFFF'],
@@ -314,7 +363,7 @@ class DashboardMesSheet implements FromCollection, WithHeadings, WithMapping, Wi
         }
 
         // Auto-filtro sulla riga header
-        $sheet->setAutoFilter('A1:AN1');
+        $sheet->setAutoFilter('A1:AO1');
 
         return [];
     }
