@@ -238,7 +238,7 @@
         <div class="brand-icon">V9</div>
         <div>
             <div class="brand-name">Canon imagePRESS V900</div>
-            <div class="brand-sub">Fiery P400 &middot; MES Dashboard</div>
+            <div class="brand-sub">Fiery P400 &middot; MES Dashboard <span id="fw-badge" style="display:none;margin-left:8px;padding:1px 6px;border-radius:10px;background:#eff6ff;color:#0d6efd;font-size:10px;font-weight:600;"></span></div>
         </div>
     </div>
     <div class="nav-links">
@@ -280,6 +280,38 @@
     }
     loadFieryAlerts();
     setInterval(loadFieryAlerts, 60000);
+
+    // Arricchisci vassoi con tipo carta + dimensioni SRA3 da API v5
+    fetch('{{ route("mes.fiery.consumables") }}')
+        .then(r => r.json())
+        .then(d => {
+            if (!d.success || !d.trays) return;
+            document.querySelectorAll('[data-tray-idx]').forEach((el, idx) => {
+                const tray = d.trays[idx];
+                if (!tray) return;
+                const media = el.querySelector('.tray-media');
+                if (!media) return;
+                const parts = [];
+                if (tray.page_size && tray.page_size !== '-') parts.push(tray.page_size);
+                if (tray.dimensions_mm && tray.dimensions_mm !== '-') parts.push(tray.dimensions_mm + 'mm');
+                media.textContent = parts.join(' · ');
+            });
+        })
+        .catch(() => {});
+
+    // Badge firmware (cache server 24h, fetch una volta al load)
+    fetch('{{ route("mes.fiery.info") }}')
+        .then(r => r.json())
+        .then(d => {
+            if (!d.success) return;
+            const badge = document.getElementById('fw-badge');
+            const v = d.version;
+            if (badge && v && v !== '[]') {
+                badge.textContent = 'FW ' + (typeof v === 'string' ? v.substring(0,20) : '');
+                badge.style.display = 'inline-block';
+            }
+        })
+        .catch(() => {});
 })();
 </script>
 
@@ -340,7 +372,7 @@
                     $pct = $v['percentuale'];
                     $low = $pct !== null && $pct >= 0 && $pct <= 20;
                 @endphp
-                <div class="tray-item {{ $low ? 'low' : '' }}">
+                <div class="tray-item {{ $low ? 'low' : '' }}" data-tray-idx="{{ $loop->index }}">
                     <div class="tray-name">{{ $v['nome'] ?: 'Vassoio '.($loop->index+1) }}</div>
                     <div class="tray-bar-h"><div class="tray-fill-h" style="width:{{ $pct !== null && $pct >= 0 ? $pct : 0 }}%; {{ $low ? 'background:var(--red);' : '' }}"></div></div>
                     <div class="tray-info">
@@ -350,6 +382,7 @@
                         @endif
                     </div>
                     @if($v['tipo'])<div class="tray-type">{{ $v['tipo'] }}</div>@endif
+                    <div class="tray-media" style="font-size:10px;color:#6b7280;margin-top:2px;"></div>
                 </div>
                 @endforeach
             </div>
@@ -538,13 +571,24 @@
                 <th>Carta</th>
                 <th>Copie</th>
                 <th>Fogli</th>
+                <th title="Tempo RIP/elaborazione">RIP</th>
+                <th title="Tempo di stampa effettivo">Stampa</th>
                 <th>B/V</th>
                 <th>Data</th>
             </tr>
         </thead>
         <tbody id="completed-body">
             @foreach($jobData['completed'] as $job)
-            @php $pct = $job['num_copies'] > 0 ? round(($job['copies_printed'] / $job['num_copies']) * 100) : 100; @endphp
+            @php
+                $pct = $job['num_copies'] > 0 ? round(($job['copies_printed'] / $job['num_copies']) * 100) : 100;
+                $tm = $job['timings'] ?? [];
+                $fmt = function($s) {
+                    if (!$s || $s <= 0) return '-';
+                    if ($s < 60) return $s.'s';
+                    if ($s < 3600) return floor($s/60).'m'.str_pad($s%60,2,'0',STR_PAD_LEFT).'s';
+                    return floor($s/3600).'h'.str_pad(floor(($s%3600)/60),2,'0',STR_PAD_LEFT).'m';
+                };
+            @endphp
             <tr>
                 <td class="c-title">{{ $job['title'] }}</td>
                 <td>
@@ -559,6 +603,8 @@
                     <span class="copies-sm">{{ $job['copies_printed'] }}/{{ $job['num_copies'] }}</span>
                 </td>
                 <td style="font-weight:600;color:var(--text);">{{ $job['total_sheets'] }}</td>
+                <td style="font-size:11px;color:var(--text-muted);white-space:nowrap;">{{ $fmt($tm['rip_sec'] ?? null) }}</td>
+                <td style="font-size:11px;color:var(--text-muted);white-space:nowrap;">{{ $fmt($tm['print_sec'] ?? null) }}</td>
                 <td>{{ $job['duplex'] ? 'Si' : '-' }}</td>
                 <td style="font-size:11px;color:var(--text-dim);white-space:nowrap;">{{ $job['date'] }}</td>
             </tr>

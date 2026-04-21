@@ -233,6 +233,7 @@ class FieryService
                 'duplex' => ($job['EFDuplex'] ?? 'False') !== 'False',
                 'input_slot' => $job['input slot'] ?? '',
                 'commessa' => $this->estraiCommessaDaTitolo($job['title'] ?? ''),
+                'timings' => $this->getJobTimings($job),
             ];
         })->toArray();
     }
