@@ -2,10 +2,10 @@
 <html lang="it">
 <head>
 <meta charset="utf-8">
-<title>Architettura MES — Grafica Nappa</title>
+<title>Architettura MES — Grafica Nappa (Master)</title>
 <script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
 <style>
-    @page { size: A3 landscape; margin: 1cm; }
+    @page { size: A2 landscape; margin: 1cm; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Segoe UI', Tahoma, sans-serif; color: #222; padding: 20px; background: #eef2f7; }
 
@@ -15,12 +15,13 @@
     .toolbar button.secondary { background: #6c757d; }
 
     .header { text-align: center; margin-bottom: 18px; }
-    .header h1 { color: #D11317; font-size: 24pt; font-weight: 800; letter-spacing: -0.5px; }
-    .header .sub { font-size: 10.5pt; color: #555; margin-top: 4px; }
+    .header h1 { color: #D11317; font-size: 26pt; font-weight: 800; letter-spacing: -0.5px; }
+    .header .sub { font-size: 11pt; color: #555; margin-top: 4px; }
 
     .chart-wrap { background: #fff; padding: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-radius: 6px; overflow-x: auto; }
-    .mermaid { min-width: 1200px; }
-    .mermaid svg { max-width: 100% !important; height: auto !important; }
+    .mermaid { min-width: 1800px; font-size: 16px; }
+    .mermaid .nodeLabel { font-size: 14px !important; line-height: 1.4 !important; }
+    .mermaid .cluster-label { font-size: 15px !important; font-weight: 700 !important; }
 
     .legend { margin-top: 18px; padding: 14px 18px; background: #fff; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); display: flex; gap: 18px; flex-wrap: wrap; justify-content: center; font-size: 9.5pt; }
     .legend-item { display: flex; align-items: center; gap: 6px; }
@@ -42,7 +43,7 @@
 
 <div class="header">
     <h1>Architettura MES — Grafica Nappa</h1>
-    <div class="sub">Flusso funzionale, integrazioni esterne, componenti produzione · stato attuale</div>
+    <div class="sub">Componenti produzione · integrazioni · flussi dati — versione master in produzione</div>
 </div>
 
 <div class="chart-wrap">
@@ -52,85 +53,86 @@ flowchart LR
 %% ============== INTEGRAZIONI ESTERNE ==============
 subgraph EXT [🔵 INTEGRAZIONI ESTERNE]
     direction TB
-    ONDA["Onda ERP<br/><i>SOAP · SQL Server .253</i>"]
-    PRIN["Prinect API<br/><i>REST · Heidelberg XL106</i>"]
-    FIER["Fiery API<br/><i>EFI P400 · Indigo</i>"]
-    BRT["BRT API<br/><i>Tracking spedizioni</i>"]
-    NTIME["NetTime<br/><i>Presenze · share .253</i>"]
-    SOLAR["Solar-Log<br/><i>Fotovoltaico 180 kWp</i>"]
-    XLS["Excel condiviso<br/><i>Sync bidir. 2 min</i>"]
-    VPN["VPN MikroTik<br/><i>WireGuard</i>"]
+    ONDA["<b>Onda ERP</b><br/>SOAP · SQL Server .253<br/>━━━━━━━━━━<br/>• Commesse · ordini<br/>• Anagrafiche clienti/fornitori<br/>• DDT fornitore 30gg<br/>• Articoli lavorazione<br/>• Scarti previsti (OC_TotScarti)"]
+    PRIN["<b>Prinect API</b><br/>REST · Heidelberg XL106<br/>━━━━━━━━━━<br/>• Worksteps · activities<br/>• Fogli buoni/scarto live<br/>• Tempo avv/esecuzione<br/>• Ink · preview · quality<br/>• Milestones · devices"]
+    FIER["<b>Fiery API</b><br/>EFI P400 · Indigo<br/>━━━━━━━━━━<br/>• Accounting API v5<br/>• WebTools fallback<br/>• Smart match multi-fase<br/>• Login + timeout 120s"]
+    BRT["<b>BRT API</b><br/>Tracking spedizioni<br/>━━━━━━━━━━<br/>• Stato consegna real-time<br/>• Multi-spedizione<br/>• Email ritardi auto<br/>• PDF bolle"]
+    NTIME["<b>NetTime</b><br/>Presenze · share .253<br/>━━━━━━━━━━<br/>• Timbrature dipendenti<br/>• Task ogni 5 min<br/>• Import badge"]
+    SOLAR["<b>Solar-Log</b><br/>Fotovoltaico 180 kWp<br/>━━━━━━━━━━<br/>• 7 inverter PVI-TRIO<br/>• Portale web scrape<br/>• Rendimenti giornalieri"]
+    XLS["<b>Excel condiviso</b><br/>Sync bidirezionale 2 min<br/>━━━━━━━━━━<br/>• Import/export fasi<br/>• Rispetta priorità manuale<br/>• isDirty per performance"]
+    VPN["<b>VPN MikroTik</b><br/>WireGuard integrato<br/>━━━━━━━━━━<br/>• Peer per utente<br/>• Endpoint mynetname.net<br/>• Accesso remoto sicuro"]
 end
 
 %% ============== PRODUZIONE ==============
 subgraph PROD [🟡 PRODUZIONE · COMMESSE]
     direction TB
-    ORD["Ordini / Fasi<br/><i>Stati 0→4 · priorità manuale</i>"]
-    PRE["Prestampa<br/><i>Dashboard dedicata · note</i>"]
-    OPER["Dashboard Operatore<br/><i>Touch reparto · Avvia/Pausa/Termina</i>"]
-    FIN["Finitura · Legatoria<br/><i>Fustella · piega · brossura · UV</i>"]
-    SPED["Spedizione<br/><i>DDT · corriere · PDF</i>"]
-    CLIC["Cliché Offset<br/><i>Match 7 iter · 89 hit</i>"]
-end
-
-%% ============== INFRASTRUTTURA ==============
-subgraph INFRA [⚙️ INFRASTRUTTURA]
-    direction TB
-    CRON["Scheduler Cron<br/><i>Onda 1h · Fiery 1m · Prinect 5m</i>"]
-    LARAVEL["Laravel 12 · MySQL<br/><i>PHP 8.5 · server .60</i>"]
+    ORD["<b>Ordini / Fasi</b><br/>Core MES · ordine_fasi<br/>━━━━━━━━━━<br/>• Stati 0/1/2/3/4/EXT<br/>• Priorità manuale + flag<br/>• Popover applica a tutte<br/>• Dedup whitespace<br/>• Rimappa STAMPA generico<br/>• Flag esterno per reparto"]
+    PRE["<b>Prestampa</b><br/>Dashboard dedicata<br/>━━━━━━━━━━<br/>• Redirect auto operatori<br/>• Campi editabili: desc, cliente<br/>• Qta · colori · fustella · note<br/>• Assegna operatore prestampa<br/>• Commento produzione"]
+    OPER["<b>Dashboard Operatore</b><br/>Touch tablet reparto<br/>━━━━━━━━━━<br/>• Avvia · Pausa · Termina<br/>• Motivi pausa (6 opzioni)<br/>• Taglio per fase successiva<br/>• Etichette Data Matrix<br/>• Scarti + tiro obbligatori<br/>• Stato 3 stampa rimane visibile"]
+    FIN["<b>Finitura · Legatoria</b><br/>Reparti produzione<br/>━━━━━━━━━━<br/>• Fustella BOBST · Iberica<br/>• Piega-incolla PI01/02/03<br/>• Brossura · punti metallici<br/>• UV spot · plastifica · foil<br/>• Rilievi a secco · ZUND<br/>• Note fustelle Mirko"]
+    SPED["<b>Spedizione</b><br/>Dashboard dedicata<br/>━━━━━━━━━━<br/>• DDT · corriere · BRT<br/>• PDF archivio vecchio<br/>• Ricerca DDT commesse<br/>• Parziali · consegnate<br/>• Note consegne persistenti<br/>• Descrizione stretta 220px"]
+    CLIC["<b>Cliché Offset</b><br/>Gestione stampa a caldo<br/>━━━━━━━━━━<br/>• Import Excel<br/>• Match v7 token synonym<br/>• AST/ASTUCCIO stoplist<br/>• Tiro (cm foil consumato)<br/>• 89 match · zero falsi<br/>• Report per commessa"]
+    ROP["<b>Ricalcolo Priorità</b><br/>FaseStatoService<br/>━━━━━━━━━━<br/>• config/fasi_priorita.php<br/>• Sequenza fasi 10→999<br/>• Ricalcolo su cambio stato<br/>• PhaseCompleted event"]
 end
 
 %% ============== STAMPA REAL-TIME ==============
-subgraph STAMPA [🔴 STAMPA REAL-TIME]
+subgraph STAMPA [🔴 STAMPA · SYNC REAL-TIME]
     direction TB
-    PSYNC["PrinectSync<br/><i>Worksteps · Activities live</i>"]
-    FSYNC["FierySync<br/><i>Accounting v5 · smart match</i>"]
-    RPRI["Report Prinect<br/><i>B/V · OEE · tempi</i>"]
-    FOGLI["Fogli buoni / scarto<br/><i>Sync DB · retrofit</i>"]
-    INK["Ink · Preview · Quality<br/><i>Inchiostro · anteprime</i>"]
+    PSYNC["<b>PrinectSync</b><br/>Sync live XL106<br/>━━━━━━━━━━<br/>• Worksteps + activities<br/>• Filter status COMPLETED<br/>• Auto-terminazione >4h<br/>• Protezione fasi attive<br/>• Ripristino stato 3→2<br/>• Cron 5 min"]
+    FSYNC["<b>FierySync</b><br/>Sync live Indigo<br/>━━━━━━━━━━<br/>• Accounting API v5<br/>• Smart match qta_fase<br/>• Multi STAMPAINDIGO<br/>• Auto-term no stampa<br/>• Cron 1 min · timeout 120s"]
+    RPRI["<b>Report Prinect</b><br/>KPI commessa<br/>━━━━━━━━━━<br/>• Detect bianca/volta (B/V)<br/>• Coppie 0/4 + 4/0<br/>• OEE · tempo avv/esec<br/>• Per workstep + operatore<br/>• Chart timeline"]
+    FOGLI["<b>Fogli buoni / scarto</b><br/>Dati fase · storico<br/>━━━━━━━━━━<br/>• fogli_buoni · fogli_scarto<br/>• Sync DB auto<br/>• Retrofit storico<br/>• Sanity guard 100k"]
+    INK["<b>Ink · Preview · Quality</b><br/>Dettaglio workstep<br/>━━━━━━━━━━<br/>• Consumo inchiostro CMYK<br/>• Anteprima pagina<br/>• Color measurements<br/>• Elementi · lastre"]
 end
 
 %% ============== DASHBOARD ==============
 subgraph DASH [🟡 DASHBOARD · REPORT]
     direction TB
-    DOWN["Dashboard Owner<br/><i>Real-time · filtri · notifiche</i>"]
-    RORE["Report Ore<br/><i>Lav. vs prev. · Chart.js</i>"]
-    XLEXP["Export Excel<br/><i>40+ colonne · readonly</i>"]
-    DSPED["Dashboard Spedizione<br/><i>Da consegnare · PDF DDT</i>"]
-    NCON["Note Consegne<br/><i>Push · beep · toast</i>"]
-    RDIR["Report Direzione<br/><i>KPI reparti · Excel + PDF</i>"]
-    SEC["Security · Audit<br/><i>Spatie · RBAC 5 ruoli</i>"]
-    DPRE["Dashboard Prestampa<br/><i>Campi editabili</i>"]
+    DOWN["<b>Dashboard Owner</b><br/>Controllo produzione<br/>━━━━━━━━━━<br/>• Real-time stato fasi<br/>• Filtri · ricerca · notifiche<br/>• Ore lavorate (P=Prinect)<br/>• Scrollbar sticky<br/>• EXT badge viola<br/>• Priorità manuale UI"]
+    DPRE["<b>Dashboard Prestampa</b><br/>Area dedicata<br/>━━━━━━━━━━<br/>• Lista commesse prestampa<br/>• Campi editabili<br/>• Assegnazione operatori<br/>• Note persistenti"]
+    DSPED["<b>Dashboard Spedizione</b><br/>Area Emanuele<br/>━━━━━━━━━━<br/>• Da consegnare · parziali<br/>• Sidebar anchor sezioni<br/>• Ricerca PDF DDT<br/>• Note ultima data<br/>• BRT multi-spedizione"]
+    RORE["<b>Report Ore</b><br/>Lavorate vs previste<br/>━━━━━━━━━━<br/>• 6 KPI · 4 Chart.js<br/>• Ore da Prinect (stampa)<br/>• Fallback pivot operatore<br/>• Click sforate → dettaglio<br/>• Solo stato &gt; 2"]
+    RDIR["<b>Report Direzione</b><br/>KPI strategici<br/>━━━━━━━━━━<br/>• KPI per reparto<br/>• Scarti · ore totali<br/>• Excel + PDF<br/>• Grafici storici<br/>• NetTime presenze"]
+    XLEXP["<b>Export Excel Dashboard</b><br/>DashboardMesExport<br/>━━━━━━━━━━<br/>• 40+ colonne<br/>• Qta Prod. Prinect<br/>• Scarti Prinect · Onda<br/>• Cliché · ore previste<br/>• 2 sheet (attive · terminate)"]
+    NCON["<b>Note Consegne</b><br/>Owner ↔ Spedizione<br/>━━━━━━━━━━<br/>• Polling 1-15s<br/>• Badge rosso<br/>• Browser push<br/>• Beep AudioContext<br/>• Toast 30s bidirezionale"]
+    SEC["<b>Security · Audit</b><br/>Accesso e log<br/>━━━━━━━━━━<br/>• Spatie Permission<br/>• RBAC 5 ruoli<br/>• CSRF refresh 30min<br/>• Logout GET+POST<br/>• Session 8h turno"]
+    ETIC["<b>Etichette Data Matrix</b><br/>Stampa da operatore<br/>━━━━━━━━━━<br/>• Plain DataMatrix<br/>• A nel GTIN<br/>• Qty 8 cifre zero-padded<br/>• bwip-js generator"]
+end
+
+%% ============== INFRASTRUTTURA ==============
+subgraph INFRA [⚙️ INFRASTRUTTURA]
+    direction TB
+    CRON["<b>Scheduler Cron</b><br/>Laravel Schedule<br/>━━━━━━━━━━<br/>• OndaSync · ogni ora<br/>• ExcelSync · ogni 2 min<br/>• PrinectSync · 5 min<br/>• FierySync · 1 min<br/>• NetTime · 5 min<br/>• Cleanup · giornaliero"]
+    LARAVEL["<b>Laravel 12 · MySQL</b><br/>Stack backend<br/>━━━━━━━━━━<br/>• PHP 8.5<br/>• Server Windows .60<br/>• SOAP BRT + Onda<br/>• SQL Server connection<br/>• Blade + Bootstrap 5"]
 end
 
 %% ============== FLUSSI PRINCIPALI ==============
 ONDA ==> ORD
-ORD --> PRE --> OPER --> FIN --> SPED
+ORD --> PRE
+PRE --> OPER
+OPER --> FIN
+FIN --> SPED
+ORD -.-> ROP
+ROP -.-> ORD
 
-%% Integrazioni stampa
 PRIN ==> PSYNC
 FIER ==> FSYNC
 PSYNC --> FOGLI
 FSYNC --> FOGLI
 PSYNC --> RPRI
 PSYNC --> INK
-
-%% Live data verso operatore
 FOGLI -.-> OPER
 FSYNC -.-> OPER
 
-%% BRT
 BRT --> SPED
-
-%% Excel bidir
 XLS <-.-> ORD
 
-%% Cron alimenta integrazioni
 CRON -.-> ONDA
 CRON -.-> PRIN
 CRON -.-> FIER
+CRON -.-> NTIME
+CRON -.-> SOLAR
 
-%% Output verso Dashboard
 ORD ==> DOWN
 OPER ==> DOWN
 OPER ==> RORE
@@ -138,29 +140,32 @@ RPRI ==> XLEXP
 OPER ==> XLEXP
 SPED ==> DSPED
 SPED ==> NCON
+NCON <-.-> DOWN
 NTIME ==> RDIR
 OPER ==> RDIR
 PRE ==> DPRE
+OPER --> ETIC
+CLIC --> ORD
 
 %% ============== STILI ==============
-classDef ext fill:#eaf2fb,stroke:#0d6efd,stroke-width:1.5px,color:#1a365d
-classDef comm fill:#fff3cd,stroke:#d69e2e,stroke-width:1.5px,color:#5c4600
-classDef pre fill:#e7f1dc,stroke:#6b9a3a,stroke-width:1.5px,color:#3a5020
-classDef stampa fill:#fde4e4,stroke:#D11317,stroke-width:1.5px,color:#7a0d10
-classDef finit fill:#fde3c8,stroke:#e07c2a,stroke-width:1.5px,color:#7a3d0a
-classDef mag fill:#dfecfa,stroke:#1973b8,stroke-width:1.5px,color:#0a3b5c
-classDef sped fill:#e9daf5,stroke:#7e3bc6,stroke-width:1.5px,color:#4a1a7a
-classDef dash fill:#fff5b8,stroke:#c9a000,stroke-width:1.5px,color:#5c4600
-classDef core fill:#ff7575,stroke:#a10d10,stroke-width:3px,color:#fff,font-weight:bold
+classDef ext fill:#eaf2fb,stroke:#0d6efd,stroke-width:2px,color:#1a365d
+classDef comm fill:#fff3cd,stroke:#d69e2e,stroke-width:2px,color:#5c4600
+classDef pre fill:#e7f1dc,stroke:#6b9a3a,stroke-width:2px,color:#3a5020
+classDef stampa fill:#fde4e4,stroke:#D11317,stroke-width:2px,color:#7a0d10
+classDef finit fill:#fde3c8,stroke:#e07c2a,stroke-width:2px,color:#7a3d0a
+classDef sped fill:#e9daf5,stroke:#7e3bc6,stroke-width:2px,color:#4a1a7a
+classDef dash fill:#fff5b8,stroke:#c9a000,stroke-width:2px,color:#5c4600
+classDef infra fill:#f0f0f0,stroke:#555,stroke-width:2px,color:#1a1a1a
 
 class ONDA,PRIN,FIER,BRT,NTIME,SOLAR,XLS,VPN ext
-class ORD,CLIC,CRON,LARAVEL comm
+class ORD,CLIC,ROP comm
 class PRE pre
 class OPER comm
 class FIN finit
 class SPED sped
 class PSYNC,FSYNC,RPRI,FOGLI,INK stampa
-class DOWN,RORE,XLEXP,DSPED,NCON,RDIR,SEC,DPRE dash
+class DOWN,RORE,XLEXP,DSPED,NCON,RDIR,SEC,DPRE,ETIC dash
+class CRON,LARAVEL infra
 </div>
 </div>
 
@@ -172,10 +177,11 @@ class DOWN,RORE,XLEXP,DSPED,NCON,RDIR,SEC,DPRE dash
     <div class="legend-item"><span class="legend-dot" style="background:#fde3c8; border-color:#e07c2a;"></span> Finitura · legatoria</div>
     <div class="legend-item"><span class="legend-dot" style="background:#e9daf5; border-color:#7e3bc6;"></span> Spedizione</div>
     <div class="legend-item"><span class="legend-dot" style="background:#fff5b8; border-color:#c9a000;"></span> Dashboard · report</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#f0f0f0; border-color:#555;"></span> Infrastruttura</div>
 </div>
 
 <div style="text-align:center; margin-top: 14px; font-size: 8.5pt; color: #777;">
-    <strong style="color:#D11317;">Grafica Nappa S.r.l.</strong> · Via Saporito 24 · 81031 Aversa (CE) · MES Production Suite
+    <strong style="color:#D11317;">Grafica Nappa S.r.l.</strong> · Via Saporito 24 · 81031 Aversa (CE) · MES Production Suite (master)
 </div>
 
 <script>
@@ -184,14 +190,18 @@ class DOWN,RORE,XLEXP,DSPED,NCON,RDIR,SEC,DPRE dash
         theme: 'base',
         flowchart: {
             curve: 'basis',
-            padding: 20,
-            nodeSpacing: 50,
-            rankSpacing: 80,
-            useMaxWidth: false
+            padding: 25,
+            nodeSpacing: 70,
+            rankSpacing: 120,
+            useMaxWidth: false,
+            htmlLabels: true
         },
         themeVariables: {
             fontFamily: 'Segoe UI, Tahoma, sans-serif',
-            fontSize: '14px'
+            fontSize: '15px',
+            primaryColor: '#fff',
+            primaryBorderColor: '#333',
+            lineColor: '#4a4a4a'
         }
     });
 
@@ -204,7 +214,7 @@ class DOWN,RORE,XLEXP,DSPED,NCON,RDIR,SEC,DPRE dash
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'flowchart_mes.svg';
+        a.download = 'architettura_mes.svg';
         a.click();
         URL.revokeObjectURL(url);
     }
