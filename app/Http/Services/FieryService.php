@@ -38,13 +38,23 @@ class FieryService
         $cached = Cache::get('fiery_server_status');
         if (!empty($cached)) return $cached;
 
-        try {
-            $response = Http::withoutVerifying()
-                ->withOptions(['verify' => false])
-                ->timeout(5)
-                ->get($this->baseUrl . '/live/api/v5/server/status');
+        // Retry 2 volte con timeout 8s (API Fiery Canon V900 a volte lenta)
+        $response = null;
+        for ($attempt = 1; $attempt <= 2; $attempt++) {
+            try {
+                $response = Http::withoutVerifying()
+                    ->withOptions(['verify' => false])
+                    ->timeout(8)
+                    ->get($this->baseUrl . '/live/api/v5/server/status');
+                if ($response->successful()) break;
+            } catch (\Exception $e) {
+                if ($attempt === 2) return null;
+                usleep(500000); // 0.5s tra tentativi
+            }
+        }
 
-            if (!$response->successful()) return null;
+        try {
+            if (!$response || !$response->successful()) return null;
 
             $data = $response->json('data.item', []);
             if (empty($data)) return null;
