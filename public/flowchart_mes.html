@@ -2,41 +2,245 @@
 <html lang="it">
 <head>
 <meta charset="utf-8">
-<title>Architettura MES — Grafica Nappa (Master)</title>
-<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+<title>Architettura MES — Grafica Nappa</title>
 <style>
-    @page { size: A2 landscape; margin: 1cm; }
+    @page { size: A3 landscape; margin: 1cm; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Segoe UI', Tahoma, sans-serif; color: #222; padding: 20px; background: #eef2f7; }
+    body {
+        font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Tahoma, sans-serif;
+        color: #1a1a1a;
+        background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+        min-height: 100vh;
+        padding: 24px;
+    }
 
-    .toolbar { position: sticky; top: 0; background: #fff; border: 1px solid #0d6efd; padding: 8px 14px; margin-bottom: 14px; z-index: 100; display: flex; gap: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-radius: 4px; }
-    .toolbar button { background: #0d6efd; color: #fff; border: none; padding: 7px 16px; font-size: 9.5pt; cursor: pointer; border-radius: 4px; font-weight: 600; }
-    .toolbar button:hover { background: #0a58ca; }
+    .toolbar {
+        position: sticky;
+        top: 0;
+        background: #fff;
+        padding: 10px 16px;
+        margin-bottom: 20px;
+        z-index: 100;
+        display: flex;
+        gap: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        border-radius: 8px;
+        align-items: center;
+    }
+    .toolbar button {
+        background: #0d6efd;
+        color: #fff;
+        border: none;
+        padding: 8px 16px;
+        font-size: 10pt;
+        cursor: pointer;
+        border-radius: 6px;
+        font-weight: 600;
+        transition: all 0.15s;
+    }
+    .toolbar button:hover { background: #0a58ca; transform: translateY(-1px); }
     .toolbar button.secondary { background: #6c757d; }
+    .toolbar button.secondary:hover { background: #545b62; }
 
-    .header { text-align: center; margin-bottom: 18px; }
-    .header h1 { color: #D11317; font-size: 26pt; font-weight: 800; letter-spacing: -0.5px; }
-    .header .sub { font-size: 11pt; color: #555; margin-top: 4px; }
+    .header { text-align: center; margin-bottom: 30px; }
+    .header h1 {
+        color: #D11317;
+        font-size: 32pt;
+        font-weight: 800;
+        letter-spacing: -1px;
+        line-height: 1.1;
+    }
+    .header .sub {
+        font-size: 12pt;
+        color: #666;
+        margin-top: 8px;
+        font-weight: 500;
+    }
 
-    .chart-wrap { background: #fff; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-radius: 6px; overflow: auto; max-height: 85vh; }
-    .mermaid { font-size: 18px; display: flex; justify-content: center; transform-origin: top left; }
-    .mermaid svg { min-width: 1700px; }
-    .mermaid .nodeLabel { font-size: 17px !important; line-height: 1.45 !important; font-weight: 600 !important; }
-    .mermaid .cluster-label { font-size: 20px !important; font-weight: 800 !important; }
-    .mermaid .node rect, .mermaid .node polygon { stroke-width: 2.5px !important; }
-    .mermaid .edgeLabel { font-size: 13px !important; }
+    .canvas {
+        display: grid;
+        grid-template-columns: 1fr 1.3fr 1.3fr 1fr;
+        gap: 20px;
+        max-width: 1600px;
+        margin: 0 auto;
+    }
 
-    .zoom-controls { display: inline-flex; gap: 6px; margin-left: auto; }
-    .zoom-controls button { padding: 4px 10px; font-size: 10pt; }
+    .column {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
 
-    .legend { margin-top: 18px; padding: 14px 18px; background: #fff; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); display: flex; gap: 18px; flex-wrap: wrap; justify-content: center; font-size: 9.5pt; }
-    .legend-item { display: flex; align-items: center; gap: 6px; }
-    .legend-dot { width: 20px; height: 14px; border-radius: 3px; border: 1.5px solid #555; }
+    .col-title {
+        background: #fff;
+        padding: 14px 18px;
+        border-radius: 10px;
+        text-align: center;
+        font-weight: 800;
+        font-size: 13pt;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+        border-top: 4px solid;
+    }
+    .col-title.ext { border-top-color: #0d6efd; color: #0d6efd; }
+    .col-title.prod { border-top-color: #d69e2e; color: #a07800; }
+    .col-title.stampa { border-top-color: #D11317; color: #D11317; }
+    .col-title.dash { border-top-color: #c9a000; color: #a07800; }
+
+    .card {
+        background: #fff;
+        border-radius: 10px;
+        padding: 14px 16px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        border-left: 5px solid #ccc;
+        transition: all 0.15s;
+    }
+    .card:hover { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(0,0,0,0.12); }
+    .card h3 {
+        font-size: 11pt;
+        font-weight: 700;
+        margin-bottom: 4px;
+        color: #1a1a1a;
+    }
+    .card .tag {
+        font-size: 8.5pt;
+        color: #666;
+        font-style: italic;
+        margin-bottom: 8px;
+    }
+    .card ul {
+        list-style: none;
+        padding: 0;
+    }
+    .card ul li {
+        font-size: 9pt;
+        padding: 2px 0 2px 14px;
+        position: relative;
+        color: #333;
+        line-height: 1.3;
+    }
+    .card ul li::before {
+        content: "▸";
+        position: absolute;
+        left: 0;
+        color: #0d6efd;
+        font-weight: 700;
+    }
+
+    /* Card variants */
+    .card-ext { border-left-color: #0d6efd; }
+    .card-ext h3 { color: #0d6efd; }
+    .card-comm { border-left-color: #d69e2e; }
+    .card-comm h3 { color: #a07800; }
+    .card-pre { border-left-color: #6b9a3a; }
+    .card-pre h3 { color: #3a5020; }
+    .card-stampa { border-left-color: #D11317; }
+    .card-stampa h3 { color: #D11317; }
+    .card-finit { border-left-color: #e07c2a; }
+    .card-finit h3 { color: #7a3d0a; }
+    .card-sped { border-left-color: #7e3bc6; }
+    .card-sped h3 { color: #7e3bc6; }
+    .card-dash { border-left-color: #c9a000; }
+    .card-dash h3 { color: #a07800; }
+    .card-infra { border-left-color: #6c757d; }
+    .card-infra h3 { color: #495057; }
+
+    .card-core {
+        background: linear-gradient(135deg, #D11317 0%, #a10d10 100%);
+        color: #fff;
+        border-left: none;
+        text-align: center;
+        padding: 18px;
+        box-shadow: 0 4px 14px rgba(209,19,23,0.3);
+    }
+    .card-core h3 {
+        font-size: 13pt;
+        color: #fff;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+    }
+    .card-core .tag { color: rgba(255,255,255,0.9); font-style: normal; font-weight: 500; }
+    .card-core ul li { color: rgba(255,255,255,0.95); }
+    .card-core ul li::before { color: #fff; }
+
+    /* Flow connectors between columns */
+    .flow-arrow {
+        position: relative;
+        text-align: center;
+        padding: 8px 0;
+        font-size: 10pt;
+        color: #666;
+        font-weight: 600;
+    }
+    .flow-arrow::after {
+        content: "→";
+        position: absolute;
+        right: -30px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 24pt;
+        color: #aaa;
+    }
+
+    .infra-row {
+        max-width: 1600px;
+        margin: 30px auto 0 auto;
+        background: #fff;
+        border-radius: 10px;
+        padding: 18px 24px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        border-left: 5px solid #6c757d;
+    }
+    .infra-row .infra-item h4 {
+        font-size: 10pt;
+        font-weight: 700;
+        color: #495057;
+        margin-bottom: 3px;
+    }
+    .infra-row .infra-item p {
+        font-size: 8.5pt;
+        color: #666;
+    }
+
+    .legend {
+        max-width: 1600px;
+        margin: 20px auto 0 auto;
+        background: #fff;
+        padding: 14px 20px;
+        border-radius: 8px;
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+        justify-content: center;
+        font-size: 9pt;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+    .legend-item { display: flex; align-items: center; gap: 6px; color: #555; }
+    .legend-dot { width: 22px; height: 14px; border-radius: 3px; }
+
+    .footer {
+        text-align: center;
+        margin-top: 24px;
+        font-size: 8pt;
+        color: #999;
+    }
+    .footer strong { color: #D11317; }
+
+    @media (max-width: 1200px) {
+        .canvas { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 700px) {
+        .canvas { grid-template-columns: 1fr; }
+    }
 
     @media print {
         body { background: #fff; padding: 0; }
         .toolbar { display: none; }
-        .chart-wrap, .legend { box-shadow: none; }
+        .card { break-inside: avoid; }
     }
 </style>
 </head>
@@ -44,204 +248,357 @@
 
 <div class="toolbar">
     <button onclick="window.print()">🖨️ Stampa / Salva PDF</button>
-    <button class="secondary" onclick="exportSvg()">💾 Scarica SVG</button>
-    <div class="zoom-controls">
-        <button class="secondary" onclick="zoomChart(-0.1)">🔍−</button>
-        <button class="secondary" onclick="zoomChart(0.1)">🔍+</button>
-        <button class="secondary" onclick="zoomChart(0)">↺ Reset</button>
-    </div>
+    <span style="margin-left:auto; color:#666; font-size:9pt;">Architettura modulare — versione master in produzione</span>
 </div>
 
 <div class="header">
-    <h1>Architettura MES — Grafica Nappa</h1>
-    <div class="sub">Componenti produzione · integrazioni · flussi dati — versione master in produzione</div>
+    <h1>Architettura MES</h1>
+    <div class="sub">Grafica Nappa · Componenti produzione, integrazioni, flussi dati</div>
 </div>
 
-<div class="chart-wrap">
-<div class="mermaid">
-flowchart TB
+<div class="canvas">
 
-%% ============== INTEGRAZIONI ESTERNE ==============
-subgraph EXT [🔵 INTEGRAZIONI ESTERNE]
-    direction LR
-    ONDA["<b>Onda ERP</b><br/><i>SOAP · SQL Server</i><br/>Commesse · DDT · articoli"]
-    PRIN["<b>Prinect API</b><br/><i>REST · XL106</i><br/>Worksteps · fogli live · tempi"]
-    FIER["<b>Fiery API</b><br/><i>EFI P400 · Indigo</i><br/>Accounting v5 · smart match"]
-    BRT["<b>BRT API</b><br/><i>Tracking</i><br/>Multi-spedizione · email ritardi"]
-    NTIME["<b>NetTime</b><br/><i>Share .253</i><br/>Timbrature · task 5min"]
-    SOLAR["<b>Solar-Log</b><br/><i>180 kWp</i><br/>Scrape portale · rendimenti"]
-    XLS["<b>Excel condiviso</b><br/><i>Sync bidir. 2min</i><br/>Rispetta priorità · isDirty"]
-    VPN["<b>VPN MikroTik</b><br/><i>WireGuard</i><br/>Peer per utente · mynetname"]
-end
+    <!-- ============== COLONNA 1: INTEGRAZIONI ESTERNE ============== -->
+    <div class="column">
+        <div class="col-title ext">🔵 Integrazioni Esterne</div>
 
-%% ============== PRODUZIONE ==============
-subgraph PROD [🟡 PRODUZIONE · COMMESSE]
-    direction LR
-    ORD["<b>Ordini / Fasi</b><br/>Stati 0→4 · EXT<br/>Priorità manuale · dedup"]
-    PRE["<b>Prestampa</b><br/>Dashboard dedicata<br/>Campi editabili · note"]
-    OPER["<b>Dashboard Operatore</b><br/>Touch tablet reparto<br/>Avvia · Pausa · Termina"]
-    FIN["<b>Finitura · Legatoria</b><br/>Fustella · piega · brossura<br/>UV · foil · rilievi"]
-    SPED["<b>Spedizione</b><br/>DDT · BRT · PDF archivio<br/>Note consegne · ricerca"]
-    CLIC["<b>Cliché Offset</b><br/>Match v7 · 89 hit<br/>Tiro foil · report"]
-    ROP["<b>Ricalcolo Priorità</b><br/>FaseStatoService<br/>Sequenza fasi 10→999"]
-end
+        <div class="card card-ext">
+            <h3>Onda ERP</h3>
+            <div class="tag">SOAP · SQL Server .253</div>
+            <ul>
+                <li>Commesse · ordini · DDT</li>
+                <li>Anagrafiche clienti/fornitori</li>
+                <li>Articoli lavorazione · scarti</li>
+            </ul>
+        </div>
 
-%% ============== STAMPA REAL-TIME ==============
-subgraph STAMPA [🔴 STAMPA · SYNC REAL-TIME]
-    direction LR
-    PSYNC["<b>PrinectSync</b><br/>Worksteps + activities<br/>Auto-term >4h · cron 5min"]
-    FSYNC["<b>FierySync</b><br/>Accounting v5 · cron 1min<br/>Smart match qta_fase"]
-    RPRI["<b>Report Prinect</b><br/>Detect B/V · OEE<br/>Tempo avv/esec · timeline"]
-    FOGLI["<b>Fogli buoni / scarto</b><br/>Sync DB · retrofit storico<br/>Sanity guard 100k"]
-    INK["<b>Ink · Preview · Quality</b><br/>Consumo CMYK · anteprima<br/>Color measurements"]
-end
+        <div class="card card-ext">
+            <h3>Prinect API</h3>
+            <div class="tag">REST · Heidelberg XL106</div>
+            <ul>
+                <li>Worksteps · activities live</li>
+                <li>Fogli buoni / scarto real-time</li>
+                <li>Ink · preview · quality</li>
+            </ul>
+        </div>
 
-%% ============== DASHBOARD ==============
-subgraph DASH [🟡 DASHBOARD · REPORT]
-    direction TB
-    DOWN["<b>Dashboard Owner</b><br/>Real-time fasi · filtri<br/>Ore lavorate · EXT · priorità"]
-    DPRE["<b>Dashboard Prestampa</b><br/>Lista commesse<br/>Campi editabili · assegnazioni"]
-    DSPED["<b>Dashboard Spedizione</b><br/>Da consegnare · parziali<br/>Ricerca DDT · BRT multi"]
-    RORE["<b>Report Ore</b><br/>Lav. vs prev. · 4 Chart.js<br/>Click sforate → dettaglio"]
-    RDIR["<b>Report Direzione</b><br/>KPI reparto · ore · scarti<br/>Excel + PDF · NetTime"]
-    XLEXP["<b>Export Excel</b><br/>40+ colonne · 2 sheet<br/>Prinect · Onda · Cliché"]
-    NCON["<b>Note Consegne</b><br/>Polling · badge · push<br/>Beep · toast 30s bidir."]
-    SEC["<b>Security · Audit</b><br/>Spatie · RBAC 5 ruoli<br/>CSRF · session 8h"]
-    ETIC["<b>Etichette Data Matrix</b><br/>Plain · A nel GTIN<br/>bwip-js · 8 cifre"]
-end
+        <div class="card card-ext">
+            <h3>Fiery API</h3>
+            <div class="tag">EFI P400 · Indigo</div>
+            <ul>
+                <li>Accounting API v5</li>
+                <li>Smart match multi-fase</li>
+                <li>Auto-login · timeout 120s</li>
+            </ul>
+        </div>
 
-%% ============== INFRASTRUTTURA ==============
-subgraph INFRA [⚙️ INFRASTRUTTURA]
-    direction LR
-    CRON["<b>Scheduler Cron</b><br/>Onda 1h · Excel 2min<br/>Prinect 5min · Fiery 1min"]
-    LARAVEL["<b>Laravel 12 · MySQL</b><br/>PHP 8.5 · server .60<br/>SOAP · SQL Server · Blade"]
-end
+        <div class="card card-ext">
+            <h3>BRT API</h3>
+            <div class="tag">Tracking spedizioni</div>
+            <ul>
+                <li>Stato consegna live</li>
+                <li>Multi-spedizione</li>
+                <li>Email ritardi automatica</li>
+            </ul>
+        </div>
 
-%% ============== FLUSSI PRINCIPALI ==============
-ONDA ==> ORD
-ORD --> PRE
-PRE --> OPER
-OPER --> FIN
-FIN --> SPED
-ORD -.-> ROP
-ROP -.-> ORD
+        <div class="card card-ext">
+            <h3>NetTime · Solar-Log</h3>
+            <div class="tag">Presenze · fotovoltaico</div>
+            <ul>
+                <li>Timbrature share .253</li>
+                <li>Rendimenti 180 kWp</li>
+                <li>Task cron 5 min</li>
+            </ul>
+        </div>
 
-PRIN ==> PSYNC
-FIER ==> FSYNC
-PSYNC --> FOGLI
-FSYNC --> FOGLI
-PSYNC --> RPRI
-PSYNC --> INK
-FOGLI -.-> OPER
-FSYNC -.-> OPER
+        <div class="card card-ext">
+            <h3>Excel Condiviso</h3>
+            <div class="tag">Sync bidirezionale 2 min</div>
+            <ul>
+                <li>Import / export fasi</li>
+                <li>Rispetta priorità manuale</li>
+                <li>isDirty per performance</li>
+            </ul>
+        </div>
 
-BRT --> SPED
-XLS <-.-> ORD
+        <div class="card card-ext">
+            <h3>VPN MikroTik</h3>
+            <div class="tag">WireGuard integrato</div>
+            <ul>
+                <li>Peer per utente</li>
+                <li>Endpoint mynetname.net</li>
+                <li>Accesso remoto sicuro</li>
+            </ul>
+        </div>
+    </div>
 
-CRON -.-> ONDA
-CRON -.-> PRIN
-CRON -.-> FIER
-CRON -.-> NTIME
-CRON -.-> SOLAR
+    <!-- ============== COLONNA 2: PRODUZIONE ============== -->
+    <div class="column">
+        <div class="col-title prod">🟡 Produzione · Commesse</div>
 
-ORD ==> DOWN
-OPER ==> DOWN
-OPER ==> RORE
-RPRI ==> XLEXP
-OPER ==> XLEXP
-SPED ==> DSPED
-SPED ==> NCON
-NCON <-.-> DOWN
-NTIME ==> RDIR
-OPER ==> RDIR
-PRE ==> DPRE
-OPER --> ETIC
-CLIC --> ORD
+        <div class="card card-comm">
+            <h3>Ordini / Fasi</h3>
+            <div class="tag">Core MES · ordine_fasi</div>
+            <ul>
+                <li>Stati 0/1/2/3/4/EXT</li>
+                <li>Priorità manuale + popover</li>
+                <li>Dedup whitespace · rimappa</li>
+                <li>Flag esterno per reparto</li>
+            </ul>
+        </div>
 
-%% ============== STILI ==============
-classDef ext fill:#eaf2fb,stroke:#0d6efd,stroke-width:2px,color:#1a365d
-classDef comm fill:#fff3cd,stroke:#d69e2e,stroke-width:2px,color:#5c4600
-classDef pre fill:#e7f1dc,stroke:#6b9a3a,stroke-width:2px,color:#3a5020
-classDef stampa fill:#fde4e4,stroke:#D11317,stroke-width:2px,color:#7a0d10
-classDef finit fill:#fde3c8,stroke:#e07c2a,stroke-width:2px,color:#7a3d0a
-classDef sped fill:#e9daf5,stroke:#7e3bc6,stroke-width:2px,color:#4a1a7a
-classDef dash fill:#fff5b8,stroke:#c9a000,stroke-width:2px,color:#5c4600
-classDef infra fill:#f0f0f0,stroke:#555,stroke-width:2px,color:#1a1a1a
+        <div class="card card-pre">
+            <h3>Prestampa</h3>
+            <div class="tag">Dashboard dedicata</div>
+            <ul>
+                <li>Redirect automatico operatori</li>
+                <li>Campi editabili · note</li>
+                <li>Assegnazione operatore</li>
+                <li>Commento produzione</li>
+            </ul>
+        </div>
 
-class ONDA,PRIN,FIER,BRT,NTIME,SOLAR,XLS,VPN ext
-class ORD,CLIC,ROP comm
-class PRE pre
-class OPER comm
-class FIN finit
-class SPED sped
-class PSYNC,FSYNC,RPRI,FOGLI,INK stampa
-class DOWN,RORE,XLEXP,DSPED,NCON,RDIR,SEC,DPRE,ETIC dash
-class CRON,LARAVEL infra
+        <div class="card card-comm">
+            <h3>Dashboard Operatore</h3>
+            <div class="tag">Touch tablet reparto</div>
+            <ul>
+                <li>Avvia · Pausa · Termina</li>
+                <li>6 motivi pausa · taglio fase succ.</li>
+                <li>Etichette Data Matrix</li>
+                <li>Scarti · tiro obbligatori</li>
+            </ul>
+        </div>
+
+        <div class="card card-finit">
+            <h3>Finitura · Legatoria</h3>
+            <div class="tag">Reparti produzione</div>
+            <ul>
+                <li>Fustella BOBST · Iberica</li>
+                <li>Piega-incolla PI01/02/03</li>
+                <li>Brossura · UV · foil · rilievi</li>
+                <li>Note fustelle Mirko</li>
+            </ul>
+        </div>
+
+        <div class="card card-sped">
+            <h3>Spedizione</h3>
+            <div class="tag">Dashboard Emanuele</div>
+            <ul>
+                <li>DDT · corriere · BRT</li>
+                <li>Ricerca PDF DDT archivio</li>
+                <li>Note consegne persistenti</li>
+                <li>Parziali · consegnate</li>
+            </ul>
+        </div>
+
+        <div class="card card-comm">
+            <h3>Cliché Offset</h3>
+            <div class="tag">Gestione stampa a caldo</div>
+            <ul>
+                <li>Match v7 · 89 hit validati</li>
+                <li>Token synonym · stoplist</li>
+                <li>Tiro foil (cm consumato)</li>
+                <li>Report per commessa</li>
+            </ul>
+        </div>
+
+        <div class="card card-comm">
+            <h3>Ricalcolo Priorità</h3>
+            <div class="tag">FaseStatoService</div>
+            <ul>
+                <li>config/fasi_priorita.php</li>
+                <li>Sequenza fasi 10 → 999</li>
+                <li>Auto su cambio stato</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- ============== COLONNA 3: STAMPA REAL-TIME ============== -->
+    <div class="column">
+        <div class="col-title stampa">🔴 Stampa · Sync Real-Time</div>
+
+        <div class="card card-stampa">
+            <h3>PrinectSync</h3>
+            <div class="tag">Sync live XL106 · cron 5 min</div>
+            <ul>
+                <li>Worksteps + activities</li>
+                <li>Filter status COMPLETED</li>
+                <li>Auto-terminazione &gt; 4h</li>
+                <li>Protezione fasi attive</li>
+                <li>Ripristino stato 3 → 2</li>
+            </ul>
+        </div>
+
+        <div class="card card-stampa">
+            <h3>FierySync</h3>
+            <div class="tag">Sync live Indigo · cron 1 min</div>
+            <ul>
+                <li>Accounting API v5</li>
+                <li>Smart match qta_fase</li>
+                <li>Multi STAMPAINDIGO</li>
+                <li>Auto-term protetto</li>
+            </ul>
+        </div>
+
+        <div class="card card-stampa">
+            <h3>Report Prinect</h3>
+            <div class="tag">KPI commessa</div>
+            <ul>
+                <li>Detect bianca/volta (B/V)</li>
+                <li>Coppie 0/4 + 4/0 automatiche</li>
+                <li>OEE · tempo avv/esec</li>
+                <li>Per workstep + operatore</li>
+                <li>Chart timeline interattiva</li>
+            </ul>
+        </div>
+
+        <div class="card card-stampa">
+            <h3>Fogli Buoni / Scarto</h3>
+            <div class="tag">Dati fase · storico</div>
+            <ul>
+                <li>Sync DB automatico</li>
+                <li>Retrofit storico applicato</li>
+                <li>Sanity guard 100k</li>
+                <li>Scarti reali da preventivo Onda</li>
+            </ul>
+        </div>
+
+        <div class="card card-stampa">
+            <h3>Ink · Preview · Quality</h3>
+            <div class="tag">Dettaglio workstep</div>
+            <ul>
+                <li>Consumo inchiostro CMYK</li>
+                <li>Anteprima pagina</li>
+                <li>Color measurements</li>
+                <li>Elementi · lastre</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- ============== COLONNA 4: DASHBOARD ============== -->
+    <div class="column">
+        <div class="col-title dash">🟡 Dashboard · Report</div>
+
+        <div class="card card-dash">
+            <h3>Dashboard Owner</h3>
+            <div class="tag">Controllo produzione</div>
+            <ul>
+                <li>Real-time stato fasi</li>
+                <li>Ore lavorate (P=Prinect)</li>
+                <li>EXT badge · priorità UI</li>
+                <li>Scrollbar sticky</li>
+            </ul>
+        </div>
+
+        <div class="card card-dash">
+            <h3>Report Ore</h3>
+            <div class="tag">Lavorate vs previste</div>
+            <ul>
+                <li>6 KPI · 4 Chart.js</li>
+                <li>Click sforate → dettaglio</li>
+                <li>Ore Prinect per stampa</li>
+            </ul>
+        </div>
+
+        <div class="card card-dash">
+            <h3>Report Direzione</h3>
+            <div class="tag">KPI strategici</div>
+            <ul>
+                <li>KPI per reparto</li>
+                <li>Scarti · ore totali</li>
+                <li>Excel + PDF · presenze NetTime</li>
+            </ul>
+        </div>
+
+        <div class="card card-dash">
+            <h3>Export Excel</h3>
+            <div class="tag">DashboardMesExport</div>
+            <ul>
+                <li>40+ colonne · 2 sheet</li>
+                <li>Qta Prod · Scarti Prinect</li>
+                <li>Scarti Reali · Cliché</li>
+            </ul>
+        </div>
+
+        <div class="card card-dash">
+            <h3>Dashboard Spedizione</h3>
+            <div class="tag">Area consegne</div>
+            <ul>
+                <li>Da consegnare · parziali</li>
+                <li>Ricerca DDT archivio</li>
+                <li>BRT multi-spedizione</li>
+            </ul>
+        </div>
+
+        <div class="card card-dash">
+            <h3>Note Consegne</h3>
+            <div class="tag">Owner ↔ Spedizione</div>
+            <ul>
+                <li>Polling · badge · push</li>
+                <li>Beep AudioContext</li>
+                <li>Toast 30s bidirezionale</li>
+            </ul>
+        </div>
+
+        <div class="card card-dash">
+            <h3>Dashboard Prestampa</h3>
+            <div class="tag">Area dedicata</div>
+            <ul>
+                <li>Lista commesse prestampa</li>
+                <li>Campi editabili · assegnazioni</li>
+                <li>Note persistenti</li>
+            </ul>
+        </div>
+
+        <div class="card card-dash">
+            <h3>Security · Audit</h3>
+            <div class="tag">Accesso e log</div>
+            <ul>
+                <li>Spatie Permission</li>
+                <li>RBAC 5 ruoli</li>
+                <li>CSRF refresh 30min</li>
+                <li>Session 8h turno</li>
+            </ul>
+        </div>
+    </div>
+
 </div>
+
+<!-- ============== INFRASTRUTTURA ROW ============== -->
+<div class="infra-row">
+    <div class="infra-item">
+        <h4>⚙️ Scheduler Cron</h4>
+        <p>Onda 1h · Excel 2min · Prinect 5min · Fiery 1min · NetTime 5min</p>
+    </div>
+    <div class="infra-item">
+        <h4>🐘 Laravel 12 + MySQL</h4>
+        <p>PHP 8.5 · server Windows .60 · SOAP · SQL Server · Blade + Bootstrap 5</p>
+    </div>
+    <div class="infra-item">
+        <h4>📱 Etichette Data Matrix</h4>
+        <p>Plain DataMatrix · A nel GTIN · qty 8 cifre · bwip-js generator</p>
+    </div>
+    <div class="infra-item">
+        <h4>🔐 VPN &amp; Security</h4>
+        <p>WireGuard MikroTik · CSRF token · RBAC Spatie · session timeout 8h</p>
+    </div>
 </div>
 
 <div class="legend">
-    <div class="legend-item"><span class="legend-dot" style="background:#eaf2fb; border-color:#0d6efd;"></span> Integrazioni esterne</div>
-    <div class="legend-item"><span class="legend-dot" style="background:#fff3cd; border-color:#d69e2e;"></span> Commesse · produzione</div>
-    <div class="legend-item"><span class="legend-dot" style="background:#e7f1dc; border-color:#6b9a3a;"></span> Prestampa</div>
-    <div class="legend-item"><span class="legend-dot" style="background:#fde4e4; border-color:#D11317;"></span> Stampa real-time</div>
-    <div class="legend-item"><span class="legend-dot" style="background:#fde3c8; border-color:#e07c2a;"></span> Finitura · legatoria</div>
-    <div class="legend-item"><span class="legend-dot" style="background:#e9daf5; border-color:#7e3bc6;"></span> Spedizione</div>
-    <div class="legend-item"><span class="legend-dot" style="background:#fff5b8; border-color:#c9a000;"></span> Dashboard · report</div>
-    <div class="legend-item"><span class="legend-dot" style="background:#f0f0f0; border-color:#555;"></span> Infrastruttura</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#0d6efd;"></span> Integrazioni esterne</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#d69e2e;"></span> Commesse · produzione</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#6b9a3a;"></span> Prestampa</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#D11317;"></span> Stampa real-time</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#e07c2a;"></span> Finitura · legatoria</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#7e3bc6;"></span> Spedizione</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#c9a000;"></span> Dashboard · report</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#6c757d;"></span> Infrastruttura</div>
 </div>
 
-<div style="text-align:center; margin-top: 14px; font-size: 8.5pt; color: #777;">
-    <strong style="color:#D11317;">Grafica Nappa S.r.l.</strong> · Via Saporito 24 · 81031 Aversa (CE) · MES Production Suite (master)
+<div class="footer">
+    <strong>Grafica Nappa S.r.l.</strong> · Via Saporito 24 · 81031 Aversa (CE) · MES Production Suite (master)
 </div>
-
-<script>
-    mermaid.initialize({
-        startOnLoad: true,
-        theme: 'base',
-        flowchart: {
-            curve: 'basis',
-            padding: 25,
-            nodeSpacing: 25,
-            rankSpacing: 55,
-            useMaxWidth: false,
-            htmlLabels: true
-        },
-        themeVariables: {
-            fontFamily: 'Segoe UI, Tahoma, sans-serif',
-            fontSize: '17px',
-            primaryColor: '#fff',
-            primaryBorderColor: '#333',
-            lineColor: '#4a4a4a'
-        }
-    });
-
-    let currentZoom = 1;
-    function zoomChart(delta) {
-        const el = document.querySelector('.mermaid');
-        if (!el) return;
-        if (delta === 0) {
-            currentZoom = 1;
-        } else {
-            currentZoom = Math.max(0.4, Math.min(2, currentZoom + delta));
-        }
-        el.style.transform = 'scale(' + currentZoom + ')';
-    }
-
-    function exportSvg() {
-        const svg = document.querySelector('.mermaid svg');
-        if (!svg) { alert('SVG non pronto'); return; }
-        const serializer = new XMLSerializer();
-        const svgString = serializer.serializeToString(svg);
-        const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'architettura_mes.svg';
-        a.click();
-        URL.revokeObjectURL(url);
-    }
-</script>
 
 </body>
 </html>
