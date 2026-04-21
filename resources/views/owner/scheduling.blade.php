@@ -398,8 +398,8 @@
 <!-- HEADER -->
 <div class="sched-header">
     <div>
-        <h2>Scheduling Produzione</h2>
-        <div class="subtitle">Pianificazione e Gantt delle lavorazioni attive</div>
+        <h2>Scheduler Mossa 37</h2>
+        <div class="subtitle">Pianificazione automatica · Gantt lavorazioni attive</div>
     </div>
     <div class="header-right">
         <input type="text" id="searchGlobal" class="search-box" placeholder="Cerca commessa, cliente, fase...">
