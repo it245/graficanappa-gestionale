@@ -18,14 +18,14 @@
     .header h1 { color: #D11317; font-size: 26pt; font-weight: 800; letter-spacing: -0.5px; }
     .header .sub { font-size: 11pt; color: #555; margin-top: 4px; }
 
-    .chart-wrap { background: #fff; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-radius: 6px; overflow-x: auto; }
-    .mermaid { width: 100%; font-size: 12px; display: flex; justify-content: center; }
-    .mermaid svg { width: 100% !important; height: auto !important; max-width: 100% !important; }
-    .mermaid .nodeLabel { font-size: 11px !important; line-height: 1.3 !important; }
-    .mermaid .cluster-label { font-size: 13px !important; font-weight: 700 !important; }
-    @media (max-width: 1200px) {
-        .mermaid .nodeLabel { font-size: 10px !important; }
-    }
+    .chart-wrap { background: #fff; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-radius: 6px; overflow: auto; max-height: 85vh; }
+    .mermaid { font-size: 13px; display: flex; justify-content: center; transform-origin: top left; }
+    .mermaid svg { min-width: 1200px; }
+    .mermaid .nodeLabel { font-size: 12px !important; line-height: 1.4 !important; }
+    .mermaid .cluster-label { font-size: 14px !important; font-weight: 700 !important; }
+
+    .zoom-controls { display: inline-flex; gap: 6px; margin-left: auto; }
+    .zoom-controls button { padding: 4px 10px; font-size: 10pt; }
 
     .legend { margin-top: 18px; padding: 14px 18px; background: #fff; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); display: flex; gap: 18px; flex-wrap: wrap; justify-content: center; font-size: 9.5pt; }
     .legend-item { display: flex; align-items: center; gap: 6px; }
@@ -43,6 +43,11 @@
 <div class="toolbar">
     <button onclick="window.print()">🖨️ Stampa / Salva PDF</button>
     <button class="secondary" onclick="exportSvg()">💾 Scarica SVG</button>
+    <div class="zoom-controls">
+        <button class="secondary" onclick="zoomChart(-0.1)">🔍−</button>
+        <button class="secondary" onclick="zoomChart(0.1)">🔍+</button>
+        <button class="secondary" onclick="zoomChart(0)">↺ Reset</button>
+    </div>
 </div>
 
 <div class="header">
@@ -208,6 +213,18 @@ class CRON,LARAVEL infra
             lineColor: '#4a4a4a'
         }
     });
+
+    let currentZoom = 1;
+    function zoomChart(delta) {
+        const el = document.querySelector('.mermaid');
+        if (!el) return;
+        if (delta === 0) {
+            currentZoom = 1;
+        } else {
+            currentZoom = Math.max(0.4, Math.min(2, currentZoom + delta));
+        }
+        el.style.transform = 'scale(' + currentZoom + ')';
+    }
 
     function exportSvg() {
         const svg = document.querySelector('.mermaid svg');
