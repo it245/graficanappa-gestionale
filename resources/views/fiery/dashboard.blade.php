@@ -423,7 +423,7 @@
                     <span class="rip-chip rip-idle">RIP idle</span>
                     @endif
                 </div>
-                <div class="timestamp-sm" id="ultimo-aggiornamento">{{ $status['ultimo_aggiornamento'] }}</div>
+                <div class="timestamp-sm" id="ultimo-aggiornamento">{{ $status['ultimo_aggiornamento'] ?? '' }}</div>
             </div>
             @if($status['avviso'])
             <div class="warning-strip" id="avviso-box">{{ $status['avviso'] }}</div>
