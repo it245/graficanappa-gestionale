@@ -431,11 +431,15 @@ class FieryService
      */
     private function loginAndGetHttp()
     {
-        $login = $this->http()->post($this->baseUrl . '/live/api/v5/login', [
-            'username' => $this->username,
-            'password' => $this->password,
-            'accessrights' => $this->apiKey,
-        ]);
+        // withoutVerifying + withOptions(verify false) esplicito + timeout più lungo (web env)
+        $login = Http::withoutVerifying()
+            ->withOptions(['verify' => false])
+            ->timeout(15)
+            ->post($this->baseUrl . '/live/api/v5/login', [
+                'username' => $this->username,
+                'password' => $this->password,
+                'accessrights' => $this->apiKey,
+            ]);
         if (!$login->successful()) return null;
 
         $cookieHeader = '';
@@ -444,7 +448,10 @@ class FieryService
                 $cookieHeader .= $m[1] . '=' . $m[2] . '; ';
             }
         }
-        return $this->http()->withHeaders(['Cookie' => trim($cookieHeader, '; ')]);
+        return Http::withoutVerifying()
+            ->withOptions(['verify' => false])
+            ->timeout(15)
+            ->withHeaders(['Cookie' => trim($cookieHeader, '; ')]);
     }
 
     /**
