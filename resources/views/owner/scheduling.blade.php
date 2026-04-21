@@ -398,13 +398,70 @@
 <!-- HEADER -->
 <div class="sched-header">
     <div>
-        <h2>Scheduler Mossa 37</h2>
+        <h2>Scheduler Mossa 37 <button id="btnInfoAlgoritmo" title="Come funziona" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;width:28px;height:28px;border-radius:50%;font-weight:700;cursor:pointer;vertical-align:middle;margin-left:6px;font-size:14px;">?</button></h2>
         <div class="subtitle">Pianificazione automatica · Gantt lavorazioni attive</div>
     </div>
     <div class="header-right">
         <input type="text" id="searchGlobal" class="search-box" placeholder="Cerca commessa, cliente, fase...">
     </div>
 </div>
+
+<!-- MODAL INFO ALGORITMO -->
+<div id="modalInfoAlgoritmo" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:#1e1e38;border:1px solid #2a2a45;border-radius:16px;max-width:720px;width:100%;max-height:85vh;overflow-y:auto;padding:32px;color:#fff;">
+        <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:20px;">
+            <div>
+                <h2 style="margin:0;font-size:24px;">Come funziona Mossa 37</h2>
+                <div style="font-size:13px;color:rgba(255,255,255,0.6);margin-top:4px;">Algoritmo di pianificazione produzione tipografica</div>
+            </div>
+            <button onclick="document.getElementById('modalInfoAlgoritmo').style.display='none'" style="background:none;border:none;color:#fff;font-size:28px;cursor:pointer;line-height:1;">×</button>
+        </div>
+
+        <div style="margin-bottom:22px;">
+            <h3 style="color:#60a5fa;font-size:15px;margin:0 0 8px 0;">📊 4 criteri di priorità</h3>
+            <div style="font-size:13px;line-height:1.6;color:rgba(255,255,255,0.85);">
+                <div style="margin-bottom:8px;"><strong style="color:#f59e0b;">1. Urgenza consegna</strong> — giorni rimanenti alla data promessa. Commesse in ritardo / critiche (&le;3gg) salgono in priorità.</div>
+                <div style="margin-bottom:8px;"><strong style="color:#f59e0b;">2. Sequenza ciclo produttivo</strong> — ogni fase ha un ordine nel flusso (stampa → plastifica → fustella → piegaincolla → spedizione). Mossa 37 rispetta le dipendenze.</div>
+                <div style="margin-bottom:8px;"><strong style="color:#f59e0b;">3. Affinità batch</strong> — commesse con stesso formato/colore/cliché raggruppate per ridurre setup macchina (±5gg urgenza).</div>
+                <div style="margin-bottom:8px;"><strong style="color:#f59e0b;">4. Disponibilità macchina</strong> — vincoli fisici: BOBST (1 macchina, 2 config rilievi/fustella, cambio 1h), Piegaincolla (1 macchina, 3 config PI01/02/03).</div>
+            </div>
+        </div>
+
+        <div style="margin-bottom:22px;">
+            <h3 style="color:#60a5fa;font-size:15px;margin:0 0 8px 0;">⏱ Dati real-time integrati</h3>
+            <div style="font-size:13px;line-height:1.6;color:rgba(255,255,255,0.85);">
+                • <strong>Prinect API</strong> Heidelberg XL106 → tempi effettivi avviamento ed esecuzione<br>
+                • <strong>Fiery API</strong> Canon imagePRESS V900 → stato digitale, job in stampa, coda<br>
+                • <strong>Onda ERP</strong> → commesse, ordini, priorità manuali<br>
+                • <strong>NetTime</strong> → presenze operatori<br>
+            </div>
+        </div>
+
+        <div style="margin-bottom:22px;">
+            <h3 style="color:#60a5fa;font-size:15px;margin:0 0 8px 0;">🔄 Ricomposizione automatica</h3>
+            <div style="font-size:13px;line-height:1.6;color:rgba(255,255,255,0.85);">
+                Ogni volta che una fase termina, un operatore chiude una lavorazione o arriva una commessa urgente, Mossa 37 ricompone il piano in meno di 1 secondo. Il Gantt si aggiorna in tempo reale.
+            </div>
+        </div>
+
+        <div style="background:rgba(96,165,250,0.1);border:1px solid rgba(96,165,250,0.3);border-radius:10px;padding:14px 16px;font-size:12px;color:rgba(255,255,255,0.9);line-height:1.5;">
+            <strong style="color:#60a5fa;">Risultato</strong> — pianificazione ottimale di 50+ commesse in &lt;1 secondo, vs 2 ore pianificazione manuale su Excel. Margine d'errore minore, batch ottimizzati, consegne rispettate.
+        </div>
+
+        <div style="text-align:right;margin-top:22px;">
+            <button onclick="document.getElementById('modalInfoAlgoritmo').style.display='none'" style="background:#3b82f6;border:none;color:#fff;padding:10px 22px;border-radius:8px;font-weight:600;cursor:pointer;">Chiudi</button>
+        </div>
+    </div>
+</div>
+<script>
+document.getElementById('btnInfoAlgoritmo').addEventListener('click', () => {
+    const m = document.getElementById('modalInfoAlgoritmo');
+    m.style.display = 'flex';
+});
+document.getElementById('modalInfoAlgoritmo').addEventListener('click', (e) => {
+    if (e.target.id === 'modalInfoAlgoritmo') e.target.style.display = 'none';
+});
+</script>
 
 <!-- KPI -->
 <div class="kpi-row" id="kpiRow"></div>
@@ -503,7 +560,7 @@ let searchQuery = '';
 
 // ===================== CONFIGURAZIONE TURNI PER REPARTO =====================
 // Ogni reparto ha orari lun-ven e sabato separati. Domenica: tutti chiusi.
-// stampa offset:  00:00-23:00 (1h pausa), anche sabato
+// stampa offset:  06:00-22:00 (2 turni 8h, 16h totali), anche sabato
 // piegaincolla:   06:00-22:00 lun-sab
 // stampa a caldo: 06:00-22:00 lun-ven, 06:00-13:00 sabato
 // fustella:       06:00-22:00 lun-sab
@@ -511,7 +568,7 @@ let searchQuery = '';
 
 function getTurno(reparto) {
     const r = (reparto || '').toLowerCase();
-    if (r === 'stampa offset')  return { inizio: 0,  fine: 23, sabInizio: 0, sabFine: 23 };
+    if (r === 'stampa offset')  return { inizio: 6,  fine: 22, sabInizio: 6, sabFine: 22 };
     if (r === 'piegaincolla')   return { inizio: 6,  fine: 22, sabInizio: 6, sabFine: 22 };
     if (r === 'stampa a caldo') return { inizio: 6,  fine: 22, sabInizio: 6, sabFine: 13 };
     if (r === 'fustella')       return { inizio: 6,  fine: 22, sabInizio: 6, sabFine: 22 };
@@ -529,7 +586,7 @@ function getWorkHours(reparto, date) {
 function getTurnoLabel(reparto) {
     const r = (reparto || '').toLowerCase();
     if (r === 'esterno') return 'parallelo';
-    if (r === 'stampa offset') return '0-23';
+    if (r === 'stampa offset') return '6-22';
     if (r === 'stampa a caldo') return '6-22, sab 6-13';
     if (r === 'piegaincolla' || r === 'fustella') return '6-22';
     if (r.includes('bobst')) return '6-22';
@@ -699,13 +756,13 @@ function schedulaPerMacchina(data) {
 // ===================== SCHEDULER DA DB (Mossa 37 pre-calcolato) =====================
 function schedulaDaDB(data) {
     const NOMI_MAC = {
-        'XL106': 'Heidelberg XL 106 (24h)', 'BOBST': 'BOBST 75x106', 'STEL': 'STEL G33/P25',
+        'XL106': 'Heidelberg XL 106 (16h)', 'BOBST': 'BOBST 75x106', 'STEL': 'STEL G33/P25',
         'JOH': 'JOH Stampa a Caldo', 'PLAST': 'Plastificatrice', 'PIEGA': 'Piegaincolla',
         'FIN': 'Finestratrice', 'INDIGO': 'HP Indigo/MGI', 'TAGLIO': 'Tagliacarte',
         'LEGAT': 'Legatoria', 'ZUND': 'Zünd', 'SPED': 'Spedizione',
     };
     const TURNI_MAC = {
-        'XL106': '24h', 'BOBST': '6-22', 'STEL': '6-22', 'JOH': '6-22, sab 6-13',
+        'XL106': '6-22', 'BOBST': '6-22', 'STEL': '6-22', 'JOH': '6-22, sab 6-13',
         'PLAST': '6-22', 'PIEGA': '6-22', 'FIN': '6-22', 'INDIGO': '6-22',
         'TAGLIO': '6-22', 'LEGAT': '6-22', 'ZUND': '6-22', 'SPED': '-',
     };

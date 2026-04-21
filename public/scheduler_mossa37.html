@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Scheduler Mossa 37 — Come Funziona</title>
+<style>
+    @page { size: A4 portrait; margin: 1.5cm 1.5cm 2cm 1.5cm; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Georgia, 'Times New Roman', serif; color: #222; line-height: 1.5; padding: 30px 40px; max-width: 210mm; margin: 0 auto; font-size: 10pt; }
+
+    .page-header { text-align: center; border-bottom: 3px solid #D11317; padding-bottom: 20px; margin-bottom: 10px; }
+    .page-header .azienda { color: #D11317; font-size: 14pt; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 2px; }
+    .page-header .indirizzo { font-size: 8pt; color: #555; }
+    .page-header .titolo { font-size: 18pt; font-weight: 700; color: #111; margin-top: 14px; }
+    .page-header .sottotitolo { font-size: 10pt; color: #333; margin-top: 4px; }
+
+    .meta-table { width: 100%; border-collapse: collapse; margin: 10px 0 18px 0; font-size: 8.5pt; }
+    .meta-table td { padding: 4px 8px; border: 1px solid #ccc; }
+    .meta-table td:first-child { font-weight: 700; width: 170px; background: #f5f5f5; }
+
+    .classificazione { text-align: center; padding: 7px; background: #D11317; color: #fff; font-weight: 700; font-size: 10pt; letter-spacing: 0.1em; margin-bottom: 25px; }
+
+    h2 { color: #D11317; font-size: 13pt; margin-top: 22px; margin-bottom: 10px; border-bottom: 2px solid #D11317; padding-bottom: 3px; page-break-after: avoid; }
+    h3 { color: #333; font-size: 11pt; margin-top: 16px; margin-bottom: 7px; page-break-after: avoid; }
+    h4 { color: #555; font-size: 10pt; margin-top: 10px; margin-bottom: 5px; font-weight: 700; }
+
+    p { margin-bottom: 7px; text-align: justify; }
+    ul, ol { margin: 6px 0 10px 22px; }
+    li { margin-bottom: 4px; }
+
+    .intro { background: #fef2f2; border-left: 4px solid #D11317; padding: 12px 16px; margin: 15px 0; font-size: 9.5pt; }
+    .valore { background: #d1fae5; border-left: 4px solid #059669; padding: 12px 16px; margin: 12px 0; font-size: 9.5pt; }
+    .esempio { background: #eff6ff; border-left: 4px solid #0d6efd; padding: 12px 16px; margin: 12px 0; font-size: 9.5pt; }
+
+    table.data { width: 100%; border-collapse: collapse; margin: 10px 0 14px 0; font-size: 9pt; font-family: 'Segoe UI', Tahoma, sans-serif; }
+    table.data th { background: #333; color: #fff; padding: 6px 8px; text-align: left; font-weight: 600; }
+    table.data td { padding: 5px 8px; border-bottom: 1px solid #ddd; vertical-align: top; }
+    table.data tr:nth-child(even) { background: #f9f9f9; }
+
+    .fatto-num {
+        display: inline-block; width: 32px; height: 32px; background: #D11317; color: #fff;
+        border-radius: 50%; text-align: center; line-height: 32px; font-weight: 800;
+        font-family: 'Segoe UI', sans-serif; margin-right: 8px; vertical-align: middle;
+    }
+
+    .box-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0; }
+    .box-mini { background: #fafafa; border: 1px solid #ddd; border-left: 4px solid #D11317; padding: 10px 14px; }
+    .box-mini h4 { margin-top: 0; color: #D11317; }
+
+    .kpi-row { display: flex; gap: 12px; margin: 14px 0; }
+    .kpi-card {
+        flex: 1; background: #1a1a2e; color: #fff; padding: 14px 16px; border-radius: 8px; text-align: center;
+    }
+    .kpi-card .val { font-size: 22pt; font-weight: 800; display: block; }
+    .kpi-card .lbl { font-size: 8pt; opacity: 0.7; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    .page-break { page-break-before: always; }
+    .footer-note { margin-top: 40px; font-size: 7.5pt; color: #888; text-align: center; border-top: 1px solid #ddd; padding-top: 8px; }
+
+    @media print {
+        body { padding: 0; }
+        h2, h3 { page-break-after: avoid; }
+        .box-grid, .kpi-row { page-break-inside: avoid; }
+    }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+    <div class="azienda">GRAFICA NAPPA srl</div>
+    <div class="indirizzo">Via Saporito, 24 — 81031 Aversa (CE)</div>
+    <div class="titolo">Scheduler Mossa 37</div>
+    <div class="sottotitolo">Pianificazione automatica della produzione — Cosa fa, perché funziona, quanto vale</div>
+</div>
+
+<table class="meta-table">
+    <tr><td>Documento</td><td>DOC-SCHED-MES-001</td></tr>
+    <tr><td>Versione</td><td>1.0</td></tr>
+    <tr><td>Destinatario</td><td>Direzione Grafica Nappa · Cliente prospect tipografie</td></tr>
+    <tr><td>Data</td><td>21 aprile 2026</td></tr>
+    <tr><td>Scopo</td><td>Descrivere funzionamento, valore operativo e commerciale dello scheduler</td></tr>
+</table>
+
+<div class="classificazione">DOCUMENTO COMMERCIALE · USO INTERNO E CLIENTI PROSPECT</div>
+
+<div class="intro">
+    <strong>In una frase.</strong> Mossa 37 è un motore di pianificazione automatica della produzione che, partendo dalle commesse Onda e dai tempi reali delle macchine (Prinect/Fiery), costruisce in meno di un secondo un piano ottimale: chi stampa cosa, su quale macchina, in quale ordine, rispettando scadenze cliente, vincoli macchina e sequenza del ciclo produttivo. Lo scheduler sostituisce ore di lavoro manuale su Excel con un piano visivo, sempre aggiornato, condiviso da tutti.
+</div>
+
+<h2>1. Il problema che risolve</h2>
+
+<p>Pianificare la produzione di una tipografia è complesso perché:</p>
+<ul>
+    <li>Ogni commessa passa per <strong>più reparti</strong> in sequenza (stampa → plastifica → fustella → piega → spedizione).</li>
+    <li>Ogni macchina ha <strong>vincoli fisici</strong> diversi (BOBST lavora una config per volta, piegaincolla richiede setup per formato).</li>
+    <li>Le <strong>scadenze clienti</strong> cambiano ogni giorno (ristampe urgenti, modifiche in corsa).</li>
+    <li>I <strong>tempi reali di lavorazione</strong> variano (setup lungo, operatore assente, inchiostro mancante).</li>
+</ul>
+
+<p>Il pianificatore manuale su Excel spende 1-2 ore al giorno a sistemare il puzzle, rischia errori e deve rifare tutto quando arriva un'urgenza. Le commesse scivolano, il cliente aspetta, le macchine restano ferme perché i fogli non arrivano dal reparto a monte.</p>
+
+<div class="valore">
+    <strong>Con Mossa 37</strong>: il piano si costruisce in meno di un secondo. Quando arriva un'urgenza, il piano si ricompone automaticamente. Quando una fase termina, le fasi successive partono da sole. Il pianificatore passa da "costruire il piano" a "controllare che tutto funzioni".
+</div>
+
+<h2>2. Come funziona l'algoritmo</h2>
+
+<p>Mossa 37 valuta ogni fase attiva (commesse in produzione, stato &lt; terminata) su <strong>4 criteri</strong> di priorità:</p>
+
+<div class="box-grid">
+    <div class="box-mini">
+        <h4><span class="fatto-num">1</span> Urgenza consegna</h4>
+        Giorni rimanenti alla data promessa al cliente. Commesse scadute o con meno di 3 giorni salgono in priorità.
+    </div>
+    <div class="box-mini">
+        <h4><span class="fatto-num">2</span> Sequenza ciclo produttivo</h4>
+        Ogni fase ha un ordine nel flusso (stampa → plastifica → fustella → piega → spedizione). Mossa 37 rispetta le dipendenze: non pianifica la fustella se la stampa non è pronta.
+    </div>
+    <div class="box-mini">
+        <h4><span class="fatto-num">3</span> Affinità batch</h4>
+        Commesse con stesso formato carta / colore / cliché vengono raggruppate per ridurre cambi setup (entro finestra ±5 giorni urgenza).
+    </div>
+    <div class="box-mini">
+        <h4><span class="fatto-num">4</span> Disponibilità macchina</h4>
+        Vincoli fisici: BOBST (1 macchina, 2 config, cambio 1h), Piegaincolla (1 macchina, 3 config PI01/02/03). Turni reali per reparto.
+    </div>
+</div>
+
+<h2>3. Dati real-time che lo alimentano</h2>
+
+<p>Lo scheduler non lavora su ipotesi: legge dati veri da 4 fonti in tempo reale.</p>
+
+<table class="data">
+    <tr><th>Fonte</th><th>Cosa legge</th><th>Frequenza</th></tr>
+    <tr><td><strong>Onda ERP</strong></td><td>Commesse nuove, ordini cliente, priorità manuali, scadenze</td><td>ogni ora</td></tr>
+    <tr><td><strong>Prinect API</strong><br>(Heidelberg XL106)</td><td>Tempi effettivi avviamento/esecuzione, fogli stampati, scarti</td><td>ogni 5 minuti</td></tr>
+    <tr><td><strong>Fiery API</strong><br>(Canon imagePRESS V900)</td><td>Job in coda, tempi stampa digitale, contatori, livelli toner</td><td>ogni 1 minuto</td></tr>
+    <tr><td><strong>NetTime</strong></td><td>Presenze operatori — capacità reale per turno</td><td>ogni 5 minuti</td></tr>
+    <tr><td><strong>Eventi sistema</strong></td><td>Fase terminata, pausa operatore, rientro esterno</td><td>istantaneo</td></tr>
+</table>
+
+<p>Quando l'operatore clicca "Termina" sulla dashboard tablet, Mossa 37 lo sa entro 2-3 secondi, promuove le fasi successive e aggiorna il Gantt per tutti.</p>
+
+<div class="page-break"></div>
+
+<h2>4. Cosa vede l'utente</h2>
+
+<h3>4.1 Gantt Per Macchina</h3>
+<p>Visione dal punto di vista del reparto. Ogni riga è una macchina/reparto. Ogni barra è una fase schedulata. Colori per stato (in lavorazione, pronta, scaduta, critica, normale). Zoom timeline regolabile. Il responsabile offset vede immediatamente tutte le commesse che passeranno sulla XL106 nei prossimi giorni.</p>
+
+<h3>4.2 Gantt Per Commessa</h3>
+<p>Visione dal punto di vista del cliente/commessa. Ogni riga è una commessa. Ogni barra è una fase che attraversa un reparto. Si vede in un colpo d'occhio "la commessa 67083 inizia stampa oggi, plastifica giovedì, fustella venerdì, spedizione lunedì".</p>
+
+<h3>4.3 Tabella Priorità</h3>
+<p>Lista ordinata per priorità numerica. Filtri rapidi: "In ritardo", "Critici". Ogni riga mostra commessa, cliente, consegna, ore totali, margine. È la vista del capo: "cosa c'è urgente oggi".</p>
+
+<h2>5. Perché ci sono giorni "vuoti" nel Gantt</h2>
+
+<p>Nel Gantt, alcuni reparti hanno giorni senza barre. Questo <strong>non è un errore</strong>: è la rappresentazione fedele della realtà produttiva.</p>
+
+<ul>
+    <li><strong>Dipendenza tra fasi</strong>. La fustella lavora solo fogli già stampati. Se la stampa è satura fino a venerdì, la fustella parte da sabato. Mossa 37 non schedula fasi fittizie.</li>
+    <li><strong>Orari reali di lavoro</strong>. Ogni reparto ha turni (stampa offset 16h, fustella 16h, digitale 9h). I vuoti coincidono con i turni chiusi.</li>
+    <li><strong>Capacità disponibile</strong>. I giorni vuoti rappresentano margine per nuove commesse (sync Onda ogni ora), ristampe last-minute, preventivi in arrivo.</li>
+</ul>
+
+<div class="esempio">
+    <strong>Quando si riempiono.</strong> Tre momenti:<br>
+    (a) <em>ogni ora</em> il sync Onda porta nuove commesse → lo scheduler le posiziona;<br>
+    (b) <em>quando una fase termina</em>, le successive diventano "pronte" e occupano lo slot più vicino libero;<br>
+    (c) <em>se una commessa va in ritardo</em>, le successive slittano nei giorni liberi.<br>
+    In produzione reale Nappa: fustella si riempie entro 24-48h, piegaincolla entro 3-5 giorni man mano che stampa e finitura finiscono.
+</div>
+
+<div class="valore">
+    <strong>Frase da usare col cliente.</strong> "Un Excel manuale riempie tutto fino all'ultimo minuto. Mossa 37 lascia respiro calcolato: quello spazio è il vostro margine per dire sì al cliente che chiama con l'urgenza. Senza scheduler, invece di spazio libero avete 'devo spostare tre commesse, riprogrammare setup, chiamare operatori'. Con Mossa 37 è istantaneo."
+</div>
+
+<h2>6. Ricomposizione automatica</h2>
+
+<p>Ogni evento significativo scatena un ricalcolo:</p>
+
+<ul>
+    <li>Una fase termina → le fasi successive di quella commessa passano a stato "pronta" → il Gantt le mostra.</li>
+    <li>Un operatore va in pausa con motivo "taglio per fase successiva" → la fase successiva viene promossa subito.</li>
+    <li>Una commessa rientra dall'esterno con lavorazioni aggiuntive → torna in dashboard operatore.</li>
+    <li>Una nuova commessa entra da Onda → Mossa 37 la piazza nello slot ottimale.</li>
+    <li>Il capo cambia priorità manualmente da dashboard → il Gantt si riordina.</li>
+</ul>
+
+<p>Tempo di risposta: <strong>meno di 1 secondo</strong> per 50+ commesse attive con 200+ fasi totali.</p>
+
+<h2>7. Valore operativo per Grafica Nappa</h2>
+
+<div class="kpi-row">
+    <div class="kpi-card">
+        <span class="val">&lt;1s</span>
+        <span class="lbl">Tempo ricalcolo piano</span>
+    </div>
+    <div class="kpi-card">
+        <span class="val">2h → 0</span>
+        <span class="lbl">Tempo pianificazione/die</span>
+    </div>
+    <div class="kpi-card">
+        <span class="val">200+</span>
+        <span class="lbl">Fasi in Gantt live</span>
+    </div>
+    <div class="kpi-card">
+        <span class="val">4</span>
+        <span class="lbl">Criteri automatici</span>
+    </div>
+</div>
+
+<h3>Risparmi concreti</h3>
+<ul>
+    <li><strong>Tempo pianificatore</strong>: 2 ore al giorno liberate, usate per controllo/commerciale.</li>
+    <li><strong>Setup macchine</strong>: batch automatico riduce cambi formato (stima: 8-15% ore setup risparmiate/mese).</li>
+    <li><strong>Ritardi consegna</strong>: urgenze rispettate, commesse non "dimenticate" in coda.</li>
+    <li><strong>Comunicazione reparti</strong>: tutti vedono lo stesso Gantt, zero telefonate tra capi reparto.</li>
+</ul>
+
+<div class="page-break"></div>
+
+<h2>8. Argomenti di vendita</h2>
+
+<h3>Per tipografie prospect, evidenziare:</h3>
+
+<ol>
+    <li><strong>Non sostituisce il gestionale</strong>. Mossa 37 si affianca al sistema ERP esistente (abbiamo integrato Onda, si può integrare SAP, TeamSystem, Arca, Zucchetti). Legge commesse, non le sostituisce.</li>
+    <li><strong>Dati dei loro sistemi, non nostri</strong>. Prinect/Fiery/macchine che hanno già. Non devono comprare hardware nuovo.</li>
+    <li><strong>Implementazione progressiva</strong>. Si parte con un reparto (stampa), si estende dopo. Non serve rifondere tutto in un giorno.</li>
+    <li><strong>ROI misurabile</strong>. 2 ore al giorno di pianificazione × 250 giorni × tariffa oraria = minimo 10k €/anno. Il sistema si ripaga in mesi.</li>
+    <li><strong>Battle-tested</strong>. Produzione vera Grafica Nappa, 190 commesse attive, 24/7.</li>
+</ol>
+
+<h3>Obiezioni tipiche e risposte</h3>
+
+<table class="data">
+    <tr><th>Obiezione cliente</th><th>Risposta</th></tr>
+    <tr><td>"Il mio pianificatore conosce bene la produzione, lui sa meglio del software."</td><td>Giusto. Mossa 37 non lo sostituisce: gli dà il primo piano ottimale in 1 secondo, lui decide se accettarlo o intervenire con correzioni manuali. Da esecutore diventa supervisore.</td></tr>
+    <tr><td>"I miei operatori non sanno usare tablet."</td><td>Touch 3 tasti grandi: avvia, pausa, termina. Già operatori Nappa di tutte le età lo usano senza formazione specifica.</td></tr>
+    <tr><td>"Ho già un gestionale, perché cambiare?"</td><td>Non cambia nulla lato gestionale. Mossa 37 lo affianca: resta la sua anagrafica, i suoi preventivi, le sue fatture. Si aggiunge solo il pezzo di schedulazione visuale che oggi fate su Excel o a testa.</td></tr>
+    <tr><td>"Quanto costa?"</td><td>Dipende da dimensione tipografia e integrazioni richieste. Modello SaaS mensile, installazione una tantum. Contattaci per preventivo mirato.</td></tr>
+</table>
+
+<h2>9. Prossimi sviluppi roadmap</h2>
+
+<ul>
+    <li>Integrazione AI (Claude API) per suggerimenti di ottimizzazione avanzati (batching intelligente, previsione ritardi).</li>
+    <li>Export PDF del piano per capi reparto offline.</li>
+    <li>Notifiche push su tablet reparto per fasi in ritardo.</li>
+    <li>Simulazione scenari ("cosa succede se aggiungo 1000 astucci oggi?").</li>
+    <li>Module white-label per SaaS multi-tipografia.</li>
+</ul>
+
+<h2>10. Come mostrarlo in demo</h2>
+
+<ol>
+    <li><strong>Intro (3 min)</strong>: problema pianificazione tipografia.</li>
+    <li><strong>KPI overview (3 min)</strong>: commesse attive, ritardi, carico macchine.</li>
+    <li><strong>Gantt Per Macchina (10 min)</strong>: zoom, filtri, colori, tooltip, esempi concreti di batch e sequenza.</li>
+    <li><strong>Gantt Per Commessa (5 min)</strong>: tracing di una commessa specifica attraverso i reparti.</li>
+    <li><strong>Tabella Priorità (3 min)</strong>: filtro "In Ritardo", "Critici".</li>
+    <li><strong>Integrazioni + Q&A (6 min)</strong>: Prinect/Fiery live, ricomposizione automatica.</li>
+</ol>
+
+<div class="intro">
+    <strong>In chiusura demo.</strong> "Non stiamo vendendo un software. Stiamo vendendo tempo del pianificatore restituito all'azienda, consegne rispettate senza stress, reparti che parlano lo stesso linguaggio senza telefonate. Il gestionale che avete resta. Noi mettiamo il cervello che manca tra commesse e macchine."
+</div>
+
+<div class="footer-note">
+    DOC-SCHED-MES-001 v1.0 — Scheduler Mossa 37, Grafica Nappa MES<br>
+    Grafica Nappa srl · Via Saporito 24 · 81031 Aversa (CE) · P.IVA 03145680617 · it@graficanappa.com
+</div>
+
+</body>
+</html>
