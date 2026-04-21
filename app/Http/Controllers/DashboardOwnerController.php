@@ -636,20 +636,13 @@ public function calcolaOreEPriorita($fase)
             }
             $fase->save();
         } elseif ($campo === 'reparto') {
-            // ATTENZIONE: cambio reparto dalla dashboard è GLOBALE (tutte le fasi con questo
-            // nome cambiano insieme). Richiede conferma esplicita lato UI.
-            // Per spostare SOLO una fase, usare il campo "fase" cambiando nome (es. STAMPAINDIGO → STAMPAXL106).
-            $nomeReparto = trim($valore) ?: 'generico';
-            $reparto = Reparto::firstOrCreate(['nome' => $nomeReparto]);
-            $faseNome = $fase->fase ?: '-';
-            $repartoPrima = $fase->faseCatalogo->reparto->nome ?? '-';
-            $faseCat = FasiCatalogo::updateOrCreate(
-                ['nome' => $faseNome],
-                ['reparto_id' => $reparto->id]
-            );
-            $fase->fase_catalogo_id = $faseCat->id;
-            $fase->save();
-            \Log::warning("CAMBIO REPARTO GLOBALE: fase={$faseNome} reparto {$repartoPrima}→{$nomeReparto} (tutte le fasi con questo nome spostate) · operatore_id=" . (request()->attributes->get('operatore_id') ?? session('operatore_id') ?? '-'));
+            // Il reparto NON è modificabile direttamente: deriva dal catalogo della fase.
+            // Per cambiare reparto di una singola fase, modificare il campo "fase" (nome)
+            // con una fase che appartiene al reparto desiderato.
+            return response()->json([
+                'success' => false,
+                'messaggio' => 'Reparto non editabile. Per cambiare reparto, modifica il nome della fase.'
+            ], 422);
         } elseif (in_array($campo, $campiFase)) {
             $valorePrima = $fase->{$campo};
             $fase->{$campo} = $valore;

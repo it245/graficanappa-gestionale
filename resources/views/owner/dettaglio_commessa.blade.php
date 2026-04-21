@@ -388,7 +388,7 @@
                     </td>
                 @endif
                 <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'fase', this.innerText)">{{ $fase->faseCatalogo->nome_display ?? $fase->fase ?? '-' }}</td>
-                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'reparto', this.innerText)">{{ $fase->reparto_nome ?? '-' }}</td>
+                <td title="Reparto derivato dalla fase: per cambiarlo modifica il nome della fase" style="color:#666; background:#f5f5f5;">{{ $fase->reparto_nome ?? '-' }}</td>
                 @php
                     $umFase = strtoupper(trim($fase->um ?? 'FG'));
                     $isPezzi = in_array($umFase, ['TR', 'PZ', 'KG']);
