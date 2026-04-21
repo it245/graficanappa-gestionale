@@ -6,60 +6,91 @@
 <style>
     @page { size: A4 portrait; margin: 1cm 1.2cm 1cm 1.2cm; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Segoe UI', Tahoma, sans-serif; color: #222; line-height: 1.3; font-size: 9pt; padding: 10px; max-width: 210mm; margin: 0 auto; }
+    body { font-family: 'Segoe UI', Tahoma, sans-serif; color: #222; line-height: 1.3; font-size: 9pt; padding: 10px; max-width: 210mm; margin: 0 auto; background: #f4f4f4; }
+    .page { background: #fff; padding: 18px 22px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 
     .top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
     .logo-col { width: 30%; padding-top: 20px; }
     .logo-col .title { font-size: 10pt; color: #555; font-style: italic; margin-bottom: 10px; }
     .logo-col .brand { font-size: 26pt; font-weight: 800; color: #D11317; letter-spacing: -1px; line-height: 1; }
-    .logo-col .brand-sub { font-size: 9pt; color: #666; margin-top: 2px; letter-spacing: 2px; }
 
     .data-col { width: 68%; }
     .data-col table { width: 100%; border-collapse: collapse; }
     .data-col td { padding: 3px 0; font-size: 8.5pt; vertical-align: middle; }
     .data-col td.label { width: 65px; font-weight: 600; color: #333; }
     .data-col td.label-small { width: 40px; font-weight: 600; color: #333; }
-    .data-col input[type="text"] { width: 100%; border: 1px solid #bbb; padding: 3px 5px; font-size: 8.5pt; font-family: inherit; background: #fff; }
-    .data-col .field { border: 1px solid #bbb; padding: 3px 5px; min-height: 18px; background: #fff; }
     .data-col .referente-row { background: #eff6ff; padding: 4px 6px; margin: 3px 0; border-radius: 2px; }
     .data-col .referente-row .label { font-weight: 700; color: #0d6efd; }
+
+    input[type="text"], input[type="number"], input[type="email"], input[type="tel"] {
+        width: 100%; border: 1px solid #bbb; padding: 3px 5px; font-size: 8.5pt; font-family: inherit; background: #fff;
+        border-radius: 2px;
+    }
+    input[type="text"]:focus, input[type="number"]:focus, textarea:focus {
+        outline: none; border-color: #0d6efd; background: #eff6ff;
+    }
+    textarea { width: 100%; border: 1px solid #bbb; padding: 6px; font-size: 9pt; font-family: inherit; background: #fff; resize: vertical; min-height: 90px; border-radius: 2px; }
 
     .section-title { background: #f0f0f0; border: 1px solid #999; text-align: center; padding: 4px; font-weight: 700; font-size: 9pt; letter-spacing: 0.05em; margin-top: 8px; }
 
     .checkbox-row { display: flex; flex-wrap: wrap; gap: 10px 20px; padding: 6px 10px; border: 1px solid #ccc; border-top: none; font-size: 8.5pt; }
-    .cb { display: inline-flex; align-items: center; gap: 5px; }
-    .cb::before { content: ""; display: inline-block; width: 11px; height: 11px; border: 1.5px solid #333; background: #fff; }
-    .cb.circle::before { border-radius: 50%; }
+    .cb { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
+    .cb input[type="checkbox"] { margin: 0; width: 12px; height: 12px; cursor: pointer; accent-color: #0d6efd; }
+    .cb input[type="radio"] { margin: 0; width: 12px; height: 12px; cursor: pointer; accent-color: #0d6efd; }
 
     .grid-3col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px 20px; padding: 6px 10px; border: 1px solid #ccc; border-top: none; font-size: 8.5pt; }
+    .grid-4col { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 4px 20px; padding: 6px 10px; border: 1px solid #ccc; border-top: none; font-size: 8.5pt; }
 
     .info-table { width: 100%; border-collapse: collapse; margin-top: 4px; font-size: 8.5pt; }
     .info-table td { border: 1px solid #bbb; padding: 4px 6px; vertical-align: middle; }
     .info-table td.lbl { background: #f5f5f5; font-weight: 600; }
-    .info-table td.fill { background: #fff; min-height: 20px; }
+    .info-table td input[type="text"], .info-table td input[type="number"] { border: none; padding: 2px 4px; }
+    .info-table td input:focus { background: #eff6ff; }
 
     .attr-table { width: 100%; border-collapse: collapse; margin-top: 4px; font-size: 8pt; }
     .attr-table th { background: #333; color: #fff; padding: 4px 5px; border: 1px solid #333; font-size: 8.5pt; font-weight: 700; }
-    .attr-table td { border: 1px solid #bbb; padding: 3px 5px; height: 18px; vertical-align: middle; }
+    .attr-table td { border: 1px solid #bbb; padding: 3px 5px; vertical-align: middle; }
     .attr-table td.lbl { background: #f9f9f9; font-weight: 500; }
     .attr-table td.num { background: #fff; width: 35px; text-align: center; }
-    .attr-table .section-head { background: #0d6efd; color: #fff; font-weight: 700; text-align: center; }
-
-    .note-area { border: 1px solid #bbb; min-height: 100px; padding: 6px; margin-top: 4px; background: #fff; }
+    .attr-table td input[type="text"], .attr-table td input[type="number"] { border: none; padding: 2px 4px; text-align: center; }
+    .attr-table td input:focus { background: #eff6ff; }
 
     .privacy { margin-top: 8px; display: flex; gap: 10px; align-items: flex-end; font-size: 7.5pt; color: #333; }
     .privacy .text { flex: 1; line-height: 1.3; }
-    .privacy .firma { width: 180px; border: 1px solid #bbb; height: 40px; padding: 3px; background: #fff; }
+    .privacy .firma-field { width: 180px; border: 1px solid #bbb; height: 40px; padding: 3px; background: #fff; }
     .privacy .firma-lbl { font-size: 7pt; color: #888; text-align: center; }
     .privacy a { color: #0d6efd; text-decoration: underline; }
 
     .footer { margin-top: 10px; font-size: 7pt; color: #555; padding-top: 6px; border-top: 1px solid #ccc; line-height: 1.3; }
     .footer strong { color: #D11317; }
 
-    @media print { body { padding: 0; } }
+    .toolbar { position: sticky; top: 0; background: #fff; border: 1px solid #0d6efd; padding: 8px 14px; margin-bottom: 14px; z-index: 100; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .toolbar button { background: #0d6efd; color: #fff; border: none; padding: 6px 14px; font-size: 9pt; cursor: pointer; border-radius: 3px; font-weight: 600; }
+    .toolbar button:hover { background: #0a58ca; }
+    .toolbar button.secondary { background: #6c757d; }
+    .toolbar button.secondary:hover { background: #545b62; }
+    .toolbar .info { font-size: 8.5pt; color: #555; }
+
+    @media print {
+        body { padding: 0; background: #fff; }
+        .page { box-shadow: none; padding: 0; margin: 0; }
+        .toolbar { display: none; }
+        input, textarea { background: transparent !important; }
+    }
 </style>
 </head>
 <body>
+
+<div class="toolbar">
+    <button onclick="window.print()">🖨️ Stampa / Salva PDF</button>
+    <button onclick="salvaDati()" class="secondary">💾 Salva bozza (browser)</button>
+    <button onclick="caricaDati()" class="secondary">📂 Riapri bozza</button>
+    <button onclick="resetForm()" class="secondary">🗑️ Pulisci</button>
+    <span class="info">Compila nel browser, poi stampa come PDF (Chrome/Edge → Stampa → Salva come PDF).</span>
+</div>
+
+<form id="discoveryForm">
+<div class="page">
 
 <div class="top">
     <div class="logo-col">
@@ -68,28 +99,28 @@
     </div>
     <div class="data-col">
         <table>
-            <tr><td class="label">Ragione sociale</td><td colspan="3"><div class="field"></div></td></tr>
+            <tr><td class="label">Ragione sociale</td><td colspan="3"><input type="text" name="ragione_sociale"></td></tr>
             <tr>
-                <td class="label">Via</td><td><div class="field"></div></td>
-                <td class="label-small" style="padding-left:8px;">Cap</td><td style="width:100px;"><div class="field"></div></td>
+                <td class="label">Via</td><td><input type="text" name="via"></td>
+                <td class="label-small" style="padding-left:8px;">Cap</td><td style="width:100px;"><input type="text" name="cap"></td>
             </tr>
             <tr>
-                <td class="label">Comune</td><td><div class="field"></div></td>
-                <td class="label-small" style="padding-left:8px;">Prov.</td><td><div class="field"></div></td>
+                <td class="label">Comune</td><td><input type="text" name="comune"></td>
+                <td class="label-small" style="padding-left:8px;">Prov.</td><td><input type="text" name="prov"></td>
             </tr>
             <tr>
-                <td class="label">E-mail</td><td><div class="field"></div></td>
-                <td class="label-small" style="padding-left:8px;">Tel.</td><td><div class="field"></div></td>
+                <td class="label">E-mail</td><td><input type="email" name="email"></td>
+                <td class="label-small" style="padding-left:8px;">Tel.</td><td><input type="tel" name="tel"></td>
             </tr>
-            <tr><td class="label">P.IVA</td><td colspan="3"><div class="field"></div></td></tr>
+            <tr><td class="label">P.IVA</td><td colspan="3"><input type="text" name="piva"></td></tr>
         </table>
         <div class="referente-row">
             <table>
-                <tr><td class="label" style="width:60px;">Referente</td><td colspan="3"><div class="field"></div></td></tr>
-                <tr><td class="label">Ruolo</td><td colspan="3"><div class="field"></div></td></tr>
+                <tr><td class="label" style="width:60px;">Referente</td><td colspan="3"><input type="text" name="referente"></td></tr>
+                <tr><td class="label">Ruolo</td><td colspan="3"><input type="text" name="ruolo"></td></tr>
                 <tr>
-                    <td class="label">E-mail</td><td><div class="field"></div></td>
-                    <td class="label-small" style="padding-left:8px;">Tel.</td><td style="width:140px;"><div class="field"></div></td>
+                    <td class="label">E-mail</td><td><input type="email" name="referente_email"></td>
+                    <td class="label-small" style="padding-left:8px;">Tel.</td><td style="width:140px;"><input type="tel" name="referente_tel"></td>
                 </tr>
             </table>
         </div>
@@ -98,79 +129,100 @@
 
 <div class="section-title">COME HA CONOSCIUTO GRAFICA NAPPA MES</div>
 <div class="checkbox-row">
-    <span class="cb circle">Fiere</span>
-    <span class="cb circle">Riviste</span>
-    <span class="cb circle">E-Mail</span>
-    <span class="cb circle">Facebook</span>
-    <span class="cb circle">Linkedin</span>
-    <span class="cb circle">Google</span>
-    <span class="cb circle">Passaparola</span>
-    <span class="cb circle">Demo sul campo</span>
-    <span class="cb circle">Cliente referente</span>
+    <label class="cb"><input type="checkbox" name="conosciuto_fiere"> Fiere</label>
+    <label class="cb"><input type="checkbox" name="conosciuto_riviste"> Riviste</label>
+    <label class="cb"><input type="checkbox" name="conosciuto_email"> E-Mail</label>
+    <label class="cb"><input type="checkbox" name="conosciuto_facebook"> Facebook</label>
+    <label class="cb"><input type="checkbox" name="conosciuto_linkedin"> Linkedin</label>
+    <label class="cb"><input type="checkbox" name="conosciuto_google"> Google</label>
+    <label class="cb"><input type="checkbox" name="conosciuto_passaparola"> Passaparola</label>
+    <label class="cb"><input type="checkbox" name="conosciuto_demo"> Demo sul campo</label>
+    <label class="cb"><input type="checkbox" name="conosciuto_referente"> Cliente referente</label>
 </div>
 
 <div class="section-title">TIPOLOGIA ATTIVITÀ</div>
 <div class="grid-3col">
-    <span class="cb">Studio grafico / Agenzia</span>
-    <span class="cb">Editore</span>
-    <span class="cb">Digitale piccolo f.to</span>
-    <span class="cb">Serigrafia</span>
-    <span class="cb">Stampa in piano</span>
-    <span class="cb">Tipo Lito</span>
-    <span class="cb">Etichette</span>
-    <span class="cb">Digitale grande f.to</span>
-    <span class="cb">Imballaggio flessibile</span>
-    <span class="cb">Stampa in bobina</span>
-    <span class="cb">Legatoria</span>
-    <span class="cb">Cartotecnica</span>
-    <span class="cb">Packaging astucci</span>
-    <span class="cb">Packaging lusso</span>
-    <span class="cb">Altro: _____________</span>
+    <label class="cb"><input type="checkbox" name="att_studio"> Studio grafico / Agenzia</label>
+    <label class="cb"><input type="checkbox" name="att_editore"> Editore</label>
+    <label class="cb"><input type="checkbox" name="att_dig_piccolo"> Digitale piccolo f.to</label>
+    <label class="cb"><input type="checkbox" name="att_serigrafia"> Serigrafia</label>
+    <label class="cb"><input type="checkbox" name="att_stampa_piano"> Stampa in piano</label>
+    <label class="cb"><input type="checkbox" name="att_lito"> Tipo Lito</label>
+    <label class="cb"><input type="checkbox" name="att_etichette"> Etichette</label>
+    <label class="cb"><input type="checkbox" name="att_dig_grande"> Digitale grande f.to</label>
+    <label class="cb"><input type="checkbox" name="att_imballaggio"> Imballaggio flessibile</label>
+    <label class="cb"><input type="checkbox" name="att_bobina"> Stampa in bobina</label>
+    <label class="cb"><input type="checkbox" name="att_legatoria"> Legatoria</label>
+    <label class="cb"><input type="checkbox" name="att_cartotecnica"> Cartotecnica</label>
+    <label class="cb"><input type="checkbox" name="att_astucci"> Packaging astucci</label>
+    <label class="cb"><input type="checkbox" name="att_lusso"> Packaging lusso</label>
+    <label class="cb"><input type="checkbox" name="att_altro_flag"> Altro: <input type="text" name="att_altro" style="width:100px;"></label>
 </div>
 
 <table class="info-table" style="margin-top: 8px;">
     <tr>
         <td class="lbl" style="width:33%;">Possiede software gestionale?</td>
-        <td style="width:12%;"><span class="cb">SI</span> &nbsp; <span class="cb">NO</span></td>
+        <td style="width:18%;"><label class="cb"><input type="radio" name="sw_gest" value="si"> SI</label> &nbsp; <label class="cb"><input type="radio" name="sw_gest" value="no"> NO</label></td>
         <td class="lbl" style="width:10%;">Quale?</td>
-        <td class="fill"></td>
+        <td><input type="text" name="sw_gest_nome"></td>
     </tr>
     <tr>
         <td class="lbl">Possiede software contabilità?</td>
-        <td><span class="cb">SI</span> &nbsp; <span class="cb">NO</span></td>
+        <td><label class="cb"><input type="radio" name="sw_cont" value="si"> SI</label> &nbsp; <label class="cb"><input type="radio" name="sw_cont" value="no"> NO</label></td>
         <td class="lbl">Quale?</td>
-        <td class="fill"></td>
+        <td><input type="text" name="sw_cont_nome"></td>
     </tr>
     <tr>
         <td class="lbl">Possiede workflow prestampa?</td>
-        <td><span class="cb">SI</span> &nbsp; <span class="cb">NO</span></td>
+        <td><label class="cb"><input type="radio" name="sw_workflow" value="si"> SI</label> &nbsp; <label class="cb"><input type="radio" name="sw_workflow" value="no"> NO</label></td>
         <td class="lbl">Quale?</td>
-        <td class="fill"></td>
+        <td><input type="text" name="sw_workflow_nome"></td>
+    </tr>
+    <tr>
+        <td class="lbl">Software preventivazione dedicato?</td>
+        <td><label class="cb"><input type="radio" name="sw_preventivi" value="si"> SI</label> &nbsp; <label class="cb"><input type="radio" name="sw_preventivi" value="no"> NO</label></td>
+        <td class="lbl">Quale?</td>
+        <td><input type="text" name="sw_preventivi_nome"></td>
     </tr>
 </table>
 
 <table class="info-table">
     <tr>
-        <td class="lbl" style="width:15%;">N° Dipendenti</td><td class="fill" style="width:10%;"></td>
-        <td class="lbl" style="width:15%;">di cui in Ufficio</td><td class="fill" style="width:10%;"></td>
-        <td class="lbl" style="width:15%;">in Produzione</td><td class="fill" style="width:10%;"></td>
-        <td class="lbl" style="width:10%;">Fatturato</td><td class="fill"></td>
+        <td class="lbl" style="width:15%;">N° Dipendenti</td><td style="width:10%;"><input type="number" name="dip_tot"></td>
+        <td class="lbl" style="width:15%;">di cui in Ufficio</td><td style="width:10%;"><input type="number" name="dip_uff"></td>
+        <td class="lbl" style="width:15%;">in Produzione</td><td style="width:10%;"><input type="number" name="dip_prod"></td>
+        <td class="lbl" style="width:10%;">Fatturato</td><td><input type="text" name="fatturato"></td>
     </tr>
     <tr>
         <td class="lbl">Avete almeno un addetto IT</td>
-        <td colspan="2"><span class="cb">SI</span> &nbsp;&nbsp; <span class="cb">NO</span></td>
+        <td colspan="2"><label class="cb"><input type="radio" name="it_interno" value="si"> SI</label> &nbsp;&nbsp; <label class="cb"><input type="radio" name="it_interno" value="no"> NO</label></td>
         <td class="lbl">Se presente è</td>
-        <td colspan="4"><span class="cb">Interno</span> &nbsp;&nbsp; <span class="cb">Esterno all'organico</span></td>
+        <td colspan="4"><label class="cb"><input type="radio" name="it_tipo" value="interno"> Interno</label> &nbsp;&nbsp; <label class="cb"><input type="radio" name="it_tipo" value="esterno"> Esterno all'organico</label></td>
     </tr>
     <tr>
-        <td class="lbl">N° commesse/mese</td><td class="fill"></td>
-        <td class="lbl">N° clienti attivi</td><td class="fill"></td>
-        <td class="lbl">Tiratura media</td><td class="fill"></td>
-        <td class="lbl">Export %</td><td class="fill"></td>
+        <td class="lbl">N° commesse/mese</td><td><input type="number" name="commesse_mese"></td>
+        <td class="lbl">N° clienti attivi</td><td><input type="number" name="clienti_attivi"></td>
+        <td class="lbl">Tiratura media</td><td><input type="text" name="tiratura_media"></td>
+        <td class="lbl">Export %</td><td><input type="number" name="export_perc"></td>
+    </tr>
+    <tr>
+        <td class="lbl">N° turni/giorno</td><td><label class="cb"><input type="radio" name="turni" value="1"> 1</label> <label class="cb"><input type="radio" name="turni" value="2"> 2</label> <label class="cb"><input type="radio" name="turni" value="3"> 3</label></td>
+        <td class="lbl">Lavoro notturno</td><td><label class="cb"><input type="radio" name="notturno" value="si"> SI</label> <label class="cb"><input type="radio" name="notturno" value="no"> NO</label></td>
+        <td class="lbl">Lavoro sabato</td><td><label class="cb"><input type="radio" name="sabato" value="si"> SI</label> <label class="cb"><input type="radio" name="sabato" value="no"> NO</label></td>
+        <td class="lbl">% urgenti (&lt;7gg)</td><td><input type="number" name="urgenti_perc"></td>
+    </tr>
+    <tr>
+        <td class="lbl">% commesse ripetitive</td><td><input type="number" name="ripetitive_perc"></td>
+        <td class="lbl">Lead time medio (gg)</td><td><input type="number" name="lead_time"></td>
+        <td class="lbl">Scarti medi %</td><td><input type="number" name="scarti_perc"></td>
+        <td class="lbl">Certificazioni</td><td><input type="text" name="certificazioni" placeholder="FSC, ISO 9001, BRC..."></td>
     </tr>
 </table>
 
-<div class="section-title" style="margin-top:8px;">ATTREZZATURE DELL'AZIENDA</div>
+</div>
+<div class="page">
+
+<div class="section-title">ATTREZZATURE DELL'AZIENDA</div>
 <table class="attr-table">
     <tr>
         <th style="width:22%;">PRESTAMPA</th><th style="width:4%;">n°</th>
@@ -179,137 +231,54 @@
         <th style="width:18%;">POST STAMPA</th><th style="width:4%;">n°</th>
     </tr>
     <tr>
-        <td class="lbl">MAC</td><td class="num"></td>
-        <td class="lbl">Offset</td><td class="num"></td>
-        <td class="lbl">Fustellatura</td><td class="num"></td>
-        <td class="lbl">Tagliacarte</td><td class="num"></td>
+        <td class="lbl">MAC</td><td class="num"><input type="number" name="n_mac"></td>
+        <td class="lbl">Offset</td><td class="num"><input type="number" name="n_offset"></td>
+        <td class="lbl">Fustellatura</td><td class="num"><input type="number" name="n_fustella"></td>
+        <td class="lbl">Tagliacarte</td><td class="num"><input type="number" name="n_taglia"></td>
     </tr>
     <tr>
-        <td class="lbl">PC</td><td class="num"></td>
-        <td class="lbl">Roto offset</td><td class="num"></td>
-        <td class="lbl">Piega-incolla</td><td class="num"></td>
-        <td class="lbl">Piegatrici</td><td class="num"></td>
+        <td class="lbl">PC</td><td class="num"><input type="number" name="n_pc"></td>
+        <td class="lbl">Roto offset</td><td class="num"><input type="number" name="n_roto"></td>
+        <td class="lbl">Piega-incolla</td><td class="num"><input type="number" name="n_piega"></td>
+        <td class="lbl">Piegatrici</td><td class="num"><input type="number" name="n_piegatrici"></td>
     </tr>
     <tr>
-        <td class="lbl">Operatori</td><td class="num"></td>
-        <td class="lbl">Flexo</td><td class="num"></td>
-        <td class="lbl">Finestratura</td><td class="num"></td>
-        <td class="lbl">Punti metallici</td><td class="num"></td>
+        <td class="lbl">Operatori prestampa</td><td class="num"><input type="number" name="n_op_pre"></td>
+        <td class="lbl">Flexo</td><td class="num"><input type="number" name="n_flexo"></td>
+        <td class="lbl">Finestratura</td><td class="num"><input type="number" name="n_finestra"></td>
+        <td class="lbl">Punti metallici</td><td class="num"><input type="number" name="n_punti"></td>
     </tr>
     <tr>
-        <td class="lbl">CTP</td><td class="num"></td>
-        <td class="lbl">Digitale toner</td><td class="num"></td>
-        <td class="lbl">Plastificazione</td><td class="num"></td>
-        <td class="lbl">Brossuratrici</td><td class="num"></td>
+        <td class="lbl">CTP</td><td class="num"><input type="number" name="n_ctp"></td>
+        <td class="lbl">Digitale toner</td><td class="num"><input type="number" name="n_dig_toner"></td>
+        <td class="lbl">Plastificazione</td><td class="num"><input type="number" name="n_plast"></td>
+        <td class="lbl">Brossuratrici</td><td class="num"><input type="number" name="n_brossura"></td>
     </tr>
     <tr>
-        <td class="lbl">Workflow (Prinect/Esko)</td><td class="num"></td>
-        <td class="lbl">Digitale inkjet</td><td class="num"></td>
-        <td class="lbl">Stampa a caldo / foil</td><td class="num"></td>
-        <td class="lbl">Linee cartonato</td><td class="num"></td>
+        <td class="lbl">Workflow (Prinect/Esko)</td><td class="num"><input type="number" name="n_workflow"></td>
+        <td class="lbl">Digitale inkjet</td><td class="num"><input type="number" name="n_inkjet"></td>
+        <td class="lbl">Stampa a caldo / foil</td><td class="num"><input type="number" name="n_foil"></td>
+        <td class="lbl">Linee cartonato</td><td class="num"><input type="number" name="n_cartonato"></td>
     </tr>
     <tr>
-        <td class="lbl">Plotter prove colore</td><td class="num"></td>
-        <td class="lbl">Serigrafico</td><td class="num"></td>
-        <td class="lbl">Rilievi a secco</td><td class="num"></td>
-        <td class="lbl">Cellofanatrici</td><td class="num"></td>
+        <td class="lbl">Plotter prove colore</td><td class="num"><input type="number" name="n_plotter"></td>
+        <td class="lbl">Serigrafico</td><td class="num"><input type="number" name="n_serigrafia"></td>
+        <td class="lbl">Rilievi a secco</td><td class="num"><input type="number" name="n_rilievi"></td>
+        <td class="lbl">Cellofanatrici</td><td class="num"><input type="number" name="n_cello"></td>
     </tr>
     <tr>
-        <td class="lbl">Software DTP (Illustrator/Packz)</td><td class="num"></td>
-        <td class="lbl">Grande formato</td><td class="num"></td>
-        <td class="lbl">Verniciatura UV / spot</td><td class="num"></td>
-        <td class="lbl">Confezionamento</td><td class="num"></td>
+        <td class="lbl">Software DTP</td><td class="num"><input type="number" name="n_dtp"></td>
+        <td class="lbl">Grande formato</td><td class="num"><input type="number" name="n_grande_fto"></td>
+        <td class="lbl">Verniciatura UV / spot</td><td class="num"><input type="number" name="n_uv"></td>
+        <td class="lbl">Confezionamento</td><td class="num"><input type="number" name="n_confez"></td>
     </tr>
     <tr>
-        <td class="lbl">Altro: _______________</td><td class="num"></td>
-        <td class="lbl">Altro: _______________</td><td class="num"></td>
-        <td class="lbl">Altro: _______________</td><td class="num"></td>
-        <td class="lbl">Altro: _______________</td><td class="num"></td>
+        <td class="lbl"><input type="text" name="pre_altro" placeholder="Altro"></td><td class="num"><input type="number" name="pre_altro_n"></td>
+        <td class="lbl"><input type="text" name="stampa_altro" placeholder="Altro"></td><td class="num"><input type="number" name="stampa_altro_n"></td>
+        <td class="lbl"><input type="text" name="finit_altro" placeholder="Altro"></td><td class="num"><input type="number" name="finit_altro_n"></td>
+        <td class="lbl"><input type="text" name="post_altro" placeholder="Altro"></td><td class="num"><input type="number" name="post_altro_n"></td>
     </tr>
 </table>
-
-<table class="info-table" style="margin-top: 6px;">
-    <tr>
-        <td class="lbl" style="width:12%;">SERVER</td><td style="width:12%;"><span class="cb">SI</span> &nbsp; <span class="cb">NO</span></td>
-        <td class="lbl" style="width:16%;">Struttura in Cloud</td><td style="width:12%;"><span class="cb">SI</span> &nbsp; <span class="cb">NO</span></td>
-        <td class="lbl" style="width:16%;">Sistema operativo</td><td class="fill"></td>
-    </tr>
-    <tr>
-        <td class="lbl">Rete LAN</td><td><span class="cb">1Gbps</span> &nbsp; <span class="cb">10Gbps</span></td>
-        <td class="lbl">Wi-Fi produzione</td><td><span class="cb">SI</span> &nbsp; <span class="cb">NO</span></td>
-        <td class="lbl">VPN esterna</td><td class="fill"></td>
-    </tr>
-    <tr>
-        <td class="lbl">Tablet / PC reparto</td><td class="fill" colspan="3"></td>
-        <td class="lbl">Backup</td><td class="fill"></td>
-    </tr>
-    <tr>
-        <td class="lbl">Prinect / Fiery / Esko in uso</td><td class="fill" colspan="5"></td>
-    </tr>
-    <tr>
-        <td class="lbl">Corrieri (BRT/GLS/DHL)</td><td class="fill" colspan="5"></td>
-    </tr>
-</table>
-
-<div class="section-title" style="margin-top:8px;">ACCESSO REMOTO / VPN PER MANUTENZIONE</div>
-<table class="info-table">
-    <tr>
-        <td class="lbl" style="width:22%;">Router / firewall marca</td>
-        <td style="width:48%;"><span class="cb">MikroTik</span> &nbsp; <span class="cb">FortiGate</span> &nbsp; <span class="cb">pfSense</span> &nbsp; <span class="cb">OPNsense</span> &nbsp; <span class="cb">Sophos</span> &nbsp; <span class="cb">Unifi</span> &nbsp; <span class="cb">Consumer (TIM/Fastweb)</span></td>
-        <td class="lbl" style="width:12%;">Modello</td>
-        <td class="fill"></td>
-    </tr>
-    <tr>
-        <td class="lbl">VPN disponibile</td>
-        <td><span class="cb">WireGuard</span> &nbsp; <span class="cb">OpenVPN</span> &nbsp; <span class="cb">IPsec</span> &nbsp; <span class="cb">Cisco AnyConnect</span> &nbsp; <span class="cb">Nessuna</span></td>
-        <td class="lbl">Endpoint</td>
-        <td class="fill"></td>
-    </tr>
-    <tr>
-        <td class="lbl">IP pubblico fisso</td>
-        <td><span class="cb">SI</span> &nbsp; <span class="cb">NO (DynDNS)</span></td>
-        <td class="lbl">Dominio/DDNS</td>
-        <td class="fill"></td>
-    </tr>
-    <tr>
-        <td class="lbl">Peer VPN per nostro tecnico</td>
-        <td colspan="3"><span class="cb">Possibile creare peer dedicato</span> &nbsp; <span class="cb">Serve autorizzazione</span> &nbsp; <span class="cb">Non possibile — proporre alternativa</span></td>
-    </tr>
-    <tr>
-        <td class="lbl">Banda internet (up/down)</td>
-        <td class="fill"></td>
-        <td class="lbl">Tipo connettività</td>
-        <td class="fill"><span class="cb">FTTH</span> &nbsp; <span class="cb">FTTC</span> &nbsp; <span class="cb">ADSL</span> &nbsp; <span class="cb">Altro</span></td>
-    </tr>
-</table>
-
-<div class="section-title" style="margin-top:8px;">AREE DI INTERESSE</div>
-<div class="grid-3col">
-    <span class="cb">CRM</span>
-    <span class="cb">Produzione — rilevazione tempi</span>
-    <span class="cb">Consuntivi</span>
-    <span class="cb">Recupero crediti autom.</span>
-    <span class="cb">Business Intelligence</span>
-    <span class="cb">Preventivi</span>
-    <span class="cb">Magazzino — Logistica</span>
-    <span class="cb">Industria 4.0</span>
-    <span class="cb">Sicurezza Informatica</span>
-    <span class="cb">E-commerce</span>
-    <span class="cb">Commesse</span>
-    <span class="cb">Ordini — Bolle</span>
-    <span class="cb">Fatture / Contabilità</span>
-    <span class="cb">Consulenza IT</span>
-    <span class="cb">Scheduler AI</span>
-    <span class="cb">Integrazione Prinect</span>
-    <span class="cb">Integrazione Fiery</span>
-    <span class="cb">Etichette QR magazzino</span>
-    <span class="cb">OCR bolle fornitore</span>
-    <span class="cb">Dashboard direzione</span>
-    <span class="cb">Tracking spedizioni BRT</span>
-    <span class="cb">App operatore touch</span>
-    <span class="cb">Notifiche push</span>
-    <span class="cb">Report ore automatici</span>
-</div>
 
 <div class="section-title" style="margin-top:8px;">MACCHINE CON API / CONNETTIVITÀ DATI</div>
 <table class="attr-table">
@@ -323,151 +292,354 @@
     </tr>
     <tr>
         <td class="lbl">Stampa offset</td>
-        <td class="num" style="width:auto;"></td>
-        <td class="num" style="width:auto;">Prinect / Logotronic / Connex</td>
-        <td><span class="cb">SI</span> <span class="cb">NO</span></td>
-        <td><span class="cb">REST</span> <span class="cb">JDF</span> <span class="cb">CIP3</span></td>
-        <td><span class="cb">SI</span> <span class="cb">NO</span></td>
+        <td><input type="text" name="api_offset_modello"></td>
+        <td>Prinect / Logotronic / Connex</td>
+        <td><label class="cb"><input type="radio" name="api_offset_av" value="si"> SI</label> <label class="cb"><input type="radio" name="api_offset_av" value="no"> NO</label></td>
+        <td><label class="cb"><input type="checkbox" name="api_offset_rest"> REST</label> <label class="cb"><input type="checkbox" name="api_offset_jdf"> JDF</label> <label class="cb"><input type="checkbox" name="api_offset_cip"> CIP3</label></td>
+        <td><label class="cb"><input type="radio" name="api_offset_use" value="si"> SI</label> <label class="cb"><input type="radio" name="api_offset_use" value="no"> NO</label></td>
     </tr>
     <tr>
         <td class="lbl">Stampa digitale toner</td>
-        <td class="num" style="width:auto;"></td>
-        <td class="num" style="width:auto;">Fiery / FreeFlow / IC-Pro</td>
-        <td><span class="cb">SI</span> <span class="cb">NO</span></td>
-        <td><span class="cb">REST</span> <span class="cb">JDF</span></td>
-        <td><span class="cb">SI</span> <span class="cb">NO</span></td>
+        <td><input type="text" name="api_dig_modello"></td>
+        <td>Fiery / FreeFlow / IC-Pro</td>
+        <td><label class="cb"><input type="radio" name="api_dig_av" value="si"> SI</label> <label class="cb"><input type="radio" name="api_dig_av" value="no"> NO</label></td>
+        <td><label class="cb"><input type="checkbox" name="api_dig_rest"> REST</label> <label class="cb"><input type="checkbox" name="api_dig_jdf"> JDF</label></td>
+        <td><label class="cb"><input type="radio" name="api_dig_use" value="si"> SI</label> <label class="cb"><input type="radio" name="api_dig_use" value="no"> NO</label></td>
     </tr>
     <tr>
         <td class="lbl">Stampa digitale inkjet</td>
-        <td class="num" style="width:auto;"></td>
-        <td class="num" style="width:auto;">HP SmartStream / Indigo / Ricoh</td>
-        <td><span class="cb">SI</span> <span class="cb">NO</span></td>
-        <td><span class="cb">REST</span> <span class="cb">JDF</span></td>
-        <td><span class="cb">SI</span> <span class="cb">NO</span></td>
+        <td><input type="text" name="api_ink_modello"></td>
+        <td>HP SmartStream / Indigo / Ricoh</td>
+        <td><label class="cb"><input type="radio" name="api_ink_av" value="si"> SI</label> <label class="cb"><input type="radio" name="api_ink_av" value="no"> NO</label></td>
+        <td><label class="cb"><input type="checkbox" name="api_ink_rest"> REST</label> <label class="cb"><input type="checkbox" name="api_ink_jdf"> JDF</label></td>
+        <td><label class="cb"><input type="radio" name="api_ink_use" value="si"> SI</label> <label class="cb"><input type="radio" name="api_ink_use" value="no"> NO</label></td>
     </tr>
     <tr>
         <td class="lbl">Grande formato</td>
-        <td class="num" style="width:auto;"></td>
-        <td class="num" style="width:auto;">HP Latex / EFI / Roland / Mimaki</td>
-        <td><span class="cb">SI</span> <span class="cb">NO</span></td>
-        <td><span class="cb">REST</span> <span class="cb">File</span></td>
-        <td><span class="cb">SI</span> <span class="cb">NO</span></td>
+        <td><input type="text" name="api_gf_modello"></td>
+        <td>HP Latex / EFI / Roland / Mimaki</td>
+        <td><label class="cb"><input type="radio" name="api_gf_av" value="si"> SI</label> <label class="cb"><input type="radio" name="api_gf_av" value="no"> NO</label></td>
+        <td><label class="cb"><input type="checkbox" name="api_gf_rest"> REST</label> <label class="cb"><input type="checkbox" name="api_gf_file"> File</label></td>
+        <td><label class="cb"><input type="radio" name="api_gf_use" value="si"> SI</label> <label class="cb"><input type="radio" name="api_gf_use" value="no"> NO</label></td>
     </tr>
     <tr>
         <td class="lbl">CTP / lastre</td>
-        <td class="num" style="width:auto;"></td>
-        <td class="num" style="width:auto;">Kodak / Heidelberg / Esko</td>
-        <td><span class="cb">SI</span> <span class="cb">NO</span></td>
-        <td><span class="cb">JDF</span> <span class="cb">File</span></td>
-        <td><span class="cb">SI</span> <span class="cb">NO</span></td>
+        <td><input type="text" name="api_ctp_modello"></td>
+        <td>Kodak / Heidelberg / Esko</td>
+        <td><label class="cb"><input type="radio" name="api_ctp_av" value="si"> SI</label> <label class="cb"><input type="radio" name="api_ctp_av" value="no"> NO</label></td>
+        <td><label class="cb"><input type="checkbox" name="api_ctp_jdf"> JDF</label> <label class="cb"><input type="checkbox" name="api_ctp_file"> File</label></td>
+        <td><label class="cb"><input type="radio" name="api_ctp_use" value="si"> SI</label> <label class="cb"><input type="radio" name="api_ctp_use" value="no"> NO</label></td>
     </tr>
     <tr>
         <td class="lbl">Workflow prestampa</td>
-        <td class="num" style="width:auto;"></td>
-        <td class="num" style="width:auto;">Prinect Cockpit / Esko AE / Prinergy</td>
-        <td><span class="cb">SI</span> <span class="cb">NO</span></td>
-        <td><span class="cb">REST</span> <span class="cb">SOAP</span> <span class="cb">JDF</span></td>
-        <td><span class="cb">SI</span> <span class="cb">NO</span></td>
+        <td><input type="text" name="api_wf_modello"></td>
+        <td>Prinect Cockpit / Esko AE / Prinergy</td>
+        <td><label class="cb"><input type="radio" name="api_wf_av" value="si"> SI</label> <label class="cb"><input type="radio" name="api_wf_av" value="no"> NO</label></td>
+        <td><label class="cb"><input type="checkbox" name="api_wf_rest"> REST</label> <label class="cb"><input type="checkbox" name="api_wf_soap"> SOAP</label> <label class="cb"><input type="checkbox" name="api_wf_jdf"> JDF</label></td>
+        <td><label class="cb"><input type="radio" name="api_wf_use" value="si"> SI</label> <label class="cb"><input type="radio" name="api_wf_use" value="no"> NO</label></td>
     </tr>
     <tr>
         <td class="lbl">Fustellatura piana</td>
-        <td class="num" style="width:auto;"></td>
-        <td class="num" style="width:auto;">BOBST iQ / Heidelberg Dymatrix</td>
-        <td><span class="cb">SI</span> <span class="cb">NO</span></td>
-        <td><span class="cb">OPC-UA</span> <span class="cb">MQTT</span> <span class="cb">File</span></td>
-        <td><span class="cb">SI</span> <span class="cb">NO</span></td>
+        <td><input type="text" name="api_fust_modello"></td>
+        <td>BOBST iQ / Heidelberg Dymatrix</td>
+        <td><label class="cb"><input type="radio" name="api_fust_av" value="si"> SI</label> <label class="cb"><input type="radio" name="api_fust_av" value="no"> NO</label></td>
+        <td><label class="cb"><input type="checkbox" name="api_fust_opc"> OPC-UA</label> <label class="cb"><input type="checkbox" name="api_fust_mqtt"> MQTT</label> <label class="cb"><input type="checkbox" name="api_fust_file"> File</label></td>
+        <td><label class="cb"><input type="radio" name="api_fust_use" value="si"> SI</label> <label class="cb"><input type="radio" name="api_fust_use" value="no"> NO</label></td>
     </tr>
     <tr>
         <td class="lbl">Piega-incolla</td>
-        <td class="num" style="width:auto;"></td>
-        <td class="num" style="width:auto;">BOBST / Jagenberg / Kohmann</td>
-        <td><span class="cb">SI</span> <span class="cb">NO</span></td>
-        <td><span class="cb">OPC-UA</span> <span class="cb">File</span></td>
-        <td><span class="cb">SI</span> <span class="cb">NO</span></td>
+        <td><input type="text" name="api_pi_modello"></td>
+        <td>BOBST / Jagenberg / Kohmann</td>
+        <td><label class="cb"><input type="radio" name="api_pi_av" value="si"> SI</label> <label class="cb"><input type="radio" name="api_pi_av" value="no"> NO</label></td>
+        <td><label class="cb"><input type="checkbox" name="api_pi_opc"> OPC-UA</label> <label class="cb"><input type="checkbox" name="api_pi_file"> File</label></td>
+        <td><label class="cb"><input type="radio" name="api_pi_use" value="si"> SI</label> <label class="cb"><input type="radio" name="api_pi_use" value="no"> NO</label></td>
     </tr>
     <tr>
         <td class="lbl">Plastificazione / lamin.</td>
-        <td class="num" style="width:auto;"></td>
-        <td class="num" style="width:auto;">Komfi / GMP / Autobond</td>
-        <td><span class="cb">SI</span> <span class="cb">NO</span></td>
-        <td><span class="cb">File</span> <span class="cb">Modbus</span></td>
-        <td><span class="cb">SI</span> <span class="cb">NO</span></td>
+        <td><input type="text" name="api_lam_modello"></td>
+        <td>Komfi / GMP / Autobond</td>
+        <td><label class="cb"><input type="radio" name="api_lam_av" value="si"> SI</label> <label class="cb"><input type="radio" name="api_lam_av" value="no"> NO</label></td>
+        <td><label class="cb"><input type="checkbox" name="api_lam_file"> File</label> <label class="cb"><input type="checkbox" name="api_lam_mb"> Modbus</label></td>
+        <td><label class="cb"><input type="radio" name="api_lam_use" value="si"> SI</label> <label class="cb"><input type="radio" name="api_lam_use" value="no"> NO</label></td>
     </tr>
     <tr>
         <td class="lbl">Stampa caldo / foil</td>
-        <td class="num" style="width:auto;"></td>
-        <td class="num" style="width:auto;">BOBST Masterfoil / Kurz</td>
-        <td><span class="cb">SI</span> <span class="cb">NO</span></td>
-        <td><span class="cb">OPC-UA</span> <span class="cb">File</span></td>
-        <td><span class="cb">SI</span> <span class="cb">NO</span></td>
+        <td><input type="text" name="api_foil_modello"></td>
+        <td>BOBST Masterfoil / Kurz</td>
+        <td><label class="cb"><input type="radio" name="api_foil_av" value="si"> SI</label> <label class="cb"><input type="radio" name="api_foil_av" value="no"> NO</label></td>
+        <td><label class="cb"><input type="checkbox" name="api_foil_opc"> OPC-UA</label> <label class="cb"><input type="checkbox" name="api_foil_file"> File</label></td>
+        <td><label class="cb"><input type="radio" name="api_foil_use" value="si"> SI</label> <label class="cb"><input type="radio" name="api_foil_use" value="no"> NO</label></td>
     </tr>
     <tr>
         <td class="lbl">Brossuratrice / legatoria</td>
-        <td class="num" style="width:auto;"></td>
-        <td class="num" style="width:auto;">Muller Martini Connex / Kolbus</td>
-        <td><span class="cb">SI</span> <span class="cb">NO</span></td>
-        <td><span class="cb">JDF</span> <span class="cb">REST</span></td>
-        <td><span class="cb">SI</span> <span class="cb">NO</span></td>
+        <td><input type="text" name="api_leg_modello"></td>
+        <td>Muller Martini Connex / Kolbus</td>
+        <td><label class="cb"><input type="radio" name="api_leg_av" value="si"> SI</label> <label class="cb"><input type="radio" name="api_leg_av" value="no"> NO</label></td>
+        <td><label class="cb"><input type="checkbox" name="api_leg_jdf"> JDF</label> <label class="cb"><input type="checkbox" name="api_leg_rest"> REST</label></td>
+        <td><label class="cb"><input type="radio" name="api_leg_use" value="si"> SI</label> <label class="cb"><input type="radio" name="api_leg_use" value="no"> NO</label></td>
     </tr>
     <tr>
         <td class="lbl">Taglierina</td>
-        <td class="num" style="width:auto;"></td>
-        <td class="num" style="width:auto;">Polar / Wohlenberg / Perfecta</td>
-        <td><span class="cb">SI</span> <span class="cb">NO</span></td>
-        <td><span class="cb">Compucut</span> <span class="cb">File</span></td>
-        <td><span class="cb">SI</span> <span class="cb">NO</span></td>
+        <td><input type="text" name="api_tag_modello"></td>
+        <td>Polar / Wohlenberg / Perfecta</td>
+        <td><label class="cb"><input type="radio" name="api_tag_av" value="si"> SI</label> <label class="cb"><input type="radio" name="api_tag_av" value="no"> NO</label></td>
+        <td><label class="cb"><input type="checkbox" name="api_tag_compu"> Compucut</label> <label class="cb"><input type="checkbox" name="api_tag_file"> File</label></td>
+        <td><label class="cb"><input type="radio" name="api_tag_use" value="si"> SI</label> <label class="cb"><input type="radio" name="api_tag_use" value="no"> NO</label></td>
     </tr>
     <tr>
         <td class="lbl">Finitura digitale</td>
-        <td class="num" style="width:auto;"></td>
-        <td class="num" style="width:auto;">Zund / MGI / Duplo / Morgana</td>
-        <td><span class="cb">SI</span> <span class="cb">NO</span></td>
-        <td><span class="cb">REST</span> <span class="cb">File</span></td>
-        <td><span class="cb">SI</span> <span class="cb">NO</span></td>
-    </tr>
-    <tr>
-        <td class="lbl">Sensori IoT / OEE esterni</td>
-        <td class="num" style="width:auto;"></td>
-        <td class="num" style="width:auto;">MachineMetrics / Tulip / Siemens</td>
-        <td><span class="cb">SI</span> <span class="cb">NO</span></td>
-        <td><span class="cb">MQTT</span> <span class="cb">OPC-UA</span> <span class="cb">REST</span></td>
-        <td><span class="cb">SI</span> <span class="cb">NO</span></td>
+        <td><input type="text" name="api_fd_modello"></td>
+        <td>Zund / MGI / Duplo / Morgana</td>
+        <td><label class="cb"><input type="radio" name="api_fd_av" value="si"> SI</label> <label class="cb"><input type="radio" name="api_fd_av" value="no"> NO</label></td>
+        <td><label class="cb"><input type="checkbox" name="api_fd_rest"> REST</label> <label class="cb"><input type="checkbox" name="api_fd_file"> File</label></td>
+        <td><label class="cb"><input type="radio" name="api_fd_use" value="si"> SI</label> <label class="cb"><input type="radio" name="api_fd_use" value="no"> NO</label></td>
     </tr>
     <tr>
         <td class="lbl">Rilevazione presenze</td>
-        <td class="num" style="width:auto;"></td>
-        <td class="num" style="width:auto;">Zucchetti / NetTime / altro</td>
-        <td><span class="cb">SI</span> <span class="cb">NO</span></td>
-        <td><span class="cb">REST</span> <span class="cb">DB</span> <span class="cb">File</span></td>
-        <td><span class="cb">SI</span> <span class="cb">NO</span></td>
+        <td><input type="text" name="api_pres_modello"></td>
+        <td>Zucchetti / NetTime / altro</td>
+        <td><label class="cb"><input type="radio" name="api_pres_av" value="si"> SI</label> <label class="cb"><input type="radio" name="api_pres_av" value="no"> NO</label></td>
+        <td><label class="cb"><input type="checkbox" name="api_pres_rest"> REST</label> <label class="cb"><input type="checkbox" name="api_pres_db"> DB</label> <label class="cb"><input type="checkbox" name="api_pres_file"> File</label></td>
+        <td><label class="cb"><input type="radio" name="api_pres_use" value="si"> SI</label> <label class="cb"><input type="radio" name="api_pres_use" value="no"> NO</label></td>
     </tr>
     <tr>
         <td class="lbl">Monitoraggio energetico</td>
-        <td class="num" style="width:auto;"></td>
-        <td class="num" style="width:auto;">Solar-Log / Carlo Gavazzi</td>
-        <td><span class="cb">SI</span> <span class="cb">NO</span></td>
-        <td><span class="cb">REST</span> <span class="cb">Modbus</span></td>
-        <td><span class="cb">SI</span> <span class="cb">NO</span></td>
-    </tr>
-    <tr>
-        <td class="lbl">Altro: _____________</td>
-        <td class="num" style="width:auto;"></td>
-        <td class="num" style="width:auto;"></td>
-        <td><span class="cb">SI</span> <span class="cb">NO</span></td>
-        <td></td>
-        <td><span class="cb">SI</span> <span class="cb">NO</span></td>
+        <td><input type="text" name="api_ener_modello"></td>
+        <td>Solar-Log / Carlo Gavazzi</td>
+        <td><label class="cb"><input type="radio" name="api_ener_av" value="si"> SI</label> <label class="cb"><input type="radio" name="api_ener_av" value="no"> NO</label></td>
+        <td><label class="cb"><input type="checkbox" name="api_ener_rest"> REST</label> <label class="cb"><input type="checkbox" name="api_ener_mb"> Modbus</label></td>
+        <td><label class="cb"><input type="radio" name="api_ener_use" value="si"> SI</label> <label class="cb"><input type="radio" name="api_ener_use" value="no"> NO</label></td>
     </tr>
 </table>
 
+</div>
+<div class="page">
+
+<div class="section-title">INFRASTRUTTURA IT</div>
+<table class="info-table">
+    <tr>
+        <td class="lbl" style="width:12%;">SERVER locale</td><td style="width:12%;"><label class="cb"><input type="radio" name="server_loc" value="si"> SI</label> <label class="cb"><input type="radio" name="server_loc" value="no"> NO</label></td>
+        <td class="lbl" style="width:16%;">Struttura in Cloud</td><td style="width:12%;"><label class="cb"><input type="radio" name="cloud" value="si"> SI</label> <label class="cb"><input type="radio" name="cloud" value="no"> NO</label></td>
+        <td class="lbl" style="width:16%;">Sistema operativo server</td><td><input type="text" name="os_server"></td>
+    </tr>
+    <tr>
+        <td class="lbl">Rete LAN</td><td><label class="cb"><input type="radio" name="lan" value="1g"> 1Gbps</label> <label class="cb"><input type="radio" name="lan" value="10g"> 10Gbps</label></td>
+        <td class="lbl">Wi-Fi produzione</td><td><label class="cb"><input type="radio" name="wifi" value="si"> SI</label> <label class="cb"><input type="radio" name="wifi" value="no"> NO</label></td>
+        <td class="lbl">Database in uso</td><td><input type="text" name="db" placeholder="MySQL, SQL Server, Oracle..."></td>
+    </tr>
+    <tr>
+        <td class="lbl">Tablet / PC reparto</td><td colspan="3"><input type="text" name="tablet_reparto" placeholder="Android, iPad, PC touch, n° dispositivi..."></td>
+        <td class="lbl">Backup</td><td><input type="text" name="backup"></td>
+    </tr>
+    <tr>
+        <td class="lbl">Prinect / Fiery / Esko in uso</td><td colspan="5"><input type="text" name="heidelberg_fiery"></td>
+    </tr>
+    <tr>
+        <td class="lbl">Corrieri (BRT/GLS/DHL)</td><td colspan="5"><input type="text" name="corrieri"></td>
+    </tr>
+    <tr>
+        <td class="lbl">Stampanti etichette</td><td colspan="3"><input type="text" name="st_etichette" placeholder="Zebra, Toshiba, Honeywell..."></td>
+        <td class="lbl">Lettori QR/barcode</td><td><input type="text" name="scanner"></td>
+    </tr>
+    <tr>
+        <td class="lbl">Antivirus / EDR</td><td colspan="3"><input type="text" name="antivirus"></td>
+        <td class="lbl">Dominio AD</td><td><label class="cb"><input type="radio" name="ad" value="si"> SI</label> <label class="cb"><input type="radio" name="ad" value="no"> NO</label></td>
+    </tr>
+</table>
+
+<div class="section-title" style="margin-top:8px;">ACCESSO REMOTO / VPN PER MANUTENZIONE</div>
+<table class="info-table">
+    <tr>
+        <td class="lbl" style="width:22%;">Router / firewall marca</td>
+        <td style="width:48%;">
+            <label class="cb"><input type="checkbox" name="rt_mikrotik"> MikroTik</label>
+            <label class="cb"><input type="checkbox" name="rt_fortigate"> FortiGate</label>
+            <label class="cb"><input type="checkbox" name="rt_pfsense"> pfSense</label>
+            <label class="cb"><input type="checkbox" name="rt_opnsense"> OPNsense</label>
+            <label class="cb"><input type="checkbox" name="rt_sophos"> Sophos</label>
+            <label class="cb"><input type="checkbox" name="rt_unifi"> Unifi</label>
+            <label class="cb"><input type="checkbox" name="rt_consumer"> Consumer (TIM/Fastweb)</label>
+        </td>
+        <td class="lbl" style="width:12%;">Modello</td>
+        <td><input type="text" name="rt_modello"></td>
+    </tr>
+    <tr>
+        <td class="lbl">VPN disponibile</td>
+        <td>
+            <label class="cb"><input type="checkbox" name="vpn_wg"> WireGuard</label>
+            <label class="cb"><input type="checkbox" name="vpn_ovpn"> OpenVPN</label>
+            <label class="cb"><input type="checkbox" name="vpn_ipsec"> IPsec</label>
+            <label class="cb"><input type="checkbox" name="vpn_cisco"> Cisco AnyConnect</label>
+            <label class="cb"><input type="checkbox" name="vpn_no"> Nessuna</label>
+        </td>
+        <td class="lbl">Endpoint</td>
+        <td><input type="text" name="vpn_endpoint"></td>
+    </tr>
+    <tr>
+        <td class="lbl">IP pubblico fisso</td>
+        <td><label class="cb"><input type="radio" name="ip_fisso" value="si"> SI</label> &nbsp; <label class="cb"><input type="radio" name="ip_fisso" value="ddns"> NO (DynDNS)</label></td>
+        <td class="lbl">Dominio/DDNS</td>
+        <td><input type="text" name="ddns"></td>
+    </tr>
+    <tr>
+        <td class="lbl">Peer VPN per nostro tecnico</td>
+        <td colspan="3">
+            <label class="cb"><input type="radio" name="peer_vpn" value="si"> Possibile creare peer dedicato</label> &nbsp;
+            <label class="cb"><input type="radio" name="peer_vpn" value="auth"> Serve autorizzazione</label> &nbsp;
+            <label class="cb"><input type="radio" name="peer_vpn" value="no"> Non possibile — proporre alternativa</label>
+        </td>
+    </tr>
+    <tr>
+        <td class="lbl">Banda internet (up/down)</td>
+        <td><input type="text" name="banda" placeholder="es. 100/20 Mbps"></td>
+        <td class="lbl">Tipo connettività</td>
+        <td>
+            <label class="cb"><input type="radio" name="conn" value="ftth"> FTTH</label>
+            <label class="cb"><input type="radio" name="conn" value="fttc"> FTTC</label>
+            <label class="cb"><input type="radio" name="conn" value="adsl"> ADSL</label>
+            <label class="cb"><input type="radio" name="conn" value="altro"> Altro</label>
+        </td>
+    </tr>
+</table>
+
+<div class="section-title" style="margin-top:8px;">ORGANIZZAZIONE PRODUZIONE</div>
+<table class="info-table">
+    <tr>
+        <td class="lbl" style="width:22%;">Pianificazione attuale</td>
+        <td colspan="3">
+            <label class="cb"><input type="checkbox" name="plan_excel"> Excel</label>
+            <label class="cb"><input type="checkbox" name="plan_lavagna"> Lavagna</label>
+            <label class="cb"><input type="checkbox" name="plan_gestionale"> Gestionale</label>
+            <label class="cb"><input type="checkbox" name="plan_memoria"> A memoria</label>
+            <label class="cb"><input type="checkbox" name="plan_altro"> Altro: <input type="text" name="plan_altro_nome" style="width:150px;"></label>
+        </td>
+    </tr>
+    <tr>
+        <td class="lbl">Chi pianifica</td>
+        <td><input type="text" name="pianificatore"></td>
+        <td class="lbl">Frequenza ripianificazione</td>
+        <td><input type="text" name="ripianifica"></td>
+    </tr>
+    <tr>
+        <td class="lbl">Comunicazione reparti oggi</td>
+        <td colspan="3">
+            <label class="cb"><input type="checkbox" name="com_bolla"> Bolla cartacea</label>
+            <label class="cb"><input type="checkbox" name="com_radio"> Radio/walkie</label>
+            <label class="cb"><input type="checkbox" name="com_whatsapp"> WhatsApp</label>
+            <label class="cb"><input type="checkbox" name="com_app"> App dedicata</label>
+            <label class="cb"><input type="checkbox" name="com_voce"> A voce</label>
+        </td>
+    </tr>
+    <tr>
+        <td class="lbl">Rilevazione tempi operatori</td>
+        <td colspan="3">
+            <label class="cb"><input type="checkbox" name="tempi_nessuna"> Nessuna</label>
+            <label class="cb"><input type="checkbox" name="tempi_cartellino"> Cartellino macchina</label>
+            <label class="cb"><input type="checkbox" name="tempi_badge"> Badge</label>
+            <label class="cb"><input type="checkbox" name="tempi_app"> App</label>
+        </td>
+    </tr>
+    <tr>
+        <td class="lbl">Colli di bottiglia noti</td>
+        <td colspan="3"><input type="text" name="bottleneck"></td>
+    </tr>
+    <tr>
+        <td class="lbl">Magazzino carta gestito?</td>
+        <td><label class="cb"><input type="radio" name="mag" value="si"> SI</label> <label class="cb"><input type="radio" name="mag" value="no"> NO</label></td>
+        <td class="lbl">Software magazzino</td>
+        <td><input type="text" name="mag_sw"></td>
+    </tr>
+    <tr>
+        <td class="lbl">N. tipologie carta gestite</td>
+        <td><input type="number" name="mag_tipi"></td>
+        <td class="lbl">Ubicazioni codificate</td>
+        <td><label class="cb"><input type="radio" name="mag_ubi" value="si"> SI</label> <label class="cb"><input type="radio" name="mag_ubi" value="no"> NO</label></td>
+    </tr>
+</table>
+
+<div class="section-title" style="margin-top:8px;">AREE DI INTERESSE</div>
+<div class="grid-3col">
+    <label class="cb"><input type="checkbox" name="int_crm"> CRM</label>
+    <label class="cb"><input type="checkbox" name="int_tempi"> Produzione — rilevazione tempi</label>
+    <label class="cb"><input type="checkbox" name="int_cons"> Consuntivi</label>
+    <label class="cb"><input type="checkbox" name="int_recupero"> Recupero crediti autom.</label>
+    <label class="cb"><input type="checkbox" name="int_bi"> Business Intelligence</label>
+    <label class="cb"><input type="checkbox" name="int_prev"> Preventivi</label>
+    <label class="cb"><input type="checkbox" name="int_mag"> Magazzino — Logistica</label>
+    <label class="cb"><input type="checkbox" name="int_i40"> Industria 4.0</label>
+    <label class="cb"><input type="checkbox" name="int_sec"> Sicurezza Informatica</label>
+    <label class="cb"><input type="checkbox" name="int_ecom"> E-commerce</label>
+    <label class="cb"><input type="checkbox" name="int_comm"> Commesse</label>
+    <label class="cb"><input type="checkbox" name="int_ord"> Ordini — Bolle</label>
+    <label class="cb"><input type="checkbox" name="int_fatt"> Fatture / Contabilità</label>
+    <label class="cb"><input type="checkbox" name="int_cons_it"> Consulenza IT</label>
+    <label class="cb"><input type="checkbox" name="int_sched"> Scheduler AI</label>
+    <label class="cb"><input type="checkbox" name="int_prinect"> Integrazione Prinect</label>
+    <label class="cb"><input type="checkbox" name="int_fiery"> Integrazione Fiery</label>
+    <label class="cb"><input type="checkbox" name="int_qr"> Etichette QR magazzino</label>
+    <label class="cb"><input type="checkbox" name="int_ocr"> OCR bolle fornitore</label>
+    <label class="cb"><input type="checkbox" name="int_dash"> Dashboard direzione</label>
+    <label class="cb"><input type="checkbox" name="int_brt"> Tracking spedizioni BRT</label>
+    <label class="cb"><input type="checkbox" name="int_touch"> App operatore touch</label>
+    <label class="cb"><input type="checkbox" name="int_push"> Notifiche push</label>
+    <label class="cb"><input type="checkbox" name="int_oreauto"> Report ore automatici</label>
+    <label class="cb"><input type="checkbox" name="int_qualita"> Qualità / non conformità</label>
+    <label class="cb"><input type="checkbox" name="int_manut"> Manutenzione macchine</label>
+    <label class="cb"><input type="checkbox" name="int_oee"> OEE / efficienza</label>
+</div>
+
+<div class="section-title" style="margin-top:8px;">PROGETTO E ASPETTATIVE</div>
+<table class="info-table">
+    <tr>
+        <td class="lbl" style="width:25%;">Go-live desiderato (entro)</td>
+        <td><input type="text" name="golive" placeholder="es. 3 mesi, entro settembre 2026"></td>
+        <td class="lbl" style="width:25%;">Storico da migrare (anni)</td>
+        <td><input type="number" name="storico_anni"></td>
+    </tr>
+    <tr>
+        <td class="lbl">Preferenza deploy</td>
+        <td colspan="3">
+            <label class="cb"><input type="radio" name="deploy" value="onprem"> On-premise</label>
+            <label class="cb"><input type="radio" name="deploy" value="cloud"> Cloud dedicato</label>
+            <label class="cb"><input type="radio" name="deploy" value="saas"> SaaS</label>
+            <label class="cb"><input type="radio" name="deploy" value="ibrido"> Ibrido</label>
+        </td>
+    </tr>
+    <tr>
+        <td class="lbl">Key users identificati</td>
+        <td colspan="3"><input type="text" name="key_users" placeholder="Nome + ruolo delle persone di riferimento"></td>
+    </tr>
+    <tr>
+        <td class="lbl">N. utenti concorrenti attesi</td>
+        <td><input type="number" name="utenti_conc"></td>
+        <td class="lbl">Multi-stabilimento</td>
+        <td><label class="cb"><input type="radio" name="multi_sede" value="si"> SI</label> <label class="cb"><input type="radio" name="multi_sede" value="no"> NO</label></td>
+    </tr>
+    <tr>
+        <td class="lbl">SLA supporto richiesto</td>
+        <td>
+            <label class="cb"><input type="radio" name="sla" value="4h"> 4h</label>
+            <label class="cb"><input type="radio" name="sla" value="8h"> 8h (standard)</label>
+            <label class="cb"><input type="radio" name="sla" value="24h"> 24h</label>
+            <label class="cb"><input type="radio" name="sla" value="besteff"> Best effort</label>
+        </td>
+        <td class="lbl">Demo / PoC richiesto</td>
+        <td><label class="cb"><input type="radio" name="demo" value="si"> SI</label> <label class="cb"><input type="radio" name="demo" value="no"> NO</label></td>
+    </tr>
+</table>
+
+<div class="section-title" style="margin-top:8px;">PAIN POINTS — COSA NON FUNZIONA OGGI</div>
+<textarea name="pain_points" placeholder="Top 3-5 criticità operative: cosa vi fa perdere più tempo, dove si generano errori, cosa vorreste eliminare subito..."></textarea>
+
 <div class="section-title" style="margin-top:8px;">NOTE — ALTRE INFORMAZIONI UTILI</div>
-<div class="note-area"></div>
+<textarea name="note"></textarea>
 
 <div class="privacy">
     <div class="text">
-        <span class="cb">Accetto</span> &nbsp; l'informativa sulla privacy e il trattamento dei miei dati personali per essere contattato dal personale commerciale e tecnico di Grafica Nappa per l'adempimento di quanto richiesto. Ho preso visione dell'informativa <a href="#">qui</a>.
+        <label class="cb"><input type="checkbox" name="privacy_accetta"> Accetto</label> &nbsp; l'informativa sulla privacy e il trattamento dei miei dati personali per essere contattato dal personale commerciale e tecnico di Grafica Nappa per l'adempimento di quanto richiesto.
     </div>
     <div>
-        <div class="firma"></div>
+        <div class="firma-field"><input type="text" name="firma" style="width:100%; border:none; text-align:center; font-family:'Segoe Script',cursive; font-size:14pt;"></div>
         <div class="firma-lbl">Firma</div>
     </div>
 </div>
@@ -476,6 +648,49 @@
     <strong>Grafica Nappa S.r.l.</strong> · Via Saporito, 24 — 81031 Aversa (CE) · Tel. +39 081 xxx xxxx · P.IVA 03145680617 · www.graficanappa.com<br>
     MES Production Suite — contatti: it@graficanappa.com
 </div>
+
+</div>
+</form>
+
+<script>
+function salvaDati() {
+    const form = document.getElementById('discoveryForm');
+    const data = {};
+    Array.from(form.elements).forEach(el => {
+        if (!el.name) return;
+        if (el.type === 'checkbox' || el.type === 'radio') {
+            if (el.checked) data[el.name] = el.value || 'on';
+        } else {
+            if (el.value) data[el.name] = el.value;
+        }
+    });
+    localStorage.setItem('discovery_draft', JSON.stringify(data));
+    alert('Bozza salvata nel browser. Riapri in qualsiasi momento con "Riapri bozza".');
+}
+
+function caricaDati() {
+    const data = JSON.parse(localStorage.getItem('discovery_draft') || '{}');
+    if (Object.keys(data).length === 0) { alert('Nessuna bozza salvata.'); return; }
+    const form = document.getElementById('discoveryForm');
+    Array.from(form.elements).forEach(el => {
+        if (!el.name || !(el.name in data)) return;
+        if (el.type === 'checkbox') {
+            el.checked = true;
+        } else if (el.type === 'radio') {
+            if (el.value === data[el.name]) el.checked = true;
+        } else {
+            el.value = data[el.name];
+        }
+    });
+    alert('Bozza ricaricata.');
+}
+
+function resetForm() {
+    if (!confirm('Pulire tutti i campi?')) return;
+    document.getElementById('discoveryForm').reset();
+    localStorage.removeItem('discovery_draft');
+}
+</script>
 
 </body>
 </html>
