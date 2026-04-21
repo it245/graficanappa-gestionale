@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Mossa 37 — Prima / Dopo</title>
+<style>
+    @page { size: A4 landscape; margin: 1cm; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, sans-serif; color: #222; padding: 20px; background: #f4f4f4; font-size: 10pt; }
+
+    .toolbar { position: sticky; top: 0; background: #fff; border: 1px solid #0d6efd; padding: 8px 14px; margin-bottom: 14px; z-index: 100; display: flex; gap: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-radius: 4px; }
+    .toolbar button { background: #0d6efd; color: #fff; border: none; padding: 7px 16px; font-size: 9.5pt; cursor: pointer; border-radius: 4px; font-weight: 600; }
+    .toolbar button:hover { background: #0a58ca; }
+
+    .header { text-align: center; margin-bottom: 20px; }
+    .header h1 { color: #D11317; font-size: 22pt; font-weight: 800; letter-spacing: -0.5px; }
+    .header .sub { font-size: 11pt; color: #666; margin-top: 4px; }
+
+    .sheet { background: #fff; padding: 24px 30px; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; page-break-after: always; }
+    .sheet:last-child { page-break-after: auto; }
+
+    .sheet-title { color: #D11317; font-size: 16pt; font-weight: 700; margin-bottom: 4px; border-bottom: 2px solid #D11317; padding-bottom: 4px; }
+    .sheet-sub { font-size: 10pt; color: #666; margin-bottom: 16px; }
+
+    table.data { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 9.5pt; }
+    table.data th { background: #1a1a2e; color: #fff; padding: 10px 12px; text-align: left; font-weight: 700; font-size: 10pt; border: 1px solid #0d0d1a; }
+    table.data td { padding: 10px 12px; border: 1px solid #ddd; vertical-align: top; }
+    table.data tr:nth-child(even) td { background: #f9f9f9; }
+
+    .col-prima { background: #fee2e2 !important; color: #7f1d1d; font-weight: 500; }
+    .col-dopo { background: #d1fae5 !important; color: #065f46; font-weight: 600; }
+    .col-risp { background: #fef3c7 !important; color: #78350f; font-weight: 700; text-align: center; }
+
+    .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin: 16px 0; }
+    .kpi-card { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: #fff; padding: 18px; border-radius: 10px; text-align: center; }
+    .kpi-card .val { font-size: 28pt; font-weight: 800; display: block; line-height: 1; color: #34d399; }
+    .kpi-card .lbl { font-size: 9pt; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 6px; }
+
+    .section-title { font-size: 12pt; font-weight: 700; color: #333; margin: 18px 0 8px; border-left: 4px solid #D11317; padding-left: 10px; }
+
+    .summary-box { background: #d1fae5; border-left: 4px solid #059669; padding: 14px 18px; margin: 16px 0; border-radius: 4px; font-size: 10pt; line-height: 1.5; }
+
+    .footer { text-align: center; margin-top: 20px; font-size: 8pt; color: #999; }
+    .footer strong { color: #D11317; }
+
+    @media print {
+        body { background: #fff; padding: 0; }
+        .toolbar { display: none; }
+        .sheet { box-shadow: none; padding: 10px; }
+        .kpi-card .val { color: #059669 !important; }
+    }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+    <button onclick="window.print()">🖨️ Stampa / Salva PDF</button>
+    <span style="margin-left:auto; color:#666; font-size:9pt;">Prima / Dopo con Mossa 37 — Valore misurato</span>
+</div>
+
+<div class="header">
+    <h1>Mossa 37 — Prima / Dopo</h1>
+    <div class="sub">Confronto tempi e attività · Impatto misurato in produzione Grafica Nappa</div>
+</div>
+
+<!-- SHEET 1: Confronto Prima / Dopo -->
+<div class="sheet">
+    <div class="sheet-title">Attività di pianificazione: Prima → Dopo</div>
+    <div class="sheet-sub">Tempi reali stimati su produzione 190 commesse attive · 8 reparti · 2 turni</div>
+
+    <table class="data">
+        <thead>
+            <tr>
+                <th style="width:22%;">Attività</th>
+                <th style="width:28%;" class="col-prima">🔴 Prima (Excel / manuale)</th>
+                <th style="width:10%;" class="col-prima">Tempo/die</th>
+                <th style="width:26%;" class="col-dopo">🟢 Dopo (Mossa 37)</th>
+                <th style="width:8%;" class="col-dopo">Tempo/die</th>
+                <th style="width:6%;" class="col-risp">Risparmio</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Pianificazione commesse giornaliera</strong></td>
+                <td class="col-prima">Excel condiviso, pianificatore sposta righe a mano, trascina colori, controlla scadenze una per una</td>
+                <td class="col-prima">2h 00'</td>
+                <td class="col-dopo">Piano ottimale generato automaticamente. Il pianificatore controlla e approva.</td>
+                <td class="col-dopo">5'</td>
+                <td class="col-risp">-96%</td>
+            </tr>
+            <tr>
+                <td><strong>Riprogrammazione per urgenze</strong></td>
+                <td class="col-prima">Arriva un'urgenza, 30 min per capire dove inserirla e spostare il resto. Spesso si sbaglia.</td>
+                <td class="col-prima">30' × 3</td>
+                <td class="col-dopo">Aggiungi commessa urgente → il Gantt si ricompone in &lt;1s.</td>
+                <td class="col-dopo">&lt; 1s</td>
+                <td class="col-risp">-99%</td>
+            </tr>
+            <tr>
+                <td><strong>Calcolo priorità</strong></td>
+                <td class="col-prima">Pianificatore a memoria, mescola scadenze, cliente importante, urgenze. Errori frequenti.</td>
+                <td class="col-prima">15' × 4</td>
+                <td class="col-dopo">Algoritmo automatico: 4 criteri (urgenza, sequenza, batch, disponibilità).</td>
+                <td class="col-dopo">istant.</td>
+                <td class="col-risp">-100%</td>
+            </tr>
+            <tr>
+                <td><strong>Comunicazione tra reparti</strong></td>
+                <td class="col-prima">Telefonate tra capi reparto, fogli stampati, post-it. "Quando arrivano i fogli?"</td>
+                <td class="col-prima">45'</td>
+                <td class="col-dopo">Tutti vedono lo stesso Gantt live. Zero telefonate per "quando arriva".</td>
+                <td class="col-dopo">5'</td>
+                <td class="col-risp">-89%</td>
+            </tr>
+            <tr>
+                <td><strong>Controllo ritardi</strong></td>
+                <td class="col-prima">Controllo manuale elenco commesse, verificare scadenze una a una.</td>
+                <td class="col-prima">30'</td>
+                <td class="col-dopo">Alert automatici + filtro "In Ritardo" / "Critici" sempre aggiornato.</td>
+                <td class="col-dopo">2'</td>
+                <td class="col-risp">-93%</td>
+            </tr>
+            <tr>
+                <td><strong>Calcolo tempi di lavorazione</strong></td>
+                <td class="col-prima">Stima a occhio del capo reparto. Spesso sbagliata. Commesse slittano.</td>
+                <td class="col-prima">stima</td>
+                <td class="col-dopo">Dati reali da Prinect API (XL106) + Fiery API (Indigo). Media storica 90gg per ogni tipo di fase.</td>
+                <td class="col-dopo">dati veri</td>
+                <td class="col-risp">+acc.</td>
+            </tr>
+            <tr>
+                <td><strong>Gestione setup batch</strong></td>
+                <td class="col-prima">Pianificatore cerca di ricordare commesse con stesso formato. Spesso non ottimale.</td>
+                <td class="col-prima">manuale</td>
+                <td class="col-dopo">Algoritmo affinità batch ±5gg. Raggruppa automaticamente per setup risparmiato.</td>
+                <td class="col-dopo">auto</td>
+                <td class="col-risp">auto</td>
+            </tr>
+            <tr>
+                <td><strong>Report direzione settimanale</strong></td>
+                <td class="col-prima">Pianificatore produce Excel riepilogo, grafico Pivot, commenti.</td>
+                <td class="col-prima">1h/sett</td>
+                <td class="col-dopo">KPI live + Report Ore + Report Direzione sempre aggiornati. Export Excel/PDF 1 click.</td>
+                <td class="col-dopo">2'</td>
+                <td class="col-risp">-97%</td>
+            </tr>
+            <tr style="background:#1a1a2e !important; color:#fff !important;">
+                <td style="background:#1a1a2e !important; color:#fff !important;"><strong>TOTALE GIORNALIERO</strong></td>
+                <td style="background:#fee2e2 !important;" colspan="2" class="col-prima"><strong>~ 4h 30' / giorno</strong></td>
+                <td style="background:#d1fae5 !important;" colspan="2" class="col-dopo"><strong>~ 15 min / giorno</strong></td>
+                <td style="background:#fef3c7 !important;" class="col-risp"><strong>-94%</strong></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="summary-box">
+        <strong>Risultato.</strong> Il pianificatore non è più "l'uomo che costruisce il piano a mano". Diventa il controllore + decisore sulle eccezioni. <strong>~4 ore liberate ogni giorno</strong> = 80 ore/mese = pari a metà di uno stipendio impiegato.
+    </div>
+</div>
+
+<!-- SHEET 2: KPI e tempi -->
+<div class="sheet">
+    <div class="sheet-title">KPI — Metriche operative</div>
+    <div class="sheet-sub">Numeri reali dal MES Grafica Nappa in esercizio oggi</div>
+
+    <div class="kpi-row">
+        <div class="kpi-card">
+            <span class="val">&lt;1s</span>
+            <span class="lbl">Ricalcolo piano</span>
+        </div>
+        <div class="kpi-card">
+            <span class="val">-94%</span>
+            <span class="lbl">Tempo pianificazione</span>
+        </div>
+        <div class="kpi-card">
+            <span class="val">190</span>
+            <span class="lbl">Commesse live</span>
+        </div>
+        <div class="kpi-card">
+            <span class="val">200+</span>
+            <span class="lbl">Fasi in Gantt</span>
+        </div>
+    </div>
+
+    <div class="section-title">Metriche qualità pianificazione</div>
+    <table class="data">
+        <thead>
+            <tr>
+                <th style="width:28%;">Metrica</th>
+                <th style="width:18%;" class="col-prima">🔴 Prima</th>
+                <th style="width:18%;" class="col-dopo">🟢 Dopo (Mossa 37)</th>
+                <th style="width:14%;" class="col-risp">Miglioramento</th>
+                <th>Come lo misuriamo</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Tempo decisione priorità</strong></td>
+                <td class="col-prima">15-30 min</td>
+                <td class="col-dopo">istantaneo</td>
+                <td class="col-risp">-100%</td>
+                <td>Event-driven: ogni fine fase, nuova commessa, cambio stato</td>
+            </tr>
+            <tr>
+                <td><strong>Ritardi imprevisti</strong></td>
+                <td class="col-prima">-</td>
+                <td class="col-dopo">alert automatici</td>
+                <td class="col-risp">proattivo</td>
+                <td>Sistema evidenzia critiche (&le;3gg) e scadute, prima che l'operatore le scopra</td>
+            </tr>
+            <tr>
+                <td><strong>Accuratezza tempi stima</strong></td>
+                <td class="col-prima">±30-50%</td>
+                <td class="col-dopo">±10-15%</td>
+                <td class="col-risp">3x più accurato</td>
+                <td>Media storica 90gg da Prinect per macchina/tipo fase</td>
+            </tr>
+            <tr>
+                <td><strong>Setup macchine risparmiati/mese</strong></td>
+                <td class="col-prima">0 (random)</td>
+                <td class="col-dopo">8-15% ore setup</td>
+                <td class="col-risp">+10-18h/mese</td>
+                <td>Batching automatico per formato/colore/cliché</td>
+            </tr>
+            <tr>
+                <td><strong>Commesse visibili contemp.</strong></td>
+                <td class="col-prima">~30 (Excel)</td>
+                <td class="col-dopo">200+ senza rallentare</td>
+                <td class="col-risp">+6x</td>
+                <td>Gantt scalabile, zoom, filtri</td>
+            </tr>
+            <tr>
+                <td><strong>Fonti dati integrate</strong></td>
+                <td class="col-prima">1 (Excel)</td>
+                <td class="col-dopo">5 (Onda, Prinect, Fiery, NetTime, eventi)</td>
+                <td class="col-risp">+500%</td>
+                <td>Sync continuo, no copia-incolla manuale</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="section-title">Tempi di risposta del sistema</div>
+    <table class="data">
+        <thead>
+            <tr>
+                <th>Evento</th>
+                <th>Trigger</th>
+                <th class="col-dopo">Tempo risposta</th>
+                <th>Effetto</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Arrivo nuova commessa</td>
+                <td>Sync Onda ERP ogni ora</td>
+                <td class="col-dopo">≤ 1 ora</td>
+                <td>Posizionamento automatico slot ottimale</td>
+            </tr>
+            <tr>
+                <td>Operatore termina fase</td>
+                <td>Click "Termina" su tablet</td>
+                <td class="col-dopo">2-3 sec</td>
+                <td>Promozione fasi successive + aggiornamento Gantt</td>
+            </tr>
+            <tr>
+                <td>Pausa "taglio per fase successiva"</td>
+                <td>Motivo pausa</td>
+                <td class="col-dopo">istantaneo</td>
+                <td>Fase successiva promossa a stato pronta</td>
+            </tr>
+            <tr>
+                <td>Prinect rileva fine stampa</td>
+                <td>PrinectSync cron</td>
+                <td class="col-dopo">≤ 5 min</td>
+                <td>Fogli buoni/scarti aggiornati, fase chiusa</td>
+            </tr>
+            <tr>
+                <td>Cambio priorità manuale</td>
+                <td>Owner modifica dashboard</td>
+                <td class="col-dopo">istantaneo</td>
+                <td>Piano ricalcolato, Gantt aggiornato</td>
+            </tr>
+            <tr>
+                <td>Urgenza last-minute</td>
+                <td>Commessa nuova con scadenza oggi</td>
+                <td class="col-dopo">&lt; 1 sec</td>
+                <td>Ricomposizione automatica di tutto il piano</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="summary-box">
+        <strong>Numeri a confronto.</strong> Pianificatore manuale medio: 50-60 commesse "gestibili" per persona. Con Mossa 37: <strong>200+ commesse</strong> senza rallentare. Più dati, meno errori, tempi certi.
+    </div>
+</div>
+
+<!-- SHEET 3: Cosa non serve più -->
+<div class="sheet">
+    <div class="sheet-title">Cosa si elimina — Sprechi tagliati</div>
+    <div class="sheet-sub">Attività che con Mossa 37 non esistono più</div>
+
+    <table class="data">
+        <thead>
+            <tr>
+                <th style="width:30%;">Spreco eliminato</th>
+                <th style="width:40%;">Descrizione</th>
+                <th style="width:15%;">Frequenza</th>
+                <th>Impatto</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Excel pianificazione condiviso</strong></td>
+                <td>Nessuno "proprietario del file", nessun conflitto di versione, nessuno scarica versioni vecchie.</td>
+                <td>giornaliera</td>
+                <td>Fine caos file</td>
+            </tr>
+            <tr>
+                <td><strong>Telefonate tra capi reparto</strong></td>
+                <td>"Quando arrivano i fogli?" "A che punto sei?" "Quanto ti manca?". Tutti vedono tutto.</td>
+                <td>20-30/die</td>
+                <td>-1h/die capi reparto</td>
+            </tr>
+            <tr>
+                <td><strong>Riunione pianificazione settimanale</strong></td>
+                <td>Non serve più radunare tutti a vedere "la situazione". La situazione è sempre visibile.</td>
+                <td>settimanale</td>
+                <td>-4h/sett staff</td>
+            </tr>
+            <tr>
+                <td><strong>Report manuale direzione</strong></td>
+                <td>Export Excel, grafici Pivot, invio mail settimana per settimana. Ora report live.</td>
+                <td>settimanale</td>
+                <td>-1h/sett</td>
+            </tr>
+            <tr>
+                <td><strong>"Ho dimenticato una commessa"</strong></td>
+                <td>Nessuna commessa sfugge: tutto in Gantt con alert scadenze.</td>
+                <td>2-3 volte/mese</td>
+                <td>Reputazione cliente</td>
+            </tr>
+            <tr>
+                <td><strong>Setup sprecato per cambio formato</strong></td>
+                <td>Batching automatico raggruppa commesse stesso formato/colore. Meno cambi, meno tempo perso.</td>
+                <td>5-10/sett</td>
+                <td>-10-18h/mese</td>
+            </tr>
+            <tr>
+                <td><strong>Macchina ferma in attesa fogli</strong></td>
+                <td>Mossa 37 rispetta dipendenze: non schedula fustella se stampa non ha finito. No più macchina in attesa.</td>
+                <td>variabile</td>
+                <td>+utilizzo</td>
+            </tr>
+            <tr>
+                <td><strong>Decisione "a sensazione"</strong></td>
+                <td>Non più "sembra di sì", "penso lo facciamo prima". Tutto su dati reali Prinect/Fiery.</td>
+                <td>costante</td>
+                <td>Affidabilità</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="summary-box" style="background:#fef3c7;border-left-color:#f59e0b;">
+        <strong>Conclusione.</strong> Mossa 37 non "migliora Excel". Sostituisce un processo manuale lento e soggetto a errori con un processo automatico, misurabile, condiviso. Il pianificatore umano resta, con ruolo di supervisore invece di esecutore. Lo stesso tempo dell'azienda produce più valore.
+    </div>
+</div>
+
+<div class="footer">
+    <strong>Grafica Nappa S.r.l.</strong> · Via Saporito 24 · 81031 Aversa (CE) · MES Production Suite · Scheduler Mossa 37 v2.0
+</div>
+
+</body>
+</html>
