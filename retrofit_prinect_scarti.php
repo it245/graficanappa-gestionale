@@ -36,7 +36,8 @@ foreach ($fasi as $commessa => $gruppo) {
     try {
         $wsData = $prinect->getJobWorksteps($jobId);
         $worksteps = collect($wsData['worksteps'] ?? [])
-            ->filter(fn($ws) => in_array('ConventionalPrinting', $ws['types'] ?? []));
+            ->filter(fn($ws) => in_array('ConventionalPrinting', $ws['types'] ?? []))
+            ->filter(fn($ws) => ($ws['status'] ?? '') === 'COMPLETED'); // Solo completed (esclude WAITING con placeholder forecast)
         if ($worksteps->isEmpty()) { $skip++; continue; }
 
         $totBuoni = $worksteps->sum(fn($ws) => $ws['amountProduced'] ?? 0);
