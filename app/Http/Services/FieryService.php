@@ -208,14 +208,15 @@ class FieryService
      */
     public function getJobs(): ?array
     {
-        // Cache 30s: dashboard fa 441 job × overhead parsing → risparmio ~2-5s per refresh
-        return Cache::remember('fiery_jobs_parsed', 30, function () {
-            $json = $this->apiGet('/live/api/v5/jobs');
-            if (!$json) return null;
+        // Cache solo se risultato non vuoto (evita cache stale con 0 job)
+        $cached = Cache::get('fiery_jobs_parsed');
+        if (!empty($cached)) return $cached;
 
-            $items = $json['data']['items'] ?? [];
+        $json = $this->apiGet('/live/api/v5/jobs');
+        if (!$json) return null;
 
-            return collect($items)->map(function ($job) {
+        $items = $json['data']['items'] ?? [];
+        $parsed = collect($items)->map(function ($job) {
                 return [
                     'id' => $job['id'] ?? null,
                     'title' => $job['title'] ?? '',
@@ -238,7 +239,11 @@ class FieryService
                     'timings' => $this->getJobTimings($job),
                 ];
             })->toArray();
-        });
+
+        if (!empty($parsed)) {
+            Cache::put('fiery_jobs_parsed', $parsed, 30);
+        }
+        return $parsed;
     }
 
     /**

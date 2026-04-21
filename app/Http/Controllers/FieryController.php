@@ -26,12 +26,16 @@ class FieryController extends Controller
 
         $status['commessa'] = $this->cercaCommessa($status['stampa']['documento'] ?? null);
 
-        // Cache jobData (organizzaJobs fa N+1 query DB se non cachato) per 30s
-        $jobData = \Cache::remember('fiery_job_data_organized', 30, function () use ($fiery) {
+        // Cache jobData (organizzaJobs fa N+1 query DB se non cachato) solo se non vuoto
+        $jobData = \Cache::get('fiery_job_data_organized');
+        if (empty($jobData) || ($jobData['total'] ?? 0) === 0) {
             $jobs = $fiery->getJobs();
             $accounting = $fiery->getAccountingPerCommessa();
-            return $this->organizzaJobs($jobs, $accounting);
-        });
+            $jobData = $this->organizzaJobs($jobs, $accounting);
+            if (($jobData['total'] ?? 0) > 0) {
+                \Cache::put('fiery_job_data_organized', $jobData, 30);
+            }
+        }
 
         // SNMP cachato 30s
         $snmp = \Cache::remember('fiery_snmp_live', 30, fn() => $this->leggiContatoriSnmp());
