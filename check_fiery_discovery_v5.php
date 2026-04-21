@@ -15,24 +15,31 @@ $pass = config('fiery.password');
 $key = config('fiery.api_key');
 $base = "https://{$host}/live/api/v5";
 
-$cookie = null;
-
-// Login per ottenere cookie sessione
+// Login e raccolta header Set-Cookie come stringa
 echo "=== Login API v5 ===\n";
 $login = Http::withoutVerifying()->timeout(5)->post("{$base}/login", [
     'username' => $user,
     'password' => $pass,
     'accessrights' => $key,
 ]);
-if ($login->successful()) {
-    $cookie = $login->cookies();
-    echo "✓ Login OK\n\n";
-} else {
+if (!$login->successful()) {
     echo "✗ Login fallito ({$login->status()})\n\n";
     exit(1);
 }
+echo "✓ Login OK\n";
 
-$http = Http::withoutVerifying()->timeout(5)->withCookies($cookie->toArray(), $host);
+// Estrai cookie dal response in formato "name=value; name2=value2"
+$setCookies = $login->headers()['Set-Cookie'] ?? [];
+$cookiePairs = [];
+foreach ((array) $setCookies as $sc) {
+    if (preg_match('/^([^=]+)=([^;]+)/', $sc, $m)) {
+        $cookiePairs[] = $m[1] . '=' . $m[2];
+    }
+}
+$cookieHeader = implode('; ', $cookiePairs);
+echo "Cookie: " . substr($cookieHeader, 0, 100) . "...\n\n";
+
+$http = Http::withoutVerifying()->timeout(5)->withHeaders(['Cookie' => $cookieHeader]);
 
 // Endpoint GET da esplorare — ampio set API v5 tipica Fiery
 $endpoints = [
