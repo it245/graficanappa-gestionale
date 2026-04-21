@@ -2,26 +2,27 @@
 <html lang="it">
 <head>
 <meta charset="utf-8">
-<title>Flusso Operativo MES — Grafica Nappa</title>
+<title>Architettura MES — Grafica Nappa</title>
 <style>
     @page { size: A3 landscape; margin: 1cm; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Segoe UI', Tahoma, sans-serif; color: #222; padding: 20px; background: #f4f4f4; }
+    body { font-family: 'Segoe UI', Tahoma, sans-serif; color: #222; padding: 20px; background: #eef2f7; }
 
-    .header { text-align: center; margin-bottom: 20px; }
-    .header h1 { color: #D11317; font-size: 22pt; font-weight: 800; letter-spacing: -0.5px; }
-    .header .sub { font-size: 10pt; color: #555; margin-top: 4px; }
+    .header { text-align: center; margin-bottom: 18px; }
+    .header h1 { color: #D11317; font-size: 24pt; font-weight: 800; letter-spacing: -0.5px; }
+    .header .sub { font-size: 10.5pt; color: #555; margin-top: 4px; }
 
-    .chart-wrap { background: #fff; padding: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); border-radius: 4px; overflow-x: auto; }
+    .chart-wrap { background: #fff; padding: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-radius: 6px; overflow-x: auto; }
 
     svg { display: block; margin: 0 auto; }
 
-    .legend { margin-top: 20px; padding: 15px; background: #fff; border-radius: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; font-size: 9.5pt; }
+    .legend { margin-top: 18px; padding: 14px 18px; background: #fff; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); display: flex; gap: 18px; flex-wrap: wrap; justify-content: center; font-size: 9.5pt; }
     .legend-item { display: flex; align-items: center; gap: 6px; }
-    .legend-dot { width: 18px; height: 14px; border-radius: 3px; border: 1px solid #555; }
+    .legend-dot { width: 20px; height: 14px; border-radius: 3px; border: 1.5px solid #555; }
 
-    .toolbar { position: sticky; top: 0; background: #fff; border: 1px solid #0d6efd; padding: 8px 14px; margin-bottom: 14px; z-index: 100; display: flex; gap: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    .toolbar button { background: #0d6efd; color: #fff; border: none; padding: 6px 14px; font-size: 9pt; cursor: pointer; border-radius: 3px; font-weight: 600; }
+    .toolbar { position: sticky; top: 0; background: #fff; border: 1px solid #0d6efd; padding: 8px 14px; margin-bottom: 14px; z-index: 100; display: flex; gap: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-radius: 4px; }
+    .toolbar button { background: #0d6efd; color: #fff; border: none; padding: 7px 16px; font-size: 9.5pt; cursor: pointer; border-radius: 4px; font-weight: 600; }
+    .toolbar button:hover { background: #0a58ca; }
 
     @media print {
         body { background: #fff; padding: 0; }
@@ -37,283 +38,281 @@
 </div>
 
 <div class="header">
-    <h1>Flusso Operativo MES — Grafica Nappa</h1>
-    <div class="sub">Architettura funzionale, integrazioni esterne, flussi dati — stato attuale produzione</div>
+    <h1>Architettura MES — Grafica Nappa</h1>
+    <div class="sub">Flusso funzionale, integrazioni esterne, componenti produzione · stato attuale</div>
 </div>
 
 <div class="chart-wrap">
-<svg width="1400" height="900" viewBox="0 0 1400 900" xmlns="http://www.w3.org/2000/svg" style="font-family: 'Segoe UI', Tahoma, sans-serif;">
+<svg width="1440" height="880" viewBox="0 0 1440 880" xmlns="http://www.w3.org/2000/svg">
 <defs>
-    <marker id="arrow" viewBox="0 -5 10 10" refX="8" refY="0" markerWidth="8" markerHeight="8" orient="auto">
-        <path d="M0,-5L10,0L0,5" fill="#333"/>
-    </marker>
-    <marker id="arrow-red" viewBox="0 -5 10 10" refX="8" refY="0" markerWidth="8" markerHeight="8" orient="auto">
-        <path d="M0,-5L10,0L0,5" fill="#D11317"/>
-    </marker>
-    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
-        <feDropShadow dx="1" dy="2" stdDeviation="1.5" flood-opacity="0.25"/>
-    </filter>
-    <!-- Stili box riutilizzabili -->
+    <marker id="arr" viewBox="0 -5 10 10" refX="10" refY="0" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,-5L10,0L0,5" fill="#4a4a4a"/></marker>
+    <marker id="arr-red" viewBox="0 -5 10 10" refX="10" refY="0" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,-5L10,0L0,5" fill="#D11317"/></marker>
+    <marker id="arr-blu" viewBox="0 -5 10 10" refX="10" refY="0" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,-5L10,0L0,5" fill="#0d6efd"/></marker>
+    <filter id="sh" x="-5%" y="-5%" width="110%" height="115%"><feDropShadow dx="0" dy="1.5" stdDeviation="1.5" flood-opacity="0.2"/></filter>
     <style>
-        .box { stroke: #555; stroke-width: 1.2; rx: 8; ry: 8; filter: url(#shadow); }
-        .box-text { font-size: 10pt; font-weight: 600; fill: #222; text-anchor: middle; dominant-baseline: central; }
-        .box-text-sm { font-size: 8pt; font-weight: 500; fill: #444; text-anchor: middle; dominant-baseline: central; }
-        .ext { fill: #e8f4fb; stroke: #0d6efd; } /* integrazioni esterne */
-        .comm { fill: #fff3cd; stroke: #e6a700; } /* commesse/produzione */
-        .pre { fill: #e6f0d8; stroke: #6b9a3a; } /* prestampa */
-        .stampa { fill: #fde2e2; stroke: #D11317; } /* stampa */
-        .finit { fill: #ffe0c2; stroke: #e67e22; } /* finitura */
-        .mag { fill: #d6e9f8; stroke: #1973b8; } /* magazzino */
-        .sped { fill: #e5d6f5; stroke: #7e3bc6; } /* spedizione */
-        .dash { fill: #fff8c8; stroke: #c9a000; } /* dashboard/report */
-        .core { fill: #ffb8b8; stroke: #D11317; stroke-width: 2.5; } /* scheduler centrale */
-        .decision { fill: #d1ecf1; stroke: #17a2b8; }
+        .zone { opacity: 0.45; }
+        .zone-label { font-size: 11pt; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+        .box { stroke-width: 1.5; rx: 6; ry: 6; filter: url(#sh); }
+        .t-h { font-size: 10pt; font-weight: 700; fill: #1a1a1a; text-anchor: middle; dominant-baseline: middle; font-family: 'Segoe UI'; }
+        .t-s { font-size: 8pt; font-weight: 400; fill: #555; text-anchor: middle; dominant-baseline: middle; font-family: 'Segoe UI'; }
+        .ext { fill: #eaf2fb; stroke: #0d6efd; }
+        .comm { fill: #fff3cd; stroke: #d69e2e; }
+        .pre { fill: #e7f1dc; stroke: #6b9a3a; }
+        .stampa { fill: #fde4e4; stroke: #D11317; }
+        .finit { fill: #fde3c8; stroke: #e07c2a; }
+        .mag { fill: #dfecfa; stroke: #1973b8; }
+        .sped { fill: #e9daf5; stroke: #7e3bc6; }
+        .dash { fill: #fff5b8; stroke: #c9a000; }
+        .core { fill: #ff9c9c; stroke: #a10d10; stroke-width: 3; }
+        .flow { stroke: #4a4a4a; stroke-width: 1.8; fill: none; }
+        .flow-red { stroke: #D11317; stroke-width: 2; fill: none; }
+        .flow-blu { stroke: #0d6efd; stroke-width: 1.3; fill: none; stroke-dasharray: 4,3; }
+        .flow-dash { stroke: #888; stroke-width: 1.2; fill: none; stroke-dasharray: 3,3; }
     </style>
 </defs>
 
-<!-- TITOLO AREE (raggruppamenti) -->
-<text x="200" y="25" font-size="11pt" font-weight="700" fill="#0d6efd">INTEGRAZIONI ESTERNE</text>
-<text x="540" y="25" font-size="11pt" font-weight="700" fill="#e6a700">COMMESSE / PRODUZIONE</text>
-<text x="960" y="25" font-size="11pt" font-weight="700" fill="#D11317">STAMPA (REAL-TIME)</text>
-<text x="1240" y="25" font-size="11pt" font-weight="700" fill="#c9a000">DASHBOARD</text>
+<!-- === ZONE BACKGROUND === -->
+<rect class="zone" x="20" y="60" width="240" height="700" fill="#eaf2fb" rx="8"/>
+<rect class="zone" x="290" y="60" width="280" height="700" fill="#fff3cd" rx="8"/>
+<rect class="zone" x="600" y="60" width="220" height="700" fill="#ffd6d6" rx="8"/>
+<rect class="zone" x="850" y="60" width="270" height="700" fill="#fde4e4" rx="8"/>
+<rect class="zone" x="1150" y="60" width="270" height="700" fill="#fff5b8" rx="8"/>
 
-<!-- === INTEGRAZIONI ESTERNE (sinistra) === -->
+<!-- zone titles -->
+<text class="zone-label" x="140" y="85" fill="#0d6efd" text-anchor="middle">Integrazioni Esterne</text>
+<text class="zone-label" x="430" y="85" fill="#a07800" text-anchor="middle">Produzione · Commesse</text>
+<text class="zone-label" x="710" y="85" fill="#a10d10" text-anchor="middle">Scheduler</text>
+<text class="zone-label" x="985" y="85" fill="#D11317" text-anchor="middle">Stampa Real-time</text>
+<text class="zone-label" x="1285" y="85" fill="#a07800" text-anchor="middle">Dashboard · Report</text>
+
+<!-- === INTEGRAZIONI ESTERNE === -->
 <g>
-    <rect class="box ext" x="30" y="50" width="180" height="50"/>
-    <text class="box-text" x="120" y="68">Onda ERP</text>
-    <text class="box-text-sm" x="120" y="85">SOAP / SQL Server .253</text>
+    <rect class="box ext" x="50" y="115" width="180" height="50"/>
+    <text class="t-h" x="140" y="133">Onda ERP</text>
+    <text class="t-s" x="140" y="150">SOAP · SQL Server .253</text>
 
-    <rect class="box ext" x="30" y="120" width="180" height="50"/>
-    <text class="box-text" x="120" y="138">Prinect API</text>
-    <text class="box-text-sm" x="120" y="155">REST Heidelberg XL106</text>
+    <rect class="box ext" x="50" y="190" width="180" height="50"/>
+    <text class="t-h" x="140" y="208">Prinect API</text>
+    <text class="t-s" x="140" y="225">REST · Heidelberg XL106</text>
 
-    <rect class="box ext" x="30" y="190" width="180" height="50"/>
-    <text class="box-text" x="120" y="208">Fiery API</text>
-    <text class="box-text-sm" x="120" y="225">EFI P400 Indigo</text>
+    <rect class="box ext" x="50" y="265" width="180" height="50"/>
+    <text class="t-h" x="140" y="283">Fiery API</text>
+    <text class="t-s" x="140" y="300">EFI P400 · Indigo</text>
 
-    <rect class="box ext" x="30" y="260" width="180" height="50"/>
-    <text class="box-text" x="120" y="278">BRT API</text>
-    <text class="box-text-sm" x="120" y="295">Tracking spedizioni</text>
+    <rect class="box ext" x="50" y="340" width="180" height="50"/>
+    <text class="t-h" x="140" y="358">BRT API</text>
+    <text class="t-s" x="140" y="375">Tracking spedizioni</text>
 
-    <rect class="box ext" x="30" y="330" width="180" height="50"/>
-    <text class="box-text" x="120" y="348">NetTime</text>
-    <text class="box-text-sm" x="120" y="365">Presenze (share .253)</text>
+    <rect class="box ext" x="50" y="415" width="180" height="50"/>
+    <text class="t-h" x="140" y="433">NetTime</text>
+    <text class="t-s" x="140" y="450">Presenze · share .253</text>
 
-    <rect class="box ext" x="30" y="400" width="180" height="50"/>
-    <text class="box-text" x="120" y="418">Solar-Log</text>
-    <text class="box-text-sm" x="120" y="435">Fotovoltaico 180 kWp</text>
+    <rect class="box ext" x="50" y="490" width="180" height="50"/>
+    <text class="t-h" x="140" y="508">Solar-Log</text>
+    <text class="t-s" x="140" y="525">Fotovoltaico 180 kWp</text>
 
-    <rect class="box ext" x="30" y="470" width="180" height="50"/>
-    <text class="box-text" x="120" y="488">Excel condiviso</text>
-    <text class="box-text-sm" x="120" y="505">Sync bidirezionale 2 min</text>
+    <rect class="box ext" x="50" y="565" width="180" height="50"/>
+    <text class="t-h" x="140" y="583">Excel condiviso</text>
+    <text class="t-s" x="140" y="600">Sync bidirezionale 2 min</text>
+
+    <rect class="box ext" x="50" y="640" width="180" height="50"/>
+    <text class="t-h" x="140" y="658">VPN MikroTik</text>
+    <text class="t-s" x="140" y="675">WireGuard · .mynetname</text>
 </g>
 
-<!-- === COMMESSE / PRODUZIONE (centro-sinistra) === -->
+<!-- === PRODUZIONE / COMMESSE === -->
 <g>
-    <rect class="box comm" x="280" y="50" width="200" height="60"/>
-    <text class="box-text" x="380" y="70">OndaSync</text>
-    <text class="box-text-sm" x="380" y="88">Import commesse + fasi</text>
-    <text class="box-text-sm" x="380" y="100">ogni ora</text>
+    <rect class="box comm" x="310" y="115" width="240" height="50"/>
+    <text class="t-h" x="430" y="133">Ordini / Fasi</text>
+    <text class="t-s" x="430" y="150">Stati 0→4 · priorità 4 livelli</text>
 
-    <rect class="box comm" x="280" y="140" width="200" height="60"/>
-    <text class="box-text" x="380" y="160">Ordini / Fasi</text>
-    <text class="box-text-sm" x="380" y="178">Stati: 0/1/2/3/4/5</text>
-    <text class="box-text-sm" x="380" y="190">Priorità 4 livelli</text>
+    <rect class="box pre" x="310" y="190" width="240" height="50"/>
+    <text class="t-h" x="430" y="208">Prestampa</text>
+    <text class="t-s" x="430" y="225">Dashboard dedicata · note</text>
 
-    <rect class="box pre" x="280" y="230" width="200" height="60"/>
-    <text class="box-text" x="380" y="250">Prestampa</text>
-    <text class="box-text-sm" x="380" y="268">Dashboard dedicata</text>
-    <text class="box-text-sm" x="380" y="280">Campi editabili + note</text>
+    <rect class="box comm" x="310" y="265" width="240" height="55"/>
+    <text class="t-h" x="430" y="283">Dashboard Operatore</text>
+    <text class="t-s" x="430" y="302">Touch reparto · Avvia/Pausa/Termina</text>
 
-    <rect class="box comm" x="280" y="320" width="200" height="60"/>
-    <text class="box-text" x="380" y="340">Dashboard Operatore</text>
-    <text class="box-text-sm" x="380" y="358">Touch tablet reparto</text>
-    <text class="box-text-sm" x="380" y="370">Avvia / Pausa / Termina</text>
+    <rect class="box finit" x="310" y="345" width="240" height="55"/>
+    <text class="t-h" x="430" y="363">Finitura · Legatoria</text>
+    <text class="t-s" x="430" y="382">Fustella, piega, brossura, UV, foil</text>
 
-    <rect class="box finit" x="280" y="410" width="200" height="60"/>
-    <text class="box-text" x="380" y="430">Finitura / Legatoria</text>
-    <text class="box-text-sm" x="380" y="448">Fustella, piega, brossura</text>
-    <text class="box-text-sm" x="380" y="460">UV, plastifica, foil</text>
+    <rect class="box mag" x="310" y="425" width="240" height="55"/>
+    <text class="t-h" x="430" y="443">Magazzino Carta</text>
+    <text class="t-s" x="430" y="462">QR etichette · OCR bolle (def2.0)</text>
 
-    <rect class="box mag" x="280" y="500" width="200" height="60"/>
-    <text class="box-text" x="380" y="520">Magazzino Carta</text>
-    <text class="box-text-sm" x="380" y="538">QR etichette + OCR bolle</text>
-    <text class="box-text-sm" x="380" y="550">(in sviluppo def2.0)</text>
+    <rect class="box sped" x="310" y="505" width="240" height="55"/>
+    <text class="t-h" x="430" y="523">Spedizione</text>
+    <text class="t-s" x="430" y="542">DDT · corriere · PDF archivio</text>
 
-    <rect class="box sped" x="280" y="590" width="200" height="60"/>
-    <text class="box-text" x="380" y="610">Spedizione</text>
-    <text class="box-text-sm" x="380" y="628">DDT, corriere, note</text>
-    <text class="box-text-sm" x="380" y="640">PDF archivio</text>
+    <rect class="box comm" x="310" y="585" width="240" height="50"/>
+    <text class="t-h" x="430" y="603">OndaSync · ExcelSync</text>
+    <text class="t-s" x="430" y="620">Cron import commesse + fasi</text>
+
+    <rect class="box comm" x="310" y="660" width="240" height="50"/>
+    <text class="t-h" x="430" y="678">Cliché Offset</text>
+    <text class="t-s" x="430" y="695">Match 7 iterazioni · 89 hit</text>
 </g>
 
-<!-- === SCHEDULER MOSSA37 (core centrale) === -->
+<!-- === SCHEDULER (CORE) === -->
 <g>
-    <rect class="box core" x="580" y="330" width="220" height="90"/>
-    <text class="box-text" x="690" y="355" font-size="12pt">SCHEDULER</text>
-    <text class="box-text" x="690" y="375" font-size="11pt">MOSSA 37</text>
-    <text class="box-text-sm" x="690" y="395">Priorità AI · batch · urgenza</text>
-    <text class="box-text-sm" x="690" y="407">PriorityService + PhaseCompleted</text>
+    <rect class="box core" x="620" y="280" width="180" height="130"/>
+    <text class="t-h" x="710" y="312" font-size="14pt" fill="#fff">SCHEDULER</text>
+    <text class="t-h" x="710" y="335" font-size="12pt" fill="#fff">MOSSA 37</text>
+    <text class="t-s" x="710" y="362" fill="#fff8">Priorità AI</text>
+    <text class="t-s" x="710" y="378" fill="#fff8">Batch · urgenza</text>
+    <text class="t-s" x="710" y="394" fill="#fff8">PriorityService</text>
+
+    <rect class="box comm" x="620" y="440" width="180" height="50"/>
+    <text class="t-h" x="710" y="458">Eventi sistema</text>
+    <text class="t-s" x="710" y="475">PhaseCompleted · sync</text>
+
+    <rect class="box ext" x="620" y="520" width="180" height="50"/>
+    <text class="t-h" x="710" y="538">Laravel 12 · MySQL</text>
+    <text class="t-s" x="710" y="555">PHP 8.5 · server .60</text>
+
+    <rect class="box ext" x="620" y="600" width="180" height="50"/>
+    <text class="t-h" x="710" y="618">PWA · Push</text>
+    <text class="t-s" x="710" y="635">Service Worker · installabile</text>
 </g>
 
-<!-- === STAMPA REAL-TIME (centro-destra) === -->
+<!-- === STAMPA REAL-TIME === -->
 <g>
-    <rect class="box stampa" x="880" y="50" width="200" height="60"/>
-    <text class="box-text" x="980" y="70">PrinectSync</text>
-    <text class="box-text-sm" x="980" y="88">Worksteps + Activities</text>
-    <text class="box-text-sm" x="980" y="100">Fogli buoni/scarto live</text>
+    <rect class="box stampa" x="870" y="115" width="230" height="55"/>
+    <text class="t-h" x="985" y="133">PrinectSync</text>
+    <text class="t-s" x="985" y="152">Worksteps · Activities live</text>
 
-    <rect class="box stampa" x="880" y="140" width="200" height="60"/>
-    <text class="box-text" x="980" y="160">FierySync</text>
-    <text class="box-text-sm" x="980" y="178">Accounting API v5</text>
-    <text class="box-text-sm" x="980" y="190">Smart match multi-fase</text>
+    <rect class="box stampa" x="870" y="195" width="230" height="55"/>
+    <text class="t-h" x="985" y="213">FierySync</text>
+    <text class="t-s" x="985" y="232">Accounting API v5 · smart match</text>
 
-    <rect class="box stampa" x="880" y="230" width="200" height="60"/>
-    <text class="box-text" x="980" y="250">Report Prinect</text>
-    <text class="box-text-sm" x="980" y="268">Detect bianca+volta (B/V)</text>
-    <text class="box-text-sm" x="980" y="280">OEE, tempo avv/esec</text>
+    <rect class="box stampa" x="870" y="275" width="230" height="55"/>
+    <text class="t-h" x="985" y="293">Report Prinect</text>
+    <text class="t-s" x="985" y="312">Detect B/V · OEE · tempo avv/esec</text>
 
-    <rect class="box stampa" x="880" y="320" width="200" height="60"/>
-    <text class="box-text" x="980" y="340">Cliché Offset</text>
-    <text class="box-text-sm" x="980" y="358">Match 7 iterazioni</text>
-    <text class="box-text-sm" x="980" y="370">89 match zero falsi</text>
+    <rect class="box stampa" x="870" y="355" width="230" height="55"/>
+    <text class="t-h" x="985" y="373">Fogli buoni / scarto</text>
+    <text class="t-s" x="985" y="392">Sync DB · retrofit storico</text>
+
+    <rect class="box stampa" x="870" y="435" width="230" height="55"/>
+    <text class="t-h" x="985" y="453">Ink · Preview · Quality</text>
+    <text class="t-s" x="985" y="472">Inchiostro · anteprima pagine</text>
+
+    <rect class="box comm" x="870" y="530" width="230" height="50"/>
+    <text class="t-h" x="985" y="548">Scheduler Cron</text>
+    <text class="t-s" x="985" y="565">Onda 1h · Fiery 1m · Prinect 5m</text>
 </g>
 
-<!-- === DASHBOARD / REPORT (destra) === -->
+<!-- === DASHBOARD / REPORT === -->
 <g>
-    <rect class="box dash" x="1150" y="50" width="220" height="60"/>
-    <text class="box-text" x="1260" y="70">Dashboard Owner</text>
-    <text class="box-text-sm" x="1260" y="88">Real-time produzione</text>
-    <text class="box-text-sm" x="1260" y="100">Filtri + notifiche</text>
+    <rect class="box dash" x="1170" y="115" width="230" height="55"/>
+    <text class="t-h" x="1285" y="133">Dashboard Owner</text>
+    <text class="t-s" x="1285" y="152">Real-time · filtri · notifiche</text>
 
-    <rect class="box dash" x="1150" y="140" width="220" height="60"/>
-    <text class="box-text" x="1260" y="160">Report Ore</text>
-    <text class="box-text-sm" x="1260" y="178">Lavorate vs previste</text>
-    <text class="box-text-sm" x="1260" y="190">Chart.js + KPI</text>
+    <rect class="box dash" x="1170" y="195" width="230" height="55"/>
+    <text class="t-h" x="1285" y="213">Report Ore</text>
+    <text class="t-s" x="1285" y="232">Lavorate vs previste · Chart.js</text>
 
-    <rect class="box dash" x="1150" y="230" width="220" height="60"/>
-    <text class="box-text" x="1260" y="250">Export Excel</text>
-    <text class="box-text-sm" x="1260" y="268">DashboardMesExport</text>
-    <text class="box-text-sm" x="1260" y="280">40+ colonne, readonly</text>
+    <rect class="box dash" x="1170" y="275" width="230" height="55"/>
+    <text class="t-h" x="1285" y="293">Export Excel</text>
+    <text class="t-s" x="1285" y="312">40+ colonne · readonly</text>
 
-    <rect class="box dash" x="1150" y="320" width="220" height="60"/>
-    <text class="box-text" x="1260" y="340">Dashboard Spedizione</text>
-    <text class="box-text-sm" x="1260" y="358">Da consegnare / parziali</text>
-    <text class="box-text-sm" x="1260" y="370">Ricerca PDF DDT</text>
+    <rect class="box dash" x="1170" y="355" width="230" height="55"/>
+    <text class="t-h" x="1285" y="373">Dashboard Spedizione</text>
+    <text class="t-s" x="1285" y="392">Da consegnare · ricerca DDT</text>
 
-    <rect class="box dash" x="1150" y="410" width="220" height="60"/>
-    <text class="box-text" x="1260" y="430">Note Consegne</text>
-    <text class="box-text-sm" x="1260" y="448">Bidirezionali owner↔sped.</text>
-    <text class="box-text-sm" x="1260" y="460">Push + beep + toast</text>
+    <rect class="box dash" x="1170" y="435" width="230" height="55"/>
+    <text class="t-h" x="1285" y="453">Note Consegne</text>
+    <text class="t-s" x="1285" y="472">Push · beep · toast bidir.</text>
 
-    <rect class="box dash" x="1150" y="500" width="220" height="60"/>
-    <text class="box-text" x="1260" y="520">Report Direzione</text>
-    <text class="box-text-sm" x="1260" y="538">KPI reparti, ore, scarti</text>
-    <text class="box-text-sm" x="1260" y="550">Excel + PDF</text>
+    <rect class="box dash" x="1170" y="515" width="230" height="55"/>
+    <text class="t-h" x="1285" y="533">Report Direzione</text>
+    <text class="t-s" x="1285" y="552">KPI reparti · Excel + PDF</text>
 
-    <rect class="box dash" x="1150" y="590" width="220" height="60"/>
-    <text class="box-text" x="1260" y="610">Security / Audit</text>
-    <text class="box-text-sm" x="1260" y="628">Spatie Permission + log</text>
-    <text class="box-text-sm" x="1260" y="640">RBAC 5 ruoli</text>
+    <rect class="box dash" x="1170" y="595" width="230" height="55"/>
+    <text class="t-h" x="1285" y="613">Security · Audit</text>
+    <text class="t-s" x="1285" y="632">Spatie · RBAC 5 ruoli</text>
+
+    <rect class="box dash" x="1170" y="675" width="230" height="45"/>
+    <text class="t-h" x="1285" y="692">Dashboard Prestampa</text>
+    <text class="t-s" x="1285" y="708">Campi editabili · assegnazioni</text>
 </g>
 
-<!-- === INFRASTRUTTURA (basso) === -->
-<g>
-    <rect class="box comm" x="280" y="690" width="200" height="50"/>
-    <text class="box-text" x="380" y="708">Scheduler Cron</text>
-    <text class="box-text-sm" x="380" y="725">Onda 1h · Fiery 1min · Prinect 5min</text>
+<!-- === FRECCE (ortogonali, pulite) === -->
 
-    <rect class="box ext" x="580" y="690" width="220" height="50"/>
-    <text class="box-text" x="690" y="708">Laravel 12 + MySQL</text>
-    <text class="box-text-sm" x="690" y="725">PHP 8.5 · server .60</text>
+<!-- Integrazioni → Produzione -->
+<path class="flow" d="M 230 140 L 275 140 L 275 140 L 310 140" marker-end="url(#arr)"/>
+<path class="flow" d="M 230 590 L 275 590 L 275 610 L 310 610" marker-end="url(#arr)"/>
 
-    <rect class="box dash" x="880" y="690" width="200" height="50"/>
-    <text class="box-text" x="980" y="708">PWA + Push</text>
-    <text class="box-text-sm" x="980" y="725">Service Worker · installabile</text>
+<!-- Produzione flusso verticale -->
+<path class="flow" d="M 430 165 L 430 190" marker-end="url(#arr)"/>
+<path class="flow" d="M 430 240 L 430 265" marker-end="url(#arr)"/>
+<path class="flow" d="M 430 320 L 430 345" marker-end="url(#arr)"/>
+<path class="flow" d="M 430 400 L 430 425" marker-end="url(#arr)"/>
+<path class="flow" d="M 430 480 L 430 505" marker-end="url(#arr)"/>
 
-    <rect class="box ext" x="1150" y="690" width="220" height="50"/>
-    <text class="box-text" x="1260" y="708">VPN MikroTik WireGuard</text>
-    <text class="box-text-sm" x="1260" y="725">Accesso remoto sicuro</text>
-</g>
+<!-- OndaSync → Ordini (retrograda) -->
+<path class="flow" d="M 310 600 L 280 600 L 280 140 L 310 140" stroke-dasharray="4,3" marker-end="url(#arr)"/>
 
-<!-- === FRECCE === -->
-<!-- Onda → OndaSync -->
-<path d="M 210 75 L 280 75" stroke="#333" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
-<!-- OndaSync → Ordini/Fasi -->
-<path d="M 380 110 L 380 140" stroke="#333" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
-<!-- Ordini → Prestampa -->
-<path d="M 380 200 L 380 230" stroke="#333" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
-<!-- Prestampa → Operatore -->
-<path d="M 380 290 L 380 320" stroke="#333" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
-<!-- Operatore → Finitura -->
-<path d="M 380 380 L 380 410" stroke="#333" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
-<!-- Finitura → Magazzino -->
-<path d="M 380 470 L 380 500" stroke="#333" stroke-width="1.5" fill="none" marker-end="url(#arrow)" stroke-dasharray="4,3"/>
-<!-- Finitura → Spedizione -->
-<path d="M 420 470 Q 500 530 420 590" stroke="#333" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+<!-- Integrazioni (Prinect, Fiery) → zona stampa (destra) -->
+<path class="flow-red" d="M 230 215 L 270 215 L 270 80 L 985 80 L 985 115" marker-end="url(#arr-red)"/>
+<path class="flow-red" d="M 230 290 L 260 290 L 260 75 L 985 75 L 985 195" marker-end="url(#arr-red)"/>
 
-<!-- Prinect → PrinectSync -->
-<path d="M 210 145 Q 500 145 880 75" stroke="#D11317" stroke-width="1.5" fill="none" marker-end="url(#arrow-red)"/>
-<!-- Fiery → FierySync -->
-<path d="M 210 215 Q 500 200 880 165" stroke="#D11317" stroke-width="1.5" fill="none" marker-end="url(#arrow-red)"/>
 <!-- BRT → Spedizione -->
-<path d="M 210 285 Q 260 600 280 620" stroke="#7e3bc6" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
-
-<!-- PrinectSync → Operatore -->
-<path d="M 880 80 Q 600 150 480 340" stroke="#D11317" stroke-width="1.2" fill="none" stroke-dasharray="3,3" marker-end="url(#arrow-red)"/>
-<!-- FierySync → Operatore -->
-<path d="M 880 170 Q 700 250 480 350" stroke="#D11317" stroke-width="1.2" fill="none" stroke-dasharray="3,3" marker-end="url(#arrow-red)"/>
-<!-- PrinectSync → Report Prinect -->
-<path d="M 980 110 L 980 230" stroke="#D11317" stroke-width="1.5" fill="none" marker-end="url(#arrow-red)"/>
-
-<!-- Scheduler core frecce bidirezionali verso Ordini/Fasi e Operatore -->
-<path d="M 580 360 L 480 340" stroke="#D11317" stroke-width="2" fill="none" marker-end="url(#arrow-red)"/>
-<path d="M 480 360 L 580 380" stroke="#D11317" stroke-width="2" fill="none" marker-end="url(#arrow-red)"/>
-<path d="M 580 400 L 480 430" stroke="#D11317" stroke-width="2" fill="none" marker-end="url(#arrow-red)"/>
-<!-- Scheduler ← → Prinect -->
-<path d="M 800 350 L 880 280" stroke="#D11317" stroke-width="2" fill="none" marker-end="url(#arrow-red)"/>
-
-<!-- Operatore → Dashboard Owner -->
-<path d="M 480 340 Q 800 150 1150 80" stroke="#c9a000" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
-<!-- Operatore → Report Ore -->
-<path d="M 480 360 Q 800 260 1150 170" stroke="#c9a000" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
-<!-- Report Prinect → Excel Export -->
-<path d="M 1080 260 L 1150 260" stroke="#333" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
-<!-- Spedizione → Dashboard Spedizione -->
-<path d="M 480 620 Q 800 500 1150 350" stroke="#7e3bc6" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
-<!-- Spedizione → Note Consegne -->
-<path d="M 480 640 Q 800 540 1150 440" stroke="#7e3bc6" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
-
+<path class="flow" stroke="#7e3bc6" stroke-width="1.5" fill="none" d="M 230 365 L 275 365 L 275 530 L 310 530" marker-end="url(#arr)"/>
 <!-- NetTime → Report Direzione -->
-<path d="M 210 355 Q 800 600 1150 520" stroke="#0d6efd" stroke-width="1.2" fill="none" stroke-dasharray="3,3" marker-end="url(#arrow)"/>
-<!-- Excel sync → Ordini bidirezionale -->
-<path d="M 210 495 Q 250 300 280 180" stroke="#333" stroke-width="1.2" fill="none" stroke-dasharray="2,2" marker-end="url(#arrow)"/>
-<path d="M 280 200 Q 250 400 210 505" stroke="#333" stroke-width="1.2" fill="none" stroke-dasharray="2,2" marker-end="url(#arrow)"/>
+<path class="flow" stroke="#0d6efd" stroke-width="1.3" fill="none" stroke-dasharray="4,3" d="M 230 440 L 1170 540" marker-end="url(#arr-blu)"/>
+<!-- Excel condiviso ↔ Ordini -->
+<path class="flow-dash" d="M 230 585 L 310 585" marker-end="url(#arr)"/>
+<path class="flow-dash" d="M 310 595 L 260 595 L 260 155 L 310 155" marker-end="url(#arr)"/>
 
-<!-- Cron → OndaSync -->
-<path d="M 380 690 L 380 400" stroke="#333" stroke-width="1" fill="none" stroke-dasharray="2,3"/>
+<!-- Scheduler ←→ Ordini/Operatore -->
+<path class="flow-red" d="M 620 300 L 570 140 L 550 140" marker-end="url(#arr-red)"/>
+<path class="flow-red" d="M 550 290 L 620 370" marker-end="url(#arr-red)"/>
+<path class="flow-red" d="M 620 390 L 550 370" marker-end="url(#arr-red)"/>
 
-<!-- Legenda sezioni in fondo -->
-<text x="700" y="800" font-size="9pt" fill="#666" text-anchor="middle" font-style="italic">
-    Frecce continue = flusso dati principale · tratteggiate = sync periodiche / eventi asincroni · rosse = integrazioni real-time (stampa)
-</text>
+<!-- Scheduler → Stampa (feedback da produzione live) -->
+<path class="flow-red" d="M 800 345 L 870 320" marker-end="url(#arr-red)"/>
+<path class="flow-red" d="M 870 215 L 800 310" marker-end="url(#arr-red)"/>
+
+<!-- PrinectSync/FierySync → Operatore (dati reali live) -->
+<path class="flow-red" stroke-dasharray="3,3" d="M 870 140 L 570 290 L 550 290" marker-end="url(#arr-red)"/>
+<path class="flow-red" stroke-dasharray="3,3" d="M 870 220 L 570 300 L 550 300" marker-end="url(#arr-red)"/>
+
+<!-- Produzione → Dashboard (output report) -->
+<path class="flow" stroke="#c9a000" stroke-width="1.6" d="M 550 140 L 1170 140" marker-end="url(#arr)"/>
+<path class="flow" stroke="#c9a000" stroke-width="1.6" d="M 550 290 L 1140 290 L 1140 220 L 1170 220" marker-end="url(#arr)"/>
+<path class="flow" stroke="#c9a000" stroke-width="1.6" d="M 550 530 L 1140 530 L 1140 380 L 1170 380" marker-end="url(#arr)"/>
+<path class="flow" stroke="#c9a000" stroke-width="1.6" d="M 550 375 L 1130 375 L 1130 300 L 1170 300" marker-end="url(#arr)"/>
+
+<!-- Stampa → Dashboard -->
+<path class="flow" stroke="#D11317" stroke-width="1.4" d="M 1100 300 L 1170 300" marker-end="url(#arr-red)"/>
+<path class="flow" stroke="#D11317" stroke-width="1.4" d="M 1100 140 L 1170 140" marker-end="url(#arr-red)"/>
+
+<!-- Spedizione → Note Consegne -->
+<path class="flow" stroke="#7e3bc6" stroke-width="1.5" d="M 550 520 L 1140 460 L 1170 460" marker-end="url(#arr)"/>
+
+<!-- Prestampa → Dashboard prestampa -->
+<path class="flow" stroke="#6b9a3a" stroke-width="1.4" d="M 550 215 L 1140 700 L 1170 700" marker-end="url(#arr)"/>
 
 </svg>
 </div>
 
 <div class="legend">
-    <div class="legend-item"><span class="legend-dot" style="background:#e8f4fb; border-color:#0d6efd;"></span> Integrazioni esterne (Onda, Prinect, Fiery, BRT, NetTime)</div>
-    <div class="legend-item"><span class="legend-dot" style="background:#fff3cd; border-color:#e6a700;"></span> Commesse / fasi / operatore</div>
-    <div class="legend-item"><span class="legend-dot" style="background:#e6f0d8; border-color:#6b9a3a;"></span> Prestampa</div>
-    <div class="legend-item"><span class="legend-dot" style="background:#fde2e2; border-color:#D11317;"></span> Stampa real-time (Prinect / Fiery / cliché)</div>
-    <div class="legend-item"><span class="legend-dot" style="background:#ffe0c2; border-color:#e67e22;"></span> Finitura / legatoria</div>
-    <div class="legend-item"><span class="legend-dot" style="background:#d6e9f8; border-color:#1973b8;"></span> Magazzino</div>
-    <div class="legend-item"><span class="legend-dot" style="background:#e5d6f5; border-color:#7e3bc6;"></span> Spedizione</div>
-    <div class="legend-item"><span class="legend-dot" style="background:#fff8c8; border-color:#c9a000;"></span> Dashboard / report</div>
-    <div class="legend-item"><span class="legend-dot" style="background:#ffb8b8; border-color:#D11317;"></span> Scheduler Mossa 37 (core)</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#eaf2fb; border-color:#0d6efd;"></span> Integrazioni esterne (Onda, Prinect, Fiery, BRT, NetTime, Solar-Log, Excel, VPN)</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#fff3cd; border-color:#d69e2e;"></span> Commesse / produzione</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#e7f1dc; border-color:#6b9a3a;"></span> Prestampa</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#fde4e4; border-color:#D11317;"></span> Stampa real-time (Prinect · Fiery)</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#fde3c8; border-color:#e07c2a;"></span> Finitura · legatoria</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#dfecfa; border-color:#1973b8;"></span> Magazzino</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#e9daf5; border-color:#7e3bc6;"></span> Spedizione</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#fff5b8; border-color:#c9a000;"></span> Dashboard · report</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#ff9c9c; border-color:#a10d10;"></span> Scheduler Mossa 37 (core)</div>
 </div>
 
-<div style="text-align:center; margin-top: 14px; font-size: 8pt; color: #777;">
-    <strong style="color:#D11317;">Grafica Nappa S.r.l.</strong> · Via Saporito 24 · 81031 Aversa (CE) · MES Production Suite · v2.0
+<div style="text-align:center; margin-top: 14px; font-size: 8.5pt; color: #777;">
+    <strong style="color:#D11317;">Grafica Nappa S.r.l.</strong> · Via Saporito 24 · 81031 Aversa (CE) · MES Production Suite
 </div>
 
 </body>
