@@ -256,6 +256,33 @@
 <div class="alert-strip ok" id="snmp-alert">&#10003; Nessun avviso attivo sulla macchina</div>
 @endif
 
+{{-- Alert Fiery API v5 (toner + vassoi) auto-refresh 60s --}}
+<div id="fiery-alerts-box" style="margin:8px 0;"></div>
+<script>
+(function() {
+    function fmtAlert(a) {
+        const col = {critico:'#dc2626', warning:'#d97706', info:'#2563eb'}[a.livello] || '#6c757d';
+        const bg = {critico:'#fef2f2', warning:'#fffbeb', info:'#eff6ff'}[a.livello] || '#f4f5f7';
+        const ico = {critico:'❌', warning:'⚠️', info:'ℹ️'}[a.livello] || '•';
+        return `<div style="background:${bg};border-left:4px solid ${col};padding:8px 14px;margin-bottom:4px;border-radius:4px;font-size:13px;color:${col};font-weight:600;">${ico} ${a.msg}</div>`;
+    }
+    function loadFieryAlerts() {
+        fetch('{{ route("mes.fiery.consumables") }}')
+            .then(r => r.json())
+            .then(d => {
+                if (!d.success || !d.alerts || !d.alerts.length) {
+                    document.getElementById('fiery-alerts-box').innerHTML = '';
+                    return;
+                }
+                document.getElementById('fiery-alerts-box').innerHTML = d.alerts.map(fmtAlert).join('');
+            })
+            .catch(() => {});
+    }
+    loadFieryAlerts();
+    setInterval(loadFieryAlerts, 60000);
+})();
+</script>
+
 @if($status)
 
 {{-- === ROW 1: KPI + Toner + Vassoi affiancati === --}}
