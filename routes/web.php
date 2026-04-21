@@ -83,6 +83,7 @@ Route::get('/owner/audit-log', [DashboardOwnerController::class, 'auditLog'])->n
 Route::post('/owner/cliche/set', [DashboardOwnerController::class, 'setCliche'])->name('owner.setCliche');
 Route::post('/owner/cliche/clear', [DashboardOwnerController::class, 'clearCliche'])->name('owner.clearCliche');
 Route::get('/owner/report-cliche', [DashboardOwnerController::class, 'reportCliche'])->name('owner.reportCliche');
+Route::post('/owner/applica-priorita-commessa', [DashboardOwnerController::class, 'applicaPrioritaCommessa'])->name('owner.applicaPrioritaCommessa');
 });
 
 // Alert ritardi (protetto con middleware owner)
@@ -194,6 +195,7 @@ Route::prefix('spedizione')->middleware(['operatore.auth'])->group(function() {
     Route::post('/notifiche/{id}/letta', [DashboardSpedizioneController::class, 'notificaLetta'])->name('spedizione.notificaLetta');
     Route::post('/notifiche/lette', [DashboardSpedizioneController::class, 'notificheLette'])->name('spedizione.notificheLette');
     Route::post('/sync-onda', [DashboardSpedizioneController::class, 'syncOnda'])->name('spedizione.syncOnda');
+    Route::get('/ricerca-ddt', [DashboardSpedizioneController::class, 'ricercaDdt'])->name('spedizione.ricercaDdt');
 });
 
 // Tracking BRT (protetto)

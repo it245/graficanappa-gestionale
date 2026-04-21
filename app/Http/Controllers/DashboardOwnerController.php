@@ -647,14 +647,19 @@ public function calcolaOreEPriorita($fase)
             $fase->fase_catalogo_id = $faseCat->id;
             $fase->save();
         } elseif (in_array($campo, $campiFase)) {
+            $valorePrima = $fase->{$campo};
             $fase->{$campo} = $valore;
 
             // Se priorità cambiata manualmente, segnala come manuale
             if ($campo === 'priorita') {
                 $fase->priorita_manuale = true;
+                \Log::info("aggiornaCampo priorita: fase_id={$fase->id} commessa=" . ($fase->ordine->commessa ?? '-') . " fase={$fase->fase} {$valorePrima}→{$valore} manuale=true");
             }
 
-            $fase->save();
+            $saved = $fase->save();
+            if ($campo === 'priorita' && !$saved) {
+                \Log::warning("aggiornaCampo priorita SAVE FAILED fase_id={$fase->id}");
+            }
 
             // Se aggiornata qta_prod, controlla completamento automatico
             if ($campo === 'qta_prod') {
@@ -742,7 +747,7 @@ public function calcolaOreEPriorita($fase)
             return response()->json(['success' => false, 'messaggio' => 'Campo non aggiornabile'], 422);
         }
 
-        app()->terminating(fn() => ExcelSyncService::exportToExcel());
+        // NOTA: ExcelSync NON eseguito qui (costoso) - cron ogni 2min lo fa
         return response()->json(['success' => true]);
     }
 
@@ -1719,6 +1724,37 @@ public function calcolaOreEPriorita($fase)
     }
 
     /**
+     * Applica una priorità a tutte le fasi di una commessa (stato < 3).
+     * Imposta priorita_manuale=true per proteggere dai ricalcoli automatici.
+     */
+    public function applicaPrioritaCommessa(Request $request)
+    {
+        if ($deny = $this->denyIfReadonly()) return $deny;
+        $commessa = trim((string) $request->input('commessa'));
+        $priorita = $request->input('priorita');
+        if ($commessa === '' || $priorita === null || $priorita === '') {
+            return response()->json(['success' => false, 'messaggio' => 'commessa o priorita mancanti'], 422);
+        }
+        $priorita = (float) str_replace(',', '.', (string) $priorita);
+
+        $ordiniIds = \App\Models\Ordine::where('commessa', $commessa)->pluck('id');
+        if ($ordiniIds->isEmpty()) {
+            return response()->json(['success' => false, 'messaggio' => 'commessa non trovata'], 404);
+        }
+
+        $count = OrdineFase::whereIn('ordine_id', $ordiniIds)
+            ->where('stato', '<', 3)
+            ->whereNull('deleted_at')
+            ->update([
+                'priorita' => $priorita,
+                'priorita_manuale' => true,
+                'updated_at' => now(),
+            ]);
+
+        return response()->json(['success' => true, 'count' => $count]);
+    }
+
+    /**
      * Rimuove il collegamento cliché (torna ad auto al prossimo match).
      */
     public function clearCliche(Request $request)
@@ -1783,6 +1819,32 @@ public function calcolaOreEPriorita($fase)
             ->get()
             ->groupBy('cliche_numero');
 
-        return view('owner.report_cliche', compact('rows', 'breakdown'));
+        // Vista per commessa: tutte le commesse con cliché collegato
+        $perCommessa = DB::table('ordini as o')
+            ->join('cliche_anagrafica as c', 'c.numero', '=', 'o.cliche_numero')
+            ->leftJoin('ordine_fasi as f', function ($j) {
+                $j->on('f.ordine_id', '=', 'o.id')
+                  ->whereNull('f.deleted_at')
+                  ->whereIn('f.fase', ['STAMPACALDOJOH', 'STAMPACALDOJOHEST', 'STAMPALAMINAORO']);
+            })
+            ->select(
+                'o.commessa',
+                'o.cliente_nome',
+                'o.descrizione',
+                'o.data_prevista_consegna',
+                'o.qta_richiesta',
+                'c.numero AS cliche_numero',
+                'c.scatola',
+                'c.descrizione_raw AS cliche_desc',
+                DB::raw('COALESCE(SUM(f.tiro), 0) AS tiro'),
+                DB::raw('COALESCE(SUM(f.scarti), 0) AS scarti'),
+                DB::raw('COALESCE(SUM(f.qta_prod), 0) AS qta_prod')
+            )
+            ->groupBy('o.commessa', 'o.cliente_nome', 'o.descrizione', 'o.data_prevista_consegna',
+                     'o.qta_richiesta', 'c.numero', 'c.scatola', 'c.descrizione_raw')
+            ->orderBy('o.data_prevista_consegna', 'desc')
+            ->get();
+
+        return view('owner.report_cliche', compact('rows', 'breakdown', 'perCommessa'));
     }
 }

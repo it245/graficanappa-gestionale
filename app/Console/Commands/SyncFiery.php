@@ -116,7 +116,7 @@ class SyncFiery extends Command
         }
 
         $r = \Illuminate\Support\Facades\Http::withoutVerifying()
-            ->timeout(10)
+            ->timeout(120)
             ->withCookies($cookies, $host)
             ->get($baseUrl . '/live/api/v5/accounting');
 

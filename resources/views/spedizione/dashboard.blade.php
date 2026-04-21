@@ -399,6 +399,13 @@
 </div>
 @endif
 
+<!-- Ricerca PDF DDT commesse vecchie/consegnate -->
+<div class="mx-2 mt-3 mb-3 d-flex gap-2 align-items-center flex-wrap" style="background:#e3f2fd; padding:10px; border-radius:8px; border:1px solid #90caf9;">
+    <strong style="color:#1565c0;">🔍 Cerca PDF DDT:</strong>
+    <input type="text" id="searchDdtInput" class="form-control form-control-sm" style="max-width:260px;" placeholder="Commessa, nº DDT o cliente (min 3 car.)" oninput="cercaDdt(this.value)">
+    <div id="searchDdtResults" style="width:100%;"></div>
+</div>
+
 <!-- Tabella fasi da spedire -->
 <h4 class="mx-2 mt-2" id="sezDaConsegnare" style="color:#28a745;">Da consegnare</h4>
 <div class="table-wrapper">
@@ -467,10 +474,15 @@
                 <th>Cod. Articolo</th>
                 <th>Descrizione</th>
                 <th data-sort="date" style="cursor:pointer;">Data cons. parziale <span class="sort-arrow">▼</span></th>
+                <th>DDT / PDF</th>
             </tr>
         </thead>
         <tbody>
             @foreach($fasiParziali as $fase)
+                @php
+                    $ddtPart = \App\Models\DdtSpedizione::where('commessa', $fase->ordine->commessa ?? '')
+                        ->orderByDesc('data_ddt')->first();
+                @endphp
                 <tr class="searchable">
                     <td>
                         <button class="btn-consegna btn-consegna-green" onclick="apriModalConsegnaDDT({{ $fase->id }}, 'totale')">Consegna Totale</button>
@@ -480,6 +492,13 @@
                     <td>{{ $fase->ordine->cod_art ?? '-' }}</td>
                     <td class="desc-col">{{ $fase->ordine->descrizione ?? '-' }}</td>
                     <td>{{ $fase->data_fine ? \Carbon\Carbon::parse($fase->data_fine)->format('d/m/Y H:i') : '-' }}</td>
+                    <td>
+                        @if($ddtPart)
+                            <a href="{{ route('ddt.pdf', $ddtPart->numero_ddt) }}" target="_blank" class="btn btn-sm btn-primary" title="Scarica PDF DDT {{ $ddtPart->numero_ddt }}">📄 {{ $ddtPart->numero_ddt }}</a>
+                        @else
+                            <span class="text-muted">-</span>
+                        @endif
+                    </td>
                 </tr>
             @endforeach
         </tbody>
@@ -1425,5 +1444,41 @@ document.querySelectorAll('table.sortable th[data-sort]').forEach(function(th) {
         rows.forEach(function(row) { tbody.appendChild(row); });
     });
 });
+
+// Ricerca DDT PDF per commessa/DDT/cliente
+var _searchDdtTimer = null;
+function cercaDdt(q) {
+    clearTimeout(_searchDdtTimer);
+    var box = document.getElementById('searchDdtResults');
+    if (!box) return;
+    if (!q || q.length < 3) { box.innerHTML = ''; return; }
+    _searchDdtTimer = setTimeout(function() {
+        fetch('{{ route("spedizione.ricercaDdt") }}?q=' + encodeURIComponent(q), {
+            headers: {'Accept': 'application/json'}
+        })
+        .then(r => r.json())
+        .then(d => {
+            if (!d.ok || !d.ddt || d.ddt.length === 0) {
+                box.innerHTML = '<small class="text-muted">Nessun DDT trovato</small>';
+                return;
+            }
+            var html = '<table class="table table-sm mt-2" style="font-size:12px; background:white;"><thead><tr><th>DDT</th><th>Data</th><th>Commessa</th><th>Cliente</th><th>Vettore</th><th>Qta</th><th>PDF</th></tr></thead><tbody>';
+            d.ddt.forEach(function(x) {
+                html += '<tr>'
+                    + '<td><strong>' + x.numero_ddt + '</strong></td>'
+                    + '<td>' + x.data_ddt + '</td>'
+                    + '<td>' + x.commessa + '</td>'
+                    + '<td>' + (x.cliente || '-') + '</td>'
+                    + '<td>' + (x.vettore || '-') + '</td>'
+                    + '<td>' + (x.qta || '-') + '</td>'
+                    + '<td><a href="' + x.pdf_url + '" target="_blank" class="btn btn-sm btn-primary">📄 PDF</a></td>'
+                    + '</tr>';
+            });
+            html += '</tbody></table>';
+            box.innerHTML = html;
+        })
+        .catch(() => { box.innerHTML = '<small class="text-danger">Errore ricerca</small>'; });
+    }, 300);
+}
 </script>
 @endsection

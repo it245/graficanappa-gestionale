@@ -511,15 +511,15 @@
             <div class="modal-body">
                 <input type="hidden" id="terminaFaseId">
                 <div class="mb-3">
-                    <label class="form-label fw-bold">Qta prodotta <span class="text-danger">*</span></label>
-                    <input type="number" id="terminaQtaProdotta" class="form-control" min="0" required>
+                    <label class="form-label fw-bold">Fogli buoni <span class="text-danger">*</span></label>
+                    <input type="number" id="terminaQtaProdotta" class="form-control" min="1" required>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label fw-bold">Scarti</label>
-                    <input type="number" id="terminaScarti" class="form-control" min="0" value="0">
+                    <label class="form-label fw-bold">Scarti <span class="text-danger">*</span></label>
+                    <input type="number" id="terminaScarti" class="form-control" min="0" required>
                 </div>
                 <div class="mb-3" id="terminaTiroWrap" style="display:none;">
-                    <label class="form-label fw-bold">Tiro <span class="text-danger">*</span></label>
+                    <label class="form-label fw-bold">Tiro (cm) <span class="text-danger">*</span></label>
                     <input type="number" id="terminaTiro" class="form-control" min="1">
                 </div>
             </div>
@@ -1003,7 +1003,8 @@ function confermaTerminaEt() {
     var tiroWrap = document.getElementById('terminaTiroWrap');
     var isCaldo = tiroWrap.style.display !== 'none';
     var tiro = tiroInput.value;
-    if (qta === '' || parseInt(qta) <= 0) { alert('Inserire la quantità prodotta'); return; }
+    if (qta === '' || parseInt(qta) <= 0) { alert('Inserire i fogli buoni'); return; }
+    if (scarti === '') { alert('Inserire gli scarti (anche 0)'); document.getElementById('terminaScarti').focus(); return; }
     if (isCaldo && (tiro === '' || parseInt(tiro) <= 0)) { alert('Inserire il tiro (cm foil consumato)'); tiroInput.focus(); return; }
     bootstrap.Modal.getInstance(document.getElementById('modalTermina')).hide();
     var payload = {fase_id: faseId, qta_prodotta: parseInt(qta), scarti: parseInt(scarti) || 0};

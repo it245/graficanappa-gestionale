@@ -355,6 +355,7 @@
                 <th>Reparto</th>
                 <th>Qta Carta</th>
                 <th>Qta Prod.</th>
+                <th>Qta Prod. Prinect</th>
                 <th>Scarti P.</th>
                 <th>Scarti R.</th>
                 <th>Operatori</th>
@@ -398,6 +399,7 @@
                 @endphp
                 <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'qta_fase', this.innerText)">{{ $qtaFaseVal ? number_format($qtaFaseVal, 0, ',', '.') : '-' }}</td>
                 <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'qta_prod', this.innerText)">{{ $fase->qta_prod ?? '-' }}</td>
+                <td style="text-align:center; background:#f0f7ff;">{{ $fase->fogli_buoni ?? '-' }}</td>
                 <td style="text-align:center;">{{ $fase->fogli_scarto ?? '-' }}</td>
                 <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'scarti', this.innerText)" style="text-align:center;">{{ $fase->scarti ?? '-' }}</td>
                 <td>

@@ -826,8 +826,8 @@ tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !imp
                     @else
                     <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)" style="background:{{ $statoBg[$statoVal] ?? '#e9ecef' }} !important;font-weight:bold;text-align:center;">{{ $statoVal }}</td>
                     @endif
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'cliente_nome', this.innerText)">{{ $fase->ordine->cliente_nome ?? '-' }}</td>
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'cod_art', this.innerText)">{{ $fase->ordine->cod_art ?? '-' }}</td>
+                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'cliente_nome', this.innerText, this)">{{ $fase->ordine->cliente_nome ?? '-' }}</td>
+                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'cod_art', this.innerText, this)">{{ $fase->ordine->cod_art ?? '-' }}</td>
                     @php
                         $descOwner = $fase->ordine->descrizione ?? '';
                         $clienteOwner = $fase->ordine->cliente_nome ?? '';
@@ -837,11 +837,11 @@ tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !imp
                     @endphp
                     <td>{{ $coloriOwner ?: '-' }}{{ str_contains(strtolower($clienteOwner), 'tifata') ? ' - IML' : '' }}</td>
                     <td>{{ $fustellaOwner ?: '-' }}</td>
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'descrizione', this.innerText)">{{ $fase->ordine->descrizione ?? '-' }}</td>
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'qta_richiesta', this.innerText)">{{ $fase->ordine->qta_richiesta ?? '-' }}</td>
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'um', this.innerText)">{{ $fase->ordine->um ?? '-' }}</td>
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'priorita', this.innerText)">{{ $fase->priorita !== null ? number_format($fase->priorita, 2) : '-' }}</td>
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'fase', this.innerText)">{{ $fase->faseCatalogo->nome_display ?? '-' }}</td>
+                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'descrizione', this.innerText, this)">{{ $fase->ordine->descrizione ?? '-' }}</td>
+                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'qta_richiesta', this.innerText, this)">{{ $fase->ordine->qta_richiesta ?? '-' }}</td>
+                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'um', this.innerText, this)">{{ $fase->ordine->um ?? '-' }}</td>
+                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'priorita', this.innerText, this)">{{ $fase->priorita !== null ? number_format($fase->priorita, 2) : '-' }}</td>
+                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'fase', this.innerText, this)">{{ $fase->faseCatalogo->nome_display ?? '-' }}</td>
                     <td>{{ $fase->faseCatalogo->reparto->nome ?? '-' }}</td>
                     @php
                         $cartaDesc = $fase->ordine->carta ?? '-';
@@ -852,7 +852,7 @@ tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !imp
                             $cartaDesc = preg_replace('/\d+\s*[Xx]\s*\d+/', $formatoReale, $cartaDesc, 1);
                         }
                     @endphp
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'carta', this.innerText)">{{ $cartaDesc }}</td>
+                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'carta', this.innerText, this)">{{ $cartaDesc }}</td>
                     @php
                         $umFase = strtoupper(trim($fase->um ?? 'FG'));
                         $isPezzi = in_array($umFase, ['TR', 'PZ', 'KG']);
@@ -863,9 +863,9 @@ tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !imp
                             $qtaFaseVal = $fase->qta_fase ?: ($isPezzi ? ($fase->ordine->qta_richiesta ?? 0) : ($fase->ordine->qta_carta ?? 0));
                         }
                     @endphp
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'qta_fase', this.innerText)">{{ $qtaFaseVal ? number_format($qtaFaseVal, 0, ',', '.') : '-' }}</td>
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_prevista_consegna', this.innerText)">{{ formatItalianDate($fase->ordine->data_prevista_consegna) }}</td>
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'cod_carta', this.innerText)">{{ $fase->ordine->cod_carta ?? '-' }}</td>
+                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'qta_fase', this.innerText, this)">{{ $qtaFaseVal ? number_format($qtaFaseVal, 0, ',', '.') : '-' }}</td>
+                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_prevista_consegna', this.innerText, this)">{{ formatItalianDate($fase->ordine->data_prevista_consegna) }}</td>
+                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'cod_carta', this.innerText, this)">{{ $fase->ordine->cod_carta ?? '-' }}</td>
                     <td style="font-weight:600;color:{{ $isPezzi ? '#2563eb' : '#059669' }}">{{ $umLabel }}</td>
                     <td>
                         @forelse($fase->operatori as $op)
@@ -874,7 +874,7 @@ tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !imp
                             -
                         @endforelse
                     </td>
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'qta_prod', this.innerText)">{{ $fase->qta_prod ?? '-' }}</td>
+                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'qta_prod', this.innerText, this)">{{ $fase->qta_prod ?? '-' }}</td>
                     @php
                         $fornitoreEsterno = preg_match('/Inviato a:\s*(.+)/i', $fase->note ?? '', $mEst) ? trim($mEst[1]) : null;
                         $notePulitaOwner = preg_replace('/,?\s*Inviato a:\s*.+/i', '', $fase->note ?? '');
@@ -892,10 +892,10 @@ tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !imp
                             @endforeach
                             @if($notePulitaOwner)<br>@endif
                         @endif
-                        <span contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'note', this.innerText)">{{ $notePulitaOwner ?? '-' }}</span>
+                        <span contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'note', this.innerText, this)">{{ $notePulitaOwner ?? '-' }}</span>
                     </td>
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_inizio', this.innerText)">{{ formatItalianDate($fase->data_inizio, true) }}</td>
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_fine', this.innerText)">{{ formatItalianDate($fase->data_fine, true) }}</td>
+                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_inizio', this.innerText, this)">{{ formatItalianDate($fase->data_inizio, true) }}</td>
+                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_fine', this.innerText, this)">{{ formatItalianDate($fase->data_fine, true) }}</td>
                     @php
                         // Ore previste: avviamento + qta_carta / copieh
                         $fasiInfoOw = config('fasi_ore');
@@ -953,7 +953,7 @@ tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !imp
                             -
                         @endif
                     </td>
-                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_registrazione', this.innerText)">{{ formatItalianDate($fase->ordine->data_registrazione) }}</td>
+                    <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_registrazione', this.innerText, this)">{{ formatItalianDate($fase->ordine->data_registrazione) }}</td>
                     @php
                         $prog = $progressoCommesse[$fase->ordine->commessa ?? ''] ?? ['totale'=>0,'terminate'=>0,'avviate'=>0,'percentuale'=>0];
                         $progPerc = $prog['percentuale'];
@@ -1592,10 +1592,10 @@ document.addEventListener('DOMContentLoaded', function(){
 <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
 {{-- JS --}}
 <script>
-function aggiornaCampo(faseId, campo, valore){
+function aggiornaCampo(faseId, campo, valore, targetEl){
+    console.log('[aggiornaCampo]', {faseId, campo, valore, targetEl});
     valore = valore.trim();
 
-    // Se il campo è numerico o priorità, sostituisci la virgola con punto
     const campiNumerici = ['qta_richiesta','qta_prod','priorita','qta_carta','ore'];
     if(campiNumerici.includes(campo)){
         valore = valore.replace(',', '.');
@@ -1605,23 +1605,92 @@ function aggiornaCampo(faseId, campo, valore){
         }
     }
 
+    var cell = targetEl || (typeof event !== 'undefined' && event.target) || null;
+    if (cell) {
+        cell.style.transition = 'background 0.3s';
+        cell.style.background = '#fff8e1';
+    }
+
     fetch(urlToken('{{ route("owner.aggiornaCampo") }}'), {
         method: 'POST',
-        headers: {'X-CSRF-TOKEN': csrfToken(), 'Content-Type': 'application/json'},
+        headers: {'X-CSRF-TOKEN': csrfToken(), 'Content-Type': 'application/json', 'Accept': 'application/json'},
         body: JSON.stringify({ fase_id: faseId, campo: campo, valore: valore })
+    })
+    .then(function(r) {
+        if (r.status === 419) { alert('Sessione scaduta. Ricarica la pagina (F5).'); throw new Error('csrf'); }
+        if (r.status === 429) { alert('Troppe richieste. Attendi qualche secondo.'); throw new Error('throttle'); }
+        if (!r.ok) throw new Error('http-' + r.status);
+        return r.json();
+    })
+    .then(function(d) {
+        if (!d.success) {
+            if (cell) cell.style.background = '#f8d7da';
+            alert('Errore salvataggio: ' + (d.messaggio || ''));
+            return;
+        }
+        if (cell) {
+            cell.style.background = '#d1e7dd';
+            setTimeout(function() { cell.style.background = ''; }, 1200);
+        }
+        if (campo === 'priorita' && cell) {
+            try {
+                var row = cell.closest('tr');
+                var commessaCell = row ? row.querySelector('td:first-child') : null;
+                var commessa = commessaCell ? commessaCell.innerText.trim() : '';
+                console.log('[popover] commessa:', commessa, 'valore:', valore, 'cell:', cell);
+                if (commessa) mostraPopoverApplicaTutte(cell, commessa, valore);
+                else console.warn('[popover] commessa vuota');
+            } catch (e) { console.error('[popover]', e); }
+        } else if (campo === 'priorita' && !cell) {
+            console.warn('[popover] cell undefined, skip');
+        }
+        if (d.reload) window.location.reload();
+    })
+    .catch(function(err) {
+        console.error('aggiornaCampo:', err);
+        if (err.message === 'csrf' || err.message === 'throttle') return;
+        if (cell) cell.style.background = '#f8d7da';
+        alert('Errore salvataggio (server)');
+    });
+}
+
+function mostraPopoverApplicaTutte(cell, commessa, priorita) {
+    var existing = document.getElementById('popApplicaTutte');
+    if (existing) existing.remove();
+
+    var rect = cell.getBoundingClientRect();
+    var pop = document.createElement('div');
+    pop.id = 'popApplicaTutte';
+    pop.style.cssText = 'position:fixed; z-index:9999; background:#fff; border:2px solid #f57f17; border-radius:6px; padding:8px 12px; box-shadow:0 4px 12px rgba(0,0,0,0.2); font-size:13px;';
+    pop.style.top = (rect.bottom + 4) + 'px';
+    pop.style.left = rect.left + 'px';
+    pop.innerHTML = '<button class="btn btn-sm btn-warning fw-bold" onclick="applicaPrioritaATutte(\'' + commessa + '\', ' + priorita + ')">Applica ' + priorita + ' a tutte le fasi di ' + commessa + '</button> <button class="btn btn-sm btn-link text-muted p-0 ms-2" onclick="document.getElementById(\'popApplicaTutte\').remove()">✕</button>';
+    document.body.appendChild(pop);
+    setTimeout(function() {
+        var p = document.getElementById('popApplicaTutte');
+        if (p) p.remove();
+    }, 8000);
+}
+
+function applicaPrioritaATutte(commessa, priorita) {
+    var pop = document.getElementById('popApplicaTutte');
+    if (pop) pop.remove();
+    if (!confirm('Applicare priorità ' + priorita + ' a TUTTE le fasi (stato <3) della commessa ' + commessa + '?')) return;
+    fetch('{{ route("owner.applicaPrioritaCommessa") }}', {
+        method: 'POST',
+        headers: {'X-CSRF-TOKEN': csrfToken(), 'Content-Type': 'application/json'},
+        body: JSON.stringify({ commessa: commessa, priorita: priorita })
     })
     .then(r => r.json())
     .then(d => {
-        if (!d.success) {
-            alert('Errore salvataggio: ' + (d.messaggio || ''));
-        } else if (d.reload) {
+        if (d.success) {
+            alert('Priorità applicata a ' + d.count + ' fasi');
             window.location.reload();
+        } else {
+            alert('Errore: ' + (d.messaggio || ''));
         }
     })
-    .catch(err => {
-        console.error(err);
-        alert('Errore di connessione');
-    });
+    .catch(() => alert('Errore di connessione'));
 }
 
 function aggiornaStato(faseId, testo) {

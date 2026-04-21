@@ -960,13 +960,8 @@ class OndaSyncService
             }
         }
 
-        // Ricalcola priorità e ore per tutte le fasi
-        $controller = app(\App\Http\Controllers\DashboardOwnerController::class);
-        $tutteLeFasi = OrdineFase::with('ordine')->get();
-        foreach ($tutteLeFasi as $fase) {
-            $controller->calcolaOreEPriorita($fase);
-            $fase->save();
-        }
+        // NOTA: ricalcolo priorità/ore NON in sync Onda (lento).
+        // DashboardOwnerController::index() calcola in memoria al page load.
 
         // Ricalcola stati (promuove fasi con predecessori terminati, rispetta modifiche manuali)
         FaseStatoService::ricalcolaTutti();
@@ -1478,7 +1473,7 @@ class OndaSyncService
             JOIN ATTDocRighe r ON t.IdDoc = r.IdDoc
             LEFT JOIN STDAnagrafiche a ON t.IdAnagrafica = a.IdAnagrafica
             WHERE t.TipoDocumento = 7
-              AND t.DataRegistrazione >= DATEADD(day, -60, GETDATE())
+              AND t.DataRegistrazione >= DATEADD(day, -30, GETDATE())
         ");
 
         if (empty($righeDDT)) return 0;

@@ -32,6 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'owner/aggiorna-campo',
             'owner/cliche/set',
             'owner/cliche/clear',
+            'owner/applica-priorita-commessa',
             'operatore/prestampa/aggiorna-campo',
             'spedizione/sync-onda',
         ]);

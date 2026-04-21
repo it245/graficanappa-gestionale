@@ -63,7 +63,7 @@ class DashboardMesSheet implements FromCollection, WithHeadings, WithMapping, Wi
             'Qta Prod', 'Note', 'Data Inizio', 'Data Fine',
             'Ordine Cliente', 'N. DDT Vendita', 'Vettore DDT', 'Qta DDT', 'Note Fasi Successive',
             'Colori', 'Fustella', 'Esterno', 'Ore Prev.', 'Ore Lav.',
-            'Scarti', 'Scarti Prev.', 'Cliché',
+            'Scarti', 'Scarti Prev.', 'Cliché', 'Qta Prod. Prinect',
         ];
     }
 
@@ -166,6 +166,8 @@ class DashboardMesSheet implements FromCollection, WithHeadings, WithMapping, Wi
             })(),
             // Cliché (auto/manual, sola lettura)
             $ordine && $ordine->cliche ? $ordine->cliche->label() : '',
+            // Qta Prodotta Prinect (fogli_buoni, sola lettura)
+            $fase->fogli_buoni ?? '',
         ];
     }
 
@@ -210,6 +212,7 @@ class DashboardMesSheet implements FromCollection, WithHeadings, WithMapping, Wi
             'AJ' => 10, // Scarti
             'AK' => 12, // Scarti Prev.
             'AL' => 12, // Cliché
+            'AM' => 14, // Qta Prod. Prinect
         ];
     }
 
