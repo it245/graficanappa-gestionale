@@ -14,25 +14,19 @@ class PrinectController extends Controller
     {
         $deviceId = env('PRINECT_DEVICE_XL106_ID', '4001');
 
-        // Dati live dalla macchina
-        $devices = $service->getDevices();
+        // Dati live dalla macchina (cache 30s)
+        $devices = cache()->remember('prinect_devices', 30, fn() => $service->getDevices());
         $device = $devices['devices'][0] ?? null;
 
-        // ===== ATTIVITA OGGI: LIVE DALLA API PRINECT (non dal DB) =====
+        // ===== ATTIVITA OGGI: LIVE DALLA API PRINECT (cache 60s) =====
+        // Sync in DB è gestito dal cron `prinect:sync-attivita` ogni 5min — non farlo inline
         $oggi = Carbon::today()->format('Y-m-d\TH:i:sP');
         $ora = Carbon::now()->format('Y-m-d\TH:i:sP');
-        $apiOggi = $service->getDeviceActivity($deviceId, $oggi, $ora);
+        $apiOggi = cache()->remember('prinect_activity_oggi', 60, fn() => $service->getDeviceActivity($deviceId, $oggi, $ora));
         $rawOggiArray = collect($apiOggi['activities'] ?? [])
             ->filter(fn($a) => !empty($a['id']))
             ->values()
             ->toArray();
-
-        // Sync live: salva in DB + aggiorna fasi stampa (operatore, data_inizio, stato)
-        try {
-            $syncService->sincronizzaDaLive($rawOggiArray);
-        } catch (\Exception $e) {
-            // Non bloccare la dashboard se il sync fallisce
-        }
 
         $attivitaOggi = collect($rawOggiArray)->map(function ($a) {
             $jobId = $a['workstep']['job']['id'] ?? null;
@@ -51,9 +45,9 @@ class PrinectController extends Controller
             ];
         })->sortByDesc('start_time')->values();
 
-        // ===== ATTIVITA 7GG: LIVE DALLA API PRINECT =====
+        // ===== ATTIVITA 7GG: LIVE DALLA API PRINECT (cache 5min) =====
         $start7gg = Carbon::now()->subDays(7)->format('Y-m-d\TH:i:sP');
-        $api7gg = $service->getDeviceActivity($deviceId, $start7gg, $ora);
+        $api7gg = cache()->remember('prinect_activity_7gg', 300, fn() => $service->getDeviceActivity($deviceId, $start7gg, $ora));
         $raw7gg = collect($api7gg['activities'] ?? [])
             ->filter(fn($a) => !empty($a['id']));
 
@@ -150,8 +144,8 @@ class PrinectController extends Controller
                 ];
             })->sortByDesc('buoni')->take(10);
 
-        // Consumption (lastre)
-        $consumption = $service->getDeviceConsumption($deviceId, $start7gg, $ora);
+        // Consumption (lastre) — cache 5min
+        $consumption = cache()->remember('prinect_consumption_7gg', 300, fn() => $service->getDeviceConsumption($deviceId, $start7gg, $ora));
         $cambiLastra = $consumption['plateChanges'] ?? 0;
 
         // Media lastre per commessa
@@ -306,17 +300,21 @@ class PrinectController extends Controller
             $query->whereDate('start_time', '<=', $request->a);
         }
 
+        // Cache riepilogo per 60s (aggregato pesante, cambia poco tra page load ravvicinati)
+        $cacheKey = 'prinect_riepilogo_' . md5(serialize($request->only(['job','tipo','da','a'])));
         $riepilogoQuery = clone $query;
-        $riepilogoJobs = $riepilogoQuery
-            ->selectRaw('prinect_job_id, prinect_job_name, commessa_gestionale,
-                SUM(good_cycles) as total_good,
-                SUM(waste_cycles) as total_waste,
-                MIN(start_time) as first_start,
-                MAX(end_time) as last_end,
-                COUNT(*) as count')
-            ->groupBy('prinect_job_id', 'prinect_job_name', 'commessa_gestionale')
-            ->orderByDesc('first_start')
-            ->get();
+        $riepilogoJobs = cache()->remember($cacheKey, 60, function () use ($riepilogoQuery) {
+            return $riepilogoQuery
+                ->selectRaw('prinect_job_id, prinect_job_name, commessa_gestionale,
+                    SUM(good_cycles) as total_good,
+                    SUM(waste_cycles) as total_waste,
+                    MIN(start_time) as first_start,
+                    MAX(end_time) as last_end,
+                    COUNT(*) as count')
+                ->groupBy('prinect_job_id', 'prinect_job_name', 'commessa_gestionale')
+                ->orderByDesc('first_start')
+                ->get();
+        });
 
         $attivita = PrinectAttivita::query();
         if ($request->filled('job')) $attivita->where('prinect_job_id', $request->job);
