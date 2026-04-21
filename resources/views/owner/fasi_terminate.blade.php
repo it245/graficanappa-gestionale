@@ -334,7 +334,7 @@ th:nth-child(24), td:nth-child(24) {
                 <th>Qta Prod.</th>
                 <th style="min-width:70px;">Ore Prev.</th>
                 <th style="min-width:70px;">Ore Lav.</th>
-                <th>Scarti P.</th>
+                <th>Scarti Prinect</th>
                 <th>Scarti R.</th>
                 <th>Note</th>
                 <th>Data Inizio</th>

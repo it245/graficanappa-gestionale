@@ -63,7 +63,7 @@ class DashboardMesSheet implements FromCollection, WithHeadings, WithMapping, Wi
             'Qta Prod', 'Note', 'Data Inizio', 'Data Fine',
             'Ordine Cliente', 'N. DDT Vendita', 'Vettore DDT', 'Qta DDT', 'Note Fasi Successive',
             'Colori', 'Fustella', 'Esterno', 'Ore Prev.', 'Ore Lav.',
-            'Scarti', 'Scarti Prev.', 'Cliché', 'Qta Prod. Prinect',
+            'Scarti', 'Scarti Prinect', 'Cliché', 'Qta Prod. Prinect',
         ];
     }
 

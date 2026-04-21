@@ -353,7 +353,7 @@
                 <th>Qta Carta</th>
                 <th>Qta Prod.</th>
                 <th>Qta Prod. Prinect</th>
-                <th>Scarti P.</th>
+                <th>Scarti Prinect</th>
                 <th>Scarti R.</th>
                 <th>Operatori</th>
                 <th>Note</th>
