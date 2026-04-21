@@ -214,8 +214,21 @@ class DashboardMesSheet implements FromCollection, WithHeadings, WithMapping, Wi
             // Scarti Onda (OC_TotScarti da preventivo articoli lavorazione, sola lettura)
             (function() use ($fase, $ordine) {
                 $map = $this->caricaScartiOnda();
-                $chiave = ($ordine->commessa ?? '') . '|' . ($fase->fase ?? '');
-                return $map[$chiave] ?? '';
+                $commessa = $ordine->commessa ?? '';
+                $faseNome = $fase->fase ?? '';
+                // Normalizza suffissi dedup (.1, .2) e prova varianti comuni
+                $faseBase = preg_replace('/\.\d+$/', '', $faseNome);
+                $tentativi = [$faseNome, $faseBase];
+                // Se fase MES è stampa, aggiungi fallback generico "STAMPA" (Onda spesso salva così)
+                if (preg_match('/^STAMPA/i', $faseBase)) {
+                    $tentativi[] = 'STAMPA';
+                }
+                foreach ($tentativi as $tentativo) {
+                    if (!$tentativo) continue;
+                    $chiave = $commessa . '|' . $tentativo;
+                    if (isset($map[$chiave])) return $map[$chiave];
+                }
+                return '';
             })(),
         ];
     }
