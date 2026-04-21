@@ -2,663 +2,300 @@
 <html lang="it">
 <head>
 <meta charset="utf-8">
-<title>DOC-DISC-MES-001 — Scheda Discovery Cliente</title>
+<title>Scheda Raccolta Dati — Grafica Nappa MES</title>
 <style>
-    @page { size: A4 portrait; margin: 1.5cm 1.5cm 2cm 1.5cm; }
+    @page { size: A4 portrait; margin: 1cm 1.2cm 1cm 1.2cm; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Segoe UI', Tahoma, sans-serif; color: #222; line-height: 1.45; padding: 25px 35px; max-width: 210mm; margin: 0 auto; font-size: 9.5pt; }
+    body { font-family: 'Segoe UI', Tahoma, sans-serif; color: #222; line-height: 1.3; font-size: 9pt; padding: 10px; max-width: 210mm; margin: 0 auto; }
 
-    .page-header { text-align: center; border-bottom: 3px solid #0d6efd; padding-bottom: 16px; margin-bottom: 10px; }
-    .page-header .azienda { color: #0d6efd; font-size: 14pt; font-weight: 700; letter-spacing: 0.05em; }
-    .page-header .indirizzo { font-size: 8pt; color: #555; margin-top: 2px; }
-    .page-header .titolo { font-size: 17pt; font-weight: 700; color: #111; margin-top: 14px; }
-    .page-header .sottotitolo { font-size: 9.5pt; color: #333; margin-top: 4px; }
+    .top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+    .logo-col { width: 30%; padding-top: 20px; }
+    .logo-col .title { font-size: 10pt; color: #555; font-style: italic; margin-bottom: 10px; }
+    .logo-col .brand { font-size: 26pt; font-weight: 800; color: #D11317; letter-spacing: -1px; line-height: 1; }
+    .logo-col .brand-sub { font-size: 9pt; color: #666; margin-top: 2px; letter-spacing: 2px; }
 
-    .meta-table { width: 100%; border-collapse: collapse; margin: 10px 0 18px 0; font-size: 8.5pt; }
-    .meta-table td { padding: 4px 8px; border: 1px solid #ccc; }
-    .meta-table td:first-child { font-weight: 700; width: 170px; background: #f5f5f5; }
+    .data-col { width: 68%; }
+    .data-col table { width: 100%; border-collapse: collapse; }
+    .data-col td { padding: 3px 0; font-size: 8.5pt; vertical-align: middle; }
+    .data-col td.label { width: 65px; font-weight: 600; color: #333; }
+    .data-col td.label-small { width: 40px; font-weight: 600; color: #333; }
+    .data-col input[type="text"] { width: 100%; border: 1px solid #bbb; padding: 3px 5px; font-size: 8.5pt; font-family: inherit; background: #fff; }
+    .data-col .field { border: 1px solid #bbb; padding: 3px 5px; min-height: 18px; background: #fff; }
+    .data-col .referente-row { background: #eff6ff; padding: 4px 6px; margin: 3px 0; border-radius: 2px; }
+    .data-col .referente-row .label { font-weight: 700; color: #0d6efd; }
 
-    .classificazione { text-align: center; padding: 7px; background: #0d6efd; color: #fff; font-weight: 700; font-size: 10pt; letter-spacing: 0.1em; margin-bottom: 25px; }
+    .section-title { background: #f0f0f0; border: 1px solid #999; text-align: center; padding: 4px; font-weight: 700; font-size: 9pt; letter-spacing: 0.05em; margin-top: 8px; }
 
-    h2 { color: #0d6efd; font-size: 12pt; margin-top: 20px; margin-bottom: 8px; border-bottom: 2px solid #0d6efd; padding-bottom: 3px; page-break-after: avoid; }
-    h3 { color: #333; font-size: 10.5pt; margin-top: 12px; margin-bottom: 5px; page-break-after: avoid; }
+    .checkbox-row { display: flex; flex-wrap: wrap; gap: 10px 20px; padding: 6px 10px; border: 1px solid #ccc; border-top: none; font-size: 8.5pt; }
+    .cb { display: inline-flex; align-items: center; gap: 5px; }
+    .cb::before { content: ""; display: inline-block; width: 11px; height: 11px; border: 1.5px solid #333; background: #fff; }
+    .cb.circle::before { border-radius: 50%; }
 
-    p { margin-bottom: 5px; }
-    ul, ol { margin: 4px 0 8px 20px; }
-    li { margin-bottom: 2px; }
+    .grid-3col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px 20px; padding: 6px 10px; border: 1px solid #ccc; border-top: none; font-size: 8.5pt; }
 
-    .intro-box { background: #eff6ff; border-left: 4px solid #0d6efd; padding: 10px 14px; margin: 15px 0; font-size: 9pt; page-break-inside: avoid; }
+    .info-table { width: 100%; border-collapse: collapse; margin-top: 4px; font-size: 8.5pt; }
+    .info-table td { border: 1px solid #bbb; padding: 4px 6px; vertical-align: middle; }
+    .info-table td.lbl { background: #f5f5f5; font-weight: 600; }
+    .info-table td.fill { background: #fff; min-height: 20px; }
 
-    table.form { width: 100%; border-collapse: collapse; margin: 6px 0 12px 0; font-size: 9pt; }
-    table.form th { background: #333; color: #fff; padding: 5px 7px; text-align: left; font-weight: 600; font-size: 8.5pt; }
-    table.form td { padding: 5px 7px; border: 1px solid #ccc; vertical-align: top; min-height: 22px; }
-    table.form td.label { background: #f5f5f5; font-weight: 600; width: 38%; }
-    table.form td.fill { min-height: 22px; background: #fff; }
+    .attr-table { width: 100%; border-collapse: collapse; margin-top: 4px; font-size: 8pt; }
+    .attr-table th { background: #333; color: #fff; padding: 4px 5px; border: 1px solid #333; font-size: 8.5pt; font-weight: 700; }
+    .attr-table td { border: 1px solid #bbb; padding: 3px 5px; height: 18px; vertical-align: middle; }
+    .attr-table td.lbl { background: #f9f9f9; font-weight: 500; }
+    .attr-table td.num { background: #fff; width: 35px; text-align: center; }
+    .attr-table .section-head { background: #0d6efd; color: #fff; font-weight: 700; text-align: center; }
 
-    table.grid { width: 100%; border-collapse: collapse; margin: 6px 0 12px 0; font-size: 8.5pt; }
-    table.grid th { background: #333; color: #fff; padding: 4px 5px; text-align: center; font-weight: 600; font-size: 8pt; }
-    table.grid td { padding: 4px 5px; border: 1px solid #ccc; text-align: left; height: 26px; background: #fff; }
-    table.grid td.empty { background: #fafafa; }
-    table.grid tr:nth-child(even) td.empty { background: #f3f3f3; }
+    .note-area { border: 1px solid #bbb; min-height: 100px; padding: 6px; margin-top: 4px; background: #fff; }
 
-    .check-list { list-style: none; margin-left: 0; }
-    .check-list li { padding: 2px 0 2px 24px; position: relative; margin-bottom: 3px; }
-    .check-list li::before { content: ""; position: absolute; left: 0; top: 3px; width: 14px; height: 14px; border: 2px solid #333; border-radius: 2px; background: #fff; }
+    .privacy { margin-top: 8px; display: flex; gap: 10px; align-items: flex-end; font-size: 7.5pt; color: #333; }
+    .privacy .text { flex: 1; line-height: 1.3; }
+    .privacy .firma { width: 180px; border: 1px solid #bbb; height: 40px; padding: 3px; background: #fff; }
+    .privacy .firma-lbl { font-size: 7pt; color: #888; text-align: center; }
+    .privacy a { color: #0d6efd; text-decoration: underline; }
 
-    .radio-group { display: inline-block; margin-right: 15px; font-size: 9pt; }
-    .radio-group::before { content: "○ "; font-weight: bold; color: #0d6efd; }
+    .footer { margin-top: 10px; font-size: 7pt; color: #555; padding-top: 6px; border-top: 1px solid #ccc; line-height: 1.3; }
+    .footer strong { color: #D11317; }
 
-    .note-box { border: 1px dashed #999; min-height: 60px; padding: 8px; margin: 8px 0; background: #fcfcfc; font-size: 9pt; color: #999; font-style: italic; }
-
-    .firma-box { margin-top: 30px; page-break-inside: avoid; }
-    .firma-box table { width: 100%; border-collapse: collapse; }
-    .firma-box td { padding: 25px 10px 8px 10px; border-bottom: 1px solid #333; width: 50%; font-size: 9pt; color: #666; vertical-align: bottom; }
-    .firma-box td:first-child { border-right: none; padding-right: 30px; }
-    .firma-box td:last-child { padding-left: 30px; }
-
-    .badge { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 8pt; font-weight: 700; color: #fff; }
-    .badge-req { background: #dc3545; }
-    .badge-opt { background: #6c757d; }
-    .badge-new { background: #28a745; }
-
-    .page-break { page-break-before: always; }
-    .footer-note { margin-top: 40px; font-size: 7.5pt; color: #888; text-align: center; border-top: 1px solid #ddd; padding-top: 8px; }
-
-    @media print {
-        body { padding: 0; }
-        h2, h3 { page-break-after: avoid; }
-        table, .note-box, .firma-box { page-break-inside: avoid; }
-    }
+    @media print { body { padding: 0; } }
 </style>
 </head>
 <body>
 
-<div class="page-header">
-    <div class="azienda">GRAFICA NAPPA srl</div>
-    <div class="indirizzo">Via Saporito, 24 — 81031 Aversa (CE) — P.IVA 03145680617</div>
-    <div class="titolo">Scheda Discovery — Analisi Pre-Vendita MES</div>
-    <div class="sottotitolo">Raccolta requisiti per implementazione sistema di gestione produzione tipografica</div>
+<div class="top">
+    <div class="logo-col">
+        <div class="title">Scheda dati tecnici per il prodotto</div>
+        <div class="brand">grafica nappa</div>
+        <div class="brand-sub">MES · PRODUCTION SUITE</div>
+    </div>
+    <div class="data-col">
+        <table>
+            <tr><td class="label">Ragione sociale</td><td colspan="3"><div class="field"></div></td></tr>
+            <tr>
+                <td class="label">Via</td><td><div class="field"></div></td>
+                <td class="label-small" style="padding-left:8px;">Cap</td><td style="width:100px;"><div class="field"></div></td>
+            </tr>
+            <tr>
+                <td class="label">Comune</td><td><div class="field"></div></td>
+                <td class="label-small" style="padding-left:8px;">Prov.</td><td><div class="field"></div></td>
+            </tr>
+            <tr>
+                <td class="label">E-mail</td><td><div class="field"></div></td>
+                <td class="label-small" style="padding-left:8px;">Tel.</td><td><div class="field"></div></td>
+            </tr>
+            <tr><td class="label">P.IVA</td><td colspan="3"><div class="field"></div></td></tr>
+        </table>
+        <div class="referente-row">
+            <table>
+                <tr><td class="label" style="width:60px;">Referente</td><td colspan="3"><div class="field"></div></td></tr>
+                <tr><td class="label">Ruolo</td><td colspan="3"><div class="field"></div></td></tr>
+                <tr>
+                    <td class="label">E-mail</td><td><div class="field"></div></td>
+                    <td class="label-small" style="padding-left:8px;">Tel.</td><td style="width:140px;"><div class="field"></div></td>
+                </tr>
+            </table>
+        </div>
+    </div>
 </div>
 
-<table class="meta-table">
-    <tr><td>Documento</td><td>DOC-DISC-MES-001</td></tr>
-    <tr><td>Versione</td><td>1.0</td></tr>
-    <tr><td>Data compilazione</td><td>____ / ____ / 2026</td></tr>
-    <tr><td>Riferimento commerciale</td><td>Grafica Nappa srl</td></tr>
-    <tr><td>Redatto da</td><td>_______________________________________</td></tr>
-</table>
-
-<div class="classificazione">RISERVATO — DA COMPILARE A CURA DEL CLIENTE</div>
-
-<div class="intro-box">
-    <strong>Scopo.</strong> Questa scheda raccoglie informazioni tecniche e operative necessarie a valutare l'implementazione del MES Grafica Nappa presso la Vostra azienda. I dati servono a dimensionare il progetto, preparare un preventivo accurato, definire le integrazioni con i sistemi esistenti e il piano di migrazione.<br><br>
-    <strong>Modalità.</strong> Compilare tutti i campi applicabili. Per campi non pertinenti scrivere "N/A". Le sezioni con <span class="badge badge-req">OBBLIGATORIO</span> sono essenziali. Le sezioni <span class="badge badge-opt">FACOLTATIVO</span> migliorano l'offerta.<br><br>
-    <strong>Riservatezza.</strong> I dati forniti sono trattati come riservati e utilizzati esclusivamente per la preparazione della proposta tecnico-commerciale.
+<div class="section-title">COME HA CONOSCIUTO GRAFICA NAPPA MES</div>
+<div class="checkbox-row">
+    <span class="cb circle">Fiere</span>
+    <span class="cb circle">Riviste</span>
+    <span class="cb circle">E-Mail</span>
+    <span class="cb circle">Facebook</span>
+    <span class="cb circle">Linkedin</span>
+    <span class="cb circle">Google</span>
+    <span class="cb circle">Passaparola</span>
+    <span class="cb circle">Demo sul campo</span>
+    <span class="cb circle">Cliente referente</span>
 </div>
 
-<h2>1. Anagrafica Azienda <span class="badge badge-req">OBBLIGATORIO</span></h2>
-<table class="form">
-    <tr><td class="label">Ragione sociale</td><td class="fill"></td></tr>
-    <tr><td class="label">Forma giuridica</td><td class="fill"></td></tr>
-    <tr><td class="label">Partita IVA / CF</td><td class="fill"></td></tr>
-    <tr><td class="label">Codice SDI / PEC</td><td class="fill"></td></tr>
-    <tr><td class="label">Sede legale</td><td class="fill"></td></tr>
-    <tr><td class="label">Sede operativa (se diversa)</td><td class="fill"></td></tr>
-    <tr><td class="label">Sito web</td><td class="fill"></td></tr>
-    <tr><td class="label">Anno fondazione</td><td class="fill"></td></tr>
-    <tr><td class="label">N. dipendenti totali</td><td class="fill"></td></tr>
-    <tr><td class="label">Dipendenti produzione</td><td class="fill"></td></tr>
-    <tr><td class="label">Dipendenti uffici</td><td class="fill"></td></tr>
-    <tr><td class="label">Fatturato annuo indicativo</td><td class="fill"></td></tr>
-    <tr><td class="label">Superficie stabilimento (mq)</td><td class="fill"></td></tr>
-    <tr><td class="label">Certificazioni (FSC / ISO / BRC / altro)</td><td class="fill"></td></tr>
-</table>
-
-<h2>2. Referenti Progetto <span class="badge badge-req">OBBLIGATORIO</span></h2>
-<table class="grid">
-    <thead>
-    <tr>
-        <th style="width:22%">Ruolo</th>
-        <th style="width:22%">Nome e Cognome</th>
-        <th style="width:20%">Telefono</th>
-        <th style="width:26%">Email</th>
-        <th style="width:10%">Decisore?</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr><td>Titolare / AD</td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Responsabile produzione</td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Responsabile IT / sistemi</td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Responsabile prestampa</td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Responsabile commerciale</td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Responsabile amministr.</td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Referente tecnico progetto</td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    </tbody>
-</table>
-
-<h2>3. Attività e Tipologia Produzione <span class="badge badge-req">OBBLIGATORIO</span></h2>
-<h3>3.1 Settore merceologico principale</h3>
-<ul>
-    <li class="check-list-item"><span class="radio-group">Packaging astucci pieghevoli</span> <span class="radio-group">Etichette</span> <span class="radio-group">Libri / editoria</span></li>
-    <li class="check-list-item"><span class="radio-group">Commerciale (depliant, brochure)</span> <span class="radio-group">Cartotecnica</span> <span class="radio-group">Packaging lusso</span></li>
-    <li class="check-list-item"><span class="radio-group">Stampa digitale B2B</span> <span class="radio-group">Grande formato</span> <span class="radio-group">Altro: _________________</span></li>
-</ul>
-
-<h3>3.2 Mercati serviti</h3>
-<ul>
-    <li class="check-list-item"><span class="radio-group">Food / beverage</span> <span class="radio-group">Cosmetica / farmaceutico</span> <span class="radio-group">Moda / lusso</span> <span class="radio-group">Industriale</span></li>
-    <li class="check-list-item"><span class="radio-group">Editoria</span> <span class="radio-group">Pubblicitario</span> <span class="radio-group">Grande distribuzione</span> <span class="radio-group">Altro</span></li>
-</ul>
-
-<h3>3.3 Volumi produzione medi</h3>
-<table class="form">
-    <tr><td class="label">N. commesse medio/mese</td><td class="fill"></td></tr>
-    <tr><td class="label">N. commesse picco/mese</td><td class="fill"></td></tr>
-    <tr><td class="label">N. clienti attivi</td><td class="fill"></td></tr>
-    <tr><td class="label">% commesse urgenti (&lt;7gg)</td><td class="fill"></td></tr>
-    <tr><td class="label">% commesse ripetitive</td><td class="fill"></td></tr>
-    <tr><td class="label">Tiratura media (copie)</td><td class="fill"></td></tr>
-    <tr><td class="label">Tiratura minima / massima</td><td class="fill"></td></tr>
-    <tr><td class="label">Lead time medio dichiarato (gg)</td><td class="fill"></td></tr>
-    <tr><td class="label">Export estero (%)</td><td class="fill"></td></tr>
-</table>
-
-<h2>4. Organizzazione Reparti <span class="badge badge-req">OBBLIGATORIO</span></h2>
-<table class="grid">
-    <thead>
-    <tr>
-        <th style="width:22%">Reparto</th>
-        <th style="width:10%">Attivo?</th>
-        <th style="width:14%">N. addetti</th>
-        <th style="width:14%">N. turni</th>
-        <th style="width:20%">Orari</th>
-        <th style="width:20%">Responsabile</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr><td>Prestampa / DTP</td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>CTP / lastre</td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Stampa offset</td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Stampa digitale</td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Plastificazione / laminazione</td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Stampa a caldo / foil</td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Rilievi a secco</td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Verniciatura UV / spot</td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Fustellatura</td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Piega e incolla</td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Legatoria</td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Finitura digitale</td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Allestimento / confezionamento</td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Magazzino carta</td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Magazzino PF</td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Spedizione</td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Qualità / controllo</td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Manutenzione</td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Altro: __________</td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    </tbody>
-</table>
-
-<div class="page-break"></div>
-
-<h2>5. Parco Macchine — Stampa Offset</h2>
-<table class="grid">
-    <thead>
-    <tr>
-        <th style="width:22%">Marca/Modello</th>
-        <th style="width:10%">Anno</th>
-        <th style="width:10%">Formato max</th>
-        <th style="width:10%">N. colori</th>
-        <th style="width:12%">Velocità max</th>
-        <th style="width:10%">B/V</th>
-        <th style="width:14%">Accessori (UV, torre vernice…)</th>
-        <th style="width:12%">Connettività (Prinect/JDF)</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    </tbody>
-</table>
-
-<h2>6. Parco Macchine — Stampa Digitale</h2>
-<table class="grid">
-    <thead>
-    <tr>
-        <th style="width:25%">Marca/Modello (es. HP Indigo, Xerox, Kodak, Fiery)</th>
-        <th style="width:10%">Anno</th>
-        <th style="width:15%">Formato max</th>
-        <th style="width:15%">Toner / Inkjet</th>
-        <th style="width:15%">DFE (Fiery/altro)</th>
-        <th style="width:20%">API/JDF disponibile</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    </tbody>
-</table>
-
-<h2>7. Parco Macchine — Finitura e Legatoria</h2>
-<table class="grid">
-    <thead>
-    <tr>
-        <th style="width:30%">Macchina (fustellatrice, piegaincolla, brossuratrice, plastificatrice, foil, rilievo…)</th>
-        <th style="width:20%">Marca/Modello</th>
-        <th style="width:10%">Anno</th>
-        <th style="width:15%">Formato max</th>
-        <th style="width:25%">Connettività / sensori OEE</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    </tbody>
-</table>
-
-<h2>8. Prestampa e CTP</h2>
-<table class="form">
-    <tr><td class="label">Software prestampa (Illustrator, Packz, ArtPro, Esko, Kodak…)</td><td class="fill"></td></tr>
-    <tr><td class="label">Workflow imposizione (Prinect Cockpit, Kodak Prinergy, Esko Automation Engine, Pitstop, altro)</td><td class="fill"></td></tr>
-    <tr><td class="label">CTP marca/modello</td><td class="fill"></td></tr>
-    <tr><td class="label">N. lastre/giorno</td><td class="fill"></td></tr>
-    <tr><td class="label">Prove colore (softproof / contract proof)</td><td class="fill"></td></tr>
-    <tr><td class="label">Gestione cliché stampa a caldo (Excel / gestionale / manuale)</td><td class="fill"></td></tr>
-    <tr><td class="label">Gestione fustelle (archivio, riutilizzo)</td><td class="fill"></td></tr>
-</table>
-
-<div class="page-break"></div>
-
-<h2>9. Gestionale / ERP Attuale <span class="badge badge-req">OBBLIGATORIO</span></h2>
-<table class="form">
-    <tr><td class="label">ERP gestionale in uso (nome + versione)</td><td class="fill"></td></tr>
-    <tr><td class="label">Anno implementazione</td><td class="fill"></td></tr>
-    <tr><td class="label">Fornitore / partner</td><td class="fill"></td></tr>
-    <tr><td class="label">Database (SQL Server, MySQL, Oracle, altro)</td><td class="fill"></td></tr>
-    <tr><td class="label">On-premise / Cloud / SaaS</td><td class="fill"></td></tr>
-    <tr><td class="label">Moduli attivi (ordini, offerte, contabilità, magazzino, CRM, HR…)</td><td class="fill"></td></tr>
-    <tr><td class="label">API esposte (SOAP / REST / nessuna)</td><td class="fill"></td></tr>
-    <tr><td class="label">Documentazione API disponibile?</td><td class="fill"></td></tr>
-    <tr><td class="label">Contratto manutenzione attivo?</td><td class="fill"></td></tr>
-    <tr><td class="label">Punti deboli del gestionale attuale</td><td class="fill"></td></tr>
-    <tr><td class="label">Volete sostituirlo o affiancarlo al MES?</td><td class="fill"></td></tr>
-</table>
-
-<h2>10. Preventivazione</h2>
-<table class="form">
-    <tr><td class="label">Software preventivazione (nome)</td><td class="fill"></td></tr>
-    <tr><td class="label">Integrato con ERP?</td><td class="fill"></td></tr>
-    <tr><td class="label">Tempo medio per preventivo (minuti)</td><td class="fill"></td></tr>
-    <tr><td class="label">N. preventivi/mese</td><td class="fill"></td></tr>
-    <tr><td class="label">Tasso conversione preventivi (%)</td><td class="fill"></td></tr>
-    <tr><td class="label">Integrazione richiesta con MES?</td><td class="fill"></td></tr>
-</table>
-
-<h2>11. Sistemi Produzione Esistenti</h2>
-<table class="grid">
-    <thead>
-    <tr>
-        <th style="width:25%">Sistema</th>
-        <th style="width:15%">Versione</th>
-        <th style="width:20%">Integrazione API disponibile</th>
-        <th style="width:20%">Dati utili (KPI, conteggi, consumi)</th>
-        <th style="width:20%">Critico per MES?</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr><td>Prinect Business Manager</td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Prinect Shopfloor / Pressroom Manager</td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Prinect Portal / API REST</td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Fiery Central / Command WorkStation</td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Fiery API (Evaluation/Automation/Production)</td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Esko Automation Engine / Device Manager</td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Kodak Prinergy</td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Sistemi MIS (Hiflex, EFI Monarch, Optimus…)</td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>CIP3/CIP4/JDF workflow</td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    </tbody>
-</table>
-
-<h2>12. Sistemi Amministrativi / Esterni</h2>
-<table class="grid">
-    <thead>
-    <tr>
-        <th style="width:30%">Sistema</th>
-        <th style="width:25%">Fornitore / Prodotto</th>
-        <th style="width:20%">Integrazione richiesta?</th>
-        <th style="width:25%">Note</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr><td>Contabilità</td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Fatturazione elettronica</td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>CRM</td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>E-commerce / portale clienti</td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Piattaforma spedizioni (BRT, GLS, DHL, DPD)</td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Rilevazione presenze (NetTime, Zucchetti, altro)</td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Badge / controllo accessi</td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Monitoraggio energetico / fotovoltaico</td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Sensori IoT / OEE macchine</td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Office 365 / Google Workspace</td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    </tbody>
-</table>
-
-<div class="page-break"></div>
-
-<h2>13. Flusso Ordine Attuale (AS-IS)</h2>
-<div class="note-box">Descrivere passo-passo come nasce oggi una commessa: dal contatto cliente, al preventivo, all'ordine, alla pianificazione, alla produzione, alla spedizione, alla fattura. Quali persone intervengono? Quali documenti si scambiano? Quali software usate? Dove si crea il "numero commessa"?</div>
-
-<h2>14. Magazzino Carta</h2>
-<table class="form">
-    <tr><td class="label">Gestite magazzino carta?</td><td class="fill"></td></tr>
-    <tr><td class="label">Software attuale (o Excel/manuale)</td><td class="fill"></td></tr>
-    <tr><td class="label">N. tipologie carta gestite</td><td class="fill"></td></tr>
-    <tr><td class="label">Movimenti carico/scarico/mese</td><td class="fill"></td></tr>
-    <tr><td class="label">Ubicazioni codificate?</td><td class="fill"></td></tr>
-    <tr><td class="label">Etichette QR / barcode su bancali?</td><td class="fill"></td></tr>
-    <tr><td class="label">Inventario frequenza</td><td class="fill"></td></tr>
-    <tr><td class="label">Fornitori carta principali</td><td class="fill"></td></tr>
-    <tr><td class="label">Bolle fornitore — gestione (cartacea/digitale)</td><td class="fill"></td></tr>
-    <tr><td class="label">Interesse OCR bolle?</td><td class="fill"></td></tr>
-</table>
-
-<h2>15. Magazzino Prodotti Finiti</h2>
-<table class="form">
-    <tr><td class="label">Gestite magazzino PF?</td><td class="fill"></td></tr>
-    <tr><td class="label">Software attuale</td><td class="fill"></td></tr>
-    <tr><td class="label">Lotti tracciati?</td><td class="fill"></td></tr>
-    <tr><td class="label">Conto lavoro / stock cliente?</td><td class="fill"></td></tr>
-    <tr><td class="label">Spedizioni parziali frequenti?</td><td class="fill"></td></tr>
-</table>
-
-<h2>16. Spedizioni</h2>
-<table class="form">
-    <tr><td class="label">Corrieri principali (BRT, GLS, DHL, DPD, SDA…)</td><td class="fill"></td></tr>
-    <tr><td class="label">API tracking integrate?</td><td class="fill"></td></tr>
-    <tr><td class="label">Ritiri/giorno medi</td><td class="fill"></td></tr>
-    <tr><td class="label">DDT generati da ERP o manuali?</td><td class="fill"></td></tr>
-    <tr><td class="label">Spedizione estero (frequenza)</td><td class="fill"></td></tr>
-    <tr><td class="label">Consegne con vs mezzo aziendale?</td><td class="fill"></td></tr>
-</table>
-
-<h2>17. Infrastruttura IT <span class="badge badge-req">OBBLIGATORIO</span></h2>
-<table class="form">
-    <tr><td class="label">Server on-premise (marca/modello, età)</td><td class="fill"></td></tr>
-    <tr><td class="label">Sistema operativo server</td><td class="fill"></td></tr>
-    <tr><td class="label">Database server (versione)</td><td class="fill"></td></tr>
-    <tr><td class="label">Virtualizzazione (VMware, Hyper-V, Proxmox)</td><td class="fill"></td></tr>
-    <tr><td class="label">N. server fisici / VM</td><td class="fill"></td></tr>
-    <tr><td class="label">Risorse disponibili (RAM, CPU, storage)</td><td class="fill"></td></tr>
-    <tr><td class="label">Rete LAN (1Gbps/10Gbps)</td><td class="fill"></td></tr>
-    <tr><td class="label">Wi-Fi produzione (copertura reparti)</td><td class="fill"></td></tr>
-    <tr><td class="label">Firewall / UTM</td><td class="fill"></td></tr>
-    <tr><td class="label">Dominio Active Directory?</td><td class="fill"></td></tr>
-    <tr><td class="label">VPN per accesso remoto</td><td class="fill"></td></tr>
-    <tr><td class="label">Connettività internet (tipo / banda)</td><td class="fill"></td></tr>
-    <tr><td class="label">IP pubblico fisso?</td><td class="fill"></td></tr>
-    <tr><td class="label">Certificato SSL / dominio interno</td><td class="fill"></td></tr>
-    <tr><td class="label">Fornitore IT esterno (nome)</td><td class="fill"></td></tr>
-</table>
-
-<h2>18. Postazioni di Reparto</h2>
-<table class="grid">
-    <thead>
-    <tr>
-        <th style="width:30%">Reparto</th>
-        <th style="width:15%">N. postazioni</th>
-        <th style="width:20%">Tipo (PC / tablet / touch)</th>
-        <th style="width:20%">Età / condizioni</th>
-        <th style="width:15%">Nuova fornitura?</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr><td>Prestampa</td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Stampa offset</td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Stampa digitale</td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Finitura</td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Magazzino</td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Spedizione</td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Uffici</td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    </tbody>
-</table>
-
-<div class="page-break"></div>
-
-<h2>19. Sicurezza e Backup <span class="badge badge-req">OBBLIGATORIO</span></h2>
-<table class="form">
-    <tr><td class="label">Backup attuali — frequenza e destinazione</td><td class="fill"></td></tr>
-    <tr><td class="label">Disaster recovery plan</td><td class="fill"></td></tr>
-    <tr><td class="label">Antivirus / EDR</td><td class="fill"></td></tr>
-    <tr><td class="label">Politica password</td><td class="fill"></td></tr>
-    <tr><td class="label">2FA per accessi critici</td><td class="fill"></td></tr>
-    <tr><td class="label">Log accessi / audit</td><td class="fill"></td></tr>
-    <tr><td class="label">GDPR — DPO nominato?</td><td class="fill"></td></tr>
-    <tr><td class="label">Registro trattamenti esistente?</td><td class="fill"></td></tr>
-    <tr><td class="label">Incidenti di sicurezza passati</td><td class="fill"></td></tr>
-</table>
-
-<h2>20. Reporting e KPI</h2>
-<h3>20.1 KPI attualmente monitorati</h3>
-<ul>
-    <li class="check-list-item"><span class="radio-group">Ore macchina</span> <span class="radio-group">OEE</span> <span class="radio-group">Scarti</span> <span class="radio-group">Rispetto tempi di consegna</span></li>
-    <li class="check-list-item"><span class="radio-group">Costo commessa</span> <span class="radio-group">Margine commessa</span> <span class="radio-group">Fatturato/reparto</span> <span class="radio-group">Produttività operatore</span></li>
-    <li class="check-list-item"><span class="radio-group">Carta consumata</span> <span class="radio-group">Inchiostro consumato</span> <span class="radio-group">Energia</span> <span class="radio-group">Nessuno</span></li>
-</ul>
-
-<h3>20.2 Report richiesti dal management</h3>
-<div class="note-box">Elencare i report periodici che la direzione/commerciale/produzione desidera: cadenza (giornaliera/settimanale/mensile), destinatari, formato (Excel, PDF, dashboard).</div>
-
-<h2>21. Scheduler e Pianificazione <span class="badge badge-req">OBBLIGATORIO</span></h2>
-<table class="form">
-    <tr><td class="label">Chi pianifica oggi la produzione?</td><td class="fill"></td></tr>
-    <tr><td class="label">Strumento usato (Excel, gestionale, lavagna, altro)</td><td class="fill"></td></tr>
-    <tr><td class="label">Orizzonte pianificazione (giorni/settimane)</td><td class="fill"></td></tr>
-    <tr><td class="label">Frequenza ripianificazione</td><td class="fill"></td></tr>
-    <tr><td class="label">Criteri prioritizzazione (data consegna, cliente, urgenza…)</td><td class="fill"></td></tr>
-    <tr><td class="label">Tempo medio dedicato (ore/giorno)</td><td class="fill"></td></tr>
-    <tr><td class="label">Problemi principali con la pianificazione attuale</td><td class="fill"></td></tr>
-    <tr><td class="label">Vincoli di macchina (cambio formato, setup, manutenzioni)</td><td class="fill"></td></tr>
-    <tr><td class="label">Vincoli di personale (competenze macchina)</td><td class="fill"></td></tr>
-    <tr><td class="label">Batching / raggruppamenti frequenti</td><td class="fill"></td></tr>
-    <tr><td class="label">Colli di bottiglia noti</td><td class="fill"></td></tr>
-</table>
-
-<h2>22. Qualità e Non Conformità</h2>
-<table class="form">
-    <tr><td class="label">Sistema gestione NC (software/modulo)</td><td class="fill"></td></tr>
-    <tr><td class="label">Tasso difettosità medio</td><td class="fill"></td></tr>
-    <tr><td class="label">Controlli in linea (spettro, densitometro, camere ispezione)</td><td class="fill"></td></tr>
-    <tr><td class="label">Procedure di rilavorazione</td><td class="fill"></td></tr>
-    <tr><td class="label">Tracciabilità lotti</td><td class="fill"></td></tr>
-</table>
-
-<h2>23. Manutenzione</h2>
-<table class="form">
-    <tr><td class="label">Manutenzione programmata su macchine?</td><td class="fill"></td></tr>
-    <tr><td class="label">Software CMMS utilizzato</td><td class="fill"></td></tr>
-    <tr><td class="label">Interventi correttivi/mese</td><td class="fill"></td></tr>
-    <tr><td class="label">Integrazione con MES desiderata?</td><td class="fill"></td></tr>
-</table>
-
-<div class="page-break"></div>
-
-<h2>24. Utenti e Ruoli Previsti per il MES <span class="badge badge-req">OBBLIGATORIO</span></h2>
-<table class="grid">
-    <thead>
-    <tr>
-        <th style="width:30%">Ruolo</th>
-        <th style="width:15%">N. utenti</th>
-        <th style="width:35%">Funzioni principali richieste</th>
-        <th style="width:20%">Dispositivo principale</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr><td>Operatore reparto</td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Capo reparto</td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Prestampa</td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Pianificatore</td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Responsabile produzione</td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Spedizione / magazzino</td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Commerciale</td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Titolare / direzione</td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Qualità</td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>IT / amministratore</td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    </tbody>
-</table>
-
-<h2>25. Dati da Migrare</h2>
-<table class="grid">
-    <thead>
-    <tr>
-        <th style="width:35%">Entità</th>
-        <th style="width:10%">Volume</th>
-        <th style="width:15%">Storico da importare</th>
-        <th style="width:20%">Formato sorgente</th>
-        <th style="width:20%">Qualità dato</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr><td>Anagrafica clienti</td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Anagrafica fornitori</td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Articoli / prodotti</td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Commesse aperte</td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Commesse storiche (anni)</td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Fustelle / cliché</td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Distinte base / cicli</td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Listini / preventivi</td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Magazzino giacenze</td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td>Documenti (PDF ordini, DDT)</td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    </tbody>
-</table>
-
-<h2>26. Pain Points — Cosa Non Funziona Oggi <span class="badge badge-req">OBBLIGATORIO</span></h2>
-<div class="note-box">Top 5 criticità operative attuali. Per ogni punto indicare: problema, impatto (tempo perso / errori / costi), frequenza.</div>
-
-<h2>27. Obiettivi Attesi dal MES <span class="badge badge-req">OBBLIGATORIO</span></h2>
-<ul>
-    <li class="check-list-item">Ridurre tempi di attraversamento</li>
-    <li class="check-list-item">Aumentare rispetto date di consegna</li>
-    <li class="check-list-item">Ridurre scarti e rilavorazioni</li>
-    <li class="check-list-item">Tracciabilità completa delle commesse</li>
-    <li class="check-list-item">Automatizzare pianificazione</li>
-    <li class="check-list-item">Visibilità real-time stato reparti</li>
-    <li class="check-list-item">Costo reale commessa</li>
-    <li class="check-list-item">Digitalizzare bolle di lavorazione</li>
-    <li class="check-list-item">Eliminare carta in produzione</li>
-    <li class="check-list-item">Integrare Prinect / Fiery</li>
-    <li class="check-list-item">Notifiche automatiche ritardi</li>
-    <li class="check-list-item">Dashboard direzione</li>
-    <li class="check-list-item">Altro: ________________________________________________</li>
-</ul>
-
-<h2>28. Aspetti Legali / Compliance</h2>
-<table class="form">
-    <tr><td class="label">Certificazioni da mantenere (FSC, BRC, ISO 9001, 14001, 22000)</td><td class="fill"></td></tr>
-    <tr><td class="label">Audit periodici (clienti, enti, …)</td><td class="fill"></td></tr>
-    <tr><td class="label">Tracciabilità materie prime richiesta (es. food/pharma)</td><td class="fill"></td></tr>
-    <tr><td class="label">Documentazione obbligatoria da conservare</td><td class="fill"></td></tr>
-    <tr><td class="label">Retention dati (anni)</td><td class="fill"></td></tr>
-</table>
-
-<div class="page-break"></div>
-
-<h2>29. Modalità di Deploy Preferita</h2>
-<ul>
-    <li class="check-list-item"><span class="radio-group">On-premise (server interno)</span></li>
-    <li class="check-list-item"><span class="radio-group">Cloud dedicato</span></li>
-    <li class="check-list-item"><span class="radio-group">SaaS multi-tenant</span></li>
-    <li class="check-list-item"><span class="radio-group">Ibrido (DB locale, app cloud)</span></li>
-</ul>
-
-<h2>30. Personalizzazioni Desiderate</h2>
-<table class="form">
-    <tr><td class="label">Logo / branding personalizzato</td><td class="fill"></td></tr>
-    <tr><td class="label">Dominio proprio (es. mes.azienda.it)</td><td class="fill"></td></tr>
-    <tr><td class="label">Workflow custom rispetto al sistema base</td><td class="fill"></td></tr>
-    <tr><td class="label">Campi aggiuntivi su commesse / articoli</td><td class="fill"></td></tr>
-    <tr><td class="label">Stampe personalizzate (DDT, etichette, bolle)</td><td class="fill"></td></tr>
-    <tr><td class="label">Lingue aggiuntive richieste</td><td class="fill"></td></tr>
-</table>
-
-<h2>31. Formazione e Supporto Atteso</h2>
-<table class="form">
-    <tr><td class="label">Numero persone da formare (totale)</td><td class="fill"></td></tr>
-    <tr><td class="label">Modalità preferita (in aula / on-the-job / remoto)</td><td class="fill"></td></tr>
-    <tr><td class="label">Livello competenze IT utenti (1=base, 5=avanzato)</td><td class="fill"></td></tr>
-    <tr><td class="label">Key users identificati?</td><td class="fill"></td></tr>
-    <tr><td class="label">Supporto richiesto (helpdesk 24/7, 8/5, email)</td><td class="fill"></td></tr>
-    <tr><td class="label">SLA desiderati (tempo di risposta)</td><td class="fill"></td></tr>
-</table>
-
-<h2>32. Integrazioni Specifiche — Dettaglio Tecnico</h2>
-<table class="grid">
-    <thead>
-    <tr>
-        <th style="width:25%">Sistema</th>
-        <th style="width:15%">Protocollo (REST/SOAP/DB/File)</th>
-        <th style="width:15%">Direzione (read/write/bidir)</th>
-        <th style="width:15%">Frequenza</th>
-        <th style="width:30%">Dati scambiati</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    <tr><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>
-    </tbody>
-</table>
-
-<h2>33. Documentazione Fornita a Supporto <span class="badge badge-opt">FACOLTATIVO</span></h2>
-<ul>
-    <li class="check-list-item">Organigramma aziendale</li>
-    <li class="check-list-item">Layout stabilimento / planimetria</li>
-    <li class="check-list-item">Esempio bolla di lavorazione attuale</li>
-    <li class="check-list-item">Esempio DDT e fattura</li>
-    <li class="check-list-item">Esempio ordine cliente</li>
-    <li class="check-list-item">Schema flusso produttivo</li>
-    <li class="check-list-item">Manuali API sistemi esistenti</li>
-    <li class="check-list-item">Elenco completo macchinari con schede tecniche</li>
-    <li class="check-list-item">Listino prezzi / preventivi tipo</li>
-    <li class="check-list-item">Screenshot gestionale attuale (schermate principali)</li>
-</ul>
-
-<h2>34. Note e Richieste Specifiche</h2>
-<div class="note-box" style="min-height: 140px;">Spazio libero per qualsiasi informazione aggiuntiva, richiesta particolare, vincolo organizzativo, preferenza tecnologica, esperienza negativa con fornitori precedenti, ecc.</div>
-
-<h2>35. Checklist Sopralluogo Tecnico <span class="badge badge-opt">FACOLTATIVO</span></h2>
-<ul class="check-list">
-    <li>Verifica fisica sala server</li>
-    <li>Test velocità rete in reparto</li>
-    <li>Verifica copertura Wi-Fi</li>
-    <li>Foto postazioni reparto</li>
-    <li>Foto macchine e targhe seriali</li>
-    <li>Accesso console Prinect / Fiery</li>
-    <li>Test ping tra sottoreti</li>
-    <li>Verifica alimentazione UPS</li>
-    <li>Verifica rumore / temperatura reparti (per tablet)</li>
-    <li>Controllo stampanti etichette / termiche</li>
-    <li>Verifica lettori barcode / QR esistenti</li>
-</ul>
-
-<div class="firma-box">
-    <table>
-        <tr>
-            <td>Firma Cliente / Data</td>
-            <td>Firma Grafica Nappa / Data</td>
-        </tr>
-    </table>
+<div class="section-title">TIPOLOGIA ATTIVITÀ</div>
+<div class="grid-3col">
+    <span class="cb">Studio grafico / Agenzia</span>
+    <span class="cb">Editore</span>
+    <span class="cb">Digitale piccolo f.to</span>
+    <span class="cb">Serigrafia</span>
+    <span class="cb">Stampa in piano</span>
+    <span class="cb">Tipo Lito</span>
+    <span class="cb">Etichette</span>
+    <span class="cb">Digitale grande f.to</span>
+    <span class="cb">Imballaggio flessibile</span>
+    <span class="cb">Stampa in bobina</span>
+    <span class="cb">Legatoria</span>
+    <span class="cb">Cartotecnica</span>
+    <span class="cb">Packaging astucci</span>
+    <span class="cb">Packaging lusso</span>
+    <span class="cb">Altro: _____________</span>
 </div>
 
-<div class="footer-note">
-    DOC-DISC-MES-001 v1.0 — Scheda Discovery MES Grafica Nappa — Riservato<br>
-    Grafica Nappa srl · Via Saporito 24 · 81031 Aversa (CE) · P.IVA 03145680617 · it@graficanappa.com
+<table class="info-table" style="margin-top: 8px;">
+    <tr>
+        <td class="lbl" style="width:33%;">Possiede software gestionale?</td>
+        <td style="width:12%;"><span class="cb">SI</span> &nbsp; <span class="cb">NO</span></td>
+        <td class="lbl" style="width:10%;">Quale?</td>
+        <td class="fill"></td>
+    </tr>
+    <tr>
+        <td class="lbl">Possiede software contabilità?</td>
+        <td><span class="cb">SI</span> &nbsp; <span class="cb">NO</span></td>
+        <td class="lbl">Quale?</td>
+        <td class="fill"></td>
+    </tr>
+    <tr>
+        <td class="lbl">Possiede workflow prestampa?</td>
+        <td><span class="cb">SI</span> &nbsp; <span class="cb">NO</span></td>
+        <td class="lbl">Quale?</td>
+        <td class="fill"></td>
+    </tr>
+</table>
+
+<table class="info-table">
+    <tr>
+        <td class="lbl" style="width:15%;">N° Dipendenti</td><td class="fill" style="width:10%;"></td>
+        <td class="lbl" style="width:15%;">di cui in Ufficio</td><td class="fill" style="width:10%;"></td>
+        <td class="lbl" style="width:15%;">in Produzione</td><td class="fill" style="width:10%;"></td>
+        <td class="lbl" style="width:10%;">Fatturato</td><td class="fill"></td>
+    </tr>
+    <tr>
+        <td class="lbl">Avete almeno un addetto IT</td>
+        <td colspan="2"><span class="cb">SI</span> &nbsp;&nbsp; <span class="cb">NO</span></td>
+        <td class="lbl">Se presente è</td>
+        <td colspan="4"><span class="cb">Interno</span> &nbsp;&nbsp; <span class="cb">Esterno all'organico</span></td>
+    </tr>
+    <tr>
+        <td class="lbl">N° commesse/mese</td><td class="fill"></td>
+        <td class="lbl">N° clienti attivi</td><td class="fill"></td>
+        <td class="lbl">Tiratura media</td><td class="fill"></td>
+        <td class="lbl">Export %</td><td class="fill"></td>
+    </tr>
+</table>
+
+<div class="section-title" style="margin-top:8px;">ATTREZZATURE DELL'AZIENDA</div>
+<table class="attr-table">
+    <tr>
+        <th style="width:22%;">PRESTAMPA</th><th style="width:4%;">n°</th>
+        <th style="width:22%;">TECNOLOGIE DI STAMPA</th><th style="width:4%;">n°</th>
+        <th style="width:22%;">FINISSAGGIO</th><th style="width:4%;">n°</th>
+        <th style="width:18%;">POST STAMPA</th><th style="width:4%;">n°</th>
+    </tr>
+    <tr>
+        <td class="lbl">MAC</td><td class="num"></td>
+        <td class="lbl">Offset</td><td class="num"></td>
+        <td class="lbl">Fustellatura</td><td class="num"></td>
+        <td class="lbl">Tagliacarte</td><td class="num"></td>
+    </tr>
+    <tr>
+        <td class="lbl">PC</td><td class="num"></td>
+        <td class="lbl">Roto offset</td><td class="num"></td>
+        <td class="lbl">Piega-incolla</td><td class="num"></td>
+        <td class="lbl">Piegatrici</td><td class="num"></td>
+    </tr>
+    <tr>
+        <td class="lbl">Operatori</td><td class="num"></td>
+        <td class="lbl">Flexo</td><td class="num"></td>
+        <td class="lbl">Finestratura</td><td class="num"></td>
+        <td class="lbl">Punti metallici</td><td class="num"></td>
+    </tr>
+    <tr>
+        <td class="lbl">CTP</td><td class="num"></td>
+        <td class="lbl">Digitale toner</td><td class="num"></td>
+        <td class="lbl">Plastificazione</td><td class="num"></td>
+        <td class="lbl">Brossuratrici</td><td class="num"></td>
+    </tr>
+    <tr>
+        <td class="lbl">Workflow (Prinect/Esko)</td><td class="num"></td>
+        <td class="lbl">Digitale inkjet</td><td class="num"></td>
+        <td class="lbl">Stampa a caldo / foil</td><td class="num"></td>
+        <td class="lbl">Linee cartonato</td><td class="num"></td>
+    </tr>
+    <tr>
+        <td class="lbl">Plotter prove colore</td><td class="num"></td>
+        <td class="lbl">Serigrafico</td><td class="num"></td>
+        <td class="lbl">Rilievi a secco</td><td class="num"></td>
+        <td class="lbl">Cellofanatrici</td><td class="num"></td>
+    </tr>
+    <tr>
+        <td class="lbl">Software DTP (Illustrator/Packz)</td><td class="num"></td>
+        <td class="lbl">Grande formato</td><td class="num"></td>
+        <td class="lbl">Verniciatura UV / spot</td><td class="num"></td>
+        <td class="lbl">Confezionamento</td><td class="num"></td>
+    </tr>
+    <tr>
+        <td class="lbl">Altro: _______________</td><td class="num"></td>
+        <td class="lbl">Altro: _______________</td><td class="num"></td>
+        <td class="lbl">Altro: _______________</td><td class="num"></td>
+        <td class="lbl">Altro: _______________</td><td class="num"></td>
+    </tr>
+</table>
+
+<table class="info-table" style="margin-top: 6px;">
+    <tr>
+        <td class="lbl" style="width:12%;">SERVER</td><td style="width:12%;"><span class="cb">SI</span> &nbsp; <span class="cb">NO</span></td>
+        <td class="lbl" style="width:16%;">Struttura in Cloud</td><td style="width:12%;"><span class="cb">SI</span> &nbsp; <span class="cb">NO</span></td>
+        <td class="lbl" style="width:16%;">Sistema operativo</td><td class="fill"></td>
+    </tr>
+    <tr>
+        <td class="lbl">Rete LAN</td><td><span class="cb">1Gbps</span> &nbsp; <span class="cb">10Gbps</span></td>
+        <td class="lbl">Wi-Fi produzione</td><td><span class="cb">SI</span> &nbsp; <span class="cb">NO</span></td>
+        <td class="lbl">VPN esterna</td><td class="fill"></td>
+    </tr>
+    <tr>
+        <td class="lbl">Tablet / PC reparto</td><td class="fill" colspan="3"></td>
+        <td class="lbl">Backup</td><td class="fill"></td>
+    </tr>
+    <tr>
+        <td class="lbl">Prinect / Fiery / Esko in uso</td><td class="fill" colspan="5"></td>
+    </tr>
+    <tr>
+        <td class="lbl">Corrieri (BRT/GLS/DHL)</td><td class="fill" colspan="5"></td>
+    </tr>
+</table>
+
+<div class="section-title" style="margin-top:8px;">AREE DI INTERESSE</div>
+<div class="grid-3col">
+    <span class="cb">CRM</span>
+    <span class="cb">Produzione — rilevazione tempi</span>
+    <span class="cb">Consuntivi</span>
+    <span class="cb">Recupero crediti autom.</span>
+    <span class="cb">Business Intelligence</span>
+    <span class="cb">Preventivi</span>
+    <span class="cb">Magazzino — Logistica</span>
+    <span class="cb">Industria 4.0</span>
+    <span class="cb">Sicurezza Informatica</span>
+    <span class="cb">E-commerce</span>
+    <span class="cb">Commesse</span>
+    <span class="cb">Ordini — Bolle</span>
+    <span class="cb">Fatture / Contabilità</span>
+    <span class="cb">Consulenza IT</span>
+    <span class="cb">Scheduler AI</span>
+    <span class="cb">Integrazione Prinect</span>
+    <span class="cb">Integrazione Fiery</span>
+    <span class="cb">Etichette QR magazzino</span>
+    <span class="cb">OCR bolle fornitore</span>
+    <span class="cb">Dashboard direzione</span>
+    <span class="cb">Tracking spedizioni BRT</span>
+    <span class="cb">App operatore touch</span>
+    <span class="cb">Notifiche push</span>
+    <span class="cb">Report ore automatici</span>
+</div>
+
+<div class="section-title" style="margin-top:8px;">NOTE — ALTRE INFORMAZIONI UTILI</div>
+<div class="note-area"></div>
+
+<div class="privacy">
+    <div class="text">
+        <span class="cb">Accetto</span> &nbsp; l'informativa sulla privacy e il trattamento dei miei dati personali per essere contattato dal personale commerciale e tecnico di Grafica Nappa per l'adempimento di quanto richiesto. Ho preso visione dell'informativa <a href="#">qui</a>.
+    </div>
+    <div>
+        <div class="firma"></div>
+        <div class="firma-lbl">Firma</div>
+    </div>
+</div>
+
+<div class="footer">
+    <strong>Grafica Nappa S.r.l.</strong> · Via Saporito, 24 — 81031 Aversa (CE) · Tel. +39 081 xxx xxxx · P.IVA 03145680617 · www.graficanappa.com<br>
+    MES Production Suite — contatti: it@graficanappa.com
 </div>
 
 </body>
