@@ -119,7 +119,8 @@ class DashboardMesSheet implements FromCollection, WithHeadings, WithMapping, Wi
                             $tot += (float) ($c['estimatedConsumption'] ?? 0);
                         }
                     }
-                    return round($tot, 2);
+                    // Prinect ritorna in kg → converto in grammi
+                    return round($tot * 1000, 1);
                 } catch (\Exception $e) {
                     return null;
                 }

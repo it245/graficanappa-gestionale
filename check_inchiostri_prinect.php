@@ -64,7 +64,8 @@ foreach ($fasi as $fase) {
         foreach ($worksteps as $ws) {
             $ink = $prinect->getWorkstepInkConsumption($jobId, $ws['id']);
             foreach (($ink['inkConsumptions'] ?? []) as $c) {
-                $g = (float) ($c['estimatedConsumption'] ?? 0);
+                // Prinect restituisce in kg → moltiplico per 1000 per grammi
+                $g = ((float) ($c['estimatedConsumption'] ?? 0)) * 1000;
                 $color = strtolower($c['color'] ?? '');
                 $totGen += $g;
                 if (str_contains($color, 'cyan')) $totals['C'] += $g;
@@ -92,10 +93,9 @@ foreach ($fasi as $fase) {
     }
 }
 
-echo "\n--- Note coerenza ---\n";
+echo "\n--- Note coerenza (formato 70x100 / 72x102) ---\n";
 echo "Valori tipici stampa 4 colori offset:\n";
-echo "  - 0.3 - 0.8 g/1000 fogli per colore (depende copertura)\n";
-echo "  - Copertura bassa (testi): ~0.2-0.4 g/1000fg\n";
-echo "  - Copertura alta (immagini piene): ~1.0-2.0 g/1000fg\n";
-echo "  - Totale CMYK: 1-5 g/1000fg\n";
-echo "Se vedi valori >> 10 g/1000fg o 0 g/1000fg → probabile bug/mancanza dati Prinect\n";
+echo "  - Copertura bassa (testi): ~20-50 g/1000fg totale CMYK\n";
+echo "  - Copertura media: ~50-120 g/1000fg\n";
+echo "  - Copertura alta (immagini piene): ~150-250 g/1000fg\n";
+echo "Se vedi valori >> 500 g/1000fg o << 10 g/1000fg → possibile anomalia\n";
