@@ -252,9 +252,26 @@
     }
 
     @media print {
-        body { background: #fff; padding: 0; }
+        @page { size: A3 landscape; margin: 0.8cm; }
+        html, body { background: #fff; padding: 0; margin: 0; width: 420mm; height: 297mm; }
         .toolbar { display: none; }
-        .card { break-inside: avoid; }
+        .header { margin-bottom: 14px; }
+        .header h1 { font-size: 22pt; }
+        .header .sub { font-size: 10pt; margin-top: 3px; }
+        .canvas-wrap, .canvas { max-width: 100% !important; }
+        .canvas { gap: 35px !important; }
+        .col-title { padding: 8px 12px; font-size: 10pt; }
+        .card { padding: 8px 12px; break-inside: avoid; box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important; }
+        .card h3 { font-size: 9pt; margin-bottom: 2px; }
+        .card .tag { font-size: 7pt; margin-bottom: 4px; }
+        .card ul li { font-size: 7.5pt; padding: 1px 0 1px 12px; line-height: 1.2; }
+        .infra-row { margin-top: 14px; padding: 10px 16px; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+        .infra-row .infra-item h4 { font-size: 8.5pt; }
+        .infra-row .infra-item p { font-size: 7pt; }
+        .legend { margin-top: 10px; padding: 8px 12px; font-size: 7.5pt; gap: 12px; }
+        .footer { margin-top: 10px; font-size: 7pt; }
+        .connections { display: none; } /* nascosti in stampa, layout pulito */
+        * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
     }
 </style>
 </head>
