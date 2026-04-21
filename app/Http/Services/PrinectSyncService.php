@@ -610,9 +610,10 @@ class PrinectSyncService
     protected function controllaCompletamentoPrinect(): void
     {
         // Include anche fasi con fogli_buoni=0 (il workstep potrebbe avere dati che le attività non hanno)
+        // Include stato 3 (terminate) per permettere aggiornamento dati Prinect arrivati tardi.
+        // NO stato 4 (consegnate) per evitare modifiche a dati ormai storicizzati.
         $fasiNonTerminate = OrdineFase::with('ordine')
-            ->where('stato', '<', 3)
-            ->where('stato', '>=', 0)
+            ->whereIn('stato', [0, 1, 2, 3])
             ->where(function ($q) {
                 $q->where('fase', 'LIKE', 'STAMPAXL106%')
                   ->orWhere('fase', 'STAMPA')
