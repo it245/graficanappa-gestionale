@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\MagazzinoArticolo;
+use App\Models\MagazzinoMovimento;
+use App\Services\MagazzinoService;
 use App\Services\TelegramBotService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -107,7 +110,12 @@ class TelegramWebhookController extends Controller
     {
         $text = trim($text);
 
-        switch (strtolower($text)) {
+        // Parsing comandi con argomenti (es. "/giacenza GC1")
+        [$cmd, $args] = array_pad(explode(' ', $text, 2), 2, '');
+        $cmd = strtolower(trim($cmd));
+        $args = trim($args);
+
+        switch ($cmd) {
             case '/start':
             case '/help':
                 $this->inviaAiuto($chatId);
@@ -130,6 +138,23 @@ class TelegramWebhookController extends Controller
                 $this->inviaStatus($chatId);
                 break;
 
+            case '/giacenza':
+            case '/cerca':
+                $this->inviaGiacenza($chatId, $args);
+                break;
+
+            case '/articoli':
+                $this->inviaArticoli($chatId);
+                break;
+
+            case '/alert':
+                $this->inviaAlert($chatId);
+                break;
+
+            case '/movimenti':
+                $this->inviaMovimenti($chatId);
+                break;
+
             default:
                 TelegramBotService::sendMessage(
                     $chatId,
@@ -139,6 +164,100 @@ class TelegramWebhookController extends Controller
         }
 
         return response()->json(['ok' => true]);
+    }
+
+    private function inviaGiacenza(int $chatId, string $query)
+    {
+        if (empty($query)) {
+            TelegramBotService::sendMessage($chatId, "Uso: `/giacenza <ricerca>`\nEsempio: `/giacenza GC1`");
+            return;
+        }
+
+        $articoli = MagazzinoArticolo::where('attivo', true)
+            ->where(function ($q) use ($query) {
+                $q->where('codice', 'like', "%{$query}%")
+                  ->orWhere('descrizione', 'like', "%{$query}%")
+                  ->orWhere('categoria', 'like', "%{$query}%");
+            })
+            ->limit(10)
+            ->get();
+
+        if ($articoli->isEmpty()) {
+            TelegramBotService::sendMessage($chatId, "❓ Nessun articolo trovato per `{$query}`");
+            return;
+        }
+
+        $righe = ["📦 *Risultati per*: `{$query}`\n"];
+        foreach ($articoli as $a) {
+            $qta = $a->giacenzaTotale();
+            $warn = $a->sottoSoglia() ? ' ⚠️' : '';
+            $righe[] = "*{$a->codice}*{$warn}\n"
+                . "_{$a->descrizione}_\n"
+                . "Giacenza: *{$qta} {$a->um}* (soglia min: {$a->soglia_minima})\n";
+        }
+
+        TelegramBotService::sendMessage($chatId, implode("\n", $righe));
+    }
+
+    private function inviaArticoli(int $chatId)
+    {
+        $articoli = MagazzinoArticolo::where('attivo', true)
+            ->orderByDesc('id')
+            ->limit(10)
+            ->get();
+
+        if ($articoli->isEmpty()) {
+            TelegramBotService::sendMessage($chatId, "📋 Nessun articolo in anagrafica.");
+            return;
+        }
+
+        $righe = ["📋 *Ultimi 10 articoli*\n"];
+        foreach ($articoli as $a) {
+            $qta = $a->giacenzaTotale();
+            $righe[] = "• *{$a->codice}* — {$qta} {$a->um}\n  _{$a->descrizione}_";
+        }
+
+        TelegramBotService::sendMessage($chatId, implode("\n", $righe));
+    }
+
+    private function inviaAlert(int $chatId)
+    {
+        $alert = MagazzinoService::alertSottoSoglia();
+
+        if (empty($alert)) {
+            TelegramBotService::sendMessage($chatId, "✅ Nessun articolo sotto soglia minima.");
+            return;
+        }
+
+        $righe = ["⚠️ *Articoli sotto soglia minima*\n"];
+        foreach ($alert as $a) {
+            $righe[] = "• *{$a['codice']}* — {$a['giacenza']}/{$a['soglia_minima']} {$a['um']}\n  _{$a['descrizione']}_";
+        }
+
+        TelegramBotService::sendMessage($chatId, implode("\n", $righe));
+    }
+
+    private function inviaMovimenti(int $chatId)
+    {
+        $mov = MagazzinoMovimento::with('articolo:id,codice,descrizione')
+            ->orderByDesc('id')
+            ->limit(10)
+            ->get();
+
+        if ($mov->isEmpty()) {
+            TelegramBotService::sendMessage($chatId, "📜 Nessun movimento registrato.");
+            return;
+        }
+
+        $righe = ["📜 *Ultimi 10 movimenti*\n"];
+        foreach ($mov as $m) {
+            $segno = in_array($m->tipo, ['carico', 'reso']) ? '+' : '-';
+            $data = $m->created_at?->format('d/m H:i') ?? '';
+            $cod = $m->articolo?->codice ?? 'N/A';
+            $righe[] = "• `{$data}` {$cod} {$segno}{$m->quantita} ({$m->tipo})";
+        }
+
+        TelegramBotService::sendMessage($chatId, implode("\n", $righe));
     }
 
     private function handleCallback(array $callback)
@@ -158,21 +277,23 @@ class TelegramWebhookController extends Controller
     private function inviaAiuto(int $chatId)
     {
         $testo = "👋 *Bot Magazzino — Grafica Nappa*\n\n"
-            . "Questo bot permetterà di gestire il magazzino carta tramite Telegram.\n\n"
-            . "*Stato attuale*: fase iniziale — base operativa attiva.\n\n"
-            . "*Cosa puoi fare adesso*:\n"
-            . "• Inviare foto (vengono archiviate nel MES)\n"
-            . "• Usare i comandi base\n\n"
-            . "*Comandi disponibili*:\n"
+            . "Gestisci il magazzino carta direttamente da Telegram.\n\n"
+            . "*Consultazione magazzino*:\n"
+            . "/giacenza <testo> — cerca articoli e mostra giacenze\n"
+            . "/articoli — ultimi 10 articoli in anagrafica\n"
+            . "/alert — articoli sotto soglia minima\n"
+            . "/movimenti — ultimi 10 movimenti magazzino\n\n"
+            . "*Diagnostica bot*:\n"
             . "/start — messaggio iniziale\n"
             . "/help — questo messaggio\n"
             . "/id — mostra il tuo chat ID\n"
-            . "/ping — verifica che il bot sia attivo\n"
-            . "/status — stato del bot\n\n"
+            . "/ping — verifica connessione\n"
+            . "/status — stato configurazione bot\n\n"
+            . "*Foto*: inviando una foto viene archiviata nel MES.\n\n"
             . "*In arrivo*:\n"
-            . "• Lettura automatica bolle con intelligenza artificiale\n"
-            . "• Conferma dati ed etichetta QR automatica\n"
-            . "• Scansione QR per scarico carta per commessa";
+            . "• Lettura automatica bolle con AI (analisi foto)\n"
+            . "• Conferma dati + etichetta QR automatica\n"
+            . "• Scansione QR bancale per scarico carta su commessa";
 
         TelegramBotService::sendMessage($chatId, $testo);
     }
