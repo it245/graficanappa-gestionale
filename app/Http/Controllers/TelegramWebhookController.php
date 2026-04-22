@@ -7,7 +7,9 @@ use App\Models\MagazzinoMovimento;
 use App\Services\MagazzinoService;
 use App\Services\TelegramBotService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 /**
  * Endpoint webhook Telegram.
@@ -110,6 +112,19 @@ class TelegramWebhookController extends Controller
     {
         $text = trim($text);
 
+        // Se l'utente è in mezzo a un flusso /carico, processa lo step corrente
+        $stateKey = "tg_carico_state_{$chatId}";
+        if (Cache::has($stateKey) && !Str::startsWith($text, '/')) {
+            return $this->processaStepCarico($chatId, $text, $stateKey);
+        }
+
+        // /annulla interrompe qualsiasi flusso attivo
+        if (strtolower($text) === '/annulla' || strtolower($text) === '/cancel') {
+            Cache::forget($stateKey);
+            TelegramBotService::sendMessage($chatId, "❌ Operazione annullata.");
+            return response()->json(['ok' => true]);
+        }
+
         // Parsing comandi con argomenti (es. "/giacenza GC1")
         [$cmd, $args] = array_pad(explode(' ', $text, 2), 2, '');
         $cmd = strtolower(trim($cmd));
@@ -153,6 +168,10 @@ class TelegramWebhookController extends Controller
 
             case '/movimenti':
                 $this->inviaMovimenti($chatId);
+                break;
+
+            case '/carico':
+                $this->avviaCarico($chatId);
                 break;
 
             default:
@@ -265,19 +284,220 @@ class TelegramWebhookController extends Controller
         $callbackId = $callback['id'];
         $data = $callback['data'] ?? '';
         $chatId = $callback['message']['chat']['id'] ?? null;
-
-        // Placeholder: i bottoni saranno usati quando si attiverà il flusso AI
-        TelegramBotService::answerCallbackQuery($callbackId, 'Funzione non ancora attiva');
+        $messageId = $callback['message']['message_id'] ?? null;
 
         Log::info('Telegram callback ricevuto', ['chat_id' => $chatId, 'data' => $data]);
 
+        if (!$chatId) {
+            TelegramBotService::answerCallbackQuery($callbackId);
+            return response()->json(['ok' => true]);
+        }
+
+        [$action, $arg] = array_pad(explode(':', $data, 2), 2, null);
+
+        switch ($action) {
+            case 'carico_conferma':
+                TelegramBotService::answerCallbackQuery($callbackId, 'Salvataggio in corso...');
+                $this->confermaCarico($chatId, $messageId);
+                break;
+
+            case 'carico_annulla':
+                TelegramBotService::answerCallbackQuery($callbackId, 'Annullato');
+                Cache::forget("tg_carico_state_{$chatId}");
+                if ($messageId) TelegramBotService::editMessage($chatId, $messageId, '❌ Registrazione annullata.');
+                break;
+
+            default:
+                TelegramBotService::answerCallbackQuery($callbackId, 'Azione non riconosciuta');
+        }
+
         return response()->json(['ok' => true]);
+    }
+
+    /* ============================================================
+     *  FSM /carico — registrazione carta manuale via conversazione
+     * ============================================================
+     */
+
+    /** Sequenza campi del flusso /carico */
+    private const CARICO_STEPS = [
+        'fornitore'    => ['label' => '🏭 *Fornitore?*', 'required' => true],
+        'categoria'    => ['label' => "📦 *Categoria?*\n_Es: GC1, GC2, Patinata, Uncoated, Cartoncino, Altro_", 'required' => true],
+        'descrizione'  => ['label' => '📝 *Descrizione completa?*\n_Es: Performa White 56x102_', 'required' => true],
+        'grammatura'   => ['label' => '⚖️ *Grammatura (g)?*\n_Numero, es: 300_', 'required' => true, 'type' => 'int'],
+        'formato'      => ['label' => '📐 *Formato?*\n_Es: 56x102_', 'required' => false],
+        'quantita'     => ['label' => '🔢 *Quantità (fogli)?*\n_Numero intero_', 'required' => true, 'type' => 'int'],
+        'lotto'        => ['label' => '🏷 *Numero lotto?*\n_/skip per saltare_', 'required' => false],
+    ];
+
+    private function avviaCarico(int $chatId)
+    {
+        $stateKey = "tg_carico_state_{$chatId}";
+        $firstStep = array_key_first(self::CARICO_STEPS);
+
+        Cache::put($stateKey, [
+            'step' => $firstStep,
+            'data' => [],
+        ], now()->addMinutes(30));
+
+        $introduzione = "🧾 *Registrazione carico*\n"
+            . "_Rispondi a ogni domanda. Scrivi /annulla per interrompere._\n\n"
+            . self::CARICO_STEPS[$firstStep]['label'];
+
+        TelegramBotService::sendMessage($chatId, $introduzione);
+    }
+
+    private function processaStepCarico(int $chatId, string $text, string $stateKey)
+    {
+        $state = Cache::get($stateKey);
+        if (!$state) return response()->json(['ok' => true]);
+
+        $currentStep = $state['step'];
+        $config = self::CARICO_STEPS[$currentStep] ?? null;
+        if (!$config) {
+            Cache::forget($stateKey);
+            TelegramBotService::sendMessage($chatId, "⚠️ Stato corrotto, ricomincia con /carico");
+            return response()->json(['ok' => true]);
+        }
+
+        // /skip per campi opzionali
+        if (strtolower(trim($text)) === '/skip') {
+            if (!empty($config['required'])) {
+                TelegramBotService::sendMessage($chatId, "⚠️ Campo obbligatorio — non si può saltare.");
+                return response()->json(['ok' => true]);
+            }
+            $state['data'][$currentStep] = null;
+        } else {
+            // Validazione tipo
+            if (($config['type'] ?? null) === 'int') {
+                $numeric = preg_replace('/[^\d]/', '', $text);
+                if ($numeric === '') {
+                    TelegramBotService::sendMessage($chatId, "⚠️ Serve un numero. Riprova.");
+                    return response()->json(['ok' => true]);
+                }
+                $state['data'][$currentStep] = (int) $numeric;
+            } else {
+                $val = trim($text);
+                if (empty($val) && !empty($config['required'])) {
+                    TelegramBotService::sendMessage($chatId, "⚠️ Campo obbligatorio. Riprova.");
+                    return response()->json(['ok' => true]);
+                }
+                $state['data'][$currentStep] = $val;
+            }
+        }
+
+        // Avanza al campo successivo
+        $steps = array_keys(self::CARICO_STEPS);
+        $currentIndex = array_search($currentStep, $steps);
+        $nextStep = $steps[$currentIndex + 1] ?? null;
+
+        if ($nextStep) {
+            $state['step'] = $nextStep;
+            Cache::put($stateKey, $state, now()->addMinutes(30));
+            TelegramBotService::sendMessage($chatId, self::CARICO_STEPS[$nextStep]['label']);
+        } else {
+            // Ultimo step completato → mostra riepilogo + bottoni
+            Cache::put($stateKey, $state, now()->addMinutes(30));
+            $this->mostraRiepilogoCarico($chatId, $state['data']);
+        }
+
+        return response()->json(['ok' => true]);
+    }
+
+    private function mostraRiepilogoCarico(int $chatId, array $data)
+    {
+        $testo = "📋 *Riepilogo carico*\n\n"
+            . "🏭 *Fornitore*: " . ($data['fornitore'] ?? '—') . "\n"
+            . "📦 *Categoria*: " . ($data['categoria'] ?? '—') . "\n"
+            . "📝 *Descrizione*: " . ($data['descrizione'] ?? '—') . "\n"
+            . "⚖️ *Grammatura*: " . ($data['grammatura'] ?? '—') . "g\n"
+            . "📐 *Formato*: " . ($data['formato'] ?: '—') . "\n"
+            . "🔢 *Quantità*: " . ($data['quantita'] ?? '—') . " fg\n"
+            . "🏷 *Lotto*: " . ($data['lotto'] ?: '—') . "\n\n"
+            . "Confermare il salvataggio?";
+
+        TelegramBotService::sendMessageWithButtons($chatId, $testo, [
+            [
+                ['text' => '✅ Conferma', 'callback_data' => 'carico_conferma'],
+                ['text' => '❌ Annulla', 'callback_data' => 'carico_annulla'],
+            ],
+        ]);
+    }
+
+    private function confermaCarico(int $chatId, ?int $messageId)
+    {
+        $stateKey = "tg_carico_state_{$chatId}";
+        $state = Cache::get($stateKey);
+        if (!$state) {
+            TelegramBotService::sendMessage($chatId, "⚠️ Sessione scaduta, ricomincia con /carico");
+            return;
+        }
+
+        $data = $state['data'];
+
+        try {
+            // Genera codice articolo canonico: CATEGORIA.INIZIALI.GRAMMATURA.FORMATO
+            $sigla = strtoupper(substr(preg_replace('/[^A-Za-z]/', '', $data['descrizione'] ?? ''), 0, 2));
+            $sigla = $sigla ?: 'XX';
+            $formatoKey = preg_replace('/\s+/', '', $data['formato'] ?? '');
+            $codice = implode('.', array_filter([
+                strtoupper($data['categoria'] ?? 'GEN'),
+                $sigla,
+                (string)($data['grammatura'] ?? ''),
+                $formatoKey,
+            ]));
+
+            // Trova o crea articolo
+            $articolo = MagazzinoArticolo::firstOrCreate(
+                ['codice' => $codice],
+                [
+                    'descrizione' => $data['descrizione'] ?? 'Articolo da bot',
+                    'categoria' => $data['categoria'] ?? null,
+                    'formato' => $data['formato'] ?? null,
+                    'grammatura' => $data['grammatura'] ?? null,
+                    'um' => 'fg',
+                    'soglia_minima' => 0,
+                    'fornitore' => $data['fornitore'] ?? null,
+                    'attivo' => true,
+                ]
+            );
+
+            // Registra movimento carico
+            MagazzinoService::registraCarico([
+                'articolo_id' => $articolo->id,
+                'quantita' => $data['quantita'],
+                'lotto' => $data['lotto'] ?: null,
+                'fornitore' => $data['fornitore'] ?? null,
+                'note' => 'Caricato via Bot Telegram',
+            ]);
+
+            Cache::forget($stateKey);
+
+            $giacenza = $articolo->fresh()->giacenzaTotale();
+
+            $riepilogo = "✅ *Carico registrato*\n\n"
+                . "Codice articolo: `{$articolo->codice}`\n"
+                . "Aggiunti: *{$data['quantita']} fg*\n"
+                . "Giacenza totale: *{$giacenza} fg*";
+
+            if ($messageId) {
+                TelegramBotService::editMessage($chatId, $messageId, $riepilogo);
+            } else {
+                TelegramBotService::sendMessage($chatId, $riepilogo);
+            }
+        } catch (\Exception $e) {
+            Log::error('Carico Telegram errore', ['error' => $e->getMessage(), 'data' => $data]);
+            TelegramBotService::sendMessage($chatId, "❌ Errore nel salvataggio: " . $e->getMessage());
+        }
     }
 
     private function inviaAiuto(int $chatId)
     {
         $testo = "👋 *Bot Magazzino — Grafica Nappa*\n\n"
             . "Gestisci il magazzino carta direttamente da Telegram.\n\n"
+            . "*Registra carico*:\n"
+            . "/carico — avvia registrazione guidata di una carta in ingresso\n"
+            . "/annulla — interrompe un flusso in corso\n\n"
             . "*Consultazione magazzino*:\n"
             . "/giacenza <testo> — cerca articoli e mostra giacenze\n"
             . "/articoli — ultimi 10 articoli in anagrafica\n"
