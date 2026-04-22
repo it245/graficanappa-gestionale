@@ -69,6 +69,7 @@ Route::post('/owner/elimina-fase', [DashboardOwnerController::class, 'eliminaFas
 Route::get('/owner/scheduling', [DashboardOwnerController::class, 'scheduling'])->name('owner.scheduling');
 Route::get('/owner/scheduling/excel', [DashboardOwnerController::class, 'schedulingExcel'])->name('owner.schedulingExcel');
 Route::get('/owner/bolla/{faseId}', [DashboardOwnerController::class, 'bollaLavorazione'])->whereNumber('faseId')->name('owner.bolla');
+Route::get('/owner/scheda/{commessa}', [DashboardOwnerController::class, 'schedaProduzione'])->name('owner.schedaProduzione');
 Route::get('/owner/report-ore', [DashboardOwnerController::class, 'reportOre'])->name('owner.reportOre');
 Route::get('/owner/excel-download', [DashboardOwnerController::class, 'downloadExcel'])->name('owner.downloadExcel');
 Route::get('/owner/esterne', [DashboardOwnerController::class, 'esterne'])->name('owner.esterne');

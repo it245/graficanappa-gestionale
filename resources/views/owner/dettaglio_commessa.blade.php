@@ -10,7 +10,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
         Dashboard
     </a>
-    <a href="{{ url()->previous() }}" class="mes-sidebar-item">
+    <a href="{{ route('owner.dashboard') }}?op_token={{ request('op_token') }}" class="mes-sidebar-item" onclick="if(document.referrer && document.referrer !== window.location.href){event.preventDefault();history.back();return false;}">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
         Torna indietro
     </a>
@@ -110,6 +110,10 @@
             <a href="{{ route('mes.prinect.jobDetail', $jobIdNum) }}" class="btn btn-outline-secondary btn-sm">Dettaglio Prinect</a>
         @endif
         <a href="{{ route('mes.prinect.report', $commessa) }}" class="btn btn-outline-success btn-sm">Report Stampa</a>
+        <a href="{{ route('owner.schedaProduzione', $commessa) }}" target="_blank" class="btn btn-primary btn-sm" title="Scheda produzione completa di tutte le fasi (PDF)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            Scheda Produzione
+        </a>
         <button class="btn btn-outline-info btn-sm" onclick="document.getElementById('invioEsternoBox').style.display = document.getElementById('invioEsternoBox').style.display === 'none' ? 'block' : 'none';">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="7.5 4.21 12 6.81 16.5 4.21"/></svg>
             Invia all'esterno

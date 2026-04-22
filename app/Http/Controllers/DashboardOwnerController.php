@@ -1559,6 +1559,14 @@ public function calcolaOreEPriorita($fase)
         return \App\Services\BollaLavorazioneService::stream((int) $faseId);
     }
 
+    /**
+     * Scarica PDF scheda produzione completa per commessa (tutte le fasi)
+     */
+    public function schedaProduzione($commessa)
+    {
+        return \App\Services\BollaLavorazioneService::streamCommessa($commessa);
+    }
+
     public function downloadExcel()
     {
         // Genera file aggiornato
