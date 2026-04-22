@@ -72,12 +72,9 @@ class FieryService
             $fiery = strtolower($data['fiery'] ?? '');
             $ext = strtolower($data['fieryExtendedStatus'] ?? 'none');
 
-            // Stato iniziale da /server/status (spesso dice "running" anche quando stampa)
-            $stato = match (true) {
-                str_contains($fiery, 'print') => 'stampa',
-                $fiery === 'running' => 'idle',
-                default => 'offline',
-            };
+            // Default: idle se raggiungibile, offline solo se /server/status risponde ma vuoto
+            $stato = 'idle';
+            if (str_contains($fiery, 'print')) $stato = 'stampa';
 
             // Controllo /jobs/printing per stato reale stampa (API autenticata)
             $stampaDoc = null;
@@ -86,10 +83,15 @@ class FieryService
             $stampaUser = '-';
             try {
                 $http = $this->loginAndGetHttp();
-                if ($http) {
+                if (!$http) {
+                    \Log::warning('Fiery /jobs/printing skip: loginAndGetHttp() returned null');
+                } else {
                     $jp = $http->get($this->baseUrl . '/live/api/v5/jobs/printing');
-                    if ($jp->successful()) {
+                    if (!$jp->successful()) {
+                        \Log::warning('Fiery /jobs/printing HTTP ' . $jp->status());
+                    } else {
                         $items = $jp->json('data.items', []);
+                        \Log::info('Fiery /jobs/printing items=' . count($items));
                         if (!empty($items)) {
                             $job = $items[0];
                             $stato = 'stampa';
@@ -100,7 +102,9 @@ class FieryService
                         }
                     }
                 }
-            } catch (\Exception $e) {}
+            } catch (\Exception $e) {
+                \Log::warning('Fiery /jobs/printing exception: ' . $e->getMessage());
+            }
 
             $progresso = $stampaCopieTotali > 0
                 ? round(($stampaCopieFatte / $stampaCopieTotali) * 100)
