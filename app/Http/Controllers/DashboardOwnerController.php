@@ -1551,6 +1551,14 @@ public function calcolaOreEPriorita($fase)
         return response()->download($filePath, 'piano_produzione_' . now()->format('Y-m-d') . '.xlsx')->deleteFileAfterSend(true);
     }
 
+    /**
+     * Scarica PDF bolla di lavorazione per una fase
+     */
+    public function bollaLavorazione($faseId)
+    {
+        return \App\Services\BollaLavorazioneService::stream((int) $faseId);
+    }
+
     public function downloadExcel()
     {
         // Genera file aggiornato

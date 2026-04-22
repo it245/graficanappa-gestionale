@@ -429,7 +429,10 @@
                 <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'descrizione', this.innerText)">{{ $fase->ordine->descrizione ?? '-' }}</td>
                 <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_inizio', this.innerText)">{{ $fase->data_inizio ?? '-' }}</td>
                 <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_fine', this.innerText)">{{ $fase->data_fine ?? '-' }}</td>
-                <td><button class="btn-elimina" onclick="eliminaFase({{ $fase->id }})">&times;</button></td>
+                <td>
+                    <a href="{{ route('owner.bolla', $fase->id) }}" target="_blank" class="btn-bolla" title="Stampa bolla lavorazione PDF" style="display:inline-block;background:#0a58ca;color:#fff;border:none;border-radius:3px;padding:3px 7px;text-decoration:none;font-size:11px;margin-right:4px;">🖨</a>
+                    <button class="btn-elimina" onclick="eliminaFase({{ $fase->id }})">&times;</button>
+                </td>
             </tr>
         @endforeach
         </tbody>
