@@ -177,7 +177,7 @@
     <li>Nessuna tracciabilità digitale carta → commessa</li>
     <li>Errori di trascrizione rilevati solo a valle dopo lo spreco</li>
     <li>Riordini fornitori reattivi, mai proattivi</li>
-    <li>Magazzino dipendente dalla presenza di Emanuele (single point of failure)</li>
+    <li>Magazzino dipendente dalla presenza di una sola persona (single point of failure)</li>
     <li>Impossibile reportistica direzionale su consumi e scorte</li>
 </ol>
 
@@ -185,8 +185,8 @@
 
 <p>Sono previsti <strong>due flussi operativi</strong>, utilizzabili in parallelo a seconda del dispositivo a disposizione dell'operatore.</p>
 
-<h3>Flusso A — Bot Telegram (telefono Emanuele)</h3>
-<div class="flow">Emanuele / Operatore (telefono)
+<h3>Flusso A — Bot Telegram (telefono)</h3>
+<div class="flow">Addetto magazzino (telefono)
         ↓ foto via Telegram
 Bot Telegram aziendale
         ↓ webhook HTTPS
@@ -198,10 +198,10 @@ Database MES + etichetta QR stampata
         ↓ conferma operatore
 Sistema aggiornato in tempo reale</div>
 
-<p><em>Utile quando Emanuele è in movimento con solo il cellulare.</em></p>
+<p><em>Utile quando l'addetto è in movimento con solo il cellulare.</em></p>
 
 <h3>Flusso B — Upload diretto nel MES (tablet/PC reparto)</h3>
-<div class="flow">Emanuele / Operatore (tablet o PC reparto)
+<div class="flow">Addetto magazzino (tablet o PC reparto)
         ↓ apre MES → sezione "Magazzino → Registra Bolla"
         ↓ scatta foto (fotocamera tablet/PC) oppure carica file
 Controller MES → salva foto su server .60
@@ -212,7 +212,7 @@ Form precompilato mostrato all'operatore
         ↓ conferma/correzione manuale
 Database MES + etichetta QR stampata</div>
 
-<p><em>Utile quando Emanuele è in postazione fissa e vuole vedere la foto ad alta risoluzione prima di confermare.</em></p>
+<p><em>Utile quando l'addetto è in postazione fissa e vuole vedere la foto ad alta risoluzione prima di confermare.</em></p>
 
 <div class="note">
 <strong>Stessa intelligenza, due ingressi</strong>: entrambi i flussi usano la stessa chiamata API Claude Vision e la stessa logica di salvataggio nel MES. L'operatore sceglie il canale più comodo in base alla situazione.
@@ -405,7 +405,7 @@ Totale per 1 foto bolla: $0.00368 ≈ €0.003</div>
         <tr><td>Down API Claude</td><td>Bassa</td><td>Basso</td><td>Fallback inserimento manuale web</td></tr>
         <tr><td>Errori estrazione AI</td><td>Media</td><td>Basso</td><td>Conferma umana obbligatoria pre-salvataggio</td></tr>
         <tr><td>Connessione assente in reparto</td><td>Media</td><td>Medio</td><td>Funziona anche su WiFi aziendale</td></tr>
-        <tr><td>Resistenza al cambiamento</td><td>Media</td><td>Medio</td><td>Training 1 ora con Emanuele</td></tr>
+        <tr><td>Resistenza al cambiamento</td><td>Media</td><td>Medio</td><td>Training 1 ora con l'addetto</td></tr>
     </tbody>
 </table>
 
@@ -418,7 +418,7 @@ Totale per 1 foto bolla: $0.00368 ≈ €0.003</div>
         <tr><td>F1 — Setup bot Telegram + API Anthropic</td><td>1 giorno</td><td>Bot operativo, chiavi attive</td></tr>
         <tr><td>F2 — Sviluppo core magazzino (DB + viste)</td><td>2 giorni</td><td>Anagrafica + giacenze + movimenti</td></tr>
         <tr><td>F3 — Integrazione AI + test end-to-end</td><td>1 giorno</td><td>Flusso completo</td></tr>
-        <tr><td>F4 — Training operativo</td><td>2 ore</td><td>Emanuele formato</td></tr>
+        <tr><td>F4 — Training operativo</td><td>2 ore</td><td>Addetto formato</td></tr>
         <tr><td>F5 — Rollout produzione</td><td>immediato</td><td>Sistema live</td></tr>
         <tr class="total"><td colspan="2">Totale</td><td>5 giorni lavorativi</td></tr>
     </tbody>
