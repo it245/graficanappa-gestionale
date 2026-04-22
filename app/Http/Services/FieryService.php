@@ -34,19 +34,105 @@ class FieryService
      */
     public function getServerStatus(): ?array
     {
-        try {
-            $response = $this->http()->timeout(2)->get($this->baseUrl . '/wt4/home/get_server_status', [
-                'client_locale' => 'it_IT',
-            ]);
+        // Check cache (salvata solo se successo, mai null)
+        $cached = Cache::get('fiery_server_status');
+        if (!empty($cached)) return $cached;
 
-            if ($response->successful()) {
-                return $this->parseServerStatus($response->json());
+        // Retry 2 volte con timeout 8s (API Fiery Canon V900 a volte lenta)
+        $response = null;
+        $lastErr = null;
+        for ($attempt = 1; $attempt <= 2; $attempt++) {
+            try {
+                $response = Http::withoutVerifying()
+                    ->withOptions(['verify' => false, 'http_errors' => false])
+                    ->timeout(8)
+                    ->connectTimeout(3)
+                    ->get($this->baseUrl . '/live/api/v5/server/status');
+                if ($response->successful()) break;
+                $lastErr = 'HTTP ' . $response->status();
+                $response = null;
+            } catch (\Exception $e) {
+                $lastErr = $e->getMessage();
+                $response = null;
+                if ($attempt === 2) break;
+                usleep(500000);
             }
-        } catch (\Exception $e) {
-            // Fiery non raggiungibile
         }
 
-        return null;
+        if (!$response) {
+            \Log::warning('Fiery getServerStatus fallito: ' . $lastErr);
+            return null;
+        }
+
+        try {
+
+            $data = $response->json('data.item', []);
+            if (empty($data)) return null;
+
+            $fiery = strtolower($data['fiery'] ?? '');
+            $ext = strtolower($data['fieryExtendedStatus'] ?? 'none');
+
+            // Default: idle se raggiungibile, offline solo se /server/status risponde ma vuoto
+            $stato = 'idle';
+            if (str_contains($fiery, 'print')) $stato = 'stampa';
+
+            // Controllo /jobs/printing per stato reale stampa (API autenticata)
+            $stampaDoc = null;
+            $stampaCopieFatte = 0;
+            $stampaCopieTotali = 0;
+            $stampaUser = '-';
+            try {
+                $http = $this->loginAndGetHttp();
+                if (!$http) {
+                    \Log::warning('Fiery /jobs/printing skip: loginAndGetHttp() returned null');
+                } else {
+                    $jp = $http->get($this->baseUrl . '/live/api/v5/jobs/printing');
+                    if (!$jp->successful()) {
+                        \Log::warning('Fiery /jobs/printing HTTP ' . $jp->status());
+                    } else {
+                        $items = $jp->json('data.items', []);
+                        \Log::info('Fiery /jobs/printing items=' . count($items));
+                        if (!empty($items)) {
+                            $job = $items[0];
+                            $stato = 'stampa';
+                            $stampaDoc = $job['title'] ?? null;
+                            $stampaCopieFatte = (int) ($job['copies printed'] ?? 0);
+                            $stampaCopieTotali = (int) ($job['num copies'] ?? 0);
+                            $stampaUser = $job['username'] ?? '-';
+                        }
+                    }
+                }
+            } catch (\Exception $e) {
+                \Log::warning('Fiery /jobs/printing exception: ' . $e->getMessage());
+            }
+
+            $progresso = $stampaCopieTotali > 0
+                ? round(($stampaCopieFatte / $stampaCopieTotali) * 100)
+                : 0;
+
+            $result = [
+                'stato' => $stato,
+                'online' => true,
+                'stampa' => [
+                    'documento' => $stampaDoc,
+                    'pagine' => 0,
+                    'copie_fatte' => $stampaCopieFatte,
+                    'copie_totali' => $stampaCopieTotali,
+                    'progresso' => $progresso,
+                    'utente' => $stampaUser,
+                ],
+                'rip' => ['idle' => true, 'documento' => null, 'count' => 0],
+                'avviso' => $ext !== 'none' ? $ext : null,
+                'ultimo_aggiornamento' => now()->format('H:i:s'),
+                'raw' => $data,
+            ];
+
+            // Cache 30s SOLO se successo
+            Cache::put('fiery_server_status', $result, 30);
+            return $result;
+        } catch (\Exception $e) {
+            return null;
+        }
     }
 
     /**
@@ -179,33 +265,42 @@ class FieryService
      */
     public function getJobs(): ?array
     {
+        // Cache solo se risultato non vuoto (evita cache stale con 0 job)
+        $cached = Cache::get('fiery_jobs_parsed');
+        if (!empty($cached)) return $cached;
+
         $json = $this->apiGet('/live/api/v5/jobs');
         if (!$json) return null;
 
         $items = $json['data']['items'] ?? [];
+        $parsed = collect($items)->map(function ($job) {
+                return [
+                    'id' => $job['id'] ?? null,
+                    'title' => $job['title'] ?? '',
+                    'state' => $job['state'] ?? '',
+                    'status' => $job['status'] ?? '',
+                    'date' => $job['date'] ?? '',
+                    'username' => $job['username'] ?? '',
+                    'copies_printed' => (int) ($job['copies printed'] ?? 0),
+                    'num_copies' => (int) ($job['num copies'] ?? 0),
+                    'total_sheets' => (int) ($job['total sheets printed'] ?? 0),
+                    'total_pages' => (int) ($job['total pages printed'] ?? 0),
+                    'total_color' => (int) ($job['total color pages printed'] ?? 0),
+                    'total_bw' => (int) ($job['total bw pages printed'] ?? 0),
+                    'num_pages' => (int) ($job['num pages'] ?? 0),
+                    'media_size' => $job['media size'] ?? '',
+                    'media_weight' => $job['media weight'] ?? '',
+                    'duplex' => ($job['EFDuplex'] ?? 'False') !== 'False',
+                    'input_slot' => $job['input slot'] ?? '',
+                    'commessa' => $this->estraiCommessaDaTitolo($job['title'] ?? ''),
+                    'timings' => $this->getJobTimings($job),
+                ];
+            })->toArray();
 
-        return collect($items)->map(function ($job) {
-            return [
-                'id' => $job['id'] ?? null,
-                'title' => $job['title'] ?? '',
-                'state' => $job['state'] ?? '',
-                'status' => $job['status'] ?? '',
-                'date' => $job['date'] ?? '',
-                'username' => $job['username'] ?? '',
-                'copies_printed' => (int) ($job['copies printed'] ?? 0),
-                'num_copies' => (int) ($job['num copies'] ?? 0),
-                'total_sheets' => (int) ($job['total sheets printed'] ?? 0),
-                'total_pages' => (int) ($job['total pages printed'] ?? 0),
-                'total_color' => (int) ($job['total color pages printed'] ?? 0),
-                'total_bw' => (int) ($job['total bw pages printed'] ?? 0),
-                'num_pages' => (int) ($job['num pages'] ?? 0),
-                'media_size' => $job['media size'] ?? '',
-                'media_weight' => $job['media weight'] ?? '',
-                'duplex' => ($job['EFDuplex'] ?? 'False') !== 'False',
-                'input_slot' => $job['input slot'] ?? '',
-                'commessa' => $this->estraiCommessaDaTitolo($job['title'] ?? ''),
-            ];
-        })->toArray();
+        if (!empty($parsed)) {
+            Cache::put('fiery_jobs_parsed', $parsed, 30);
+        }
+        return $parsed;
     }
 
     /**
@@ -266,6 +361,176 @@ class FieryService
 
             return $perCommessa;
         });
+    }
+
+    /**
+     * Dump raw consumables JSON per debug struttura
+     */
+    public function getConsumablesRaw()
+    {
+        try {
+            $http = $this->loginAndGetHttp();
+            if (!$http) return ['err' => 'login failed'];
+            $r = $http->get($this->baseUrl . '/live/api/v5/consumables');
+            return ['status' => $r->status(), 'body' => $r->json() ?? $r->body()];
+        } catch (\Exception $e) {
+            return ['err' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Livelli consumabili (toner CMYK, waste, ADF kit, staples).
+     * Cache 60s — non stressare API Fiery.
+     */
+    public function getConsumables(): ?array
+    {
+        return Cache::remember('fiery_consumables', 60, function () {
+            try {
+                $http = $this->loginAndGetHttp();
+                if (!$http) return null;
+                $r = $http->get($this->baseUrl . '/live/api/v5/consumables');
+                if (!$r->successful()) return null;
+
+                $item = $r->json('data.item', []);
+
+                // Toner/colorants
+                $toners = [];
+                foreach (($item['colorants'] ?? []) as $c) {
+                    $toners[] = [
+                        'name' => $c['i18n'] ?? $c['name'] ?? '-',
+                        'type' => 'toner',
+                        'color_hex' => $c['color'] ?? '#999',
+                        'level' => (int) ($c['level'] ?? 0),
+                        'unit' => '%',
+                    ];
+                }
+
+                // Vassoi carta
+                $trays = [];
+                foreach (($item['trays'] ?? []) as $t) {
+                    $dim = $t['dimensions'] ?? [];
+                    $trays[] = [
+                        'name' => $t['i18n'] ?? $t['name'] ?? '-',
+                        'trayid' => $t['trayid'] ?? null,
+                        'level' => (int) ($t['level'] ?? 0),
+                        'media_type' => $t['attributes']['EFMediaType'] ?? '-',
+                        'page_size' => $t['attributes']['EFPrintSize'] ?? ($t['attributes']['PageSize'] ?? '-'),
+                        'dimensions_mm' => !empty($dim) ? round($dim[0] / 2.834) . 'x' . round($dim[1] / 2.834) : '-',
+                    ];
+                }
+
+                return ['toners' => $toners, 'trays' => $trays];
+            } catch (\Exception $e) {
+                return null;
+            }
+        });
+    }
+
+    /**
+     * Info estesa server Fiery (capabilities, modello, seriale).
+     * Cache 1h — dati statici.
+     */
+    public function getInfoExtended(): ?array
+    {
+        return Cache::remember('fiery_info_extended', 3600, function () {
+            try {
+                $http = $this->loginAndGetHttp();
+                if (!$http) return null;
+                // v1 ha info più ricca (4612 bytes vs 530 v5)
+                $r = $http->get($this->baseUrl . '/live/api/v1/info');
+                if (!$r->successful()) {
+                    $r = $http->get($this->baseUrl . '/live/api/v5/info');
+                }
+                return $r->successful() ? $r->json('data.item', []) : null;
+            } catch (\Exception $e) {
+                return null;
+            }
+        });
+    }
+
+    /**
+     * Versione firmware Fiery.
+     * Cache 24h.
+     */
+    public function getVersion(): ?string
+    {
+        return Cache::remember('fiery_version', 86400, function () {
+            try {
+                $http = $this->loginAndGetHttp();
+                if (!$http) return null;
+                $r = $http->get($this->baseUrl . '/live/api/v3/version');
+                if ($r->successful()) {
+                    $data = $r->json('data.item', []);
+                    return $data['version'] ?? $data['buildNumber'] ?? json_encode($data);
+                }
+                return null;
+            } catch (\Exception $e) {
+                return null;
+            }
+        });
+    }
+
+    /**
+     * Estrae timing spooling/ripping/printing da un job (campi timestamp).
+     */
+    public function getJobTimings(array $job): array
+    {
+        // Parse timestamp robusto: skipa valori vuoti/strani, cap a 24h per sanity
+        $ts = function ($key) use ($job) {
+            $v = $job[$key] ?? null;
+            if (!$v || $v === '0' || $v === 0) return null;
+            $t = is_numeric($v) ? (int) $v : strtotime($v);
+            // Timestamp valido solo se > 1 gen 2020 (prima = artefatto)
+            return ($t && $t > 1577836800) ? $t : null;
+        };
+        $SANITY_MAX = 24 * 3600; // 24h max realistico per uno step
+        $diff = fn($a, $b) => ($a && $b && $b >= $a) ? min($b - $a, $SANITY_MAX * 10) : null;
+
+        $spoolStart = $ts('timestamp spooling');
+        $spoolDone = $ts('timestamp done spooling');
+        $ripStart = $ts('timestamp ripping');
+        $ripDone = $ts('timestamp done ripping');
+        $printStart = $ts('timestamp printing');
+        $printDone = $ts('timestamp done printing');
+
+        // Applica sanity: se diff > 24h per un singolo step → null (valore non attendibile)
+        $sanity = fn($s) => ($s !== null && $s <= $SANITY_MAX) ? $s : null;
+
+        return [
+            'spool_sec' => $sanity($diff($spoolStart, $spoolDone)),
+            'rip_sec'   => $sanity($diff($ripStart, $ripDone)),
+            'print_sec' => $sanity($diff($printStart, $printDone)),
+            'total_sec' => $sanity($diff($spoolStart, $printDone)),
+        ];
+    }
+
+    /**
+     * Login + ritorna PendingRequest con cookie sessione.
+     * Helper interno per le chiamate API v5/v1/v3 protette.
+     */
+    private function loginAndGetHttp()
+    {
+        // withoutVerifying + withOptions(verify false) esplicito + timeout più lungo (web env)
+        $login = Http::withoutVerifying()
+            ->withOptions(['verify' => false])
+            ->timeout(15)
+            ->post($this->baseUrl . '/live/api/v5/login', [
+                'username' => $this->username,
+                'password' => $this->password,
+                'accessrights' => $this->apiKey,
+            ]);
+        if (!$login->successful()) return null;
+
+        $cookieHeader = '';
+        foreach ((array) ($login->headers()['Set-Cookie'] ?? []) as $sc) {
+            if (preg_match('/^([^=]+)=([^;]+)/', $sc, $m)) {
+                $cookieHeader .= $m[1] . '=' . $m[2] . '; ';
+            }
+        }
+        return Http::withoutVerifying()
+            ->withOptions(['verify' => false])
+            ->timeout(15)
+            ->withHeaders(['Cookie' => trim($cookieHeader, '; ')]);
     }
 
     /**
