@@ -51,5 +51,26 @@ Schedule::command('cliche:match')->everyTenMinutes()->withoutOverlapping();
 // Scheduler Mossa 37 — DISABILITATO (in attesa approvazione capo)
 // Schedule::command('scheduler:run')->everyFifteenMinutes()->weekdays()->between('6:00', '22:00')->withoutOverlapping();
 
-// Piano produzione serale via email — DISABILITATO
-// Schedule::command('scheduler:run --email')->weekdays()->dailyAt('22:00');
+// ===== PIANO PRODUZIONE EMAIL MATTUTINA =====
+// Invia piano produzione con Excel allegato ai capi reparto ogni mattina
+// Abilitato/disabilitato da .env: PIANO_EMAIL_ENABLED=true|false
+// Orario: PIANO_EMAIL_ORA=06:00 (default)
+// Destinatari: PIANO_EMAIL_TO="mario@x.it,luigi@y.it" (lista separata da virgola)
+if (env('PIANO_EMAIL_ENABLED', false)) {
+    $ora = env('PIANO_EMAIL_ORA', '06:00');
+    $destinatari = env('PIANO_EMAIL_TO', 'anappa@graficanappa.com');
+    Schedule::command("scheduler:run --email --to={$destinatari}")
+        ->weekdays()
+        ->dailyAt($ora)
+        ->withoutOverlapping();
+}
+
+// ===== ALERT COMMESSE A RISCHIO =====
+// Notifica commesse critiche (scadute o <=2gg alla consegna) ogni mattina 7:30
+// Abilitato da .env: ALERT_RITARDI_ENABLED=true|false
+if (env('ALERT_RITARDI_ENABLED', false)) {
+    Schedule::command('ritardi:alert')
+        ->weekdays()
+        ->dailyAt('07:30')
+        ->withoutOverlapping();
+}
