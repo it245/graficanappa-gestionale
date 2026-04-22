@@ -59,20 +59,22 @@
         font-weight: bold;
         cursor: pointer;
     }
+    /* 15 colonne: Priorità, Stato, Fase, Reparto, QtaCarta, QtaProd, QtaProdPrinect, ScartiPrinect, ScartiR, Operatori, Note, Descrizione, DataInizio, DataFine, Azioni */
     .dc-table th:nth-child(1), .dc-table td:nth-child(1) { width: 70px; text-align: center; }
     .dc-table th:nth-child(2), .dc-table td:nth-child(2) { width: 60px; text-align: center; }
     .dc-table th:nth-child(3), .dc-table td:nth-child(3) { width: 120px; }
     .dc-table th:nth-child(4), .dc-table td:nth-child(4) { width: 100px; }
     .dc-table th:nth-child(5), .dc-table td:nth-child(5) { width: 80px; text-align: center; }
     .dc-table th:nth-child(6), .dc-table td:nth-child(6) { width: 80px; text-align: center; }
-    .dc-table th:nth-child(7), .dc-table td:nth-child(7) { width: 65px; text-align: center; }
-    .dc-table th:nth-child(8), .dc-table td:nth-child(8) { width: 65px; text-align: center; }
-    .dc-table th:nth-child(9), .dc-table td:nth-child(9) { width: 120px; }
-    .dc-table th:nth-child(10), .dc-table td:nth-child(10) { width: 100px; }
-    .dc-table th:nth-child(11), .dc-table td:nth-child(11) { width: 180px; }
-    .dc-table th:nth-child(12), .dc-table td:nth-child(12) { width: 110px; }
-    .dc-table th:nth-child(13), .dc-table td:nth-child(13) { width: 110px; }
-    .dc-table th:nth-child(14), .dc-table td:nth-child(14) { width: 50px; text-align: center; }
+    .dc-table th:nth-child(7), .dc-table td:nth-child(7) { width: 75px; text-align: center; }
+    .dc-table th:nth-child(8), .dc-table td:nth-child(8) { width: 75px; text-align: center; }
+    .dc-table th:nth-child(9), .dc-table td:nth-child(9) { width: 75px; text-align: center; }
+    .dc-table th:nth-child(10), .dc-table td:nth-child(10) { width: 110px; }
+    .dc-table th:nth-child(11), .dc-table td:nth-child(11) { width: 160px; }
+    .dc-table th:nth-child(12), .dc-table td:nth-child(12) { width: 220px; }
+    .dc-table th:nth-child(13), .dc-table td:nth-child(13) { width: 100px; }
+    .dc-table th:nth-child(14), .dc-table td:nth-child(14) { width: 100px; }
+    .dc-table th:nth-child(15), .dc-table td:nth-child(15) { width: 115px; text-align: center; }
     .btn-elimina {
         background: var(--danger);
         color: #fff;
