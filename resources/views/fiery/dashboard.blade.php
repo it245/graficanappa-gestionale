@@ -256,64 +256,6 @@
 <div class="alert-strip ok" id="snmp-alert">&#10003; Nessun avviso attivo sulla macchina</div>
 @endif
 
-{{-- Alert controllo carta --}}
-@if(!empty($cartaCheck['warnings']))
-    @foreach($cartaCheck['warnings'] as $w)
-        <div class="alert-strip warn" style="background:#b91c1c;color:#fff;">&#9888; {{ $w['testo'] }}</div>
-    @endforeach
-@endif
-
-{{-- Card controllo carta vassoi (Fiery API v5) --}}
-@if(!empty($cartaCheck['trays']))
-<div class="card-d" style="margin-bottom:16px;">
-    <div class="card-label">
-        Controllo Carta Vassoi
-        @if($cartaCheck['grammatura_in_stampa'])
-            <span style="margin-left:10px;font-weight:normal;color:var(--text-dim);">
-                Commessa in stampa richiede: <strong style="color:var(--accent);">{{ $cartaCheck['grammatura_in_stampa'] }}g</strong>
-            </span>
-        @endif
-        @if(!empty($cartaCheck['grammature_prossime']))
-            <span style="margin-left:10px;font-weight:normal;color:var(--text-dim);">
-                Prossime: {{ implode('g, ', $cartaCheck['grammature_prossime']) }}g
-            </span>
-        @endif
-    </div>
-    <table class="tab" style="width:100%;margin-top:8px;">
-        <thead>
-            <tr>
-                <th>Vassoio</th>
-                <th>Media</th>
-                <th>Formato</th>
-                <th>Grammatura</th>
-                <th>Livello</th>
-                <th>Match</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($cartaCheck['trays'] as $t)
-            <tr>
-                <td><strong>{{ $t['name'] ?? '-' }}</strong></td>
-                <td>{{ $t['media_type'] ?? '-' }}</td>
-                <td>{{ $t['page_size'] ?? '-' }} · {{ $t['dimensions_mm'] ?? '' }}</td>
-                <td>{{ $t['grammatura_estratta'] ? $t['grammatura_estratta'].'g' : '—' }}</td>
-                <td>{{ $t['level'] ?? 0 }}%</td>
-                <td>
-                    @if($t['match_in_stampa'] === true)
-                        <span style="background:#10b981;color:#fff;padding:2px 8px;border-radius:3px;">&#10003; OK</span>
-                    @elseif($t['match_in_stampa'] === false)
-                        <span style="background:#ef4444;color:#fff;padding:2px 8px;border-radius:3px;">&#10007; Diff</span>
-                    @else
-                        <span style="color:var(--text-dim);">—</span>
-                    @endif
-                </td>
-            </tr>
-            @endforeach
-        </tbody>
-    </table>
-</div>
-@endif
-
 @if($status)
 
 {{-- === ROW 1: KPI + Toner + Vassoi affiancati === --}}

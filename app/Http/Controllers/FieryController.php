@@ -21,9 +21,7 @@ class FieryController extends Controller
         if (!$status) {
             $jobData = ['printing' => null, 'queue' => [], 'completed' => [], 'total' => 0];
             $snmp = \Cache::get('fiery_snmp_live', []);
-            $trays = [];
-            $cartaCheck = ['trays' => [], 'grammatura_in_stampa' => null, 'grammature_prossime' => [], 'warnings' => []];
-            return view('fiery.dashboard', compact('status', 'jobData', 'snmp', 'trays', 'cartaCheck'));
+            return view('fiery.dashboard', compact('status', 'jobData', 'snmp'));
         }
 
         $status['commessa'] = $this->cercaCommessa($status['stampa']['documento'] ?? null);
@@ -36,71 +34,7 @@ class FieryController extends Controller
         // SNMP cachato 30s
         $snmp = \Cache::remember('fiery_snmp_live', 30, fn() => $this->leggiContatoriSnmp());
 
-        // Controllo carta vassoi (match cod_carta vs trays Fiery)
-        $trays = $fiery->getConsumables()['trays'] ?? [];
-        $cartaCheck = $this->checkCartaVassoi($trays, $jobData['printing'] ?? null, $jobData['queue'] ?? []);
-
-        return view('fiery.dashboard', compact('status', 'jobData', 'snmp', 'trays', 'cartaCheck'));
-    }
-
-    /**
-     * Controllo match carta: confronta grammatura cod_carta commessa vs media_type tray caricati.
-     * Ritorna array con trays arricchiti + alert mismatch sul job in stampa.
-     *
-     * Cod_carta format: "02W.SE.PW.300.0007" → grammatura = 4° segmento
-     * Fiery media_type: "Coated 300gsm" / "Uncoated 150" → regex numerica
-     */
-    private function checkCartaVassoi(array $trays, ?array $printing, array $queue): array
-    {
-        $grammaturaJob = function (?array $job): ?int {
-            $codCarta = $job['mes']['cod_carta'] ?? null;
-            if (!$codCarta) return null;
-            $parts = explode('.', $codCarta);
-            return isset($parts[3]) && is_numeric($parts[3]) ? (int) $parts[3] : null;
-        };
-
-        $grammaturaTray = function (string $mediaType): ?int {
-            if (preg_match('/(\d{2,4})\s*(gsm|g|gr)?\b/i', $mediaType, $m)) {
-                $g = (int) $m[1];
-                return ($g >= 60 && $g <= 500) ? $g : null;
-            }
-            return null;
-        };
-
-        $gramJobInStampa = $grammaturaJob($printing);
-        $gramJobProssimi = array_filter(array_map($grammaturaJob, array_slice($queue, 0, 3)));
-
-        $traysArricchiti = [];
-        foreach ($trays as $t) {
-            $gramTray = $grammaturaTray($t['media_type'] ?? '');
-            $t['grammatura_estratta'] = $gramTray;
-            $t['match_in_stampa'] = $gramJobInStampa && $gramTray ? ($gramJobInStampa === $gramTray) : null;
-            $traysArricchiti[] = $t;
-        }
-
-        $warnings = [];
-        if ($gramJobInStampa && !empty($trays)) {
-            $trovato = false;
-            foreach ($trays as $t) {
-                if ($grammaturaTray($t['media_type'] ?? '') === $gramJobInStampa) {
-                    $trovato = true;
-                    break;
-                }
-            }
-            if (!$trovato) {
-                $warnings[] = [
-                    'livello' => 'error',
-                    'testo' => "Commessa {$printing['commessa']} richiede carta {$gramJobInStampa}g — nessun vassoio caricato con questa grammatura.",
-                ];
-            }
-        }
-
-        return [
-            'trays' => $traysArricchiti,
-            'grammatura_in_stampa' => $gramJobInStampa,
-            'grammature_prossime' => array_values(array_unique($gramJobProssimi)),
-            'warnings' => $warnings,
-        ];
+        return view('fiery.dashboard', compact('status', 'jobData', 'snmp'));
     }
 
     public function statusJson(FieryService $fiery, FierySyncService $syncService)
