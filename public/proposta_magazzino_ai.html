@@ -139,7 +139,7 @@
 
 <div class="kpi-row">
     <div class="kpi"><div class="v">-93%</div><div class="l">Tempo operativo</div></div>
-    <div class="kpi"><div class="v">€4.968</div><div class="l">Risparmio anno 1</div></div>
+    <div class="kpi"><div class="v">~€1.260</div><div class="l">Risparmio min anno 1</div></div>
     <div class="kpi"><div class="v">&lt;30gg</div><div class="l">Payback</div></div>
     <div class="kpi"><div class="v">5gg</div><div class="l">Tempi rollout</div></div>
 </div>
@@ -164,24 +164,26 @@
     <tbody>
         <tr><td>Ricezione bolla fornitore + trascrizione dati</td><td>N bolle</td><td>5 min</td><td>3h 20'</td></tr>
         <tr><td>Aggiornamento quaderno/foglio giacenze</td><td>N</td><td>2 min</td><td>1h 20'</td></tr>
-        <tr><td>Ricerca carta per commessa</td><td>~200 prelievi</td><td>3 min</td><td>10h</td></tr>
         <tr><td>Inventario periodico</td><td>1 sessione</td><td>240 min</td><td>4h</td></tr>
-        <tr><td>Gestione errori post-prelievo</td><td>~2 episodi</td><td>90 min</td><td>3h</td></tr>
-        <tr class="total"><td colspan="3">TOTALE presupposto</td><td>~22 ore / mese</td></tr>
+        <tr class="total"><td colspan="3">TOTALE attività misurabili</td><td>~8h 40' / mese</td></tr>
     </tbody>
 </table>
 
-<h3>Costo operativo attuale stimato</h3>
+<div class="note">
+<strong>Nota metodologica</strong>: oggi non vengono tracciati tempi di ricerca carta per commessa né errori di prelievo (carta sbagliata, ristampe). Questi costi esistono nella realtà ma non sono quantificabili con i sistemi attuali. Vengono quindi <em>esclusi dai calcoli economici</em> di questo report, che si basa solo su attività misurabili. Una volta attivato il nuovo sistema, sarà possibile misurare questi costi nascosti e validare ulteriori risparmi.
+</div>
+
+<h3>Costo operativo attuale stimato (solo attività misurabili)</h3>
 <ul>
-    <li>Costo tempo magazzino/operatori: <strong>~€525/mese</strong></li>
-    <li>Costi errori (ristampe, scarti carta sbagliata): <strong>€100-500/mese</strong></li>
+    <li>Costo tempo magazzino dedicato a bolle + giacenze + inventario: <strong>~€130/mese</strong></li>
+    <li>Costi nascosti non tracciati (ricerca carta, errori prelievo): <em>non quantificabili con i sistemi attuali</em></li>
 </ul>
 
 <h3>Criticità operative rilevate</h3>
 <ol>
     <li>Nessuna tracciabilità digitale carta → commessa</li>
-    <li>Errori di trascrizione rilevati solo a valle dopo lo spreco</li>
-    <li>Riordini fornitori reattivi, mai proattivi</li>
+    <li>Errori di trascrizione possibili ma non tracciati oggi</li>
+    <li>Riordini fornitori non pianificabili su base dati</li>
     <li>Magazzino dipendente dalla presenza di una sola persona (single point of failure)</li>
     <li>Impossibile reportistica direzionale su consumi e scorte</li>
 </ol>
@@ -264,28 +266,30 @@ Database MES + etichetta QR stampata</div>
 A questi costi si aggiungono <strong>stampante etichette QR + rulli etichette adesive</strong>, che sono oggetto di valutazione separata già in corso.
 </div>
 
-<h3>Risparmio stimato (12 mesi)</h3>
+<h3>Risparmio stimato (12 mesi) — solo attività misurabili</h3>
 <table>
     <thead>
         <tr><th>Voce</th><th>Risparmio mensile</th><th>Risparmio annuo</th></tr>
     </thead>
     <tbody>
-        <tr><td>Tempo magazzino liberato (~8h × €15)</td><td>€120</td><td>€1.440</td></tr>
-        <tr><td>Tempo operatori liberato (~8h × €18)</td><td>€144</td><td>€1.728</td></tr>
-        <tr><td>Errori evitati</td><td>€150</td><td>€1.800</td></tr>
-        <tr class="total"><td>TOTALE</td><td>€414</td><td>€4.968</td></tr>
+        <tr><td>Tempo magazzino liberato (~7h × €15) — bolle, giacenze, inventario</td><td>~€105</td><td>~€1.260</td></tr>
+        <tr class="total"><td>TOTALE quantificato</td><td>~€105</td><td>~€1.260</td></tr>
     </tbody>
 </table>
 
-<h3>Indicatori finanziari</h3>
-<div class="kpi-row">
-    <div class="kpi"><div class="v">1° mese</div><div class="l">Break-even</div></div>
-    <div class="kpi"><div class="v">&gt;1000%</div><div class="l">ROI anno 1</div></div>
-    <div class="kpi"><div class="v">&lt;30gg</div><div class="l">Payback period</div></div>
-    <div class="kpi"><div class="v">€4.938</div><div class="l">Netto anno 1</div></div>
+<div class="note">
+I risparmi quantificati sono conservativi e considerano solo il tempo magazzino oggi misurabile. I costi nascosti (ricerca carta, errori di prelievo, ristampe, ordini fornitori reattivi) oggi non sono tracciati e quindi non entrano nel conteggio. Dopo il rollout saranno monitorati e validati con dati reali, con risparmi aggiuntivi attesi.
 </div>
 
-<h2>5. Tempi di Risparmio — Dettaglio</h2>
+<h3>Indicatori finanziari (conservativi)</h3>
+<div class="kpi-row">
+    <div class="kpi"><div class="v">1° mese</div><div class="l">Break-even</div></div>
+    <div class="kpi"><div class="v">&gt;250%</div><div class="l">ROI anno 1</div></div>
+    <div class="kpi"><div class="v">&lt;30gg</div><div class="l">Payback period</div></div>
+    <div class="kpi"><div class="v">€1.200</div><div class="l">Netto anno 1 (min)</div></div>
+</div>
+
+<h2>5. Tempi di Risparmio — Dettaglio attività misurabili</h2>
 <table>
     <thead>
         <tr>
@@ -294,18 +298,19 @@ A questi costi si aggiungono <strong>stampante etichette QR + rulli etichette ad
     </thead>
     <tbody>
         <tr><td>Registrare 1 bolla</td><td>5 min</td><td>30 sec</td><td>4.5 min</td><td>-90%</td></tr>
-        <tr><td>Prelievo carta</td><td>3 min</td><td>15 sec</td><td>2.75 min</td><td>-92%</td></tr>
-        <tr><td>Controllo giacenza</td><td>2 min</td><td>5 sec</td><td>1.9 min</td><td>-96%</td></tr>
+        <tr><td>Aggiornamento giacenza per bolla</td><td>2 min</td><td>automatica</td><td>2 min</td><td>-100%</td></tr>
         <tr><td>Inventario mensile</td><td>4 ore</td><td>15 min</td><td>3h 45'</td><td>-94%</td></tr>
         <tr class="total"><td colspan="4">Media ponderata</td><td>-93%</td></tr>
     </tbody>
 </table>
 
-<h3>Risparmio cumulativo</h3>
+<h3>Risparmio cumulativo (solo attività tracciate oggi)</h3>
 <ul>
-    <li><strong>Mese 1</strong>: 20 ore liberate</li>
-    <li><strong>Anno 1</strong>: 240 ore (30 giornate-uomo)</li>
+    <li><strong>Mese 1</strong>: ~7 ore liberate</li>
+    <li><strong>Anno 1</strong>: ~84 ore (~10 giornate-uomo)</li>
 </ul>
+
+<p>Ulteriori risparmi attesi da attività non tracciate oggi (ricerca carta, errori prelievo) verranno misurati dopo il rollout.</p>
 
 <h2>5.bis Prezziario Dettagliato — Opzioni Canale Messaggistica</h2>
 
@@ -437,7 +442,7 @@ Totale per 1 foto bolla: $0.00368 ≈ €0.003</div>
 </ol>
 
 <h2>11. Conclusione</h2>
-<p>Investimento di soli <strong>€30-60</strong> il primo anno in servizi cloud per un risparmio stimato di <strong>€4.968</strong>, con payback inferiore a 30 giorni.</p>
+<p>Investimento di soli <strong>€30-60</strong> il primo anno in servizi cloud, a fronte di un risparmio misurabile minimo di <strong>~€1.260</strong>, con payback inferiore a 30 giorni. Ulteriori risparmi, oggi non quantificabili, sono attesi una volta attivato il tracciamento digitale.</p>
 <p>Il progetto rafforza il posizionamento tecnologico di Grafica Nappa e getta le basi per ulteriori automazioni (notifiche produzione, alert commesse, reportistica direzionale) a costo marginale zero.</p>
 <p>Sono pronto a implementare entro 5 giorni dall'approvazione.</p>
 
