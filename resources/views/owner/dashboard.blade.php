@@ -634,6 +634,61 @@ tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !imp
         </div>
     </div>
 
+    {{-- PROSSIME URGENZE TOP 10 --}}
+    @if(isset($urgenze) && $urgenze->count() > 0)
+    <div class="mb-3 mx-0" style="max-width:1200px; background:#fff; border:1px solid #e5e7eb; border-radius:8px; overflow:hidden;">
+        <div style="background:linear-gradient(90deg,#dc2626,#f59e0b); color:#fff; padding:8px 14px; font-weight:700; font-size:13px; display:flex; align-items:center; justify-content:space-between;">
+            <span>🔥 Prossime Urgenze — Top 10</span>
+            <span style="font-weight:normal; font-size:11px; opacity:0.9;">commesse con consegna ≤10gg e fasi aperte</span>
+        </div>
+        <table style="width:100%; border-collapse:collapse; font-size:12px;">
+            <thead style="background:#f9fafb;">
+                <tr style="color:#6b7280; text-align:left;">
+                    <th style="padding:6px 10px;">#</th>
+                    <th style="padding:6px 10px;">Commessa</th>
+                    <th style="padding:6px 10px;">Cliente</th>
+                    <th style="padding:6px 10px;">Descrizione</th>
+                    <th style="padding:6px 10px;">Consegna</th>
+                    <th style="padding:6px 10px; text-align:center;">Giorni</th>
+                    <th style="padding:6px 10px;">Prossima fase</th>
+                    <th style="padding:6px 10px; text-align:center;">Avanz.</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($urgenze as $i => $u)
+                <tr style="border-top:1px solid #f3f4f6; @if($u['scaduta']) background:#fee2e2; @elseif($u['giorni_residui'] <= 2) background:#fef3c7; @endif">
+                    <td style="padding:6px 10px; font-weight:700; color:#9ca3af;">{{ $i + 1 }}</td>
+                    <td style="padding:6px 10px;">
+                        <a href="{{ route('owner.dettaglioCommessa', $u['commessa']) }}?op_token={{ request('op_token') }}" style="font-weight:700; color:#111827; text-decoration:none;">{{ $u['commessa'] }}</a>
+                    </td>
+                    <td style="padding:6px 10px;">{{ $u['cliente'] ?? '—' }}</td>
+                    <td style="padding:6px 10px; max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="{{ $u['descrizione'] }}">{{ $u['descrizione'] ?? '—' }}</td>
+                    <td style="padding:6px 10px;">{{ $u['data_consegna'] }}</td>
+                    <td style="padding:6px 10px; text-align:center;">
+                        @if($u['scaduta'])
+                            <span style="background:#dc2626;color:#fff;padding:2px 8px;border-radius:10px;font-weight:700;">{{ abs($u['giorni_residui']) }}gg fa</span>
+                        @elseif($u['giorni_residui'] <= 2)
+                            <span style="background:#f59e0b;color:#fff;padding:2px 8px;border-radius:10px;font-weight:700;">{{ $u['giorni_residui'] }}gg</span>
+                        @else
+                            <span style="background:#10b981;color:#fff;padding:2px 8px;border-radius:10px;">{{ $u['giorni_residui'] }}gg</span>
+                        @endif
+                    </td>
+                    <td style="padding:6px 10px;">
+                        {{ $u['prossima_fase'] ?? '—' }}
+                        @if($u['prossimo_reparto'])
+                            <span style="color:#6b7280; font-size:10px;">· {{ $u['prossimo_reparto'] }}</span>
+                        @endif
+                    </td>
+                    <td style="padding:6px 10px; text-align:center; color:#6b7280;">
+                        {{ $u['fasi_totali'] - $u['fasi_aperte'] }}/{{ $u['fasi_totali'] }}
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+    @endif
+
     {{-- ICONE AZIONI --}}
     <div class="mb-3 d-flex align-items-center gap-3 mx-2">
         <button id="toggleFilter" class="btn btn-sm btn-outline-secondary" title="Mostra / Nascondi filtri">

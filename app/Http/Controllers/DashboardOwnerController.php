@@ -574,10 +574,52 @@ public function calcolaOreEPriorita($fase)
         }
         usort($riempimento, fn($a, $b) => $b['ore_totali'] <=> $a['ore_totali']);
 
+        // Widget "Prossime urgenze top 10"
+        // Commesse con fase non completata (stato < 3) e consegna entro 10gg (o già scadute),
+        // ordinate per: giorni residui ASC, priorita min ASC
+        $oggi = now()->startOfDay();
+        $limite = (clone $oggi)->addDays(10);
+        $urgenze = Ordine::with(['fasi' => fn($q) => $q->orderBy('priorita')])
+            ->whereNotNull('data_prevista_consegna')
+            ->whereDate('data_prevista_consegna', '<=', $limite)
+            ->whereHas('fasi', function ($q) {
+                $q->whereRaw('CAST(stato AS UNSIGNED) < 3');
+            })
+            ->get()
+            ->map(function ($o) use ($oggi) {
+                $dataCons = Carbon::parse($o->data_prevista_consegna)->startOfDay();
+                $gg = $oggi->diffInDays($dataCons, false);
+                $fasiAperte = $o->fasi->filter(fn($f) => (int)$f->stato < 3);
+                $prioMin = $fasiAperte->min('priorita');
+                $prossimaFase = $fasiAperte->sortBy('priorita')->first();
+                return [
+                    'commessa' => $o->commessa,
+                    'cliente' => $o->cliente_nome,
+                    'descrizione' => $o->descrizione,
+                    'data_consegna' => $dataCons->format('d/m/Y'),
+                    'giorni_residui' => $gg,
+                    'scaduta' => $gg < 0,
+                    'prossima_fase' => $prossimaFase?->fase,
+                    'prossimo_reparto' => $prossimaFase?->reparto ?? ($prossimaFase?->faseCatalogo?->reparto?->nome),
+                    'priorita' => $prioMin,
+                    'qta' => $o->qta_richiesta,
+                    'fasi_aperte' => $fasiAperte->count(),
+                    'fasi_totali' => $o->fasi->count(),
+                ];
+            })
+            ->sort(function ($a, $b) {
+                if ($a['giorni_residui'] !== $b['giorni_residui']) {
+                    return $a['giorni_residui'] <=> $b['giorni_residui'];
+                }
+                return ($a['priorita'] ?? PHP_INT_MAX) <=> ($b['priorita'] ?? PHP_INT_MAX);
+            })
+            ->take(10)
+            ->values();
+
         return view('owner.dashboard', compact(
             'fasi', 'reparti', 'fasiCatalogo', 'spedizioniOggi', 'storicoConsegne',
             'fasiCompletateOggi', 'oreLavorateOggi', 'orePerOperatoreOggi', 'commesseSpediteOggi', 'fasiAttive', 'spedizioniBRT', 'operatore', 'isReadonly',
-            'progressoCommesse', 'riempimento'
+            'progressoCommesse', 'riempimento', 'urgenze'
         ));
     }
 
