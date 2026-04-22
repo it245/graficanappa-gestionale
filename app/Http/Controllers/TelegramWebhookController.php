@@ -2,15 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\ClaudeVisionService;
 use App\Services\TelegramBotService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 /**
  * Endpoint webhook Telegram.
- * Riceve aggiornamenti (foto, messaggi, callback) e gestisce flusso magazzino.
+ * Base bot magazzino: riceve comandi e foto, salva in storage.
+ * L'analisi AI (Claude Vision) sarà integrata in seconda fase.
  */
 class TelegramWebhookController extends Controller
 {
@@ -24,7 +23,7 @@ class TelegramWebhookController extends Controller
         }
 
         $update = $request->all();
-        Log::info('Telegram update ricevuto', ['type' => array_keys($update)]);
+        Log::info('Telegram update ricevuto', ['keys' => array_keys($update)]);
 
         // Callback query (click bottoni inline)
         if (isset($update['callback_query'])) {
@@ -32,13 +31,26 @@ class TelegramWebhookController extends Controller
         }
 
         $message = $update['message'] ?? null;
-        if (!$message) return response()->json(['ok' => true]);
+        if (!$message) {
+            return response()->json(['ok' => true]);
+        }
 
         $chatId = $message['chat']['id'] ?? null;
-        if (!$chatId || !TelegramBotService::chatAutorizzato($chatId)) {
-            if ($chatId) {
-                TelegramBotService::sendMessage($chatId, "⛔ Chat non autorizzata (ID: {$chatId}).");
-            }
+        if (!$chatId) {
+            return response()->json(['ok' => true]);
+        }
+
+        // Se chat non autorizzata, risponde comunque con il chat_id (utile per setup iniziale)
+        if (!TelegramBotService::chatAutorizzato($chatId)) {
+            TelegramBotService::sendMessage(
+                $chatId,
+                "⛔ Chat non autorizzata.\n\n"
+                . "Per abilitare questa chat:\n"
+                . "1. Copia il Chat ID qui sotto\n"
+                . "2. Aggiungilo a `TELEGRAM_ALLOWED_CHATS` nel .env del MES\n"
+                . "3. Riavvia e riprova\n\n"
+                . "Chat ID: `{$chatId}`"
+            );
             return response()->json(['ok' => true]);
         }
 
@@ -47,78 +59,85 @@ class TelegramWebhookController extends Controller
             return $this->handleFoto($chatId, $message);
         }
 
-        // Messaggio testuale (comandi e flusso conversazionale)
+        // Messaggio testuale
         if (isset($message['text'])) {
-            return $this->handleText($chatId, $message['text'], $message);
+            return $this->handleText($chatId, $message['text']);
         }
 
         return response()->json(['ok' => true]);
     }
 
+    /**
+     * Gestisce foto ricevuta.
+     * Per ora: scarica, salva in storage, conferma ricezione.
+     * Integrazione AI analisi foto in fase successiva.
+     */
     private function handleFoto(int $chatId, array $message)
     {
         $photos = $message['photo'];
-        // Prendi la risoluzione più alta
-        $photo = end($photos);
+        $photo = end($photos); // risoluzione massima
         $fileId = $photo['file_id'] ?? null;
 
         if (!$fileId) {
-            TelegramBotService::sendMessage($chatId, "⚠️ Foto non valida, riprova.");
+            TelegramBotService::sendMessage($chatId, "⚠️ Foto non valida. Riprova.");
             return response()->json(['ok' => true]);
         }
 
-        TelegramBotService::sendMessage($chatId, "🔍 Sto leggendo la bolla con l'AI...");
-
-        try {
-            $imagePath = TelegramBotService::downloadFoto($fileId);
-            if (!$imagePath) {
-                TelegramBotService::sendMessage($chatId, "❌ Errore nel download della foto.");
-                return response()->json(['ok' => true]);
-            }
-
-            $dati = ClaudeVisionService::estraiBolla($imagePath);
-
-            // Salva dati in cache temporanea per conferma successiva
-            $token = 'tg_bolla_' . $chatId . '_' . time();
-            Cache::put($token, [
-                'dati' => $dati,
-                'image_path' => $imagePath,
-                'chat_id' => $chatId,
-            ], now()->addMinutes(30));
-
-            $testo = $this->formattaRiepilogo($dati);
-
-            TelegramBotService::sendMessageWithButtons($chatId, $testo, [
-                [
-                    ['text' => '✅ Conferma', 'callback_data' => "confirm:{$token}"],
-                    ['text' => '✏️ Modifica', 'callback_data' => "edit:{$token}"],
-                    ['text' => '❌ Annulla', 'callback_data' => "cancel:{$token}"],
-                ],
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Telegram handleFoto errore', ['error' => $e->getMessage()]);
-            TelegramBotService::sendMessage($chatId, "❌ Errore lettura AI: " . $e->getMessage());
+        $imagePath = TelegramBotService::downloadFoto($fileId);
+        if (!$imagePath) {
+            TelegramBotService::sendMessage($chatId, "❌ Errore nel download della foto da Telegram.");
+            return response()->json(['ok' => true]);
         }
+
+        $filename = basename($imagePath);
+        Log::info('Telegram foto salvata', ['chat_id' => $chatId, 'file' => $filename]);
+
+        $testo = "📸 *Foto ricevuta e salvata*\n\n"
+            . "File: `{$filename}`\n"
+            . "Dimensione: " . round(filesize($imagePath) / 1024, 1) . " KB\n\n"
+            . "_L'analisi automatica delle bolle sarà attivata prossimamente._\n"
+            . "_Per ora la foto è archiviata nel MES e potrà essere rielaborata quando l'AI sarà attiva._";
+
+        TelegramBotService::sendMessage($chatId, $testo);
 
         return response()->json(['ok' => true]);
     }
 
-    private function handleText(int $chatId, string $text, array $message)
+    private function handleText(int $chatId, string $text)
     {
         $text = trim($text);
 
-        if ($text === '/start' || $text === '/help') {
-            $this->inviaAiuto($chatId);
-            return response()->json(['ok' => true]);
+        switch (strtolower($text)) {
+            case '/start':
+            case '/help':
+                $this->inviaAiuto($chatId);
+                break;
+
+            case '/id':
+            case '/chatid':
+                TelegramBotService::sendMessage(
+                    $chatId,
+                    "🆔 *Chat ID*: `{$chatId}`\n\n"
+                    . "Aggiungilo a `TELEGRAM_ALLOWED_CHATS` nel `.env` del MES per autorizzare questa chat."
+                );
+                break;
+
+            case '/ping':
+                TelegramBotService::sendMessage($chatId, "🏓 pong — bot attivo e autorizzato.");
+                break;
+
+            case '/status':
+                $this->inviaStatus($chatId);
+                break;
+
+            default:
+                TelegramBotService::sendMessage(
+                    $chatId,
+                    "🤖 Comando non riconosciuto.\n"
+                    . "Invia /help per vedere i comandi disponibili, oppure inviami una foto."
+                );
         }
 
-        if ($text === '/chatid' || $text === '/id') {
-            TelegramBotService::sendMessage($chatId, "Chat ID: `{$chatId}`\nAggiungilo a `TELEGRAM_ALLOWED_CHATS` nel .env");
-            return response()->json(['ok' => true]);
-        }
-
-        // Default: istruzioni
-        TelegramBotService::sendMessage($chatId, "📸 Inviami una foto di una bolla fornitore per registrarla in magazzino.\n\nComandi: /help");
         return response()->json(['ok' => true]);
     }
 
@@ -127,83 +146,50 @@ class TelegramWebhookController extends Controller
         $callbackId = $callback['id'];
         $data = $callback['data'] ?? '';
         $chatId = $callback['message']['chat']['id'] ?? null;
-        $messageId = $callback['message']['message_id'] ?? null;
 
-        [$action, $token] = array_pad(explode(':', $data, 2), 2, null);
+        // Placeholder: i bottoni saranno usati quando si attiverà il flusso AI
+        TelegramBotService::answerCallbackQuery($callbackId, 'Funzione non ancora attiva');
 
-        $payload = Cache::get($token);
-        if (!$payload) {
-            TelegramBotService::answerCallbackQuery($callbackId, 'Sessione scaduta, invia di nuovo la foto.');
-            return response()->json(['ok' => true]);
-        }
-
-        switch ($action) {
-            case 'confirm':
-                TelegramBotService::answerCallbackQuery($callbackId, 'Registrazione in corso...');
-                $this->registraCarico($chatId, $messageId, $payload);
-                Cache::forget($token);
-                break;
-            case 'edit':
-                TelegramBotService::answerCallbackQuery($callbackId, 'Apri il MES per modificare');
-                $url = rtrim(env('APP_URL', 'http://localhost'), '/') . '/magazzino/carico';
-                TelegramBotService::sendMessage(
-                    $chatId,
-                    "✏️ Per modificare i dati, apri il MES:\n{$url}\n\nI dati AI sono stati salvati nella tua sessione."
-                );
-                break;
-            case 'cancel':
-                TelegramBotService::answerCallbackQuery($callbackId, 'Annullato');
-                if ($messageId) TelegramBotService::editMessage($chatId, $messageId, '❌ Registrazione annullata.');
-                Cache::forget($token);
-                break;
-        }
+        Log::info('Telegram callback ricevuto', ['chat_id' => $chatId, 'data' => $data]);
 
         return response()->json(['ok' => true]);
     }
 
-    private function registraCarico(int $chatId, ?int $messageId, array $payload)
-    {
-        // TODO: chiamare MagazzinoService::registraCarico($payload['dati'])
-        // Per ora risposta placeholder. Integrazione completa dopo validazione flusso.
-        $dati = $payload['dati'];
-        $riepilogo = "✅ *Carico registrato*\n\n"
-            . "• Carta: {$dati['descrizione']}\n"
-            . "• Qta: {$dati['quantita']} {$dati['unita_misura']}\n"
-            . "• Lotto: {$dati['lotto']}\n\n"
-            . "_Etichetta QR in coda di stampa_";
-
-        if ($messageId) {
-            TelegramBotService::editMessage($chatId, $messageId, $riepilogo);
-        } else {
-            TelegramBotService::sendMessage($chatId, $riepilogo);
-        }
-    }
-
-    private function formattaRiepilogo(array $dati): string
-    {
-        $costo = isset($dati['costo_stimato_eur']) ? sprintf('€%.4f', $dati['costo_stimato_eur']) : '—';
-        return "📋 *Bolla letta dall'AI*\n\n"
-            . "🏭 *Fornitore*: " . ($dati['fornitore'] ?: '—') . "\n"
-            . "📄 *Bolla N°*: " . ($dati['numero_bolla'] ?: '—') . "\n"
-            . "📅 *Data*: " . ($dati['data_bolla'] ?: '—') . "\n"
-            . "📦 *Categoria*: " . ($dati['categoria'] ?: '—') . "\n"
-            . "📝 *Descrizione*: " . ($dati['descrizione'] ?: '—') . "\n"
-            . "⚖️ *Grammatura*: " . ($dati['grammatura'] ? $dati['grammatura'] . 'g' : '—') . "\n"
-            . "📐 *Formato*: " . ($dati['formato'] ?: '—') . "\n"
-            . "🔢 *Quantità*: " . ($dati['quantita'] ? $dati['quantita'] . ' ' . $dati['unita_misura'] : '—') . "\n"
-            . "🏷 *Lotto*: " . ($dati['lotto'] ?: '—') . "\n\n"
-            . "_Costo analisi AI: {$costo}_\n\n"
-            . "Conferma per registrare in magazzino:";
-    }
-
     private function inviaAiuto(int $chatId)
     {
-        $testo = "👋 *Bot Magazzino Grafica Nappa*\n\n"
-            . "Invia una *foto di una bolla fornitore* e l'AI la leggerà automaticamente.\n\n"
-            . "Conferma i dati estratti → registrazione in magazzino + etichetta QR.\n\n"
-            . "*Comandi*:\n"
-            . "/help — mostra questo messaggio\n"
-            . "/chatid — mostra il tuo chat ID";
+        $testo = "👋 *Bot Magazzino — Grafica Nappa*\n\n"
+            . "Questo bot permetterà di gestire il magazzino carta tramite Telegram.\n\n"
+            . "*Stato attuale*: fase iniziale — base operativa attiva.\n\n"
+            . "*Cosa puoi fare adesso*:\n"
+            . "• Inviare foto (vengono archiviate nel MES)\n"
+            . "• Usare i comandi base\n\n"
+            . "*Comandi disponibili*:\n"
+            . "/start — messaggio iniziale\n"
+            . "/help — questo messaggio\n"
+            . "/id — mostra il tuo chat ID\n"
+            . "/ping — verifica che il bot sia attivo\n"
+            . "/status — stato del bot\n\n"
+            . "*In arrivo*:\n"
+            . "• Lettura automatica bolle con intelligenza artificiale\n"
+            . "• Conferma dati ed etichetta QR automatica\n"
+            . "• Scansione QR per scarico carta per commessa";
+
+        TelegramBotService::sendMessage($chatId, $testo);
+    }
+
+    private function inviaStatus(int $chatId)
+    {
+        $claudeAttivo = !empty(env('ANTHROPIC_API_KEY'));
+        $botConfigurato = !empty(env('TELEGRAM_BOT_TOKEN'));
+        $webhookSecret = !empty(env('TELEGRAM_WEBHOOK_SECRET'));
+        $allowedList = env('TELEGRAM_ALLOWED_CHATS', '(tutti)');
+
+        $testo = "🛠 *Stato Bot*\n\n"
+            . "Bot Token: " . ($botConfigurato ? '✅ configurato' : '❌ mancante') . "\n"
+            . "Webhook secret: " . ($webhookSecret ? '✅ configurato' : '❌ mancante') . "\n"
+            . "AI Claude Vision: " . ($claudeAttivo ? '✅ attiva' : '⏳ in attesa di attivazione') . "\n"
+            . "Chat autorizzate: `{$allowedList}`";
+
         TelegramBotService::sendMessage($chatId, $testo);
     }
 }
