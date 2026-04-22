@@ -475,7 +475,16 @@ class FieryService
      */
     public function getJobTimings(array $job): array
     {
-        $ts = fn($key) => isset($job[$key]) && $job[$key] ? strtotime($job[$key]) : null;
+        // Parse timestamp robusto: skipa valori vuoti/strani, cap a 24h per sanity
+        $ts = function ($key) use ($job) {
+            $v = $job[$key] ?? null;
+            if (!$v || $v === '0' || $v === 0) return null;
+            $t = is_numeric($v) ? (int) $v : strtotime($v);
+            // Timestamp valido solo se > 1 gen 2020 (prima = artefatto)
+            return ($t && $t > 1577836800) ? $t : null;
+        };
+        $SANITY_MAX = 24 * 3600; // 24h max realistico per uno step
+        $diff = fn($a, $b) => ($a && $b && $b >= $a) ? min($b - $a, $SANITY_MAX * 10) : null;
 
         $spoolStart = $ts('timestamp spooling');
         $spoolDone = $ts('timestamp done spooling');
@@ -484,11 +493,14 @@ class FieryService
         $printStart = $ts('timestamp printing');
         $printDone = $ts('timestamp done printing');
 
+        // Applica sanity: se diff > 24h per un singolo step → null (valore non attendibile)
+        $sanity = fn($s) => ($s !== null && $s <= $SANITY_MAX) ? $s : null;
+
         return [
-            'spool_sec' => ($spoolStart && $spoolDone) ? max(0, $spoolDone - $spoolStart) : null,
-            'rip_sec' => ($ripStart && $ripDone) ? max(0, $ripDone - $ripStart) : null,
-            'print_sec' => ($printStart && $printDone) ? max(0, $printDone - $printStart) : null,
-            'total_sec' => ($spoolStart && $printDone) ? max(0, $printDone - $spoolStart) : null,
+            'spool_sec' => $sanity($diff($spoolStart, $spoolDone)),
+            'rip_sec'   => $sanity($diff($ripStart, $ripDone)),
+            'print_sec' => $sanity($diff($printStart, $printDone)),
+            'total_sec' => $sanity($diff($spoolStart, $printDone)),
         ];
     }
 
