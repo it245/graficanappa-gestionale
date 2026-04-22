@@ -363,7 +363,7 @@
                 <th>Descrizione</th>
                 <th>Data Inizio</th>
                 <th>Data Fine</th>
-                <th></th>
+                <th style="min-width:110px;">Azioni</th>
             </tr>
         </thead>
         <tbody>
@@ -429,9 +429,12 @@
                 <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'descrizione', this.innerText)">{{ $fase->ordine->descrizione ?? '-' }}</td>
                 <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_inizio', this.innerText)">{{ $fase->data_inizio ?? '-' }}</td>
                 <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_fine', this.innerText)">{{ $fase->data_fine ?? '-' }}</td>
-                <td>
-                    <a href="{{ route('owner.bolla', $fase->id) }}" target="_blank" class="btn-bolla" title="Stampa bolla lavorazione PDF" style="display:inline-block;background:#0a58ca;color:#fff;border:none;border-radius:3px;padding:3px 7px;text-decoration:none;font-size:11px;margin-right:4px;">🖨</a>
-                    <button class="btn-elimina" onclick="eliminaFase({{ $fase->id }})">&times;</button>
+                <td style="white-space:nowrap;">
+                    <a href="{{ route('owner.bolla', $fase->id) }}" target="_blank" title="Stampa bolla lavorazione PDF" style="display:inline-flex;align-items:center;gap:4px;background:#0a58ca;color:#fff;border:none;border-radius:4px;padding:4px 8px;text-decoration:none;font-size:11px;font-weight:600;margin-right:4px;vertical-align:middle;">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                        PDF
+                    </a>
+                    <button class="btn-elimina" onclick="eliminaFase({{ $fase->id }})" style="vertical-align:middle;">&times;</button>
                 </td>
             </tr>
         @endforeach
