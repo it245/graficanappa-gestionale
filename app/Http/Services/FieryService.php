@@ -108,6 +108,7 @@ class FieryService
 
             $result = [
                 'stato' => $stato,
+                'online' => true,
                 'stampa' => [
                     'documento' => $stampaDoc,
                     'pagine' => 0,
