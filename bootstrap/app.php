@@ -35,6 +35,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'owner/applica-priorita-commessa',
             'operatore/prestampa/aggiorna-campo',
             'spedizione/sync-onda',
+            'telegram/webhook/*',
         ]);
 
         $middleware->alias([

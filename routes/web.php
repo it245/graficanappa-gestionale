@@ -70,6 +70,14 @@ Route::get('/owner/scheduling', [DashboardOwnerController::class, 'scheduling'])
 Route::get('/owner/scheduling/excel', [DashboardOwnerController::class, 'schedulingExcel'])->name('owner.schedulingExcel');
 Route::get('/owner/bolla/{faseId}', [DashboardOwnerController::class, 'bollaLavorazione'])->whereNumber('faseId')->name('owner.bolla');
 Route::get('/owner/scheda/{commessa}', [DashboardOwnerController::class, 'schedaProduzione'])->name('owner.schedaProduzione');
+
+// Telegram Bot webhook — riceve update (foto bolle, callback)
+// URL pubblico: https://<dominio>/telegram/webhook/<secret>
+// Configurare TELEGRAM_WEBHOOK_SECRET in .env (qualsiasi stringa lunga)
+// CSRF esente: vedi bootstrap/app.php validateCsrfTokens
+Route::post('/telegram/webhook/{secret}', [\App\Http\Controllers\TelegramWebhookController::class, 'handle'])
+    ->where('secret', '[A-Za-z0-9_\-]{16,}')
+    ->name('telegram.webhook');
 Route::get('/owner/report-ore', [DashboardOwnerController::class, 'reportOre'])->name('owner.reportOre');
 Route::get('/owner/excel-download', [DashboardOwnerController::class, 'downloadExcel'])->name('owner.downloadExcel');
 Route::get('/owner/esterne', [DashboardOwnerController::class, 'esterne'])->name('owner.esterne');
