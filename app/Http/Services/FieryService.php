@@ -71,22 +71,50 @@ class FieryService
 
             $fiery = strtolower($data['fiery'] ?? '');
             $ext = strtolower($data['fieryExtendedStatus'] ?? 'none');
+
+            // Stato iniziale da /server/status (spesso dice "running" anche quando stampa)
             $stato = match (true) {
                 str_contains($fiery, 'print') => 'stampa',
-                $fiery === 'running' && $ext === 'none' => 'idle',
                 $fiery === 'running' => 'idle',
                 default => 'offline',
             };
 
+            // Controllo /jobs/printing per stato reale stampa (API autenticata)
+            $stampaDoc = null;
+            $stampaCopieFatte = 0;
+            $stampaCopieTotali = 0;
+            $stampaUser = '-';
+            try {
+                $http = $this->loginAndGetHttp();
+                if ($http) {
+                    $jp = $http->get($this->baseUrl . '/live/api/v5/jobs/printing');
+                    if ($jp->successful()) {
+                        $items = $jp->json('data.items', []);
+                        if (!empty($items)) {
+                            $job = $items[0];
+                            $stato = 'stampa';
+                            $stampaDoc = $job['title'] ?? null;
+                            $stampaCopieFatte = (int) ($job['copies printed'] ?? 0);
+                            $stampaCopieTotali = (int) ($job['num copies'] ?? 0);
+                            $stampaUser = $job['username'] ?? '-';
+                        }
+                    }
+                }
+            } catch (\Exception $e) {}
+
+            $progresso = $stampaCopieTotali > 0
+                ? round(($stampaCopieFatte / $stampaCopieTotali) * 100)
+                : 0;
+
             $result = [
                 'stato' => $stato,
                 'stampa' => [
-                    'documento' => null,
+                    'documento' => $stampaDoc,
                     'pagine' => 0,
-                    'copie_fatte' => 0,
-                    'copie_totali' => 0,
-                    'progresso' => 0,
-                    'utente' => '-',
+                    'copie_fatte' => $stampaCopieFatte,
+                    'copie_totali' => $stampaCopieTotali,
+                    'progresso' => $progresso,
+                    'utente' => $stampaUser,
                 ],
                 'rip' => ['idle' => true, 'documento' => null, 'count' => 0],
                 'avviso' => $ext !== 'none' ? $ext : null,
@@ -94,7 +122,7 @@ class FieryService
                 'raw' => $data,
             ];
 
-            // Cache 30s SOLO se successo (evita null cachato che genera "non raggiungibile" per 30s)
+            // Cache 30s SOLO se successo
             Cache::put('fiery_server_status', $result, 30);
             return $result;
         } catch (\Exception $e) {
