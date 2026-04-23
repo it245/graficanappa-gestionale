@@ -30,28 +30,36 @@ class CachePrinectInkJob implements ShouldQueue
 
         try {
             $wsData = $service->getJobWorksteps($jobId);
-            $worksteps = collect($wsData['worksteps'] ?? [])
-                ->filter(fn($ws) => in_array('ConventionalPrinting', $ws['types'] ?? []))
-                ->filter(fn($ws) => ($ws['status'] ?? '') === 'COMPLETED');
+            if (!$wsData) {
+                Log::info("CachePrinectInk {$this->commessa}: API Prinect no response (job {$jobId} non trovato)");
+                Cache::put("prinect_ink_total_{$this->commessa}", null, 3600);
+                return;
+            }
+            $allWs = collect($wsData['worksteps'] ?? []);
+            $printing = $allWs->filter(fn($ws) => in_array('ConventionalPrinting', $ws['types'] ?? []));
+            $completed = $printing->filter(fn($ws) => ($ws['status'] ?? '') === 'COMPLETED');
 
-            if ($worksteps->isEmpty()) {
+            if ($completed->isEmpty()) {
+                Log::info("CachePrinectInk {$this->commessa}: tot ws=" . $allWs->count() . ", printing=" . $printing->count() . ", completed=" . $completed->count() . " → NO DATA");
                 Cache::put("prinect_ink_total_{$this->commessa}", null, 86400);
                 return;
             }
 
             $tot = 0;
-            foreach ($worksteps as $ws) {
+            $countInk = 0;
+            foreach ($completed as $ws) {
                 $ink = $service->getWorkstepInkConsumption($jobId, $ws['id']);
                 foreach (($ink['inkConsumptions'] ?? []) as $c) {
                     $tot += (float) ($c['estimatedConsumption'] ?? 0);
+                    $countInk++;
                 }
             }
 
             $grammi = round($tot * 1000, 1);
             Cache::put("prinect_ink_total_{$this->commessa}", $grammi, 86400 * 7);
-            Log::info("CachePrinectInkJob: commessa {$this->commessa} = {$grammi}g");
+            Log::info("CachePrinectInk {$this->commessa}: {$completed->count()} ws completed, {$countInk} ink entries = {$grammi}g");
         } catch (\Throwable $e) {
-            Log::warning("CachePrinectInkJob errore commessa {$this->commessa}: " . $e->getMessage());
+            Log::warning("CachePrinectInk errore {$this->commessa}: " . $e->getMessage());
         }
     }
 }
