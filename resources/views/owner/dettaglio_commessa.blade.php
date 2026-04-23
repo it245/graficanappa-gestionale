@@ -404,10 +404,10 @@
                     }
                 @endphp
                 <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'qta_fase', this.innerText)">{{ $qtaFaseVal ? number_format($qtaFaseVal, 0, ',', '.') : '-' }}</td>
-                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'qta_prod', this.innerText)">{{ $fase->qta_prod ?? '-' }}</td>
-                <td style="text-align:center; background:#f0f7ff;">{{ $fase->fogli_buoni ?? '-' }}</td>
-                <td style="text-align:center;">{{ $fase->fogli_scarto ?? '-' }}</td>
-                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'scarti', this.innerText)" style="text-align:center;">{{ $fase->scarti ?? '-' }}</td>
+                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'qta_prod', this.innerText)">{{ ((int)$fase->stato >= 2 && $fase->qta_prod !== null) ? $fase->qta_prod : '-' }}</td>
+                <td style="text-align:center; background:#f0f7ff;">{{ ((int)$fase->stato >= 2 && $fase->fogli_buoni) ? $fase->fogli_buoni : '-' }}</td>
+                <td style="text-align:center;">{{ ((int)$fase->stato >= 2 && $fase->fogli_scarto !== null) ? $fase->fogli_scarto : '-' }}</td>
+                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'scarti', this.innerText)" style="text-align:center;">{{ ((int)$fase->stato >= 2 && $fase->scarti !== null) ? $fase->scarti : '-' }}</td>
                 <td>
                     @forelse($fase->operatori as $op)
                         {{ $op->nome }} {{ $op->cognome }}@if(!$loop->last), @endif

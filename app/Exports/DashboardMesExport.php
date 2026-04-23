@@ -63,7 +63,7 @@ class DashboardMesSheet implements FromCollection, WithHeadings, WithMapping, Wi
             'Qta Prod', 'Note', 'Data Inizio', 'Data Fine',
             'Ordine Cliente', 'N. DDT Vendita', 'Vettore DDT', 'Qta DDT', 'Note Fasi Successive',
             'Colori', 'Fustella', 'Esterno', 'Ore Prev.', 'Ore Lav.',
-            'Scarti', 'Scarti Prinect', 'Cliché', 'Qta Prod. Prinect',
+            'Scarti Reali', 'Scarti Prinect', 'Cliché', 'Qta Prod. Prinect',
         ];
     }
 
@@ -154,15 +154,15 @@ class DashboardMesSheet implements FromCollection, WithHeadings, WithMapping, Wi
                 }
                 return '';
             })(),
-            // Scarti (editabile)
-            $fase->scarti ?? '',
-            // Scarti Previsti: per reparto "stampa offset" usa fogli_scarto da Prinect; altrimenti scarti_previsti da Onda
+            // Scarti Reali (editabile operatore): solo se fase avviata/terminata
+            ((int)$fase->stato >= 2 && $fase->scarti !== null) ? $fase->scarti : '',
+            // Scarti Prinect: solo per stampa offset con fogli_scarto reali (no scarti_previsti da Onda)
             (function() use ($fase) {
                 $reparto = strtolower($fase->faseCatalogo->reparto->nome ?? '');
-                if ($reparto === 'stampa offset' && ($fase->fogli_scarto ?? 0) > 0) {
+                if ($reparto === 'stampa offset' && (int)$fase->stato >= 2 && ($fase->fogli_scarto ?? 0) > 0) {
                     return $fase->fogli_scarto;
                 }
-                return $fase->scarti_previsti ?? '';
+                return '';
             })(),
             // Cliché (auto/manual, sola lettura)
             $ordine && $ordine->cliche ? $ordine->cliche->label() : '',
@@ -209,8 +209,8 @@ class DashboardMesSheet implements FromCollection, WithHeadings, WithMapping, Wi
             'AG' => 18, // Esterno
             'AH' => 10, // Ore Prev.
             'AI' => 10, // Ore Lav.
-            'AJ' => 10, // Scarti
-            'AK' => 12, // Scarti Prev.
+            'AJ' => 10, // Scarti Reali
+            'AK' => 12, // Scarti Prinect
             'AL' => 12, // Cliché
             'AM' => 14, // Qta Prod. Prinect
         ];
