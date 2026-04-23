@@ -19,19 +19,15 @@ class PrinectCacheInk extends Command
             return 0;
         }
 
-        $commesse = OrdineFase::query()
-            ->where('stato', 3)
-            ->where(function($q) {
-                $q->whereHas('faseCatalogo.reparto', fn($r) => $r->whereRaw('LOWER(nome) = ?', ['stampa offset']))
-                  ->orWhere('fase', 'like', 'STAMPAXL106%')
-                  ->orWhere('fase', 'like', 'STAMPA%OFFSET%');
-            })
-            ->with('ordine:id,commessa')
-            ->get()
-            ->pluck('ordine.commessa')
-            ->filter()
-            ->unique()
-            ->values();
+        $rows = \Illuminate\Support\Facades\DB::select("
+            SELECT DISTINCT o.commessa
+            FROM ordine_fasi f
+            INNER JOIN ordini o ON o.id = f.ordine_id
+            WHERE f.stato = 3
+              AND (f.fase LIKE 'STAMPAXL106%' OR f.fase LIKE 'STAMPA XL%' OR f.fase = 'STAMPA')
+              AND o.commessa IS NOT NULL
+        ");
+        $commesse = collect($rows)->pluck('commessa')->filter()->unique()->values();
 
         $this->info("Commesse da cacheare: {$commesse->count()}");
         $bar = $this->output->createProgressBar($commesse->count());
