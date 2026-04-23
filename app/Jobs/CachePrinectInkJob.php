@@ -31,7 +31,7 @@ class CachePrinectInkJob implements ShouldQueue
         try {
             $wsData = $service->getJobWorksteps($jobId);
             if (!$wsData) {
-                Log::info("CachePrinectInk {$this->commessa}: API Prinect no response (job {$jobId} non trovato)");
+                Log::error("CachePrinectInk {$this->commessa}: API Prinect no response (job {$jobId} non trovato)");
                 Cache::put("prinect_ink_total_{$this->commessa}", null, 3600);
                 return;
             }
@@ -40,7 +40,7 @@ class CachePrinectInkJob implements ShouldQueue
             $completed = $printing->filter(fn($ws) => ($ws['status'] ?? '') === 'COMPLETED');
 
             if ($completed->isEmpty()) {
-                Log::info("CachePrinectInk {$this->commessa}: tot ws=" . $allWs->count() . ", printing=" . $printing->count() . ", completed=" . $completed->count() . " → NO DATA");
+                Log::error("CachePrinectInk {$this->commessa}: tot ws=" . $allWs->count() . ", printing=" . $printing->count() . ", completed=" . $completed->count() . " → NO DATA");
                 Cache::put("prinect_ink_total_{$this->commessa}", null, 86400);
                 return;
             }
@@ -57,9 +57,9 @@ class CachePrinectInkJob implements ShouldQueue
 
             $grammi = round($tot * 1000, 1);
             Cache::put("prinect_ink_total_{$this->commessa}", $grammi, 86400 * 7);
-            Log::info("CachePrinectInk {$this->commessa}: {$completed->count()} ws completed, {$countInk} ink entries = {$grammi}g");
+            Log::error("CachePrinectInk {$this->commessa}: {$completed->count()} ws completed, {$countInk} ink entries = {$grammi}g");
         } catch (\Throwable $e) {
-            Log::warning("CachePrinectInk errore {$this->commessa}: " . $e->getMessage());
+            Log::error("CachePrinectInk errore {$this->commessa}: " . $e->getMessage());
         }
     }
 }
