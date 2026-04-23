@@ -272,9 +272,10 @@ class DashboardMesSheet implements FromCollection, WithHeadings, WithMapping, Wi
                 }
                 return '';
             })(),
-            // Inchiostro Prinect (g): solo fasi stampa offset TERMINATE (stato >= 3)
-            // per evitare N chiamate API Prinect su ogni commessa in corso (timeout)
+            // Inchiostro Prinect (g): disabilitato in sync automatica (timeout 120s Windows CLI).
+            // Attivabile via env EXCEL_SYNC_INK_PRINECT=true per export manuale.
             (function() use ($fase, $ordine) {
+                if (!env('EXCEL_SYNC_INK_PRINECT', false)) return '';
                 $reparto = strtolower($fase->faseCatalogo->reparto->nome ?? '');
                 if ($reparto !== 'stampa offset') return '';
                 if ((int)$fase->stato < 3) return '';
