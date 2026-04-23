@@ -7,10 +7,24 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\FasiCatalogo;
 use App\Events\PhaseCompleted;
+use App\Jobs\CachePrinectInkJob;
 
 class OrdineFase extends Model
 {
     use HasFactory, SoftDeletes;
+
+    protected static function booted(): void
+    {
+        static::updated(function (self $fase) {
+            if (!$fase->wasChanged('stato')) return;
+            if ((int) $fase->stato !== 3) return;
+            $reparto = strtolower(optional(optional($fase->faseCatalogo)->reparto)->nome ?? '');
+            if ($reparto !== 'stampa offset') return;
+            $commessa = optional($fase->ordine)->commessa;
+            if (!$commessa) return;
+            CachePrinectInkJob::dispatch($commessa)->afterCommit();
+        });
+    }
 
     protected $table = 'ordine_fasi';
 

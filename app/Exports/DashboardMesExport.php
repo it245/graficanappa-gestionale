@@ -272,14 +272,16 @@ class DashboardMesSheet implements FromCollection, WithHeadings, WithMapping, Wi
                 }
                 return '';
             })(),
-            // Inchiostro Prinect (g): disabilitato in sync automatica (timeout 120s Windows CLI).
-            // Attivabile via env EXCEL_SYNC_INK_PRINECT=true per export manuale.
+            // Inchiostro Prinect (g): letto SOLO da cache popolata dal job async
+            // CachePrinectInkJob (dispatch automatico su fine fase stampa offset).
+            // Zero chiamate API durante sync Excel → no timeout.
             (function() use ($fase, $ordine) {
-                if (!env('EXCEL_SYNC_INK_PRINECT', false)) return '';
                 $reparto = strtolower($fase->faseCatalogo->reparto->nome ?? '');
                 if ($reparto !== 'stampa offset') return '';
                 if ((int)$fase->stato < 3) return '';
-                $val = $this->inchiostroPrinect($ordine->commessa ?? null);
+                $commessa = $ordine->commessa ?? null;
+                if (!$commessa) return '';
+                $val = \Illuminate\Support\Facades\Cache::get("prinect_ink_total_{$commessa}");
                 return $val !== null ? $val : '';
             })(),
             // Tiro (cm foil consumato per fasi stampa a caldo)
