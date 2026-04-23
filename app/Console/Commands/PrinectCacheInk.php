@@ -21,7 +21,11 @@ class PrinectCacheInk extends Command
 
         $commesse = OrdineFase::query()
             ->where('stato', 3)
-            ->whereHas('faseCatalogo.reparto', fn($q) => $q->whereRaw('LOWER(nome) = ?', ['stampa offset']))
+            ->where(function($q) {
+                $q->whereHas('faseCatalogo.reparto', fn($r) => $r->whereRaw('LOWER(nome) = ?', ['stampa offset']))
+                  ->orWhere('fase', 'like', 'STAMPAXL106%')
+                  ->orWhere('fase', 'like', 'STAMPA%OFFSET%');
+            })
             ->with('ordine:id,commessa')
             ->get()
             ->pluck('ordine.commessa')
