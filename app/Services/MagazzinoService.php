@@ -172,12 +172,21 @@ class MagazzinoService
             $giacenza = MagazzinoGiacenza::lockForUpdate()->findOrFail($giacenzaId);
             $differenza = $nuovaQta - $giacenza->quantita;
 
+            // Normalizza ubicazione_id: 0/"" → NULL (evita FK violation)
+            $ubicazioneId = $giacenza->ubicazione_id;
+            if (empty($ubicazioneId)) {
+                $ubicazioneId = null;
+                if ($giacenza->ubicazione_id !== null) {
+                    $giacenza->ubicazione_id = null;
+                }
+            }
+
             $giacenza->quantita = $nuovaQta;
             $giacenza->save();
 
             return MagazzinoMovimento::create([
                 'articolo_id' => $giacenza->articolo_id,
-                'ubicazione_id' => $giacenza->ubicazione_id,
+                'ubicazione_id' => $ubicazioneId,
                 'tipo' => 'rettifica',
                 'quantita' => $differenza,
                 'giacenza_dopo' => $nuovaQta,
