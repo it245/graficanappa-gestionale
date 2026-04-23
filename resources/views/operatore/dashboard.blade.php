@@ -439,13 +439,14 @@ function segnaLetta(id, btn) {
                             <th>Operatori</th>
                             <th>Note Operatore</th>
                             <th>Timeout</th>
+                            <th>Scarico Carta</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($info['fasi'] as $fase)
                             @include('operatore._fase_row', ['fase' => $fase])
                         @empty
-                            <tr><td colspan="{{ 20 + ($showColori ? 1 : 0) + ($showEsterno ? 1 : 0) }}" class="text-center text-muted">Nessuna fase attiva</td></tr>
+                            <tr><td colspan="{{ 21 + ($showColori ? 1 : 0) + ($showEsterno ? 1 : 0) }}" class="text-center text-muted">Nessuna fase attiva</td></tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -663,6 +664,144 @@ document.querySelectorAll('.filtri-reparto').forEach(function(bar) {
     applicaFiltri(bar.querySelector('.filtro-stato'));
 });
 
+// ============================================================
+// SCARICO CARTA — Dialog per fasi STAMPA
+// ============================================================
+
+// Carica stato scarico per ogni riga fase STAMPA
+function caricaStatoScaricoFasi() {
+    document.querySelectorAll('.btn-scarico').forEach(function(btn) {
+        var faseId = btn.dataset.faseId;
+        var statoDiv = document.getElementById('scarico-stato-' + faseId);
+        if (!statoDiv) return;
+        fetch('/produzione/stato-scarico/' + faseId, {
+            headers: {'X-Op-Token': window.opToken()}
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.scaricato) {
+                statoDiv.innerHTML = '<span style="color:#198754;font-weight:600;">&#10003; ' + data.quantita_totale + '</span>';
+                btn.style.background = '#198754';
+                btn.innerHTML = '&#10003; Modifica';
+            } else {
+                statoDiv.innerHTML = '<span style="color:#dc3545;">&#9888; Da scaricare</span>';
+            }
+        })
+        .catch(function() {
+            statoDiv.innerHTML = '';
+        });
+    });
+}
+window.addEventListener('load', caricaStatoScaricoFasi);
+
+function apriDialogScarico(btn) {
+    var faseId = btn.dataset.faseId;
+    var commessa = btn.dataset.commessa || '';
+    var faseNome = btn.dataset.faseNome || '';
+    var codCarta = btn.dataset.codCarta || '';
+    var qtaSugg = btn.dataset.qtaSuggerita || '';
+
+    document.getElementById('scarico-fase-id').value = faseId;
+    document.getElementById('scarico-commessa-display').textContent = commessa;
+    document.getElementById('scarico-fase-display').textContent = faseNome;
+    document.getElementById('scarico-articolo-id').value = '';
+    document.getElementById('scarico-articolo-input').value = codCarta;
+    document.getElementById('scarico-quantita').value = qtaSugg;
+    document.getElementById('scarico-lotto').value = '';
+    document.getElementById('scarico-suggest').innerHTML = '';
+    document.getElementById('scarico-messaggio').innerHTML = '';
+
+    document.getElementById('modal-scarico').style.display = 'flex';
+
+    if (codCarta.length >= 2) {
+        cercaArticoliScarico(codCarta);
+    }
+}
+
+function chiudiDialogScarico() {
+    document.getElementById('modal-scarico').style.display = 'none';
+}
+
+var scaricoSearchTimer = null;
+function cercaArticoliScarico(query) {
+    clearTimeout(scaricoSearchTimer);
+    scaricoSearchTimer = setTimeout(function() {
+        if (!query || query.length < 2) {
+            document.getElementById('scarico-suggest').innerHTML = '';
+            return;
+        }
+        fetch('/produzione/cerca-articolo?q=' + encodeURIComponent(query), {
+            headers: {'X-Op-Token': window.opToken()}
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(items) {
+            var html = '';
+            items.forEach(function(a) {
+                html += '<div class="scarico-item" onclick="selezionaArticoloScarico(' + a.id + ', \'' + a.codice.replace(/'/g,"\\'") + '\')">'
+                     + '<b>' + a.codice + '</b> — ' + (a.descrizione || '') + ' <span style="color:#666;">(giac: ' + a.giacenza + ' ' + a.um + ')</span>'
+                     + '</div>';
+            });
+            document.getElementById('scarico-suggest').innerHTML = html || '<div style="color:#999;padding:6px;">Nessun articolo</div>';
+        });
+    }, 250);
+}
+
+function selezionaArticoloScarico(id, codice) {
+    document.getElementById('scarico-articolo-id').value = id;
+    document.getElementById('scarico-articolo-input').value = codice;
+    document.getElementById('scarico-suggest').innerHTML = '';
+}
+
+function confermaScarico() {
+    var faseId = document.getElementById('scarico-fase-id').value;
+    var articoloId = document.getElementById('scarico-articolo-id').value;
+    var quantita = document.getElementById('scarico-quantita').value;
+    var lotto = document.getElementById('scarico-lotto').value;
+
+    if (!articoloId) {
+        alert('Seleziona un articolo dalla lista suggerimenti');
+        return;
+    }
+    if (!quantita || parseInt(quantita) <= 0) {
+        alert('Inserisci una quantità valida');
+        return;
+    }
+
+    var msgDiv = document.getElementById('scarico-messaggio');
+    msgDiv.innerHTML = '<span style="color:#0d6efd;">Salvataggio...</span>';
+
+    fetch('{{ route("produzione.scaricaCarta") }}', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': window.csrfToken(),
+            'X-Op-Token': window.opToken(),
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+            fase_id: faseId,
+            articolo_id: articoloId,
+            quantita: parseInt(quantita),
+            lotto: lotto || null
+        })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.success) {
+            msgDiv.innerHTML = '<span style="color:#198754;">&#10003; ' + data.messaggio + '</span>';
+            setTimeout(function() {
+                chiudiDialogScarico();
+                caricaStatoScaricoFasi();
+            }, 1200);
+        } else {
+            msgDiv.innerHTML = '<span style="color:#dc3545;">&#10007; ' + (data.messaggio || 'Errore') + '</span>';
+        }
+    })
+    .catch(function(e) {
+        msgDiv.innerHTML = '<span style="color:#dc3545;">Errore di connessione</span>';
+    });
+}
+
 // Auto-refresh su deploy: controlla ogni 10 minuti se c'è una nuova versione
 (function() {
     var currentVersion = null;
@@ -684,4 +823,62 @@ document.querySelectorAll('.filtri-reparto').forEach(function(bar) {
 })();
 
 </script>
+
+{{-- Modal scarico carta per fase STAMPA --}}
+<div id="modal-scarico" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.55);align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:10px;width:92%;max-width:520px;padding:18px 20px;box-shadow:0 10px 30px rgba(0,0,0,0.4);">
+        <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e9ecef;padding-bottom:10px;margin-bottom:12px;">
+            <h5 style="margin:0;font-weight:700;color:#0d6efd;">📦 Scarica Carta</h5>
+            <button type="button" onclick="chiudiDialogScarico()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#6c757d;">&times;</button>
+        </div>
+
+        <div style="font-size:13px;color:#555;margin-bottom:12px;">
+            Commessa: <strong id="scarico-commessa-display" style="color:#111;"></strong>
+            &nbsp;·&nbsp;
+            Fase: <strong id="scarico-fase-display" style="color:#111;"></strong>
+        </div>
+
+        <input type="hidden" id="scarico-fase-id">
+        <input type="hidden" id="scarico-articolo-id">
+
+        <div style="margin-bottom:10px;">
+            <label style="font-size:12px;font-weight:600;">Articolo (cerca per codice o descrizione)</label>
+            <input type="text" id="scarico-articolo-input" placeholder="Es. GC1, Performa White, ..."
+                   oninput="cercaArticoliScarico(this.value)"
+                   style="width:100%;padding:8px;border:1px solid #ced4da;border-radius:4px;font-size:14px;">
+            <div id="scarico-suggest" style="max-height:180px;overflow-y:auto;border:1px solid #eee;border-radius:4px;margin-top:4px;"></div>
+        </div>
+
+        <div style="display:flex;gap:10px;margin-bottom:10px;">
+            <div style="flex:1;">
+                <label style="font-size:12px;font-weight:600;">Quantità</label>
+                <input type="number" id="scarico-quantita" min="1"
+                       style="width:100%;padding:8px;border:1px solid #ced4da;border-radius:4px;font-size:14px;">
+            </div>
+            <div style="flex:1;">
+                <label style="font-size:12px;font-weight:600;">Lotto (opzionale)</label>
+                <input type="text" id="scarico-lotto"
+                       style="width:100%;padding:8px;border:1px solid #ced4da;border-radius:4px;font-size:14px;">
+            </div>
+        </div>
+
+        <div id="scarico-messaggio" style="font-size:13px;min-height:20px;margin:6px 0;"></div>
+
+        <div style="display:flex;gap:8px;justify-content:flex-end;border-top:1px solid #e9ecef;padding-top:12px;">
+            <button type="button" onclick="chiudiDialogScarico()" style="background:#6c757d;color:#fff;border:none;border-radius:4px;padding:8px 14px;cursor:pointer;">Annulla</button>
+            <button type="button" onclick="confermaScarico()" style="background:#0d6efd;color:#fff;border:none;border-radius:4px;padding:8px 14px;cursor:pointer;font-weight:600;">Conferma Scarico</button>
+        </div>
+    </div>
+</div>
+
+<style>
+.scarico-item {
+    padding:6px 10px;
+    border-bottom:1px solid #f1f3f5;
+    cursor:pointer;
+    font-size:13px;
+}
+.scarico-item:hover { background:#e7f1ff; }
+</style>
+
 @endsection

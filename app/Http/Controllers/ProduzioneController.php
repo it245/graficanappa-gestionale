@@ -341,4 +341,116 @@ public function aggiornaCampo(Request $request)
             default: return $stato;
         }
     }
+
+    /**
+     * Autocomplete ricerca articoli magazzino
+     * GET /produzione/cerca-articolo?q=<testo>
+     */
+    public function cercaArticolo(Request $request)
+    {
+        $q = trim($request->query('q', ''));
+        if (strlen($q) < 2) {
+            return response()->json([]);
+        }
+
+        $articoli = \App\Models\MagazzinoArticolo::where('attivo', true)
+            ->where(function ($builder) use ($q) {
+                $builder->where('codice', 'like', "%{$q}%")
+                        ->orWhere('descrizione', 'like', "%{$q}%")
+                        ->orWhere('categoria', 'like', "%{$q}%");
+            })
+            ->limit(20)
+            ->get()
+            ->map(function ($a) {
+                return [
+                    'id' => $a->id,
+                    'codice' => $a->codice,
+                    'descrizione' => $a->descrizione,
+                    'um' => $a->um,
+                    'giacenza' => $a->giacenzaTotale(),
+                ];
+            });
+
+        return response()->json($articoli);
+    }
+
+    /**
+     * Registra scarico carta collegato a una fase STAMPA.
+     * POST /produzione/scarica-carta
+     * Body: fase_id, articolo_id, quantita, lotto (opzionale)
+     */
+    public function scaricaCarta(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'fase_id' => 'required|exists:ordine_fasi,id',
+            'articolo_id' => 'required|exists:magazzino_articoli,id',
+            'quantita' => 'required|numeric|min:1',
+            'lotto' => 'nullable|string|max:100',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+        }
+
+        $fase = OrdineFase::with('ordine')->findOrFail($request->fase_id);
+        $operatoreId = $request->attributes->get('operatore_id') ?? session('operatore_id');
+
+        try {
+            $movimento = \App\Services\MagazzinoService::registraScarico([
+                'articolo_id' => $request->articolo_id,
+                'quantita' => $request->quantita,
+                'lotto' => $request->lotto,
+                'commessa' => $fase->ordine?->commessa,
+                'fase' => $fase->fase,
+                'operatore_id' => $operatoreId,
+                'note' => "Scarico da fase #{$fase->id} — {$fase->fase}",
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'movimento_id' => $movimento->id,
+                'giacenza_dopo' => $movimento->giacenza_dopo,
+                'messaggio' => "Scaricati {$request->quantita} collegati a commessa {$fase->ordine?->commessa}",
+            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Scarico carta fase errore', [
+                'fase_id' => $fase->id,
+                'error' => $e->getMessage(),
+            ]);
+            return response()->json([
+                'success' => false,
+                'messaggio' => 'Errore scarico: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Ritorna se una fase ha già uno scarico carta registrato e la quantità.
+     * GET /produzione/stato-scarico/{faseId}
+     */
+    public function statoScarico($faseId)
+    {
+        $fase = OrdineFase::findOrFail($faseId);
+        $movimenti = \App\Models\MagazzinoMovimento::where('tipo', 'scarico')
+            ->where('fase', $fase->fase)
+            ->where('commessa', $fase->ordine->commessa ?? null)
+            ->with('articolo:id,codice,descrizione,um')
+            ->get();
+
+        $qtaTotale = $movimenti->sum('quantita');
+
+        return response()->json([
+            'fase_id' => $fase->id,
+            'scaricato' => $movimenti->isNotEmpty(),
+            'quantita_totale' => $qtaTotale,
+            'movimenti' => $movimenti->map(fn($m) => [
+                'id' => $m->id,
+                'quantita' => $m->quantita,
+                'articolo_codice' => $m->articolo?->codice,
+                'articolo_desc' => $m->articolo?->descrizione,
+                'um' => $m->articolo?->um ?? 'fg',
+                'created_at' => $m->created_at?->format('d/m/Y H:i'),
+            ])->values(),
+        ]);
+    }
 }

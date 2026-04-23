@@ -187,6 +187,11 @@ Route::prefix('produzione')->middleware(['operatore.auth'])->group(function() {
     Route::post('/riprendi', [ProduzioneController::class, 'riprendiFase'])->name('produzione.riprendi');
     Route::post('/aggiorna-campo', [ProduzioneController::class, 'aggiornaCampo'])->name('produzione.aggiornaCampo');
     Route::post('/aggiorna-ordine-campo', [ProduzioneController::class, 'aggiornaOrdineCampo'])->name('produzione.aggiornaOrdineCampo');
+
+    // Scarico carta legato a fase STAMPA
+    Route::get('/cerca-articolo', [ProduzioneController::class, 'cercaArticolo'])->name('produzione.cercaArticolo');
+    Route::post('/scarica-carta', [ProduzioneController::class, 'scaricaCarta'])->name('produzione.scaricaCarta');
+    Route::get('/stato-scarico/{faseId}', [ProduzioneController::class, 'statoScarico'])->whereNumber('faseId')->name('produzione.statoScarico');
 });
 
 

@@ -87,4 +87,26 @@
         @endif
     </td>
     <td id="timeout-{{ $fase->id }}">{{ $fase->timeout ?? '-' }}</td>
+    @php
+        $faseUpper = strtoupper($fase->fase ?? '');
+        $isStampa = str_starts_with($faseUpper, 'STAMPA');
+    @endphp
+    <td id="scarico-{{ $fase->id }}" style="text-align:center; white-space:nowrap;">
+        @if($isStampa && $fase->stato >= 2)
+            <button type="button" class="btn-scarico" data-fase-id="{{ $fase->id }}"
+                    data-commessa="{{ $fase->ordine->commessa ?? '' }}"
+                    data-fase-nome="{{ $fase->fase }}"
+                    data-cod-carta="{{ $fase->ordine->cod_carta ?? '' }}"
+                    data-qta-suggerita="{{ $fase->ordine->qta_carta ?? '' }}"
+                    onclick="apriDialogScarico(this)"
+                    style="background:#0d6efd;color:#fff;border:none;border-radius:4px;padding:4px 8px;font-size:11px;cursor:pointer;">
+                📦 Scarica
+            </button>
+            <div class="scarico-stato" id="scarico-stato-{{ $fase->id }}" style="font-size:10px;color:#6c757d;margin-top:2px;">
+                <span class="scarico-loading">...</span>
+            </div>
+        @else
+            <span style="color:#adb5bd;">—</span>
+        @endif
+    </td>
 </tr>
