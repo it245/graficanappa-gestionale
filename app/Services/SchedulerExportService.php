@@ -12,7 +12,7 @@ use PhpOffice\PhpSpreadsheet\Style\Alignment;
 class SchedulerExportService
 {
     protected static array $nomiMacchine = [
-        'XL106' => 'Heidelberg XL 106 (24h)',
+        'XL106' => 'Heidelberg XL 106 (16h)',
         'BOBST' => 'BOBST 75x106',
         'STEL' => 'STEL G33/P25',
         'JOH' => 'JOH Stampa a Caldo',
