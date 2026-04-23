@@ -150,7 +150,7 @@ class DashboardMesSheet implements FromCollection, WithHeadings, WithMapping, Wi
             'Qta Prod', 'Note', 'Data Inizio', 'Data Fine',
             'Ordine Cliente', 'N. DDT Vendita', 'Vettore DDT', 'Qta DDT', 'Note Fasi Successive',
             'Colori', 'Fustella', 'Esterno', 'Ore Prev.', 'Ore Lav.',
-            'Scarti Operatore', 'Scarti Prinect/Previsti', 'Cliché', 'Qta Prod. Prinect', 'Scarti Consuntivo Onda', 'Inchiostro Prinect (g)', 'Tiro (cm foil)',
+            'Scarti Operatore', 'Scarti Prinect', 'Cliché', 'Qta Prod. Prinect', 'Scarti Onda', 'Inchiostro Prinect (g)', 'Tiro (cm foil)',
         ];
     }
 
@@ -243,13 +243,13 @@ class DashboardMesSheet implements FromCollection, WithHeadings, WithMapping, Wi
             })(),
             // Scarti (editabile)
             $fase->scarti ?? '',
-            // Scarti Previsti: per reparto "stampa offset" usa fogli_scarto da Prinect; altrimenti scarti_previsti da Onda
+            // Scarti Prinect: solo da API Prinect (fogli_scarto), solo stampa offset con fase avviata
             (function() use ($fase) {
                 $reparto = strtolower($fase->faseCatalogo->reparto->nome ?? '');
-                if ($reparto === 'stampa offset' && ($fase->fogli_scarto ?? 0) > 0) {
+                if ($reparto === 'stampa offset' && (int)$fase->stato >= 2 && ($fase->fogli_scarto ?? 0) > 0) {
                     return $fase->fogli_scarto;
                 }
-                return $fase->scarti_previsti ?? '';
+                return '';
             })(),
             // Cliché (auto/manual, sola lettura)
             $ordine && $ordine->cliche ? $ordine->cliche->label() : '',
@@ -327,10 +327,10 @@ class DashboardMesSheet implements FromCollection, WithHeadings, WithMapping, Wi
             'AH' => 10, // Ore Prev.
             'AI' => 10, // Ore Lav.
             'AJ' => 14, // Scarti Operatore
-            'AK' => 16, // Scarti Prinect/Previsti
+            'AK' => 14, // Scarti Prinect
             'AL' => 12, // Cliché
             'AM' => 14, // Qta Prod. Prinect
-            'AN' => 16, // Scarti Consuntivo Onda
+            'AN' => 12, // Scarti Onda
             'AO' => 16, // Inchiostro Prinect (g)
             'AP' => 12, // Tiro (cm foil)
         ];
