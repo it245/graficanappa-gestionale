@@ -88,7 +88,7 @@ class PrinectService
 
     public function getJobWorksteps($jobId)
     {
-        $response = $this->api()->get("{$this->baseUrl}/rest/job/{$jobId}/workstep");
+        $response = $this->api()->timeout(15)->connectTimeout(5)->get("{$this->baseUrl}/rest/job/{$jobId}/workstep");
         return $response->successful() ? $response->json() : null;
     }
 
@@ -130,7 +130,7 @@ class PrinectService
 
     public function getWorkstepInkConsumption($jobId, $workstepId)
     {
-        $response = $this->api()->get(
+        $response = $this->api()->timeout(15)->connectTimeout(5)->get(
             "{$this->baseUrl}/rest/job/{$jobId}/workstep/{$workstepId}/inkConsumption"
         );
         return $response->successful() ? $response->json() : null;
