@@ -100,6 +100,18 @@ class TelegramBotService
         return storage_path('app/private/' . $relativePath);
     }
 
+    /**
+     * Long-polling: chiede a Telegram i nuovi update.
+     * @param int|null $offset id ultimo update processato + 1
+     * @param int $timeout secondi di attesa lato server Telegram (max 50)
+     */
+    public static function getUpdates(?int $offset = null, int $timeout = 30): ?array
+    {
+        $params = ['timeout' => $timeout];
+        if ($offset !== null) $params['offset'] = $offset;
+        return self::call('getUpdates', $params, $timeout + 10);
+    }
+
     /** Registra webhook URL su Telegram (eseguito manualmente al setup) */
     public static function setWebhook(string $url): ?array
     {
@@ -119,7 +131,7 @@ class TelegramBotService
     }
 
     /** Chiamata HTTP generica Telegram API */
-    private static function call(string $method, array $params = []): ?array
+    private static function call(string $method, array $params = [], int $timeout = 15): ?array
     {
         $token = env('TELEGRAM_BOT_TOKEN');
         if (!$token) {
@@ -128,7 +140,7 @@ class TelegramBotService
         }
 
         try {
-            $r = Http::timeout(15)->post(self::API_BASE . $token . '/' . $method, $params);
+            $r = Http::timeout($timeout)->post(self::API_BASE . $token . '/' . $method, $params);
             return $r->json();
         } catch (\Exception $e) {
             Log::error('Telegram API exception', ['method' => $method, 'error' => $e->getMessage()]);

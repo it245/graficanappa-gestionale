@@ -27,23 +27,29 @@ class TelegramWebhookController extends Controller
             abort(403);
         }
 
-        $update = $request->all();
+        $this->processUpdate($request->all());
+        return response()->json(['ok' => true]);
+    }
+
+    /**
+     * Processa un singolo update Telegram.
+     * Usato sia dal webhook HTTP che dal comando artisan di polling.
+     */
+    public function processUpdate(array $update): void
+    {
         Log::info('Telegram update ricevuto', ['keys' => array_keys($update)]);
 
         // Callback query (click bottoni inline)
         if (isset($update['callback_query'])) {
-            return $this->handleCallback($update['callback_query']);
+            $this->handleCallback($update['callback_query']);
+            return;
         }
 
         $message = $update['message'] ?? null;
-        if (!$message) {
-            return response()->json(['ok' => true]);
-        }
+        if (!$message) return;
 
         $chatId = $message['chat']['id'] ?? null;
-        if (!$chatId) {
-            return response()->json(['ok' => true]);
-        }
+        if (!$chatId) return;
 
         // Se chat non autorizzata, risponde comunque con il chat_id (utile per setup iniziale)
         if (!TelegramBotService::chatAutorizzato($chatId)) {
@@ -56,20 +62,20 @@ class TelegramWebhookController extends Controller
                 . "3. Riavvia e riprova\n\n"
                 . "Chat ID: `{$chatId}`"
             );
-            return response()->json(['ok' => true]);
+            return;
         }
 
         // Foto allegata
         if (isset($message['photo'])) {
-            return $this->handleFoto($chatId, $message);
+            $this->handleFoto($chatId, $message);
+            return;
         }
 
         // Messaggio testuale
         if (isset($message['text'])) {
-            return $this->handleText($chatId, $message['text']);
+            $this->handleText($chatId, $message['text']);
+            return;
         }
-
-        return response()->json(['ok' => true]);
     }
 
     /**
