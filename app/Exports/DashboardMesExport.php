@@ -150,7 +150,7 @@ class DashboardMesSheet implements FromCollection, WithHeadings, WithMapping, Wi
             'Qta Prod', 'Note', 'Data Inizio', 'Data Fine',
             'Ordine Cliente', 'N. DDT Vendita', 'Vettore DDT', 'Qta DDT', 'Note Fasi Successive',
             'Colori', 'Fustella', 'Esterno', 'Ore Prev.', 'Ore Lav.',
-            'Scarti Operatore', 'Scarti Prinect/Previsti', 'Cliché', 'Qta Prod. Prinect', 'Scarti Consuntivo Onda', 'Inchiostro Prinect (g)',
+            'Scarti Operatore', 'Scarti Prinect/Previsti', 'Cliché', 'Qta Prod. Prinect', 'Scarti Consuntivo Onda', 'Inchiostro Prinect (g)', 'Tiro (cm foil)',
         ];
     }
 
@@ -279,6 +279,12 @@ class DashboardMesSheet implements FromCollection, WithHeadings, WithMapping, Wi
                 $val = $this->inchiostroPrinect($ordine->commessa ?? null);
                 return $val !== null ? $val : '';
             })(),
+            // Tiro (cm foil consumato per fasi stampa a caldo)
+            (function() use ($fase) {
+                $fasiCaldo = ['STAMPACALDOJOH', 'STAMPACALDOJOHEST', 'STAMPALAMINAORO'];
+                if (!in_array(strtoupper($fase->fase ?? ''), $fasiCaldo, true)) return '';
+                return $fase->tiro ?? '';
+            })(),
         ];
     }
 
@@ -320,12 +326,13 @@ class DashboardMesSheet implements FromCollection, WithHeadings, WithMapping, Wi
             'AG' => 18, // Esterno
             'AH' => 10, // Ore Prev.
             'AI' => 10, // Ore Lav.
-            'AJ' => 10, // Scarti
-            'AK' => 12, // Scarti Prev.
+            'AJ' => 14, // Scarti Operatore
+            'AK' => 16, // Scarti Prinect/Previsti
             'AL' => 12, // Cliché
             'AM' => 14, // Qta Prod. Prinect
-            'AN' => 14, // Scarti Reali
+            'AN' => 16, // Scarti Consuntivo Onda
             'AO' => 16, // Inchiostro Prinect (g)
+            'AP' => 12, // Tiro (cm foil)
         ];
     }
 
