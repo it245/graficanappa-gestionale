@@ -55,7 +55,8 @@
         font-weight: bold;
         cursor: pointer;
     }
-    table { table-layout: auto; }
+    /* Tabella fissa: 15 colonne, larghezze esplicite, somma ~1515px */
+    table { table-layout: fixed; }
     th:nth-child(1), td:nth-child(1) { width: 70px; text-align: center; }       /* Priorità */
     th:nth-child(2), td:nth-child(2) { width: 60px; text-align: center; }       /* Stato */
     th:nth-child(3), td:nth-child(3) { width: 130px; }                          /* Fase */
@@ -68,11 +69,20 @@
     th:nth-child(10), td:nth-child(10) { width: 140px; }                        /* Operatori */
     th:nth-child(11), td:nth-child(11) { width: 160px; }                        /* Note */
     th:nth-child(12), td:nth-child(12) { width: 220px; }                        /* Descrizione */
-    th:nth-child(13), td:nth-child(13) { width: 120px; text-align: center; }    /* Data Inizio */
-    th:nth-child(14), td:nth-child(14) { width: 120px; text-align: center; }    /* Data Fine */
-    th:nth-child(15), td:nth-child(15) { width: 50px; text-align: center; }     /* × */
+    th:nth-child(13), td:nth-child(13) { width: 110px; text-align: center; }    /* Data Inizio */
+    th:nth-child(14), td:nth-child(14) { width: 110px; text-align: center; }    /* Data Fine */
+    th:nth-child(15), td:nth-child(15) { width: 60px; text-align: center; }     /* × */
     td { white-space: nowrap; }
-    td.desc-col, td:nth-child(12) { white-space: normal; }
+    /* Descrizione: spezza su più righe ma limita altezza riga */
+    td.desc-col, td:nth-child(12) {
+        white-space: normal;
+        max-height: 3.9em;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+    }
     .dc-wrapper { overflow-x: auto; }
     .btn-elimina {
         background: #dc3545;
