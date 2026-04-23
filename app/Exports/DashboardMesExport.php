@@ -272,10 +272,12 @@ class DashboardMesSheet implements FromCollection, WithHeadings, WithMapping, Wi
                 }
                 return '';
             })(),
-            // Inchiostro Prinect (g): totale CMYK solo per fasi stampa offset (sola lettura)
+            // Inchiostro Prinect (g): solo fasi stampa offset TERMINATE (stato >= 3)
+            // per evitare N chiamate API Prinect su ogni commessa in corso (timeout)
             (function() use ($fase, $ordine) {
                 $reparto = strtolower($fase->faseCatalogo->reparto->nome ?? '');
                 if ($reparto !== 'stampa offset') return '';
+                if ((int)$fase->stato < 3) return '';
                 $val = $this->inchiostroPrinect($ordine->commessa ?? null);
                 return $val !== null ? $val : '';
             })(),

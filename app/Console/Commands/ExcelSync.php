@@ -12,6 +12,10 @@ class ExcelSync extends Command
 
     public function handle()
     {
+        // Sync puo essere lungo per via chiamate Prinect: alzare timeout
+        set_time_limit(600);
+        ini_set('max_execution_time', '600');
+
         $this->info('Excel sync in corso...');
 
         try {
