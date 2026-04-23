@@ -224,12 +224,11 @@
         <label class="form-label">Cliente</label>
         <input type="text" id="campo-cliente" class="form-control" value="{{ $cliente }}">
     </div>
-    <div class="mb-3">
-        <label class="form-label">Descrizione ordine <small class="text-muted">(modificabile, aggiorna anche la stampa)</small></label>
-        <textarea id="campo-descrizione-ordine" class="form-control" rows="2"
-                  style="font-size:13px;"
-                  oninput="onDescrizioneChange(this.value)">{{ $ordine->descrizione ?? '' }}</textarea>
+    @if($ordine->descrizione)
+    <div class="alert alert-light py-2 px-3 mb-3" style="font-size:13px; border:1px solid #dee2e6;">
+        <strong>Descrizione ordine:</strong> {{ $ordine->descrizione }}
     </div>
+    @endif
     @endif
 
     @if($isSimpleLabel)
@@ -577,25 +576,6 @@
 <script src="https://cdn.jsdelivr.net/npm/bwip-js@4.5.1/dist/bwip-js-min.js"></script>
 
 <script>
-// Propaga modifiche descrizione ordine ai campi stampa visibili
-function onDescrizioneChange(val) {
-    var descSimple = document.getElementById('print-descrizione-simple');
-    if (descSimple) descSimple.textContent = val;
-    var descTifata = document.getElementById('print-descrizione-tifata');
-    if (descTifata) descTifata.textContent = val;
-    // Se è anche nel campo "Descrizione articolo" simple (non ancora toccato dall'utente) aggiorna
-    var descSimpleField = document.getElementById('campo-descrizione-simple');
-    if (descSimpleField && !descSimpleField.dataset.touched) descSimpleField.value = val;
-    // Se sezione no-EAN non ancora compilata, propaga anche lì
-    var noeanField = document.getElementById('campo-articolo-noean');
-    if (noeanField && !noeanField.dataset.touched) noeanField.value = val;
-}
-// Marca campi come "toccati" dall'utente, così non vengono sovrascritti da onDescrizioneChange
-['campo-descrizione-simple','campo-articolo-noean'].forEach(function(id){
-    var el = document.getElementById(id);
-    if (el) el.addEventListener('input', function(){ el.dataset.touched = '1'; });
-});
-
 // ===== Aggiornamento anteprima in tempo reale =====
 function aggiornaAnteprima() {
     var cliente, articolo, ean;
