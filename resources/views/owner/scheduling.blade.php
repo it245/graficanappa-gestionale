@@ -512,7 +512,6 @@ document.getElementById('modalInfoAlgoritmo').addEventListener('click', (e) => {
     <button class="qf-btn active" data-qf="all">Tutte</button>
     <button class="qf-btn" data-qf="critiche">🔴 Solo critiche</button>
     <button class="qf-btn" data-qf="oggi">📅 Oggi/Domani</button>
-    <button class="qf-btn" data-qf="inlav">⚡ In lavorazione</button>
     <button class="qf-btn" data-qf="2h">🕐 Prossime 2h</button>
 </div>
 
