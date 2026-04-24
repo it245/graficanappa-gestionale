@@ -566,6 +566,22 @@ class SchedulerService
                 ]);
             }
         }
+
+        // Fasi esterne: data invio = disponibile_da (quando predecessore termina)
+        foreach ($fasi as $f) {
+            if (empty($f['esterno'])) continue;
+            if (!empty($f['sched'])) continue; // già schedulata
+            $inizio = $f['disponibile_da'] ?? $this->now;
+            $fine = $inizio->copy()->addHours(max($f['ore'] ?? 1, 1));
+
+            DB::table('ordine_fasi')->where('id', $f['db_id'])->update([
+                'sched_macchina' => 'EST',
+                'sched_inizio' => $inizio->format('Y-m-d H:i:s'),
+                'sched_fine' => $fine->format('Y-m-d H:i:s'),
+                'sched_setup_tipo' => 'ESTERNO',
+                'sched_calcolato_at' => $adesso,
+            ]);
+        }
     }
 
     // === Helper ===

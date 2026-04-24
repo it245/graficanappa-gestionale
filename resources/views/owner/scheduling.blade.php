@@ -782,13 +782,18 @@ function schedulaDaDB(data) {
 
     const macchine = {};
     data.forEach(f => {
-        // Fasi esterne: raggruppate sotto "Esterno" anche senza sched_macchina
+        // Fasi esterne: usa sched_inizio (= disponibile_da) se presente, altrimenti oggi
         if (f.esterno) {
             const nome = 'Esterno';
             if (!macchine[nome]) macchine[nome] = { nome, reparto_id: 0, fasi: [], turni: '-' };
             const oreEff = getBestOre(f) || 1;
-            const startH = 0;
-            const endH = oreEff;
+            let startH = 0, endH = oreEff;
+            if (f.sched_inizio && f.sched_fine) {
+                const inizio = new Date(f.sched_inizio);
+                const fine = new Date(f.sched_fine);
+                startH = (inizio - NOW) / 3600000;
+                endH = (fine - NOW) / 3600000;
+            }
             macchine[nome].fasi.push({ ...f, start_h: startH, end_h: endH, ore_effettive: oreEff, lane: 0 });
             return;
         }
@@ -1434,8 +1439,10 @@ function renderGanttMacchina() {
             fRow.appendChild(fLabel);
             const fTimeline = el('div', 'gantt-timeline', { width:totalWidth+'px', minHeight:'40px', position:'relative' });
             const bar = el('div', 'gantt-bar ' + getBarClass(fase));
-            bar.style.left = '0px';
-            bar.style.width = Math.max((fase.ore_effettive || fase.ore || 1) * pxPerHour, 40) + 'px';
+            const dispStart = calToDisplay(fase.start_h || 0);
+            const dispEnd = calToDisplay(fase.end_h || fase.ore_effettive || 1);
+            bar.style.left = (dispStart * pxPerHour) + 'px';
+            bar.style.width = Math.max((dispEnd - dispStart) * pxPerHour, 40) + 'px';
             bar.style.height = '30px';
             bar.style.top = '6px';
             bar.innerHTML = `<span>${fase.commessa}</span>`;
