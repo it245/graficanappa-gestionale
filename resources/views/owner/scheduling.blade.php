@@ -1102,6 +1102,28 @@ function filterScheduledMacchine(macchine) {
             )
         })).filter(m => m.fasi.length > 0);
     }
+    // Quick filter applicato anche su Per Macchina
+    if (quickFilter && quickFilter !== 'all') {
+        const now = new Date();
+        const fine2h = new Date(now.getTime() + 2*3600*1000);
+        const fine48h = new Date(now.getTime() + 48*3600*1000);
+        result = result.map(m => ({
+            ...m,
+            fasi: m.fasi.filter(f => {
+                if (quickFilter === 'critiche') return f.giorni_consegna !== null && f.giorni_consegna <= -3;
+                if (quickFilter === 'inlav') return f.stato == 2;
+                if (quickFilter === 'oggi') {
+                    if (!f.sched_inizio) return false;
+                    return new Date(f.sched_inizio) <= fine48h;
+                }
+                if (quickFilter === '2h') {
+                    if (!f.sched_inizio) return false;
+                    return new Date(f.sched_inizio) <= fine2h;
+                }
+                return true;
+            })
+        })).filter(m => m.fasi.length > 0);
+    }
     return result;
 }
 
