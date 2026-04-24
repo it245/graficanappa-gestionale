@@ -117,7 +117,9 @@
         display:flex; flex-direction:column; align-items:stretch;
         padding:12px 24px; gap:10px;
         background:#1a1a34; border-radius:0;
-        overflow:hidden; max-width:100%; box-sizing:border-box;
+        overflow:hidden; box-sizing:border-box;
+        /* Estende fino ai bordi del main-content (scavalca padding mes-content-inner 16px) */
+        margin-left:-16px; margin-right:-16px;
     }
     .controls-bar .zoom-controls { align-self:flex-start; }
     .zoom-controls { display:flex; align-items:center; gap:10px; }
