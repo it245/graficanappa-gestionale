@@ -1386,6 +1386,34 @@ function renderKPI() {
     `;
 }
 
+// ===================== BAR SEGMENTS (split su weekend) =====================
+
+function splitBarWeekend(startH, endH, lavoraSab) {
+    // Suddivide range ore in segmenti saltando sab (se !lavoraSab) e dom sempre.
+    const segments = [];
+    const startMs = NOW.getTime() + startH * 3600000;
+    const endMs = NOW.getTime() + endH * 3600000;
+    let cur = new Date(startMs);
+    const end = new Date(endMs);
+    while (cur < end) {
+        const dow = cur.getDay(); // 0=dom, 6=sab
+        const skip = dow === 0 || (dow === 6 && !lavoraSab);
+        const midnight = new Date(cur);
+        midnight.setHours(24, 0, 0, 0);
+        const segEnd = midnight < end ? midnight : end;
+        if (!skip) {
+            segments.push({
+                startH: (cur.getTime() - NOW.getTime()) / 3600000,
+                endH: (segEnd.getTime() - NOW.getTime()) / 3600000,
+            });
+        }
+        cur = new Date(segEnd);
+    }
+    // Se nessun segmento (tutto weekend), mantiene barra intera per non scomparire
+    if (segments.length === 0) segments.push({ startH, endH });
+    return segments;
+}
+
 // ===================== HIGHLIGHT COMMESSA =====================
 
 function highlightCommessa(commessa) {
@@ -1494,23 +1522,37 @@ function renderGanttMacchina() {
         const timeline = el('div', 'gantt-timeline', { width:totalWidth+'px', minHeight:rowH+'px' });
         renderDayLines(timeline, maxCalOre, macchina.nome);
 
+        // Macchina lavora sabato? leggiamo dal label turni (es "6-22, sab 6-13")
+        const lavoraSab = (macchina.turni || '').toLowerCase().includes('sab');
+
         macchina.fasi.forEach(fase => {
             const dispStart = calToDisplay(fase.start_h);
             const dispEnd = calToDisplay(fase.end_h);
-            const bar = el('div', 'gantt-bar ' + getBarClass(fase));
-            bar.dataset.commessa = fase.commessa;
-            bar.style.left = (dispStart * pxPerHour) + 'px';
-            bar.style.width = Math.max((dispEnd - dispStart) * pxPerHour, 4) + 'px';
-            bar.style.height = barH + 'px';
-            bar.style.top = (4 + (fase.lane || 0) * laneH) + 'px';
             const bw = (dispEnd - dispStart) * pxPerHour;
-            if (bw > 70) bar.innerHTML = `<span>${fase.commessa}</span>`;
-            else if (bw > 30) bar.innerHTML = `<span>${fase.commessa.slice(-6)}</span>`;
-            bar.addEventListener('mouseenter', e => { showTooltip(e, fase); highlightCommessa(fase.commessa); });
-            bar.addEventListener('mouseleave', () => { hideTooltip(); highlightCommessa(null); });
-            bar.addEventListener('mousemove', moveTooltip);
-            bar.addEventListener('click', () => { hideTooltip(); openSidePanel(fase.commessa); });
-            timeline.appendChild(bar);
+
+            // Calcola segmenti saltando weekend per macchine senza sab
+            const segments = splitBarWeekend(fase.start_h, fase.end_h, lavoraSab);
+            segments.forEach((seg, segIdx) => {
+                const bar = el('div', 'gantt-bar ' + getBarClass(fase));
+                bar.dataset.commessa = fase.commessa;
+                const ds = calToDisplay(seg.startH);
+                const de = calToDisplay(seg.endH);
+                bar.style.left = (ds * pxPerHour) + 'px';
+                bar.style.width = Math.max((de - ds) * pxPerHour, 4) + 'px';
+                bar.style.height = barH + 'px';
+                bar.style.top = (4 + (fase.lane || 0) * laneH) + 'px';
+                const segW = (de - ds) * pxPerHour;
+                // Etichetta solo sul primo segmento (più lungo probabilmente)
+                if (segIdx === 0) {
+                    if (bw > 70) bar.innerHTML = `<span>${fase.commessa}</span>`;
+                    else if (bw > 30) bar.innerHTML = `<span>${fase.commessa.slice(-6)}</span>`;
+                }
+                bar.addEventListener('mouseenter', e => { showTooltip(e, fase); highlightCommessa(fase.commessa); });
+                bar.addEventListener('mouseleave', () => { hideTooltip(); highlightCommessa(null); });
+                bar.addEventListener('mousemove', moveTooltip);
+                bar.addEventListener('click', () => { hideTooltip(); openSidePanel(fase.commessa); });
+                timeline.appendChild(bar);
+            });
         });
 
         row.appendChild(timeline);
