@@ -10,6 +10,7 @@ $operatori = [
     ['matricola' => '000671', 'cognome' => 'MARCONE', 'nome' => 'EMANUELE'],
     ['matricola' => '000672', 'cognome' => 'PIETROPAOLO', 'nome' => 'GIOVANNI'],
     ['matricola' => '000673', 'cognome' => 'SIMONETTI', 'nome' => 'CHRISTIAN'],
+    ['matricola' => '000674', 'cognome' => 'GARGIULO', 'nome' => 'VINCENZO'],
 ];
 
 foreach ($operatori as $op) {
