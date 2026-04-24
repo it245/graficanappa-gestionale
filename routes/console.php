@@ -31,6 +31,9 @@ Schedule::command('fiery:sync')->everyMinute()->withoutOverlapping();
 // Sync attivita Prinect XL106 ogni 5 minuti (storico 7gg)
 Schedule::command('prinect:sync-attivita')->everyFiveMinutes()->withoutOverlapping();
 
+// Sync principale Prinect — chiusura fasi stampa offset a stato 3 ogni 2 minuti
+Schedule::command('prinect:sync')->everyTwoMinutes()->withoutOverlapping();
+
 // Controllo consegne BRT in ritardo — DISABILITATO
 // Schedule::command('brt:check-ritardi')->dailyAt('09:00');
 
