@@ -826,8 +826,17 @@ function schedulaDaDB(data) {
         m.ore_totali = m.fasi.length > 0 ? Math.max(...m.fasi.map(f => f.end_h || 0)) : 0;
     });
 
-    // Converti oggetto in array (il resto del codice aspetta un array)
-    return Object.values(macchine);
+    // Ordine macchine fisso per il cliente
+    const ORDINE_MAC = ['Stampa offset','Fustella piana','Fustella cilindrica','Stampa a caldo',
+                        'Plastificazione','Piegaincolla','Finestratura','Digitale','Tagliacarte',
+                        'Legatoria','Finitura digitale','Spedizione','Esterno'];
+    const arr = Object.values(macchine);
+    arr.sort((a, b) => {
+        const ia = ORDINE_MAC.indexOf(a.nome);
+        const ib = ORDINE_MAC.indexOf(b.nome);
+        return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+    });
+    return arr;
 }
 
 // ===================== SCHEDULER CLIENT-SIDE (fallback) =====================
