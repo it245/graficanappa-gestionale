@@ -140,7 +140,7 @@ class TelegramBotService
         }
 
         try {
-            $r = Http::timeout($timeout)->post(self::API_BASE . $token . '/' . $method, $params);
+            $r = Http::withoutVerifying()->timeout($timeout)->post(self::API_BASE . $token . '/' . $method, $params);
             return $r->json();
         } catch (\Exception $e) {
             Log::error('Telegram API exception', ['method' => $method, 'error' => $e->getMessage()]);
