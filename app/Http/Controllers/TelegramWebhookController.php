@@ -103,13 +103,42 @@ class TelegramWebhookController extends Controller
         $filename = basename($imagePath);
         Log::info('Telegram foto salvata', ['chat_id' => $chatId, 'file' => $filename]);
 
-        $testo = "📸 *Foto ricevuta e salvata*\n\n"
-            . "File: `{$filename}`\n"
-            . "Dimensione: " . round(filesize($imagePath) / 1024, 1) . " KB\n\n"
-            . "_L'analisi automatica delle bolle sarà attivata prossimamente._\n"
-            . "_Per ora la foto è archiviata nel MES e potrà essere rielaborata quando l'AI sarà attiva._";
+        $kb = round(filesize($imagePath) / 1024, 1);
+        $msgIniziale = "📸 *Foto ricevuta* (`{$filename}`, {$kb} KB)\n\n🤖 Analisi AI in corso…";
+        $sent = TelegramBotService::sendMessage($chatId, $msgIniziale);
+        $messageId = $sent['result']['message_id'] ?? null;
 
-        TelegramBotService::sendMessage($chatId, $testo);
+        if (!env('ANTHROPIC_API_KEY')) {
+            $fallback = "📸 *Foto salvata*\n\nFile: `{$filename}`\nDimensione: {$kb} KB\n\n_AI non ancora configurata. Foto archiviata per analisi futura._";
+            if ($messageId) {
+                TelegramBotService::editMessage($chatId, $messageId, $fallback);
+            } else {
+                TelegramBotService::sendMessage($chatId, $fallback);
+            }
+            return response()->json(['ok' => true]);
+        }
+
+        $result = \App\Services\BollaAIService::analizzaBolla($imagePath);
+        $testo = \App\Services\BollaAIService::formatPerTelegram($result);
+
+        if ($result['ok'] ?? false) {
+            Log::info('Bolla analizzata', [
+                'chat_id' => $chatId,
+                'file' => $filename,
+                'fornitore' => $result['fornitore'] ?? null,
+                'ddt' => $result['numero_ddt'] ?? null,
+                'righe' => count($result['righe'] ?? []),
+                'usage' => $result['_usage'] ?? null,
+            ]);
+        } else {
+            Log::warning('Bolla analisi fallita', ['chat_id' => $chatId, 'file' => $filename, 'error' => $result['error'] ?? 'unknown']);
+        }
+
+        if ($messageId) {
+            TelegramBotService::editMessage($chatId, $messageId, $testo);
+        } else {
+            TelegramBotService::sendMessage($chatId, $testo);
+        }
 
         return response()->json(['ok' => true]);
     }
