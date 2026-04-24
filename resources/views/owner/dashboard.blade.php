@@ -601,36 +601,26 @@ tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !imp
     </div>
 
     {{-- KPI GIORNALIERI --}}
-    <div class="d-flex gap-2 mb-1 mx-0" style="max-width:920px;">
-        <a href="{{ route('owner.fasiTerminate', ['oggi' => 1]) }}" class="d-flex align-items-center p-2 rounded flex-fill text-decoration-none" style="background:#d1e7dd; height:56px; min-width:200px; cursor:pointer;" title="Visualizza fasi completate oggi">
-            <div>
-                <div style="font-size:11px; color:#555; line-height:1.2;">Fasi completate oggi</div>
-                <div style="font-size:22px; font-weight:700; color:#198754; line-height:1;">{{ $fasiCompletateOggi }}</div>
-            </div>
+    <div class="d-flex gap-2 mb-1 mx-0 flex-wrap" style="max-width:1100px;">
+        <a href="{{ route('owner.fasiTerminate', ['oggi' => 1]) }}" class="kpi-card text-decoration-none" style="background:#fff;border:1px solid #e5e7eb;border-left:3px solid #198754;padding:10px 14px;border-radius:6px;min-width:180px;flex:1;box-shadow:0 1px 2px rgba(0,0,0,.04);" title="Visualizza fasi completate oggi">
+            <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.3px;font-weight:600;">Fasi completate oggi</div>
+            <div style="font-size:24px;font-weight:700;color:#198754;line-height:1.1;margin-top:2px;">{{ $fasiCompletateOggi }}</div>
         </a>
-        <div class="d-flex align-items-center p-2 rounded flex-fill" style="background:#cfe2ff; height:56px; min-width:200px; cursor:pointer;" data-bs-toggle="modal" data-bs-target="#modalOreOggi">
-            <div>
-                <div style="font-size:11px; color:#555; line-height:1.2;">Ore lavorate oggi</div>
-                <div style="font-size:22px; font-weight:700; color:#0d6efd; line-height:1;">{{ $oreLavorateOggi }}h</div>
-            </div>
+        <div class="kpi-card" style="background:#fff;border:1px solid #e5e7eb;border-left:3px solid #0d6efd;padding:10px 14px;border-radius:6px;min-width:180px;flex:1;box-shadow:0 1px 2px rgba(0,0,0,.04);cursor:pointer;" data-bs-toggle="modal" data-bs-target="#modalOreOggi">
+            <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.3px;font-weight:600;">Ore lavorate oggi</div>
+            <div style="font-size:24px;font-weight:700;color:#0d6efd;line-height:1.1;margin-top:2px;">{{ $oreLavorateOggi }}h</div>
         </div>
-        <div class="d-flex align-items-center p-2 rounded flex-fill" style="background:#d5d5d5; height:56px; min-width:200px;">
-            <div>
-                <div style="font-size:11px; color:#555; line-height:1.2;">Consegnate oggi</div>
-                <div style="font-size:22px; font-weight:700; color:#333; line-height:1;">{{ $commesseSpediteOggi }}</div>
-            </div>
+        <div class="kpi-card" style="background:#fff;border:1px solid #e5e7eb;border-left:3px solid #6b7280;padding:10px 14px;border-radius:6px;min-width:180px;flex:1;box-shadow:0 1px 2px rgba(0,0,0,.04);">
+            <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.3px;font-weight:600;">Consegnate oggi</div>
+            <div style="font-size:24px;font-weight:700;color:#374151;line-height:1.1;margin-top:2px;">{{ $commesseSpediteOggi }}</div>
         </div>
-        <div class="d-flex align-items-center p-2 rounded flex-fill" style="background:#fff3cd; height:56px; min-width:200px;">
-            <div>
-                <div style="font-size:11px; color:#555; line-height:1.2;">Fasi in lavorazione</div>
-                <div style="font-size:22px; font-weight:700; color:#e67e22; line-height:1;">{{ $fasiAttive }}</div>
-            </div>
+        <div class="kpi-card" style="background:#fff;border:1px solid #e5e7eb;border-left:3px solid #f59e0b;padding:10px 14px;border-radius:6px;min-width:180px;flex:1;box-shadow:0 1px 2px rgba(0,0,0,.04);">
+            <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.3px;font-weight:600;">Fasi in lavorazione</div>
+            <div style="font-size:24px;font-weight:700;color:#d97706;line-height:1.1;margin-top:2px;">{{ $fasiAttive }}</div>
         </div>
-        <div class="d-flex align-items-center p-2 rounded flex-fill" style="background:#ede9fe; height:56px; min-width:200px; cursor:pointer;" data-bs-toggle="modal" data-bs-target="#modalRiempimento">
-            <div>
-                <div style="font-size:11px; color:#555; line-height:1.2;">Riempimento macchine</div>
-                <div style="font-size:22px; font-weight:700; color:#7c3aed; line-height:1;">{{ round(collect($riempimento)->sum('ore_totali')) }}h</div>
-            </div>
+        <div class="kpi-card" style="background:#fff;border:1px solid #e5e7eb;border-left:3px solid #7c3aed;padding:10px 14px;border-radius:6px;min-width:180px;flex:1;box-shadow:0 1px 2px rgba(0,0,0,.04);cursor:pointer;" data-bs-toggle="modal" data-bs-target="#modalRiempimento">
+            <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.3px;font-weight:600;">Riempimento macchine</div>
+            <div style="font-size:24px;font-weight:700;color:#7c3aed;line-height:1.1;margin-top:2px;">{{ round(collect($riempimento)->sum('ore_totali')) }}h</div>
         </div>
     </div>
 
@@ -811,20 +801,24 @@ tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !imp
                     $statoBg = [0 => '#e9ecef', 1 => '#cfe2ff', 2 => '#fff3cd', 3 => '#d1e7dd', 4 => '#c3c3c3', 5 => '#e0cffc'];
                 @endphp
                 <tr class="{{ $rowClass }}" data-id="{{ $fase->id }}">
-                    <td><a href="{{ route('owner.dettaglioCommessa', $fase->ordine->commessa ?? '-') }}" style="color:#000;font-weight:bold;text-decoration:underline;">{{ $fase->ordine->commessa ?? '-' }}</a></td>
+                    <td><a href="{{ route('owner.dettaglioCommessa', $fase->ordine->commessa ?? '-') }}" style="color:#1e40af;font-weight:600;text-decoration:none;padding:2px 6px;border-radius:4px;background:rgba(59,130,246,.08);font-family:ui-monospace,monospace;font-size:12px;" onmouseover="this.style.background='rgba(59,130,246,.18)'" onmouseout="this.style.background='rgba(59,130,246,.08)'">{{ $fase->ordine->commessa ?? '-' }}</a></td>
                     @php
                         $statoVal = $fase->stato;
                         $isPausa = (!is_numeric($statoVal) || (is_numeric($statoVal) && (int)$statoVal > 5));
                     @endphp
                     @php $isEsternoAny = $fase->esterno || $fase->ddt_fornitore_id; @endphp
+                    @php
+                        $statoLabelShort = [0 => 'NEW', 1 => 'Pronto', 2 => 'Avviato', 3 => 'Term.', 4 => 'Cons.'];
+                        $statoTextColor = [0 => '#6b7280', 1 => '#1e40af', 2 => '#b45309', 3 => '#047857', 4 => '#374151'];
+                    @endphp
                     @if($isEsternoAny && ((int)$statoVal === 5 || $statoVal < 3) && $fase->ddt_fornitore_id)
-                    <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)" style="background:#d1fae5 !important;font-weight:bold;text-align:center;color:#065f46;font-size:10px;" title="Inviato al fornitore (DDT creato)">EXT</td>
+                    <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)" style="background:#d1fae5 !important;font-weight:700;text-align:center;color:#065f46;font-size:10px;" title="Inviato al fornitore (DDT creato)">EXT</td>
                     @elseif($isEsternoAny && ((int)$statoVal === 5 || $statoVal < 3))
-                    <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)" style="background:#ede9fe !important;font-weight:bold;text-align:center;color:#7c3aed;font-size:10px;" title="Esterno - da inviare">EXT</td>
+                    <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)" style="background:#ede9fe !important;font-weight:700;text-align:center;color:#7c3aed;font-size:10px;" title="Esterno - da inviare">EXT</td>
                     @elseif($isPausa)
-                    <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)" style="background:#e9ecef !important;font-weight:bold;text-align:center;font-size:10px;" title="In pausa">{{ $statoVal }}</td>
+                    <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)" style="background:#e9ecef !important;font-weight:700;text-align:center;font-size:10px;" title="In pausa">{{ $statoVal }}</td>
                     @else
-                    <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)" style="background:{{ $statoBg[$statoVal] ?? '#e9ecef' }} !important;font-weight:bold;text-align:center;">{{ $statoVal }}</td>
+                    <td contenteditable onblur="aggiornaStato({{ $fase->id }}, this.innerText)" style="background:{{ $statoBg[$statoVal] ?? '#e9ecef' }} !important;color:{{ $statoTextColor[$statoVal] ?? '#374151' }};font-weight:700;text-align:center;font-size:11px;" title="{{ $statiLabel[$statoVal] ?? '' }}">{{ $statoVal }}</td>
                     @endif
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'cliente_nome', this.innerText, this)">{{ $fase->ordine->cliente_nome ?? '-' }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'cod_art', this.innerText, this)">{{ $fase->ordine->cod_art ?? '-' }}</td>
