@@ -54,8 +54,8 @@
     /* ===== KPI ===== */
     .kpi-row { display:flex; gap:16px; padding:20px 24px 16px; flex-wrap:wrap; }
     .kpi-card {
-        flex:1; min-width:180px; background:#1e1e38; border-radius:14px;
-        padding:20px 22px; position:relative; overflow:hidden;
+        flex:1; min-width:210px; background:#1e1e38; border-radius:14px;
+        padding:18px 70px 18px 20px; position:relative; overflow:hidden;
         box-shadow:0 2px 12px rgba(0,0,0,0.25); transition:transform 0.2s, box-shadow 0.2s;
         border:1px solid #2a2a45;
     }
@@ -1384,9 +1384,10 @@ function renderGanttMacchina() {
     headerRow.appendChild(timeHeader);
     container.appendChild(headerRow);
 
-    // Separa Esterno dal resto (collassabile)
-    const macchineReali = macchine.filter(m => m.nome !== 'Esterno');
-    const esternoMac = macchine.find(m => m.nome === 'Esterno');
+    // Separa Esterno + Spedizione dal resto (collassabili)
+    const COLLAPSABLE = ['Esterno','Spedizione'];
+    const macchineReali = macchine.filter(m => !COLLAPSABLE.includes(m.nome));
+    const collapsables = macchine.filter(m => COLLAPSABLE.includes(m.nome));
 
     // Rows
     macchineReali.forEach(macchina => {
@@ -1429,19 +1430,20 @@ function renderGanttMacchina() {
         container.appendChild(row);
     });
 
-    // Sezione Esterno collassabile (default chiusa)
-    if (esternoMac && esternoMac.fasi.length > 0) {
+    // Sezioni collassabili (Esterno, Spedizione) — default chiuse
+    collapsables.forEach(mac => {
+        if (!mac || mac.fasi.length === 0) return;
         const toggleRow = el('div', 'gantt-row', { cursor:'pointer', background:'#1a1a2e', borderTop:'2px solid #3a3a5c' });
         toggleRow.dataset.expanded = '0';
         const toggleLabel = el('div', 'gantt-label', { fontWeight:'700' });
-        toggleLabel.innerHTML = `<div>▶ Esterno <div class="label-sub">${esternoMac.fasi.length} fasi · click per espandere</div></div>`;
+        toggleLabel.innerHTML = `<div>▶ ${mac.nome} <div class="label-sub">${mac.fasi.length} fasi · click per espandere</div></div>`;
         toggleRow.appendChild(toggleLabel);
         const toggleTimeline = el('div', 'gantt-timeline', { width:totalWidth+'px', minHeight:'40px' });
         toggleRow.appendChild(toggleTimeline);
         container.appendChild(toggleRow);
 
-        const esternoContainer = el('div', '', { display:'none' });
-        esternoMac.fasi.forEach(fase => {
+        const innerContainer = el('div', '', { display:'none' });
+        mac.fasi.forEach(fase => {
             const fRow = el('div', 'gantt-row', { background:'#0f0f1a' });
             const fLabel = el('div', 'gantt-label', { paddingLeft:'24px' });
             fLabel.innerHTML = `<div>${fase.commessa}<div class="label-sub">${fase.fase} · ${fase.cliente || ''}</div></div>`;
@@ -1461,17 +1463,17 @@ function renderGanttMacchina() {
             bar.addEventListener('click', () => { hideTooltip(); openSidePanel(fase.commessa); });
             fTimeline.appendChild(bar);
             fRow.appendChild(fTimeline);
-            esternoContainer.appendChild(fRow);
+            innerContainer.appendChild(fRow);
         });
-        container.appendChild(esternoContainer);
+        container.appendChild(innerContainer);
 
         toggleRow.addEventListener('click', () => {
             const expanded = toggleRow.dataset.expanded === '1';
             toggleRow.dataset.expanded = expanded ? '0' : '1';
-            esternoContainer.style.display = expanded ? 'none' : 'block';
-            toggleLabel.innerHTML = `<div>${expanded ? '▶' : '▼'} Esterno <div class="label-sub">${esternoMac.fasi.length} fasi · click per ${expanded ? 'espandere' : 'chiudere'}</div></div>`;
+            innerContainer.style.display = expanded ? 'none' : 'block';
+            toggleLabel.innerHTML = `<div>${expanded ? '▶' : '▼'} ${mac.nome} <div class="label-sub">${mac.fasi.length} fasi · click per ${expanded ? 'espandere' : 'chiudere'}</div></div>`;
         });
-    }
+    });
 }
 
 // ===================== GANTT PER COMMESSA =====================
