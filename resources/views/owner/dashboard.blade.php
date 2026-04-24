@@ -448,9 +448,12 @@ th.selected {
 
 #filterBox input,
 #filterBox .choices {
-    flex: 1 1 200px;
-    max-width: 250px;
+    flex: 0 0 auto;
+    width: 180px;
+    max-width: 180px;
+    margin-bottom: 0 !important;
 }
+#filterBox .choices { min-width: 160px; }
 
 #filterBox input {
     height: 38px;
@@ -642,11 +645,11 @@ tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !imp
 
 
                 {{-- FILTRI --}}
-<div class="mb-3" id="filterBox" style="display:none;">
+<div class="mb-3 d-flex flex-wrap gap-2 align-items-center" id="filterBox" style="display:none; max-width:100%;">
     <!-- Filtri multi-valore (virgola) -->
-    <input type="text" id="filterCommessa" class="form-control form-control-sm" placeholder="Filtra Commessa (più valori ,)" style="max-width:200px;">
-    <input type="text" id="filterCliente" class="form-control form-control-sm" placeholder="Filtra Cliente (più valori ,)" style="max-width:200px;">
-    <input type="text" id="filterDescrizione" class="form-control form-control-sm" placeholder="Filtra Descrizione (più valori ,)" style="max-width:300px;">
+    <input type="text" id="filterCommessa" class="form-control form-control-sm" placeholder="Commessa (virgola)" style="width:180px;">
+    <input type="text" id="filterCliente" class="form-control form-control-sm" placeholder="Cliente (virgola)" style="width:180px;">
+    <input type="text" id="filterDescrizione" class="form-control form-control-sm" placeholder="Descrizione (virgola)" style="width:220px;">
 
     <!-- Filtri multi-selezione -->
    <select id="filterStato" multiple>
