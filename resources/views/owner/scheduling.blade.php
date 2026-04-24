@@ -54,8 +54,8 @@
     /* ===== KPI ===== */
     .kpi-row { display:flex; gap:14px; padding:18px 24px 14px; flex-wrap:wrap; }
     .kpi-card {
-        flex:1; min-width:190px; background:linear-gradient(145deg,#1e1e38,#1a1a30);
-        border-radius:12px; padding:14px 60px 14px 18px; position:relative; overflow:hidden;
+        flex:1; min-width:210px; background:linear-gradient(145deg,#1e1e38,#1a1a30);
+        border-radius:12px; padding:14px 56px 14px 18px; position:relative; overflow:hidden;
         box-shadow:0 1px 8px rgba(0,0,0,0.2); transition:transform 0.15s, box-shadow 0.15s;
         border:1px solid rgba(255,255,255,0.05);
     }
@@ -63,6 +63,8 @@
     .kpi-card small {
         display:block; color:#9090b0; font-size:11px; font-weight:700;
         text-transform:uppercase; letter-spacing:0.8px; margin-bottom:6px;
+        white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+        min-height:14px;
     }
     .kpi-card h3 {
         margin:0; font-size:32px; font-weight:800; letter-spacing:-1px;
@@ -115,9 +117,9 @@
     /* ===== ZOOM & FILTRI ===== */
     .controls-bar {
         display:flex; flex-direction:column; align-items:stretch;
-        padding:12px 0; gap:10px;
+        padding:12px 24px; gap:10px;
         background:transparent; border-radius:0;
-        overflow:visible; box-sizing:border-box;
+        overflow:hidden; box-sizing:border-box; max-width:100%;
     }
     .controls-bar .zoom-controls { align-self:flex-start; }
     .zoom-controls { display:flex; align-items:center; gap:10px; }
