@@ -1522,6 +1522,7 @@ public function calcolaOreEPriorita($fase)
                 'reparto_id' => $fase->faseCatalogo?->reparto_id ?? 0,
                 'reparto' => ucfirst($fase->faseCatalogo?->reparto?->nome ?? 'generico'),
                 'data_inizio_reale' => $dataInizio,
+                'esterno' => (bool) $fase->esterno,
                 // Scheduler Mossa 37 (pre-calcolati) per uso da UI schedulaDaDB
                 'sched_macchina' => $fase->sched_macchina,
                 'sched_inizio' => $fase->sched_inizio,

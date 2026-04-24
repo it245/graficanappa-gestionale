@@ -774,6 +774,16 @@ function schedulaDaDB(data) {
 
     const macchine = {};
     data.forEach(f => {
+        // Fasi esterne: raggruppate sotto "Esterno" anche senza sched_macchina
+        if (f.esterno) {
+            const nome = 'Esterno';
+            if (!macchine[nome]) macchine[nome] = { nome, reparto_id: 0, fasi: [], turni: '-' };
+            const oreEff = getBestOre(f) || 1;
+            const startH = 0;
+            const endH = oreEff;
+            macchine[nome].fasi.push({ ...f, start_h: startH, end_h: endH, ore_effettive: oreEff, lane: 0 });
+            return;
+        }
         if (!f.sched_macchina || !f.sched_inizio || !f.sched_fine) return;
         const mid = f.sched_macchina;
         const nome = NOMI_MAC[mid] || f.reparto || mid;
@@ -1350,8 +1360,12 @@ function renderGanttMacchina() {
     headerRow.appendChild(timeHeader);
     container.appendChild(headerRow);
 
+    // Separa Esterno dal resto (collassabile)
+    const macchineReali = macchine.filter(m => m.nome !== 'Esterno');
+    const esternoMac = macchine.find(m => m.nome === 'Esterno');
+
     // Rows
-    macchine.forEach(macchina => {
+    macchineReali.forEach(macchina => {
         const row = el('div', 'gantt-row');
         const label = el('div', 'gantt-label');
         const turnoLabel = macchina.turni || getTurnoLabel(macchina.nome);
@@ -1390,6 +1404,48 @@ function renderGanttMacchina() {
         row.appendChild(timeline);
         container.appendChild(row);
     });
+
+    // Sezione Esterno collassabile (default chiusa)
+    if (esternoMac && esternoMac.fasi.length > 0) {
+        const toggleRow = el('div', 'gantt-row', { cursor:'pointer', background:'#1a1a2e', borderTop:'2px solid #3a3a5c' });
+        toggleRow.dataset.expanded = '0';
+        const toggleLabel = el('div', 'gantt-label', { fontWeight:'700' });
+        toggleLabel.innerHTML = `<div>▶ Esterno <div class="label-sub">${esternoMac.fasi.length} fasi · click per espandere</div></div>`;
+        toggleRow.appendChild(toggleLabel);
+        const toggleTimeline = el('div', 'gantt-timeline', { width:totalWidth+'px', minHeight:'40px' });
+        toggleRow.appendChild(toggleTimeline);
+        container.appendChild(toggleRow);
+
+        const esternoContainer = el('div', '', { display:'none' });
+        esternoMac.fasi.forEach(fase => {
+            const fRow = el('div', 'gantt-row', { background:'#0f0f1a' });
+            const fLabel = el('div', 'gantt-label', { paddingLeft:'24px' });
+            fLabel.innerHTML = `<div>${fase.commessa}<div class="label-sub">${fase.fase} · ${fase.cliente || ''}</div></div>`;
+            fRow.appendChild(fLabel);
+            const fTimeline = el('div', 'gantt-timeline', { width:totalWidth+'px', minHeight:'40px', position:'relative' });
+            const bar = el('div', 'gantt-bar ' + getBarClass(fase));
+            bar.style.left = '0px';
+            bar.style.width = Math.max((fase.ore_effettive || fase.ore || 1) * pxPerHour, 40) + 'px';
+            bar.style.height = '30px';
+            bar.style.top = '6px';
+            bar.innerHTML = `<span>${fase.commessa}</span>`;
+            bar.addEventListener('mouseenter', e => showTooltip(e, fase));
+            bar.addEventListener('mouseleave', hideTooltip);
+            bar.addEventListener('mousemove', moveTooltip);
+            bar.addEventListener('click', () => { hideTooltip(); openSidePanel(fase.commessa); });
+            fTimeline.appendChild(bar);
+            fRow.appendChild(fTimeline);
+            esternoContainer.appendChild(fRow);
+        });
+        container.appendChild(esternoContainer);
+
+        toggleRow.addEventListener('click', () => {
+            const expanded = toggleRow.dataset.expanded === '1';
+            toggleRow.dataset.expanded = expanded ? '0' : '1';
+            esternoContainer.style.display = expanded ? 'none' : 'block';
+            toggleLabel.innerHTML = `<div>${expanded ? '▶' : '▼'} Esterno <div class="label-sub">${esternoMac.fasi.length} fasi · click per ${expanded ? 'espandere' : 'chiudere'}</div></div>`;
+        });
+    }
 }
 
 // ===================== GANTT PER COMMESSA =====================
