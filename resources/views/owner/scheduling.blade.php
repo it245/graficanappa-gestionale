@@ -114,28 +114,33 @@
 
     /* ===== ZOOM & FILTRI ===== */
     .controls-bar {
-        display:flex; justify-content:space-between; align-items:center;
-        padding:12px 24px; flex-wrap:wrap; gap:10px;
-        background:#1a1a34;
+        display:flex; flex-direction:column; align-items:stretch;
+        padding:12px 24px; gap:10px;
+        background:#1a1a34; border-radius:0;
     }
+    .controls-bar .zoom-controls { align-self:flex-start; }
     .zoom-controls { display:flex; align-items:center; gap:10px; }
     .zoom-controls button {
-        width:36px; height:36px; border:2px solid #3a3a5c; border-radius:8px;
-        background:#1e1e38; cursor:pointer; font-size:18px; font-weight:bold;
-        color:#c8c8e0; transition:all 0.2s;
+        width:32px; height:32px; border:1px solid rgba(255,255,255,0.08); border-radius:7px;
+        background:#1e1e38; cursor:pointer; font-size:16px; font-weight:bold;
+        color:#c8c8e0; transition:all 0.15s;
     }
     .zoom-controls button:hover { background:#0d6efd; color:#fff; border-color:#0d6efd; }
     .zoom-controls .zoom-val {
-        font-size:13px; color:#8c8caa; background:#16162e;
-        padding:4px 12px; border-radius:6px; font-weight:600; min-width:60px; text-align:center;
+        font-size:12px; color:#a0a0c0; background:rgba(22,22,46,0.7);
+        padding:4px 10px; border-radius:6px; font-weight:600; min-width:58px; text-align:center;
     }
-    .filter-row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    .filter-row {
+        display:flex; gap:6px; align-items:center; flex-wrap:wrap;
+        width:100%;
+    }
     .filter-chip {
-        padding:6px 14px; border:1.5px solid #3a3a5c; border-radius:20px;
-        font-size:12px; font-weight:600; cursor:pointer; background:transparent;
-        transition:all 0.2s; color:#8c8caa;
+        padding:5px 12px; border:1px solid rgba(255,255,255,0.08); border-radius:16px;
+        font-size:11.5px; font-weight:600; cursor:pointer; background:rgba(30,30,56,0.5);
+        transition:all 0.12s; color:#a0a0c0; white-space:nowrap;
     }
-    .filter-chip.active { background:#0d6efd; color:#fff; border-color:#0d6efd; box-shadow:0 2px 8px rgba(13,110,253,0.3); }
+    .filter-chip:hover { background:rgba(42,42,80,0.7); color:#fff; }
+    .filter-chip.active { background:#0d6efd; color:#fff; border-color:#0d6efd; box-shadow:0 2px 6px rgba(13,110,253,0.35); }
     .filter-chip:hover:not(.active) { border-color:#5a5a7c; color:#ccc; }
 
     /* ===== GANTT ===== */
