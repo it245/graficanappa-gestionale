@@ -31,31 +31,42 @@ class BollaAIService
         $model = env('ANTHROPIC_MODEL', 'claude-haiku-4-5-20251001');
 
         $prompt = <<<'PROMPT'
-Analizza questa bolla di carico italiana (DDT - Documento di Trasporto) ed estrai i dati strutturati.
+Analizza questa bolla di carico italiana (DDT - Documento di Trasporto) di CARTA ed estrai i dati strutturati.
 
-Rispondi SOLO con un JSON valido, senza testo prima o dopo, in questo formato esatto:
+REGOLE IMPORTANTI:
+1. FORNITORE = il MITTENTE della merce (intestazione in alto, logo aziendale, sezione "Cliente" o similar DOVE "Cliente" è chi emette fattura). NON è Grafica Nappa (che è destinatario quasi sempre).
+2. DESTINATARIO = "Luogo di consegna" o "Destinatario" — solitamente GRAFICA NAPPA SRL.
+3. DATA DDT = data effettiva del documento (campo "del GG/MM/AA" vicino al numero DDT). IGNORA date normative tipo "D.P.R. 472 del 14 agosto 1996" (è solo riferimento legge).
+4. NUMERO DDT = campo "Numero" o "Nr." vicino alla data.
+5. RIGHE: una riga articolo può avere PIÙ unità di misura nella stessa riga (es: 19.488 KG e 87.456 NR = stessa carta, KG = peso, NR = numero fogli). METTI tutto in UNA riga con qta_kg e qta_fogli separati.
+6. CODICE articolo = prima colonna (es: "CV380 700X820", "JW190 720X1020").
+7. Numeri italiani: "19.488" = diciannovemila quattrocentoottantotto (punto = migliaia, virgola = decimali).
+
+Rispondi SOLO con JSON valido, senza testo prima o dopo:
 
 {
-  "fornitore": "Nome del fornitore",
-  "numero_ddt": "numero documento",
-  "data": "YYYY-MM-DD",
-  "destinatario": "Nome destinatario",
+  "fornitore": "Nome mittente",
+  "numero_ddt": "189",
+  "data": "2026-04-21",
+  "destinatario": "GRAFICA NAPPA SRL",
+  "causale": "Vendita/Conto lavoro/etc",
   "righe": [
     {
-      "codice": "codice articolo o null",
-      "descrizione": "descrizione articolo",
-      "qta": numero,
-      "um": "KG o PZ o MT o FG",
-      "peso_kg": numero o null
+      "codice": "CV380 700X820",
+      "descrizione": "SUPER COSMICO GC1 Grammatura 380 Formato 70x82",
+      "qta_fogli": 87456,
+      "qta_kg": 19488,
+      "bancali": 55
     }
   ],
-  "peso_totale_kg": numero o null,
-  "numero_colli": numero o null,
+  "peso_totale_kg": 19488,
+  "numero_colli": 55,
+  "vettore": "Nome vettore o null",
   "note": "eventuali note o null"
 }
 
-Se un campo non è leggibile o assente, usa null. Se la foto non è una bolla, ritorna {"ok": false, "motivo": "spiegazione"}.
-Priorità: dati carta (formato, grammatura, tipo). Non inventare valori. Sii preciso sui numeri.
+Se la foto non è una bolla leggibile, ritorna {"ok": false, "motivo": "spiegazione breve"}.
+Non inventare valori. Se un campo non è leggibile, usa null. Sii preciso sui numeri (rispetta punti e virgole italiani).
 PROMPT;
 
         try {
@@ -137,30 +148,41 @@ PROMPT;
     public static function formatPerTelegram(array $data): string
     {
         if (!($data['ok'] ?? false)) {
-            return "❌ Non sono riuscito a leggere la bolla.\n" . ($data['error'] ?? '');
+            $motivo = $data['motivo'] ?? $data['error'] ?? 'errore sconosciuto';
+            return "❌ Bolla non leggibile.\n_{$motivo}_";
         }
+
+        $fmt = fn($n) => is_numeric($n) ? number_format((float)$n, 0, ',', '.') : '—';
 
         $out = "📄 *Bolla analizzata*\n\n";
         $out .= "*Fornitore:* " . ($data['fornitore'] ?? '—') . "\n";
-        $out .= "*DDT:* " . ($data['numero_ddt'] ?? '—') . "\n";
-        $out .= "*Data:* " . ($data['data'] ?? '—') . "\n";
+        $out .= "*DDT:* " . ($data['numero_ddt'] ?? '—');
+        $out .= " del " . ($data['data'] ?? '—') . "\n";
+        if (!empty($data['causale'])) {
+            $out .= "*Causale:* " . $data['causale'] . "\n";
+        }
         if (!empty($data['destinatario'])) {
-            $out .= "*Destinatario:* " . $data['destinatario'] . "\n";
+            $out .= "*A:* " . $data['destinatario'] . "\n";
         }
-        $out .= "\n*Righe:*\n";
+
+        $out .= "\n*Articoli:*\n";
         foreach (($data['righe'] ?? []) as $r) {
-            $qta = $r['qta'] ?? '?';
-            $um = $r['um'] ?? '';
+            $cod = !empty($r['codice']) ? "`{$r['codice']}`\n" : '';
             $desc = $r['descrizione'] ?? '—';
-            $cod = !empty($r['codice']) ? "`{$r['codice']}` " : '';
-            $peso = !empty($r['peso_kg']) ? " ({$r['peso_kg']} kg)" : '';
-            $out .= "• {$cod}{$desc} — {$qta} {$um}{$peso}\n";
+            $parts = [];
+            if (!empty($r['qta_fogli'])) $parts[] = $fmt($r['qta_fogli']) . ' fg';
+            if (!empty($r['qta_kg'])) $parts[] = $fmt($r['qta_kg']) . ' kg';
+            if (!empty($r['bancali'])) $parts[] = $r['bancali'] . ' bcl';
+            $qtaStr = implode(' · ', $parts) ?: '—';
+            $out .= "• {$cod}{$desc}\n  _{$qtaStr}_\n";
         }
-        if (!empty($data['peso_totale_kg'])) {
-            $out .= "\n*Peso totale:* {$data['peso_totale_kg']} kg";
-        }
-        if (!empty($data['numero_colli'])) {
-            $out .= "\n*Colli:* {$data['numero_colli']}";
+
+        $foot = [];
+        if (!empty($data['peso_totale_kg'])) $foot[] = "Peso tot: " . $fmt($data['peso_totale_kg']) . " kg";
+        if (!empty($data['numero_colli'])) $foot[] = "Colli: " . $data['numero_colli'];
+        if (!empty($data['vettore'])) $foot[] = "Vettore: " . $data['vettore'];
+        if ($foot) {
+            $out .= "\n" . implode(' · ', $foot);
         }
         return $out;
     }
