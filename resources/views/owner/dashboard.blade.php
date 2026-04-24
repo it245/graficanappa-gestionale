@@ -878,18 +878,28 @@ tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !imp
                         $notePulitaOwner = trim($notePulitaOwner, ", \t\n\r") ?: null;
                     @endphp
                     <td>{{ $fornitoreEsterno ?? '-' }}</td>
-                    <td>
-                        @php
-                            $nfsOwner = $fase->ordine->note_fasi_successive ?? '';
-                            $righeNfsOwner = $nfsOwner ? json_decode($nfsOwner, true) : [];
-                        @endphp
-                        @if(!empty($righeNfsOwner) && is_array($righeNfsOwner))
-                            @foreach($righeNfsOwner as $r)
-                                <strong>{{ $r['nome'] ?? '' }}</strong>: {{ $r['testo'] ?? '' }}@if(!$loop->last) — @endif
-                            @endforeach
-                            @if($notePulitaOwner)<br>@endif
-                        @endif
-                        <span contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'note', this.innerText, this)">{{ $notePulitaOwner ?? '-' }}</span>
+                    @php
+                        $nfsOwner = $fase->ordine->note_fasi_successive ?? '';
+                        $righeNfsOwner = $nfsOwner ? json_decode($nfsOwner, true) : [];
+                        $tooltipNote = '';
+                        if (!empty($righeNfsOwner) && is_array($righeNfsOwner)) {
+                            foreach ($righeNfsOwner as $r) {
+                                $tooltipNote .= ($r['nome'] ?? '') . ': ' . ($r['testo'] ?? '') . "\n";
+                            }
+                        }
+                        $tooltipNote .= $notePulitaOwner ?? '';
+                        $tooltipNote = trim($tooltipNote);
+                    @endphp
+                    <td style="max-width:240px; vertical-align:top;" title="{{ $tooltipNote }}">
+                        <div style="display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; text-overflow:ellipsis; line-height:1.3; cursor:pointer;" onclick="this.style.webkitLineClamp = this.style.webkitLineClamp === 'unset' ? '3' : 'unset'">
+                            @if(!empty($righeNfsOwner) && is_array($righeNfsOwner))
+                                @foreach($righeNfsOwner as $r)
+                                    <strong>{{ $r['nome'] ?? '' }}</strong>: {{ $r['testo'] ?? '' }}@if(!$loop->last) — @endif
+                                @endforeach
+                                @if($notePulitaOwner)<br>@endif
+                            @endif
+                            <span contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'note', this.innerText, this)">{{ $notePulitaOwner ?? '-' }}</span>
+                        </div>
                     </td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_inizio', this.innerText, this)">{{ formatItalianDate($fase->data_inizio, true) }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_fine', this.innerText, this)">{{ formatItalianDate($fase->data_fine, true) }}</td>
