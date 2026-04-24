@@ -329,8 +329,17 @@ class SchedulerService
                         $batchIds[$f['id']] = true;
                     }
                 }
-                // Ordina batch: per PIEGA/FIN raggruppa per cod_art (articoli uguali consecutivi)
-                if (in_array($mid, ['PIEGA', 'FIN'])) {
+                // Ordina batch:
+                // - XL106: prima per cod_carta (stessa lastra consecutiva → setup lastra 0),
+                //   poi per urgenza. Formato è già costante dentro il batch (batch key)
+                // - PIEGA/FIN: per cod_art (articoli uguali consecutivi)
+                // - Altre: solo per urgenza
+                if ($mid === 'XL106') {
+                    usort($batch, function ($a, $b) {
+                        $codCmp = ($a['cod_carta'] ?? '') <=> ($b['cod_carta'] ?? '');
+                        return $codCmp !== 0 ? $codCmp : $a['gg'] <=> $b['gg'];
+                    });
+                } elseif (in_array($mid, ['PIEGA', 'FIN'])) {
                     usort($batch, function ($a, $b) {
                         $artCmp = ($a['cod_art'] ?? '') <=> ($b['cod_art'] ?? '');
                         return $artCmp !== 0 ? $artCmp : $a['gg'] <=> $b['gg'];
@@ -440,7 +449,12 @@ class SchedulerService
     protected function getBatchKey(array $f, string $mid): string
     {
         return match ($mid) {
-            'XL106' => ($f['tipo_offset'] ?? 'STD') . ($f['cod_carta'] ? '|' . $f['cod_carta'] : ''),
+            // XL106: batch per tipo offset + FORMATO CARTA (livello 5 priorità)
+            // Setup cambio formato XL106 = 20-30 min meccanici. Raggruppare stesso
+            // formato consecutivo azzera quel setup. Dentro il batch il sort secondario
+            // per cod_carta mette lastra identica consecutiva (setup lastra 0).
+            'XL106' => ($f['tipo_offset'] ?? 'STD')
+                . ($f['formato_carta'] ? '|' . $f['formato_carta'] : ''),
             'BOBST', 'STEL', 'JOH' => $f['fs'] ?? 'NOFS_' . $f['commessa'],
             'PLAST' => $f['formato_carta']
                 ? $f['fase'] . '|' . $f['formato_carta']
