@@ -12,7 +12,7 @@ return [
     'macchine' => [
         'XL106' => [
             'nome' => 'Heidelberg XL 106 (16h)',
-            'turni' => 'standard', // 6-22 lun-ven
+            'turni' => 'standard_sab', // 6-22 lun-ven + sab 6-13
             'fasi' => ['STAMPAXL106','STAMPAXL106.1','STAMPAXL106.2','STAMPAXL106.3',
                         'STAMPAXL106.4','STAMPAXL106.5','STAMPAXL106.6','STAMPAXL106.7','STAMPA'],
         ],
@@ -45,7 +45,7 @@ return [
         ],
         'PIEGA' => [
             'nome' => 'Piegaincolla',
-            'turni' => 'standard',
+            'turni' => 'standard_sab', // 6-22 lun-ven + sab 6-13
             'fasi' => ['PI01','PI02','PI03'],
             'config' => [
                 'PI01' => ['PI01'],
