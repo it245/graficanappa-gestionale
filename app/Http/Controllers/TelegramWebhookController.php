@@ -130,6 +130,11 @@ class TelegramWebhookController extends Controller
                 'righe' => count($result['righe'] ?? []),
                 'usage' => $result['_usage'] ?? null,
             ]);
+
+            $caricoReport = $this->registraCarichiDaBolla($result, $imagePath);
+            if ($caricoReport !== '') {
+                $testo .= "\n\n" . $caricoReport;
+            }
         } else {
             Log::warning('Bolla analisi fallita', ['chat_id' => $chatId, 'file' => $filename, 'error' => $result['error'] ?? 'unknown']);
         }
@@ -141,6 +146,67 @@ class TelegramWebhookController extends Controller
         }
 
         return response()->json(['ok' => true]);
+    }
+
+    /**
+     * Per ogni riga della bolla, cerca match in magazzino_articoli per codice.
+     * Se match → registra carico con qta_fogli.
+     * Se no match → log pending.
+     */
+    private function registraCarichiDaBolla(array $bolla, string $imagePath): string
+    {
+        $righe = $bolla['righe'] ?? [];
+        if (empty($righe)) return '';
+
+        $fornitore = $bolla['fornitore'] ?? null;
+        $ddt = $bolla['numero_ddt'] ?? null;
+        $dataDdt = $bolla['data'] ?? null;
+        $lotto = $ddt ? "DDT{$ddt}-" . ($dataDdt ?? date('Y-m-d')) : null;
+        $ocrRaw = json_encode($bolla, JSON_UNESCAPED_UNICODE);
+        $fotoPath = 'bolle/' . basename($imagePath);
+
+        $caricati = [];
+        $mancanti = [];
+
+        foreach ($righe as $r) {
+            $codice = trim((string)($r['codice'] ?? ''));
+            $qtaFogli = (int)($r['qta_fogli'] ?? 0);
+            if ($codice === '' || $qtaFogli <= 0) continue;
+
+            $articolo = \App\Models\MagazzinoArticolo::where('codice', $codice)->first();
+
+            if (!$articolo) {
+                $mancanti[] = $codice;
+                continue;
+            }
+
+            try {
+                \App\Services\MagazzinoService::registraCarico([
+                    'articolo_id' => $articolo->id,
+                    'quantita' => $qtaFogli,
+                    'lotto' => $lotto,
+                    'fornitore' => $fornitore,
+                    'foto_bolla' => $fotoPath,
+                    'ocr_raw' => $ocrRaw,
+                    'note' => "Carico da bolla Telegram DDT {$ddt}",
+                ]);
+                $caricati[] = "{$codice} (+" . number_format($qtaFogli, 0, ',', '.') . " fg)";
+            } catch (\Exception $e) {
+                Log::error('Carico bolla fallito', ['codice' => $codice, 'error' => $e->getMessage()]);
+                $mancanti[] = $codice . ' (errore)';
+            }
+        }
+
+        $out = '';
+        if ($caricati) {
+            $out .= "✅ *Caricato in magazzino:*\n" . implode("\n", array_map(fn($c) => "• {$c}", $caricati));
+        }
+        if ($mancanti) {
+            if ($out) $out .= "\n\n";
+            $out .= "⚠️ *Articolo non trovato in anagrafica:*\n" . implode("\n", array_map(fn($c) => "• {$c}", $mancanti));
+            $out .= "\n_Aggiungilo in Magazzino → Articoli per caricare la prossima volta._";
+        }
+        return $out;
     }
 
     private function handleText(int $chatId, string $text)
