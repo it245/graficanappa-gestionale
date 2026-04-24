@@ -170,6 +170,24 @@
     }
     .gantt-bar:hover { opacity:0.9; transform:scaleY(1.1); z-index:20; }
     .gantt-bar span { overflow:hidden; text-overflow:ellipsis; text-shadow:0 1px 2px rgba(0,0,0,0.5); }
+    .gantt-bar.bar-highlight {
+        outline:3px solid #fff; outline-offset:1px; z-index:25;
+        box-shadow:0 0 20px rgba(255,255,255,0.5);
+    }
+    .gantt-bar.bar-dimmed { opacity:0.22; transition:opacity 0.15s; }
+
+    /* Filtri rapidi */
+    .quick-filters {
+        display:flex; gap:10px; padding:10px 24px 0;
+        flex-wrap:wrap;
+    }
+    .qf-btn {
+        background:#1e1e38; color:#b8b8d0; border:1px solid #2a2a45;
+        padding:8px 16px; border-radius:10px; font-size:13px; font-weight:600;
+        cursor:pointer; transition:all 0.15s;
+    }
+    .qf-btn:hover { background:#2a2a50; color:#fff; }
+    .qf-btn.active { background:#0d6efd; color:#fff; border-color:#0d6efd; }
 
     .bar-scaduta { background:linear-gradient(135deg,#dc3545,#e35d6a); }
     .bar-critica { background:linear-gradient(135deg,#e67e22,#f0a04b); }
@@ -487,6 +505,15 @@ document.getElementById('modalInfoAlgoritmo').addEventListener('click', (e) => {
     <div class="legend-item"><div class="legend-color bar-scaduta"></div> Scaduta</div>
     <div class="legend-item"><div class="legend-color bar-critica"></div> Critica (&le;3gg)</div>
     <div class="legend-item"><div class="legend-color bar-normale"></div> Normale</div>
+</div>
+
+<!-- FILTRI RAPIDI -->
+<div class="quick-filters">
+    <button class="qf-btn active" data-qf="all">Tutte</button>
+    <button class="qf-btn" data-qf="critiche">🔴 Solo critiche</button>
+    <button class="qf-btn" data-qf="oggi">📅 Oggi/Domani</button>
+    <button class="qf-btn" data-qf="inlav">⚡ In lavorazione</button>
+    <button class="qf-btn" data-qf="2h">🕐 Prossime 2h</button>
 </div>
 
 <!-- TABS -->
@@ -1132,6 +1159,8 @@ function statoLabel(stato) {
     return `<span class="badge-stato" style="background:${color}">${label}</span>`;
 }
 
+let quickFilter = 'all';
+
 function filterData(data) {
     let result = data;
     if (filtroReparti.size > 0) result = result.filter(f => filtroReparti.has(f.reparto));
@@ -1142,6 +1171,26 @@ function filterData(data) {
             f.descrizione.toLowerCase().includes(q) || f.fase.toLowerCase().includes(q) ||
             f.reparto.toLowerCase().includes(q)
         );
+    }
+    if (quickFilter !== 'all') {
+        const now = new Date();
+        const inizio24h = new Date(now.getTime() + 2*3600*1000);
+        const fine48h = new Date(now.getTime() + 48*3600*1000);
+        result = result.filter(f => {
+            if (quickFilter === 'critiche') return f.giorni_consegna !== null && f.giorni_consegna <= -3;
+            if (quickFilter === 'inlav') return f.stato == 2;
+            if (quickFilter === 'oggi') {
+                if (!f.sched_inizio) return false;
+                const si = new Date(f.sched_inizio);
+                return si <= fine48h;
+            }
+            if (quickFilter === '2h') {
+                if (!f.sched_inizio) return false;
+                const si = new Date(f.sched_inizio);
+                return si <= inizio24h;
+            }
+            return true;
+        });
     }
     return result;
 }
@@ -1315,6 +1364,21 @@ function renderKPI() {
     `;
 }
 
+// ===================== HIGHLIGHT COMMESSA =====================
+
+function highlightCommessa(commessa) {
+    document.querySelectorAll('.gantt-bar').forEach(b => {
+        if (!commessa) { b.classList.remove('bar-highlight', 'bar-dimmed'); return; }
+        if (b.dataset.commessa === commessa) {
+            b.classList.add('bar-highlight');
+            b.classList.remove('bar-dimmed');
+        } else {
+            b.classList.add('bar-dimmed');
+            b.classList.remove('bar-highlight');
+        }
+    });
+}
+
 // ===================== TOOLTIP =====================
 
 function showTooltip(e, fase) {
@@ -1412,6 +1476,7 @@ function renderGanttMacchina() {
             const dispStart = calToDisplay(fase.start_h);
             const dispEnd = calToDisplay(fase.end_h);
             const bar = el('div', 'gantt-bar ' + getBarClass(fase));
+            bar.dataset.commessa = fase.commessa;
             bar.style.left = (dispStart * pxPerHour) + 'px';
             bar.style.width = Math.max((dispEnd - dispStart) * pxPerHour, 4) + 'px';
             bar.style.height = barH + 'px';
@@ -1419,8 +1484,8 @@ function renderGanttMacchina() {
             const bw = (dispEnd - dispStart) * pxPerHour;
             if (bw > 70) bar.innerHTML = `<span>${fase.commessa}</span>`;
             else if (bw > 30) bar.innerHTML = `<span>${fase.commessa.slice(-6)}</span>`;
-            bar.addEventListener('mouseenter', e => showTooltip(e, fase));
-            bar.addEventListener('mouseleave', hideTooltip);
+            bar.addEventListener('mouseenter', e => { showTooltip(e, fase); highlightCommessa(fase.commessa); });
+            bar.addEventListener('mouseleave', () => { hideTooltip(); highlightCommessa(null); });
             bar.addEventListener('mousemove', moveTooltip);
             bar.addEventListener('click', () => { hideTooltip(); openSidePanel(fase.commessa); });
             timeline.appendChild(bar);
@@ -1892,6 +1957,16 @@ hScroll.addEventListener('scroll', function() {
     syncing = true;
     activeGanttWrapper.scrollLeft = hScroll.scrollLeft;
     syncing = false;
+});
+
+// ===================== QUICK FILTERS =====================
+document.querySelectorAll('.qf-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.qf-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        quickFilter = btn.dataset.qf;
+        renderAll();
+    });
 });
 
 // ===================== INIT =====================
