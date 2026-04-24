@@ -369,6 +369,14 @@ public function calcolaOreEPriorita($fase)
                 $primaData = $fase->operatori->sortBy('pivot.data_inizio')->first()->pivot->data_inizio;
                 $fase->data_inizio = $primaData ?: null;
             }
+
+            // Pre-compute parser descrizione (evita 2× parse per riga nel blade)
+            $descPc = $fase->ordine->descrizione ?? '';
+            $cliPc = $fase->ordine->cliente_nome ?? '';
+            $repPc = strtolower($fase->faseCatalogo->reparto->nome ?? '');
+            $notePrePc = $fase->ordine->note_prestampa ?? '';
+            $fase->colori_parsed = \App\Helpers\DescrizioneParser::parseColori($descPc, $cliPc, $repPc);
+            $fase->fustella_parsed = \App\Helpers\DescrizioneParser::parseFustella($descPc, $cliPc, $notePrePc);
         }
 
         $fasi = $fasi->sortBy('priorita');

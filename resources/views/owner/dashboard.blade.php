@@ -840,11 +840,9 @@ tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !imp
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'cliente_nome', this.innerText, this)">{{ $fase->ordine->cliente_nome ?? '-' }}</td>
                     <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'cod_art', this.innerText, this)">{{ $fase->ordine->cod_art ?? '-' }}</td>
                     @php
-                        $descOwner = $fase->ordine->descrizione ?? '';
                         $clienteOwner = $fase->ordine->cliente_nome ?? '';
-                        $repartoOwner = strtolower($fase->faseCatalogo->reparto->nome ?? '');
-                        $coloriOwner = \App\Helpers\DescrizioneParser::parseColori($descOwner, $clienteOwner, $repartoOwner);
-                        $fustellaOwner = \App\Helpers\DescrizioneParser::parseFustella($descOwner, $clienteOwner, $fase->ordine->note_prestampa ?? '');
+                        $coloriOwner = $fase->colori_parsed ?? '';
+                        $fustellaOwner = $fase->fustella_parsed ?? '';
                     @endphp
                     <td>{{ $coloriOwner ?: '-' }}{{ str_contains(strtolower($clienteOwner), 'tifata') ? ' - IML' : '' }}</td>
                     <td>{{ $fustellaOwner ?: '-' }}</td>
