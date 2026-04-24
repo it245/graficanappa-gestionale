@@ -1389,13 +1389,18 @@ function renderKPI() {
 // ===================== BAR SEGMENTS (split su weekend) =====================
 
 function splitBarWeekend(startH, endH, lavoraSab) {
+    // Guardia: valori non validi → ritorna barra intera
+    if (!isFinite(startH) || !isFinite(endH) || endH <= startH) {
+        return [{ startH: startH || 0, endH: endH || (startH || 0) + 1 }];
+    }
     // Suddivide range ore in segmenti saltando sab (se !lavoraSab) e dom sempre.
     const segments = [];
     const startMs = NOW.getTime() + startH * 3600000;
     const endMs = NOW.getTime() + endH * 3600000;
     let cur = new Date(startMs);
     const end = new Date(endMs);
-    while (cur < end) {
+    let safety = 0;
+    while (cur < end && safety++ < 400) {
         const dow = cur.getDay(); // 0=dom, 6=sab
         const skip = dow === 0 || (dow === 6 && !lavoraSab);
         const midnight = new Date(cur);
