@@ -455,6 +455,15 @@ th.selected {
 }
 #filterBox .choices { min-width: 160px; }
 
+/* Anti-FOUC: nasconde select nativi finché Choices.js non li trasforma */
+#filterBox select:not(.choices__input) {
+    position: absolute !important;
+    opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    pointer-events: none !important;
+}
+
 #filterBox input {
     height: 38px;
     padding: 0.25rem 0.5rem;
@@ -604,26 +613,31 @@ tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !imp
     </div>
 
     {{-- KPI GIORNALIERI --}}
+    <style>
+        .kpi-card{background:#fff;border:1px solid #e5e7eb;padding:10px 14px;border-radius:6px;min-width:170px;flex:1;box-shadow:0 1px 2px rgba(0,0,0,.04);display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:58px;}
+        .kpi-card .kpi-label{font-size:10.5px;color:#6b7280;text-transform:uppercase;letter-spacing:.3px;font-weight:600;line-height:1.25;}
+        .kpi-card .kpi-val{font-size:24px;font-weight:700;line-height:1;white-space:nowrap;}
+    </style>
     <div class="d-flex gap-2 mb-1 mx-0 flex-wrap" style="max-width:1100px;">
-        <a href="{{ route('owner.fasiTerminate', ['oggi' => 1]) }}" class="kpi-card text-decoration-none" style="background:#fff;border:1px solid #e5e7eb;border-left:3px solid #198754;padding:10px 14px;border-radius:6px;min-width:180px;flex:1;box-shadow:0 1px 2px rgba(0,0,0,.04);" title="Visualizza fasi completate oggi">
-            <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.3px;font-weight:600;">Fasi completate oggi</div>
-            <div style="font-size:24px;font-weight:700;color:#198754;line-height:1.1;margin-top:2px;">{{ $fasiCompletateOggi }}</div>
+        <a href="{{ route('owner.fasiTerminate', ['oggi' => 1]) }}" class="kpi-card text-decoration-none" style="border-left:3px solid #198754;" title="Visualizza fasi completate oggi">
+            <span class="kpi-label">Fasi completate oggi</span>
+            <span class="kpi-val" style="color:#198754;">{{ $fasiCompletateOggi }}</span>
         </a>
-        <div class="kpi-card" style="background:#fff;border:1px solid #e5e7eb;border-left:3px solid #0d6efd;padding:10px 14px;border-radius:6px;min-width:180px;flex:1;box-shadow:0 1px 2px rgba(0,0,0,.04);cursor:pointer;" data-bs-toggle="modal" data-bs-target="#modalOreOggi">
-            <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.3px;font-weight:600;">Ore lavorate oggi</div>
-            <div style="font-size:24px;font-weight:700;color:#0d6efd;line-height:1.1;margin-top:2px;">{{ $oreLavorateOggi }}h</div>
+        <div class="kpi-card" style="border-left:3px solid #0d6efd;cursor:pointer;" data-bs-toggle="modal" data-bs-target="#modalOreOggi">
+            <span class="kpi-label">Ore lavorate oggi</span>
+            <span class="kpi-val" style="color:#0d6efd;">{{ $oreLavorateOggi }}h</span>
         </div>
-        <div class="kpi-card" style="background:#fff;border:1px solid #e5e7eb;border-left:3px solid #6b7280;padding:10px 14px;border-radius:6px;min-width:180px;flex:1;box-shadow:0 1px 2px rgba(0,0,0,.04);">
-            <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.3px;font-weight:600;">Consegnate oggi</div>
-            <div style="font-size:24px;font-weight:700;color:#374151;line-height:1.1;margin-top:2px;">{{ $commesseSpediteOggi }}</div>
+        <div class="kpi-card" style="border-left:3px solid #6b7280;">
+            <span class="kpi-label">Consegnate oggi</span>
+            <span class="kpi-val" style="color:#374151;">{{ $commesseSpediteOggi }}</span>
         </div>
-        <div class="kpi-card" style="background:#fff;border:1px solid #e5e7eb;border-left:3px solid #f59e0b;padding:10px 14px;border-radius:6px;min-width:180px;flex:1;box-shadow:0 1px 2px rgba(0,0,0,.04);">
-            <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.3px;font-weight:600;">Fasi in lavorazione</div>
-            <div style="font-size:24px;font-weight:700;color:#d97706;line-height:1.1;margin-top:2px;">{{ $fasiAttive }}</div>
+        <div class="kpi-card" style="border-left:3px solid #f59e0b;">
+            <span class="kpi-label">Fasi in lavorazione</span>
+            <span class="kpi-val" style="color:#d97706;">{{ $fasiAttive }}</span>
         </div>
-        <div class="kpi-card" style="background:#fff;border:1px solid #e5e7eb;border-left:3px solid #7c3aed;padding:10px 14px;border-radius:6px;min-width:180px;flex:1;box-shadow:0 1px 2px rgba(0,0,0,.04);cursor:pointer;" data-bs-toggle="modal" data-bs-target="#modalRiempimento">
-            <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.3px;font-weight:600;">Riempimento macchine</div>
-            <div style="font-size:24px;font-weight:700;color:#7c3aed;line-height:1.1;margin-top:2px;">{{ round(collect($riempimento)->sum('ore_totali')) }}h</div>
+        <div class="kpi-card" style="border-left:3px solid #7c3aed;cursor:pointer;" data-bs-toggle="modal" data-bs-target="#modalRiempimento">
+            <span class="kpi-label">Riempimento macchine</span>
+            <span class="kpi-val" style="color:#7c3aed;">{{ round(collect($riempimento)->sum('ore_totali')) }}h</span>
         </div>
     </div>
 
