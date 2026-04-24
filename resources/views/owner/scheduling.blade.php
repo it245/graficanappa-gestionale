@@ -1452,11 +1452,13 @@ function renderGanttMacchina() {
             const bar = el('div', 'gantt-bar ' + getBarClass(fase));
             const dispStart = calToDisplay(fase.start_h || 0);
             const dispEnd = calToDisplay(fase.end_h || fase.ore_effettive || 1);
+            const bw = Math.max((dispEnd - dispStart) * pxPerHour, 90);
             bar.style.left = (dispStart * pxPerHour) + 'px';
-            bar.style.width = Math.max((dispEnd - dispStart) * pxPerHour, 40) + 'px';
+            bar.style.width = bw + 'px';
             bar.style.height = '30px';
             bar.style.top = '6px';
-            bar.innerHTML = `<span>${fase.commessa}</span>`;
+            if (bw > 90) bar.innerHTML = `<span>${fase.commessa}</span>`;
+            else bar.innerHTML = `<span>${fase.commessa.slice(-7)}</span>`;
             bar.addEventListener('mouseenter', e => showTooltip(e, fase));
             bar.addEventListener('mouseleave', hideTooltip);
             bar.addEventListener('mousemove', moveTooltip);
