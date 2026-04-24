@@ -115,11 +115,9 @@
     /* ===== ZOOM & FILTRI ===== */
     .controls-bar {
         display:flex; flex-direction:column; align-items:stretch;
-        padding:12px 24px; gap:10px;
-        background:#1a1a34; border-radius:0;
-        overflow:hidden; box-sizing:border-box;
-        /* Estende fino ai bordi del main-content (scavalca padding mes-content-inner 16px) */
-        margin-left:-16px; margin-right:-16px;
+        padding:12px 0; gap:10px;
+        background:transparent; border-radius:0;
+        overflow:visible; box-sizing:border-box;
     }
     .controls-bar .zoom-controls { align-self:flex-start; }
     .zoom-controls { display:flex; align-items:center; gap:10px; }
@@ -184,6 +182,44 @@
         box-shadow:0 0 20px rgba(255,255,255,0.5);
     }
     .gantt-bar.bar-dimmed { opacity:0.22; transition:opacity 0.15s; }
+
+    /* Dashboard Oggi */
+    .do-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+    .do-panel {
+        background:#1e1e38; border:1px solid rgba(255,255,255,0.06);
+        border-radius:12px; padding:18px; min-height:300px;
+    }
+    .do-panel h3 {
+        margin:0 0 14px; font-size:14px; font-weight:700;
+        color:#c8c8e0; text-transform:uppercase; letter-spacing:0.6px;
+    }
+    .do-fase {
+        display:grid; grid-template-columns:auto 1fr auto; gap:12px;
+        padding:10px 12px; border-radius:8px; margin-bottom:6px;
+        background:rgba(255,255,255,0.02); border-left:3px solid #0d6efd;
+        transition:background 0.15s;
+    }
+    .do-fase:hover { background:rgba(13,110,253,0.08); cursor:pointer; }
+    .do-fase.critica { border-left-color:#ff6b7a; }
+    .do-fase.urgente { border-left-color:#f0a04b; }
+    .do-fase-ora { font-size:15px; font-weight:800; color:#5a9cff; min-width:48px; }
+    .do-fase-info { min-width:0; }
+    .do-fase-comm { font-size:13px; font-weight:700; color:#fff; }
+    .do-fase-sub {
+        font-size:11px; color:#8c8caa; overflow:hidden; text-overflow:ellipsis;
+        white-space:nowrap;
+    }
+    .do-fase-dur { font-size:12px; color:#b8b8d0; font-weight:600; white-space:nowrap; }
+    .do-mac-row {
+        display:flex; justify-content:space-between; align-items:center;
+        padding:8px 12px; border-radius:6px; margin-bottom:4px;
+        background:rgba(255,255,255,0.02);
+    }
+    .do-mac-name { font-size:13px; font-weight:600; color:#c8c8e0; }
+    .do-mac-status { font-size:12px; color:#8c8caa; }
+    .do-mac-status.busy { color:#f0a04b; }
+    .do-mac-status.idle { color:#5dd39e; }
+    @media (max-width:1100px) { .do-grid { grid-template-columns:1fr; } }
 
     /* Filtri rapidi */
     .quick-filters {
@@ -531,9 +567,15 @@ document.getElementById('modalInfoAlgoritmo').addEventListener('click', (e) => {
 
 <!-- TABS -->
 <div class="tab-nav">
+    <button class="tab-btn" data-tab="oggi">📍 Oggi</button>
     <button class="tab-btn active" data-tab="macchina">Per Macchina</button>
     <button class="tab-btn" data-tab="commessa">Per Commessa</button>
     <button class="tab-btn" data-tab="tabella">Tabella Priorita</button>
+</div>
+
+<!-- TAB: Dashboard Oggi -->
+<div class="tab-content" id="tab-oggi">
+    <div id="dashOggi" style="padding:20px 24px;"></div>
 </div>
 
 <!-- TAB: Per Macchina -->
@@ -2041,6 +2083,115 @@ hScroll.addEventListener('scroll', function() {
     syncing = false;
 });
 
+// ===================== DASHBOARD OGGI =====================
+
+function renderDashboardOggi() {
+    const container = document.getElementById('dashOggi');
+    if (!container) return;
+
+    const now = new Date();
+    const endToday = new Date(now); endToday.setHours(23,59,59,999);
+    const endTomorrow = new Date(endToday); endTomorrow.setDate(endTomorrow.getDate()+1);
+    const end2h = new Date(now.getTime() + 2*3600*1000);
+
+    // Fasi da fare oggi/domani (ordinate per inizio)
+    const fasiOggi = DATA
+        .filter(f => f.sched_inizio && !f.esterno)
+        .filter(f => {
+            const si = new Date(f.sched_inizio);
+            return si <= endTomorrow && si >= new Date(now.getFullYear(), now.getMonth(), now.getDate()-1);
+        })
+        .sort((a,b) => new Date(a.sched_inizio) - new Date(b.sched_inizio))
+        .slice(0, 15);
+
+    // Top fasi critiche (scadute o ≤3gg)
+    const fasiCritiche = DATA
+        .filter(f => f.giorni_consegna !== null && f.giorni_consegna <= 3)
+        .sort((a,b) => (a.giorni_consegna || 0) - (b.giorni_consegna || 0))
+        .slice(0, 10);
+
+    // Stato macchine (fase in lavorazione + prossima)
+    const MAC_ORDER = ['XL106','BOBST','STEL','JOH','PLAST','PIEGA','FIN','INDIGO','TAGLIO','LEGAT'];
+    const MAC_NOMI = {
+        'XL106':'Stampa offset','BOBST':'Fustella piana','STEL':'Fustella cilindrica',
+        'JOH':'Stampa a caldo','PLAST':'Plastificazione','PIEGA':'Piegaincolla',
+        'FIN':'Finestratura','INDIGO':'Digitale','TAGLIO':'Tagliacarte','LEGAT':'Legatoria',
+    };
+    const macchineStato = MAC_ORDER.map(mid => {
+        const fasiMac = DATA.filter(f => f.sched_macchina === mid && f.sched_inizio)
+            .sort((a,b) => new Date(a.sched_inizio) - new Date(b.sched_inizio));
+        const attiva = fasiMac.find(f => {
+            const si = new Date(f.sched_inizio), sf = new Date(f.sched_fine);
+            return si <= now && sf >= now;
+        });
+        const prossima = fasiMac.find(f => new Date(f.sched_inizio) > now);
+        return { id: mid, nome: MAC_NOMI[mid] || mid, attiva, prossima };
+    });
+
+    const fmtOra = (d) => {
+        const dt = new Date(d);
+        return dt.toLocaleDateString('it-IT', { weekday:'short', day:'2-digit' }).replace('.','') + ' ' +
+               dt.toLocaleTimeString('it-IT', { hour:'2-digit', minute:'2-digit' });
+    };
+
+    const faseClass = (f) => {
+        if (f.giorni_consegna !== null && f.giorni_consegna <= -3) return 'critica';
+        if (f.giorni_consegna !== null && f.giorni_consegna <= 0) return 'urgente';
+        return '';
+    };
+
+    container.innerHTML = `
+        <div class="do-grid">
+            <div class="do-panel">
+                <h3>📋 Fasi da fare Oggi / Domani (${fasiOggi.length})</h3>
+                ${fasiOggi.length === 0 ? '<div style="color:#8c8caa;text-align:center;padding:30px;">Nessuna fase schedulata</div>' :
+                fasiOggi.map(f => `
+                    <div class="do-fase ${faseClass(f)}" data-comm="${f.commessa}">
+                        <div class="do-fase-ora">${fmtOra(f.sched_inizio)}</div>
+                        <div class="do-fase-info">
+                            <div class="do-fase-comm">${f.commessa} · ${f.cliente || ''}</div>
+                            <div class="do-fase-sub">${f.fase} · ${f.descrizione || ''}</div>
+                        </div>
+                        <div class="do-fase-dur">${Math.round(f.ore || 0)}h</div>
+                    </div>
+                `).join('')}
+            </div>
+            <div class="do-panel">
+                <h3>🏭 Stato Macchine Ora</h3>
+                ${macchineStato.map(m => `
+                    <div class="do-mac-row">
+                        <div class="do-mac-name">${m.nome}</div>
+                        <div class="do-mac-status ${m.attiva ? 'busy' : 'idle'}">
+                            ${m.attiva
+                                ? `⚡ ${m.attiva.commessa} (fino ${fmtOra(m.attiva.sched_fine)})`
+                                : (m.prossima
+                                    ? `⏳ Prossima: ${m.prossima.commessa} alle ${fmtOra(m.prossima.sched_inizio)}`
+                                    : '— libera')}
+                        </div>
+                    </div>
+                `).join('')}
+                <h3 style="margin-top:22px;">🔴 Top 10 commesse critiche</h3>
+                ${fasiCritiche.length === 0 ? '<div style="color:#8c8caa;padding:10px;">Nessuna commessa critica</div>' :
+                fasiCritiche.map(f => `
+                    <div class="do-fase ${faseClass(f)}" data-comm="${f.commessa}">
+                        <div class="do-fase-ora">${f.giorni_consegna >= 0 ? '+' : ''}${f.giorni_consegna}g</div>
+                        <div class="do-fase-info">
+                            <div class="do-fase-comm">${f.commessa} · ${f.cliente || ''}</div>
+                            <div class="do-fase-sub">${f.fase} · ${f.reparto || ''}</div>
+                        </div>
+                        <div class="do-fase-dur">${Math.round(f.ore || 0)}h</div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+
+    // Click su fase apre side panel
+    container.querySelectorAll('.do-fase[data-comm]').forEach(el => {
+        el.addEventListener('click', () => openSidePanel(el.dataset.comm));
+    });
+}
+
 // ===================== QUICK FILTERS =====================
 document.querySelectorAll('.qf-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -2060,6 +2211,7 @@ function renderAll() {
 
     renderKPI();
     renderFilterChips();
+    renderDashboardOggi();
     renderGanttMacchina();
     renderGanttCommessa();
     renderTabella();
