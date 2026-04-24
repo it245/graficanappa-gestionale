@@ -141,6 +141,7 @@ class SchedulerService
                 'formato_carta' => $formatoCarta,
                 'tipo_offset' => $tipoOffset,
                 'mac' => $mac,
+                'esterno' => (bool) ($row->esterno ?? false),
                 'priorita_db' => $row->priorita ?? 999,
                 'priorita_manuale' => (bool) ($row->priorita_manuale ?? false),
                 'disponibile' => false,

@@ -60,12 +60,20 @@
         border:1px solid #2a2a45;
     }
     .kpi-card:hover { transform:translateY(-3px); box-shadow:0 6px 20px rgba(0,0,0,0.35); }
-    .kpi-card h3 { margin:0 0 4px; font-size:36px; font-weight:800; letter-spacing:-1px; }
-    .kpi-card small { color:#8c8caa; font-size:13px; font-weight:500; }
+    .kpi-card small {
+        display:block; color:#8c8caa; font-size:12px; font-weight:600;
+        text-transform:uppercase; letter-spacing:0.6px; margin-bottom:10px;
+    }
+    .kpi-card h3 {
+        margin:0; font-size:38px; font-weight:800; letter-spacing:-1px;
+        display:flex; align-items:baseline; gap:8px;
+    }
+    .kpi-card .kpi-pct { font-size:16px; font-weight:700; opacity:0.9; }
+    .kpi-card .kpi-unit { font-size:22px; font-weight:700; opacity:0.7; margin-left:2px; }
     .kpi-card .kpi-icon {
-        position:absolute; top:14px; right:16px; width:44px; height:44px;
-        border-radius:12px; display:flex; align-items:center; justify-content:center;
-        font-size:20px; font-weight:bold; color:#fff;
+        position:absolute; top:18px; right:18px; width:40px; height:40px;
+        border-radius:10px; display:flex; align-items:center; justify-content:center;
+        font-size:18px; font-weight:bold; color:#fff; opacity:0.85;
     }
     .kpi-blue h3 { color:#5a9cff; }
     .kpi-blue .kpi-icon { background:linear-gradient(135deg,#0d6efd,#6ea8fe); }
@@ -761,10 +769,10 @@ function schedulaPerMacchina(data) {
 // ===================== SCHEDULER DA DB (Mossa 37 pre-calcolato) =====================
 function schedulaDaDB(data) {
     const NOMI_MAC = {
-        'XL106': 'Heidelberg XL 106 (16h)', 'BOBST': 'BOBST 75x106', 'STEL': 'STEL G33/P25',
-        'JOH': 'JOH Stampa a Caldo', 'PLAST': 'Plastificatrice', 'PIEGA': 'Piegaincolla',
-        'FIN': 'Finestratrice', 'INDIGO': 'HP Indigo/MGI', 'TAGLIO': 'Tagliacarte',
-        'LEGAT': 'Legatoria', 'ZUND': 'Zünd', 'SPED': 'Spedizione',
+        'XL106': 'Stampa offset', 'BOBST': 'Fustella piana', 'STEL': 'Fustella cilindrica',
+        'JOH': 'Stampa a caldo', 'PLAST': 'Plastificazione', 'PIEGA': 'Piegaincolla',
+        'FIN': 'Finestratura', 'INDIGO': 'Digitale', 'TAGLIO': 'Tagliacarte',
+        'LEGAT': 'Legatoria', 'ZUND': 'Finitura digitale', 'SPED': 'Spedizione',
     };
     const TURNI_MAC = {
         'XL106': '6-22', 'BOBST': '6-22', 'STEL': '6-22', 'JOH': '6-22, sab 6-13',
@@ -1266,27 +1274,29 @@ function renderKPI() {
 
     document.getElementById('kpiRow').innerHTML = `
         <div class="kpi-card kpi-blue">
+            <small>Commesse attive</small>
+            <h3>${totale}</h3>
             <div class="kpi-icon">C</div>
-            <h3>${totale}</h3><small>Commesse attive</small>
         </div>
         <div class="kpi-card kpi-green">
-            <div class="kpi-icon">&check;</div>
-            <h3>${inTempo} <span style="font-size:18px;color:#5dd39e;font-weight:700">(${pct(inTempo)}%)</span></h3>
             <small>In tempo</small>
+            <h3>${inTempo} <span class="kpi-pct" style="color:#5dd39e">${pct(inTempo)}%</span></h3>
+            <div class="kpi-icon">&check;</div>
         </div>
         <div class="kpi-card kpi-red">
-            <div class="kpi-icon">!</div>
-            <h3>${scadute} <span style="font-size:18px;color:#ff6b7a;font-weight:700">(${pct(scadute)}%)</span></h3>
             <small>In ritardo</small>
+            <h3>${scadute} <span class="kpi-pct" style="color:#ff6b7a">${pct(scadute)}%</span></h3>
+            <div class="kpi-icon">!</div>
         </div>
         <div class="kpi-card kpi-orange">
+            <small>Critiche &ge;3gg</small>
+            <h3>${critiche} <span class="kpi-pct" style="color:#f0a04b">${pct(critiche)}%</span></h3>
             <div class="kpi-icon">!!</div>
-            <h3>${critiche} <span style="font-size:18px;color:#f0a04b;font-weight:700">(${pct(critiche)}%)</span></h3>
-            <small>Critiche (&ge;3gg scadute)</small>
         </div>
         <div class="kpi-card kpi-purple">
+            <small>Ore stimate</small>
+            <h3>${oreTotali}<span class="kpi-unit">h</span></h3>
             <div class="kpi-icon">H</div>
-            <h3>${oreTotali}h</h3><small>Ore lavoro stimate</small>
         </div>
     `;
 }
