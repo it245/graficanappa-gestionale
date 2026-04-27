@@ -175,9 +175,20 @@ class TelegramWebhookController extends Controller
 
             $articolo = \App\Models\MagazzinoArticolo::where('codice', $codice)->first();
 
+            $autoCreato = false;
             if (!$articolo) {
-                $mancanti[] = $codice;
-                continue;
+                // Auto-crea articolo come "primo utilizzo"
+                $descRiga = trim((string)($r['descrizione'] ?? ''));
+                $articolo = \App\Models\MagazzinoArticolo::create([
+                    'codice' => $codice,
+                    'descrizione' => $descRiga !== '' ? $descRiga : $codice,
+                    'categoria' => 'carta',
+                    'um' => 'fg',
+                    'soglia_minima' => 0,
+                    'fornitore' => $fornitore,
+                    'attivo' => true,
+                ]);
+                $autoCreato = true;
             }
 
             try {
@@ -190,7 +201,9 @@ class TelegramWebhookController extends Controller
                     'ocr_raw' => $ocrRaw,
                     'note' => "Carico da bolla Telegram DDT {$ddt}",
                 ]);
-                $caricati[] = "{$codice} (+" . number_format($qtaFogli, 0, ',', '.') . " fg)";
+                $label = "{$codice} (+" . number_format($qtaFogli, 0, ',', '.') . " fg)";
+                if ($autoCreato) $label .= " · NUOVO articolo creato";
+                $caricati[] = $label;
             } catch (\Exception $e) {
                 Log::error('Carico bolla fallito', ['codice' => $codice, 'error' => $e->getMessage()]);
                 $mancanti[] = $codice . ' (errore)';
@@ -203,8 +216,7 @@ class TelegramWebhookController extends Controller
         }
         if ($mancanti) {
             if ($out) $out .= "\n\n";
-            $out .= "⚠️ *Articolo non trovato in anagrafica:*\n" . implode("\n", array_map(fn($c) => "• {$c}", $mancanti));
-            $out .= "\n_Aggiungilo in Magazzino → Articoli per caricare la prossima volta._";
+            $out .= "⚠️ *Errori sui codici:*\n" . implode("\n", array_map(fn($c) => "• {$c}", $mancanti));
         }
         return $out;
     }

@@ -668,9 +668,9 @@ tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !imp
                 {{-- FILTRI --}}
 <div class="mb-3 d-flex flex-wrap gap-2 align-items-center" id="filterBox" style="display:none; max-width:100%;">
     <!-- Filtri multi-valore (virgola) -->
-    <input type="text" id="filterCommessa" class="form-control form-control-sm" placeholder="Commessa (virgola)" style="width:180px;">
-    <input type="text" id="filterCliente" class="form-control form-control-sm" placeholder="Cliente (virgola)" style="width:180px;">
-    <input type="text" id="filterDescrizione" class="form-control form-control-sm" placeholder="Descrizione (virgola)" style="width:220px;">
+    <input type="text" id="filterCommessa" class="form-control form-control-sm" placeholder="Commessa (virgola)" style="width:180px;" autocomplete="off">
+    <input type="text" id="filterCliente" class="form-control form-control-sm" placeholder="Cliente (virgola)" style="width:180px;" autocomplete="off">
+    <input type="text" id="filterDescrizione" class="form-control form-control-sm" placeholder="Descrizione (virgola)" style="width:220px;" autocomplete="off">
 
     <!-- Filtri multi-selezione -->
    <select id="filterStato" multiple>
@@ -2108,6 +2108,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     choiceStato.removeActiveItems();
                     choiceFase.removeActiveItems();
                     choiceReparto.removeActiveItems();
+                    [fCommessa, fCliente, fDescrizione].forEach(i => i.blur());
+                    if (document.activeElement) document.activeElement.blur();
                     rowData.forEach(data => data.row.style.display = '');
                 }, 300);
             }
