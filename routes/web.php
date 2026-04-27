@@ -56,6 +56,7 @@ Route::prefix('operatore')->group(function() {
 // Owner
 Route::middleware(['owner'])->group(function() {
     Route::get('/owner/dashboard', [DashboardOwnerController::class, 'index'])->name('owner.dashboard');
+    Route::get('/owner/demo', fn() => view('owner.demo'))->name('owner.demo');
 Route::post('/owner/aggiorna-campo', [DashboardOwnerController::class, 'aggiornaCampo'])->name('owner.aggiornaCampo');
 Route::post('/owner/import', [DashboardOwnerController::class, 'importOrdini'])->name('owner.importOrdini');
 Route::post('/owner/sync-onda', [DashboardOwnerController::class, 'syncOnda'])->name('owner.syncOnda');
