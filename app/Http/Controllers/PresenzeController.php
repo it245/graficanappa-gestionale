@@ -212,6 +212,8 @@ class PresenzeController extends Controller
      */
     public function presenti()
     {
+        // Rilascia subito session lock (evita coda con polling concorrenti)
+        if (session()->isStarted()) session()->save();
         $payload = \Illuminate\Support\Facades\Cache::remember('owner_presenti_v2', 10, function () {
             return $this->buildPresentiPayload();
         });
