@@ -43,7 +43,7 @@
 
 <input type="text" id="searchBox" class="form-control search-box" placeholder="Cerca commessa, cliente, fornitore, fase...">
 
-<div class="table-wrapper">
+<div class="table-wrapper" id="tableScroll">
     <table class="table table-bordered table-sm table-striped" id="tabEsterne">
         <thead style="background:#17a2b8; color:#fff;">
             <tr>
@@ -112,6 +112,33 @@
         </tbody>
     </table>
 </div>
+
+{{-- Scrollbar orizzontale sticky in fondo viewport --}}
+<div id="stickyScroll" style="position:fixed;bottom:0;left:0;right:0;overflow-x:auto;overflow-y:hidden;z-index:1000;height:16px;background:#f8f8f8;border-top:1px solid #ddd;display:none;">
+    <div id="stickyScrollInner" style="height:1px;"></div>
+</div>
+<script>
+(function(){
+    var ts = document.getElementById('tableScroll');
+    var sb = document.getElementById('stickyScroll');
+    var si = document.getElementById('stickyScrollInner');
+    if(!ts||!sb) return;
+    function sync(){ si.style.width = ts.scrollWidth+'px'; }
+    sync();
+    window.addEventListener('resize', sync);
+    new MutationObserver(sync).observe(ts,{childList:true,subtree:true});
+    var lock=false;
+    sb.addEventListener('scroll',function(){ if(lock)return; lock=true; ts.scrollLeft=sb.scrollLeft; lock=false; });
+    ts.addEventListener('scroll',function(){ if(lock)return; lock=true; sb.scrollLeft=ts.scrollLeft; lock=false; });
+    function vis(){
+        var r=ts.getBoundingClientRect();
+        sb.style.display = (r.right > window.innerWidth || ts.scrollWidth > ts.clientWidth) && r.bottom > window.innerHeight ? 'block':'none';
+    }
+    vis();
+    window.addEventListener('scroll',vis);
+    window.addEventListener('resize',vis);
+})();
+</script>
 
 <!-- Modal Termina Esterna (stessa logica della spedizione) -->
 <div class="modal fade" id="modalTerminaEsterno" tabindex="-1">

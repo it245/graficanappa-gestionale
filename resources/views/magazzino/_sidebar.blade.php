@@ -1,5 +1,12 @@
 {{-- Sidebar Magazzino --}}
 <div class="mes-sidebar-section">
+    <div class="mes-sidebar-section-label">Navigazione</div>
+    <a href="{{ route('owner.dashboard', ['op_token' => request('op_token')]) }}" class="mes-sidebar-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Dashboard MES
+    </a>
+</div>
+<div class="mes-sidebar-section">
     <div class="mes-sidebar-section-label">Magazzino</div>
     <a href="{{ route('magazzino.dashboard', ['op_token' => request('op_token')]) }}" class="mes-sidebar-item {{ request()->routeIs('magazzino.dashboard') ? 'active' : '' }}">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
