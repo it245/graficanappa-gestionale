@@ -58,7 +58,7 @@
     /* Tabella fissa: 15 colonne, larghezze esplicite, somma ~1515px */
     table { table-layout: fixed; }
     th:nth-child(1), td:nth-child(1) { width: 70px; text-align: center; }       /* Priorità */
-    th:nth-child(2), td:nth-child(2) { width: 60px; text-align: center; }       /* Stato */
+    th:nth-child(2), td:nth-child(2) { width: 90px; text-align: center; }       /* Stato */
     th:nth-child(3), td:nth-child(3) { width: 130px; }                          /* Fase */
     th:nth-child(4), td:nth-child(4) { width: 110px; }                          /* Reparto */
     th:nth-child(5), td:nth-child(5) { width: 80px; text-align: center; }       /* Qta Carta */
@@ -454,8 +454,8 @@
                     @if($noteExtraDett)<small class="fw-bold">{{ $noteExtraDett }}</small><br>@endif<span contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'note', this.innerText)">{{ $fase->note ?? '-' }}</span>
                 </td>
                 <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'descrizione', this.innerText)">{{ $fase->ordine->descrizione ?? '-' }}</td>
-                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_inizio', this.innerText)">{{ $fase->data_inizio ?? '-' }}</td>
-                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_fine', this.innerText)">{{ $fase->data_fine ?? '-' }}</td>
+                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_inizio', this.innerText)" title="{{ $fase->data_inizio ?? '' }}">{{ $fase->data_inizio ? \Carbon\Carbon::parse($fase->data_inizio)->format('d/m/Y') : '-' }}</td>
+                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_fine', this.innerText)" title="{{ $fase->data_fine ?? '' }}">{{ $fase->data_fine ? \Carbon\Carbon::parse($fase->data_fine)->format('d/m/Y') : '-' }}</td>
                 <td><button class="btn-elimina" onclick="eliminaFase({{ $fase->id }})">&times;</button></td>
             </tr>
         @endforeach
