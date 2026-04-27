@@ -38,8 +38,9 @@
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: normal;
-        max-height: 3.9em;
+        max-height: 5.2em;
         line-height: 1.3;
+        vertical-align: middle;
     }
     .dc-table tr:hover td { background: rgba(0,0,0,0.03); }
     .dc-table td[contenteditable] {
@@ -61,7 +62,7 @@
     }
     /* 15 colonne: Priorità, Stato, Fase, Reparto, QtaCarta, QtaProd, QtaProdPrinect, ScartiPrinect, ScartiR, Operatori, Note, Descrizione, DataInizio, DataFine, Azioni */
     .dc-table th:nth-child(1), .dc-table td:nth-child(1) { width: 70px; text-align: center; }
-    .dc-table th:nth-child(2), .dc-table td:nth-child(2) { width: 60px; text-align: center; }
+    .dc-table th:nth-child(2), .dc-table td:nth-child(2) { width: 90px; text-align: center; }
     .dc-table th:nth-child(3), .dc-table td:nth-child(3) { width: 120px; }
     .dc-table th:nth-child(4), .dc-table td:nth-child(4) { width: 100px; }
     .dc-table th:nth-child(5), .dc-table td:nth-child(5) { width: 80px; text-align: center; }
@@ -69,11 +70,11 @@
     .dc-table th:nth-child(7), .dc-table td:nth-child(7) { width: 75px; text-align: center; }
     .dc-table th:nth-child(8), .dc-table td:nth-child(8) { width: 75px; text-align: center; }
     .dc-table th:nth-child(9), .dc-table td:nth-child(9) { width: 75px; text-align: center; }
-    .dc-table th:nth-child(10), .dc-table td:nth-child(10) { width: 110px; }
-    .dc-table th:nth-child(11), .dc-table td:nth-child(11) { width: 160px; }
-    .dc-table th:nth-child(12), .dc-table td:nth-child(12) { width: 220px; }
-    .dc-table th:nth-child(13), .dc-table td:nth-child(13) { width: 100px; }
-    .dc-table th:nth-child(14), .dc-table td:nth-child(14) { width: 100px; }
+    .dc-table th:nth-child(10), .dc-table td:nth-child(10) { width: 130px; }
+    .dc-table th:nth-child(11), .dc-table td:nth-child(11) { width: 170px; }
+    .dc-table th:nth-child(12), .dc-table td:nth-child(12) { width: 240px; }
+    .dc-table th:nth-child(13), .dc-table td:nth-child(13) { width: 90px; text-align: center; white-space: nowrap; }
+    .dc-table th:nth-child(14), .dc-table td:nth-child(14) { width: 90px; text-align: center; white-space: nowrap; }
     .dc-table th:nth-child(15), .dc-table td:nth-child(15) { width: 115px; text-align: center; }
     .btn-elimina {
         background: var(--danger);
@@ -448,8 +449,8 @@
                     @if($noteExtraDett)<small class="fw-bold">{{ $noteExtraDett }}</small><br>@endif<span contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'note', this.innerText)">{{ $fase->note ?? '-' }}</span>
                 </td>
                 <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'descrizione', this.innerText)">{{ $fase->ordine->descrizione ?? '-' }}</td>
-                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_inizio', this.innerText)">{{ $fase->data_inizio ?? '-' }}</td>
-                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_fine', this.innerText)">{{ $fase->data_fine ?? '-' }}</td>
+                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_inizio', this.innerText)" title="{{ $fase->data_inizio ?? '' }}">{{ $fase->data_inizio ? \Carbon\Carbon::parse($fase->data_inizio)->format('d/m/Y') : '-' }}</td>
+                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_fine', this.innerText)" title="{{ $fase->data_fine ?? '' }}">{{ $fase->data_fine ? \Carbon\Carbon::parse($fase->data_fine)->format('d/m/Y') : '-' }}</td>
                 <td style="white-space:nowrap;">
                     <a href="{{ route('owner.bolla', $fase->id) }}" target="_blank" title="Stampa bolla lavorazione PDF" style="display:inline-flex;align-items:center;gap:4px;background:#0a58ca;color:#fff;border:none;border-radius:4px;padding:4px 8px;text-decoration:none;font-size:11px;font-weight:600;margin-right:4px;vertical-align:middle;">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
