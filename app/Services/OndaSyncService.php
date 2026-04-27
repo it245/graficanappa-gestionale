@@ -519,7 +519,8 @@ class OndaSyncService
             }
 
             // 4. Assicura che esista sempre la fase BRT1 (spedizione) — 1 sola per commessa
-            $hasBrt = OrdineFase::where(function ($q) {
+            $hasBrt = OrdineFase::withTrashed()
+                ->where(function ($q) {
                     $q->where('fase', 'BRT1')->orWhere('fase', 'brt1');
                 })
                 ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
@@ -915,7 +916,8 @@ class OndaSyncService
                 // Logica dedup: monofase / max 2 fasi / multifase
                 // Usa fase_catalogo_id (FK intera) per check più affidabile
                 if ($tipo === 'monofase') {
-                    $exists = OrdineFase::where('ordine_id', $ordine->id)
+                    $exists = OrdineFase::withTrashed()
+                        ->where('ordine_id', $ordine->id)
                         ->where('fase_catalogo_id', $faseCatalogo->id)
                         ->exists();
 
@@ -926,7 +928,8 @@ class OndaSyncService
                     }
 
                 } elseif ($tipo === 'max 2 fasi') {
-                    $count = OrdineFase::where('ordine_id', $ordine->id)
+                    $count = OrdineFase::withTrashed()
+                        ->where('ordine_id', $ordine->id)
                         ->where('fase_catalogo_id', $faseCatalogo->id)
                         ->count();
 
@@ -937,7 +940,8 @@ class OndaSyncService
                     }
 
                 } else {
-                    $exists = OrdineFase::where('ordine_id', $ordine->id)
+                    $exists = OrdineFase::withTrashed()
+                        ->where('ordine_id', $ordine->id)
                         ->where('fase_catalogo_id', $faseCatalogo->id)
                         ->exists();
 
@@ -1150,7 +1154,8 @@ class OndaSyncService
             }
 
             // BRT1 auto
-            $hasBrt = OrdineFase::where(function ($q) {
+            $hasBrt = OrdineFase::withTrashed()
+                ->where(function ($q) {
                     $q->where('fase', 'BRT1')->orWhere('fase', 'brt1');
                 })
                 ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
@@ -1320,11 +1325,13 @@ class OndaSyncService
                     }
                 }
 
-                $exists = OrdineFase::where('ordine_id', $ordine->id)
+                $exists = OrdineFase::withTrashed()
+                    ->where('ordine_id', $ordine->id)
                     ->where('fase_catalogo_id', $faseCatalogo->id)->exists();
 
                 if ($tipo === 'max 2 fasi') {
-                    $count = OrdineFase::where('ordine_id', $ordine->id)
+                    $count = OrdineFase::withTrashed()
+                        ->where('ordine_id', $ordine->id)
                         ->where('fase_catalogo_id', $faseCatalogo->id)->count();
                     if ($count < 2) {
                         OrdineFase::create($dataFase);
