@@ -2091,20 +2091,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     filterBox.style.transform = 'translateY(0)';
                 }, 10);
             } else {
-                filterBox.style.opacity = 0;
-                filterBox.style.transform = 'translateY(-10px)';
-                setTimeout(() => {
-                    filterBox.style.display = 'none';
-                    fCommessa.value = '';
-                    fCliente.value = '';
-                    fDescrizione.value = '';
-                    choiceStato.removeActiveItems();
-                    choiceFase.removeActiveItems();
-                    choiceReparto.removeActiveItems();
-                    [fCommessa, fCliente, fDescrizione].forEach(i => i.blur());
-                    if (document.activeElement) document.activeElement.blur();
-                    rowData.forEach(data => data.row.style.display = '');
-                }, 300);
+                filterBox.style.display = 'none';
+                filterBox.style.opacity = '';
+                filterBox.style.transform = '';
+                filterBox.style.marginBottom = '0';
+                fCommessa.value = '';
+                fCliente.value = '';
+                fDescrizione.value = '';
+                choiceStato.removeActiveItems();
+                choiceFase.removeActiveItems();
+                choiceReparto.removeActiveItems();
+                [fCommessa, fCliente, fDescrizione].forEach(i => i.blur());
+                if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+                rowData.forEach(data => data.row.style.display = '');
             }
         });
     }
