@@ -69,8 +69,8 @@
     th:nth-child(10), td:nth-child(10) { width: 140px; }                        /* Operatori */
     th:nth-child(11), td:nth-child(11) { width: 160px; }                        /* Note */
     th:nth-child(12), td:nth-child(12) { width: 220px; }                        /* Descrizione */
-    th:nth-child(13), td:nth-child(13) { width: 110px; text-align: center; }    /* Data Inizio */
-    th:nth-child(14), td:nth-child(14) { width: 110px; text-align: center; }    /* Data Fine */
+    th:nth-child(13), td:nth-child(13) { width: 130px; text-align: center; font-size: 11px; }    /* Data Inizio */
+    th:nth-child(14), td:nth-child(14) { width: 130px; text-align: center; font-size: 11px; }    /* Data Fine */
     th:nth-child(15), td:nth-child(15) { width: 60px; text-align: center; }     /* × */
     td { white-space: nowrap; }
     /* Descrizione: spezza su più righe ma limita altezza riga */
@@ -454,8 +454,8 @@
                     @if($noteExtraDett)<small class="fw-bold">{{ $noteExtraDett }}</small><br>@endif<span contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'note', this.innerText)">{{ $fase->note ?? '-' }}</span>
                 </td>
                 <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'descrizione', this.innerText)">{{ $fase->ordine->descrizione ?? '-' }}</td>
-                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_inizio', this.innerText)" title="{{ $fase->data_inizio ?? '' }}">{{ $fase->data_inizio ? \Carbon\Carbon::parse($fase->data_inizio)->format('d/m/Y') : '-' }}</td>
-                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_fine', this.innerText)" title="{{ $fase->data_fine ?? '' }}">{{ $fase->data_fine ? \Carbon\Carbon::parse($fase->data_fine)->format('d/m/Y') : '-' }}</td>
+                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_inizio', this.innerText)" title="{{ $fase->data_inizio ?? '' }}">{{ $fase->data_inizio ? \Carbon\Carbon::parse($fase->data_inizio)->format('d/m/Y H:i') : '-' }}</td>
+                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_fine', this.innerText)" title="{{ $fase->data_fine ?? '' }}">{{ $fase->data_fine ? \Carbon\Carbon::parse($fase->data_fine)->format('d/m/Y H:i') : '-' }}</td>
                 <td><button class="btn-elimina" onclick="eliminaFase({{ $fase->id }})">&times;</button></td>
             </tr>
         @endforeach
