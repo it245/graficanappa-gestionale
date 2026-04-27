@@ -235,8 +235,13 @@
 
 {{-- Info Commessa --}}
 @if($ordine)
+@php
+    $qtaProdottaStampa = $fasi
+        ->filter(fn($f) => ($f->reparto_nome ?? '') === 'stampa offset' && (int)$f->stato >= 2 && $f->qta_prod !== null)
+        ->sum('qta_prod');
+@endphp
 <div class="row g-2 mb-2" style="font-size:13px;">
-    <div class="col-md-4">
+    <div class="col-md-3">
         <div class="border rounded p-2 h-100" style="background:#e8f4fd">
             <strong class="d-block mb-1">Descrizione</strong>
             <span>{{ $ordine->descrizione ?: '-' }}</span>
@@ -254,10 +259,17 @@
             <span>{{ $ordine->cod_art ?: '-' }}</span>
         </div>
     </div>
-    <div class="col-md-2">
+    <div class="col-md-1">
         <div class="border rounded p-2 h-100" style="background:#e8f4fd">
             <strong class="d-block mb-1">Quantit&agrave;</strong>
             <span>{{ $ordine->qta_richiesta ? number_format($ordine->qta_richiesta, 0, ',', '.') : '-' }}</span>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="border rounded p-2 h-100" style="background:#fff4e6; border-color:#f59e0b !important;">
+            <strong class="d-block mb-1" style="color:#b45309;">Qta Prodotta</strong>
+            <span>{{ $qtaProdottaStampa > 0 ? number_format($qtaProdottaStampa, 0, ',', '.') : '-' }}</span>
+            <small class="text-muted d-block" style="font-size:10px;">stampa offset</small>
         </div>
     </div>
     <div class="col-md-2">
