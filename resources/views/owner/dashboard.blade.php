@@ -492,7 +492,12 @@ th.selected {
 .choices__list--dropdown {
     max-height: 250px;
     overflow-y: auto;
+    z-index: 1050 !important;
+    background: #fff !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    border: 1px solid #d1d5db !important;
 }
+.choices.is-open { z-index: 1050 !important; }
 
 #filterBox .choices__list--multiple {
     display: flex;
@@ -2209,7 +2214,7 @@ function checkNoteConsegne() {
 function showNoteToast(msg) {
     var toast = document.createElement('div');
     toast.innerHTML = '<strong>Note Consegne</strong><br>' + msg;
-    toast.style.cssText = 'position:fixed; top:20px; right:20px; z-index:9999; background:#0d6efd; color:#fff; padding:15px 20px; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.3); font-size:14px; cursor:pointer; max-width:350px; animation:slideIn 0.3s ease;';
+    toast.style.cssText = 'position:fixed; bottom:20px; right:20px; z-index:9999; background:#0d6efd; color:#fff; padding:12px 16px; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.25); font-size:13px; cursor:pointer; max-width:300px; animation:slideIn 0.3s ease;';
     toast.onclick = function() {
         toast.remove();
         document.getElementById('noteConsegneBadge').style.display = 'none';
@@ -2219,7 +2224,7 @@ function showNoteToast(msg) {
         caricaNoteSpedizione();
     };
     document.body.appendChild(toast);
-    setTimeout(function() { if (toast.parentNode) toast.remove(); }, 30000);
+    setTimeout(function() { if (toast.parentNode) toast.remove(); }, 8000);
 }
 
 // Nascondi badge quando apre le note
