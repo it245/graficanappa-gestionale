@@ -2399,6 +2399,10 @@ function fetchPresenti() {
             if (d.usciti.length === 0) ub.innerHTML = '<tr><td colspan="3" class="text-muted">-</td></tr>';
         }).catch(function() {});
 }
+// Avvia caricamento all'apertura modal
+document.getElementById('modalPresenti').addEventListener('shown.bs.modal', function() {
+    caricaPresenti();
+});
 // Stop polling quando modal chiuso
 document.getElementById('modalPresenti').addEventListener('hidden.bs.modal', function() {
     if (_presentiInterval) { clearInterval(_presentiInterval); _presentiInterval = null; }
