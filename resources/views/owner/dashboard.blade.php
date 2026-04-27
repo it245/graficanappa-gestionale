@@ -642,7 +642,7 @@ tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !imp
     </div>
 
     {{-- ICONE AZIONI --}}
-    <div class="mb-3 d-flex align-items-center gap-3 mx-2">
+    <div class="mb-1 d-flex align-items-center gap-3 mx-2">
         <button id="toggleFilter" class="btn btn-sm btn-outline-secondary" title="Mostra / Nascondi filtri">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;vertical-align:middle;"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
             Filtri
@@ -659,7 +659,7 @@ tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !imp
 
 
                 {{-- FILTRI --}}
-<div class="mb-3 d-flex flex-wrap gap-2 align-items-center" id="filterBox" style="display:none; max-width:100%;">
+<div class="mb-2 d-flex flex-wrap gap-2 align-items-center" id="filterBox" style="display:none; max-width:100%;">
     <!-- Filtri multi-valore (virgola) -->
     <input type="text" id="filterCommessa" class="form-control form-control-sm" placeholder="Commessa (virgola)" style="width:180px;" autocomplete="off">
     <input type="text" id="filterCliente" class="form-control form-control-sm" placeholder="Cliente (virgola)" style="width:180px;" autocomplete="off">

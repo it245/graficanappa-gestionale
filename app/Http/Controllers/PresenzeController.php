@@ -214,86 +214,61 @@ class PresenzeController extends Controller
     {
         $oggi = Carbon::today()->format('Y-m-d');
         $ieri = Carbon::yesterday()->format('Y-m-d');
+        $domani = Carbon::tomorrow()->format('Y-m-d');
 
-        // Ultima timbratura di oggi per ogni matricola
-        $ultime = DB::table('nettime_timbrature')
-            ->select('matricola', DB::raw('MAX(data_ora) as ultima_timbratura'))
-            ->whereDate('data_ora', $oggi)
-            ->groupBy('matricola')
-            ->get();
-
-        // Turno notturno: chi ha timbrato ENTRATA ieri dopo le 20:00
-        // e ha uscita oggi prima delle 08:00 (o è ancora dentro)
-        $notturni = DB::table('nettime_timbrature')
-            ->where('verso', 'E')
+        // 1 query: tutte timbrature da ieri 20:00 a oggi 23:59 (notturni + oggi)
+        $righe = DB::table('nettime_timbrature')
             ->where('data_ora', '>=', "{$ieri} 20:00:00")
-            ->where('data_ora', '<', "{$oggi} 00:00:00")
-            ->get();
+            ->where('data_ora', '<', "{$domani} 00:00:00")
+            ->orderBy('matricola')
+            ->orderBy('data_ora')
+            ->get(['matricola', 'data_ora', 'verso'])
+            ->groupBy('matricola');
 
-        // Matricole già presenti oggi
-        $matricoleOggi = $ultime->pluck('matricola')->toArray();
-
-        // Aggiungi notturni che non hanno entrata oggi
-        foreach ($notturni as $n) {
-            if (!in_array($n->matricola, $matricoleOggi)) {
-                // Controlla se ha un'uscita oggi
-                $uscitaOggi = DB::table('nettime_timbrature')
-                    ->where('matricola', $n->matricola)
-                    ->whereDate('data_ora', $oggi)
-                    ->where('verso', 'U')
-                    ->first();
-
-                $ultime->push((object)[
-                    'matricola' => $n->matricola,
-                    'ultima_timbratura' => $uscitaOggi ? $uscitaOggi->data_ora : $n->data_ora,
-                    '_entrata_notturna' => Carbon::parse($n->data_ora)->format('H:i'),
-                    '_uscita_notturna' => $uscitaOggi ? Carbon::parse($uscitaOggi->data_ora)->format('H:i') : null,
-                ]);
-                $matricoleOggi[] = $n->matricola;
-            }
-        }
+        // 1 query: anagrafica intera, indicizzata per matricola
+        $anagrafica = DB::table('nettime_anagrafica')
+            ->get(['matricola', 'cognome', 'nome'])
+            ->keyBy('matricola');
 
         $presenti = [];
         $usciti = [];
 
-        foreach ($ultime as $u) {
-            // Prendi il verso dell'ultima timbratura
-            $ultima = DB::table('nettime_timbrature')
-                ->where('matricola', $u->matricola)
-                ->where('data_ora', $u->ultima_timbratura)
-                ->first();
-
-            if (!$ultima) continue;
-
-            // Anagrafica
-            $anag = DB::table('nettime_anagrafica')
-                ->where('matricola', $u->matricola)
-                ->first();
-
-            $nome = $anag ? "{$anag->cognome} {$anag->nome}" : "Matricola {$u->matricola}";
-
-            $entry = [
-                'matricola' => $u->matricola,
-                'nome' => $nome,
-                'ultima_timbratura' => Carbon::parse($u->ultima_timbratura)->format('H:i'),
-                'verso' => $ultima->verso,
-            ];
-
-            // Entrata: turno notturno (ieri sera) o prima entrata oggi
-            if (isset($u->_entrata_notturna)) {
-                $entry['entrata'] = $u->_entrata_notturna . ' (ieri)';
-            } else {
-                $prima = DB::table('nettime_timbrature')
-                    ->where('matricola', $u->matricola)
-                    ->whereDate('data_ora', $oggi)
-                    ->where('verso', 'E')
-                    ->orderBy('data_ora')
-                    ->first();
-
-                if ($prima) {
-                    $entry['entrata'] = Carbon::parse($prima->data_ora)->format('H:i');
+        foreach ($righe as $matricola => $rs) {
+            $notturna = null;
+            $oggiRighe = [];
+            foreach ($rs as $r) {
+                if (strpos($r->data_ora, $ieri) === 0) {
+                    if ($r->verso === 'E') $notturna = $r;
+                } else {
+                    $oggiRighe[] = $r;
                 }
             }
+
+            if (empty($oggiRighe) && !$notturna) continue;
+
+            $ultima = !empty($oggiRighe) ? end($oggiRighe) : $notturna;
+            $primaOggi = null;
+            foreach ($oggiRighe as $r) {
+                if ($r->verso === 'E') { $primaOggi = $r; break; }
+            }
+
+            $anag = $anagrafica[$matricola] ?? null;
+            $nome = $anag ? "{$anag->cognome} {$anag->nome}" : "Matricola {$matricola}";
+
+            $entrata = '-';
+            if ($notturna && !$primaOggi) {
+                $entrata = Carbon::parse($notturna->data_ora)->format('H:i') . ' (ieri)';
+            } elseif ($primaOggi) {
+                $entrata = Carbon::parse($primaOggi->data_ora)->format('H:i');
+            }
+
+            $entry = [
+                'matricola' => $matricola,
+                'nome' => $nome,
+                'ultima_timbratura' => Carbon::parse($ultima->data_ora)->format('H:i'),
+                'verso' => $ultima->verso,
+                'entrata' => $entrata,
+            ];
 
             if ($ultima->verso === 'E') {
                 $presenti[] = $entry;
@@ -302,7 +277,6 @@ class PresenzeController extends Controller
             }
         }
 
-        // Ordina per cognome
         usort($presenti, fn($a, $b) => strcmp($a['nome'], $b['nome']));
         usort($usciti, fn($a, $b) => strcmp($a['nome'], $b['nome']));
 
