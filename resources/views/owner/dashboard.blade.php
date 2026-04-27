@@ -2084,26 +2084,20 @@ document.addEventListener('DOMContentLoaded', () => {
         toggleFilter.addEventListener('click', () => {
             if (filterBox.style.display === 'none') {
                 filterBox.style.display = 'flex';
-                filterBox.style.opacity = 0;
-                filterBox.style.transform = 'translateY(-10px)';
-                setTimeout(() => {
-                    filterBox.style.opacity = 1;
-                    filterBox.style.transform = 'translateY(0)';
-                }, 10);
+                filterBox.style.opacity = '';
+                filterBox.style.transform = '';
             } else {
-                filterBox.style.opacity = 0;
-                filterBox.style.transform = 'translateY(-10px)';
-                setTimeout(() => {
-                    filterBox.style.display = 'none';
-                    fCommessa.value = '';
-                    fCliente.value = '';
-                    fDescrizione.value = '';
-                    try { choiceStato.removeActiveItems(); } catch(e) {}
-                    try { choiceFase.removeActiveItems(); } catch(e) {}
-                    try { choiceReparto.removeActiveItems(); } catch(e) {}
-                    [fCommessa, fCliente, fDescrizione].forEach(i => { try { i.blur(); } catch(e) {} });
-                    rowData.forEach(data => data.row.style.display = '');
-                }, 300);
+                filterBox.style.display = 'none';
+                filterBox.style.opacity = '';
+                filterBox.style.transform = '';
+                fCommessa.value = '';
+                fCliente.value = '';
+                fDescrizione.value = '';
+                try { choiceStato.removeActiveItems(); } catch(e) {}
+                try { choiceFase.removeActiveItems(); } catch(e) {}
+                try { choiceReparto.removeActiveItems(); } catch(e) {}
+                [fCommessa, fCliente, fDescrizione].forEach(i => { try { i.blur(); } catch(e) {} });
+                rowData.forEach(data => data.row.style.display = '');
             }
         });
     }
