@@ -51,10 +51,10 @@
 
     <script>
         const slides = [
-            { title: '1. Decisione Priorità (5 livelli)', img: '/demo/01_priorita.png' },
-            { title: '2. Propagazione Fasi (event-driven)', img: '/demo/02_propagazione.png' },
-            { title: '3. Architettura Sistema', img: '/demo/03_architettura.png' },
-            { title: '4. Confronto Manuale vs Mossa 37', img: '/demo/04_confronto.png' },
+            { title: '1. Decisione Priorità (5 livelli)', img: '/demo-img/01_priorita.png' },
+            { title: '2. Propagazione Fasi (event-driven)', img: '/demo-img/02_propagazione.png' },
+            { title: '3. Architettura Sistema', img: '/demo-img/03_architettura.png' },
+            { title: '4. Confronto Manuale vs Mossa 37', img: '/demo-img/04_confronto.png' },
         ];
         let idx = 0;
 
