@@ -7,40 +7,36 @@ Render: VSCode estensione "Markdown Preview Mermaid" oppure https://mermaid.live
 ## 1. Decisione Priorità (5 livelli)
 
 ```mermaid
-flowchart TD
-    A[Commessa Onda] --> B[Mossa 37 PriorityService]
-    B --> L1{1. Urgenza<br/>giorni alla consegna}
-    L1 -->|critica ≤3gg| L1A[+1000 punti]
+flowchart LR
+    A[Commessa<br/>Onda] --> B[Mossa 37<br/>PriorityService]
+    B --> L1{1. Urgenza}
+    L1 -->|critica ≤3gg| L1A[+1000]
     L1 -->|in tempo| L1B[base]
     L1A --> L2
     L1B --> L2
 
-    L2{2. Ritardo reale<br/>fine stimata > consegna}
-    L2 -->|sì| L2A[+500 punti]
+    L2{2. Ritardo} -->|sì| L2A[+500]
     L2 -->|no| L2B[0]
     L2A --> L3
     L2B --> L3
 
-    L3{3. Batch affinity<br/>setup compatibile}
-    L3 -->|setup uguale| L3A[+200 punti]
-    L3 -->|setup diverso| L3B[0]
+    L3{3. Batch<br/>affinity} -->|setup<br/>uguale| L3A[+200]
+    L3 -->|diverso| L3B[0]
     L3A --> L4
     L3B --> L4
 
-    L4{4. Sequenza ciclo<br/>fase precedente OK}
-    L4 -->|fase pronta| L4A[+100 punti]
-    L4 -->|in attesa| L4B[posticipo]
+    L4{4. Sequenza<br/>ciclo} -->|pronta| L4A[+100]
+    L4 -->|attesa| L4B[posticipo]
     L4A --> L5
     L4B --> END
 
-    L5{5. Formato carta XL106<br/>raggruppa stessa misura}
-    L5 -->|stesso formato| L5A[+50 punti]
-    L5 -->|formato diverso| L5B[0]
+    L5{5. Formato<br/>XL106} -->|stesso| L5A[+50]
+    L5 -->|diverso| L5B[0]
     L5A --> OUT
     L5B --> OUT
 
-    OUT[Score finale] --> SCHED[Posizione in coda<br/>per macchina]
-    SCHED --> END[Gantt aggiornato]
+    OUT[Score<br/>finale] --> SCHED[Coda<br/>macchina]
+    SCHED --> END[Gantt<br/>aggiornato]
 ```
 
 ---
@@ -113,25 +109,30 @@ flowchart TB
 
 ```mermaid
 flowchart LR
-    subgraph OLD["PRIMA — Pianificazione Manuale"]
+    subgraph OLD["⚠️ PRIMA — Manuale"]
+        direction TB
         O1[Capo reparto<br/>guarda elenco] --> O2[Decide priorità<br/>a memoria]
-        O2 --> O3[Comunica a voce<br/>operatori]
-        O3 --> O4{Cambio urgenza?}
-        O4 -->|sì| O5[Re-pianifica<br/>tutto da zero<br/>30-60 min]
+        O2 --> O3[Comunica<br/>a voce]
+        O3 --> O4{Cambio<br/>urgenza?}
+        O4 -->|sì| O5[Re-pianifica<br/>30-60 min]
         O5 --> O3
-        O4 -->|no| O6[Stop]
-        O6 --> O7[Setup ridondanti<br/>fermi macchina<br/>code visibili solo a uomo]
+        O4 -->|no| O7[Setup ridondanti<br/>fermi macchina]
     end
 
-    subgraph NEW["DOPO — Mossa 37"]
-        N1[Onda invia commessa] --> N2[Mossa 37 calcola<br/>5 livelli priorità<br/>< 1 secondo]
-        N2 --> N3[Gantt aggiornato<br/>real-time]
-        N3 --> N4{Cambio urgenza?}
-        N4 -->|sì| N5[Ricalcolo automatico<br/>< 1 secondo]
+    OLD ~~~ ARROW[➡️ MOSSA 37 ➡️]
+    ARROW ~~~ NEW
+
+    subgraph NEW["✅ DOPO — Mossa 37"]
+        direction TB
+        N1[Onda invia<br/>commessa] --> N2[5 livelli priorità<br/>< 1 sec]
+        N2 --> N3[Gantt<br/>real-time]
+        N3 --> N4{Cambio<br/>urgenza?}
+        N4 -->|sì| N5[Ricalcolo auto<br/>< 1 sec]
         N5 --> N3
-        N4 -->|no| N6[Continua]
-        N6 --> N7[Batch ottimizzati<br/>setup minimi<br/>colli bottiglia evidenziati]
+        N4 -->|no| N7[Batch ottimizzati<br/>colli bottiglia<br/>evidenziati]
     end
+
+    style ARROW fill:#fff,stroke:#fff,color:#16a34a,font-weight:bold,font-size:18px,stroke-width:2px
 ```
 
 ---

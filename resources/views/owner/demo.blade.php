@@ -15,11 +15,12 @@
         button:hover { background: #f9fafb; }
         button.primary { background: #2563eb; color: #fff; border-color: #2563eb; }
         button.primary:hover { background: #1d4ed8; }
-        #slideContainer { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 24px; min-height: 80vh; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; }
-        #slideContainer:fullscreen { padding: 40px; min-height: 100vh; }
+        #slideContainer { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 24px; min-height: 80vh; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; overflow: auto; }
+        #slideContainer:fullscreen { padding: 40px; min-height: 100vh; background: #fff; }
         #slideTitle { text-align: center; margin: 0 0 16px 0; font-size: 22px; }
-        #slideImg { max-width: 100%; max-height: 75vh; object-fit: contain; }
-        #slideContainer:fullscreen #slideImg { max-height: 88vh; }
+        #slideImg { max-width: 100%; height: auto; cursor: zoom-in; transition: transform 0.2s; }
+        #slideImg.zoomed { max-width: none; transform: scale(1); cursor: zoom-out; }
+        #slideContainer:fullscreen #slideImg { max-width: 100%; max-height: 90vh; }
         .nav-btns { margin-top: 16px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
         .label { font-weight: 600; padding: 0 8px; }
     </style>
@@ -75,6 +76,9 @@
             if (e.key === 'ArrowRight' || e.key === ' ') nextSlide();
             if (e.key === 'ArrowLeft') prevSlide();
             if (e.key === 'f') toggleFullscreen();
+        });
+        document.getElementById('slideImg').addEventListener('click', function() {
+            this.classList.toggle('zoomed');
         });
         render();
     </script>
