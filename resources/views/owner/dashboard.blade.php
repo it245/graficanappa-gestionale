@@ -666,7 +666,8 @@ tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !imp
     <input type="text" id="filterDescrizione" class="form-control form-control-sm" placeholder="Descrizione (virgola)" style="width:220px;" autocomplete="off">
 
     <!-- Filtri multi-selezione -->
-   <select id="filterStato" multiple>
+   <select id="filterStato" multiple data-placeholder="Seleziona Stato">
+    <option value="" disabled placeholder>Seleziona Stato</option>
     <option value="0">0</option>
     <option value="1">1</option>
     <option value="2">2</option>
@@ -674,7 +675,8 @@ tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !imp
     <option value="EXT">EXT</option>
 </select>
 
-<select id="filterFase" multiple>
+<select id="filterFase" multiple data-placeholder="Seleziona Fase">
+    <option value="" disabled placeholder>Seleziona Fase</option>
     @php
         $fasiNomi = $fasiCatalogo->pluck('nome_display')->map(function($n) {
             if ($n === 'STAMPA') return null;
@@ -686,7 +688,8 @@ tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !imp
     @endforeach
 </select>
 
-<select id="filterReparto" multiple>
+<select id="filterReparto" multiple data-placeholder="Seleziona Reparto">
+    <option value="" disabled placeholder>Seleziona Reparto</option>
     @foreach($reparti as $id => $rep)
         @if($rep !== 'fustella')
         <option value="{{ $rep }}">{{ $rep }}</option>
@@ -1934,9 +1937,9 @@ document.addEventListener('DOMContentLoaded', () => {
         itemSelectText: '',
         placeholder:true,
     };
-    const choiceStato = new Choices('#filterStato',{...choicesOptions,placeholderValue:'Seleziona Stato'});
-    const choiceFase = new Choices('#filterFase',{...choicesOptions,placeholderValue:'Seleziona Fase'})
-    const choiceReparto = new Choices('#filterReparto',{...choicesOptions,placeholderValue:'Seleziona Reparto'})
+    const choiceStato = new Choices('#filterStato',{...choicesOptions,placeholderValue:'Seleziona Stato',searchPlaceholderValue:'Seleziona Stato'});
+    const choiceFase = new Choices('#filterFase',{...choicesOptions,placeholderValue:'Seleziona Fase',searchPlaceholderValue:'Seleziona Fase'})
+    const choiceReparto = new Choices('#filterReparto',{...choicesOptions,placeholderValue:'Seleziona Reparto',searchPlaceholderValue:'Seleziona Reparto'})
 
     const toggleFilter = document.getElementById('toggleFilter');
     const filterBox = document.getElementById('filterBox');
