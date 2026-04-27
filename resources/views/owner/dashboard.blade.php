@@ -659,7 +659,7 @@ tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !imp
 
 
                 {{-- FILTRI --}}
-<div class="mb-2 d-flex flex-wrap gap-2 align-items-center" id="filterBox" style="display:none; max-width:100%;">
+<div class="mb-2 flex-wrap gap-2 align-items-center" id="filterBox" style="display:none; max-width:100%;">
     <!-- Filtri multi-valore (virgola) -->
     <input type="text" id="filterCommessa" class="form-control form-control-sm" placeholder="Commessa (virgola)" style="width:180px;" autocomplete="off">
     <input type="text" id="filterCliente" class="form-control form-control-sm" placeholder="Cliente (virgola)" style="width:180px;" autocomplete="off">
