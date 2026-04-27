@@ -34,6 +34,13 @@
             object-fit: contain; cursor: zoom-in;
         }
         #slideImg.zoomed { max-width: none; max-height: none; cursor: zoom-out; }
+        /* Fullscreen: priorità altezza viewport, scroll orizzontale se serve */
+        #slideContainer:fullscreen .img-wrap { align-items: center; justify-content: flex-start; }
+        #slideContainer:fullscreen #slideImg {
+            max-width: none; max-height: none;
+            height: 88vh; width: auto;
+        }
+        #slideContainer:fullscreen #slideImg.zoomed { height: auto; width: auto; }
         .nav-btns { margin-top: 14px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
         .label { font-weight: 600; padding: 0 8px; min-width: 50px; text-align: center; }
         .hint { color: #6b7280; font-size: 12px; text-align: center; margin-top: 8px; }

@@ -212,6 +212,14 @@ class PresenzeController extends Controller
      */
     public function presenti()
     {
+        $payload = \Illuminate\Support\Facades\Cache::remember('owner_presenti_v2', 10, function () {
+            return $this->buildPresentiPayload();
+        });
+        return response()->json($payload);
+    }
+
+    private function buildPresentiPayload(): array
+    {
         $oggi = Carbon::today()->format('Y-m-d');
         $ieri = Carbon::yesterday()->format('Y-m-d');
         $domani = Carbon::tomorrow()->format('Y-m-d');
@@ -280,13 +288,13 @@ class PresenzeController extends Controller
         usort($presenti, fn($a, $b) => strcmp($a['nome'], $b['nome']));
         usort($usciti, fn($a, $b) => strcmp($a['nome'], $b['nome']));
 
-        return response()->json([
+        return [
             'presenti' => $presenti,
             'usciti' => $usciti,
             'totale_presenti' => count($presenti),
             'totale_usciti' => count($usciti),
             'ultimo_sync' => now()->format('H:i:s'),
-        ]);
+        ];
     }
 
     /**
