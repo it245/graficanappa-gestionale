@@ -453,7 +453,15 @@ th.selected {
     max-width: 180px;
     margin-bottom: 0 !important;
 }
-#filterBox .choices { min-width: 160px; }
+#filterBox .choices { min-width: 180px; }
+#filterBox .choices__input {
+    min-width: 140px !important;
+    background: transparent !important;
+    margin-bottom: 0 !important;
+    color: #495057 !important;
+}
+#filterBox .choices__input::placeholder { color: #6c757d !important; opacity: 1 !important; }
+#filterBox .choices__placeholder { opacity: 1 !important; color: #6c757d !important; }
 
 /* Anti-FOUC: nasconde select nativi finché Choices.js non li trasforma */
 #filterBox select:not(.choices__input) {
