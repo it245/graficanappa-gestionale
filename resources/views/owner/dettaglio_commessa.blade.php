@@ -73,8 +73,8 @@
     .dc-table th:nth-child(10), .dc-table td:nth-child(10) { width: 130px; }
     .dc-table th:nth-child(11), .dc-table td:nth-child(11) { width: 170px; }
     .dc-table th:nth-child(12), .dc-table td:nth-child(12) { width: 240px; }
-    .dc-table th:nth-child(13), .dc-table td:nth-child(13) { width: 90px; text-align: center; white-space: nowrap; }
-    .dc-table th:nth-child(14), .dc-table td:nth-child(14) { width: 90px; text-align: center; white-space: nowrap; }
+    .dc-table th:nth-child(13), .dc-table td:nth-child(13) { width: 130px; text-align: center; white-space: nowrap; font-size: 11px; }
+    .dc-table th:nth-child(14), .dc-table td:nth-child(14) { width: 130px; text-align: center; white-space: nowrap; font-size: 11px; }
     .dc-table th:nth-child(15), .dc-table td:nth-child(15) { width: 115px; text-align: center; }
     .btn-elimina {
         background: var(--danger);
@@ -449,8 +449,8 @@
                     @if($noteExtraDett)<small class="fw-bold">{{ $noteExtraDett }}</small><br>@endif<span contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'note', this.innerText)">{{ $fase->note ?? '-' }}</span>
                 </td>
                 <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'descrizione', this.innerText)">{{ $fase->ordine->descrizione ?? '-' }}</td>
-                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_inizio', this.innerText)" title="{{ $fase->data_inizio ?? '' }}">{{ $fase->data_inizio ? \Carbon\Carbon::parse($fase->data_inizio)->format('d/m/Y') : '-' }}</td>
-                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_fine', this.innerText)" title="{{ $fase->data_fine ?? '' }}">{{ $fase->data_fine ? \Carbon\Carbon::parse($fase->data_fine)->format('d/m/Y') : '-' }}</td>
+                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_inizio', this.innerText)" title="{{ $fase->data_inizio ?? '' }}">{{ $fase->data_inizio ? \Carbon\Carbon::parse($fase->data_inizio)->format('d/m/Y H:i') : '-' }}</td>
+                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_fine', this.innerText)" title="{{ $fase->data_fine ?? '' }}">{{ $fase->data_fine ? \Carbon\Carbon::parse($fase->data_fine)->format('d/m/Y H:i') : '-' }}</td>
                 <td style="white-space:nowrap;">
                     <a href="{{ route('owner.bolla', $fase->id) }}" target="_blank" title="Stampa bolla lavorazione PDF" style="display:inline-flex;align-items:center;gap:4px;background:#0a58ca;color:#fff;border:none;border-radius:4px;padding:4px 8px;text-decoration:none;font-size:11px;font-weight:600;margin-right:4px;vertical-align:middle;">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
