@@ -4,6 +4,52 @@ Render: VSCode estensione "Markdown Preview Mermaid" oppure https://mermaid.live
 
 ---
 
+## 0. Come funziona Mossa 37 — Sintesi
+
+```mermaid
+flowchart LR
+    subgraph IN["📥 INPUT real-time"]
+        direction TB
+        I1[Onda ERP<br/>commesse + priorità]
+        I2[Prinect XL106<br/>tempi effettivi stampa]
+        I3[Fiery V900<br/>coda digitale]
+        I4[NetTime<br/>presenze operatori]
+    end
+
+    subgraph CRIT["🎯 4 CRITERI di priorità"]
+        direction TB
+        C1[1. Urgenza consegna<br/>giorni rimanenti]
+        C2[2. Sequenza ciclo<br/>stampa→plast→fust→piega→sped]
+        C3[3. Affinità batch<br/>stesso formato/colore/cliché]
+        C4[4. Disponibilità macchina<br/>BOBST 2 config, PI01/02/03]
+    end
+
+    ENGINE{{⚙️ Mossa 37<br/>PriorityService<br/>< 1 secondo}}
+
+    subgraph OUT["📤 OUTPUT"]
+        direction TB
+        O1[Gantt aggiornato<br/>real-time]
+        O2[Batch ottimizzati<br/>setup minimi]
+        O3[Alert capo reparto<br/>colli bottiglia]
+    end
+
+    EVENT[🔄 Trigger ricomposizione<br/>fase termina · cambio urgenza · nuova commessa]
+
+    IN --> ENGINE
+    CRIT --> ENGINE
+    ENGINE --> OUT
+    EVENT -.-> ENGINE
+
+    RESULT[📊 50+ commesse pianificate &lt; 1 sec<br/>vs 2 ore Excel manuale]
+    OUT --> RESULT
+
+    style ENGINE fill:#0d6efd,color:#fff,stroke:#0a58ca,stroke-width:3px
+    style RESULT fill:#16a34a,color:#fff,stroke:#15803d,stroke-width:2px
+    style EVENT fill:#fbbf24,color:#000,stroke:#f59e0b
+```
+
+---
+
 ## 1. Decisione Priorità (5 livelli)
 
 ```mermaid
