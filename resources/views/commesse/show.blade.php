@@ -5,42 +5,145 @@
 
 @section('content')
 <style>
+/* === Pulsanti azione touch-first (operatore tablet) === */
 .azioni-cerchi {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 14px;
     margin-left: 20px;
 }
 .azioni-cerchi label {
     display: inline-flex;
     justify-content: center;
     align-items: center;
-    width: 75px;
-    height: 75px;
+    width: 96px;
+    height: 96px;
     border-radius: 50%;
     color: #fff;
-    font-weight: bold;
-    font-size: 12px;
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
     cursor: pointer;
     user-select: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
 }
-.badge-avvia { background-color: #28a745; }
-.badge-pausa { background-color: #ffc107; }
-.badge-termina { background-color: #dc3545; }
+.azioni-cerchi label:active {
+    transform: scale(0.95);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+.badge-avvia { background-color: #16a34a; }
+.badge-pausa { background-color: #f59e0b; color: #1f2937 !important; }
+.badge-termina { background-color: #dc2626; }
 .azioni-cerchi input[type="checkbox"] { display: none; }
 .azioni-cerchi input[type="checkbox"]:checked + label {
-    opacity: 0.7;
-    box-shadow: inset 0 0 2px rgba(0,0,0,0.5);
+    opacity: 0.65;
+    box-shadow: inset 0 0 4px rgba(0,0,0,0.4);
 }
 
-/* Lampeggio tasto Avvia quando stato = 2 */
 @keyframes lampeggio-avvia {
-    0%, 100% { opacity: 1; background-color: #28a745; }
-    50% { opacity: 0.3; background-color: #ff6600; }
+    0%, 100% { opacity: 1; background-color: #16a34a; box-shadow: 0 4px 14px rgba(22,163,74,0.5); }
+    50% { opacity: 0.85; background-color: #f97316; box-shadow: 0 4px 18px rgba(249,115,22,0.6); }
 }
-.badge-avvia.lampeggia {
-    animation: lampeggio-avvia 1s ease-in-out infinite;
+.badge-avvia.lampeggia { animation: lampeggio-avvia 1.2s ease-in-out infinite; }
+
+/* === Hero card commessa === */
+.hero-commessa {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color: #fff;
+    border-radius: 14px;
+    padding: 18px 22px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
 }
+.hero-commessa h1 {
+    font-size: 26px;
+    font-weight: 800;
+    margin: 0 0 4px 0;
+    letter-spacing: -0.5px;
+}
+.hero-commessa .hero-meta {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    font-size: 14px;
+    color: #cbd5e1;
+}
+.hero-commessa .hero-meta strong { color: #fff; font-weight: 600; }
+.hero-commessa .hero-qta {
+    display: inline-flex; align-items: baseline; gap: 6px;
+    background: rgba(255,255,255,0.08);
+    padding: 4px 12px; border-radius: 20px;
+    font-size: 13px;
+}
+.hero-commessa .hero-qta .num { font-size: 18px; font-weight: 800; color: #fde68a; }
+
+/* === Badge gruppi (colori, fustella, cliche) collapsabili === */
+.tag-group {
+    display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;
+}
+.tag-pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 14px; border-radius: 999px;
+    font-size: 13px; font-weight: 600;
+    border: 1px solid;
+    transition: transform 0.1s ease;
+}
+.tag-pill:hover { transform: translateY(-1px); }
+.tag-pill .tag-icon { font-size: 14px; }
+.tag-pill .tag-val { background: rgba(0,0,0,0.08); padding: 2px 10px; border-radius: 12px; font-size: 12px; }
+.tag-colori { background: #ecfdf5; border-color: #6ee7b7; color: #065f46; }
+.tag-fustella { background: #eff6ff; border-color: #93c5fd; color: #1e40af; }
+.tag-cliche { background: #fffbeb; border-color: #fcd34d; color: #92400e; }
+
+/* === Box info griglia compatta === */
+.info-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+    margin-bottom: 12px;
+}
+@media (max-width: 768px) { .info-grid { grid-template-columns: 1fr; } }
+.info-box {
+    background: #f8fafc; border: 1px solid #e2e8f0;
+    border-radius: 10px; padding: 10px 14px;
+    border-left: 3px solid #0d6efd;
+}
+.info-box-label {
+    font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    color: #64748b; margin-bottom: 3px;
+}
+.info-box-val { font-size: 14px; color: #0f172a; line-height: 1.35; }
+.info-box-val.muted { color: #94a3b8; font-style: italic; }
+.info-box.note-prestampa { border-left-color: #6b7280; }
+.info-box.responsabile { border-left-color: #f59e0b; }
+.info-box.commento { border-left-color: #10b981; }
+
+/* === Anteprima foglio cliccabile === */
+.anteprima-foglio { cursor: zoom-in; transition: transform 0.15s ease; border-radius: 8px; }
+.anteprima-foglio:hover { transform: scale(1.02); box-shadow: 0 6px 20px rgba(0,0,0,0.18); }
+
+/* === Timeline fasi orizzontale === */
+.fasi-timeline {
+    display: flex; gap: 4px; align-items: center;
+    background: #f1f5f9; border-radius: 10px; padding: 10px;
+    margin-bottom: 14px; overflow-x: auto;
+}
+.fasi-timeline-step {
+    flex: 1; min-width: 80px;
+    text-align: center;
+    padding: 8px 6px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    background: #fff;
+    border: 2px solid #e2e8f0;
+    position: relative;
+}
+.fasi-timeline-step.done { background: #d1fae5; border-color: #10b981; color: #065f46; }
+.fasi-timeline-step.active { background: #fef3c7; border-color: #f59e0b; color: #92400e; box-shadow: 0 0 0 4px rgba(245,158,11,0.2); }
+.fasi-timeline-step.todo { background: #fff; color: #64748b; }
+.fasi-timeline-step.consegnato { background: #e0e7ff; border-color: #6366f1; color: #3730a3; }
 </style>
 
 @php
@@ -55,30 +158,32 @@
     };
 @endphp
 
-<!-- Header -->
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h2>Commessa {{ $ordine->commessa }}</h2>
-    <div class="d-flex gap-2">
-        @if($ordini->count() > 1)
-        <div class="dropdown">
-            <button class="btn btn-outline-dark d-flex align-items-center dropdown-toggle" data-bs-toggle="dropdown">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" class="me-1"><path d="M2 1a1 1 0 0 0-1 1v4.586a1 1 0 0 0 .293.707l7 7a1 1 0 0 0 1.414 0l4.586-4.586a1 1 0 0 0 0-1.414l-7-7A1 1 0 0 0 6.586 1H2zm4 3.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/></svg> Stampa Etichetta
-            </button>
-            <ul class="dropdown-menu">
-                @foreach($ordini as $ord)
-                <li><a class="dropdown-item" href="{{ route('operatore.etichetta', $ord->id) }}">{{ Str::limit($ord->descrizione, 60) }}</a></li>
-                @endforeach
-            </ul>
+<!-- Hero card commessa -->
+<div class="hero-commessa">
+    <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+        <div class="flex-grow-1">
+            <h1>Commessa {{ $ordine->commessa }}</h1>
+            <div class="hero-meta">
+                <div><strong>{{ $ordine->cliente_nome ?: '-' }}</strong></div>
+                <div>{{ Str::limit($ordine->descrizione, 90) }}</div>
+                <div class="hero-qta">Qta <span class="num">{{ number_format($ordine->qta_richiesta, 0, ',', '.') }}</span> {{ $ordine->um }}</div>
+            </div>
         </div>
-        @else
-        <a href="{{ route('operatore.etichetta', $ordine->id) }}" class="btn btn-outline-dark d-flex align-items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" class="me-1"><path d="M2 1a1 1 0 0 0-1 1v4.586a1 1 0 0 0 .293.707l7 7a1 1 0 0 0 1.414 0l4.586-4.586a1 1 0 0 0 0-1.414l-7-7A1 1 0 0 0 6.586 1H2zm4 3.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/></svg> Stampa Etichetta
-        </a>
-        @endif
-        <a href="{{ $isSpedizione ? route('spedizione.dashboard') : route('operatore.dashboard') }}" class="btn btn-primary d-flex align-items-center">
-            <img src="{{ asset('images/turn-left_15441589.png') }}" alt="Dashboard" style="width:20px; height:20px; margin-right:5px;">
-            Dashboard
-        </a>
+        <div class="d-flex gap-2 flex-wrap">
+            @if($ordini->count() > 1)
+            <div class="dropdown">
+                <button class="btn btn-light btn-sm dropdown-toggle" data-bs-toggle="dropdown">Stampa Etichetta</button>
+                <ul class="dropdown-menu">
+                    @foreach($ordini as $ord)
+                    <li><a class="dropdown-item" href="{{ route('operatore.etichetta', $ord->id) }}">{{ Str::limit($ord->descrizione, 60) }}</a></li>
+                    @endforeach
+                </ul>
+            </div>
+            @else
+            <a href="{{ route('operatore.etichetta', $ordine->id) }}" class="btn btn-light btn-sm">Stampa Etichetta</a>
+            @endif
+            <a href="{{ $isSpedizione ? route('spedizione.dashboard') : route('operatore.dashboard') }}" class="btn btn-warning btn-sm fw-bold">← Dashboard</a>
+        </div>
     </div>
 </div>
 
@@ -90,97 +195,86 @@
 @endphp
 
 <div class="container mt-3">
-    <!-- Card info ordine -->
-    <div class="card mb-3">
-        <div class="card-body">
-            @php
-                $tutteDescOp = $ordini->pluck('descrizione')->filter()->unique()->implode(' | ');
-                $cliente = $ordine->cliente_nome ?? '';
-                $coloriCalc = \App\Helpers\DescrizioneParser::parseColori($tutteDescOp, $cliente);
-                $fustellaCalc = \App\Helpers\DescrizioneParser::parseFustella($tutteDescOp, $cliente, $ordine->note_prestampa ?? '');
-                $clicheGruppiOp = $ordini->filter(fn($o) => $o->cliche)->groupBy('cliche_numero');
-            @endphp
-            <p><strong>Cliente:</strong> {{ $ordine->cliente_nome }}</p>
-            <p><strong>Descrizione:</strong> {{ $ordine->descrizione }}</p>
-            <p><strong>Quantita totale:</strong> {{ $ordine->qta_richiesta }} {{ $ordine->um }}</p>
+    @php
+        $tutteDescOp = $ordini->pluck('descrizione')->filter()->unique()->implode(' | ');
+        $cliente = $ordine->cliente_nome ?? '';
+        $coloriCalc = \App\Helpers\DescrizioneParser::parseColori($tutteDescOp, $cliente);
+        $fustellaCalc = \App\Helpers\DescrizioneParser::parseFustella($tutteDescOp, $cliente, $ordine->note_prestampa ?? '');
+        $clicheGruppiOp = $ordini->filter(fn($o) => $o->cliche)->groupBy('cliche_numero');
+    @endphp
 
-            {{-- Box Colori/Fustella/Cliché (stile uniforme) --}}
-            <div class="d-flex gap-2 mb-2 flex-wrap">
-                @if($coloriCalc)
-                <div class="border rounded p-2 d-flex align-items-center gap-2" style="background:#e8f5e9; border-color:#66bb6a !important;">
-                    <strong style="color:#2e7d32; font-size:13px;">🎨 Colori:</strong>
-                    <span class="badge" style="background:#2e7d32; color:white; font-size:12px;">{{ $coloriCalc }}</span>
-                </div>
-                @endif
-                @if($fustellaCalc)
-                <div class="border rounded p-2 d-flex align-items-center gap-2" style="background:#e3f2fd; border-color:#42a5f5 !important;">
-                    <strong style="color:#1565c0; font-size:13px;">✂️ Fustella:</strong>
-                    <span class="badge" style="background:#1565c0; color:white; font-size:12px;">{{ $fustellaCalc }}</span>
-                </div>
-                @endif
-                @if($clicheGruppiOp->isNotEmpty())
-                    @foreach($clicheGruppiOp as $numeroCl => $gruppoCl)
-                    @php $clOp = $gruppoCl->first()->cliche; $descrCl = $gruppoCl->pluck('descrizione')->filter()->unique(); @endphp
-                    <div class="border rounded p-2 d-flex align-items-center gap-2 flex-wrap" style="background:#fff8e1; border-color:#fbc02d !important;">
-                        <strong style="color:#f57f17; font-size:13px;">🏷️ Cliché:</strong>
-                        <span class="badge" style="background:#f57f17; color:white; font-size:12px;">{{ $clOp->numero }}</span>
-                        @if($clOp->scatola)
-                            <span class="badge" style="background:#8d6e63; color:white; font-size:12px;">Scatola {{ $clOp->scatola }}</span>
-                        @endif
-                        @if($clOp->qta)
-                            <span class="badge" style="background:#6c757d; color:white; font-size:12px;">Qta Cliché {{ $clOp->qta }}</span>
-                        @endif
-                        <small class="text-muted" style="font-size:11px;">→ {{ $descrCl->implode(' | ') }}</small>
-                    </div>
-                    @endforeach
-                @else
-                <div class="border rounded p-2 d-flex align-items-center gap-2" style="background:#fff8e1; border-color:#fbc02d !important;">
-                    <strong style="color:#f57f17; font-size:13px;">🏷️ Cliché:</strong>
-                    <small class="text-muted">Cliché non impostato</small>
-                </div>
-                @endif
-            </div>
-            <div class="row mt-2 g-2">
-                <div class="col-md-4">
-                    <div class="border rounded p-2 h-100" style="background:#f8f9fa">
-                        <strong class="d-block mb-1">Note Prestampa</strong>
-                        <span class="{{ $ordine->note_prestampa ? '' : 'text-muted' }}">{{ $ordine->note_prestampa ?: '-' }}</span>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="border rounded p-2 h-100" style="background:#f8f9fa">
-                        <strong class="d-block mb-1">Operatore Prestampa</strong>
-                        <span class="{{ $ordine->responsabile ? '' : 'text-muted' }}">{{ $ordine->responsabile ?: '-' }}</span>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="border rounded p-2 h-100" style="background:#f8f9fa">
-                        <strong class="d-block mb-1">Commento Produzione</strong>
-                        <span class="{{ $ordine->commento_produzione ? '' : 'text-muted' }}">{{ $ordine->commento_produzione ?: '-' }}</span>
-                    </div>
-                </div>
-            </div>
+    {{-- Tag pills colori / fustella / cliché --}}
+    <div class="tag-group">
+        @if($coloriCalc)
+        <span class="tag-pill tag-colori"><span class="tag-icon">🎨</span> Colori <span class="tag-val">{{ $coloriCalc }}</span></span>
+        @endif
+        @if($fustellaCalc)
+        <span class="tag-pill tag-fustella"><span class="tag-icon">✂️</span> Fustella <span class="tag-val">{{ $fustellaCalc }}</span></span>
+        @endif
+        @if($clicheGruppiOp->isNotEmpty())
+            @foreach($clicheGruppiOp as $numeroCl => $gruppoCl)
+            @php $clOp = $gruppoCl->first()->cliche; @endphp
+            <span class="tag-pill tag-cliche" title="{{ $gruppoCl->pluck('descrizione')->filter()->unique()->implode(' | ') }}">
+                <span class="tag-icon">🏷️</span> Cliché
+                <span class="tag-val">{{ $clOp->numero }}</span>
+                @if($clOp->scatola)<span class="tag-val">Sc.{{ $clOp->scatola }}</span>@endif
+                @if($clOp->qta)<span class="tag-val">Qta {{ $clOp->qta }}</span>@endif
+            </span>
+            @endforeach
+        @else
+        <span class="tag-pill tag-cliche" style="opacity:0.6;"><span class="tag-icon">🏷️</span> Cliché non impostato</span>
+        @endif
+    </div>
 
-            {{-- Note Fustelle (note inserite da Mirko/prestampa sulle singole fasi) --}}
-            @php
-                $noteFasiOp = $ordini->flatMap(fn($o) => $o->fasi)->filter(fn($f) => !empty($f->note))->values();
-            @endphp
-            @if($noteFasiOp->isNotEmpty())
-            <div class="row g-2 mt-2">
-                <div class="col-12">
-                    <div class="border rounded p-2" style="background:#ede9fe; border-color:#c4b5fd !important;">
-                        <strong class="d-block mb-1" style="color:#7c3aed;">Note Fustelle</strong>
-                        @foreach($noteFasiOp as $nf)
-                            <div style="font-size:13px; padding:2px 0; {{ !$loop->last ? 'border-bottom:1px solid #ddd6fe;' : '' }}">
-                                <strong>{{ $nf->faseCatalogo->nome_display ?? $nf->fase }}</strong>: {{ $nf->note }}
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-            </div>
-            @endif
+    {{-- Info grid: prestampa / operatore / commento --}}
+    <div class="info-grid">
+        <div class="info-box note-prestampa">
+            <div class="info-box-label">📝 Note Prestampa</div>
+            <div class="info-box-val {{ $ordine->note_prestampa ? '' : 'muted' }}">{{ $ordine->note_prestampa ?: '—' }}</div>
+        </div>
+        <div class="info-box responsabile">
+            <div class="info-box-label">👤 Operatore Prestampa</div>
+            <div class="info-box-val {{ $ordine->responsabile ? '' : 'muted' }}">{{ $ordine->responsabile ?: '—' }}</div>
+        </div>
+        <div class="info-box commento">
+            <div class="info-box-label">💬 Commento Produzione</div>
+            <div class="info-box-val {{ $ordine->commento_produzione ? '' : 'muted' }}">{{ $ordine->commento_produzione ?: '—' }}</div>
         </div>
     </div>
+
+    {{-- Note Fustelle (note inserite da Mirko/prestampa sulle singole fasi) --}}
+    @php
+        $noteFasiOp = $ordini->flatMap(fn($o) => $o->fasi)->filter(fn($f) => !empty($f->note))->values();
+    @endphp
+    @if($noteFasiOp->isNotEmpty())
+    <div class="info-box mb-3" style="border-left-color:#7c3aed; background:#f5f3ff;">
+        <div class="info-box-label" style="color:#7c3aed;">📌 Note Fustelle</div>
+        @foreach($noteFasiOp as $nf)
+            <div style="font-size:13px; padding:3px 0; {{ !$loop->last ? 'border-bottom:1px solid #ddd6fe;' : '' }}">
+                <strong>{{ $nf->faseCatalogo->nome_display ?? $nf->fase }}</strong>: {{ $nf->note }}
+            </div>
+        @endforeach
+    </div>
+    @endif
+
+    {{-- Timeline fasi (panoramica visuale stato commessa) --}}
+    @php
+        $fasiOrdinate = $ordini->flatMap(fn($o) => $o->fasi)->sortBy(function($f) use ($getFaseOrdine) { return $getFaseOrdine($f); })->values();
+        $statoLabel = [0=>'Caricata',1=>'Pronta',2=>'In corso',3=>'Terminata',4=>'Consegnata',5=>'Esterna'];
+    @endphp
+    @if($fasiOrdinate->count() > 0)
+    <div class="fasi-timeline">
+        @foreach($fasiOrdinate as $ft)
+            @php
+                $st = is_numeric($ft->stato) ? (int)$ft->stato : 0;
+                $cls = $st >= 4 ? 'consegnato' : ($st >= 3 ? 'done' : ($st == 2 ? 'active' : 'todo'));
+            @endphp
+            <div class="fasi-timeline-step {{ $cls }}" title="Stato: {{ $statoLabel[$st] ?? $ft->stato }}">
+                {{ $ft->faseCatalogo->nome_display ?? $ft->fase }}
+            </div>
+        @endforeach
+    </div>
+    @endif
 
     <!-- Fase selezionata (con pulsanti) + Anteprima affiancata -->
     @foreach($fasiGestibili as $fase)
@@ -283,10 +377,23 @@
             @if(!empty($preview))
             <div class="col-md-4">
                 <div class="card p-3 text-center shadow-sm h-100 d-flex align-items-center justify-content-center">
-                    <div class="fw-bold mb-2" style="font-size:13px;">Anteprima foglio di stampa</div>
-                    <img src="data:{{ $preview['mimeType'] }};base64,{{ $preview['data'] }}"
-                         alt="Preview" style="max-width:100%; max-height:260px; border-radius:8px; cursor:pointer;"
-                         onclick="window.open(this.src)">
+                    <div class="fw-bold mb-2" style="font-size:13px;">📄 Anteprima foglio di stampa <small class="text-muted">(click per ingrandire)</small></div>
+                    <img id="anteprimaThumb" class="anteprima-foglio" src="data:{{ $preview['mimeType'] }};base64,{{ $preview['data'] }}"
+                         alt="Preview" style="max-width:100%; max-height:260px; border-radius:8px;"
+                         data-bs-toggle="modal" data-bs-target="#modalAnteprima">
+                </div>
+            </div>
+            <div class="modal fade" id="modalAnteprima" tabindex="-1">
+                <div class="modal-dialog modal-xl modal-dialog-centered">
+                    <div class="modal-content" style="background:#0f172a;">
+                        <div class="modal-header border-0">
+                            <h5 class="modal-title text-white">Anteprima foglio di stampa</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body text-center p-2">
+                            <img src="data:{{ $preview['mimeType'] }};base64,{{ $preview['data'] }}" alt="Preview full" style="max-width:100%; max-height:80vh; border-radius:8px;">
+                        </div>
+                    </div>
                 </div>
             </div>
             @endif
