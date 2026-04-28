@@ -123,6 +123,113 @@
 .anteprima-foglio { cursor: zoom-in; transition: transform 0.15s ease; border-radius: 8px; }
 .anteprima-foglio:hover { transform: scale(1.02); box-shadow: 0 6px 20px rgba(0,0,0,0.18); }
 
+/* === Section heading minimal === */
+.section-h {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: #475569;
+    margin: 24px 0 10px;
+    display: flex; align-items: center; gap: 8px;
+}
+.section-h::before {
+    content: "";
+    width: 4px; height: 18px;
+    border-radius: 2px;
+    background: #0d6efd;
+}
+
+/* === Tabella moderna === */
+.modern-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    font-size: 13px;
+}
+.modern-table thead th {
+    background: #0f172a;
+    color: #fff;
+    padding: 10px 12px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    border: none;
+}
+.modern-table tbody td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+}
+.modern-table tbody tr:last-child td { border-bottom: none; }
+.modern-table tbody tr:hover { background: #f8fafc; }
+.modern-table tbody tr.clickable { cursor: pointer; }
+.modern-table .stato-cell {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 28px; height: 26px; padding: 0 8px;
+    border-radius: 6px;
+    font-weight: 700; font-size: 12px;
+}
+.stato-0 { background: #f1f5f9; color: #475569; }
+.stato-1 { background: #dbeafe; color: #1e40af; }
+.stato-2 { background: #fef3c7; color: #92400e; }
+.stato-3 { background: #d1fae5; color: #065f46; }
+.stato-4 { background: #c7d2fe; color: #312e81; }
+
+/* === Card prossime commesse === */
+.prossime-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+}
+.prossima-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 12px 14px;
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+    text-decoration: none;
+    color: #0f172a;
+    display: block;
+    border-left: 3px solid #0d6efd;
+}
+.prossima-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+    color: #0f172a;
+}
+.prossima-card .pc-num {
+    font-size: 14px; font-weight: 700; color: #0d6efd;
+    margin-bottom: 2px;
+}
+.prossima-card .pc-cliente {
+    font-size: 12px; color: #64748b; margin-bottom: 6px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.prossima-card .pc-desc {
+    font-size: 12px; color: #475569; margin-bottom: 10px;
+    line-height: 1.4;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.prossima-card .pc-meta {
+    display: flex; gap: 10px; font-size: 11px; color: #64748b; margin-bottom: 8px;
+}
+.prossima-card .pc-meta strong { color: #0f172a; }
+.prossima-card .pc-prog {
+    display: flex; align-items: center; gap: 6px;
+}
+.prossima-card .pc-bar {
+    flex: 1; background: #e2e8f0; border-radius: 4px; height: 6px;
+}
+.prossima-card .pc-bar-fill { height: 100%; border-radius: 4px; transition: width 0.3s ease; }
+.prossima-card .pc-frac { font-size: 10px; font-weight: 700; color: #475569; min-width: 30px; }
+
 /* === Timeline fasi orizzontale === */
 .fasi-timeline {
     display: flex; gap: 4px; align-items: center;
@@ -418,32 +525,31 @@
         $altreFasiMieNonSelezionate = $fasiGestibili->filter(fn($f) => $f->id !== $faseSelezionataId)->sortBy($getFaseOrdine)->values();
     @endphp
     @if($altreFasiMieNonSelezionate->isNotEmpty())
-    <h4>Altre fasi del reparto</h4>
-    <table class="table table-sm table-bordered">
-        <thead class="table-dark">
+    <div class="section-h">Altre fasi del tuo reparto</div>
+    <table class="modern-table">
+        <thead>
             <tr>
                 <th>Fase</th>
                 <th>Descrizione</th>
-                <th>Stato</th>
+                <th style="text-align:center;">Stato</th>
                 <th>Operatori</th>
-                <th>Qta Prodotta</th>
+                <th style="text-align:center;">Qta Prodotta</th>
                 <th>Timeout</th>
             </tr>
         </thead>
         <tbody>
             @foreach($altreFasiMieNonSelezionate as $fase)
-            <tr style="cursor:pointer" onclick="window.location='{{ route('commesse.show', $ordine->commessa) }}?fase={{ $fase->id }}'">
-                <td><a href="{{ route('commesse.show', $ordine->commessa) }}?fase={{ $fase->id }}" style="color:#000; text-decoration:underline; font-weight:bold">{{ $fase->faseCatalogo->nome_display ?? '-' }}</a></td>
-                <td><small>{{ Str::limit($fase->ordine_descrizione ?? $fase->ordine->descrizione ?? '-', 60) }}</small></td>
-                @php $sb = [0=>'#e9ecef',1=>'#cfe2ff',2=>'#fff3cd',3=>'#d1e7dd']; @endphp
-                <td id="stato-{{ $fase->id }}" style="background:{{ $sb[$fase->stato] ?? '#e9ecef' }};font-weight:bold;text-align:center;">{{ $fase->stato }}</td>
+            <tr class="clickable" onclick="window.location='{{ route('commesse.show', $ordine->commessa) }}?fase={{ $fase->id }}'">
+                <td><a href="{{ route('commesse.show', $ordine->commessa) }}?fase={{ $fase->id }}" style="color:#0d6efd; text-decoration:none; font-weight:600;">{{ $fase->faseCatalogo->nome_display ?? '-' }}</a></td>
+                <td><small style="color:#64748b;">{{ Str::limit($fase->ordine_descrizione ?? $fase->ordine->descrizione ?? '-', 60) }}</small></td>
+                <td style="text-align:center;"><span class="stato-cell stato-{{ is_numeric($fase->stato) ? (int)$fase->stato : 0 }}">{{ $fase->stato }}</span></td>
                 <td>
                     @foreach($fase->operatori as $op)
-                        {{ $op->nome }} ({{ $op->pivot->data_inizio ? \Carbon\Carbon::parse($op->pivot->data_inizio)->format('d/m/Y H:i:s') : '-' }})<br>
+                        <small>{{ $op->nome }} ({{ $op->pivot->data_inizio ? \Carbon\Carbon::parse($op->pivot->data_inizio)->format('d/m H:i') : '-' }})</small><br>
                     @endforeach
                 </td>
-                <td>{{ $fase->qta_prod ?? '-' }}</td>
-                <td>{{ $fase->timeout ?? '-' }}</td>
+                <td style="text-align:center; font-weight:600;">{{ $fase->qta_prod ?? '-' }}</td>
+                <td><small>{{ $fase->timeout ?? '-' }}</small></td>
             </tr>
             @endforeach
         </tbody>
@@ -457,24 +563,37 @@
         })->sortBy($getFaseOrdine)->values();
     @endphp
     @if($altreFasi->count() > 0)
-    <h4>Altre fasi</h4>
-    <table class="table table-sm table-bordered">
-        <thead class="table-secondary">
+    @php
+        $altreFasiGrouped = $altreFasi
+            ->groupBy(fn($f) => $f->faseCatalogo->nome_display ?? $f->fase ?? 'N/A')
+            ->map(function($g) {
+                return (object)[
+                    'nome' => $g->first()->faseCatalogo->nome_display ?? $g->first()->fase ?? 'N/A',
+                    'stato_min' => $g->map(fn($f) => is_numeric($f->stato) ? (int)$f->stato : 0)->min(),
+                    'count' => $g->count(),
+                    'operatori' => $g->flatMap(fn($f) => $f->operatori),
+                ];
+            })->values();
+    @endphp
+    <div class="section-h">Fasi altri reparti</div>
+    <table class="modern-table">
+        <thead>
             <tr>
                 <th>Fase</th>
-                <th>Stato</th>
+                <th style="text-align:center;">Stato</th>
+                <th style="text-align:center;">Conteggio</th>
                 <th>Operatori</th>
             </tr>
         </thead>
         <tbody>
-            @foreach($altreFasi as $fase)
+            @foreach($altreFasiGrouped as $fg)
             <tr>
-                <td>{{ $fase->faseCatalogo->nome_display ?? '-' }}</td>
-                @php $sb2 = [0=>'#e9ecef',1=>'#cfe2ff',2=>'#fff3cd',3=>'#d1e7dd']; @endphp
-                <td style="background:{{ $sb2[$fase->stato] ?? '#e9ecef' }};font-weight:bold;text-align:center;">{{ $fase->stato }}</td>
+                <td style="font-weight:600;">{{ $fg->nome }}</td>
+                <td style="text-align:center;"><span class="stato-cell stato-{{ $fg->stato_min }}">{{ $fg->stato_min }}</span></td>
+                <td style="text-align:center;">@if($fg->count > 1)<span style="background:#e2e8f0; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:700;">×{{ $fg->count }}</span>@else <small style="color:#94a3b8;">1</small>@endif</td>
                 <td>
-                    @foreach($fase->operatori as $op)
-                        {{ $op->nome }} ({{ $op->pivot->data_inizio ? \Carbon\Carbon::parse($op->pivot->data_inizio)->format('d/m/Y H:i:s') : '-' }})<br>
+                    @foreach($fg->operatori->unique('id') as $op)
+                        <small>{{ $op->nome }}@if($op->pivot && $op->pivot->data_inizio) ({{ \Carbon\Carbon::parse($op->pivot->data_inizio)->format('d/m H:i') }})@endif</small>@if(!$loop->last), @endif
                     @endforeach
                 </td>
             </tr>
@@ -483,50 +602,30 @@
     </table>
     @endif
 
-    <!-- Prossime commesse -->
-    <h4 class="mt-4">Prossime commesse</h4>
-    <div style="overflow-x:auto;">
-        <table class="table table-bordered table-sm" style="font-size:13px; white-space:nowrap;">
-            <thead class="table-dark">
-                <tr>
-                    <th>Commessa</th>
-                    <th>Cliente</th>
-                    <th>Cod. Articolo</th>
-                    <th>Descrizione</th>
-                    <th>Qta</th>
-                    <th>Consegna</th>
-                    <th>Stato</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($prossime as $c)
-                <tr>
-                    <td>
-                        <a href="{{ route('commesse.show', $c->commessa) }}" class="fw-bold">{{ $c->commessa }}</a>
-                    </td>
-                    <td>{{ $c->cliente_nome ?? '-' }}</td>
-                    <td>{{ $c->cod_art ?? '-' }}</td>
-                    <td style="white-space:normal; max-width:200px; overflow:hidden; text-overflow:ellipsis;">{{ Str::limit($c->descrizione ?? '-', 50) }}</td>
-                    <td>{{ number_format($c->qta_richiesta ?? 0, 0, ',', '.') }}</td>
-                    <td>{{ $c->data_prevista_consegna ? \Carbon\Carbon::parse($c->data_prevista_consegna)->format('d/m/Y') : '-' }}</td>
-                    <td>
-                        @php
-                            $tot = $c->fasi_count ?? 0;
-                            $term = $c->fasi_terminate_count ?? 0;
-                            $pct = $tot > 0 ? round($term / $tot * 100) : 0;
-                            $color = $pct >= 100 ? '#198754' : ($pct >= 50 ? '#ffc107' : '#dc3545');
-                        @endphp
-                        <div style="display:flex; align-items:center; gap:6px;">
-                            <div style="flex:1; background:#e9ecef; border-radius:4px; height:16px; min-width:60px;">
-                                <div style="width:{{ $pct }}%; background:{{ $color }}; height:100%; border-radius:4px;"></div>
-                            </div>
-                            <span style="font-size:11px;">{{ $term }}/{{ $tot }}</span>
-                        </div>
-                    </td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
+    <!-- Prossime commesse (card grid) -->
+    <div class="section-h">Prossime commesse</div>
+    <div class="prossime-grid">
+        @foreach($prossime as $c)
+            @php
+                $tot = $c->fasi_count ?? 0;
+                $term = $c->fasi_terminate_count ?? 0;
+                $pct = $tot > 0 ? round($term / $tot * 100) : 0;
+                $color = $pct >= 100 ? '#16a34a' : ($pct >= 50 ? '#f59e0b' : '#dc2626');
+            @endphp
+            <a href="{{ route('commesse.show', $c->commessa) }}" class="prossima-card" style="border-left-color:{{ $color }};">
+                <div class="pc-num">{{ $c->commessa }}</div>
+                <div class="pc-cliente">{{ $c->cliente_nome ?? '-' }}</div>
+                <div class="pc-desc">{{ Str::limit($c->descrizione ?? '-', 90) }}</div>
+                <div class="pc-meta">
+                    <div>Qta <strong>{{ number_format($c->qta_richiesta ?? 0, 0, ',', '.') }}</strong></div>
+                    <div>Consegna <strong>{{ $c->data_prevista_consegna ? \Carbon\Carbon::parse($c->data_prevista_consegna)->format('d/m/Y') : '-' }}</strong></div>
+                </div>
+                <div class="pc-prog">
+                    <div class="pc-bar"><div class="pc-bar-fill" style="width:{{ $pct }}%; background:{{ $color }};"></div></div>
+                    <div class="pc-frac">{{ $term }}/{{ $tot }}</div>
+                </div>
+            </a>
+        @endforeach
     </div>
 </div>
 
