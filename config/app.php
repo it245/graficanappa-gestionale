@@ -16,6 +16,14 @@ return [
     'name' => env('APP_NAME', 'Laravel'),
 
     /*
+    | Multi-tenant: tenant nativo di default e dominio root per risoluzione subdomain
+    | - default_tenant_id: usato quando non si arriva da subdomain/header (es. server interno)
+    | - tenant_root_domain: cliente.tenant_root_domain → tenant_id = 'cliente'
+    */
+    'default_tenant_id' => env('DEFAULT_TENANT_ID', 'grafica_nappa'),
+    'tenant_root_domain' => env('TENANT_ROOT_DOMAIN', 'mes.graficanappa.com'),
+
+    /*
     |--------------------------------------------------------------------------
     | Application Environment
     |--------------------------------------------------------------------------
