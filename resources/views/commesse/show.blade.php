@@ -112,18 +112,20 @@
 .tag-fustella { background: #eff6ff; border-color: #93c5fd; color: #1e40af; }
 .tag-cliche { background: #fffbeb; border-color: #fcd34d; color: #92400e; }
 
-/* === Tag stack verticale (uno sotto l'altro, allineati) === */
-.tag-stack { display: flex; flex-direction: column; gap: 6px; }
+/* === Tag stack verticale (uno sotto l'altro, allineati, compatti) === */
+.tag-stack { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
 .tag-row {
-    display: grid;
-    grid-template-columns: 28px 90px 1fr auto auto;
+    display: inline-grid;
+    grid-template-columns: 22px 70px auto auto auto;
     align-items: center;
-    gap: 10px;
-    padding: 8px 14px;
+    gap: 8px;
+    padding: 5px 12px;
     border-radius: 8px;
     border: 1px solid;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
+    width: auto;
+    max-width: 100%;
 }
 .tag-row.tag-colori { background: #ecfdf5; border-color: #6ee7b7; color: #065f46; }
 .tag-row.tag-fustella { background: #eff6ff; border-color: #93c5fd; color: #1e40af; }
