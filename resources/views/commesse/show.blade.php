@@ -265,6 +265,23 @@
     };
 @endphp
 
+@php
+    $qtaProdottaStampe = $ordine->fasi
+        ->filter(function($f) {
+            $rep = strtolower($f->faseCatalogo->reparto->nome ?? '');
+            return $rep === 'stampa offset' && (int)($f->stato ?? 0) >= 2 && $f->qta_prod !== null;
+        })
+        ->sum('qta_prod');
+    if ($qtaProdottaStampe == 0) {
+        $qtaProdottaStampe = $ordine->fasi
+            ->filter(function($f) {
+                $rep = strtolower($f->faseCatalogo->reparto->nome ?? '');
+                return $rep === 'digitale' && (int)($f->stato ?? 0) >= 2 && $f->qta_prod !== null;
+            })
+            ->sum('qta_prod');
+    }
+@endphp
+
 <!-- Hero card commessa -->
 <div class="hero-commessa">
     <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
@@ -274,6 +291,11 @@
                 <div><strong>{{ $ordine->cliente_nome ?: '-' }}</strong></div>
                 <div>{{ Str::limit($ordine->descrizione, 90) }}</div>
                 <div class="hero-qta">Qta <span class="num">{{ number_format($ordine->qta_richiesta, 0, ',', '.') }}</span> {{ $ordine->um }}</div>
+                @if($qtaProdottaStampe > 0)
+                <div class="hero-qta" style="background:rgba(245,158,11,0.18); border:1px solid rgba(245,158,11,0.4);">
+                    Qta Prodotta <span class="num" style="color:#fbbf24;">{{ number_format($qtaProdottaStampe, 0, ',', '.') }}</span>
+                </div>
+                @endif
             </div>
         </div>
         <div class="d-flex gap-2 flex-wrap">
