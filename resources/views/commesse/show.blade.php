@@ -257,20 +257,32 @@
     </div>
     @endif
 
-    {{-- Timeline fasi (panoramica visuale stato commessa) --}}
+    {{-- Timeline fasi raggruppate per nome (panoramica visuale stato commessa) --}}
     @php
-        $fasiOrdinate = $ordini->flatMap(fn($o) => $o->fasi)->sortBy(function($f) use ($getFaseOrdine) { return $getFaseOrdine($f); })->values();
         $statoLabel = [0=>'Caricata',1=>'Pronta',2=>'In corso',3=>'Terminata',4=>'Consegnata',5=>'Esterna'];
+        $fasiTimeline = $ordini->flatMap(fn($o) => $o->fasi)
+            ->groupBy(fn($f) => $f->faseCatalogo->nome_display ?? $f->fase ?? 'N/A')
+            ->map(function($group) {
+                $stati = $group->map(fn($f) => is_numeric($f->stato) ? (int)$f->stato : 0);
+                return (object)[
+                    'nome' => $group->first()->faseCatalogo->nome_display ?? $group->first()->fase ?? 'N/A',
+                    'stato_min' => $stati->min(),
+                    'count' => $group->count(),
+                    'first' => $group->first(),
+                ];
+            })
+            ->sortBy(function($f) use ($getFaseOrdine) { return $getFaseOrdine($f->first); })
+            ->values();
     @endphp
-    @if($fasiOrdinate->count() > 0)
+    @if($fasiTimeline->count() > 0)
     <div class="fasi-timeline">
-        @foreach($fasiOrdinate as $ft)
+        @foreach($fasiTimeline as $ft)
             @php
-                $st = is_numeric($ft->stato) ? (int)$ft->stato : 0;
+                $st = $ft->stato_min;
                 $cls = $st >= 4 ? 'consegnato' : ($st >= 3 ? 'done' : ($st == 2 ? 'active' : 'todo'));
             @endphp
-            <div class="fasi-timeline-step {{ $cls }}" title="Stato: {{ $statoLabel[$st] ?? $ft->stato }}">
-                {{ $ft->faseCatalogo->nome_display ?? $ft->fase }}
+            <div class="fasi-timeline-step {{ $cls }}" title="Stato minimo: {{ $statoLabel[$st] ?? $st }} · {{ $ft->count }} fase/i">
+                {{ $ft->nome }}@if($ft->count > 1) <span style="background:rgba(0,0,0,0.15); padding:1px 6px; border-radius:8px; font-size:10px;">×{{ $ft->count }}</span>@endif
             </div>
         @endforeach
     </div>
