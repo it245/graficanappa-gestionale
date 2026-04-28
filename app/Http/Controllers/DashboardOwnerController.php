@@ -388,14 +388,16 @@ public function calcolaOreEPriorita($fase)
         $repartoSpedizione = Reparto::where('nome', 'spedizione')->first();
         $spedizioniOggi = collect();
         if ($repartoSpedizione) {
-            $spedizioniOggi = OrdineFase::where('stato', 4)
-                ->whereDate('data_fine', Carbon::today())
-                ->whereHas('faseCatalogo', function ($q) use ($repartoSpedizione) {
-                    $q->where('reparto_id', $repartoSpedizione->id);
-                })
-                ->with(['ordine', 'faseCatalogo', 'operatori'])
-                ->get()
-                ->sortByDesc('data_fine');
+            $spedizioniOggi = \Illuminate\Support\Facades\Cache::remember('owner_spedizioni_oggi', 60, function () use ($repartoSpedizione) {
+                return OrdineFase::where('stato', 4)
+                    ->whereDate('data_fine', Carbon::today())
+                    ->whereHas('faseCatalogo', function ($q) use ($repartoSpedizione) {
+                        $q->where('reparto_id', $repartoSpedizione->id);
+                    })
+                    ->with(['ordine', 'faseCatalogo', 'operatori'])
+                    ->get()
+                    ->sortByDesc('data_fine');
+            });
         }
 
         // KPI giornalieri (cache 30s — riducono ~6 query pesanti per page load)
@@ -473,19 +475,21 @@ public function calcolaOreEPriorita($fase)
         $commesseSpediteOggi = $kpi2['commesseSpediteOggi'];
         $fasiAttive = $kpi2['fasiAttive'];
 
-        // Storico consegne (ultimi 30 giorni, escluso oggi)
+        // Storico consegne ultimi 30 giorni (cache 5min — dati stabili)
         $storicoConsegne = collect();
         if ($repartoSpedizione) {
-            $storicoConsegne = OrdineFase::where('stato', 4)
-                ->whereDate('data_fine', '<', Carbon::today())
-                ->whereDate('data_fine', '>=', Carbon::today()->subDays(30))
-                ->whereHas('faseCatalogo', function ($q) use ($repartoSpedizione) {
-                    $q->where('reparto_id', $repartoSpedizione->id);
-                })
-                ->with(['ordine', 'faseCatalogo', 'operatori'])
-                ->orderByDesc('data_fine')
-                ->limit(200)
-                ->get();
+            $storicoConsegne = \Illuminate\Support\Facades\Cache::remember('owner_storico_consegne', 300, function () use ($repartoSpedizione) {
+                return OrdineFase::where('stato', 4)
+                    ->whereDate('data_fine', '<', Carbon::today())
+                    ->whereDate('data_fine', '>=', Carbon::today()->subDays(30))
+                    ->whereHas('faseCatalogo', function ($q) use ($repartoSpedizione) {
+                        $q->where('reparto_id', $repartoSpedizione->id);
+                    })
+                    ->with(['ordine', 'faseCatalogo', 'operatori'])
+                    ->orderByDesc('data_fine')
+                    ->limit(200)
+                    ->get();
+            });
         }
 
         // Spedizioni BRT: dalla tabella ddt_spedizioni (supporta più DDT per commessa)
