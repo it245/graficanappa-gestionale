@@ -32,23 +32,25 @@ class FieryService
     /**
      * Stato completo dal WebTools (sempre disponibile, no auth)
      */
-    public function getServerStatus(): ?array
+    public function getServerStatus(bool $fast = true): ?array
     {
         // Check cache (salvata solo se successo, mai null)
         $cached = Cache::get('fiery_server_status');
         if (!empty($cached)) return $cached;
 
-        // Retry 4 volte con backoff (API Fiery Canon V900 a volte lenta)
+        // Fast mode (web): 1 try 2s. Slow mode (background warm): 3 retry 10s
+        $maxAttempts = $fast ? 1 : 3;
+        $reqTimeout = $fast ? 2 : 10;
+        $connTimeout = $fast ? 1 : 4;
         $response = null;
         $lastErr = null;
-        $delays = [0, 500000, 1000000, 2000000];
-        for ($attempt = 1; $attempt <= 4; $attempt++) {
-            if ($delays[$attempt - 1] > 0) usleep($delays[$attempt - 1]);
+        for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
+            if ($attempt > 1) usleep(500000);
             try {
                 $response = Http::withoutVerifying()
                     ->withOptions(['verify' => false, 'http_errors' => false])
-                    ->timeout(10)
-                    ->connectTimeout(4)
+                    ->timeout($reqTimeout)
+                    ->connectTimeout($connTimeout)
                     ->get($this->baseUrl . '/live/api/v5/server/status');
                 if ($response->successful()) break;
                 $lastErr = 'HTTP ' . $response->status();
@@ -61,18 +63,15 @@ class FieryService
 
         if (!$response) {
             \Log::warning('Fiery getServerStatus fallito: ' . $lastErr);
-            // Fallback: stato stale (ultimo noto) se < 5 min, evita falsi "non raggiungibile"
+            // Fallback stale: ultimo stato noto fino 30 min
             $stale = Cache::get('fiery_server_status_stale');
-            $failures = (int) Cache::get('fiery_consecutive_failures', 0) + 1;
-            Cache::put('fiery_consecutive_failures', $failures, 600);
-            if (!empty($stale) && $failures < 3) {
-                $stale['avviso'] = 'connessione lenta';
+            if (!empty($stale)) {
+                $stale['avviso'] = 'dati cachati - connessione lenta';
                 $stale['stale'] = true;
                 return $stale;
             }
             return null;
         }
-        Cache::forget('fiery_consecutive_failures');
 
         try {
 
@@ -137,10 +136,9 @@ class FieryService
                 'raw' => $data,
             ];
 
-            // Cache 30s SOLO se successo
+            // Cache fresca 30s, stale 30 min per fallback durature
             Cache::put('fiery_server_status', $result, 30);
-            // Stale cache 5 min per fallback in caso retry futuri falliscano
-            Cache::put('fiery_server_status_stale', $result, 300);
+            Cache::put('fiery_server_status_stale', $result, 1800);
             return $result;
         } catch (\Exception $e) {
             return null;
@@ -242,47 +240,59 @@ class FieryService
     /**
      * Chiamata autenticata API v5
      */
-    private function apiGet(string $endpoint, array $query = [])
+    private function apiGet(string $endpoint, array $query = [], bool $fast = true)
     {
         $cookies = $this->apiLogin();
         if (!$cookies) return null;
 
-        try {
-            $response = $this->http()
-                ->timeout(10)
-                ->withCookies($cookies, $this->host)
-                ->get($this->baseUrl . $endpoint, $query);
-
-            if ($response->status() === 401) {
-                // Cookie scaduti, riprova con login fresco
-                Cache::forget('fiery_api_cookies');
-                $cookies = $this->apiLogin();
-                if (!$cookies) return null;
-
+        // Fast (web): 1 try 2s. Slow (background warm): 2 retry 10s
+        $maxAttempts = $fast ? 1 : 2;
+        $reqTimeout = $fast ? 2 : 10;
+        $connTimeout = $fast ? 1 : 4;
+        for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
+            try {
                 $response = $this->http()
-                    ->timeout(10)
+                    ->timeout($reqTimeout)
+                    ->connectTimeout($connTimeout)
                     ->withCookies($cookies, $this->host)
                     ->get($this->baseUrl . $endpoint, $query);
-            }
 
-            return $response->successful() ? $response->json() : null;
-        } catch (\Exception $e) {
-            return null;
+                if ($response->status() === 401) {
+                    Cache::forget('fiery_api_cookies');
+                    $cookies = $this->apiLogin();
+                    if (!$cookies) return null;
+                    $response = $this->http()
+                        ->timeout($reqTimeout)
+                        ->connectTimeout($connTimeout)
+                        ->withCookies($cookies, $this->host)
+                        ->get($this->baseUrl . $endpoint, $query);
+                }
+
+                if ($response->successful()) return $response->json();
+            } catch (\Exception $e) {
+                if ($attempt === $maxAttempts) break;
+                usleep(500000);
+            }
         }
+        return null;
     }
 
     /**
      * Lista completa job dal API v5 con dati strutturati.
      * Ritorna array di job con campi normalizzati.
      */
-    public function getJobs(): ?array
+    public function getJobs(bool $fast = true): ?array
     {
-        // Cache solo se risultato non vuoto (evita cache stale con 0 job)
+        // Cache fresca (60s) se non vuoto
         $cached = Cache::get('fiery_jobs_parsed');
         if (!empty($cached)) return $cached;
 
-        $json = $this->apiGet('/live/api/v5/jobs');
-        if (!$json) return null;
+        $json = $this->apiGet('/live/api/v5/jobs', [], $fast);
+        if (!$json) {
+            // Fallback stale (30 min) per evitare flicker dashboard
+            $stale = Cache::get('fiery_jobs_parsed_stale');
+            return !empty($stale) ? $stale : null;
+        }
 
         $items = $json['data']['items'] ?? [];
         $parsed = collect($items)->map(function ($job) {
@@ -310,7 +320,8 @@ class FieryService
             })->toArray();
 
         if (!empty($parsed)) {
-            Cache::put('fiery_jobs_parsed', $parsed, 30);
+            Cache::put('fiery_jobs_parsed', $parsed, 60);
+            Cache::put('fiery_jobs_parsed_stale', $parsed, 1800);
         }
         return $parsed;
     }
@@ -332,47 +343,54 @@ class FieryService
      * Cachea i dati per 5 minuti per evitare chiamate ripetute.
      * Ritorna array ['commessa' => ['fogli' => X, 'copie' => Y, 'run' => Z, 'run_dettaglio' => [...]]]
      */
-    public function getAccountingPerCommessa(): ?array
+    public function getAccountingPerCommessa(bool $fast = true): ?array
     {
-        return Cache::remember('fiery_accounting_commesse', 300, function () {
-            $json = $this->apiGet('/live/api/v5/accounting');
-            if (!$json) return null;
+        $cached = Cache::get('fiery_accounting_commesse');
+        if (!empty($cached)) return $cached;
 
-            $items = $json['data']['items'] ?? $json;
-            if (!is_array($items)) return null;
+        $json = $this->apiGet('/live/api/v5/accounting', [], $fast);
+        if (!$json) {
+            return Cache::get('fiery_accounting_commesse_stale') ?: null;
+        }
 
-            $perCommessa = [];
-            foreach ($items as $entry) {
-                $title = $entry['title'] ?? '';
-                $commessa = $this->estraiCommessaDaTitolo($title);
-                if (!$commessa) continue;
+        $items = $json['data']['items'] ?? $json;
+        if (!is_array($items)) return null;
 
-                $fogli = (int) ($entry['total sheets printed'] ?? 0);
-                $copie = (int) ($entry['copies printed'] ?? 0);
-                $printStatus = $entry['print status'] ?? '';
+        $perCommessa = [];
+        foreach ($items as $entry) {
+            $title = $entry['title'] ?? '';
+            $commessa = $this->estraiCommessaDaTitolo($title);
+            if (!$commessa) continue;
 
-                if (!isset($perCommessa[$commessa])) {
-                    $perCommessa[$commessa] = [
-                        'fogli' => 0,
-                        'copie' => 0,
-                        'run' => 0,
-                        'run_dettaglio' => [],
-                    ];
-                }
+            $fogli = (int) ($entry['total sheets printed'] ?? 0);
+            $copie = (int) ($entry['copies printed'] ?? 0);
+            $printStatus = $entry['print status'] ?? '';
 
-                $perCommessa[$commessa]['fogli'] += $fogli;
-                $perCommessa[$commessa]['copie'] += $copie;
-                $perCommessa[$commessa]['run']++;
-                $perCommessa[$commessa]['run_dettaglio'][] = [
-                    'title' => $title,
-                    'copie' => $copie,
-                    'fogli' => $fogli,
-                    'status' => $printStatus,
+            if (!isset($perCommessa[$commessa])) {
+                $perCommessa[$commessa] = [
+                    'fogli' => 0,
+                    'copie' => 0,
+                    'run' => 0,
+                    'run_dettaglio' => [],
                 ];
             }
 
-            return $perCommessa;
-        });
+            $perCommessa[$commessa]['fogli'] += $fogli;
+            $perCommessa[$commessa]['copie'] += $copie;
+            $perCommessa[$commessa]['run']++;
+            $perCommessa[$commessa]['run_dettaglio'][] = [
+                'title' => $title,
+                'copie' => $copie,
+                'fogli' => $fogli,
+                'status' => $printStatus,
+            ];
+        }
+
+        if (!empty($perCommessa)) {
+            Cache::put('fiery_accounting_commesse', $perCommessa, 300);
+            Cache::put('fiery_accounting_commesse_stale', $perCommessa, 1800);
+        }
+        return $perCommessa;
     }
 
     /**
@@ -522,10 +540,10 @@ class FieryService
      */
     private function loginAndGetHttp()
     {
-        // withoutVerifying + withOptions(verify false) esplicito + timeout più lungo (web env)
+        // Timeout corto per non esaurire PHP 60s budget complessivo
         $login = Http::withoutVerifying()
             ->withOptions(['verify' => false])
-            ->timeout(15)
+            ->timeout(5)
             ->post($this->baseUrl . '/live/api/v5/login', [
                 'username' => $this->username,
                 'password' => $this->password,
@@ -541,7 +559,7 @@ class FieryService
         }
         return Http::withoutVerifying()
             ->withOptions(['verify' => false])
-            ->timeout(15)
+            ->timeout(5)
             ->withHeaders(['Cookie' => trim($cookieHeader, '; ')]);
     }
 
