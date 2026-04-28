@@ -727,6 +727,6 @@ setInterval(function() {
             }
         })
         .catch(function() {});
-}, 15000);
+}, 30000);
 </script>
 @endsection
