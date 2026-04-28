@@ -78,6 +78,21 @@
     font-size: 13px;
 }
 .hero-commessa .hero-qta .num { font-size: 18px; font-weight: 800; color: #fde68a; }
+.hero-tags {
+    display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px;
+}
+.hero-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(255,255,255,0.10);
+    border: 1px solid rgba(255,255,255,0.18);
+    color: #f1f5f9;
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 500;
+}
+.hero-pill b { color: #fde68a; font-weight: 700; }
+.hero-pill small { color: #cbd5e1; font-size: 11px; }
 
 /* === Badge gruppi (colori, fustella, cliche) collapsabili === */
 .tag-group {
@@ -282,6 +297,14 @@
     }
 @endphp
 
+@php
+    $tutteDescOp = $ordini->pluck('descrizione')->filter()->unique()->implode(' | ');
+    $cliente = $ordine->cliente_nome ?? '';
+    $coloriCalc = \App\Helpers\DescrizioneParser::parseColori($tutteDescOp, $cliente);
+    $fustellaCalc = \App\Helpers\DescrizioneParser::parseFustella($tutteDescOp, $cliente, $ordine->note_prestampa ?? '');
+    $clicheGruppiOp = $ordini->filter(fn($o) => $o->cliche)->groupBy('cliche_numero');
+@endphp
+
 <!-- Hero card commessa -->
 <div class="hero-commessa">
     <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
@@ -295,6 +318,25 @@
                 <div class="hero-qta" style="background:rgba(245,158,11,0.18); border:1px solid rgba(245,158,11,0.4);">
                     Qta Prodotta <span class="num" style="color:#fbbf24;">{{ number_format($qtaProdottaStampe, 0, ',', '.') }}</span>
                 </div>
+                @endif
+            </div>
+            {{-- Tag pills colori / fustella / cliché --}}
+            <div class="hero-tags">
+                @if($coloriCalc)
+                <span class="hero-pill"><span>🎨</span> Colori <b>{{ $coloriCalc }}</b></span>
+                @endif
+                @if($fustellaCalc)
+                <span class="hero-pill"><span>✂️</span> Fustella <b>{{ $fustellaCalc }}</b></span>
+                @endif
+                @if($clicheGruppiOp->isNotEmpty())
+                    @foreach($clicheGruppiOp as $numeroCl => $gruppoCl)
+                    @php $clOp = $gruppoCl->first()->cliche; @endphp
+                    <span class="hero-pill" title="{{ $gruppoCl->pluck('descrizione')->filter()->unique()->implode(' | ') }}">
+                        <span>🏷️</span> Cliché <b>{{ $clOp->numero }}</b>
+                        @if($clOp->scatola)<small>· Sc.{{ $clOp->scatola }}</small>@endif
+                        @if($clOp->qta)<small>· Qta {{ $clOp->qta }}</small>@endif
+                    </span>
+                    @endforeach
                 @endif
             </div>
         </div>
@@ -324,37 +366,6 @@
 @endphp
 
 <div class="container mt-3">
-    @php
-        $tutteDescOp = $ordini->pluck('descrizione')->filter()->unique()->implode(' | ');
-        $cliente = $ordine->cliente_nome ?? '';
-        $coloriCalc = \App\Helpers\DescrizioneParser::parseColori($tutteDescOp, $cliente);
-        $fustellaCalc = \App\Helpers\DescrizioneParser::parseFustella($tutteDescOp, $cliente, $ordine->note_prestampa ?? '');
-        $clicheGruppiOp = $ordini->filter(fn($o) => $o->cliche)->groupBy('cliche_numero');
-    @endphp
-
-    {{-- Tag pills colori / fustella / cliché --}}
-    <div class="tag-group">
-        @if($coloriCalc)
-        <span class="tag-pill tag-colori"><span class="tag-icon">🎨</span> Colori <span class="tag-val">{{ $coloriCalc }}</span></span>
-        @endif
-        @if($fustellaCalc)
-        <span class="tag-pill tag-fustella"><span class="tag-icon">✂️</span> Fustella <span class="tag-val">{{ $fustellaCalc }}</span></span>
-        @endif
-        @if($clicheGruppiOp->isNotEmpty())
-            @foreach($clicheGruppiOp as $numeroCl => $gruppoCl)
-            @php $clOp = $gruppoCl->first()->cliche; @endphp
-            <span class="tag-pill tag-cliche" title="{{ $gruppoCl->pluck('descrizione')->filter()->unique()->implode(' | ') }}">
-                <span class="tag-icon">🏷️</span> Cliché
-                <span class="tag-val">{{ $clOp->numero }}</span>
-                @if($clOp->scatola)<span class="tag-val">Sc.{{ $clOp->scatola }}</span>@endif
-                @if($clOp->qta)<span class="tag-val">Qta {{ $clOp->qta }}</span>@endif
-            </span>
-            @endforeach
-        @else
-        <span class="tag-pill tag-cliche" style="opacity:0.6;"><span class="tag-icon">🏷️</span> Cliché non impostato</span>
-        @endif
-    </div>
-
     {{-- Info grid: prestampa / operatore / commento --}}
     <div class="info-grid">
         <div class="info-box note-prestampa">
