@@ -26,65 +26,15 @@ class FieryController extends Controller
 
         $status['commessa'] = $this->cercaCommessa($status['stampa']['documento'] ?? null);
 
-        // Cache jobData (organizzaJobs fa N+1 query DB se non cachato) solo se non vuoto
-        $jobData = \Cache::get('fiery_job_data_organized');
-        if (empty($jobData) || ($jobData['total'] ?? 0) === 0) {
-            $jobs = $fiery->getJobs();
-            $accounting = $fiery->getAccountingPerCommessa();
-            $jobData = $this->organizzaJobs($jobs, $accounting);
-            if (($jobData['total'] ?? 0) > 0) {
-                \Cache::put('fiery_job_data_organized', $jobData, 30);
-            }
-        }
+        // Accounting solo da cache (popolata dal warm command), evita chiamata API pesante
+        $jobs = $fiery->getJobs();
+        $accounting = \Cache::get('fiery_accounting_commesse') ?: \Cache::get('fiery_accounting_commesse_stale');
+        $jobData = $this->organizzaJobs($jobs, $accounting);
 
         // SNMP cachato 30s
         $snmp = \Cache::remember('fiery_snmp_live', 30, fn() => $this->leggiContatoriSnmp());
 
         return view('fiery.dashboard', compact('status', 'jobData', 'snmp'));
-    }
-
-    /**
-     * Endpoint JSON: livelli consumabili (toner, waste, ADF) per widget real-time.
-     */
-    public function consumablesJson(FieryService $fiery, Request $request)
-    {
-        // Debug: ?raw=1 torna payload grezzo per scoprire struttura JSON reale
-        if ($request->has('raw')) {
-            return response()->json(['raw' => $fiery->getConsumablesRaw()]);
-        }
-
-        $consumables = $fiery->getConsumables();
-        if ($consumables === null) {
-            return response()->json(['success' => false, 'msg' => 'Fiery non raggiungibile']);
-        }
-        // Alert auto toner e vassoi
-        $alerts = [];
-        foreach (($consumables['toners'] ?? []) as $t) {
-            if ($t['level'] < 5) $alerts[] = ['livello' => 'critico', 'msg' => "TONER {$t['name']} al {$t['level']}% — ordina ricambio"];
-            elseif ($t['level'] < 15) $alerts[] = ['livello' => 'warning', 'msg' => "Toner {$t['name']} basso ({$t['level']}%)"];
-        }
-        foreach (($consumables['trays'] ?? []) as $tr) {
-            if ($tr['level'] === 0) $alerts[] = ['livello' => 'info', 'msg' => "Vassoio {$tr['name']} vuoto"];
-        }
-        return response()->json([
-            'success' => true,
-            'toners' => $consumables['toners'] ?? [],
-            'trays' => $consumables['trays'] ?? [],
-            'alerts' => $alerts,
-            'updated_at' => now()->format('H:i:s'),
-        ]);
-    }
-
-    /**
-     * Info estesa server Fiery (modello, seriale, firmware, capabilities).
-     */
-    public function infoJson(FieryService $fiery)
-    {
-        return response()->json([
-            'success' => true,
-            'info' => $fiery->getInfoExtended(),
-            'version' => $fiery->getVersion(),
-        ]);
     }
 
     public function statusJson(FieryService $fiery, FierySyncService $syncService)
@@ -103,9 +53,9 @@ class FieryController extends Controller
 
         $status['commessa'] = $this->cercaCommessa($status['stampa']['documento'] ?? null);
 
-        // Job list da API v5
+        // Accounting solo da cache (popolata dal warm command), evita chiamata API pesante ad ogni polling
         $jobs = $fiery->getJobs();
-        $accounting = $fiery->getAccountingPerCommessa();
+        $accounting = \Cache::get('fiery_accounting_commesse') ?: \Cache::get('fiery_accounting_commesse_stale');
         $status['jobs'] = $this->organizzaJobs($jobs, $accounting);
         $status['snmp'] = \Cache::remember('fiery_snmp_live', 30, fn() => $this->leggiContatoriSnmp());
 
