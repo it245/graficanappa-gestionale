@@ -320,25 +320,6 @@
                 </div>
                 @endif
             </div>
-            {{-- Tag pills colori / fustella / cliché --}}
-            <div class="hero-tags">
-                @if($coloriCalc)
-                <span class="hero-pill"><span>🎨</span> Colori <b>{{ $coloriCalc }}</b></span>
-                @endif
-                @if($fustellaCalc)
-                <span class="hero-pill"><span>✂️</span> Fustella <b>{{ $fustellaCalc }}</b></span>
-                @endif
-                @if($clicheGruppiOp->isNotEmpty())
-                    @foreach($clicheGruppiOp as $numeroCl => $gruppoCl)
-                    @php $clOp = $gruppoCl->first()->cliche; @endphp
-                    <span class="hero-pill" title="{{ $gruppoCl->pluck('descrizione')->filter()->unique()->implode(' | ') }}">
-                        <span>🏷️</span> Cliché <b>{{ $clOp->numero }}</b>
-                        @if($clOp->scatola)<small>· Sc.{{ $clOp->scatola }}</small>@endif
-                        @if($clOp->qta)<small>· Qta {{ $clOp->qta }}</small>@endif
-                    </span>
-                    @endforeach
-                @endif
-            </div>
         </div>
         <div class="d-flex gap-2 flex-wrap">
             @if($ordini->count() > 1)
@@ -449,6 +430,26 @@
                     </div>
                     <div class="card-body d-flex align-items-start gap-3">
                         <div class="flex-grow-1">
+                            {{-- Tag pills colori / fustella / cliché --}}
+                            <div class="tag-group" style="margin-bottom:14px;">
+                                @if($coloriCalc)
+                                <span class="tag-pill tag-colori"><span class="tag-icon">🎨</span> Colori <span class="tag-val">{{ $coloriCalc }}</span></span>
+                                @endif
+                                @if($fustellaCalc)
+                                <span class="tag-pill tag-fustella"><span class="tag-icon">✂️</span> Fustella <span class="tag-val">{{ $fustellaCalc }}</span></span>
+                                @endif
+                                @if($clicheGruppiOp->isNotEmpty())
+                                    @foreach($clicheGruppiOp as $numeroCl => $gruppoCl)
+                                    @php $clOp = $gruppoCl->first()->cliche; @endphp
+                                    <span class="tag-pill tag-cliche" title="{{ $gruppoCl->pluck('descrizione')->filter()->unique()->implode(' | ') }}">
+                                        <span class="tag-icon">🏷️</span> Cliché <span class="tag-val">{{ $clOp->numero }}</span>
+                                        @if($clOp->scatola)<span class="tag-val">Sc.{{ $clOp->scatola }}</span>@endif
+                                        @if($clOp->qta)<span class="tag-val">Qta {{ $clOp->qta }}</span>@endif
+                                    </span>
+                                    @endforeach
+                                @endif
+                            </div>
+
                             {{-- Informazioni generali / per fasi successive --}}
                             <div>
                                 <label><strong>Informazioni generali / per fasi successive:</strong></label>
