@@ -398,45 +398,44 @@ public function calcolaOreEPriorita($fase)
                 ->sortByDesc('data_fine');
         }
 
-        // KPI giornalieri
+        // KPI giornalieri (cache 30s — riducono ~6 query pesanti per page load)
         $oggi = Carbon::today();
-
-        // Fasi completate oggi: dalla pivot O dal campo ordine_fasi.data_fine
-        $fasiCompletateOggi = OrdineFase::where('stato', '>=', 3)
-            ->where(function ($q) use ($oggi) {
-                $q->whereHas('operatori', fn($q2) => $q2->whereDate('fase_operatore.data_fine', $oggi))
-                  ->orWhereDate('data_fine', $oggi);
-            })
-            ->count();
-
-        // Ore lavorate oggi: dalla pivot operatore
-        // Solo record con data_inizio E data_fine nello stesso giorno, OPPURE data_fine oggi
-        $pivotOggi = DB::table('fase_operatore')
-            ->whereDate('data_fine', $oggi)
-            ->whereNotNull('data_inizio')
-            ->select('data_inizio', 'data_fine', 'secondi_pausa')
-            ->get();
-        $orePivot = $pivotOggi->sum(function ($row) use ($oggi) {
-            $inizio = Carbon::parse($row->data_inizio);
-            $fine = Carbon::parse($row->data_fine);
-            $secLordo = abs($fine->diffInSeconds($inizio));
-            $secPausa = min($row->secondi_pausa ?? 0, $secLordo);
-            $secNetto = max($secLordo - $secPausa, 0);
-            // Se le ore nette sono > 24h, qualcosa non torna — limita a 24h
-            return min($secNetto / 3600, 24);
+        $kpiCacheKey = 'owner_kpi_' . $oggi->format('Ymd');
+        $kpi = \Illuminate\Support\Facades\Cache::remember($kpiCacheKey, 30, function () use ($oggi) {
+            $fasiCompletateOggi = OrdineFase::where('stato', '>=', 3)
+                ->where(function ($q) use ($oggi) {
+                    $q->whereHas('operatori', fn($q2) => $q2->whereDate('fase_operatore.data_fine', $oggi))
+                      ->orWhereDate('data_fine', $oggi);
+                })
+                ->count();
+            $pivotOggi = DB::table('fase_operatore')
+                ->whereDate('data_fine', $oggi)
+                ->whereNotNull('data_inizio')
+                ->select('data_inizio', 'data_fine', 'secondi_pausa')
+                ->get();
+            $orePivot = $pivotOggi->sum(function ($row) {
+                $inizio = Carbon::parse($row->data_inizio);
+                $fine = Carbon::parse($row->data_fine);
+                $secLordo = abs($fine->diffInSeconds($inizio));
+                $secPausa = min($row->secondi_pausa ?? 0, $secLordo);
+                $secNetto = max($secLordo - $secPausa, 0);
+                return min($secNetto / 3600, 24);
+            });
+            $orePrinect = OrdineFase::where('stato', '>=', 3)
+                ->whereDate('data_fine', $oggi)
+                ->where(function ($q) {
+                    $q->where('tempo_avviamento_sec', '>', 0)
+                      ->orWhere('tempo_esecuzione_sec', '>', 0);
+                })
+                ->whereDoesntHave('operatori', fn($q) => $q->whereDate('fase_operatore.data_fine', $oggi))
+                ->sum(DB::raw('COALESCE(tempo_avviamento_sec, 0) + COALESCE(tempo_esecuzione_sec, 0)')) / 3600;
+            return [
+                'fasiCompletateOggi' => $fasiCompletateOggi,
+                'oreLavorateOggi' => round($orePivot + $orePrinect, 1),
+            ];
         });
-
-        // Ore da fasi Prinect terminate oggi (usa tempo_avviamento + esecuzione, NON date)
-        $orePrinect = OrdineFase::where('stato', '>=', 3)
-            ->whereDate('data_fine', $oggi)
-            ->where(function ($q) {
-                $q->where('tempo_avviamento_sec', '>', 0)
-                  ->orWhere('tempo_esecuzione_sec', '>', 0);
-            })
-            ->whereDoesntHave('operatori', fn($q) => $q->whereDate('fase_operatore.data_fine', $oggi))
-            ->sum(DB::raw('COALESCE(tempo_avviamento_sec, 0) + COALESCE(tempo_esecuzione_sec, 0)')) / 3600;
-
-        $oreLavorateOggi = round($orePivot + $orePrinect, 1);
+        $fasiCompletateOggi = $kpi['fasiCompletateOggi'];
+        $oreLavorateOggi = $kpi['oreLavorateOggi'];
 
         // Breakdown ore per operatore (per modal dettaglio)
         $orePerOperatoreOggi = DB::table('fase_operatore')
@@ -458,16 +457,21 @@ public function calcolaOreEPriorita($fase)
                 return $op;
             });
 
-        $commesseSpediteOggi = OrdineFase::where('ordine_fasi.stato', 4)
-            ->where(function ($q) use ($oggi) {
-                $q->whereHas('operatori', fn($q2) => $q2->whereDate('fase_operatore.data_fine', $oggi))
-                  ->orWhereDate('ordine_fasi.data_fine', $oggi);
-            })
-            ->join('ordini', 'ordine_fasi.ordine_id', '=', 'ordini.id')
-            ->distinct('ordini.commessa')
-            ->count('ordini.commessa');
-
-        $fasiAttive = OrdineFase::where('stato', 2)->count();
+        $kpi2 = \Illuminate\Support\Facades\Cache::remember('owner_kpi2_' . $oggi->format('Ymd'), 30, function () use ($oggi) {
+            return [
+                'commesseSpediteOggi' => OrdineFase::where('ordine_fasi.stato', 4)
+                    ->where(function ($q) use ($oggi) {
+                        $q->whereHas('operatori', fn($q2) => $q2->whereDate('fase_operatore.data_fine', $oggi))
+                          ->orWhereDate('ordine_fasi.data_fine', $oggi);
+                    })
+                    ->join('ordini', 'ordine_fasi.ordine_id', '=', 'ordini.id')
+                    ->distinct('ordini.commessa')
+                    ->count('ordini.commessa'),
+                'fasiAttive' => OrdineFase::where('stato', 2)->count(),
+            ];
+        });
+        $commesseSpediteOggi = $kpi2['commesseSpediteOggi'];
+        $fasiAttive = $kpi2['fasiAttive'];
 
         // Storico consegne (ultimi 30 giorni, escluso oggi)
         $storicoConsegne = collect();
@@ -497,19 +501,21 @@ public function calcolaOreEPriorita($fase)
             ->get()
             ->groupBy('numero_ddt');
 
-        // Progresso fasi per commessa — via SQL aggregate (non carica tutti i record)
+        // Progresso fasi per commessa — via SQL aggregate (cache 30s)
         $progressoCommesse = [];
-        $progressoRows = DB::table('ordine_fasi')
-            ->join('ordini', 'ordine_fasi.ordine_id', '=', 'ordini.id')
-            ->whereNull('ordine_fasi.deleted_at')
-            ->select(
-                'ordini.commessa',
-                DB::raw('COUNT(*) as totale'),
-                DB::raw("SUM(CASE WHEN ordine_fasi.stato >= 3 THEN 1 ELSE 0 END) as terminate"),
-                DB::raw("SUM(CASE WHEN ordine_fasi.stato = 2 THEN 1 ELSE 0 END) as avviate")
-            )
-            ->groupBy('ordini.commessa')
-            ->get();
+        $progressoRows = \Illuminate\Support\Facades\Cache::remember('owner_progresso_commesse', 30, function () {
+            return DB::table('ordine_fasi')
+                ->join('ordini', 'ordine_fasi.ordine_id', '=', 'ordini.id')
+                ->whereNull('ordine_fasi.deleted_at')
+                ->select(
+                    'ordini.commessa',
+                    DB::raw('COUNT(*) as totale'),
+                    DB::raw("SUM(CASE WHEN ordine_fasi.stato >= 3 THEN 1 ELSE 0 END) as terminate"),
+                    DB::raw("SUM(CASE WHEN ordine_fasi.stato = 2 THEN 1 ELSE 0 END) as avviate")
+                )
+                ->groupBy('ordini.commessa')
+                ->get();
+        });
         foreach ($progressoRows as $row) {
             $progressoCommesse[$row->commessa] = [
                 'totale' => $row->totale,
