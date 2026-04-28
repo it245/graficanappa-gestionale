@@ -306,6 +306,8 @@ th:nth-child(24), td:nth-child(24) {
             <option value="{{ $op }}" {{ request('operatore') == $op ? 'selected' : '' }}>{{ $op }}</option>
         @endforeach
     </select>
+    <input type="date" name="data_da" class="form-control form-control-sm" style="max-width:150px;" value="{{ request('data_da') }}" title="Data fine da" onchange="this.form.submit()">
+    <input type="date" name="data_a" class="form-control form-control-sm" style="max-width:150px;" value="{{ request('data_a') }}" title="Data fine a" onchange="this.form.submit()">
     <button type="submit" class="btn btn-sm btn-dark">Filtra</button>
     <a href="{{ route('owner.fasiTerminate', $soloOggi ? ['oggi' => 1] : []) }}" class="btn btn-sm btn-outline-secondary">Reset</a>
 </form>

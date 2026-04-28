@@ -886,6 +886,22 @@ public function calcolaOreEPriorita($fase)
         $filteredQuery->whereHas('operatori', fn($q) => $q->whereRaw("CONCAT(nome, ' ', cognome) = ?", [$opFilter]));
     }
 
+    // Filtro range data fine
+    if ($request->filled('data_da')) {
+        $filteredQuery->where(function ($q) use ($request) {
+            $da = $request->get('data_da');
+            $q->whereDate('ordine_fasi.data_fine', '>=', $da)
+              ->orWhereHas('operatori', fn($q2) => $q2->whereDate('fase_operatore.data_fine', '>=', $da));
+        });
+    }
+    if ($request->filled('data_a')) {
+        $filteredQuery->where(function ($q) use ($request) {
+            $a = $request->get('data_a');
+            $q->whereDate('ordine_fasi.data_fine', '<=', $a)
+              ->orWhereHas('operatori', fn($q2) => $q2->whereDate('fase_operatore.data_fine', '<=', $a));
+        });
+    }
+
     // Paginazione con eager loading
     $fasiTerminate = $filteredQuery
         ->with(['ordine.reparto', 'faseCatalogo.reparto', 'operatori'])
