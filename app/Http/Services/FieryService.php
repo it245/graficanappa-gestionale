@@ -38,15 +38,17 @@ class FieryService
         $cached = Cache::get('fiery_server_status');
         if (!empty($cached)) return $cached;
 
-        // Retry 2 volte con timeout 8s (API Fiery Canon V900 a volte lenta)
+        // Retry 4 volte con backoff (API Fiery Canon V900 a volte lenta)
         $response = null;
         $lastErr = null;
-        for ($attempt = 1; $attempt <= 2; $attempt++) {
+        $delays = [0, 500000, 1000000, 2000000];
+        for ($attempt = 1; $attempt <= 4; $attempt++) {
+            if ($delays[$attempt - 1] > 0) usleep($delays[$attempt - 1]);
             try {
                 $response = Http::withoutVerifying()
                     ->withOptions(['verify' => false, 'http_errors' => false])
-                    ->timeout(8)
-                    ->connectTimeout(3)
+                    ->timeout(10)
+                    ->connectTimeout(4)
                     ->get($this->baseUrl . '/live/api/v5/server/status');
                 if ($response->successful()) break;
                 $lastErr = 'HTTP ' . $response->status();
@@ -54,15 +56,23 @@ class FieryService
             } catch (\Exception $e) {
                 $lastErr = $e->getMessage();
                 $response = null;
-                if ($attempt === 2) break;
-                usleep(500000);
             }
         }
 
         if (!$response) {
             \Log::warning('Fiery getServerStatus fallito: ' . $lastErr);
+            // Fallback: stato stale (ultimo noto) se < 5 min, evita falsi "non raggiungibile"
+            $stale = Cache::get('fiery_server_status_stale');
+            $failures = (int) Cache::get('fiery_consecutive_failures', 0) + 1;
+            Cache::put('fiery_consecutive_failures', $failures, 600);
+            if (!empty($stale) && $failures < 3) {
+                $stale['avviso'] = 'connessione lenta';
+                $stale['stale'] = true;
+                return $stale;
+            }
             return null;
         }
+        Cache::forget('fiery_consecutive_failures');
 
         try {
 
@@ -129,6 +139,8 @@ class FieryService
 
             // Cache 30s SOLO se successo
             Cache::put('fiery_server_status', $result, 30);
+            // Stale cache 5 min per fallback in caso retry futuri falliscano
+            Cache::put('fiery_server_status_stale', $result, 300);
             return $result;
         } catch (\Exception $e) {
             return null;
