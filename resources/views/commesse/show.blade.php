@@ -257,32 +257,22 @@
     </div>
     @endif
 
-    {{-- Timeline fasi raggruppate per nome (panoramica visuale stato commessa) --}}
+    {{-- Timeline fasi solo per ordine corrente --}}
     @php
         $statoLabel = [0=>'Caricata',1=>'Pronta',2=>'In corso',3=>'Terminata',4=>'Consegnata',5=>'Esterna'];
-        $fasiTimeline = $ordini->flatMap(fn($o) => $o->fasi)
-            ->groupBy(fn($f) => $f->faseCatalogo->nome_display ?? $f->fase ?? 'N/A')
-            ->map(function($group) {
-                $stati = $group->map(fn($f) => is_numeric($f->stato) ? (int)$f->stato : 0);
-                return (object)[
-                    'nome' => $group->first()->faseCatalogo->nome_display ?? $group->first()->fase ?? 'N/A',
-                    'stato_min' => $stati->min(),
-                    'count' => $group->count(),
-                    'first' => $group->first(),
-                ];
-            })
-            ->sortBy(function($f) use ($getFaseOrdine) { return $getFaseOrdine($f->first); })
+        $fasiTimeline = $ordine->fasi
+            ->sortBy(function($f) use ($getFaseOrdine) { return $getFaseOrdine($f); })
             ->values();
     @endphp
     @if($fasiTimeline->count() > 0)
     <div class="fasi-timeline">
         @foreach($fasiTimeline as $ft)
             @php
-                $st = $ft->stato_min;
+                $st = is_numeric($ft->stato) ? (int)$ft->stato : 0;
                 $cls = $st >= 4 ? 'consegnato' : ($st >= 3 ? 'done' : ($st == 2 ? 'active' : 'todo'));
             @endphp
-            <div class="fasi-timeline-step {{ $cls }}" title="Stato minimo: {{ $statoLabel[$st] ?? $st }} · {{ $ft->count }} fase/i">
-                {{ $ft->nome }}@if($ft->count > 1) <span style="background:rgba(0,0,0,0.15); padding:1px 6px; border-radius:8px; font-size:10px;">×{{ $ft->count }}</span>@endif
+            <div class="fasi-timeline-step {{ $cls }}" title="Stato: {{ $statoLabel[$st] ?? $st }}">
+                {{ $ft->faseCatalogo->nome_display ?? $ft->fase }}
             </div>
         @endforeach
     </div>
