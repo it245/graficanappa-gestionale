@@ -644,7 +644,7 @@
             <tr>
                 <th>Fase</th>
                 <th style="text-align:center;">Stato</th>
-                <th style="text-align:center;">Conteggio</th>
+                <th style="text-align:center;">Qta Prodotta</th>
                 <th>Operatori</th>
             </tr>
         </thead>
