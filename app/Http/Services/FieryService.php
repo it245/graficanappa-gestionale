@@ -85,34 +85,21 @@ class FieryService
             $stato = 'idle';
             if (str_contains($fiery, 'print')) $stato = 'stampa';
 
-            // Controllo /jobs/printing per stato reale stampa (API autenticata)
+            // Job in stampa derivato da getJobs cache (evita chiamata API redundante /jobs/printing)
             $stampaDoc = null;
             $stampaCopieFatte = 0;
             $stampaCopieTotali = 0;
             $stampaUser = '-';
-            try {
-                $http = $this->loginAndGetHttp();
-                if (!$http) {
-                    \Log::warning('Fiery /jobs/printing skip: loginAndGetHttp() returned null');
-                } else {
-                    $jp = $http->get($this->baseUrl . '/live/api/v5/jobs/printing');
-                    if (!$jp->successful()) {
-                        \Log::warning('Fiery /jobs/printing HTTP ' . $jp->status());
-                    } else {
-                        $items = $jp->json('data.items', []);
-                        \Log::info('Fiery /jobs/printing items=' . count($items));
-                        if (!empty($items)) {
-                            $job = $items[0];
-                            $stato = 'stampa';
-                            $stampaDoc = $job['title'] ?? null;
-                            $stampaCopieFatte = (int) ($job['copies printed'] ?? 0);
-                            $stampaCopieTotali = (int) ($job['num copies'] ?? 0);
-                            $stampaUser = $job['username'] ?? '-';
-                        }
-                    }
+            $jobsCached = Cache::get('fiery_jobs_parsed') ?: Cache::get('fiery_jobs_parsed_stale') ?: [];
+            foreach ($jobsCached as $j) {
+                if (($j['state'] ?? '') === 'printing') {
+                    $stato = 'stampa';
+                    $stampaDoc = $j['title'] ?? null;
+                    $stampaCopieFatte = (int) ($j['copies_printed'] ?? 0);
+                    $stampaCopieTotali = (int) ($j['num_copies'] ?? 0);
+                    $stampaUser = $j['username'] ?? '-';
+                    break;
                 }
-            } catch (\Exception $e) {
-                \Log::warning('Fiery /jobs/printing exception: ' . $e->getMessage());
             }
 
             $progresso = $stampaCopieTotali > 0

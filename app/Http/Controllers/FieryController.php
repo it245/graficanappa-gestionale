@@ -26,9 +26,9 @@ class FieryController extends Controller
 
         $status['commessa'] = $this->cercaCommessa($status['stampa']['documento'] ?? null);
 
-        // Job list da API v5
+        // Accounting solo da cache (popolata dal warm command), evita chiamata API pesante
         $jobs = $fiery->getJobs();
-        $accounting = $fiery->getAccountingPerCommessa();
+        $accounting = \Cache::get('fiery_accounting_commesse') ?: \Cache::get('fiery_accounting_commesse_stale');
         $jobData = $this->organizzaJobs($jobs, $accounting);
 
         // SNMP cachato 30s
@@ -53,9 +53,9 @@ class FieryController extends Controller
 
         $status['commessa'] = $this->cercaCommessa($status['stampa']['documento'] ?? null);
 
-        // Job list da API v5
+        // Accounting solo da cache (popolata dal warm command), evita chiamata API pesante ad ogni polling
         $jobs = $fiery->getJobs();
-        $accounting = $fiery->getAccountingPerCommessa();
+        $accounting = \Cache::get('fiery_accounting_commesse') ?: \Cache::get('fiery_accounting_commesse_stale');
         $status['jobs'] = $this->organizzaJobs($jobs, $accounting);
         $status['snmp'] = \Cache::remember('fiery_snmp_live', 30, fn() => $this->leggiContatoriSnmp());
 
