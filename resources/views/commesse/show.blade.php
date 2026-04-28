@@ -5,42 +5,290 @@
 
 @section('content')
 <style>
+/* === Pulsanti azione touch-first (operatore tablet) === */
 .azioni-cerchi {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 14px;
     margin-left: 20px;
 }
 .azioni-cerchi label {
     display: inline-flex;
     justify-content: center;
     align-items: center;
-    width: 75px;
-    height: 75px;
+    width: 96px;
+    height: 96px;
     border-radius: 50%;
     color: #fff;
-    font-weight: bold;
-    font-size: 12px;
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
     cursor: pointer;
     user-select: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
 }
-.badge-avvia { background-color: #28a745; }
-.badge-pausa { background-color: #ffc107; }
-.badge-termina { background-color: #dc3545; }
+.azioni-cerchi label:active {
+    transform: scale(0.95);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+.badge-avvia { background-color: #16a34a; }
+.badge-pausa { background-color: #f59e0b; color: #1f2937 !important; }
+.badge-termina { background-color: #dc2626; }
 .azioni-cerchi input[type="checkbox"] { display: none; }
 .azioni-cerchi input[type="checkbox"]:checked + label {
-    opacity: 0.7;
-    box-shadow: inset 0 0 2px rgba(0,0,0,0.5);
+    opacity: 0.65;
+    box-shadow: inset 0 0 4px rgba(0,0,0,0.4);
 }
 
-/* Lampeggio tasto Avvia quando stato = 2 */
 @keyframes lampeggio-avvia {
-    0%, 100% { opacity: 1; background-color: #28a745; }
-    50% { opacity: 0.3; background-color: #ff6600; }
+    0%, 100% { opacity: 1; background-color: #16a34a; box-shadow: 0 4px 14px rgba(22,163,74,0.5); }
+    50% { opacity: 0.85; background-color: #f97316; box-shadow: 0 4px 18px rgba(249,115,22,0.6); }
 }
-.badge-avvia.lampeggia {
-    animation: lampeggio-avvia 1s ease-in-out infinite;
+.badge-avvia.lampeggia { animation: lampeggio-avvia 1.2s ease-in-out infinite; }
+
+/* === Hero card commessa === */
+.hero-commessa {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color: #fff;
+    border-radius: 14px;
+    padding: 18px 22px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
 }
+.hero-commessa h1 {
+    font-size: 26px;
+    font-weight: 800;
+    margin: 0 0 4px 0;
+    letter-spacing: -0.5px;
+}
+.hero-commessa .hero-meta {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    font-size: 14px;
+    color: #cbd5e1;
+}
+.hero-commessa .hero-meta strong { color: #fff; font-weight: 600; }
+.hero-commessa .hero-qta {
+    display: inline-flex; align-items: baseline; gap: 6px;
+    background: rgba(255,255,255,0.08);
+    padding: 4px 12px; border-radius: 20px;
+    font-size: 13px;
+}
+.hero-commessa .hero-qta .num { font-size: 18px; font-weight: 800; color: #fde68a; }
+.hero-tags {
+    display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px;
+}
+.hero-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(255,255,255,0.10);
+    border: 1px solid rgba(255,255,255,0.18);
+    color: #f1f5f9;
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 500;
+}
+.hero-pill b { color: #fde68a; font-weight: 700; }
+.hero-pill small { color: #cbd5e1; font-size: 11px; }
+
+/* === Badge gruppi (colori, fustella, cliche) collapsabili === */
+.tag-group {
+    display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;
+}
+.tag-pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 14px; border-radius: 999px;
+    font-size: 13px; font-weight: 600;
+    border: 1px solid;
+    transition: transform 0.1s ease;
+}
+.tag-pill:hover { transform: translateY(-1px); }
+.tag-pill .tag-icon { font-size: 14px; }
+.tag-pill .tag-val { background: rgba(0,0,0,0.08); padding: 2px 10px; border-radius: 12px; font-size: 12px; }
+.tag-colori { background: #ecfdf5; border-color: #6ee7b7; color: #065f46; }
+.tag-fustella { background: #eff6ff; border-color: #93c5fd; color: #1e40af; }
+.tag-cliche { background: #fffbeb; border-color: #fcd34d; color: #92400e; }
+
+/* === Tag stack verticale (uno sotto l'altro, allineati, compatti) === */
+.tag-stack { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.tag-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 12px;
+    border-radius: 8px;
+    border: 1px solid;
+    font-size: 12px;
+    font-weight: 600;
+    max-width: 100%;
+    flex-wrap: wrap;
+}
+.tag-row.tag-colori { background: #ecfdf5; border-color: #6ee7b7; color: #065f46; }
+.tag-row.tag-fustella { background: #eff6ff; border-color: #93c5fd; color: #1e40af; }
+.tag-row.tag-cliche { background: #fffbeb; border-color: #fcd34d; color: #92400e; }
+.tag-row .tag-icon { font-size: 16px; text-align: center; }
+.tag-row .tag-label { font-weight: 700; text-transform: uppercase; font-size: 11px; letter-spacing: 0.4px; }
+.tag-row .tag-val { background: rgba(0,0,0,0.08); padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 700; }
+.tag-row .tag-extra { background: rgba(0,0,0,0.06); padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+.tag-row .tag-desc { font-size: 11px; font-weight: 500; color: rgba(0,0,0,0.65); margin-left: 4px; }
+
+/* === Box info griglia compatta === */
+.info-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+    margin-bottom: 12px;
+}
+@media (max-width: 768px) { .info-grid { grid-template-columns: 1fr; } }
+.info-box {
+    background: #f8fafc; border: 1px solid #e2e8f0;
+    border-radius: 10px; padding: 10px 14px;
+    border-left: 3px solid #0d6efd;
+}
+.info-box-label {
+    font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    color: #64748b; margin-bottom: 3px;
+}
+.info-box-val { font-size: 14px; color: #0f172a; line-height: 1.35; }
+.info-box-val.muted { color: #94a3b8; font-style: italic; }
+.info-box.note-prestampa { border-left-color: #6b7280; }
+.info-box.responsabile { border-left-color: #f59e0b; }
+.info-box.commento { border-left-color: #10b981; }
+
+/* === Anteprima foglio cliccabile === */
+.anteprima-foglio { cursor: zoom-in; transition: transform 0.15s ease; border-radius: 8px; }
+.anteprima-foglio:hover { transform: scale(1.02); box-shadow: 0 6px 20px rgba(0,0,0,0.18); }
+
+/* === Section heading minimal === */
+.section-h {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: #475569;
+    margin: 24px 0 10px;
+    display: flex; align-items: center; gap: 8px;
+}
+.section-h::before {
+    content: "";
+    width: 4px; height: 18px;
+    border-radius: 2px;
+    background: #0d6efd;
+}
+
+/* === Tabella moderna === */
+.modern-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    font-size: 13px;
+}
+.modern-table thead th {
+    background: #0f172a;
+    color: #fff;
+    padding: 10px 12px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    border: none;
+}
+.modern-table tbody td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+}
+.modern-table tbody tr:last-child td { border-bottom: none; }
+.modern-table tbody tr:hover { background: #f8fafc; }
+.modern-table tbody tr.clickable { cursor: pointer; }
+.modern-table .stato-cell {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 28px; height: 26px; padding: 0 8px;
+    border-radius: 6px;
+    font-weight: 700; font-size: 12px;
+}
+.stato-0 { background: #f1f5f9; color: #475569; }
+.stato-1 { background: #dbeafe; color: #1e40af; }
+.stato-2 { background: #fef3c7; color: #92400e; }
+.stato-3 { background: #d1fae5; color: #065f46; }
+.stato-4 { background: #c7d2fe; color: #312e81; }
+
+/* === Card prossime commesse === */
+.prossime-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+}
+.prossima-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 12px 14px;
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+    text-decoration: none;
+    color: #0f172a;
+    display: block;
+    border-left: 3px solid #0d6efd;
+}
+.prossima-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+    color: #0f172a;
+}
+.prossima-card .pc-num {
+    font-size: 14px; font-weight: 700; color: #0d6efd;
+    margin-bottom: 2px;
+}
+.prossima-card .pc-cliente {
+    font-size: 12px; color: #64748b; margin-bottom: 6px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.prossima-card .pc-desc {
+    font-size: 12px; color: #475569; margin-bottom: 10px;
+    line-height: 1.4;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.prossima-card .pc-meta {
+    display: flex; gap: 10px; font-size: 11px; color: #64748b; margin-bottom: 8px;
+}
+.prossima-card .pc-meta strong { color: #0f172a; }
+.prossima-card .pc-prog {
+    display: flex; align-items: center; gap: 6px;
+}
+.prossima-card .pc-bar {
+    flex: 1; background: #e2e8f0; border-radius: 4px; height: 6px;
+}
+.prossima-card .pc-bar-fill { height: 100%; border-radius: 4px; transition: width 0.3s ease; }
+.prossima-card .pc-frac { font-size: 10px; font-weight: 700; color: #475569; min-width: 30px; }
+
+/* === Timeline fasi orizzontale === */
+.fasi-timeline {
+    display: flex; gap: 4px; align-items: center;
+    background: #f1f5f9; border-radius: 10px; padding: 10px;
+    margin-bottom: 14px; overflow-x: auto;
+}
+.fasi-timeline-step {
+    flex: 1; min-width: 80px;
+    text-align: center;
+    padding: 8px 6px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    background: #fff;
+    border: 2px solid #e2e8f0;
+    position: relative;
+}
+.fasi-timeline-step.done { background: #d1fae5; border-color: #10b981; color: #065f46; }
+.fasi-timeline-step.active { background: #fef3c7; border-color: #f59e0b; color: #92400e; box-shadow: 0 0 0 4px rgba(245,158,11,0.2); }
+.fasi-timeline-step.todo { background: #fff; color: #64748b; }
+.fasi-timeline-step.consegnato { background: #e0e7ff; border-color: #6366f1; color: #3730a3; }
 </style>
 
 @php
@@ -55,30 +303,62 @@
     };
 @endphp
 
-<!-- Header -->
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h2>Commessa {{ $ordine->commessa }}</h2>
-    <div class="d-flex gap-2">
-        @if($ordini->count() > 1)
-        <div class="dropdown">
-            <button class="btn btn-outline-dark d-flex align-items-center dropdown-toggle" data-bs-toggle="dropdown">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" class="me-1"><path d="M2 1a1 1 0 0 0-1 1v4.586a1 1 0 0 0 .293.707l7 7a1 1 0 0 0 1.414 0l4.586-4.586a1 1 0 0 0 0-1.414l-7-7A1 1 0 0 0 6.586 1H2zm4 3.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/></svg> Stampa Etichetta
-            </button>
-            <ul class="dropdown-menu">
-                @foreach($ordini as $ord)
-                <li><a class="dropdown-item" href="{{ route('operatore.etichetta', $ord->id) }}">{{ Str::limit($ord->descrizione, 60) }}</a></li>
-                @endforeach
-            </ul>
+@php
+    $qtaProdottaStampe = $ordine->fasi
+        ->filter(function($f) {
+            $rep = strtolower($f->faseCatalogo->reparto->nome ?? '');
+            return $rep === 'stampa offset' && (int)($f->stato ?? 0) >= 2 && $f->qta_prod !== null;
+        })
+        ->sum('qta_prod');
+    if ($qtaProdottaStampe == 0) {
+        $qtaProdottaStampe = $ordine->fasi
+            ->filter(function($f) {
+                $rep = strtolower($f->faseCatalogo->reparto->nome ?? '');
+                return $rep === 'digitale' && (int)($f->stato ?? 0) >= 2 && $f->qta_prod !== null;
+            })
+            ->sum('qta_prod');
+    }
+@endphp
+
+@php
+    $tutteDescOp = $ordini->pluck('descrizione')->filter()->unique()->implode(' | ');
+    $cliente = $ordine->cliente_nome ?? '';
+    $coloriCalc = \App\Helpers\DescrizioneParser::parseColori($tutteDescOp, $cliente);
+    $fustellaCalc = \App\Helpers\DescrizioneParser::parseFustella($tutteDescOp, $cliente, $ordine->note_prestampa ?? '');
+    $clicheGruppiOp = $ordini->filter(fn($o) => $o->cliche)->groupBy('cliche_numero');
+@endphp
+
+<!-- Hero card commessa -->
+<div class="hero-commessa">
+    <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+        <div class="flex-grow-1">
+            <h1>Commessa {{ $ordine->commessa }}</h1>
+            <div class="hero-meta">
+                <div><strong>{{ $ordine->cliente_nome ?: '-' }}</strong></div>
+                <div>{{ Str::limit($ordine->descrizione, 90) }}</div>
+                <div class="hero-qta">Qta <span class="num">{{ number_format($ordine->qta_richiesta, 0, ',', '.') }}</span> {{ $ordine->um }}</div>
+                @if($qtaProdottaStampe > 0)
+                <div class="hero-qta" style="background:rgba(245,158,11,0.18); border:1px solid rgba(245,158,11,0.4);">
+                    Qta Prodotta <span class="num" style="color:#fbbf24;">{{ number_format($qtaProdottaStampe, 0, ',', '.') }}</span>
+                </div>
+                @endif
+            </div>
         </div>
-        @else
-        <a href="{{ route('operatore.etichetta', $ordine->id) }}" class="btn btn-outline-dark d-flex align-items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" class="me-1"><path d="M2 1a1 1 0 0 0-1 1v4.586a1 1 0 0 0 .293.707l7 7a1 1 0 0 0 1.414 0l4.586-4.586a1 1 0 0 0 0-1.414l-7-7A1 1 0 0 0 6.586 1H2zm4 3.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/></svg> Stampa Etichetta
-        </a>
-        @endif
-        <a href="{{ $isSpedizione ? route('spedizione.dashboard') : route('operatore.dashboard') }}" class="btn btn-primary d-flex align-items-center">
-            <img src="{{ asset('images/turn-left_15441589.png') }}" alt="Dashboard" style="width:20px; height:20px; margin-right:5px;">
-            Dashboard
-        </a>
+        <div class="d-flex gap-2 flex-wrap">
+            @if($ordini->count() > 1)
+            <div class="dropdown">
+                <button class="btn btn-light btn-sm dropdown-toggle" data-bs-toggle="dropdown">Stampa Etichetta</button>
+                <ul class="dropdown-menu">
+                    @foreach($ordini as $ord)
+                    <li><a class="dropdown-item" href="{{ route('operatore.etichetta', $ord->id) }}">{{ Str::limit($ord->descrizione, 60) }}</a></li>
+                    @endforeach
+                </ul>
+            </div>
+            @else
+            <a href="{{ route('operatore.etichetta', $ordine->id) }}" class="btn btn-light btn-sm">Stampa Etichetta</a>
+            @endif
+            <a href="{{ $isSpedizione ? route('spedizione.dashboard') : route('operatore.dashboard') }}" class="btn btn-warning btn-sm fw-bold">← Dashboard</a>
+        </div>
     </div>
 </div>
 
@@ -90,97 +370,67 @@
 @endphp
 
 <div class="container mt-3">
-    <!-- Card info ordine -->
-    <div class="card mb-3">
-        <div class="card-body">
-            @php
-                $tutteDescOp = $ordini->pluck('descrizione')->filter()->unique()->implode(' | ');
-                $cliente = $ordine->cliente_nome ?? '';
-                $coloriCalc = \App\Helpers\DescrizioneParser::parseColori($tutteDescOp, $cliente);
-                $fustellaCalc = \App\Helpers\DescrizioneParser::parseFustella($tutteDescOp, $cliente, $ordine->note_prestampa ?? '');
-                $clicheGruppiOp = $ordini->filter(fn($o) => $o->cliche)->groupBy('cliche_numero');
-            @endphp
-            <p><strong>Cliente:</strong> {{ $ordine->cliente_nome }}</p>
-            <p><strong>Descrizione:</strong> {{ $ordine->descrizione }}</p>
-            <p><strong>Quantita totale:</strong> {{ $ordine->qta_richiesta }} {{ $ordine->um }}</p>
-
-            {{-- Box Colori/Fustella/Cliché (stile uniforme) --}}
-            <div class="d-flex gap-2 mb-2 flex-wrap">
-                @if($coloriCalc)
-                <div class="border rounded p-2 d-flex align-items-center gap-2" style="background:#e8f5e9; border-color:#66bb6a !important;">
-                    <strong style="color:#2e7d32; font-size:13px;">🎨 Colori:</strong>
-                    <span class="badge" style="background:#2e7d32; color:white; font-size:12px;">{{ $coloriCalc }}</span>
-                </div>
-                @endif
-                @if($fustellaCalc)
-                <div class="border rounded p-2 d-flex align-items-center gap-2" style="background:#e3f2fd; border-color:#42a5f5 !important;">
-                    <strong style="color:#1565c0; font-size:13px;">✂️ Fustella:</strong>
-                    <span class="badge" style="background:#1565c0; color:white; font-size:12px;">{{ $fustellaCalc }}</span>
-                </div>
-                @endif
-                @if($clicheGruppiOp->isNotEmpty())
-                    @foreach($clicheGruppiOp as $numeroCl => $gruppoCl)
-                    @php $clOp = $gruppoCl->first()->cliche; $descrCl = $gruppoCl->pluck('descrizione')->filter()->unique(); @endphp
-                    <div class="border rounded p-2 d-flex align-items-center gap-2 flex-wrap" style="background:#fff8e1; border-color:#fbc02d !important;">
-                        <strong style="color:#f57f17; font-size:13px;">🏷️ Cliché:</strong>
-                        <span class="badge" style="background:#f57f17; color:white; font-size:12px;">{{ $clOp->numero }}</span>
-                        @if($clOp->scatola)
-                            <span class="badge" style="background:#8d6e63; color:white; font-size:12px;">Scatola {{ $clOp->scatola }}</span>
-                        @endif
-                        @if($clOp->qta)
-                            <span class="badge" style="background:#6c757d; color:white; font-size:12px;">Qta Cliché {{ $clOp->qta }}</span>
-                        @endif
-                        <small class="text-muted" style="font-size:11px;">→ {{ $descrCl->implode(' | ') }}</small>
-                    </div>
-                    @endforeach
-                @else
-                <div class="border rounded p-2 d-flex align-items-center gap-2" style="background:#fff8e1; border-color:#fbc02d !important;">
-                    <strong style="color:#f57f17; font-size:13px;">🏷️ Cliché:</strong>
-                    <small class="text-muted">Cliché non impostato</small>
-                </div>
-                @endif
-            </div>
-            <div class="row mt-2 g-2">
-                <div class="col-md-4">
-                    <div class="border rounded p-2 h-100" style="background:#f8f9fa">
-                        <strong class="d-block mb-1">Note Prestampa</strong>
-                        <span class="{{ $ordine->note_prestampa ? '' : 'text-muted' }}">{{ $ordine->note_prestampa ?: '-' }}</span>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="border rounded p-2 h-100" style="background:#f8f9fa">
-                        <strong class="d-block mb-1">Operatore Prestampa</strong>
-                        <span class="{{ $ordine->responsabile ? '' : 'text-muted' }}">{{ $ordine->responsabile ?: '-' }}</span>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="border rounded p-2 h-100" style="background:#f8f9fa">
-                        <strong class="d-block mb-1">Commento Produzione</strong>
-                        <span class="{{ $ordine->commento_produzione ? '' : 'text-muted' }}">{{ $ordine->commento_produzione ?: '-' }}</span>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Note Fustelle (note inserite da Mirko/prestampa sulle singole fasi) --}}
-            @php
-                $noteFasiOp = $ordini->flatMap(fn($o) => $o->fasi)->filter(fn($f) => !empty($f->note))->values();
-            @endphp
-            @if($noteFasiOp->isNotEmpty())
-            <div class="row g-2 mt-2">
-                <div class="col-12">
-                    <div class="border rounded p-2" style="background:#ede9fe; border-color:#c4b5fd !important;">
-                        <strong class="d-block mb-1" style="color:#7c3aed;">Note Fustelle</strong>
-                        @foreach($noteFasiOp as $nf)
-                            <div style="font-size:13px; padding:2px 0; {{ !$loop->last ? 'border-bottom:1px solid #ddd6fe;' : '' }}">
-                                <strong>{{ $nf->faseCatalogo->nome_display ?? $nf->fase }}</strong>: {{ $nf->note }}
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-            </div>
-            @endif
+    {{-- Info grid: prestampa / operatore / commento --}}
+    <div class="info-grid">
+        <div class="info-box note-prestampa">
+            <div class="info-box-label">📝 Note Prestampa</div>
+            <div class="info-box-val {{ $ordine->note_prestampa ? '' : 'muted' }}">{{ $ordine->note_prestampa ?: '—' }}</div>
+        </div>
+        <div class="info-box responsabile">
+            <div class="info-box-label">👤 Operatore Prestampa</div>
+            <div class="info-box-val {{ $ordine->responsabile ? '' : 'muted' }}">{{ $ordine->responsabile ?: '—' }}</div>
+        </div>
+        <div class="info-box commento">
+            <div class="info-box-label">💬 Commento Produzione</div>
+            <div class="info-box-val {{ $ordine->commento_produzione ? '' : 'muted' }}">{{ $ordine->commento_produzione ?: '—' }}</div>
         </div>
     </div>
+
+    {{-- Note Fustelle (note inserite da Mirko/prestampa sulle singole fasi) --}}
+    @php
+        $noteFasiOp = $ordini->flatMap(fn($o) => $o->fasi)->filter(fn($f) => !empty($f->note))->values();
+    @endphp
+    @if($noteFasiOp->isNotEmpty())
+    <div class="info-box mb-3" style="border-left-color:#7c3aed; background:#f5f3ff;">
+        <div class="info-box-label" style="color:#7c3aed;">📌 Note Fustelle</div>
+        @foreach($noteFasiOp as $nf)
+            <div style="font-size:13px; padding:3px 0; {{ !$loop->last ? 'border-bottom:1px solid #ddd6fe;' : '' }}">
+                <strong>{{ $nf->faseCatalogo->nome_display ?? $nf->fase }}</strong>: {{ $nf->note }}
+            </div>
+        @endforeach
+    </div>
+    @endif
+
+    {{-- Timeline fasi ordine corrente — dedup per nome con badge ×N --}}
+    @php
+        $statoLabel = [0=>'Caricata',1=>'Pronta',2=>'In corso',3=>'Terminata',4=>'Consegnata',5=>'Esterna'];
+        $fasiTimeline = $ordine->fasi
+            ->groupBy(fn($f) => $f->faseCatalogo->nome_display ?? $f->fase ?? 'N/A')
+            ->map(function($group) {
+                $stati = $group->map(fn($f) => is_numeric($f->stato) ? (int)$f->stato : 0);
+                return (object)[
+                    'nome' => $group->first()->faseCatalogo->nome_display ?? $group->first()->fase ?? 'N/A',
+                    'stato_min' => $stati->min(),
+                    'count' => $group->count(),
+                    'first' => $group->first(),
+                ];
+            })
+            ->sortBy(function($f) use ($getFaseOrdine) { return $getFaseOrdine($f->first); })
+            ->values();
+    @endphp
+    @if($fasiTimeline->count() > 0)
+    <div class="fasi-timeline">
+        @foreach($fasiTimeline as $ft)
+            @php
+                $st = $ft->stato_min;
+                $cls = $st >= 4 ? 'consegnato' : ($st >= 3 ? 'done' : ($st == 2 ? 'active' : 'todo'));
+            @endphp
+            <div class="fasi-timeline-step {{ $cls }}" title="Stato: {{ $statoLabel[$st] ?? $st }} · {{ $ft->count }} fase/i">
+                {{ $ft->nome }}@if($ft->count > 1) <span style="background:rgba(0,0,0,0.18); padding:1px 6px; border-radius:8px; font-size:10px; margin-left:3px;">×{{ $ft->count }}</span>@endif
+            </div>
+        @endforeach
+    </div>
+    @endif
 
     <!-- Fase selezionata (con pulsanti) + Anteprima affiancata -->
     @foreach($fasiGestibili as $fase)
@@ -230,6 +480,32 @@
                                     <button type="button" class="btn btn-sm btn-outline-primary" style="white-space:nowrap"
                                             onclick="inviaNotaFS({{ $ordine->id }}, {{ $fase->id }})">Invia</button>
                                 </div>
+                            </div>
+
+                            {{-- Tag pills colori / fustella / cliché (uno sotto l'altro, allineati) --}}
+                            <div class="tag-stack mt-3">
+                                @if($coloriCalc)
+                                <div class="tag-row tag-colori"><span class="tag-icon">🎨</span><span class="tag-label">Colori</span><span class="tag-val">{{ $coloriCalc }}</span></div>
+                                @endif
+                                @if($fustellaCalc)
+                                <div class="tag-row tag-fustella"><span class="tag-icon">✂️</span><span class="tag-label">Fustella</span><span class="tag-val">{{ $fustellaCalc }}</span></div>
+                                @endif
+                                @if($clicheGruppiOp->isNotEmpty())
+                                    @foreach($clicheGruppiOp as $numeroCl => $gruppoCl)
+                                    @php
+                                        $clOp = $gruppoCl->first()->cliche;
+                                        $descrCl = $gruppoCl->pluck('descrizione')->filter()->unique()->implode(' | ');
+                                    @endphp
+                                    <div class="tag-row tag-cliche">
+                                        <span class="tag-icon">🏷️</span>
+                                        <span class="tag-label">Cliché</span>
+                                        <span class="tag-val">{{ $clOp->numero }}</span>
+                                        @if($clOp->scatola)<span class="tag-extra">Sc. {{ $clOp->scatola }}</span>@endif
+                                        @if($clOp->qta)<span class="tag-extra">Qta {{ $clOp->qta }}</span>@endif
+                                        @if($descrCl)<span class="tag-desc">→ {{ $descrCl }}</span>@endif
+                                    </div>
+                                    @endforeach
+                                @endif
                             </div>
 
                             {{-- Scarti Prinect + Scarti Reali (solo stampa offset) --}}
@@ -283,10 +559,23 @@
             @if(!empty($preview))
             <div class="col-md-4">
                 <div class="card p-3 text-center shadow-sm h-100 d-flex align-items-center justify-content-center">
-                    <div class="fw-bold mb-2" style="font-size:13px;">Anteprima foglio di stampa</div>
-                    <img src="data:{{ $preview['mimeType'] }};base64,{{ $preview['data'] }}"
-                         alt="Preview" style="max-width:100%; max-height:260px; border-radius:8px; cursor:pointer;"
-                         onclick="window.open(this.src)">
+                    <div class="fw-bold mb-2" style="font-size:13px;">📄 Anteprima foglio di stampa <small class="text-muted">(click per ingrandire)</small></div>
+                    <img id="anteprimaThumb" class="anteprima-foglio" src="data:{{ $preview['mimeType'] }};base64,{{ $preview['data'] }}"
+                         alt="Preview" style="max-width:100%; max-height:260px; border-radius:8px;"
+                         data-bs-toggle="modal" data-bs-target="#modalAnteprima">
+                </div>
+            </div>
+            <div class="modal fade" id="modalAnteprima" tabindex="-1">
+                <div class="modal-dialog modal-xl modal-dialog-centered">
+                    <div class="modal-content" style="background:#0f172a;">
+                        <div class="modal-header border-0">
+                            <h5 class="modal-title text-white">Anteprima foglio di stampa</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body text-center p-2">
+                            <img src="data:{{ $preview['mimeType'] }};base64,{{ $preview['data'] }}" alt="Preview full" style="max-width:100%; max-height:80vh; border-radius:8px;">
+                        </div>
+                    </div>
                 </div>
             </div>
             @endif
@@ -299,32 +588,31 @@
         $altreFasiMieNonSelezionate = $fasiGestibili->filter(fn($f) => $f->id !== $faseSelezionataId)->sortBy($getFaseOrdine)->values();
     @endphp
     @if($altreFasiMieNonSelezionate->isNotEmpty())
-    <h4>Altre fasi del reparto</h4>
-    <table class="table table-sm table-bordered">
-        <thead class="table-dark">
+    <div class="section-h">Altre fasi del tuo reparto</div>
+    <table class="modern-table">
+        <thead>
             <tr>
                 <th>Fase</th>
                 <th>Descrizione</th>
-                <th>Stato</th>
+                <th style="text-align:center;">Stato</th>
                 <th>Operatori</th>
-                <th>Qta Prodotta</th>
+                <th style="text-align:center;">Qta Prodotta</th>
                 <th>Timeout</th>
             </tr>
         </thead>
         <tbody>
             @foreach($altreFasiMieNonSelezionate as $fase)
-            <tr style="cursor:pointer" onclick="window.location='{{ route('commesse.show', $ordine->commessa) }}?fase={{ $fase->id }}'">
-                <td><a href="{{ route('commesse.show', $ordine->commessa) }}?fase={{ $fase->id }}" style="color:#000; text-decoration:underline; font-weight:bold">{{ $fase->faseCatalogo->nome_display ?? '-' }}</a></td>
-                <td><small>{{ Str::limit($fase->ordine_descrizione ?? $fase->ordine->descrizione ?? '-', 60) }}</small></td>
-                @php $sb = [0=>'#e9ecef',1=>'#cfe2ff',2=>'#fff3cd',3=>'#d1e7dd']; @endphp
-                <td id="stato-{{ $fase->id }}" style="background:{{ $sb[$fase->stato] ?? '#e9ecef' }};font-weight:bold;text-align:center;">{{ $fase->stato }}</td>
+            <tr class="clickable" onclick="window.location='{{ route('commesse.show', $ordine->commessa) }}?fase={{ $fase->id }}'">
+                <td><a href="{{ route('commesse.show', $ordine->commessa) }}?fase={{ $fase->id }}" style="color:#0d6efd; text-decoration:none; font-weight:600;">{{ $fase->faseCatalogo->nome_display ?? '-' }}</a></td>
+                <td><small style="color:#64748b;">{{ Str::limit($fase->ordine_descrizione ?? $fase->ordine->descrizione ?? '-', 60) }}</small></td>
+                <td style="text-align:center;"><span class="stato-cell stato-{{ is_numeric($fase->stato) ? (int)$fase->stato : 0 }}">{{ $fase->stato }}</span></td>
                 <td>
                     @foreach($fase->operatori as $op)
-                        {{ $op->nome }} ({{ $op->pivot->data_inizio ? \Carbon\Carbon::parse($op->pivot->data_inizio)->format('d/m/Y H:i:s') : '-' }})<br>
+                        <small>{{ $op->nome }} ({{ $op->pivot->data_inizio ? \Carbon\Carbon::parse($op->pivot->data_inizio)->format('d/m H:i') : '-' }})</small><br>
                     @endforeach
                 </td>
-                <td>{{ $fase->qta_prod ?? '-' }}</td>
-                <td>{{ $fase->timeout ?? '-' }}</td>
+                <td style="text-align:center; font-weight:600;">{{ $fase->qta_prod ?? '-' }}</td>
+                <td><small>{{ $fase->timeout ?? '-' }}</small></td>
             </tr>
             @endforeach
         </tbody>
@@ -338,24 +626,37 @@
         })->sortBy($getFaseOrdine)->values();
     @endphp
     @if($altreFasi->count() > 0)
-    <h4>Altre fasi</h4>
-    <table class="table table-sm table-bordered">
-        <thead class="table-secondary">
+    @php
+        $altreFasiGrouped = $altreFasi
+            ->groupBy(fn($f) => $f->faseCatalogo->nome_display ?? $f->fase ?? 'N/A')
+            ->map(function($g) {
+                return (object)[
+                    'nome' => $g->first()->faseCatalogo->nome_display ?? $g->first()->fase ?? 'N/A',
+                    'stato_min' => $g->map(fn($f) => is_numeric($f->stato) ? (int)$f->stato : 0)->min(),
+                    'count' => $g->count(),
+                    'operatori' => $g->flatMap(fn($f) => $f->operatori),
+                ];
+            })->values();
+    @endphp
+    <div class="section-h">Fasi altri reparti</div>
+    <table class="modern-table">
+        <thead>
             <tr>
                 <th>Fase</th>
-                <th>Stato</th>
+                <th style="text-align:center;">Stato</th>
+                <th style="text-align:center;">Qta Prodotta</th>
                 <th>Operatori</th>
             </tr>
         </thead>
         <tbody>
-            @foreach($altreFasi as $fase)
+            @foreach($altreFasiGrouped as $fg)
             <tr>
-                <td>{{ $fase->faseCatalogo->nome_display ?? '-' }}</td>
-                @php $sb2 = [0=>'#e9ecef',1=>'#cfe2ff',2=>'#fff3cd',3=>'#d1e7dd']; @endphp
-                <td style="background:{{ $sb2[$fase->stato] ?? '#e9ecef' }};font-weight:bold;text-align:center;">{{ $fase->stato }}</td>
+                <td style="font-weight:600;">{{ $fg->nome }}</td>
+                <td style="text-align:center;"><span class="stato-cell stato-{{ $fg->stato_min }}">{{ $fg->stato_min }}</span></td>
+                <td style="text-align:center;">@if($fg->count > 1)<span style="background:#e2e8f0; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:700;">×{{ $fg->count }}</span>@else <small style="color:#94a3b8;">1</small>@endif</td>
                 <td>
-                    @foreach($fase->operatori as $op)
-                        {{ $op->nome }} ({{ $op->pivot->data_inizio ? \Carbon\Carbon::parse($op->pivot->data_inizio)->format('d/m/Y H:i:s') : '-' }})<br>
+                    @foreach($fg->operatori->unique('id') as $op)
+                        <small>{{ $op->nome }}@if($op->pivot && $op->pivot->data_inizio) ({{ \Carbon\Carbon::parse($op->pivot->data_inizio)->format('d/m H:i') }})@endif</small>@if(!$loop->last), @endif
                     @endforeach
                 </td>
             </tr>
@@ -364,50 +665,30 @@
     </table>
     @endif
 
-    <!-- Prossime commesse -->
-    <h4 class="mt-4">Prossime commesse</h4>
-    <div style="overflow-x:auto;">
-        <table class="table table-bordered table-sm" style="font-size:13px; white-space:nowrap;">
-            <thead class="table-dark">
-                <tr>
-                    <th>Commessa</th>
-                    <th>Cliente</th>
-                    <th>Cod. Articolo</th>
-                    <th>Descrizione</th>
-                    <th>Qta</th>
-                    <th>Consegna</th>
-                    <th>Stato</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($prossime as $c)
-                <tr>
-                    <td>
-                        <a href="{{ route('commesse.show', $c->commessa) }}" class="fw-bold">{{ $c->commessa }}</a>
-                    </td>
-                    <td>{{ $c->cliente_nome ?? '-' }}</td>
-                    <td>{{ $c->cod_art ?? '-' }}</td>
-                    <td style="white-space:normal; max-width:200px; overflow:hidden; text-overflow:ellipsis;">{{ Str::limit($c->descrizione ?? '-', 50) }}</td>
-                    <td>{{ number_format($c->qta_richiesta ?? 0, 0, ',', '.') }}</td>
-                    <td>{{ $c->data_prevista_consegna ? \Carbon\Carbon::parse($c->data_prevista_consegna)->format('d/m/Y') : '-' }}</td>
-                    <td>
-                        @php
-                            $tot = $c->fasi_count ?? 0;
-                            $term = $c->fasi_terminate_count ?? 0;
-                            $pct = $tot > 0 ? round($term / $tot * 100) : 0;
-                            $color = $pct >= 100 ? '#198754' : ($pct >= 50 ? '#ffc107' : '#dc3545');
-                        @endphp
-                        <div style="display:flex; align-items:center; gap:6px;">
-                            <div style="flex:1; background:#e9ecef; border-radius:4px; height:16px; min-width:60px;">
-                                <div style="width:{{ $pct }}%; background:{{ $color }}; height:100%; border-radius:4px;"></div>
-                            </div>
-                            <span style="font-size:11px;">{{ $term }}/{{ $tot }}</span>
-                        </div>
-                    </td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
+    <!-- Prossime commesse (card grid) -->
+    <div class="section-h">Prossime commesse</div>
+    <div class="prossime-grid">
+        @foreach($prossime as $c)
+            @php
+                $tot = $c->fasi_count ?? 0;
+                $term = $c->fasi_terminate_count ?? 0;
+                $pct = $tot > 0 ? round($term / $tot * 100) : 0;
+                $color = $pct >= 100 ? '#16a34a' : ($pct >= 50 ? '#f59e0b' : '#dc2626');
+            @endphp
+            <a href="{{ route('commesse.show', $c->commessa) }}" class="prossima-card" style="border-left-color:{{ $color }};">
+                <div class="pc-num">{{ $c->commessa }}</div>
+                <div class="pc-cliente">{{ $c->cliente_nome ?? '-' }}</div>
+                <div class="pc-desc">{{ Str::limit($c->descrizione ?? '-', 90) }}</div>
+                <div class="pc-meta">
+                    <div>Qta <strong>{{ number_format($c->qta_richiesta ?? 0, 0, ',', '.') }}</strong></div>
+                    <div>Consegna <strong>{{ $c->data_prevista_consegna ? \Carbon\Carbon::parse($c->data_prevista_consegna)->format('d/m/Y') : '-' }}</strong></div>
+                </div>
+                <div class="pc-prog">
+                    <div class="pc-bar"><div class="pc-bar-fill" style="width:{{ $pct }}%; background:{{ $color }};"></div></div>
+                    <div class="pc-frac">{{ $term }}/{{ $tot }}</div>
+                </div>
+            </a>
+        @endforeach
     </div>
 </div>
 
@@ -460,7 +741,6 @@
                         <option>Problema macchina</option>
                         <option>Pranzo</option>
                         <option>Fine turno</option>
-                        <option value="Taglio per fase successiva">Taglio per fase successiva</option>
                         <option value="__altro__">Altro...</option>
                     </select>
                 </div>
