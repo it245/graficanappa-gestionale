@@ -245,9 +245,12 @@ class FieryService
         $cookies = $this->apiLogin();
         if (!$cookies) return null;
 
-        // Fast (web): 1 try 2s. Slow (background warm): 2 retry 10s
-        $maxAttempts = $fast ? 1 : 2;
-        $reqTimeout = $fast ? 2 : 10;
+        // Endpoint pesante (accounting con storico) richiede timeout più lungo in slow mode
+        $isHeavyEndpoint = str_contains($endpoint, '/accounting');
+
+        // Fast (web): 1 try 2s. Slow (background): 2 retry 10s, accounting 3 retry 30s
+        $maxAttempts = $fast ? 1 : ($isHeavyEndpoint ? 3 : 2);
+        $reqTimeout = $fast ? 2 : ($isHeavyEndpoint ? 30 : 10);
         $connTimeout = $fast ? 1 : 4;
         for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
             try {
