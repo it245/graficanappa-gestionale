@@ -112,6 +112,27 @@
 .tag-fustella { background: #eff6ff; border-color: #93c5fd; color: #1e40af; }
 .tag-cliche { background: #fffbeb; border-color: #fcd34d; color: #92400e; }
 
+/* === Tag stack verticale (uno sotto l'altro, allineati) === */
+.tag-stack { display: flex; flex-direction: column; gap: 6px; }
+.tag-row {
+    display: grid;
+    grid-template-columns: 28px 90px 1fr auto auto;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 1px solid;
+    font-size: 13px;
+    font-weight: 600;
+}
+.tag-row.tag-colori { background: #ecfdf5; border-color: #6ee7b7; color: #065f46; }
+.tag-row.tag-fustella { background: #eff6ff; border-color: #93c5fd; color: #1e40af; }
+.tag-row.tag-cliche { background: #fffbeb; border-color: #fcd34d; color: #92400e; }
+.tag-row .tag-icon { font-size: 16px; text-align: center; }
+.tag-row .tag-label { font-weight: 700; text-transform: uppercase; font-size: 11px; letter-spacing: 0.4px; }
+.tag-row .tag-val { background: rgba(0,0,0,0.08); padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 700; }
+.tag-row .tag-extra { background: rgba(0,0,0,0.06); padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+
 /* === Box info griglia compatta === */
 .info-grid {
     display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
@@ -430,26 +451,6 @@
                     </div>
                     <div class="card-body d-flex align-items-start gap-3">
                         <div class="flex-grow-1">
-                            {{-- Tag pills colori / fustella / cliché --}}
-                            <div class="tag-group" style="margin-bottom:14px;">
-                                @if($coloriCalc)
-                                <span class="tag-pill tag-colori"><span class="tag-icon">🎨</span> Colori <span class="tag-val">{{ $coloriCalc }}</span></span>
-                                @endif
-                                @if($fustellaCalc)
-                                <span class="tag-pill tag-fustella"><span class="tag-icon">✂️</span> Fustella <span class="tag-val">{{ $fustellaCalc }}</span></span>
-                                @endif
-                                @if($clicheGruppiOp->isNotEmpty())
-                                    @foreach($clicheGruppiOp as $numeroCl => $gruppoCl)
-                                    @php $clOp = $gruppoCl->first()->cliche; @endphp
-                                    <span class="tag-pill tag-cliche" title="{{ $gruppoCl->pluck('descrizione')->filter()->unique()->implode(' | ') }}">
-                                        <span class="tag-icon">🏷️</span> Cliché <span class="tag-val">{{ $clOp->numero }}</span>
-                                        @if($clOp->scatola)<span class="tag-val">Sc.{{ $clOp->scatola }}</span>@endif
-                                        @if($clOp->qta)<span class="tag-val">Qta {{ $clOp->qta }}</span>@endif
-                                    </span>
-                                    @endforeach
-                                @endif
-                            </div>
-
                             {{-- Informazioni generali / per fasi successive --}}
                             <div>
                                 <label><strong>Informazioni generali / per fasi successive:</strong></label>
@@ -477,6 +478,28 @@
                                     <button type="button" class="btn btn-sm btn-outline-primary" style="white-space:nowrap"
                                             onclick="inviaNotaFS({{ $ordine->id }}, {{ $fase->id }})">Invia</button>
                                 </div>
+                            </div>
+
+                            {{-- Tag pills colori / fustella / cliché (uno sotto l'altro, allineati) --}}
+                            <div class="tag-stack mt-3">
+                                @if($coloriCalc)
+                                <div class="tag-row tag-colori"><span class="tag-icon">🎨</span><span class="tag-label">Colori</span><span class="tag-val">{{ $coloriCalc }}</span></div>
+                                @endif
+                                @if($fustellaCalc)
+                                <div class="tag-row tag-fustella"><span class="tag-icon">✂️</span><span class="tag-label">Fustella</span><span class="tag-val">{{ $fustellaCalc }}</span></div>
+                                @endif
+                                @if($clicheGruppiOp->isNotEmpty())
+                                    @foreach($clicheGruppiOp as $numeroCl => $gruppoCl)
+                                    @php $clOp = $gruppoCl->first()->cliche; @endphp
+                                    <div class="tag-row tag-cliche" title="{{ $gruppoCl->pluck('descrizione')->filter()->unique()->implode(' | ') }}">
+                                        <span class="tag-icon">🏷️</span>
+                                        <span class="tag-label">Cliché</span>
+                                        <span class="tag-val">{{ $clOp->numero }}</span>
+                                        @if($clOp->scatola)<span class="tag-extra">Sc. {{ $clOp->scatola }}</span>@endif
+                                        @if($clOp->qta)<span class="tag-extra">Qta {{ $clOp->qta }}</span>@endif
+                                    </div>
+                                    @endforeach
+                                @endif
                             </div>
 
                             {{-- Scarti Prinect + Scarti Reali (solo stampa offset) --}}
