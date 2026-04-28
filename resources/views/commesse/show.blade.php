@@ -115,8 +115,7 @@
 /* === Tag stack verticale (uno sotto l'altro, allineati, compatti) === */
 .tag-stack { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
 .tag-row {
-    display: inline-grid;
-    grid-template-columns: 22px 70px auto auto auto;
+    display: inline-flex;
     align-items: center;
     gap: 8px;
     padding: 5px 12px;
@@ -124,8 +123,8 @@
     border: 1px solid;
     font-size: 12px;
     font-weight: 600;
-    width: auto;
     max-width: 100%;
+    flex-wrap: wrap;
 }
 .tag-row.tag-colori { background: #ecfdf5; border-color: #6ee7b7; color: #065f46; }
 .tag-row.tag-fustella { background: #eff6ff; border-color: #93c5fd; color: #1e40af; }
@@ -134,6 +133,7 @@
 .tag-row .tag-label { font-weight: 700; text-transform: uppercase; font-size: 11px; letter-spacing: 0.4px; }
 .tag-row .tag-val { background: rgba(0,0,0,0.08); padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 700; }
 .tag-row .tag-extra { background: rgba(0,0,0,0.06); padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+.tag-row .tag-desc { font-size: 11px; font-weight: 500; color: rgba(0,0,0,0.65); margin-left: 4px; }
 
 /* === Box info griglia compatta === */
 .info-grid {
@@ -492,13 +492,17 @@
                                 @endif
                                 @if($clicheGruppiOp->isNotEmpty())
                                     @foreach($clicheGruppiOp as $numeroCl => $gruppoCl)
-                                    @php $clOp = $gruppoCl->first()->cliche; @endphp
-                                    <div class="tag-row tag-cliche" title="{{ $gruppoCl->pluck('descrizione')->filter()->unique()->implode(' | ') }}">
+                                    @php
+                                        $clOp = $gruppoCl->first()->cliche;
+                                        $descrCl = $gruppoCl->pluck('descrizione')->filter()->unique()->implode(' | ');
+                                    @endphp
+                                    <div class="tag-row tag-cliche">
                                         <span class="tag-icon">🏷️</span>
                                         <span class="tag-label">Cliché</span>
                                         <span class="tag-val">{{ $clOp->numero }}</span>
                                         @if($clOp->scatola)<span class="tag-extra">Sc. {{ $clOp->scatola }}</span>@endif
                                         @if($clOp->qta)<span class="tag-extra">Qta {{ $clOp->qta }}</span>@endif
+                                        @if($descrCl)<span class="tag-desc">→ {{ $descrCl }}</span>@endif
                                     </div>
                                     @endforeach
                                 @endif
