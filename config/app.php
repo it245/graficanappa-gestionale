@@ -56,6 +56,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Force HTTPS / HSTS
+    |--------------------------------------------------------------------------
+    |
+    | Quando true, abilita header HSTS in SecurityHeaders middleware (per browser
+    | forzare HTTPS per 1 anno). Attivare SOLO dopo aver verificato che HTTPS
+    | sia stabile in produzione: se HTTPS si rompe, sito diventa inaccessibile
+    | per durata HSTS.
+    |
+    */
+
+    'force_https' => env('FORCE_HTTPS', false),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |
