@@ -12,11 +12,16 @@ class BrtService
     protected $userID;
     protected $password;
 
+    protected $verifySsl;
+
     public function __construct()
     {
         $this->baseUrl = config('services.brt.base_url');
         $this->userID = config('services.brt.user_id');
         $this->password = config('services.brt.password');
+        // Default true: verifica certificato. Imposta BRT_VERIFY_SSL=false in .env
+        // SOLO se BRT cambia/usa cert non valido. Lasciar true riduce MITM.
+        $this->verifySsl = config('services.brt.verify_ssl', true);
     }
 
     /**
@@ -29,7 +34,7 @@ class BrtService
                 'userID' => $this->userID,
                 'password' => $this->password,
             ])->withOptions([
-                'verify' => false,
+                'verify' => $this->verifySsl,
             ])->timeout(15)->get("{$this->baseUrl}/tracking/parcelID/{$parcelID}");
 
             if ($response->successful()) {
@@ -55,13 +60,20 @@ class BrtService
     protected function getSoapClient(string $wsdlUrl): SoapClient
     {
         $ctx = stream_context_create([
-            'ssl' => ['verify_peer' => false, 'verify_peer_name' => false],
+            'ssl' => [
+                'verify_peer' => $this->verifySsl,
+                'verify_peer_name' => $this->verifySsl,
+            ],
             'http' => ['timeout' => 30],
         ]);
         $wsdl = file_get_contents($wsdlUrl, false, $ctx);
         $wsdl = str_replace('http://wsr.brt.it', 'https://wsr.brt.it', $wsdl);
+
+        // Temp file con permessi restrittivi + cleanup automatico fine script
         $tmp = tempnam(sys_get_temp_dir(), 'brt_') . '.xml';
         file_put_contents($tmp, $wsdl);
+        @chmod($tmp, 0600);
+        register_shutdown_function(fn() => @unlink($tmp));
 
         return new SoapClient($tmp, [
             'trace' => true,

@@ -39,6 +39,9 @@ return [
         'base_url' => env('BRT_API_URL', 'https://api.brt.it/rest/v1'),
         'user_id' => env('BRT_USER_ID'),
         'password' => env('BRT_PASSWORD'),
+        // Default true (verifica cert SSL). Imposta BRT_VERIFY_SSL=false in .env
+        // SOLO se BRT cambia/usa cert non valido.
+        'verify_ssl' => env('BRT_VERIFY_SSL', true),
     ],
 
 ];
