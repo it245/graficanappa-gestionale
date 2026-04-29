@@ -115,8 +115,21 @@
     .badge-pronto { background:#dbeafe; color:#1e40af; }
     .badge-corso { background:#dcfce7; color:#166534; }
     .badge-ext { background:#ede9fe; color:#6d28d9; }
+    .badge-ext-inviata { background:#d1fae5; color:#065f46; }
     .badge-pausa { background:#fef3c7; color:#92400e; }
     .badge-dafare { background:#f3f4f6; color:#374151; }
+
+    .legenda {
+        display:flex; gap:14px; flex-wrap:wrap; align-items:center;
+        background:#fff; border:1px solid #e5e7eb; border-radius:8px;
+        padding:10px 14px; margin-bottom:14px; font-size:12px;
+    }
+    .legenda-titolo { font-weight:600; color:#6b7280; font-size:11px; text-transform:uppercase; letter-spacing:0.04em; }
+    .legenda-item { display:flex; align-items:center; gap:6px; color:#374151; }
+    .legenda-bordo {
+        width:14px; height:14px; border-radius:3px; border-left:4px solid;
+        background:#fafbfc;
+    }
 
     .btn-fase {
         background:#16a34a; color:#fff; border:none;
@@ -153,6 +166,21 @@
     <input type="text" id="searchBox" class="search-box" placeholder="Cerca commessa, cliente, descrizione...">
     <span class="stat-pill"><strong>{{ $gruppiEsterne->count() }}</strong> commesse</span>
     <span class="stat-pill"><strong>{{ $fasiEsterne->count() }}</strong> fasi totali</span>
+</div>
+
+<div class="legenda">
+    <span class="legenda-titolo">Stati</span>
+    <span class="legenda-item"><span class="badge-stato badge-dafare">Da fare</span> non iniziata</span>
+    <span class="legenda-item"><span class="badge-stato badge-pronto">Pronto</span> da inviare</span>
+    <span class="legenda-item"><span class="badge-stato badge-corso">In corso</span> dal terzista</span>
+    <span class="legenda-item"><span class="badge-stato badge-ext">EXT</span> esterno - DDT da inviare</span>
+    <span class="legenda-item"><span class="badge-stato badge-ext-inviata">EXT ✓</span> esterno - DDT inviata</span>
+    <span class="legenda-item"><span class="badge-stato badge-pausa">Pausa</span> in pausa</span>
+    <span class="legenda-titolo" style="margin-left:18px;">Percorso</span>
+    <span class="legenda-item"><span class="legenda-bordo" style="border-left-color:#22c55e;"></span> Base</span>
+    <span class="legenda-item"><span class="legenda-bordo" style="border-left-color:#eab308;"></span> Rilievi</span>
+    <span class="legenda-item"><span class="legenda-bordo" style="border-left-color:#f96f2a;"></span> Caldo</span>
+    <span class="legenda-item"><span class="legenda-bordo" style="border-left-color:#dc2626;"></span> Completo</span>
 </div>
 
 @forelse($gruppiEsterne as $gruppo)
@@ -216,7 +244,11 @@
                                 @elseif($statoFase == 1)
                                     <span class="badge-stato badge-pronto">Pronto</span>
                                 @elseif($statoFase == 5)
-                                    <span class="badge-stato badge-ext">EXT</span>
+                                    @if($fase->ddt_fornitore_id)
+                                        <span class="badge-stato badge-ext-inviata">EXT ✓</span>
+                                    @else
+                                        <span class="badge-stato badge-ext">EXT</span>
+                                    @endif
                                 @elseif($statoFase == 2)
                                     <span class="badge-stato badge-corso">In corso</span>
                                 @elseif($inPausa)
