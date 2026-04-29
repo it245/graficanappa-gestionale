@@ -659,6 +659,7 @@
                     'nome' => $g->first()->faseCatalogo->nome_display ?? $g->first()->fase ?? 'N/A',
                     'stato_min' => $g->map(fn($f) => is_numeric($f->stato) ? (int)$f->stato : 0)->min(),
                     'count' => $g->count(),
+                    'qta_prod_sum' => $g->sum(fn($f) => (int)($f->qta_prod ?? 0)),
                     'operatori' => $g->flatMap(fn($f) => $f->operatori),
                 ];
             })->values();
@@ -678,7 +679,16 @@
             <tr>
                 <td style="font-weight:600;">{{ $fg->nome }}</td>
                 <td style="text-align:center;"><span class="stato-cell stato-{{ $fg->stato_min }}">{{ $fg->stato_min }}</span></td>
-                <td style="text-align:center;">@if($fg->count > 1)<span style="background:#e2e8f0; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:700;">×{{ $fg->count }}</span>@else <small style="color:#94a3b8;">1</small>@endif</td>
+                <td style="text-align:center;">
+                    @if($fg->qta_prod_sum > 0)
+                        <strong style="color:#0f172a;">{{ number_format($fg->qta_prod_sum, 0, ',', '.') }}</strong>
+                    @else
+                        <small style="color:#94a3b8;">-</small>
+                    @endif
+                    @if($fg->count > 1)
+                        <span style="background:#e2e8f0; padding:1px 6px; border-radius:8px; font-size:10px; font-weight:700; margin-left:4px;" title="{{ $fg->count }} fasi raggruppate">×{{ $fg->count }}</span>
+                    @endif
+                </td>
                 <td>
                     @foreach($fg->operatori->unique('id') as $op)
                         <small>{{ $op->nome }}@if($op->pivot && $op->pivot->data_inizio) ({{ \Carbon\Carbon::parse($op->pivot->data_inizio)->format('d/m H:i') }})@endif</small>@if(!$loop->last), @endif
