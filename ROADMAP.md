@@ -11,24 +11,28 @@ Sviluppo: Giovanni Pietropaolo (Tirocinante) con supporto Claude Code (Anthropic
 | v1.1 Miglioramenti | Q1 2026 (Mar) | ✅ Done | Priorità manuali, lavorazioni esterne, report ore, presenze NetTime |
 | v2.0 Scheduler + Magazzino + OCR | Q1-Q2 2026 | 🔵 In corso | Scheduler ottimizzato, magazzino carta, OCR documenti |
 | v2.5 Fabbisogno + Ordini Acquisto | Q2 2026 | 🟠 Next | Pianificazione fabbisogno carta, generazione ordini fornitori |
-| v3.0 CRM + BI + AI Intelligence | Q3 2026 | 🟣 AI | Anagrafica clienti CRM, dashboard BI, AI per insight |
-| v4.0 Pianificazione AI | Q4 2026 | 🟣 AI | Mossa37 production scheduling con API Claude |
-| v5.0 Mobile App | Q1 2027 | ⚪ Future | App nativa operatori (iOS/Android) |
-| v6.0 Multi-Site | Q2 2027 | ⚪ Future | Supporto multi-stabilimento |
-| v7.0 IoT & Digital Twin | Q3 2027 | ⚪ Future | Sensori IoT macchine, digital twin produzione |
-| v8.0 BI & Analytics Avanzata | Q4 2027 | ⚪ Future | Predittiva, ML, ottimizzazione costi |
-| v9.0 Portale Clienti & API | Q4 2027 | ⚪ Future | Self-service clienti, API pubbliche |
-| v10.0 ATT Vendite + SDI Fatturazione Elettronica | Q2 2028 | ⚪ Future | Generazione fattura elettronica XML, invio Sistema di Interscambio Agenzia Entrate |
-| v11.0 PAS Acquisti + Ordini Fornitori | Q3 2028 | ⚪ Future | Documenti passivi gestiti in MES, ricezione fatture elettroniche |
-| v12.0 OC Cartotecnica completa | Q4 2028 | ⚪ Future | Segnature, agglomerati, attrezzature, lavorazioni industria-specific tipografia |
-| v13.0 IVA + Intrastat + Bollati + CONAI | Q1 2029 | ⚪ Future | Liquidazione IVA, registri, intrastat scambi UE, CONAI imballaggi |
-| v14.0 Cespiti + Bilancio XBRL CEE | Q2 2029 | ⚪ Future | Ammortamenti, bilancio Camera di Commercio (XBRL automatico) |
-| v15.0 Dismissione Onda + Migrazione storico | Q3 2029 | ⚪ Future | MES sostituisce Onda; periodo dual-write; cutover finale |
-| **v16.0 AI Co-Pilot integrato** | **Q4 2029-2030** | 🟣 AI | Claude integrato in tutti i processi MES (assistente operatori, anomaly detection, suggerimenti dashboard) |
-| **v17.0 AI Agents autonomi** | **2030-2031** | 🟣 AI | Sourcing fornitori, customer service first-line, scheduling auto |
-| **v18.0 Predictive Maintenance + ML qualità stampa** | **2030-2031** | 🟣 AI | ML per Heidelberg XL, Bobst, Canon — previsione guasti |
-| **v19.0 AI Vision** | **2031-2032** | 🟣 AI | Controllo qualità stampa via camera, OCR fatture passive, riconoscimento difetti |
-| **v20.0 Autonomous Operations** | **2032+** | 🟣 AI | Sistema gestionale auto-ottimizzante, AI agents collaborativi, intervento umano solo per eccezioni |
+| v3.0 Mobile App + Tablet operatori | Q3 2026 | ⚪ Future | App nativa operatori (iOS/Android), interfaccia tablet officina |
+| v4.0 Pianificazione AI (Mossa37) | Q4 2026 | 🟣 AI | Mossa37 production scheduling con API Claude |
+| v5.0 Qualità & Tracciabilità avanzata | Q1 2027 | ⚪ Future | Scarti dettagliati, controlli qualità, lot tracking |
+| v6.0 Audit Trail + Security Hardening + GDPR | Q2 2027 | ⚪ Future | Log azioni admin, HTTPS, 2FA, GDPR compliance completo |
+| v7.0 IoT & Digital Twin (ESP32, Bobst counter) | Q3 2027 | ⚪ Future | Sensori IoT macchine, contatori produzione, digital twin |
+| v8.0 BI Avanzata + Forecasting AI | Q4 2027 | 🟣 AI | Previsione domanda, ottimizzazione magazzino carta, ML |
+| v9.0 Portale Clienti + API + Self-service | Q1 2028 | ⚪ Future | Cliente vede stato commessa, scarica DDT, API pubbliche |
+| **— Inizia era ERP (sostituzione Onda) —** | | | |
+| v10.0 CRM + Anagrafica clienti completa | Q2 2028 | ⚪ Future | Gestione clienti/contatti/leads (sostituisce STDAnagraficaClienti Onda) |
+| v11.0 ATT Vendite + DDT + SDI Fatturazione Elettronica | Q3 2028 | ⚪ Future | Documenti vendita gestiti in MES, fattura elettronica XML, invio SDI Agenzia Entrate |
+| v12.0 PAS Acquisti + Ordini Fornitori | Q4 2028 | ⚪ Future | Documenti passivi gestiti in MES, ricezione fatture elettroniche |
+| v13.0 COG Contabilità Analitica + Prima Nota | Q1 2029 | ⚪ Future | Scrittura contabile auto da MES (COGPrimeNoteTeste, ANAMovCommessa) |
+| v14.0 OC Cartotecnica completa | Q2 2029 | ⚪ Future | Segnature, agglomerati, attrezzature, lavorazioni industria-specific tipografia |
+| v15.0 IVA + Intrastat + Bollati + CONAI | Q3 2029 | ⚪ Future | Liquidazione IVA, registri, intrastat scambi UE, CONAI imballaggi |
+| v16.0 Cespiti + Bilancio XBRL CEE | Q4 2029 | ⚪ Future | Ammortamenti, bilancio Camera di Commercio (XBRL automatico) |
+| v17.0 Dismissione Onda + Migrazione storico | Q1-Q2 2030 | ⚪ Future | MES sostituisce Onda; periodo dual-write; cutover finale |
+| **— Era AI integrata —** | | | |
+| **v18.0 AI Co-Pilot integrato** | **Q3 2030 - 2031** | 🟣 AI | Claude integrato in tutti i processi MES (assistente operatori, anomaly detection, suggerimenti dashboard) |
+| **v19.0 AI Agents autonomi** | **2031** | 🟣 AI | Sourcing fornitori, customer service first-line, scheduling auto |
+| **v20.0 Predictive Maintenance + ML qualità stampa** | **2031-2032** | 🟣 AI | ML per Heidelberg XL, Bobst, Canon — previsione guasti |
+| **v21.0 AI Vision** | **2032** | 🟣 AI | Controllo qualità stampa via camera, OCR fatture passive, riconoscimento difetti |
+| **v22.0 Autonomous Operations** | **2032+** | 🟣 AI | Sistema gestionale auto-ottimizzante, AI agents collaborativi, intervento umano solo per eccezioni |
 | **Post-2032 — Manutenzione + evoluzione** | **2032+** | 🔄 Permanente | Manutenzione attiva, nuove integrazioni, compliance, supporto IT, formazione |
 
 ## L'AI nei processi (visione 2027-2032)
