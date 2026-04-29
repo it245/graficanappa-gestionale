@@ -107,7 +107,7 @@
     <h1>ROADMAP SVILUPPO</h1>
     <h2>Sistema Gestionale MES &mdash; Grafica Nappa srl</h2>
     <div class="piano">Piano biennale (AI-Assisted): Febbraio 2026 &mdash; Febbraio 2028</div>
-    <div class="date">Aggiornata al 16 Marzo 2026</div>
+    <div class="date">Aggiornata al 29 Aprile 2026</div>
     <div class="author">Giovanni Pietropaolo &mdash; Tirocinante Sistemi Informativi</div>
 </div>
 
@@ -162,13 +162,19 @@
             <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
         </tr>
         <tr>
-            <td class="version-col">v2.0 Scheduler Mossa 37</td>
+            <td class="version-col">v2.0 Scheduler + Magazzino + OCR</td>
+            <td><div class="bar bar-done">&nbsp;</div></td>
             <td><div class="bar bar-current">&nbsp;</div></td>
+            <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+        </tr>
+        <tr>
+            <td class="version-col">v2.5 Fabbisogno + Ordini Acquisto</td>
+            <td></td>
             <td><div class="bar bar-next">&nbsp;</div></td>
             <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
         </tr>
         <tr>
-            <td class="version-col">v3.0 AI Intelligence (Open Source)</td>
+            <td class="version-col">v3.0 CRM + BI + AI Intelligence</td>
             <td></td><td></td>
             <td><div class="bar bar-ai">&nbsp;</div></td>
             <td></td><td></td><td></td><td></td><td></td><td></td>
@@ -186,7 +192,7 @@
             <td></td><td></td><td></td><td></td>
         </tr>
         <tr>
-            <td class="version-col">v6.0 Magazzino &amp; Materiali</td>
+            <td class="version-col">v6.0 Contabilit&agrave; Analitica &amp; Consuntivo</td>
             <td></td><td></td><td></td><td></td><td></td>
             <td><div class="bar bar-future">&nbsp;</div></td>
             <td></td><td></td><td></td>
@@ -487,33 +493,75 @@
     <li class="todo">Integrazione catalogo clich&eacute;: gestione e consultazione clich&eacute; per fustelle e stampa a caldo</li>
 </ul>
 
-<h4>Magazzino Base &amp; Logistica (da sviluppare)</h4>
-<p>Gestione magazzino standalone (indipendente da Onda) con scarico materiali tramite lettore QR code USB/Bluetooth.</p>
+<h4>Magazzino Carta con OCR Intelligente</h4>
+<p>Sistema completo di gestione magazzino carta con tracciabilit&agrave; dalla ricezione bolla fornitore al prelievo per produzione. OCR con Tesseract per lettura automatica bolle (predisposto per upgrade a AI Vision).</p>
 <ul class="checklist">
-    <li class="todo">Anagrafica materiali: carta, lastre, inchiostri, fustelle, plastificazione &mdash; codice interno, unit&agrave; di misura, formato, fornitore, soglia minima</li>
-    <li class="todo">Movimenti di magazzino: carico (arrivo merce + DDT fornitore), scarico (prelievo per produzione), rettifica inventario con motivazione</li>
-    <li class="todo">Scarico tramite QR code: etichette QR generate dal MES, scansione con lettore USB/Bluetooth &rarr; campo input identifica materiale, operatore inserisce quantit&agrave; e commessa</li>
-    <li class="todo">Generazione e stampa etichette QR per ogni materiale (QR + nome leggibile + codice)</li>
-    <li class="todo">Dashboard magazzino: giacenza attuale, materiali sotto soglia (evidenziati rosso), ultimi movimenti, filtri per categoria/fornitore/periodo</li>
-    <li class="todo">Alert soglia minima sul dashboard owner: &ldquo;X materiali sotto scorta&rdquo;</li>
-    <li class="todo">Report consumo materiali per periodo e per commessa</li>
+    <li class="done">Anagrafica articoli carta: codice, tipo carta, formato, grammatura, spessore, UM, soglia minima, fornitore, certificazioni</li>
+    <li class="done">Registrazione bolla con OCR Tesseract: foto bolla &rarr; estrazione automatica fornitore, tipo carta, formato, grammatura, quantit&agrave;</li>
+    <li class="done">Creazione automatica articolo da dati OCR se non presente in anagrafica</li>
+    <li class="done">Movimenti magazzino: carico (da bolla), scarico (prelievo per commessa), reso, rettifica inventariale</li>
+    <li class="done">Scarico carta SOLO per fase STAMPA (offset o digitale) &mdash; fasi successive lavorano sullo stesso foglio</li>
+    <li class="done">Etichette QR 10x15cm: PDF con QR code + codice articolo + tipo carta + formato + grammatura</li>
+    <li class="done">Scanner QR da fotocamera browser (html5-qrcode) con fallback input manuale</li>
+    <li class="done">Dashboard magazzino: 4 KPI, giacenze sotto soglia, ultimi movimenti</li>
+    <li class="done">Giacenze con filtri: tipo carta, formato, grammatura</li>
+    <li class="done">Storico movimenti con filtri: tipo, periodo, articolo</li>
+    <li class="done">Alert automatico sotto soglia minima</li>
+    <li class="done">Accesso limitato: reparto spedizione, owner, admin (middleware dedicato MagazzinoAuth)</li>
+    <li class="done">Parser OCR adattato ai fornitori reali: Stratosfera, Fedrigoni, MM Board &amp; Paper, Canon</li>
+    <li class="done">Predisposto per upgrade a AI Vision (Gemini/Claude) per accuratezza 95%+</li>
 </ul>
 
 <div class="section-box">
-    <strong>Hardware consigliato per QR:</strong> Lettore Bluetooth portatile (es. Netum C750, ~40&euro;) &mdash; si comporta come tastiera, compatibile con qualsiasi PC/tablet senza fotocamera. Consigliati 2-3 unit&agrave; per coprire magazzino e reparti.
+    <strong>Proposte hardware:</strong> Tablet a parete per postazione magazzino + pistola barcode Bluetooth per scansione QR + stampante etichette WiFi (oppure stampante attuale collegata via Ethernet a ripetitore). Documento proposta dettagliato disponibile.
 </div>
 
+<h4>Sicurezza v2.0 (aprile 2026)</h4>
+<ul class="checklist">
+    <li class="done">Audit automatico: 4 agenti paralleli (SQL injection, auth bypass, XSS/file upload, exposed routes)</li>
+    <li class="done">Fix magazzino: middleware MagazzinoAuth controlla reparto spedizione</li>
+    <li class="done">Fix open redirect: validazione URL solo percorsi interni</li>
+    <li class="done">Fix file upload: storage privato + validazione MIME types</li>
+    <li class="done">Fix SQL injection LIKE: escape wildcards in 3 controller</li>
+    <li class="done">Fix CSRF endpoint e Prinect explorer: aggiunto middleware auth</li>
+    <li class="done">Fix token auth: verifica operatore attivo nei middleware</li>
+    <li class="done">Fix mass assignment: ruolo/attivo/password in $guarded su Operatore</li>
+    <li class="done">Fix exception messages: log server-side, messaggio generico all'utente</li>
+    <li class="done">Fix JSON XSS: flag HEX nei json_encode delle viste Blade</li>
+</ul>
+
+<h4>Performance Sync Onda (aprile 2026)</h4>
+<ul class="checklist">
+    <li class="done">Sync Onda ottimizzata: esclude commesse completate (tutte fasi stato &ge; 4)</li>
+    <li class="done">Riduzione progressiva righe da processare man mano che gli ordini si completano</li>
+</ul>
+
+<!-- ========== v2.5 ========== -->
+<h3><span class="version-badge badge-next">v2.5</span> Fabbisogno Materiali &amp; Ordini Acquisto <span class="timeline-badge">Mag-Giu 2026</span></h3>
+<p>Collegamento automatico tra commesse e magazzino carta: calcolo fabbisogno, verifica disponibilit&agrave;, generazione ordini di acquisto e blocco/rilascio produzione. Ispirati all'analisi di sistemi MES di riferimento nel settore tipografico.</p>
+
+<ul class="checklist">
+    <li class="todo"><strong>Fabbisogno materiali:</strong> dalla commessa calcola automaticamente quanta carta serve (tipo, formato, grammatura, quantit&agrave;) e verifica la giacenza disponibile</li>
+    <li class="todo"><strong>Ordine di acquisto:</strong> quando la giacenza scende sotto soglia o il fabbisogno supera la disponibilit&agrave;, genera automaticamente proposta d'ordine al fornitore</li>
+    <li class="todo"><strong>Blocco/Rilascio produzione:</strong> impedisce l'avvio di una fase STAMPA se il materiale non &egrave; disponibile a magazzino, con avviso all'operatore</li>
+    <li class="todo"><strong>Impegno materiale:</strong> quando una commessa &egrave; confermata, la carta necessaria viene &ldquo;impegnata&rdquo; (riservata) per quella commessa</li>
+    <li class="todo">Mappa flussi: Commessa &rarr; Fabbisogno &rarr; Verifica giacenza &rarr; Ordine acquisto o Prelievo</li>
+</ul>
+
 <!-- ========== v3.0 ========== -->
-<h3><span class="version-badge badge-ai">v3.0</span> AI Intelligence (Open Source) <span class="timeline-badge">Lug-Set 2026</span></h3>
+<h3><span class="version-badge badge-ai">v3.0</span> CRM, Business Intelligence &amp; AI <span class="timeline-badge">Lug-Set 2026</span></h3>
 
 <div class="ai-box">
-    <strong>SUPER INTEGRAZIONE: Intelligenza Artificiale nel MES</strong><br>
-    Integrazione di un modello AI open-source e gratuito (es. LLaMA, Mistral, Gemma) eseguito in locale o via API free-tier.
+    <strong>SUPER INTEGRAZIONE: CRM + BI + Intelligenza Artificiale nel MES</strong><br>
+    Gestione completa del ciclo commerciale (offerta &rarr; ordine), business intelligence avanzata e integrazione AI open-source per analisi predittiva.
     L'AI analizza dati di produzione storici e in tempo reale per fornire insight, previsioni e suggerimenti operativi,
     senza costi di licenza ricorrenti.
 </div>
 
 <ul class="checklist">
+    <li class="todo"><strong>CRM &amp; Gestione Offerte:</strong> flusso completo richiesta offerta &rarr; preventivo &rarr; accettazione &rarr; conferma ordine &rarr; commessa</li>
+    <li class="todo"><strong>Preventivazione:</strong> costo stimato commessa (fabbisogno materiali + ore macchina stimate + conto lavoro) con confronto consuntivo</li>
+    <li class="todo"><strong>Business Intelligence:</strong> dashboard analisi avanzata con drill-down per cliente/macchina/operatore, trend, KPI configurabili</li>
     <li class="todo">Integrazione modello AI open-source (LLaMA / Mistral / Gemma) via Ollama o API free-tier</li>
     <li class="todo"><strong>Assistente AI per il titolare:</strong> chat in linguaggio naturale per interrogare i dati di produzione
         <ul class="sub-section">
@@ -526,7 +574,6 @@
     <li class="todo"><strong>Ottimizzazione tempi stimati:</strong> AI ricalibra avviamento e copie/ora in base ai dati reali accumulati</li>
     <li class="todo"><strong>Report AI generati:</strong> il report settimanale include osservazioni, anomalie e raccomandazioni scritte dall'AI</li>
     <li class="todo"><strong>Anomaly detection:</strong> segnalazione automatica di tempi anomali (fase troppo lunga/corta rispetto allo storico)</li>
-    <li class="todo">Cache intelligente delle risposte AI (Redis) per ottimizzare le performance</li>
 </ul>
 
 <!-- ========== v4.0 ========== -->
@@ -762,6 +809,46 @@
     <strong>Stack tecnologico previsto (v2.0&ndash;v10.0):</strong> AI Open Source (LLaMA / Mistral / Gemma via Ollama) &middot; Laravel Reverb (WebSocket) &middot; PWA / Service Workers &middot; Redis (cache AI) &middot; MQTT (IoT) &middot; REST API pubblica (OpenAPI) &middot; Telegram Bot API &middot; Three.js (Digital Twin 3D) &middot; App nativa (React Native/Flutter)
 </div>
 
+<!-- ========== SOSTITUZIONE ONDA ========== -->
+<h3>Piano di sostituzione Onda (ERP)</h3>
+<p>Obiettivo a lungo termine: rendere il MES completamente autonomo, eliminando la dipendenza da Onda IQ. Il database Onda contiene <strong>863 tabelle</strong> e oltre <strong>7 milioni di righe</strong>. La sostituzione avviene per fasi, partendo dalle aree gia coperte dal MES.</p>
+
+<table>
+    <tr><th>Fase</th><th>Versione MES</th><th>Cosa si sostituisce</th><th>Onda rimane per</th></tr>
+    <tr>
+        <td><strong>Oggi</strong></td>
+        <td>v2.0</td>
+        <td>Produzione, magazzino carta, DDT vendita PDF</td>
+        <td>Tutto il resto (ordini, contabilit&agrave;, fatturazione, anagrafiche)</td>
+    </tr>
+    <tr>
+        <td><strong>Fase 2</strong></td>
+        <td>v2.5</td>
+        <td>+ Fabbisogno materiali, ordini acquisto</td>
+        <td>Ordini, contabilit&agrave;, fatturazione</td>
+    </tr>
+    <tr>
+        <td><strong>Fase 3</strong></td>
+        <td>v3.0</td>
+        <td>+ CRM, preventivi, anagrafica clienti/fornitori autonoma, BI</td>
+        <td>Solo contabilit&agrave; e fatturazione</td>
+    </tr>
+    <tr>
+        <td><strong>Fase 4</strong></td>
+        <td>v6.0</td>
+        <td>+ Contabilit&agrave; analitica, consuntivo avanzato</td>
+        <td>Solo fatturazione e contabilit&agrave; generale</td>
+    </tr>
+    <tr>
+        <td><strong>Fase 5</strong></td>
+        <td>v9.0</td>
+        <td>+ Fatturazione elettronica SDI, contabilit&agrave; generale, prima nota</td>
+        <td><strong>Onda dismesso completamente</strong></td>
+    </tr>
+</table>
+
+<p><strong>Documento completo:</strong> <a href="docs/mappa_onda_completa.html">Mappa database Onda</a> &mdash; analisi di tutte le 863 tabelle con piano di migrazione.</p>
+
 <!-- ========== BRANCH ========== -->
 <h3>Branch di sviluppo</h3>
 
@@ -950,10 +1037,124 @@ che possiamo importare nel MES. In particolare:
 </ul>
 </div>
 
+<!-- ========== TODO ROADMAP OPERATIVA ========== -->
+<h3 style="margin-top:50px; border-left-color:#e67e22;">Roadmap operativa corrente <span class="timeline-badge" style="background:#e67e22;">Aggiornata 29/04/2026</span></h3>
+<p>Lista attiva delle attivit&agrave; in corso, rimandate o bloccate. Sincronizzata con <code>ROADMAP.md</code>.</p>
+
+<h4>UI Overhaul Enterprise SaaS <span style="font-size:12px; color:#888;">(priorit&agrave; media &mdash; rimandato)</span></h4>
+<p style="font-size:13px;">Stile target: <strong>Linear / Notion / Vercel</strong> &mdash; sfondo bianco/grigio chiaro, accent blu (#2563eb), font Inter, shadow leggere, spaziature generose, micro-interazioni discrete, tabelle dense ma leggibili. Solo CSS + componenti Blade wrapper, zero modifiche logica/controller/DB/JS handler.</p>
+
+<p style="font-size:13px;"><strong>Phase 1 &mdash; Foundation</strong> (1-2 giorni):</p>
+<ul class="checklist">
+    <li class="todo">Estrai token CSS in <code>public/css/mes-tokens.css</code> (cacheable)</li>
+    <li class="todo">Spacing/shadow/radius/typography scale</li>
+    <li class="todo">Inter globale in <code>app.blade.php</code></li>
+    <li class="todo">Componenti Blade: <code>&lt;x-mes.button&gt;</code>, <code>&lt;x-mes.modal&gt;</code>, <code>&lt;x-mes.card&gt;</code>, <code>&lt;x-mes.input&gt;</code>, <code>&lt;x-mes.table&gt;</code></li>
+    <li class="todo">Rimuovi token collision in <code>fiery/dashboard.blade.php</code></li>
+</ul>
+
+<p style="font-size:13px;"><strong>Phase 2 &mdash; Pagine top</strong> (3-5 giorni):</p>
+<ul class="checklist">
+    <li class="todo">Owner dashboard: 121 modal Bootstrap &rarr; <code>&lt;x-mes.modal&gt;</code>, tabella dense, KPI bar, filtri sidebar</li>
+    <li class="todo">Operatore dashboard: tab &rarr; segmented control, lazy-load QR, card commessa con tag pills</li>
+    <li class="todo">Spedizione dashboard: card sezioni uniformi, tabelle componente</li>
+</ul>
+
+<p style="font-size:13px;"><strong>Phase 3 &mdash; Pagine secondarie</strong> (2-3 giorni):</p>
+<ul class="checklist">
+    <li class="todo">Admin dashboard, cruscotto, lista_commesse</li>
+    <li class="todo">Magazzino dashboard + giacenze/articoli/movimenti</li>
+    <li class="todo">Owner: reparti_overview, esterne, fustelle, report_ore, fasi_terminate</li>
+    <li class="todo">Prestampa, Fiery contatori, Auth login (split-screen) + 2FA + errors</li>
+</ul>
+
+<p style="font-size:13px;"><strong>Phase 4 &mdash; Polish + responsive</strong> (1-2 giorni):</p>
+<ul class="checklist">
+    <li class="todo">Breakpoints SCSS (320, 640, 1024, 1280)</li>
+    <li class="todo">Sidebar collapse mobile, scroll-x con sticky-col, touch target &ge;44px</li>
+    <li class="todo">Skeleton loaders, toast notifications, hover states uniformi, focus rings AA</li>
+    <li class="todo">Dark mode completo (sync layout, contrast AA)</li>
+    <li class="todo">Print stylesheet + PWA polish (splash, theme color, app icons)</li>
+</ul>
+
+<p style="font-size:13px; font-style:italic; color:#666;">Stima totale: 7-12 giorni FTE.</p>
+
+<h4>Integrazione Bobst Visionfold 110 <span style="font-size:12px; color:#c00;">(BLOCCATA)</span></h4>
+<p style="font-size:13px;"><strong>Risposta Davide Alberti (Bobst Italia, 29/04/2026)</strong>: opzioni DATALINK e ERP INTERFACE non implementate al momento dell'acquisto, nessun ordine/quotazione dal 2015 ad oggi. Visionfold non raggiungibile da assistenza remota Helpline+.</p>
+<p style="font-size:13px;">Conseguenze: DHL Web Open Data, SQL Web Open Data, MRP Web push, JTI / Quality Mode / Manual Event tutti <strong>non attivi</strong>.</p>
+
+<p style="font-size:13px;"><strong>Strade alternative</strong>:</p>
+<ul class="checklist">
+    <li class="todo"><strong>Opzione A &mdash; Counter pulse 24V + ESP32 (€20)</strong>: solo conteggio pezzi, hardware fai-da-te, no job/velocità</li>
+    <li class="todo"><strong>Opzione B &mdash; HDMI splitter + Raspberry Pi + OCR (€110)</strong>: tutti i dati ricchi via screen scrape, no modifiche macchina</li>
+    <li class="todo"><strong>Opzione C &mdash; Pagare retrofit Bobst (€5.000-15.000)</strong>: integrazione nativa, decisione capo Antonio</li>
+</ul>
+
+<h4>HTTPS Apache <span style="font-size:12px; color:#888;">(rimandato &mdash; cert browser non si fida)</span></h4>
+<p style="font-size:13px;">Cert + vhost SSL pronti su .60. Browser Chrome/Edge non si fidano (cert in user store via certutil invece di machine store). Rollback fatto a HTTP.</p>
+<ul class="checklist">
+    <li class="todo">Riprovare con import cert via <code>mmc.exe</code> in Trusted Root Machine store</li>
+    <li class="todo">Distribuire cert su tutti PC dipendenti</li>
+    <li class="todo">Alternative: Cloudflare Tunnel, mkcert, Win-acme</li>
+    <li class="todo">Quando OK: <code>.env</code> &rarr; <code>APP_URL=https://gestionale</code> + <code>SESSION_SECURE_COOKIE=true</code> + <code>FORCE_HTTPS=true</code></li>
+</ul>
+
+<h4>Mossa 37 &mdash; Scheduler ottimizzato <span style="font-size:12px; color:#888;">(branch <code>mossa37</code>, NON in produzione)</span></h4>
+<ul class="checklist">
+    <li class="done">Step 1-4: migration, PriorityService, evento PhaseCompleted, propagazione</li>
+    <li class="todo">Step 5: OptimizeScheduleJob + integrazione API Claude</li>
+    <li class="todo">Step 6: dashboard fallback se API down</li>
+    <li class="todo">Step 7: cron job schedulazione automatica</li>
+    <li class="todo">Step 8: test end-to-end con dati produzione reali</li>
+    <li class="todo">Decisione capo: deploy su master o restare branch separato</li>
+</ul>
+
+<h4>Manutenzione &amp; Fix correnti</h4>
+
+<p style="font-size:13px;"><strong>Sicurezza / Privacy</strong>:</p>
+<ul class="checklist">
+    <li class="todo">Stampare e firmare DOC-SEC-MES-001</li>
+    <li class="todo">Stampare e firmare DOC-GDPR-MES-001</li>
+    <li class="todo">Risolvere security audit findings (1 critico, 3 alti, 4 medi, 3 bassi)</li>
+</ul>
+
+<p style="font-size:13px;"><strong>Bug fix</strong>:</p>
+<ul class="checklist">
+    <li class="todo">Fix CSRF "Page Expired" telefono/VPN: <code>.env</code> server &rarr; <code>SESSION_DOMAIN=</code> (vuoto)</li>
+    <li class="todo">Configurare <code>.env</code> per tunnel tnnl.in: <code>APP_URL</code>, <code>SESSION_DOMAIN=.p.tnnl.in</code>, <code>SESSION_SECURE_COOKIE=true</code></li>
+    <li class="todo">Bug audit findings (3 critici, 6 alti, 8 medi, 2 bassi)</li>
+</ul>
+
+<p style="font-size:13px;"><strong>Pulizie</strong>:</p>
+<ul class="checklist">
+    <li class="todo">Seeder FasiCatalogo: rimuovere PIEGA2ANTECORDONE da legatoria (resta finitura digitale)</li>
+    <li class="todo">Aggiungere <code>NETTIME_SHARE_USER</code>/<code>PASS</code> al <code>.env</code> server</li>
+    <li class="todo">Performance audit findings (5 quick wins, 5 fix medi, indici SQL)</li>
+</ul>
+
+<p style="font-size:13px;"><strong>MCP / Integrazioni</strong>:</p>
+<ul class="checklist">
+    <li class="todo">Finire config <code>claude_desktop_config.json</code> Mac capo (Onda MCP)</li>
+    <li class="todo">Solar-Log: script PHP/PowerShell login + scrape pagina rendimenti</li>
+    <li class="todo">Fiery EFI: chiamare service per firmware update (causa hang intermittente)</li>
+</ul>
+
+<h4>DONE recenti (28-29/04/2026)</h4>
+<ul class="checklist">
+    <li class="done">Fiery resilience: retry + stale cache 30 min + warm command</li>
+    <li class="done">Task scheduler <code>FieryWarmCache</code> ogni 60s su .60</li>
+    <li class="done">Polling dashboard Fiery 15s &rarr; 30s</li>
+    <li class="done">Rimosso <code>/jobs/printing</code> ridondante + <code>/accounting</code> da dashboard render</li>
+    <li class="done">Counter rinominato "Conteggio" &rarr; "Qta Prodotta" su dettaglio commessa</li>
+    <li class="done">Branch <code>feature/multi-tenant</code> cancellato (MES non più SaaS commerciale)</li>
+    <li class="done">File pitch SaaS rimossi (memo Antonio 4Graph, MES_Overview pitch)</li>
+    <li class="done">Worktree git puliti (4 vecchi worktree agent rimossi)</li>
+</ul>
+
 <div class="footer">
     <p>Sistema Gestionale MES &mdash; Grafica Nappa srl &mdash; Aversa (CE)</p>
     <p>Sviluppo: Giovanni Pietropaolo (Tirocinante) con supporto Claude Code (Anthropic AI)</p>
-    <p style="margin-top:8px; font-size:11px; color:#aaa;">Piano biennale AI-Assisted &middot; Feb 2026 &ndash; Feb 2028 &middot; 10 versioni &middot; Aggiornamento: 09/03/2026</p>
+    <p style="margin-top:8px; font-size:11px; color:#aaa;">Piano biennale AI-Assisted &middot; Feb 2026 &ndash; Feb 2028 &middot; 10 versioni &middot; Aggiornamento: 29/04/2026</p>
 </div>
 
 </body>
