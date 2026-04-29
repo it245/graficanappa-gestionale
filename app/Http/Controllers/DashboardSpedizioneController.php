@@ -161,7 +161,20 @@ class DashboardSpedizioneController extends Controller
             ->get()
             ->sortBy(fn($f) => $f->ordine->data_prevista_consegna ?? '9999-12-31');
 
-        return view('spedizione.esterne', compact('fasiEsterne', 'operatore'));
+        $gruppiEsterne = $fasiEsterne
+            ->groupBy('ordine_id')
+            ->map(function ($fasi) {
+                $primo = $fasi->first();
+                return (object) [
+                    'ordine'        => $primo->ordine,
+                    'fasi'          => $fasi->values(),
+                    'data_consegna' => $primo->ordine->data_prevista_consegna ?? null,
+                ];
+            })
+            ->sortBy(fn($g) => $g->data_consegna ?? '9999-12-31')
+            ->values();
+
+        return view('spedizione.esterne', compact('fasiEsterne', 'gruppiEsterne', 'operatore'));
     }
 
     public function invioAutomatico(Request $request)
