@@ -267,9 +267,9 @@
                             <tr class="{{ $rowClass }}">
                                 <td><strong>{{ $c->commessa }}</strong></td>
                                 <td>{{ \Illuminate\Support\Str::limit($c->cliente, 18) }}</td>
-                                <td class="text-end">{{ $c->valore_ordine > 0 ? '&euro;' . number_format($c->valore_ordine, 0, ',', '.') : '--' }}</td>
+                                <td class="text-end">{{ $c->valore_ordine > 0 ? '€' . number_format($c->valore_ordine, 0, ',', '.') : '--' }}</td>
                                 <td class="text-end">&euro;{{ number_format($c->costo_lav, 0, ',', '.') }}</td>
-                                <td class="text-end">{{ $c->costo_materiali > 0 ? '&euro;' . number_format($c->costo_materiali, 0, ',', '.') : '--' }}</td>
+                                <td class="text-end">{{ $c->costo_materiali > 0 ? '€' . number_format($c->costo_materiali, 0, ',', '.') : '--' }}</td>
                                 <td class="text-end">&euro;{{ number_format($c->costo_totale, 0, ',', '.') }}</td>
                                 <td class="text-end">
                                     @if($c->margine !== null)
