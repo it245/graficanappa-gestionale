@@ -1,5 +1,29 @@
 # MES Grafica Nappa — Roadmap
 
+**Piano biennale AI-Assisted: Febbraio 2026 — Febbraio 2028**
+Sviluppo: Giovanni Pietropaolo (Tirocinante) con supporto Claude Code (Anthropic AI).
+
+## Timeline biennale (v1.0 → v10.0)
+
+| Versione | Periodo | Stato | Descrizione |
+|----------|---------|-------|-------------|
+| v1.0 MES Completo | Q1 2026 (Gen-Feb) | ✅ Done | Fondamenta, produzione, costi, integrazioni Onda/Prinect/Fiery |
+| v1.1 Miglioramenti | Q1 2026 (Mar) | ✅ Done | Priorità manuali, lavorazioni esterne, report ore, presenze NetTime |
+| v2.0 Scheduler + Magazzino + OCR | Q1-Q2 2026 | 🔵 In corso | Scheduler ottimizzato, magazzino carta, OCR documenti |
+| v2.5 Fabbisogno + Ordini Acquisto | Q2 2026 | 🟠 Next | Pianificazione fabbisogno carta, generazione ordini fornitori |
+| v3.0 CRM + BI + AI Intelligence | Q3 2026 | 🟣 AI | Anagrafica clienti CRM, dashboard BI, AI per insight |
+| v4.0 Pianificazione AI | Q4 2026 | 🟣 AI | Mossa37 production scheduling con API Claude |
+| v5.0 Mobile App | Q1 2027 | ⚪ Future | App nativa operatori (iOS/Android) |
+| v6.0 Multi-Site | Q2 2027 | ⚪ Future | Supporto multi-stabilimento |
+| v7.0 IoT & Digital Twin | Q3 2027 | ⚪ Future | Sensori IoT macchine, digital twin produzione |
+| v8.0 BI & Analytics Avanzata | Q4 2027 | ⚪ Future | Predittiva, ML, ottimizzazione costi |
+| v9.0 Portale Clienti & API | Q4 2027 | ⚪ Future | Self-service clienti, API pubbliche |
+| v10.0 Industria 4.0 Completa | Q1 2028 | ⚪ Future | Ecosistema integrato fornitori-produzione-cliente |
+
+📄 **Roadmap completa con dettaglio versioni**: `ROADMAP.html` (timeline Gantt + checklist v1.0-v10.0)
+
+---
+
 ## TODO — UI Overhaul Enterprise SaaS (PRIORITÀ MEDIA)
 
 Stile target: **Linear / Notion / Vercel** — sfondo bianco/grigio chiaro, accent blu (#2563eb), font Inter, shadow leggere, spaziature generose, micro-interazioni discrete, tabelle dense ma leggibili.
