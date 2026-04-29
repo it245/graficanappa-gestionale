@@ -116,6 +116,64 @@ Stile target: **Linear / Notion / Vercel** — sfondo bianco/grigio chiaro, acce
 
 ---
 
+## OBIETTIVO STRATEGICO — Sostituzione Onda ERP (LUNGO TERMINE)
+
+**Visione**: il MES Grafica Nappa diventerà l'**unico sistema di gestione commesse**, sostituendo Onda ERP (SQL Server su .253).
+
+**Perché**:
+- Indipendenza da Onda (no più costi licenze, no più vincoli SOAP/SQL Server esterno)
+- Controllo totale flusso produzione (oggi Onda è sorgente, MES sync; obiettivo: MES sorgente, Onda dismessa)
+- Zero dipendenze esterne per il futuro
+- MES diventa product completo per Grafica Nappa (anche se non più SaaS commerciale, può essere referenza interna)
+
+**Stato attuale (2026)**:
+- ✅ Sync Onda → MES via SOAP (ordini, fasi, costi, prezzi vendita) ogni ora
+- ✅ Lettura SQL diretta Onda per import singola commessa, costi materiali (PRDDocRighe), DDT vendita
+- ✅ MES ha tutti i dati operativi (ordini, fasi, presenze, costi, scarti, fogli stampati)
+- 🟡 Manca creazione/modifica ordini direttamente in MES (oggi solo lettura da Onda)
+- 🟡 Manca DDT vendita/acquisto generati da MES
+- 🟡 Manca fatturazione (oggi su Onda)
+- 🟡 Manca contabilità (oggi su Onda)
+
+**Roadmap sostituzione Onda**:
+
+### Fase 1 — Lettura completa (in corso)
+- [x] Sync ordini, fasi, costi materiali, DDT vendita
+- [ ] Sync clienti completo (anagrafica + storico) → CRM v3.0
+- [ ] Sync fornitori (per ordini acquisto)
+- [ ] Sync articoli/listini
+
+### Fase 2 — Scrittura MES → Onda (bridge bidirezionale, 2026-2027)
+- [ ] Creare ordine in MES → push su Onda via API (se Onda permette)
+- [ ] Modificare fase MES → propaga su Onda
+- [ ] DDT vendita generato in MES → aggiorna Onda
+
+### Fase 3 — MES diventa sorgente (2027-2028)
+- [ ] Creare ordine direttamente in MES (no più passaggio Onda)
+- [ ] Anagrafica clienti gestita da MES
+- [ ] Listini, prezzi, sconti gestiti da MES
+- [ ] Generazione DDT vendita/acquisto da MES
+- [ ] Stampa documenti fiscali (con engine PDF tipo `BollaLavorazioneService`)
+- [ ] Fatturazione elettronica integrata (SDI)
+
+### Fase 4 — Dismissione Onda (2028+)
+- [ ] Migrazione dati storici Onda → MES (commesse archive, fatture, contabilità)
+- [ ] Periodo parallelo dual-write (sicurezza)
+- [ ] Cutover finale: spegnimento Onda
+- [ ] Backup archive Onda freezato
+- [ ] Risparmio costi licenze Onda → ROI MES
+
+**Feature già pronte in MES per il post-Onda**:
+- ✅ `BollaLavorazioneService::streamCommessa` — Scheda Produzione PDF completa multi-pagina
+- ✅ `BollaLavorazioneService::stream` — Bolla per fase PDF
+- (Oggi non usate perché Onda stampa la cartacea, ma pronte quando MES diventerà sorgente)
+
+**Note operative**:
+- Decisione 22/04/2026: non polire scheda produzione PDF per demo cliente (non valore differenziante per prospect). Focus su scheduler Mossa 37 + feature core.
+- Tempistica realistica: dismissione Onda **non prima del 2028**. Servono fatturazione elettronica + integrazione SDI + migrazione anagrafiche.
+
+---
+
 ## TODO — Mossa 37 (PRIORITÀ MEDIA, branch mossa37)
 
 Step roadmap originale:
