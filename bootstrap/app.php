@@ -18,8 +18,16 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function ($middleware) {
-        // Trust tunnel/proxy headers (tnnl.in e simili)
-        $middleware->trustProxies(at: '*');
+        // Trust tunnel/proxy headers (tnnl.in e simili).
+        // Configurabile via env TRUSTED_PROXIES (lista IP/CIDR separati da virgola).
+        // Default '*' per retrocompatibilita con tnnl.in (IP dinamici).
+        // SICUREZZA: in produzione stabile preferire whitelist esplicita,
+        // es. TRUSTED_PROXIES="127.0.0.1,192.168.1.0/24,IP_TUNNEL"
+        $trustedProxies = env('TRUSTED_PROXIES', '*');
+        if ($trustedProxies !== '*') {
+            $trustedProxies = array_map('trim', explode(',', $trustedProxies));
+        }
+        $middleware->trustProxies(at: $trustedProxies);
 
         // Security headers su tutte le risposte
         $middleware->append(SecurityHeaders::class);
