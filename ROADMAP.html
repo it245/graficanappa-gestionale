@@ -875,6 +875,230 @@
     <li class="todo">Audit trail completo: ogni azione nel sistema &egrave; tracciata e consultabile per compliance</li>
 </ul>
 
+<!-- ========== v11.0 ATT Vendite + SDI ========== -->
+<h3><span class="version-badge badge-future">v11.0</span> ATT Vendite + DDT + SDI Fatturazione Elettronica <span class="timeline-badge">Lug-Set 2028</span></h3>
+<div class="ai-box" style="background:linear-gradient(135deg, #fff8e1, #ffe7a5); border-color:#e67e22;">
+    <strong>ERA ERP &mdash; Inizio sostituzione Onda</strong><br>
+    Documenti vendita generati direttamente in MES, con fatturazione elettronica nativa via Sistema di Interscambio Agenzia Entrate.
+</div>
+<ul class="checklist">
+    <li class="todo">Generazione DDT vendita da MES (sostituisce ATTDocTeste/ATTDocRighe Onda)</li>
+    <li class="todo">Numerazione DDT progressiva con serie configurabili</li>
+    <li class="todo">Generazione fattura elettronica formato XML (FatturaPA 1.2.2)</li>
+    <li class="todo">Firma digitale automatica + invio Sistema Interscambio (SDI) Agenzia Entrate</li>
+    <li class="todo">Provider SDI integrato (es. Aruba, Register, FattureInCloud) con API</li>
+    <li class="todo">Conservazione sostitutiva documenti per 10 anni (obbligo legale)</li>
+    <li class="todo">Gestione esiti SDI: accettazione, scarto, decorrenza termini, mancata consegna</li>
+    <li class="todo">Note credito, fatture proforma, fatture differite (riepilogative mensili)</li>
+    <li class="todo">Bollo virtuale automatico documenti &gt;77,47 EUR esenti IVA</li>
+    <li class="todo">Reverse charge IVA per casi specifici (settori, categoria cliente)</li>
+</ul>
+
+<!-- ========== v12.0 PAS Acquisti ========== -->
+<h3><span class="version-badge badge-future">v12.0</span> PAS Acquisti + Ordini Fornitori <span class="timeline-badge">Ott-Dic 2028</span></h3>
+<div class="ai-box" style="background:linear-gradient(135deg, #fff8e1, #ffe7a5); border-color:#e67e22;">
+    <strong>ERA ERP &mdash; Documenti passivi gestiti in MES</strong>
+</div>
+<ul class="checklist">
+    <li class="todo">Anagrafica fornitori completa (sostituisce STDAnagraficaFornitori Onda)</li>
+    <li class="todo">Generazione ordini acquisto da MES con stato (emesso, confermato, evaso)</li>
+    <li class="todo">Ricezione fatture elettroniche passive da SDI (formato XML)</li>
+    <li class="todo">Match automatico ordine ↔ DDT fornitore ↔ fattura</li>
+    <li class="todo">Tracking pagamenti con scadenzario (sostituisce COGScadenze Onda)</li>
+    <li class="todo">Solleciti automatici fornitori per consegne in ritardo</li>
+    <li class="todo">Controllo coerenza prezzi fattura vs ordine (alert scostamenti)</li>
+    <li class="todo">Workflow autorizzazione fatture passive (admin approva &gt; soglia X)</li>
+    <li class="todo">Statistiche fornitori: lead time, qualit&agrave; consegne, affidabilit&agrave;</li>
+</ul>
+
+<!-- ========== v13.0 COG Contabilità ========== -->
+<h3><span class="version-badge badge-future">v13.0</span> COG Contabilit&agrave; Analitica + Prima Nota <span class="timeline-badge">Gen-Mar 2029</span></h3>
+<div class="ai-box" style="background:linear-gradient(135deg, #fff8e1, #ffe7a5); border-color:#e67e22;">
+    <strong>ERA ERP &mdash; Contabilit&agrave; integrata MES</strong><br>
+    Scrittura contabile automatica da movimenti produzione/vendita/acquisto.
+</div>
+<ul class="checklist">
+    <li class="todo">Piano dei conti gerarchico (sostituisce STDPianoDeiConti, ANAPianoConti Onda)</li>
+    <li class="todo">Prima Nota: scrittura automatica da DDT/fattura emessa/ricevuta</li>
+    <li class="todo">Movimenti commessa (ANAMovCommessaTeste/Righe) con allocazione costi/ricavi</li>
+    <li class="todo">Centri di costo (ANACentriCosto, ANACodiciAnalitici)</li>
+    <li class="todo">Riclassificazione bilancio CEE (attivo/passivo, conto economico)</li>
+    <li class="todo">Scadenzario clienti/fornitori con previsione cashflow 30/60/90 giorni</li>
+    <li class="todo">Riconciliazione bancaria semi-automatica (import estratto conto CSV/CBI)</li>
+    <li class="todo">Esportazione export commercialista (formato standard, es. TeamSystem)</li>
+</ul>
+
+<!-- ========== v14.0 OC Cartotecnica ========== -->
+<h3><span class="version-badge badge-future">v14.0</span> OC Cartotecnica completa (segnature, agglomerati) <span class="timeline-badge">Apr-Giu 2029</span></h3>
+<div class="ai-box" style="background:linear-gradient(135deg, #fff8e1, #ffe7a5); border-color:#e67e22;">
+    <strong>ERA ERP &mdash; Industry-specific tipografia</strong><br>
+    Funzionalità avanzate cartotecnica/legatoria specifiche del settore stampa pacchetti.
+</div>
+<ul class="checklist">
+    <li class="todo">Calcolo segnature stampa multi-pose (OC_ATTDocRigheSegnature)</li>
+    <li class="todo">Agglomerati ordini (raggruppamento commesse per ottimizzare lastre)</li>
+    <li class="todo">Distinta materiali cartotecnica (OC_ATTDocCartotecnica*)</li>
+    <li class="todo">Calcolo inchiostri per commessa (OC_ATTDocRigheInk)</li>
+    <li class="todo">Lavorazioni speciali (brossura, punto metallico, fustella, plastificazione)</li>
+    <li class="todo">Tirature multiple (OC_ATTDocRigheTirature)</li>
+    <li class="todo">Resa formato/lavorazione (OC_MAGFamiglieResaINK)</li>
+    <li class="todo">Configuratore prezzi cartotecnica con parametri industria</li>
+</ul>
+
+<!-- ========== v15.0 IVA + Intrastat ========== -->
+<h3><span class="version-badge badge-future">v15.0</span> IVA + Intrastat + Bollati + CONAI <span class="timeline-badge">Lug-Set 2029</span></h3>
+<div class="ai-box" style="background:linear-gradient(135deg, #fff8e1, #ffe7a5); border-color:#e67e22;">
+    <strong>ERA ERP &mdash; Compliance fiscale completa</strong>
+</div>
+<ul class="checklist">
+    <li class="todo">Liquidazione IVA mensile/trimestrale automatica (COGIvaLiquidazioni)</li>
+    <li class="todo">Registri IVA: vendite, acquisti, corrispettivi (auto-generazione PDF)</li>
+    <li class="todo">Dichiarazione IVA annuale + comunicazione liquidazioni periodiche (LIPE)</li>
+    <li class="todo">Intrastat trimestrale: scambi merci/servizi UE (COGIntrastatDati/Servizi)</li>
+    <li class="todo">Generazione file EDIFACT Intrastat per Agenzia Dogane</li>
+    <li class="todo">Bollati: libro giornale, libro inventari, registri obbligatori (COGBollati)</li>
+    <li class="todo">CONAI: contributo ambientale imballaggi (MAGContributiCONAI)</li>
+    <li class="todo">Esterometro / autofatture per acquisti UE/extra-UE</li>
+    <li class="todo">Plafond esportatore abituale (gestione dichiarazioni d'intento)</li>
+</ul>
+
+<!-- ========== v16.0 Cespiti + XBRL ========== -->
+<h3><span class="version-badge badge-future">v16.0</span> Cespiti + Bilancio XBRL CEE <span class="timeline-badge">Ott-Dic 2029</span></h3>
+<div class="ai-box" style="background:linear-gradient(135deg, #fff8e1, #ffe7a5); border-color:#e67e22;">
+    <strong>ERA ERP &mdash; Bilancio Camera di Commercio</strong>
+</div>
+<ul class="checklist">
+    <li class="todo">Anagrafica cespiti (CSPCespitiInAmmortamento) con classi e categorie</li>
+    <li class="todo">Calcolo ammortamenti civilistici e fiscali automatico</li>
+    <li class="todo">Storico movimenti cespiti (acquisto, dismissione, rivalutazione)</li>
+    <li class="todo">Quote ammortamento mensili → prima nota auto</li>
+    <li class="todo">Riclassificazione bilancio CEE secondo codice civile</li>
+    <li class="todo">Generazione bilancio XBRL formato Camera di Commercio (deposito annuale)</li>
+    <li class="todo">Nota integrativa template + dati auto-popolati</li>
+    <li class="todo">Relazione sulla gestione (per società obbligate)</li>
+    <li class="todo">Confronto bilanci pluriennali con grafici trend</li>
+</ul>
+
+<!-- ========== v17.0 Dismissione Onda ========== -->
+<h3><span class="version-badge badge-future">v17.0</span> Dismissione Onda + Migrazione storico <span class="timeline-badge">Gen-Giu 2030</span></h3>
+<div class="ai-box" style="background:linear-gradient(135deg, #fff8e1, #ffe7a5); border-color:#e67e22;">
+    <strong>ERA ERP &mdash; MES &egrave; il sistema unico</strong><br>
+    Cutover finale, Onda dismessa.
+</div>
+<ul class="checklist">
+    <li class="todo">Migrazione anagrafiche storiche Onda → MES (clienti, fornitori, articoli)</li>
+    <li class="todo">Migrazione documenti storici 9+ anni (vendite, acquisti, contabilit&agrave;)</li>
+    <li class="todo">Periodo dual-write: MES e Onda scrivono entrambi 30-60 giorni (sicurezza)</li>
+    <li class="todo">Riconciliazione finale: ogni record Onda ha corrispondente in MES</li>
+    <li class="todo">Cutover: spegnimento progressivo moduli Onda (vendite, acquisti, contabilità)</li>
+    <li class="todo">Backup archivio Onda freezato (read-only) per consultazione storica</li>
+    <li class="todo">Spegnimento server Onda → risparmio costi licenze annuali</li>
+    <li class="todo">Documentazione: nuovo manuale operativo MES-as-ERP</li>
+    <li class="todo">Formazione completa team: contabilit&agrave;, amministrazione, magazzino</li>
+</ul>
+
+<!-- ========== v18.0 AI Co-Pilot ========== -->
+<h3><span class="version-badge badge-ai">v18.0</span> AI Co-Pilot integrato <span class="timeline-badge">Lug 2030 &mdash; 2031</span></h3>
+<div class="ai-box">
+    <strong>ERA AI &mdash; Claude integrato in tutti i processi MES</strong><br>
+    L'AI diventa assistente operativo permanente per ogni utente del MES.
+</div>
+<ul class="checklist">
+    <li class="todo"><strong>Operatori</strong>: AI suggerisce setup macchina ottimale per nuova fase (basato su storico)</li>
+    <li class="todo"><strong>Owner</strong>: AI riassume dashboard, identifica anomalie, propone azioni correttive</li>
+    <li class="todo"><strong>Spedizione</strong>: AI prioritizza consegne urgenti, suggerisce raggruppamenti DDT</li>
+    <li class="todo"><strong>Admin</strong>: AI risponde a domande contabilità in linguaggio naturale ("quanto ho fatturato a Marinella questo trimestre?")</li>
+    <li class="todo">Anomaly detection real-time: alert su tempo fase, scarto, costo materiali fuori soglia</li>
+    <li class="todo">Suggerimenti dashboard contestuali (chip "AI suggerisce..." accanto a KPI)</li>
+    <li class="todo">Generazione automatica report direzione mensile con commenti AI</li>
+    <li class="todo">Drafting email commerciali ai clienti (preventivi, follow-up, ritardi)</li>
+    <li class="todo">Streaming responses con context cache per performance</li>
+</ul>
+
+<!-- ========== v19.0 AI Agents ========== -->
+<h3><span class="version-badge badge-ai">v19.0</span> AI Agents autonomi <span class="timeline-badge">2031</span></h3>
+<div class="ai-box">
+    <strong>ERA AI &mdash; Agenti che eseguono task autonomamente</strong><br>
+    AI non più solo consulente ma esecutore di task ripetitivi.
+</div>
+<ul class="checklist">
+    <li class="todo"><strong>Agent Sourcing</strong>: cerca fornitori per nuovo materiale, confronta prezzi, suggerisce best buy</li>
+    <li class="todo"><strong>Agent Customer Service</strong>: prima risposta automatica a email cliente (stato commessa, ETA)</li>
+    <li class="todo"><strong>Agent Scheduler</strong>: aggiusta dinamicamente piano produzione su eventi (ritardo materiale, urgenza)</li>
+    <li class="todo"><strong>Agent Quality</strong>: analizza foto fine produzione, segnala difetti, apre ticket</li>
+    <li class="todo"><strong>Agent Onboarding</strong>: training operatori nuovi via chatbot interattivo</li>
+    <li class="todo">Workflow approval per azioni critiche (ordini &gt; soglia, modifiche fasi avviate)</li>
+    <li class="todo">Audit log azioni AI (chi, quando, cosa, perch&eacute;)</li>
+    <li class="todo">Possibilit&agrave; revoca decisione AI da admin</li>
+</ul>
+
+<!-- ========== v20.0 Predictive Maintenance ========== -->
+<h3><span class="version-badge badge-ai">v20.0</span> Predictive Maintenance + ML qualit&agrave; stampa <span class="timeline-badge">2031-2032</span></h3>
+<div class="ai-box">
+    <strong>ERA AI &mdash; ML self-hosted per macchine</strong><br>
+    Modelli ML addestrati sui dati interni per predire guasti e qualità.
+</div>
+<ul class="checklist">
+    <li class="todo">Raccolta dati IoT macchine (vibrazioni, temperatura, ore funzionamento) per anni</li>
+    <li class="todo">Modello ML predictive maintenance: previene guasti 7-14 giorni prima</li>
+    <li class="todo">Alert automatico manutenzione preventiva → ordini ricambi auto</li>
+    <li class="todo">Modello ML qualit&agrave; stampa: predice scarto basato su parametri stampa + carta</li>
+    <li class="todo">Suggerimenti calibrazione macchine pre-avviamento</li>
+    <li class="todo">Storico interventi manutenzione con MTTR/MTBF per macchina</li>
+    <li class="todo">Self-hosted ML (no cloud) per dati riservati</li>
+    <li class="todo">Dashboard "Salute macchine" con score 0-100 per ogni cespite</li>
+</ul>
+
+<!-- ========== v21.0 AI Vision ========== -->
+<h3><span class="version-badge badge-ai">v21.0</span> AI Vision (controllo qualit&agrave; automatico, OCR fatture) <span class="timeline-badge">2032</span></h3>
+<div class="ai-box">
+    <strong>ERA AI &mdash; Computer Vision integrata</strong><br>
+    Camera + AI per controllo qualit&agrave; e automazione documentale.
+</div>
+<ul class="checklist">
+    <li class="todo">Camera in linea fine stampa: AI Vision controlla colore, registro, difetti</li>
+    <li class="todo">Confronto stampato vs PDF originale (color matching pixel-perfect)</li>
+    <li class="todo">OCR fatture passive cartacee/PDF (Vision AI Claude/GPT-4V)</li>
+    <li class="todo">Riconoscimento bolle DDT entrata fornitore (auto-import sistema)</li>
+    <li class="todo">Counting automatico colli su pallet pre-spedizione</li>
+    <li class="todo">Riconoscimento etichette/codici a barre senza scanner</li>
+    <li class="todo">Sorveglianza ambiente officina (AI rileva anomalie sicurezza)</li>
+    <li class="todo">Dataset annotato per training modelli specifici Grafica Nappa</li>
+</ul>
+
+<!-- ========== v22.0 Autonomous Operations ========== -->
+<h3><span class="version-badge badge-ai">v22.0</span> Autonomous Operations (24/7 AI-driven) <span class="timeline-badge">2032+</span></h3>
+<div class="ai-box">
+    <strong>VISIONE FINALE &mdash; Sistema gestionale auto-ottimizzante</strong><br>
+    AI agents collaborativi gestiscono operazioni h24, intervento umano solo per eccezioni e decisioni strategiche.
+</div>
+<ul class="checklist">
+    <li class="todo">Orchestrazione multi-agent: agenti specializzati collaborano (scheduler, sourcing, quality, customer)</li>
+    <li class="todo">Decision Engine: AI prende decisioni operative entro perimetri autorizzati</li>
+    <li class="todo">Self-healing: sistema rileva problemi (sync fallita, ritardo) e auto-corregge</li>
+    <li class="todo">Continuous learning: modelli migliorano automaticamente con nuovi dati</li>
+    <li class="todo">Conversational interface: ogni interazione MES via chat naturale (no più click)</li>
+    <li class="todo">Voice interface: comando vocale operatori officina (mani libere)</li>
+    <li class="todo">Notifiche proattive: AI avvisa Antonio prima che problema si manifesti</li>
+    <li class="todo">A/B testing automatico decisioni AI (misura impatto su KPI)</li>
+    <li class="todo">Override umano sempre disponibile (no completa autonomia)</li>
+    <li class="todo">Etica AI: log decisioni con justification, audit Compliance Italia</li>
+</ul>
+
+<!-- ========== POST-2032 ========== -->
+<h3><span class="version-badge" style="background:#0d6efd;">2032+</span> Manutenzione + Evoluzione continua <span class="timeline-badge">Permanente</span></h3>
+<p>Dal 2032 in poi il MES entra in modalit&agrave; <strong>manutenzione attiva + evoluzione su richiesta</strong>. Ruolo Responsabile IT permanente.</p>
+<ul class="checklist">
+    <li class="todo">Manutenzione: bug fix, security patch, update dipendenze</li>
+    <li class="todo">Compliance annuale: GDPR, audit security, certificazioni</li>
+    <li class="todo">Integrazione nuove macchine officina (es. nuova Heidelberg, Bobst, Canon)</li>
+    <li class="todo">Formazione nuovi assunti su MES</li>
+    <li class="todo">Adattamento normative fiscali (modifica tracciato fattura SDI, nuovi obblighi)</li>
+    <li class="todo">Aggiornamento modelli AI (Claude 5, 6, ecc) e ML self-hosted</li>
+    <li class="todo">Hardware refresh server, PC, rete, dispositivi mobili</li>
+    <li class="todo">Nuove feature on-demand su richiesta direzione/operatori</li>
+</ul>
+
 <!-- ========== RIEPILOGO ========== -->
 <h3>Riepilogo versioni</h3>
 
