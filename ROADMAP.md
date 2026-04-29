@@ -18,8 +18,36 @@ Sviluppo: Giovanni Pietropaolo (Tirocinante) con supporto Claude Code (Anthropic
 | v7.0 IoT & Digital Twin | Q3 2027 | ⚪ Future | Sensori IoT macchine, digital twin produzione |
 | v8.0 BI & Analytics Avanzata | Q4 2027 | ⚪ Future | Predittiva, ML, ottimizzazione costi |
 | v9.0 Portale Clienti & API | Q4 2027 | ⚪ Future | Self-service clienti, API pubbliche |
-| v10.0 Industria 4.0 Completa | Q1 2028 | ⚪ Future | Ecosistema integrato fornitori-produzione-cliente |
-| **Post-2028 — Evoluzione continua** | **2028+** | 🔄 Permanente | Manutenzione, integrazioni nuove macchine, security audit annuali, compliance GDPR, supporto IT generale, formazione, mobile/IoT, predictive AI, nuove feature on-demand |
+| v10.0 ATT Vendite + SDI Fatturazione Elettronica | Q2 2028 | ⚪ Future | Generazione fattura elettronica XML, invio Sistema di Interscambio Agenzia Entrate |
+| v11.0 PAS Acquisti + Ordini Fornitori | Q3 2028 | ⚪ Future | Documenti passivi gestiti in MES, ricezione fatture elettroniche |
+| v12.0 OC Cartotecnica completa | Q4 2028 | ⚪ Future | Segnature, agglomerati, attrezzature, lavorazioni industria-specific tipografia |
+| v13.0 IVA + Intrastat + Bollati + CONAI | Q1 2029 | ⚪ Future | Liquidazione IVA, registri, intrastat scambi UE, CONAI imballaggi |
+| v14.0 Cespiti + Bilancio XBRL CEE | Q2 2029 | ⚪ Future | Ammortamenti, bilancio Camera di Commercio (XBRL automatico) |
+| v15.0 Dismissione Onda + Migrazione storico | Q3 2029 | ⚪ Future | MES sostituisce Onda; periodo dual-write; cutover finale |
+| **v16.0 AI Co-Pilot integrato** | **Q4 2029-2030** | 🟣 AI | Claude integrato in tutti i processi MES (assistente operatori, anomaly detection, suggerimenti dashboard) |
+| **v17.0 AI Agents autonomi** | **2030-2031** | 🟣 AI | Sourcing fornitori, customer service first-line, scheduling auto |
+| **v18.0 Predictive Maintenance + ML qualità stampa** | **2030-2031** | 🟣 AI | ML per Heidelberg XL, Bobst, Canon — previsione guasti |
+| **v19.0 AI Vision** | **2031-2032** | 🟣 AI | Controllo qualità stampa via camera, OCR fatture passive, riconoscimento difetti |
+| **v20.0 Autonomous Operations** | **2032+** | 🟣 AI | Sistema gestionale auto-ottimizzante, AI agents collaborativi, intervento umano solo per eccezioni |
+| **Post-2032 — Manutenzione + evoluzione** | **2032+** | 🔄 Permanente | Manutenzione attiva, nuove integrazioni, compliance, supporto IT, formazione |
+
+## L'AI nei processi (visione 2027-2032)
+
+L'AI assistita non sarà solo strumento di sviluppo (come oggi con Claude Code), ma diverrà **parte integrante dei processi aziendali**:
+
+- **2026 (v3.0)**: AI per CRM — suggerisce upsell, predice churn, scrive email commerciali draft
+- **2026 (v4.0)**: AI scheduler Mossa37 — ottimizzazione produzione con LLM (Claude API)
+- **2027 (v8.0)**: AI forecasting — previsione domanda, ottimizzazione magazzino carta
+- **2029-2030 (v16.0)**: AI Co-Pilot integrato in tutti i processi MES
+- **2030-2031 (v17.0)**: AI Agents autonomi per task ripetitivi
+- **2030-2031 (v18.0)**: ML predictive maintenance macchine
+- **2031-2032 (v19.0)**: AI Vision — controllo qualità stampa, OCR fatture
+- **2032+ (v20.0)**: Autonomous Operations — sistema auto-ottimizzante
+
+**Modello costo AI**: API LLM (Claude/GPT) + modelli ML self-hosted.
+- Stima 2027: $200-500/mese
+- Stima 2030: $1.000-3.000/mese (volume crescente)
+- ROI: ore IT risparmiate + decisioni migliori + zero downtime macchine
 
 📄 **Roadmap completa con dettaglio versioni**: `ROADMAP.html` (timeline Gantt + checklist v1.0-v10.0)
 
