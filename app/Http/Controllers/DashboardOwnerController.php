@@ -821,7 +821,8 @@ public function calcolaOreEPriorita($fase)
             FaseStatoService::ricalcolaTutti();
             return redirect()->route('owner.dashboard')->with('success', 'Ordini importati correttamente.');
         } catch (\Exception $e) {
-            return redirect()->route('owner.dashboard')->with('error', 'Errore importazione: ' . $e->getMessage());
+            \Log::error('Import ordini errore', ['exception' => $e]);
+            return redirect()->route('owner.dashboard')->with('error', 'Errore importazione, contattare IT');
         }
     }
 
@@ -1234,11 +1235,12 @@ public function calcolaOreEPriorita($fase)
             }
             return redirect()->route('owner.dashboard')->with('success', $msg);
         } catch (\Exception $e) {
+            \Log::error('Sync Onda errore', ['exception' => $e]);
             $redirectUrl = request('redirect');
             if ($redirectUrl) {
-                return redirect($redirectUrl)->with('error', 'Errore sync Onda: ' . $e->getMessage());
+                return redirect($redirectUrl)->with('error', 'Errore sync Onda, contattare IT');
             }
-            return redirect()->route('owner.dashboard')->with('error', 'Errore sync Onda: ' . $e->getMessage());
+            return redirect()->route('owner.dashboard')->with('error', 'Errore sync Onda, contattare IT');
         }
     }
 
@@ -1583,8 +1585,8 @@ public function calcolaOreEPriorita($fase)
         try {
             \App\Services\SchedulerExportService::export($filePath);
         } catch (\Exception $e) {
-            \Log::error('SchedulerExportService export errore: ' . $e->getMessage());
-            return back()->with('error', 'Errore generazione Excel: ' . $e->getMessage());
+            \Log::error('SchedulerExportService export errore', ['exception' => $e]);
+            return back()->with('error', 'Errore generazione Excel, contattare IT');
         }
 
         if (!file_exists($filePath)) {
