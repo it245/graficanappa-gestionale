@@ -107,7 +107,7 @@
     <h1>ROADMAP SVILUPPO</h1>
     <h2>Sistema Gestionale MES &mdash; Grafica Nappa srl</h2>
     <div class="piano">Piano biennale (AI-Assisted): Febbraio 2026 &mdash; Febbraio 2028</div>
-    <div class="date">Aggiornata al 9 Aprile 2026</div>
+    <div class="date">Aggiornata al 29 Aprile 2026</div>
     <div class="author">Giovanni Pietropaolo &mdash; Tirocinante Sistemi Informativi</div>
 </div>
 
@@ -1037,10 +1037,124 @@ che possiamo importare nel MES. In particolare:
 </ul>
 </div>
 
+<!-- ========== TODO ROADMAP OPERATIVA ========== -->
+<h3 style="margin-top:50px; border-left-color:#e67e22;">Roadmap operativa corrente <span class="timeline-badge" style="background:#e67e22;">Aggiornata 29/04/2026</span></h3>
+<p>Lista attiva delle attivit&agrave; in corso, rimandate o bloccate. Sincronizzata con <code>ROADMAP.md</code>.</p>
+
+<h4>UI Overhaul Enterprise SaaS <span style="font-size:12px; color:#888;">(priorit&agrave; media &mdash; rimandato)</span></h4>
+<p style="font-size:13px;">Stile target: <strong>Linear / Notion / Vercel</strong> &mdash; sfondo bianco/grigio chiaro, accent blu (#2563eb), font Inter, shadow leggere, spaziature generose, micro-interazioni discrete, tabelle dense ma leggibili. Solo CSS + componenti Blade wrapper, zero modifiche logica/controller/DB/JS handler.</p>
+
+<p style="font-size:13px;"><strong>Phase 1 &mdash; Foundation</strong> (1-2 giorni):</p>
+<ul class="checklist">
+    <li class="todo">Estrai token CSS in <code>public/css/mes-tokens.css</code> (cacheable)</li>
+    <li class="todo">Spacing/shadow/radius/typography scale</li>
+    <li class="todo">Inter globale in <code>app.blade.php</code></li>
+    <li class="todo">Componenti Blade: <code>&lt;x-mes.button&gt;</code>, <code>&lt;x-mes.modal&gt;</code>, <code>&lt;x-mes.card&gt;</code>, <code>&lt;x-mes.input&gt;</code>, <code>&lt;x-mes.table&gt;</code></li>
+    <li class="todo">Rimuovi token collision in <code>fiery/dashboard.blade.php</code></li>
+</ul>
+
+<p style="font-size:13px;"><strong>Phase 2 &mdash; Pagine top</strong> (3-5 giorni):</p>
+<ul class="checklist">
+    <li class="todo">Owner dashboard: 121 modal Bootstrap &rarr; <code>&lt;x-mes.modal&gt;</code>, tabella dense, KPI bar, filtri sidebar</li>
+    <li class="todo">Operatore dashboard: tab &rarr; segmented control, lazy-load QR, card commessa con tag pills</li>
+    <li class="todo">Spedizione dashboard: card sezioni uniformi, tabelle componente</li>
+</ul>
+
+<p style="font-size:13px;"><strong>Phase 3 &mdash; Pagine secondarie</strong> (2-3 giorni):</p>
+<ul class="checklist">
+    <li class="todo">Admin dashboard, cruscotto, lista_commesse</li>
+    <li class="todo">Magazzino dashboard + giacenze/articoli/movimenti</li>
+    <li class="todo">Owner: reparti_overview, esterne, fustelle, report_ore, fasi_terminate</li>
+    <li class="todo">Prestampa, Fiery contatori, Auth login (split-screen) + 2FA + errors</li>
+</ul>
+
+<p style="font-size:13px;"><strong>Phase 4 &mdash; Polish + responsive</strong> (1-2 giorni):</p>
+<ul class="checklist">
+    <li class="todo">Breakpoints SCSS (320, 640, 1024, 1280)</li>
+    <li class="todo">Sidebar collapse mobile, scroll-x con sticky-col, touch target &ge;44px</li>
+    <li class="todo">Skeleton loaders, toast notifications, hover states uniformi, focus rings AA</li>
+    <li class="todo">Dark mode completo (sync layout, contrast AA)</li>
+    <li class="todo">Print stylesheet + PWA polish (splash, theme color, app icons)</li>
+</ul>
+
+<p style="font-size:13px; font-style:italic; color:#666;">Stima totale: 7-12 giorni FTE.</p>
+
+<h4>Integrazione Bobst Visionfold 110 <span style="font-size:12px; color:#c00;">(BLOCCATA)</span></h4>
+<p style="font-size:13px;"><strong>Risposta Davide Alberti (Bobst Italia, 29/04/2026)</strong>: opzioni DATALINK e ERP INTERFACE non implementate al momento dell'acquisto, nessun ordine/quotazione dal 2015 ad oggi. Visionfold non raggiungibile da assistenza remota Helpline+.</p>
+<p style="font-size:13px;">Conseguenze: DHL Web Open Data, SQL Web Open Data, MRP Web push, JTI / Quality Mode / Manual Event tutti <strong>non attivi</strong>.</p>
+
+<p style="font-size:13px;"><strong>Strade alternative</strong>:</p>
+<ul class="checklist">
+    <li class="todo"><strong>Opzione A &mdash; Counter pulse 24V + ESP32 (€20)</strong>: solo conteggio pezzi, hardware fai-da-te, no job/velocità</li>
+    <li class="todo"><strong>Opzione B &mdash; HDMI splitter + Raspberry Pi + OCR (€110)</strong>: tutti i dati ricchi via screen scrape, no modifiche macchina</li>
+    <li class="todo"><strong>Opzione C &mdash; Pagare retrofit Bobst (€5.000-15.000)</strong>: integrazione nativa, decisione capo Antonio</li>
+</ul>
+
+<h4>HTTPS Apache <span style="font-size:12px; color:#888;">(rimandato &mdash; cert browser non si fida)</span></h4>
+<p style="font-size:13px;">Cert + vhost SSL pronti su .60. Browser Chrome/Edge non si fidano (cert in user store via certutil invece di machine store). Rollback fatto a HTTP.</p>
+<ul class="checklist">
+    <li class="todo">Riprovare con import cert via <code>mmc.exe</code> in Trusted Root Machine store</li>
+    <li class="todo">Distribuire cert su tutti PC dipendenti</li>
+    <li class="todo">Alternative: Cloudflare Tunnel, mkcert, Win-acme</li>
+    <li class="todo">Quando OK: <code>.env</code> &rarr; <code>APP_URL=https://gestionale</code> + <code>SESSION_SECURE_COOKIE=true</code> + <code>FORCE_HTTPS=true</code></li>
+</ul>
+
+<h4>Mossa 37 &mdash; Scheduler ottimizzato <span style="font-size:12px; color:#888;">(branch <code>mossa37</code>, NON in produzione)</span></h4>
+<ul class="checklist">
+    <li class="done">Step 1-4: migration, PriorityService, evento PhaseCompleted, propagazione</li>
+    <li class="todo">Step 5: OptimizeScheduleJob + integrazione API Claude</li>
+    <li class="todo">Step 6: dashboard fallback se API down</li>
+    <li class="todo">Step 7: cron job schedulazione automatica</li>
+    <li class="todo">Step 8: test end-to-end con dati produzione reali</li>
+    <li class="todo">Decisione capo: deploy su master o restare branch separato</li>
+</ul>
+
+<h4>Manutenzione &amp; Fix correnti</h4>
+
+<p style="font-size:13px;"><strong>Sicurezza / Privacy</strong>:</p>
+<ul class="checklist">
+    <li class="todo">Stampare e firmare DOC-SEC-MES-001</li>
+    <li class="todo">Stampare e firmare DOC-GDPR-MES-001</li>
+    <li class="todo">Risolvere security audit findings (1 critico, 3 alti, 4 medi, 3 bassi)</li>
+</ul>
+
+<p style="font-size:13px;"><strong>Bug fix</strong>:</p>
+<ul class="checklist">
+    <li class="todo">Fix CSRF "Page Expired" telefono/VPN: <code>.env</code> server &rarr; <code>SESSION_DOMAIN=</code> (vuoto)</li>
+    <li class="todo">Configurare <code>.env</code> per tunnel tnnl.in: <code>APP_URL</code>, <code>SESSION_DOMAIN=.p.tnnl.in</code>, <code>SESSION_SECURE_COOKIE=true</code></li>
+    <li class="todo">Bug audit findings (3 critici, 6 alti, 8 medi, 2 bassi)</li>
+</ul>
+
+<p style="font-size:13px;"><strong>Pulizie</strong>:</p>
+<ul class="checklist">
+    <li class="todo">Seeder FasiCatalogo: rimuovere PIEGA2ANTECORDONE da legatoria (resta finitura digitale)</li>
+    <li class="todo">Aggiungere <code>NETTIME_SHARE_USER</code>/<code>PASS</code> al <code>.env</code> server</li>
+    <li class="todo">Performance audit findings (5 quick wins, 5 fix medi, indici SQL)</li>
+</ul>
+
+<p style="font-size:13px;"><strong>MCP / Integrazioni</strong>:</p>
+<ul class="checklist">
+    <li class="todo">Finire config <code>claude_desktop_config.json</code> Mac capo (Onda MCP)</li>
+    <li class="todo">Solar-Log: script PHP/PowerShell login + scrape pagina rendimenti</li>
+    <li class="todo">Fiery EFI: chiamare service per firmware update (causa hang intermittente)</li>
+</ul>
+
+<h4>DONE recenti (28-29/04/2026)</h4>
+<ul class="checklist">
+    <li class="done">Fiery resilience: retry + stale cache 30 min + warm command</li>
+    <li class="done">Task scheduler <code>FieryWarmCache</code> ogni 60s su .60</li>
+    <li class="done">Polling dashboard Fiery 15s &rarr; 30s</li>
+    <li class="done">Rimosso <code>/jobs/printing</code> ridondante + <code>/accounting</code> da dashboard render</li>
+    <li class="done">Counter rinominato "Conteggio" &rarr; "Qta Prodotta" su dettaglio commessa</li>
+    <li class="done">Branch <code>feature/multi-tenant</code> cancellato (MES non più SaaS commerciale)</li>
+    <li class="done">File pitch SaaS rimossi (memo Antonio 4Graph, MES_Overview pitch)</li>
+    <li class="done">Worktree git puliti (4 vecchi worktree agent rimossi)</li>
+</ul>
+
 <div class="footer">
     <p>Sistema Gestionale MES &mdash; Grafica Nappa srl &mdash; Aversa (CE)</p>
     <p>Sviluppo: Giovanni Pietropaolo (Tirocinante) con supporto Claude Code (Anthropic AI)</p>
-    <p style="margin-top:8px; font-size:11px; color:#aaa;">Piano biennale AI-Assisted &middot; Feb 2026 &ndash; Feb 2028 &middot; 10 versioni &middot; Aggiornamento: 09/03/2026</p>
+    <p style="margin-top:8px; font-size:11px; color:#aaa;">Piano biennale AI-Assisted &middot; Feb 2026 &ndash; Feb 2028 &middot; 10 versioni &middot; Aggiornamento: 29/04/2026</p>
 </div>
 
 </body>
