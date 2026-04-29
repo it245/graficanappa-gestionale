@@ -128,6 +128,36 @@ Step roadmap originale:
 
 ---
 
+## TODO — HTTPS Apache (RIMANDATO)
+
+**Status**: cert + vhost funzionanti su .60, ma browser non si fidano (cert in user store invece di machine store via certutil). Rollback fatto a HTTP.
+
+**File pronti per riprovare**:
+- `C:\Apache24\conf\gestionale.crt` (cert con SAN)
+- `C:\Apache24\conf\gestionale.key`
+- `C:\Apache24\conf\httpd-ssl-mes.conf` (vhost SSL pronto)
+- `genera_cert.bat` (rigenera cert con SAN)
+
+**Per riprovare in futuro**:
+1. Riabilita `Include conf/httpd-ssl-mes.conf` in `httpd.conf`
+2. Restart Apache
+3. Importa cert in **Machine store** via mmc.exe (NON certutil):
+   - `mmc.exe`
+   - Aggiungi snap-in "Certificati" → "Account computer" → "Computer locale"
+   - Espandi "Trusted Root Certification Authorities" → "Certificati"
+   - Right-click → Tutte le attività → Importa
+   - Seleziona `gestionale.crt`
+   - Restart browser
+4. Per altri PC: copia cert + ripeti import via mmc.exe in Machine store
+5. Quando OK: `.env` produzione `APP_URL=https://gestionale` + `SESSION_SECURE_COOKIE=true` + `FORCE_HTTPS=true`
+
+**Alternative migliori**:
+- Cloudflare Tunnel (HTTPS automatico)
+- mkcert tool (più affidabile di openssl + certutil)
+- Win-acme + reverse proxy interno
+
+---
+
 ## DONE recenti (28/04/2026)
 
 - ✅ Fiery resilience: retry + stale cache 30 min + warm command
