@@ -50,19 +50,42 @@ Stile target: **Linear / Notion / Vercel** — sfondo bianco/grigio chiaro, acce
 
 ---
 
-## TODO — Integrazione Bobst Visionfold 110 (PRIORITÀ ALTA, in attesa)
+## TODO — Integrazione Bobst Visionfold 110 (BLOCCATA — software non installato)
 
-In attesa risposta Davide Alberti (Bobst Italia, support@mybobst.com).
+**Risposta Davide Alberti (Bobst Italia, 29/04/2026)**:
+> "Le opzioni DATALINK e ERP INTERFACE non risultano essere state implementate in fase di acquisto e non ho trovato nessun ordine/quotazione dal 2015 ad oggi. La vostra Visionfold risulta non essere raggiungibile dal nostro servizio di assistenza remota Helpline+."
 
-- [ ] Email Davide inviata 28/04/2026 — IP eWOD + credenziali DHL/SQL Web Open Data
-- [ ] Quando arriva IP: scrivi `app/Http/Services/BobstService.php`
-  - [ ] `getProductionStatus()` via DHL → JobUnitCount, MachineState, LinearSpeed, JobName
-  - [ ] `getJobsHistory()` via SQL → query Operations, Events, Jobs
-  - [ ] `syncOperations()` → match OpRef Bobst con commessa MES, aggiorna qta_prod
-- [ ] Test connessione: `curl http://IP_eWOD:85/dhlweb` e `:85/sqlweb`
-- [ ] Push commessa MES → HMI Bobst via MRP Web (`cmd=push&OpRef=...`)
-- [ ] Schedule warm cache Bobst (analogo a Fiery warm)
-- [ ] Verifica machine class (MC4? altro?) e tabelle disponibili
+**Conseguenze**:
+- ❌ DHL Web Open Data non attivo
+- ❌ SQL Web Open Data non attivo
+- ❌ MRP Web push non attivo
+- ❌ JTI / Quality Mode / Manual Event non attivi
+- ❌ Helpline+ assistenza remota non funzionante (probabile mancato collegamento rete o licenza scaduta)
+
+**Strade alternative**:
+
+### Opzione A — Counter pulse 24V + ESP32 (€20, fai-da-te)
+- [ ] Aprire armadio elettrico Visionfold, foto morsettiera
+- [ ] Schema elettrico `BSA0356C204 D81` → cercare uscita "PRODUCTION COUNT"
+- [ ] Hardware: ESP32 + PC817 optoisolatore + custodia DIN
+- [ ] Firmware: conta impulsi + POST `/api/contatore/piegaincolla`
+- [ ] Solo conteggio pezzi, no job/velocità/target
+
+### Opzione B — HDMI splitter + Raspberry Pi + OCR (€110)
+- [ ] HDMI splitter 1→2 (uno al monitor originale, uno al Pi)
+- [ ] HDMI capture USB
+- [ ] Raspberry Pi 4 + Tesseract OCR
+- [ ] Cattura screenshot ogni 5s, estrae 2937 (contatore), 10200 (target), 69 (m/min)
+- [ ] POST a Laravel API
+- [ ] Tutti i dati ricchi senza modificare macchina
+
+### Opzione C — Pagare retrofit Bobst (€5.000-15.000 stimati)
+- [ ] Richiedere quotazione a commerciale Bobst (chiedere a Davide)
+- [ ] Attivazione DATALINK + ERP INTERFACE + Helpline+
+- [ ] Integrazione nativa via DHL/SQL/MRP Web
+- [ ] Decisione capo Antonio sul costo
+
+**Decisione**: scegliere strada in base a budget + urgenza. Per ora bloccato.
 
 ---
 
