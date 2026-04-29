@@ -215,7 +215,7 @@ class CostiMarginiController extends Controller
             $valoreOrdine = (float) ($ordine->valore_ordine ?? 0);
             $costoTotale = $costoLav + $costoMat;
             $margine = $valoreOrdine > 0 ? $valoreOrdine - $costoTotale : null;
-            $marginePerc = ($valoreOrdine > 0 && $costoTotale > 0)
+            $marginePerc = $valoreOrdine > 0
                 ? round(($margine / $valoreOrdine) * 100, 1)
                 : null;
             $deltaOrePct = ($oreStimate > 0 && $oreEffettive > 0)
