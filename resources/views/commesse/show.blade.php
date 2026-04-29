@@ -229,17 +229,42 @@
     background: #fff;
     border: 1px solid #e2e8f0;
     border-radius: 10px;
-    padding: 12px 14px;
+    padding: 12px 14px 12px 50px;
     transition: transform 0.1s ease, box-shadow 0.1s ease;
     text-decoration: none;
     color: #0f172a;
     display: block;
     border-left: 3px solid #0d6efd;
+    position: relative;
 }
 .prossima-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 16px rgba(0,0,0,0.08);
     color: #0f172a;
+}
+.prossima-card .pc-rank {
+    position: absolute; left: 10px; top: 12px;
+    width: 32px; height: 32px;
+    background: #e2e8f0; color: #475569;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 800;
+}
+.prossima-card.prima {
+    border: 2px solid #16a34a;
+    background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 80%);
+    box-shadow: 0 4px 14px rgba(22,163,74,0.15);
+}
+.prossima-card.prima .pc-rank {
+    background: #16a34a; color: #fff;
+    box-shadow: 0 0 0 4px rgba(22,163,74,0.2);
+}
+.prossima-card.prima::after {
+    content: 'PROSSIMA';
+    position: absolute; top: 8px; right: 10px;
+    background: #16a34a; color: #fff;
+    font-size: 9px; font-weight: 800; letter-spacing: 0.5px;
+    padding: 2px 8px; border-radius: 10px;
 }
 .prossima-card .pc-num {
     font-size: 14px; font-weight: 700; color: #0d6efd;
@@ -666,7 +691,7 @@
     @endif
 
     <!-- Prossime commesse (card grid) -->
-    <div class="section-h">Prossime commesse</div>
+    <div class="section-h">Prossime commesse <small style="font-weight:400; color:#64748b; font-size:12px;">— ordine di lavorazione consigliato</small></div>
     <div class="prossime-grid">
         @foreach($prossime as $c)
             @php
@@ -674,8 +699,10 @@
                 $term = $c->fasi_terminate_count ?? 0;
                 $pct = $tot > 0 ? round($term / $tot * 100) : 0;
                 $color = $pct >= 100 ? '#16a34a' : ($pct >= 50 ? '#f59e0b' : '#dc2626');
+                $isPrima = $loop->iteration === 1;
             @endphp
-            <a href="{{ route('commesse.show', $c->commessa) }}" class="prossima-card" style="border-left-color:{{ $color }};">
+            <a href="{{ route('commesse.show', $c->commessa) }}" class="prossima-card {{ $isPrima ? 'prima' : '' }}" style="border-left-color:{{ $color }};">
+                <div class="pc-rank">{{ $loop->iteration }}</div>
                 <div class="pc-num">{{ $c->commessa }}</div>
                 <div class="pc-cliente">{{ $c->cliente_nome ?? '-' }}</div>
                 <div class="pc-desc">{{ Str::limit($c->descrizione ?? '-', 90) }}</div>
