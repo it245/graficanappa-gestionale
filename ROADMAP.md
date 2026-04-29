@@ -19,8 +19,11 @@ Sviluppo: Giovanni Pietropaolo (Tirocinante) con supporto Claude Code (Anthropic
 | v8.0 BI & Analytics Avanzata | Q4 2027 | ⚪ Future | Predittiva, ML, ottimizzazione costi |
 | v9.0 Portale Clienti & API | Q4 2027 | ⚪ Future | Self-service clienti, API pubbliche |
 | v10.0 Industria 4.0 Completa | Q1 2028 | ⚪ Future | Ecosistema integrato fornitori-produzione-cliente |
+| **Post-2028 — Evoluzione continua** | **2028+** | 🔄 Permanente | Manutenzione, integrazioni nuove macchine, security audit annuali, compliance GDPR, supporto IT generale, formazione, mobile/IoT, predictive AI, nuove feature on-demand |
 
 📄 **Roadmap completa con dettaglio versioni**: `ROADMAP.html` (timeline Gantt + checklist v1.0-v10.0)
+
+**Nota**: il piano biennale 2026-2028 copre lo sviluppo intensivo delle feature core. Da 2028+ il MES entra in **manutenzione attiva** (bug fix, security continua, integrazione nuove macchine officina, compliance, evoluzione tecnologica). Il ruolo di Responsabile IT Grafica Nappa è **permanente**, non legato al piano sviluppo.
 
 ---
 
