@@ -418,7 +418,16 @@ function salvaCampoPrestampa(el) {
         },
         body: JSON.stringify({ ordine_id: ordineId, campo: campo, valore: valore })
     })
-    .then(function(r) { return r.json(); })
+    .then(function(r) {
+        if (r.status === 419) {
+            // CSRF scaduto → reload pagina per nuovo token
+            alert('Sessione scaduta. La pagina verra ricaricata.');
+            window.location.reload();
+            return Promise.reject('csrf');
+        }
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+    })
     .then(function(d) {
         if (d.success) {
             el.classList.add('campo-salvato');
@@ -427,7 +436,11 @@ function salvaCampoPrestampa(el) {
             alert('Errore: ' + (d.messaggio || 'salvataggio fallito'));
         }
     })
-    .catch(function() { alert('Errore di connessione'); });
+    .catch(function(e) {
+        if (e === 'csrf') return;
+        console.error('Errore salvataggio:', e);
+        alert('Errore di connessione: ' + (e.message || e));
+    });
 }
 
 function salvaNotaFase(el) {
