@@ -17,7 +17,10 @@ class FustellaResolver
         $dir = public_path('fustelle');
         if (!is_dir($dir)) return null;
 
-        $files = glob($dir . DIRECTORY_SEPARATOR . $codice . '*.pdf');
+        // Match prefisso (es. "FS0291 - AST.pdf") o ovunque ("ABBINAMENTO FS0291 + FS0292.pdf")
+        $prefix = glob($dir . DIRECTORY_SEPARATOR . $codice . '*.pdf');
+        $contained = glob($dir . DIRECTORY_SEPARATOR . '*' . $codice . '*.pdf');
+        $files = !empty($prefix) ? $prefix : $contained;
         if (empty($files)) return null;
 
         $file = $files[0];
