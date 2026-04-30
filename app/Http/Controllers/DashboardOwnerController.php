@@ -1089,6 +1089,10 @@ public function calcolaOreEPriorita($fase)
         // Se riportata a 0 o 1, pulisci tutto: flag esterno, data_fine, nota "Inviato a:"
         if ($nuovoStato <= 1) {
             $fase->data_fine = null;
+            // Marca riapertura manuale + snapshot qta_prod corrente
+            $fase->riaperta_at = now();
+            $fase->qta_prod_at_riapertura = (int) ($fase->qta_prod ?? 0);
+            $fase->terminata_manualmente = false;
             if ($fase->esterno) {
                 $fase->esterno = false;
             }
