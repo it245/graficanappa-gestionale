@@ -60,6 +60,14 @@
         font-weight: bold;
         cursor: pointer;
     }
+    .desc-clamp {
+        display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical;
+        overflow:hidden; text-overflow:ellipsis; word-break:break-word;
+        line-height:1.35; max-height:5.4em; cursor:help;
+    }
+    .desc-clamp:hover { -webkit-line-clamp:unset; max-height:none; background:#fffbe6; }
+    td.desc-clamp { max-width:280px; }
+
     /* 15 colonne: Priorità, Stato, Fase, Reparto, QtaCarta, QtaProd, QtaProdPrinect, ScartiPrinect, ScartiR, Operatori, Note, Descrizione, DataInizio, DataFine, Azioni */
     .dc-table th:nth-child(1), .dc-table td:nth-child(1) { width: 70px; text-align: center; }
     .dc-table th:nth-child(2), .dc-table td:nth-child(2) { width: 90px; text-align: center; }
@@ -243,7 +251,7 @@
     <div class="col-md-3">
         <div class="border rounded p-2 h-100" style="background:#e8f4fd">
             <strong class="d-block mb-1">Descrizione</strong>
-            <span>{{ $ordine->descrizione ?: '-' }}</span>
+            <span class="desc-clamp" title="{{ $ordine->descrizione ?: '-' }}">{{ $ordine->descrizione ?: '-' }}</span>
         </div>
     </div>
     <div class="col-md-2">
@@ -448,7 +456,7 @@
                 <td>
                     @if($noteExtraDett)<small class="fw-bold">{{ $noteExtraDett }}</small><br>@endif<span contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'note', this.innerText)">{{ $fase->note ?? '-' }}</span>
                 </td>
-                <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'descrizione', this.innerText)">{{ $fase->ordine->descrizione ?? '-' }}</td>
+                <td contenteditable class="desc-clamp" title="{{ $fase->ordine->descrizione ?? '-' }}" onblur="aggiornaCampo({{ $fase->id }}, 'descrizione', this.innerText)">{{ $fase->ordine->descrizione ?? '-' }}</td>
                 <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_inizio', this.innerText)" title="{{ $fase->data_inizio ?? '' }}">{{ $fase->data_inizio ? \Carbon\Carbon::parse($fase->data_inizio)->format('d/m/Y H:i') : '-' }}</td>
                 <td contenteditable onblur="aggiornaCampo({{ $fase->id }}, 'data_fine', this.innerText)" title="{{ $fase->data_fine ?? '' }}">{{ $fase->data_fine ? \Carbon\Carbon::parse($fase->data_fine)->format('d/m/Y H:i') : '-' }}</td>
                 <td style="white-space:nowrap;">
