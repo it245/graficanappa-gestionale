@@ -79,6 +79,10 @@
                             <br>
                             <button class="btn btn-sm btn-success fw-bold mt-1" style="font-size:11px;"
                                     onclick="esternoTerminaOwner({{ json_encode($riga->fasi_ids ?? []) }})">Rientro</button>
+                        @elseif($st === 0 || $st === 1)
+                            <br>
+                            <button class="btn btn-sm btn-info text-white fw-bold mt-1" style="font-size:11px;"
+                                    onclick="apriInviaEsterno({{ json_encode($riga->fasi_ids ?? []) }})">Invia</button>
                         @endif
                     </td>
                     <td><a href="{{ route('owner.dettaglioCommessa', $riga->ordine->commessa ?? '-') }}" class="commessa-link">{{ $riga->ordine->commessa ?? '-' }}</a></td>
@@ -139,9 +143,91 @@
     </div>
 </div>
 
+<!-- Modal Invia all'esterno -->
+<div class="modal fade" id="modalInviaEsterno" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">Invia lavorazione all'esterno</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="inviaEsternoFasiIds">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Fornitore esterno</label>
+                    <select id="inviaEsternoSelect" class="form-select" onchange="document.getElementById('inviaEsternoAltro').style.display=this.value==='__altro__'?'':'none';">
+                        <option value="">-- Seleziona --</option>
+                        <option>4GRAPH S.R.L.</option>
+                        <option>CARD S.R.L.</option>
+                        <option>CLEVEX S.R.L.</option>
+                        <option>KRESIA SRL</option>
+                        <option>LASER LINE FUSTELLE S.R.L.</option>
+                        <option>LEGATORIA SALVATORE TONTI SRL</option>
+                        <option>LEGOKART S.A.S.</option>
+                        <option>LEGRAF S.R.L.</option>
+                        <option>LP FUSTELLE S.R.L.</option>
+                        <option>PACKINGRAF SRL</option>
+                        <option>POLYEDRA S.P.A.</option>
+                        <option>SAE SRL</option>
+                        <option>SOL GROUP SRL</option>
+                        <option>SOLUZIONI IMBALLAGGI SRL</option>
+                        <option>TECNOCART S.R.L.</option>
+                        <option>TIPOGRAFIA BIANCO S.R.L.</option>
+                        <option>TIPOGRAFIA EFFEGI SRL</option>
+                        <option>TIPOLITOGRAFIA NEO PRINT SERVICE</option>
+                        <option value="__altro__">Altro...</option>
+                    </select>
+                    <input type="text" id="inviaEsternoAltro" class="form-control mt-2" style="display:none;" placeholder="Nome fornitore...">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                <button type="button" class="btn btn-info text-white fw-bold" onclick="confermaInviaEsterno()">Conferma invio</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 </div>
 
 <script>
+function apriInviaEsterno(fasiIds) {
+    document.getElementById('inviaEsternoFasiIds').value = JSON.stringify(fasiIds);
+    document.getElementById('inviaEsternoSelect').value = '';
+    document.getElementById('inviaEsternoAltro').value = '';
+    document.getElementById('inviaEsternoAltro').style.display = 'none';
+    new bootstrap.Modal(document.getElementById('modalInviaEsterno')).show();
+}
+
+function confermaInviaEsterno() {
+    var sel = document.getElementById('inviaEsternoSelect').value;
+    var fornitore = sel === '__altro__'
+        ? document.getElementById('inviaEsternoAltro').value.trim()
+        : sel;
+    if (!fornitore) { alert('Seleziona un fornitore'); return; }
+    var fasiIds = JSON.parse(document.getElementById('inviaEsternoFasiIds').value);
+    bootstrap.Modal.getInstance(document.getElementById('modalInviaEsterno')).hide();
+
+    var token = document.querySelector('meta[name="csrf-token"]')?.content || '';
+    var promises = fasiIds.map(function(faseId) {
+        return fetch('{{ route("owner.aggiornaCampo") }}', {
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': token, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ fase_id: faseId, campo: 'esterno', valore: 1 })
+        }).then(r => r.json()).then(() =>
+            fetch('{{ route("owner.aggiornaCampo") }}', {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': token, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({ fase_id: faseId, campo: 'note', valore: 'Inviato a: ' + fornitore })
+            }).then(r => r.json())
+        );
+    });
+
+    Promise.all(promises)
+        .then(() => { alert('Fasi inviate a: ' + fornitore); window.location.reload(); })
+        .catch(err => alert('Errore: ' + err));
+}
+
 function esternoTerminaOwner(fasiIds) {
     document.getElementById('terminaEsternoFasiIds').value = JSON.stringify(fasiIds);
     new bootstrap.Modal(document.getElementById('modalTerminaEsterno')).show();
