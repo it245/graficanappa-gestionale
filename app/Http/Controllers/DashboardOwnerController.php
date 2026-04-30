@@ -679,6 +679,8 @@ public function calcolaOreEPriorita($fase)
                 // Se riportata a 0 o 1, pulisci: flag esterno, data_fine, nota "Inviato a:"
                 if ($statoNum <= 1) {
                     $fase->data_fine = null;
+                    // Marca riapertura manuale per impedire auto-termine da Fiery/Prinect
+                    $fase->riaperta_at = now();
                     if ($fase->esterno) {
                         $fase->esterno = false;
                     }

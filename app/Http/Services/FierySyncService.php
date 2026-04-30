@@ -228,6 +228,10 @@ class FierySyncService
                     $fase->save();
                 }
             } elseif (in_array($fase->stato, [0, 1])) {
+                // Skip se riaperta manualmente (entro 24h) per evitare auto-termine indesiderato
+                if ($fase->riaperta_at && \Carbon\Carbon::parse($fase->riaperta_at)->gt(now()->subHours(24))) {
+                    continue;
+                }
                 // Fase non ancora avviata ma job Fiery completato → avvia e termina
                 $fase->stato = 2;
                 $fase->qta_prod = $qtaProdotta;
