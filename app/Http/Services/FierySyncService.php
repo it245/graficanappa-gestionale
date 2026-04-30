@@ -276,6 +276,11 @@ class FierySyncService
     {
         if ($fase->stato != 2) return;
 
+        // Skip auto-termine se riaperta manualmente entro 24h (user ha riaperto, decide lui)
+        if ($fase->riaperta_at && \Carbon\Carbon::parse($fase->riaperta_at)->gt(now()->subHours(24))) {
+            return;
+        }
+
         $qtaProd = (int) ($fase->qta_prod ?: 0);
         if ($qtaProd <= 0) return;
 
