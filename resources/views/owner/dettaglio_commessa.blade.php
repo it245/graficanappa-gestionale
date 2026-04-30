@@ -199,9 +199,13 @@
             @if(!empty($fustella['descrizione']))
                 <div class="mb-2" style="font-size:11px; color:#666;">{{ \Illuminate\Support\Str::limit($fustella['descrizione'], 60) }}</div>
             @endif
-            <embed src="{{ $fustella['url'] }}#toolbar=0&navpanes=0&zoom=page-fit"
-                   type="application/pdf"
-                   style="width:100%; height:200px; border-radius:8px; flex:1;">
+            <div style="position:relative; width:100%; height:220px; overflow:hidden; border-radius:8px; background:#f8f9fa; cursor:zoom-in;"
+                 data-bs-toggle="modal" data-bs-target="#modalFustellaOwner">
+                <embed src="{{ $fustella['url'] }}#toolbar=0&navpanes=0&scrollbar=0&view=FitH&zoom=page-fit"
+                       type="application/pdf"
+                       style="width:100%; height:100%; pointer-events:none; border:0;">
+                <div style="position:absolute; inset:0;"></div>
+            </div>
             <div class="mt-2 d-flex gap-2 justify-content-center">
                 <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalFustellaOwner">Ingrandisci</button>
                 <a href="{{ $fustella['url'] }}" target="_blank" class="btn btn-sm btn-outline-secondary">Apri PDF</a>
