@@ -31,7 +31,7 @@ class FustellaResolver
             'filename'    => $name,
             'codice'      => $codice,
             'descrizione' => self::parseDescrizione($name, $codice),
-            'dimensioni'  => self::parseDimensioni($name),
+            'dimensioni'  => null,
         ];
     }
 
