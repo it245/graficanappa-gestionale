@@ -237,10 +237,8 @@
                        autocomplete="off">
                 <div id="fustelle-suggest" style="display:none; position:absolute; top:100%; left:0; right:0; max-height:200px; overflow-y:auto; background:#fff; border:1px solid #ccc; border-radius:4px; z-index:1000; box-shadow:0 2px 6px rgba(0,0,0,0.15);"></div>
             </div>
-            <div id="fustellaPreviewWrap" class="flex-grow-1" style="position:relative; width:100%; min-height:140px; overflow:hidden; border-radius:6px; background:#525659; {{ empty($fustella) ? 'display:none;' : '' }}">
-                <embed id="fustellaEmbed" src="{{ !empty($fustella) ? $fustella['url'].'#toolbar=0&navpanes=0&scrollbar=0&view=FitH' : '' }}"
-                       type="application/pdf"
-                       style="width:100%; height:100%; border:0;">
+            <div id="fustellaPreviewWrap" class="flex-grow-1" style="position:relative; width:100%; min-height:140px; overflow:auto; border-radius:6px; background:#fff; {{ empty($fustella) ? 'display:none;' : '' }}">
+                <canvas id="fustellaCanvas" style="width:100%; display:block; background:#fff;"></canvas>
             </div>
         </div>
     </div>
@@ -259,8 +257,37 @@
         ->values()
         ->all();
 @endphp
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
+if (window.pdfjsLib) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
 window.FUSTELLE_LIST = @json($codici);
+
+async function renderFustellaPdf(url) {
+    if (!window.pdfjsLib || !url) return;
+    try {
+        const pdf = await pdfjsLib.getDocument(url).promise;
+        const page = await pdf.getPage(1);
+        const canvas = document.getElementById('fustellaCanvas');
+        const wrap = document.getElementById('fustellaPreviewWrap');
+        if (!canvas || !wrap) return;
+        const wrapW = wrap.clientWidth - 4;
+        const v1 = page.getViewport({scale: 1});
+        const scale = wrapW / v1.width;
+        const v = page.getViewport({scale});
+        canvas.width = v.width;
+        canvas.height = v.height;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        await page.render({canvasContext: ctx, viewport: v}).promise;
+    } catch (e) { console.warn('PDF render fail:', e); }
+}
+
+@if(!empty($fustella))
+window.addEventListener('DOMContentLoaded', () => renderFustellaPdf(@json($fustella['url'])));
+@endif
 
 function cercaFustelle(q) {
     q = (q || '').trim().toUpperCase();
@@ -286,13 +313,13 @@ function aggiornaPreviewFustella(codice) {
     codice = (codice || '').trim().toUpperCase();
     var wrap = document.getElementById('fustellaPreviewWrap');
     var apri = document.getElementById('fustellaApriLink');
-    if (!codice.match(/^(FS|KS)\d{3,5}$/)) return; // mantieni preview esistente se non valido
+    if (!codice.match(/^(FS|KS)\d{3,5}$/)) return;
     fetch('{{ url("/api/fustella-resolve") }}?codice=' + encodeURIComponent(codice))
         .then(r => r.json())
         .then(data => {
             if (data.url) {
                 wrap.style.display = '';
-                document.getElementById('fustellaEmbed').src = data.url + '#toolbar=0&navpanes=0&scrollbar=0&view=FitH';
+                renderFustellaPdf(data.url);
                 if (apri) { apri.href = data.url; apri.style.display = ''; }
             }
         })
