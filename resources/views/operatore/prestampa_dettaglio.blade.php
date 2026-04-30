@@ -203,51 +203,37 @@
 {{-- Row Note + Commento + Fustella --}}
 <div class="row g-2 mb-3" style="font-size:13px;">
     <div class="col-md-4">
-        <div class="border rounded p-2 h-100" style="background:#fff3cd">
+        <div class="border rounded p-2" style="background:#fff3cd;">
             <strong class="d-block mb-1">Note Prestampa</strong>
             <div contenteditable class="campo-editabile" data-campo="note_prestampa" data-ordine="{{ $ordine->id }}"
-                 onblur="salvaCampoPrestampa(this)" style="min-height:80px;">{{ $ordine->note_prestampa ?: '' }}</div>
+                 onblur="salvaCampoPrestampa(this)" style="min-height:80px; max-height:120px; overflow-y:auto;">{{ $ordine->note_prestampa ?: '' }}</div>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="border rounded p-2 h-100" style="background:#fff3cd">
+        <div class="border rounded p-2" style="background:#fff3cd;">
             <strong class="d-block mb-1">Commento Produzione</strong>
             <div contenteditable class="campo-editabile" data-campo="commento_produzione" data-ordine="{{ $ordine->id }}"
-                 onblur="salvaCampoPrestampa(this)" style="min-height:80px;">{{ $ordine->commento_produzione ?: '' }}</div>
+                 onblur="salvaCampoPrestampa(this)" style="min-height:80px; max-height:120px; overflow-y:auto;">{{ $ordine->commento_produzione ?: '' }}</div>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="border rounded p-2 h-100" style="background:#e3f2fd">
+        <div class="border rounded p-2" style="background:#e3f2fd; position:relative;">
             <div class="d-flex justify-content-between align-items-center mb-2">
                 <strong style="font-size:13px;">📐 Fustella</strong>
                 <a id="fustellaApriLink" href="{{ !empty($fustella) ? $fustella['url'] : '#' }}" target="_blank" class="btn btn-sm btn-outline-primary" style="{{ empty($fustella) ? 'display:none;' : '' }}">Apri PDF</a>
             </div>
-            <input type="text" id="fustellaInput" list="fustelle-codici"
-                   class="form-control form-control-sm campo-editabile mb-2"
-                   value="{{ $fustellaCalc ?: '' }}"
-                   placeholder="Cerca codice (es. FS0291)"
-                   data-campo="fustella_codice" data-ordine="{{ $ordine->id }}"
-                   onblur="salvaCampoPrestampa(this); aggiornaPreviewFustella(this.value);"
-                   oninput="aggiornaPreviewFustella(this.value);"
-                   autocomplete="off">
-            <datalist id="fustelle-codici">
-                @php
-                    $files = glob(public_path('fustelle/*.pdf')) ?: [];
-                    $codici = collect($files)
-                        ->map(fn($f) => basename($f))
-                        ->flatMap(function($n) {
-                            preg_match_all('/(FS|KS)\d{3,5}/', $n, $m);
-                            return $m[0] ?? [];
-                        })
-                        ->unique()
-                        ->sort()
-                        ->values()
-                        ->take(800);
-                @endphp
-                @foreach($codici as $c)
-                    <option value="{{ $c }}">
-                @endforeach
-            </datalist>
+            <div style="position:relative;">
+                <input type="text" id="fustellaInput"
+                       class="form-control form-control-sm campo-editabile mb-2"
+                       value="{{ $fustellaCalc ?: '' }}"
+                       placeholder="Cerca codice (es. FS0291)"
+                       data-campo="fustella_codice" data-ordine="{{ $ordine->id }}"
+                       onblur="setTimeout(() => { salvaCampoPrestampa(document.getElementById('fustellaInput')); document.getElementById('fustelle-suggest').style.display='none'; }, 200);"
+                       oninput="cercaFustelle(this.value); aggiornaPreviewFustella(this.value);"
+                       onfocus="cercaFustelle(this.value);"
+                       autocomplete="off">
+                <div id="fustelle-suggest" style="display:none; position:absolute; top:100%; left:0; right:0; max-height:200px; overflow-y:auto; background:#fff; border:1px solid #ccc; border-radius:4px; z-index:1000; box-shadow:0 2px 6px rgba(0,0,0,0.15);"></div>
+            </div>
             <div id="fustellaPreviewWrap" style="position:relative; width:100%; height:200px; overflow:hidden; border-radius:6px; background:#f8f9fa; {{ empty($fustella) ? 'display:none;' : '' }}">
                 <embed id="fustellaEmbed" src="{{ !empty($fustella) ? $fustella['url'].'#toolbar=0&navpanes=0&scrollbar=0&view=FitH' : '' }}"
                        type="application/pdf"
@@ -257,16 +243,47 @@
     </div>
 </div>
 
+@php
+    $files = glob(public_path('fustelle/*.pdf')) ?: [];
+    $codici = collect($files)
+        ->map(fn($f) => basename($f))
+        ->flatMap(function($n) {
+            preg_match_all('/(FS|KS)\d{3,5}/', $n, $m);
+            return $m[0] ?? [];
+        })
+        ->unique()
+        ->sort()
+        ->values()
+        ->all();
+@endphp
 <script>
+window.FUSTELLE_LIST = @json($codici);
+
+function cercaFustelle(q) {
+    q = (q || '').trim().toUpperCase();
+    var box = document.getElementById('fustelle-suggest');
+    if (!box) return;
+    var matches = (window.FUSTELLE_LIST || []).filter(c => !q || c.includes(q)).slice(0, 30);
+    if (matches.length === 0) { box.style.display = 'none'; return; }
+    box.innerHTML = matches.map(c =>
+        '<div style="padding:6px 10px; cursor:pointer; border-bottom:1px solid #eee;" onmousedown="selezionaFustella(\'' + c + '\')">' + c + '</div>'
+    ).join('');
+    box.style.display = '';
+}
+
+function selezionaFustella(codice) {
+    var input = document.getElementById('fustellaInput');
+    input.value = codice;
+    document.getElementById('fustelle-suggest').style.display = 'none';
+    aggiornaPreviewFustella(codice);
+    salvaCampoPrestampa(input);
+}
+
 function aggiornaPreviewFustella(codice) {
     codice = (codice || '').trim().toUpperCase();
     var wrap = document.getElementById('fustellaPreviewWrap');
     var apri = document.getElementById('fustellaApriLink');
-    if (!codice.match(/^(FS|KS)\d{3,5}$/)) {
-        if (wrap) wrap.style.display = 'none';
-        if (apri) apri.style.display = 'none';
-        return;
-    }
+    if (!codice.match(/^(FS|KS)\d{3,5}$/)) return; // mantieni preview esistente se non valido
     fetch('{{ url("/api/fustella-resolve") }}?codice=' + encodeURIComponent(codice))
         .then(r => r.json())
         .then(data => {
@@ -274,9 +291,6 @@ function aggiornaPreviewFustella(codice) {
                 wrap.style.display = '';
                 document.getElementById('fustellaEmbed').src = data.url + '#toolbar=0&navpanes=0&scrollbar=0&view=FitH';
                 if (apri) { apri.href = data.url; apri.style.display = ''; }
-            } else {
-                wrap.style.display = 'none';
-                if (apri) apri.style.display = 'none';
             }
         })
         .catch(()=>{});
