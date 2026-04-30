@@ -11,6 +11,11 @@ use Illuminate\Http\Request;
 
 class FieryController extends Controller
 {
+    public function consumablesJson(FieryService $fiery)
+    {
+        return response()->json($fiery->getConsumables() ?? []);
+    }
+
     public function index(FieryService $fiery, FierySyncService $syncService)
     {
         set_time_limit(60);
