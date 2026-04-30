@@ -68,22 +68,27 @@
                 @endphp
                 <tr class="{{ $rowClass }} searchable">
                     <td style="white-space:nowrap;">
-                        @if($statoFase == 5)
-                            <span class="badge badge-stato" style="background:#7c3aed;color:#fff;">Esterno</span>
-                            <br>
-                            <button class="btn btn-sm btn-success fw-bold mt-1" style="font-size:11px;"
-                                    onclick="esternoTerminaOwner({{ json_encode($riga->fasi_ids) }})">Rientro</button>
-                        @elseif($statoFase == 0)
+                        @if((int)$statoFase === 5)
+                            <span class="badge badge-stato" style="background:#7c3aed;color:#fff;">EXT</span>
+                        @elseif((int)$statoFase === 0)
                             <span class="badge bg-secondary badge-stato">Da fare</span>
-                        @elseif($statoFase == 1)
+                        @elseif((int)$statoFase === 1)
                             <span class="badge bg-info badge-stato">Pronto</span>
-                        @elseif($statoFase == 2)
+                        @elseif((int)$statoFase === 2)
                             <span class="badge bg-primary badge-stato">In corso</span>
-                            <br>
-                            <button class="btn btn-sm btn-success fw-bold mt-1" style="font-size:11px;"
-                                    onclick="esternoTerminaOwner({{ json_encode($riga->fasi_ids) }})">Rientro</button>
+                        @elseif((int)$statoFase === 3)
+                            <span class="badge bg-success badge-stato">Terminato</span>
+                        @elseif((int)$statoFase === 4)
+                            <span class="badge bg-dark badge-stato">Consegnato</span>
                         @elseif($inPausa)
                             <span class="badge bg-warning text-dark badge-stato">Pausa: {{ $statoFase }}</span>
+                        @else
+                            <span class="badge bg-light text-dark badge-stato">{{ $statoFase ?: '-' }}</span>
+                        @endif
+                        @if(in_array((int)$statoFase, [0, 1, 2, 5], true) || $inPausa)
+                            <br>
+                            <button class="btn btn-sm btn-success fw-bold mt-1" style="font-size:11px;"
+                                    onclick="esternoTerminaOwner({{ json_encode($riga->fasi_ids) }})">Rientro</button>
                         @endif
                     </td>
                     <td><a href="{{ route('owner.dettaglioCommessa', $riga->ordine->commessa ?? '-') }}" class="commessa-link">{{ $riga->ordine->commessa ?? '-' }}</a></td>
