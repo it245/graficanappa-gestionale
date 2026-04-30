@@ -91,6 +91,12 @@
 
         /* Table */
         .prestampa-table { font-size: 12px; }
+        .desc-clamp {
+            display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical;
+            overflow:hidden; text-overflow:ellipsis; word-break:break-word;
+            line-height:1.35; max-height:5.4em; cursor:help;
+        }
+        .desc-clamp:hover { -webkit-line-clamp:unset; max-height:none; background:#fffbe6; }
         .prestampa-table thead th { padding: 6px; font-size: 11px; }
         .prestampa-table td { padding: 6px; }
 
@@ -138,9 +144,10 @@
         <div class="border rounded p-2 h-100" style="background:{{ $mirko ? '#e8f4fd' : '#fff3cd' }}">
             <strong class="d-block mb-1">Descrizione</strong>
             @if($mirko)
-                <span>{{ $tutteDesc ?: '-' }}</span>
+                <span class="desc-clamp" title="{{ $tutteDesc ?: '-' }}">{{ $tutteDesc ?: '-' }}</span>
             @else
-                <div contenteditable class="campo-editabile" data-campo="descrizione" data-ordine="{{ $ordine->id }}"
+                <div contenteditable class="campo-editabile desc-clamp" data-campo="descrizione" data-ordine="{{ $ordine->id }}"
+                     title="{{ $tutteDesc ?: '' }}"
                      onblur="salvaCampoPrestampa(this)" style="min-height:40px;">{{ $tutteDesc ?: '' }}</div>
             @endif
         </div>
