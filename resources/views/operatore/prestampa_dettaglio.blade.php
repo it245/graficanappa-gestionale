@@ -200,24 +200,24 @@
     </div>
 </div>
 
-{{-- Row Note + Commento + Fustella --}}
-<div class="row g-2 mb-3" style="font-size:13px;">
+{{-- Row Note + Commento + Fustella (altezze allineate) --}}
+<div class="row g-2 mb-3 align-items-stretch" style="font-size:13px;">
     <div class="col-md-4">
-        <div class="border rounded p-2" style="background:#fff3cd;">
+        <div class="border rounded p-2 h-100 d-flex flex-column" style="background:#fff3cd;">
             <strong class="d-block mb-1">Note Prestampa</strong>
-            <div contenteditable class="campo-editabile" data-campo="note_prestampa" data-ordine="{{ $ordine->id }}"
-                 onblur="salvaCampoPrestampa(this)" style="min-height:80px; max-height:120px; overflow-y:auto;">{{ $ordine->note_prestampa ?: '' }}</div>
+            <div contenteditable class="campo-editabile flex-grow-1" data-campo="note_prestampa" data-ordine="{{ $ordine->id }}"
+                 onblur="salvaCampoPrestampa(this)" style="min-height:120px;">{{ $ordine->note_prestampa ?: '' }}</div>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="border rounded p-2" style="background:#fff3cd;">
+        <div class="border rounded p-2 h-100 d-flex flex-column" style="background:#fff3cd;">
             <strong class="d-block mb-1">Commento Produzione</strong>
-            <div contenteditable class="campo-editabile" data-campo="commento_produzione" data-ordine="{{ $ordine->id }}"
-                 onblur="salvaCampoPrestampa(this)" style="min-height:80px; max-height:120px; overflow-y:auto;">{{ $ordine->commento_produzione ?: '' }}</div>
+            <div contenteditable class="campo-editabile flex-grow-1" data-campo="commento_produzione" data-ordine="{{ $ordine->id }}"
+                 onblur="salvaCampoPrestampa(this)" style="min-height:120px;">{{ $ordine->commento_produzione ?: '' }}</div>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="border rounded p-2" style="background:#e3f2fd; position:relative;">
+        <div class="border rounded p-2 h-100 d-flex flex-column" style="background:#e3f2fd; position:relative;">
             <div class="d-flex justify-content-between align-items-center mb-2">
                 <strong style="font-size:13px;">📐 Fustella</strong>
                 <a id="fustellaApriLink" href="{{ !empty($fustella) ? $fustella['url'] : '#' }}" target="_blank" class="btn btn-sm btn-outline-primary" style="{{ empty($fustella) ? 'display:none;' : '' }}">Apri PDF</a>
@@ -234,7 +234,7 @@
                        autocomplete="off">
                 <div id="fustelle-suggest" style="display:none; position:absolute; top:100%; left:0; right:0; max-height:200px; overflow-y:auto; background:#fff; border:1px solid #ccc; border-radius:4px; z-index:1000; box-shadow:0 2px 6px rgba(0,0,0,0.15);"></div>
             </div>
-            <div id="fustellaPreviewWrap" style="position:relative; width:100%; height:200px; overflow:hidden; border-radius:6px; background:#f8f9fa; {{ empty($fustella) ? 'display:none;' : '' }}">
+            <div id="fustellaPreviewWrap" class="flex-grow-1" style="position:relative; width:100%; min-height:140px; overflow:hidden; border-radius:6px; background:#f8f9fa; {{ empty($fustella) ? 'display:none;' : '' }}">
                 <embed id="fustellaEmbed" src="{{ !empty($fustella) ? $fustella['url'].'#toolbar=0&navpanes=0&scrollbar=0&view=FitH' : '' }}"
                        type="application/pdf"
                        style="width:100%; height:100%; border:0;">
