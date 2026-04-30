@@ -44,6 +44,12 @@
         display: inline-block; padding: 3px 10px; border-radius: 12px;
         font-size: 12px; font-weight: bold;
     }
+    .desc-clamp {
+        display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical;
+        overflow:hidden; text-overflow:ellipsis; word-break:break-word;
+        line-height:1.35; max-height:5.4em; cursor:help;
+    }
+    .desc-clamp:hover { -webkit-line-clamp:unset; max-height:none; background:#fffbe6; }
 
     /* ===== RESPONSIVE MOBILE ===== */
     @media (max-width: 768px) {
@@ -91,12 +97,6 @@
 
         /* Table */
         .prestampa-table { font-size: 12px; }
-        .desc-clamp {
-            display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical;
-            overflow:hidden; text-overflow:ellipsis; word-break:break-word;
-            line-height:1.35; max-height:5.4em; cursor:help;
-        }
-        .desc-clamp:hover { -webkit-line-clamp:unset; max-height:none; background:#fffbe6; }
         .prestampa-table thead th { padding: 6px; font-size: 11px; }
         .prestampa-table td { padding: 6px; }
 

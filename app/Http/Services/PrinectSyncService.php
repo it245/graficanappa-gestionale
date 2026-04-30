@@ -496,7 +496,9 @@ class PrinectSyncService
             }
 
             // Se l'operatore ha avviato un'altra commessa → questa e terminata
-            if ($terminata && !in_array($fase->stato, [3, '3'])) {
+            // Skip se riaperta manualmente entro 24h
+            $riapertaRecente = $fase->riaperta_at && Carbon::parse($fase->riaperta_at)->gt(now()->subHours(24));
+            if ($terminata && !in_array($fase->stato, [3, '3']) && !$riapertaRecente) {
                 $fase->stato = 3;
                 if (!$fase->data_fine && $dataFine) {
                     $fase->data_fine = $dataFine;
