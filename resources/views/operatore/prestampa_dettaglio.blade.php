@@ -10,10 +10,6 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>
         Lista Commesse
     </a>
-    <a href="{{ route('operatore.dashboard', ['op_token' => request('op_token')]) }}" class="mes-sidebar-item">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-        Dashboard Operatore
-    </a>
 </div>
 @endsection
 
@@ -139,83 +135,90 @@
     // Qta: somma degli articoli finali (esclusi semilavorati SEMILAV*)
     $qtaCommessa = $ordini->filter(fn($o) => !str_starts_with($o->cod_art ?? '', 'SEMILAV'))->sum('qta_richiesta');
 @endphp
-<div class="row g-2 mb-2" style="font-size:13px;">
-    <div class="col-md-4">
-        <div class="border rounded p-2 h-100" style="background:{{ $mirko ? '#e8f4fd' : '#fff3cd' }}">
-            <strong class="d-block mb-1">Descrizione</strong>
-            @if($mirko)
-                <span class="desc-clamp" title="{{ $tutteDesc ?: '-' }}">{{ $tutteDesc ?: '-' }}</span>
-            @else
-                <div contenteditable class="campo-editabile desc-clamp" data-campo="descrizione" data-ordine="{{ $ordine->id }}"
-                     title="{{ $tutteDesc ?: '' }}"
-                     onblur="salvaCampoPrestampa(this)" style="min-height:40px;">{{ $tutteDesc ?: '' }}</div>
-            @endif
+<div class="row g-2 mb-2 align-items-stretch" style="font-size:13px;">
+    {{-- Colonna SX: descrizione + info + note + commento --}}
+    <div class="col-md-8">
+        <div class="row g-2 mb-2">
+            <div class="col-md-6">
+                <div class="border rounded p-2 h-100" style="background:{{ $mirko ? '#e8f4fd' : '#fff3cd' }}">
+                    <strong class="d-block mb-1">Descrizione</strong>
+                    @if($mirko)
+                        <span class="desc-clamp" title="{{ $tutteDesc ?: '-' }}">{{ $tutteDesc ?: '-' }}</span>
+                    @else
+                        <div contenteditable class="campo-editabile desc-clamp" data-campo="descrizione" data-ordine="{{ $ordine->id }}"
+                             title="{{ $tutteDesc ?: '' }}"
+                             onblur="salvaCampoPrestampa(this)" style="min-height:40px;">{{ $tutteDesc ?: '' }}</div>
+                    @endif
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded p-2 h-100" style="background:#e8f4fd">
+                    <strong class="d-block mb-1">Cliente</strong>
+                    <span>{{ $ordine->cliente_nome ?: '-' }}</span>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded p-2 h-100" style="background:{{ $mirko ? '#e8f4fd' : '#fff3cd' }}">
+                    <strong class="d-block mb-1">Qta</strong>
+                    @if($mirko)
+                        <span>{{ $qtaCommessa ? number_format($qtaCommessa, 0, ',', '.') : '-' }}</span>
+                    @else
+                        <div contenteditable class="campo-editabile" data-campo="qta_richiesta" data-ordine="{{ $ordine->id }}"
+                             onblur="salvaCampoPrestampa(this)">{{ $qtaCommessa ? number_format($qtaCommessa, 0, ',', '.') : '' }}</div>
+                    @endif
+                </div>
+            </div>
+        </div>
+        <div class="row g-2 mb-2">
+            <div class="col-md-3">
+                <div class="border rounded p-2 h-100" style="background:#e8f4fd">
+                    <strong class="d-block mb-1">Data Reg.</strong>
+                    <span>{{ $ordine->data_registrazione ? \Carbon\Carbon::parse($ordine->data_registrazione)->format('d/m/Y') : '-' }}</span>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded p-2 h-100" style="background:#e8f4fd">
+                    <strong class="d-block mb-1">Consegna</strong>
+                    <span>{{ $ordine->data_prevista_consegna ? \Carbon\Carbon::parse($ordine->data_prevista_consegna)->format('d/m/Y') : '-' }}</span>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded p-2 h-100" style="background:{{ $mirko ? '#e8f4fd' : '#fff3cd' }}">
+                    <strong class="d-block mb-1">Colori</strong>
+                    @if($mirko)
+                        <span>{{ $coloriCalc ?: '-' }}</span>
+                    @else
+                        <div contenteditable class="campo-editabile" data-campo="colori" data-ordine="{{ $ordine->id }}"
+                             onblur="salvaCampoPrestampa(this)">{{ $coloriCalc ?: '' }}</div>
+                    @endif
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded p-2 h-100" style="background:#e8f4fd">
+                    <strong class="d-block mb-1">Colori (parsing)</strong>
+                    <span style="font-size:11px;">{{ $coloriCalc ?: '-' }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="row g-2">
+            <div class="col-md-6">
+                <div class="border rounded p-2 h-100 d-flex flex-column" style="background:#fff3cd;">
+                    <strong class="d-block mb-1">Note Prestampa</strong>
+                    <div contenteditable class="campo-editabile flex-grow-1" data-campo="note_prestampa" data-ordine="{{ $ordine->id }}"
+                         onblur="salvaCampoPrestampa(this)" style="min-height:80px;">{{ $ordine->note_prestampa ?: '' }}</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="border rounded p-2 h-100 d-flex flex-column" style="background:#fff3cd;">
+                    <strong class="d-block mb-1">Commento Produzione</strong>
+                    <div contenteditable class="campo-editabile flex-grow-1" data-campo="commento_produzione" data-ordine="{{ $ordine->id }}"
+                         onblur="salvaCampoPrestampa(this)" style="min-height:80px;">{{ $ordine->commento_produzione ?: '' }}</div>
+                </div>
+            </div>
         </div>
     </div>
-    <div class="col-md-2">
-        <div class="border rounded p-2 h-100" style="background:#e8f4fd">
-            <strong class="d-block mb-1">Cliente</strong>
-            <span>{{ $ordine->cliente_nome ?: '-' }}</span>
-        </div>
-    </div>
-    <div class="col-md-1">
-        <div class="border rounded p-2 h-100" style="background:{{ $mirko ? '#e8f4fd' : '#fff3cd' }}">
-            <strong class="d-block mb-1">Qta</strong>
-            @if($mirko)
-                <span>{{ $qtaCommessa ? number_format($qtaCommessa, 0, ',', '.') : '-' }}</span>
-            @else
-                <div contenteditable class="campo-editabile" data-campo="qta_richiesta" data-ordine="{{ $ordine->id }}"
-                     onblur="salvaCampoPrestampa(this)">{{ $qtaCommessa ? number_format($qtaCommessa, 0, ',', '.') : '' }}</div>
-            @endif
-        </div>
-    </div>
-    <div class="col-md-1">
-        <div class="border rounded p-2 h-100" style="background:#e8f4fd">
-            <strong class="d-block mb-1">Data Reg.</strong>
-            <span>{{ $ordine->data_registrazione ? \Carbon\Carbon::parse($ordine->data_registrazione)->format('d/m/Y') : '-' }}</span>
-        </div>
-    </div>
-    <div class="col-md-1">
-        <div class="border rounded p-2 h-100" style="background:#e8f4fd">
-            <strong class="d-block mb-1">Consegna</strong>
-            <span>{{ $ordine->data_prevista_consegna ? \Carbon\Carbon::parse($ordine->data_prevista_consegna)->format('d/m/Y') : '-' }}</span>
-        </div>
-    </div>
-    <div class="col-md-1">
-        <div class="border rounded p-2 h-100" style="background:{{ $mirko ? '#e8f4fd' : '#fff3cd' }}">
-            <strong class="d-block mb-1">Colori</strong>
-            @if($mirko)
-                <span>{{ $coloriCalc ?: '-' }}</span>
-            @else
-                <div contenteditable class="campo-editabile" data-campo="colori" data-ordine="{{ $ordine->id }}"
-                     onblur="salvaCampoPrestampa(this)">{{ $coloriCalc ?: '' }}</div>
-            @endif
-        </div>
-    </div>
-    <div class="col-md-2">
-        <div class="border rounded p-2 h-100" style="background:#e8f4fd">
-            <strong class="d-block mb-1">Colori (parsing)</strong>
-            <span style="font-size:11px;">{{ $coloriCalc ?: '-' }}</span>
-        </div>
-    </div>
-</div>
 
-{{-- Row Note + Commento + Fustella (altezze allineate) --}}
-<div class="row g-2 mb-3 align-items-stretch" style="font-size:13px;">
-    <div class="col-md-4">
-        <div class="border rounded p-2 h-100 d-flex flex-column" style="background:#fff3cd;">
-            <strong class="d-block mb-1">Note Prestampa</strong>
-            <div contenteditable class="campo-editabile flex-grow-1" data-campo="note_prestampa" data-ordine="{{ $ordine->id }}"
-                 onblur="salvaCampoPrestampa(this)" style="min-height:120px;">{{ $ordine->note_prestampa ?: '' }}</div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="border rounded p-2 h-100 d-flex flex-column" style="background:#fff3cd;">
-            <strong class="d-block mb-1">Commento Produzione</strong>
-            <div contenteditable class="campo-editabile flex-grow-1" data-campo="commento_produzione" data-ordine="{{ $ordine->id }}"
-                 onblur="salvaCampoPrestampa(this)" style="min-height:120px;">{{ $ordine->commento_produzione ?: '' }}</div>
-        </div>
-    </div>
+    {{-- Colonna DX: Fustella full height --}}
     <div class="col-md-4">
         <div class="border rounded p-2 h-100 d-flex flex-column" style="background:#e3f2fd; position:relative;">
             <div class="d-flex justify-content-between align-items-center mb-2">
