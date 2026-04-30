@@ -248,7 +248,12 @@ class DashboardOperatoreController extends Controller
                 || strtolower(trim($operatore->cognome ?? '')) === 'dorazio'
                 || strtolower(trim($operatore->cognome ?? '')) === 'd orazio';
 
-        return view('operatore.prestampa_dettaglio', compact('operatore', 'ordine', 'ordini', 'commessa', 'fasi', 'isMirko'));
+        // Fustella PDF (cerca in public/fustelle/ matchando codice FS####)
+        $tutteDescPre = $ordini->pluck('descrizione')->filter()->unique()->implode(' | ');
+        $fustellaCodice = \App\Helpers\DescrizioneParser::parseFustella($tutteDescPre, $ordine->cliente_nome ?? '', $ordine->note_prestampa ?? '');
+        $fustella = \App\Helpers\FustellaResolver::resolve($fustellaCodice);
+
+        return view('operatore.prestampa_dettaglio', compact('operatore', 'ordine', 'ordini', 'commessa', 'fasi', 'isMirko', 'fustella'));
     }
 
     /**

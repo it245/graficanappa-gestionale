@@ -404,5 +404,12 @@ Route::get('/report-percorso', function () {
 // DDT PDF
 Route::get('/ddt/pdf/{numeroDdt}', [DdtPdfController::class, 'genera'])->name('ddt.pdf');
 
+// Fustella resolver API (lookup PDF da codice FS####)
+Route::get('/api/fustella-resolve', function (\Illuminate\Http\Request $request) {
+    $codice = $request->get('codice');
+    $r = \App\Helpers\FustellaResolver::resolve($codice);
+    return response()->json($r ?: ['url' => null]);
+})->name('api.fustella.resolve');
+
 // Homepage
 Route::get('/', fn() => view('welcome'));

@@ -195,15 +195,90 @@
     <div class="col-md-2">
         <div class="border rounded p-2 h-100" style="background:#fff3cd">
             <strong class="d-block mb-1">Fustella</strong>
-            <div contenteditable class="campo-editabile" data-campo="fustella_codice" data-ordine="{{ $ordine->id }}"
-                 onblur="salvaCampoPrestampa(this)">{{ $fustellaCalc ?: '' }}</div>
+            <input type="text" id="fustellaInput" list="fustelle-codici"
+                   class="form-control form-control-sm campo-editabile"
+                   value="{{ $fustellaCalc ?: '' }}"
+                   placeholder="FS####"
+                   data-campo="fustella_codice" data-ordine="{{ $ordine->id }}"
+                   onblur="salvaCampoPrestampa(this); aggiornaPreviewFustella(this.value);"
+                   oninput="aggiornaPreviewFustella(this.value);"
+                   autocomplete="off">
+            <datalist id="fustelle-codici">
+                @php
+                    $files = glob(public_path('fustelle/*.pdf')) ?: [];
+                    $codici = collect($files)
+                        ->map(fn($f) => basename($f))
+                        ->flatMap(function($n) {
+                            preg_match_all('/(FS|KS)\d{3,5}/', $n, $m);
+                            return $m[0] ?? [];
+                        })
+                        ->unique()
+                        ->sort()
+                        ->values()
+                        ->take(500);
+                @endphp
+                @foreach($codici as $c)
+                    <option value="{{ $c }}">
+                @endforeach
+            </datalist>
         </div>
     </div>
 </div>
 
-{{-- Campi editabili prestampa (nascosti per Mirko) --}}
-@if(!$mirko)
+@if(!empty($fustella))
+<div class="row g-2 mb-3" id="fustellaPreviewWrap">
+    <div class="col-md-6">
+        <div class="border rounded p-2" style="background:#e3f2fd">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <strong style="font-size:13px;">📐 Fustella <span id="fustellaCodiceLabel">{{ $fustella['codice'] }}</span>
+                    @if(!empty($fustella['dimensioni']))
+                        <span class="badge bg-info ms-1">{{ $fustella['dimensioni'] }}</span>
+                    @endif
+                </strong>
+                <a href="{{ $fustella['url'] }}" target="_blank" class="btn btn-sm btn-outline-primary">Apri PDF</a>
+            </div>
+            <div style="position:relative; width:100%; height:280px; overflow:hidden; border-radius:6px; background:#f8f9fa;">
+                <embed id="fustellaEmbed" src="{{ $fustella['url'] }}#toolbar=0&navpanes=0&scrollbar=0&view=FitH"
+                       type="application/pdf"
+                       style="width:100%; height:100%; border:0;">
+            </div>
+        </div>
+    </div>
+</div>
+@else
+<div class="row g-2 mb-3" id="fustellaPreviewWrap" style="display:none;">
+    <div class="col-md-6">
+        <div class="border rounded p-2" style="background:#e3f2fd">
+            <strong style="font-size:13px;">📐 Fustella <span id="fustellaCodiceLabel"></span></strong>
+            <div style="position:relative; width:100%; height:280px; overflow:hidden; border-radius:6px; background:#f8f9fa; margin-top:8px;">
+                <embed id="fustellaEmbed" src="" type="application/pdf"
+                       style="width:100%; height:100%; border:0;">
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+
+<script>
+function aggiornaPreviewFustella(codice) {
+    codice = (codice || '').trim().toUpperCase();
+    if (!codice.match(/^(FS|KS)\d{3,5}$/)) return;
+    fetch('{{ url("/api/fustella-resolve") }}?codice=' + encodeURIComponent(codice))
+        .then(r => r.json())
+        .then(data => {
+            if (data.url) {
+                document.getElementById('fustellaPreviewWrap').style.display = '';
+                document.getElementById('fustellaCodiceLabel').textContent = codice;
+                document.getElementById('fustellaEmbed').src = data.url + '#toolbar=0&navpanes=0&scrollbar=0&view=FitH';
+            }
+        })
+        .catch(()=>{});
+}
+</script>
+
+{{-- Campi editabili prestampa --}}
 <div class="row g-2 mb-3" style="font-size:13px;">
+    @if(!$mirko)
     <div class="col-md-4">
         <div class="border rounded p-2 h-100" style="background:#fff3cd">
             <strong class="d-block mb-1">Operatore Prestampa</strong>
@@ -211,14 +286,15 @@
                  onblur="salvaCampoPrestampa(this)">{{ $ordine->responsabile ?: '' }}</div>
         </div>
     </div>
-    <div class="col-md-4">
+    @endif
+    <div class="{{ $mirko ? 'col-md-6' : 'col-md-4' }}">
         <div class="border rounded p-2 h-100" style="background:#fff3cd">
             <strong class="d-block mb-1">Note Prestampa</strong>
             <div contenteditable class="campo-editabile" data-campo="note_prestampa" data-ordine="{{ $ordine->id }}"
                  onblur="salvaCampoPrestampa(this)" style="min-height:60px;">{{ $ordine->note_prestampa ?: '' }}</div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="{{ $mirko ? 'col-md-6' : 'col-md-4' }}">
         <div class="border rounded p-2 h-100" style="background:#fff3cd">
             <strong class="d-block mb-1">Commento Produzione</strong>
             <div contenteditable class="campo-editabile" data-campo="commento_produzione" data-ordine="{{ $ordine->id }}"
@@ -226,7 +302,6 @@
         </div>
     </div>
 </div>
-@endif
 
 
 {{-- Barra progresso fasi --}}
