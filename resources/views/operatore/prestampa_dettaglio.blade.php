@@ -323,9 +323,13 @@ async function renderFustellaPdf(url) {
     } catch (e) { console.warn('PDF render fail:', e); }
 }
 
-@if(!empty($fustella))
-window.addEventListener('DOMContentLoaded', () => renderFustellaPdf(@json($fustella['url'])));
-@endif
+window.addEventListener('DOMContentLoaded', () => {
+    var initial = @json($fustellaCalc ?: '');
+    aggiornaPreviewFustella(initial);
+    @if(!empty($fustella))
+    renderFustellaPdf(@json($fustella['url']));
+    @endif
+});
 
 function cercaFustelle(q) {
     q = (q || '').trim().toUpperCase();

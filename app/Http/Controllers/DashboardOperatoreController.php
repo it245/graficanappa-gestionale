@@ -251,7 +251,12 @@ class DashboardOperatoreController extends Controller
         // Fustella PDF (cerca in public/fustelle/ matchando codice FS####)
         $tutteDescPre = $ordini->pluck('descrizione')->filter()->unique()->implode(' | ');
         $fustellaCodice = \App\Helpers\DescrizioneParser::parseFustella($tutteDescPre, $ordine->cliente_nome ?? '', $ordine->note_prestampa ?? '');
-        $fustella = \App\Helpers\FustellaResolver::resolve($fustellaCodice);
+        // Estrai primo codice da stringa multipla (es "FS0366 / FS0331 / FS0365")
+        $primoCodice = null;
+        if ($fustellaCodice && preg_match('/(FS|KS)\d{3,5}/', $fustellaCodice, $m)) {
+            $primoCodice = $m[0];
+        }
+        $fustella = \App\Helpers\FustellaResolver::resolve($primoCodice);
 
         return view('operatore.prestampa_dettaglio', compact('operatore', 'ordine', 'ordini', 'commessa', 'fasi', 'isMirko', 'fustella'));
     }
