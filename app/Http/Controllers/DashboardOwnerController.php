@@ -1056,7 +1056,15 @@ public function calcolaOreEPriorita($fase)
         }
 
         $ordine = $ordini->first();
-        return view('owner.dettaglio_commessa', compact('commessa', 'fasi', 'preview', 'ordine', 'ordini'));
+
+        // Fustella PDF (cerca in public/fustelle/ matchando codice FS####)
+        $fustellaCodice = null;
+        $tutteDesc = $ordini->pluck('descrizione')->filter()->unique()->implode(' | ');
+        $notePre = $ordine->note_prestampa ?? '';
+        $fustellaCodice = \App\Helpers\DescrizioneParser::parseFustella($tutteDesc, $ordine->cliente_nome ?? '', $notePre);
+        $fustella = \App\Helpers\FustellaResolver::resolve($fustellaCodice);
+
+        return view('owner.dettaglio_commessa', compact('commessa', 'fasi', 'preview', 'ordine', 'ordini', 'fustella'));
     }
 
     public function eliminaFase(Request $request)

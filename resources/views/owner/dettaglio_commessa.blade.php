@@ -178,15 +178,52 @@
     </div>
 </div>
 
-{{-- Anteprima foglio di stampa --}}
-@if($preview)
-<div class="row mb-3">
+{{-- Anteprima foglio di stampa + Fustella --}}
+@if($preview || !empty($fustella))
+<div class="row mb-3 g-2">
+    @if($preview)
     <div class="col-md-4">
-        <div class="preview-card p-3 text-center bg-white shadow-sm">
-            <div class="fw-bold mb-2" style="font-size:13px;">Anteprima foglio di stampa</div>
-            <img src="data:{{ $preview['mimeType'] }};base64,{{ $preview['data'] }}" alt="Preview">
+        <div class="preview-card p-3 text-center bg-white shadow-sm h-100">
+            <div class="fw-bold mb-2" style="font-size:13px;">📄 Anteprima foglio di stampa</div>
+            <img src="data:{{ $preview['mimeType'] }};base64,{{ $preview['data'] }}" alt="Preview" style="max-width:100%; max-height:260px; border-radius:8px;">
         </div>
     </div>
+    @endif
+    @if(!empty($fustella))
+    <div class="col-md-4">
+        <div class="preview-card p-3 text-center bg-white shadow-sm h-100 d-flex flex-column">
+            <div class="fw-bold mb-1" style="font-size:13px;">📐 Fustella <strong>{{ $fustella['codice'] }}</strong></div>
+            @if(!empty($fustella['dimensioni']))
+                <div class="mb-1" style="font-size:12px; color:#0d6efd; font-weight:600;">{{ $fustella['dimensioni'] }}</div>
+            @endif
+            @if(!empty($fustella['descrizione']))
+                <div class="mb-2" style="font-size:11px; color:#666;">{{ \Illuminate\Support\Str::limit($fustella['descrizione'], 60) }}</div>
+            @endif
+            <embed src="{{ $fustella['url'] }}#toolbar=0&navpanes=0&zoom=page-fit"
+                   type="application/pdf"
+                   style="width:100%; height:200px; border-radius:8px; flex:1;">
+            <div class="mt-2 d-flex gap-2 justify-content-center">
+                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalFustellaOwner">Ingrandisci</button>
+                <a href="{{ $fustella['url'] }}" target="_blank" class="btn btn-sm btn-outline-secondary">Apri PDF</a>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="modalFustellaOwner" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content" style="background:#0f172a;">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title text-white">Fustella {{ $fustella['codice'] }}
+                        @if(!empty($fustella['dimensioni']))<span class="ms-2 badge bg-info">{{ $fustella['dimensioni'] }}</span>@endif
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-2">
+                    <iframe src="{{ $fustella['url'] }}" style="width:100%; height:80vh; border:0; border-radius:8px; background:#fff;"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
 </div>
 @endif
 
