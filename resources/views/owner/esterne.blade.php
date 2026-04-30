@@ -1,10 +1,24 @@
-@extends('layouts.app')
+@extends('layouts.mes')
+
+@section('topbar-title', 'Lavorazioni Esterne')
+
+@section('sidebar-items')
+<div class="mes-sidebar-section">
+    <div class="mes-sidebar-section-label">Produzione</div>
+    <a href="{{ route('owner.dashboard') }}?op_token={{ request('op_token') }}" class="mes-sidebar-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Dashboard
+    </a>
+    <a href="{{ route('owner.esterne') }}?op_token={{ request('op_token') }}" class="mes-sidebar-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+        Lav. Esterne
+    </a>
+</div>
+@endsection
 
 @section('content')
 <div class="container-fluid px-0">
 <style>
-    html, body { margin:0; padding:0; overflow-x:hidden; width:100%; }
-    h2, h4, p { margin-left:8px; margin-right:8px; }
     .table-wrapper {
         width:100%; max-width:100%; overflow-x:auto; overflow-y:visible; margin: 0 4px;
     }
@@ -25,14 +39,11 @@
     .badge-stato { font-size:11px; }
 </style>
 
-<div class="d-flex align-items-center mx-2 mb-2 mt-2">
-    <a href="{{ route('owner.dashboard') }}" class="btn btn-outline-secondary btn-sm me-3">&larr; Dashboard</a>
-    <h2 class="mb-0" style="color:#17a2b8;">Lavorazioni Esterne ({{ $commesseEsterne->count() }})</h2>
-</div>
+<h2 class="mb-2 mt-2 mx-2" style="color:#17a2b8;">Lavorazioni Esterne ({{ $commesseEsterne->count() }})</h2>
 
 <input type="text" id="searchBox" class="form-control search-box" placeholder="Cerca commessa, cliente, fornitore, fase...">
 
-<div class="table-wrapper">
+<div class="table-wrapper" id="tableScroll">
     <table class="table table-bordered table-sm table-striped" id="tabEsterne">
         <thead style="background:#17a2b8; color:#fff;">
             <tr>
@@ -57,17 +68,27 @@
                 @endphp
                 <tr class="{{ $rowClass }} searchable">
                     <td style="white-space:nowrap;">
-                        @if($statoFase == 0)
+                        @if((int)$statoFase === 5)
+                            <span class="badge badge-stato" style="background:#7c3aed;color:#fff;">EXT</span>
+                        @elseif((int)$statoFase === 0)
                             <span class="badge bg-secondary badge-stato">Da fare</span>
-                        @elseif($statoFase == 1)
+                        @elseif((int)$statoFase === 1)
                             <span class="badge bg-info badge-stato">Pronto</span>
-                        @elseif($statoFase == 2)
+                        @elseif((int)$statoFase === 2)
                             <span class="badge bg-primary badge-stato">In corso</span>
+                        @elseif((int)$statoFase === 3)
+                            <span class="badge bg-success badge-stato">Terminato</span>
+                        @elseif((int)$statoFase === 4)
+                            <span class="badge bg-dark badge-stato">Consegnato</span>
+                        @elseif($inPausa)
+                            <span class="badge bg-warning text-dark badge-stato">Pausa: {{ $statoFase }}</span>
+                        @else
+                            <span class="badge bg-light text-dark badge-stato">{{ $statoFase ?: '-' }}</span>
+                        @endif
+                        @if(in_array((int)$statoFase, [0, 1, 2, 5], true) || $inPausa)
                             <br>
                             <button class="btn btn-sm btn-success fw-bold mt-1" style="font-size:11px;"
                                     onclick="esternoTerminaOwner({{ json_encode($riga->fasi_ids) }})">Rientro</button>
-                        @elseif($inPausa)
-                            <span class="badge bg-warning text-dark badge-stato">Pausa: {{ $statoFase }}</span>
                         @endif
                     </td>
                     <td><a href="{{ route('owner.dettaglioCommessa', $riga->ordine->commessa ?? '-') }}" class="commessa-link">{{ $riga->ordine->commessa ?? '-' }}</a></td>
@@ -96,6 +117,33 @@
         </tbody>
     </table>
 </div>
+
+{{-- Scrollbar orizzontale sticky in fondo viewport --}}
+<div id="stickyScroll" style="position:fixed;bottom:0;left:0;right:0;overflow-x:auto;overflow-y:hidden;z-index:1000;height:16px;background:#f8f8f8;border-top:1px solid #ddd;display:none;">
+    <div id="stickyScrollInner" style="height:1px;"></div>
+</div>
+<script>
+(function(){
+    var ts = document.getElementById('tableScroll');
+    var sb = document.getElementById('stickyScroll');
+    var si = document.getElementById('stickyScrollInner');
+    if(!ts||!sb) return;
+    function sync(){ si.style.width = ts.scrollWidth+'px'; }
+    sync();
+    window.addEventListener('resize', sync);
+    new MutationObserver(sync).observe(ts,{childList:true,subtree:true});
+    var lock=false;
+    sb.addEventListener('scroll',function(){ if(lock)return; lock=true; ts.scrollLeft=sb.scrollLeft; lock=false; });
+    ts.addEventListener('scroll',function(){ if(lock)return; lock=true; sb.scrollLeft=ts.scrollLeft; lock=false; });
+    function vis(){
+        var r=ts.getBoundingClientRect();
+        sb.style.display = (r.right > window.innerWidth || ts.scrollWidth > ts.clientWidth) && r.bottom > window.innerHeight ? 'block':'none';
+    }
+    vis();
+    window.addEventListener('scroll',vis);
+    window.addEventListener('resize',vis);
+})();
+</script>
 
 <!-- Modal Termina Esterna (stessa logica della spedizione) -->
 <div class="modal fade" id="modalTerminaEsterno" tabindex="-1">
