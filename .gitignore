@@ -23,3 +23,7 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 .claude/worktrees/
+
+# Fustelle PDFs (sync manuale per ambiente)
+/public/fustelle/*.pdf
+/public/fustelle/*.txt

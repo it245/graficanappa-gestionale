@@ -1,0 +1,3 @@
+# Cartella fustelle PDFs.
+# I file .pdf sono ignorati da git (vedi /public/fustelle/*.pdf in .gitignore).
+# Sync manuale: estrarre zip da Drive in questa cartella sul server.

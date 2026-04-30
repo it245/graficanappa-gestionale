@@ -104,6 +104,15 @@ class CommessaController extends Controller
             }
         }
 
-        return view('commesse.show', compact('ordine', 'ordini', 'prossime', 'operatore', 'preview'));
+        // Fustella PDF (cerca in public/fustelle/ matchando il codice FS#### dalla descrizione/note)
+        $fustellaCodice = null;
+        foreach ($ordini as $o) {
+            $notePre = $o->fasi->firstWhere('faseCatalogo.reparto.nome', 'prestampa')->note ?? '';
+            $cod = \App\Helpers\DescrizioneParser::parseFustella($o->descrizione ?? '', $o->cliente_nome ?? '', $notePre);
+            if ($cod) { $fustellaCodice = $cod; break; }
+        }
+        $fustella = \App\Helpers\FustellaResolver::resolve($fustellaCodice);
+
+        return view('commesse.show', compact('ordine', 'ordini', 'prossime', 'operatore', 'preview', 'fustella'));
     }
 }

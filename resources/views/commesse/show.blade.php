@@ -604,6 +604,43 @@
                 </div>
             </div>
             @endif
+            @if(!empty($fustella))
+            <div class="col-md-4">
+                <div class="card p-3 text-center shadow-sm h-100 d-flex flex-column align-items-center justify-content-center">
+                    <div class="fw-bold mb-2" style="font-size:13px;">📐 Fustella <strong>{{ $fustella['codice'] }}</strong> <small class="text-muted">(click per ingrandire)</small></div>
+                    @if(!empty($fustella['dimensioni']))
+                        <div class="mb-1" style="font-size:12px; color:#0d6efd; font-weight:600;">{{ $fustella['dimensioni'] }}</div>
+                    @endif
+                    @if(!empty($fustella['descrizione']))
+                        <div class="mb-2" style="font-size:11px; color:#666;">{{ Str::limit($fustella['descrizione'], 50) }}</div>
+                    @endif
+                    <embed src="{{ $fustella['url'] }}#toolbar=0&navpanes=0&zoom=page-fit"
+                           type="application/pdf"
+                           style="width:100%; height:200px; border-radius:8px; cursor:zoom-in;"
+                           onclick="document.getElementById('btnApriFustella').click()">
+                    <button id="btnApriFustella" class="btn btn-sm btn-outline-primary mt-2"
+                            data-bs-toggle="modal" data-bs-target="#modalFustella">Ingrandisci</button>
+                </div>
+            </div>
+            <div class="modal fade" id="modalFustella" tabindex="-1">
+                <div class="modal-dialog modal-xl modal-dialog-centered">
+                    <div class="modal-content" style="background:#0f172a;">
+                        <div class="modal-header border-0">
+                            <h5 class="modal-title text-white">Fustella {{ $fustella['codice'] }}
+                                @if(!empty($fustella['dimensioni']))
+                                    <span class="ms-2 badge bg-info">{{ $fustella['dimensioni'] }}</span>
+                                @endif
+                            </h5>
+                            <a href="{{ $fustella['url'] }}" target="_blank" class="btn btn-sm btn-light me-2">Apri PDF</a>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body p-2">
+                            <iframe src="{{ $fustella['url'] }}" style="width:100%; height:80vh; border:0; border-radius:8px; background:#fff;"></iframe>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @endif
         </div>
         @endif
     @endforeach
