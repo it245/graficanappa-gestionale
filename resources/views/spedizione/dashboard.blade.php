@@ -170,10 +170,10 @@
         box-shadow: 0 0 0 3px rgba(13,110,253,0.15);
     }
 
-    .percorso-base { background: #d4edda !important; }
-    .percorso-rilievi { background: #fff3cd !important; }
-    .percorso-caldo { background: #f96f2a !important; }
-    .percorso-completo { background: #f8d7da !important; }
+    .percorso-base, .percorso-base > td { background: #d4edda !important; }
+    .percorso-rilievi, .percorso-rilievi > td { background: #fff3cd !important; }
+    .percorso-caldo, .percorso-caldo > td { background: #f96f2a !important; }
+    .percorso-completo, .percorso-completo > td { background: #f8d7da !important; }
 
     a.commessa-link {
         color: #000;
