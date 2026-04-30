@@ -228,9 +228,14 @@ class FierySyncService
                     $fase->save();
                 }
             } elseif (in_array($fase->stato, [0, 1])) {
-                // Skip se riaperta manualmente (entro 24h) per evitare auto-termine indesiderato
+                // Riapertura manuale: avvia solo se accounting > snapshot (ristampa vera)
                 if ($fase->riaperta_at && \Carbon\Carbon::parse($fase->riaperta_at)->gt(now()->subHours(24))) {
-                    continue;
+                    $snapshot = (int) ($fase->qta_prod_at_riapertura ?? $fase->qta_prod ?? 0);
+                    if ($qtaProdotta <= $snapshot) {
+                        // Nessuna nuova stampa rilevata, mantieni stato manuale
+                        continue;
+                    }
+                    // Ristampa vera rilevata, riavvia e aggiorna qta
                 }
                 // Fase non ancora avviata ma job Fiery completato → avvia e termina
                 $fase->stato = 2;
