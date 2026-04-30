@@ -40,6 +40,22 @@
         display: inline-block; padding: 3px 10px; border-radius: 12px;
         font-size: 12px; font-weight: bold;
     }
+    /* Card info con bg fisso: forza testo nero anche in dark mode */
+    .border.rounded[style*="background:#fff3cd"],
+    .border.rounded[style*="background:#e8f4fd"],
+    .border.rounded[style*="background:#e3f2fd"] {
+        color: #1a1a1a !important;
+    }
+    .border.rounded[style*="background:#fff3cd"] *,
+    .border.rounded[style*="background:#e8f4fd"] *,
+    .border.rounded[style*="background:#e3f2fd"] * {
+        color: inherit !important;
+    }
+    .border.rounded[style*="background:#fff3cd"] .campo-editabile,
+    .border.rounded[style*="background:#e8f4fd"] .campo-editabile,
+    .border.rounded[style*="background:#e3f2fd"] .campo-editabile {
+        color: #1a1a1a !important;
+    }
     .desc-clamp {
         display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical;
         overflow:hidden; text-overflow:ellipsis; word-break:break-word;
@@ -241,8 +257,8 @@
                        autocomplete="off">
                 <div id="fustelle-suggest" style="display:none; position:absolute; top:100%; left:0; right:0; max-height:200px; overflow-y:auto; background:#fff; border:1px solid #ccc; border-radius:4px; z-index:1000; box-shadow:0 2px 6px rgba(0,0,0,0.15);"></div>
             </div>
-            <div id="fustellaPreviewWrap" class="flex-grow-1" style="position:relative; width:100%; min-height:140px; overflow:auto; border-radius:6px; background:#fff; cursor:zoom-in; {{ empty($fustella) ? 'display:none;' : '' }}"
-                 data-bs-toggle="modal" data-bs-target="#modalFustellaBig">
+            <div id="fustellaPreviewWrap" class="flex-grow-1" onclick="apriModalFustella()"
+                 style="position:relative; width:100%; min-height:140px; overflow:auto; border-radius:6px; background:#fff; cursor:zoom-in; {{ empty($fustella) ? 'display:none;' : '' }}">
                 <canvas id="fustellaCanvas" style="width:100%; display:block; background:#fff;"></canvas>
             </div>
         </div>
@@ -265,21 +281,22 @@
 </div>
 
 <script>
-document.addEventListener('shown.bs.modal', function(e) {
-    if (e.target.id === 'modalFustellaBig') {
-        var codice = window.fustellaCodes[window.fustellaIdx];
-        if (!codice) return;
-        fetch('{{ url("/api/fustella-resolve") }}?codice=' + encodeURIComponent(codice))
-            .then(r => r.json())
-            .then(d => {
-                if (d.url) {
-                    document.getElementById('modalFustellaTitle').textContent = codice;
-                    document.getElementById('modalFustellaFrame').src = d.url;
-                    document.getElementById('modalFustellaApri').href = d.url;
-                }
-            });
-    }
-});
+function apriModalFustella() {
+    var codice = window.fustellaCodes[window.fustellaIdx];
+    if (!codice) return;
+    fetch('{{ url("/api/fustella-resolve") }}?codice=' + encodeURIComponent(codice))
+        .then(r => r.json())
+        .then(d => {
+            if (!d.url) return;
+            document.getElementById('modalFustellaTitle').textContent = codice;
+            document.getElementById('modalFustellaApri').href = d.url;
+            document.getElementById('modalFustellaFrame').src = d.url;
+            var modalEl = document.getElementById('modalFustellaBig');
+            var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modal.show();
+        })
+        .catch(()=>{});
+}
 </script>
 
 @php
