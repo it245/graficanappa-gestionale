@@ -222,8 +222,12 @@
     <div class="col-md-4">
         <div class="border rounded p-2 h-100 d-flex flex-column" style="background:#e3f2fd; position:relative;">
             <div class="d-flex justify-content-between align-items-center mb-2">
-                <strong style="font-size:13px;">📐 Fustella</strong>
-                <a id="fustellaApriLink" href="{{ !empty($fustella) ? $fustella['url'] : '#' }}" target="_blank" class="btn btn-sm btn-outline-primary" style="{{ empty($fustella) ? 'display:none;' : '' }}">Apri PDF</a>
+                <strong style="font-size:13px;">📐 Fustella <span id="fustellaCodicePos" style="font-weight:normal; font-size:11px; color:#6c757d;"></span></strong>
+                <div class="d-flex gap-1 align-items-center">
+                    <button type="button" id="fustellaPrev" class="btn btn-sm btn-outline-secondary" style="padding:2px 8px; display:none;" onclick="cambiaFustellaIndex(-1)">&lt;</button>
+                    <button type="button" id="fustellaNext" class="btn btn-sm btn-outline-secondary" style="padding:2px 8px; display:none;" onclick="cambiaFustellaIndex(1)">&gt;</button>
+                    <a id="fustellaApriLink" href="{{ !empty($fustella) ? $fustella['url'] : '#' }}" target="_blank" class="btn btn-sm btn-outline-primary" style="{{ empty($fustella) ? 'display:none;' : '' }}">Apri PDF</a>
+                </div>
             </div>
             <div style="position:relative;">
                 <input type="text" id="fustellaInput"
@@ -237,12 +241,46 @@
                        autocomplete="off">
                 <div id="fustelle-suggest" style="display:none; position:absolute; top:100%; left:0; right:0; max-height:200px; overflow-y:auto; background:#fff; border:1px solid #ccc; border-radius:4px; z-index:1000; box-shadow:0 2px 6px rgba(0,0,0,0.15);"></div>
             </div>
-            <div id="fustellaPreviewWrap" class="flex-grow-1" style="position:relative; width:100%; min-height:140px; overflow:auto; border-radius:6px; background:#fff; {{ empty($fustella) ? 'display:none;' : '' }}">
+            <div id="fustellaPreviewWrap" class="flex-grow-1" style="position:relative; width:100%; min-height:140px; overflow:auto; border-radius:6px; background:#fff; cursor:zoom-in; {{ empty($fustella) ? 'display:none;' : '' }}"
+                 data-bs-toggle="modal" data-bs-target="#modalFustellaBig">
                 <canvas id="fustellaCanvas" style="width:100%; display:block; background:#fff;"></canvas>
             </div>
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="modalFustellaBig" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content" style="background:#0f172a;">
+            <div class="modal-header border-0">
+                <h5 class="modal-title text-white">Fustella <span id="modalFustellaTitle"></span></h5>
+                <a id="modalFustellaApri" href="#" target="_blank" class="btn btn-sm btn-light me-2">Apri PDF</a>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-2 text-center" style="background:#fff;">
+                <iframe id="modalFustellaFrame" src="" style="width:100%; height:80vh; border:0; background:#fff;"></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('shown.bs.modal', function(e) {
+    if (e.target.id === 'modalFustellaBig') {
+        var codice = window.fustellaCodes[window.fustellaIdx];
+        if (!codice) return;
+        fetch('{{ url("/api/fustella-resolve") }}?codice=' + encodeURIComponent(codice))
+            .then(r => r.json())
+            .then(d => {
+                if (d.url) {
+                    document.getElementById('modalFustellaTitle').textContent = codice;
+                    document.getElementById('modalFustellaFrame').src = d.url;
+                    document.getElementById('modalFustellaApri').href = d.url;
+                }
+            });
+    }
+});
+</script>
 
 @php
     $files = glob(public_path('fustelle/*.pdf')) ?: [];
@@ -309,11 +347,47 @@ function selezionaFustella(codice) {
     salvaCampoPrestampa(input);
 }
 
-function aggiornaPreviewFustella(codice) {
-    codice = (codice || '').trim().toUpperCase();
+window.fustellaCodes = [];
+window.fustellaIdx = 0;
+
+function aggiornaPreviewFustella(input) {
+    var raw = (input || '').toUpperCase();
+    var matches = raw.match(/(FS|KS)\d{3,5}/g) || [];
+    window.fustellaCodes = [...new Set(matches)];
+    window.fustellaIdx = 0;
+    if (window.fustellaCodes.length === 0) return;
+    aggiornaNavBtns();
+    caricaFustellaCorrente();
+}
+
+function aggiornaNavBtns() {
+    var prev = document.getElementById('fustellaPrev');
+    var next = document.getElementById('fustellaNext');
+    var pos = document.getElementById('fustellaCodicePos');
+    var n = window.fustellaCodes.length;
+    if (n > 1) {
+        if (prev) prev.style.display = '';
+        if (next) next.style.display = '';
+        if (pos) pos.textContent = window.fustellaCodes[window.fustellaIdx] + ' (' + (window.fustellaIdx+1) + '/' + n + ')';
+    } else {
+        if (prev) prev.style.display = 'none';
+        if (next) next.style.display = 'none';
+        if (pos) pos.textContent = window.fustellaCodes[0] || '';
+    }
+}
+
+function cambiaFustellaIndex(delta) {
+    var n = window.fustellaCodes.length;
+    if (n === 0) return;
+    window.fustellaIdx = (window.fustellaIdx + delta + n) % n;
+    aggiornaNavBtns();
+    caricaFustellaCorrente();
+}
+
+function caricaFustellaCorrente() {
+    var codice = window.fustellaCodes[window.fustellaIdx];
     var wrap = document.getElementById('fustellaPreviewWrap');
     var apri = document.getElementById('fustellaApriLink');
-    if (!codice.match(/^(FS|KS)\d{3,5}$/)) return;
     fetch('{{ url("/api/fustella-resolve") }}?codice=' + encodeURIComponent(codice))
         .then(r => r.json())
         .then(data => {
