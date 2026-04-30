@@ -237,7 +237,7 @@
                        autocomplete="off">
                 <div id="fustelle-suggest" style="display:none; position:absolute; top:100%; left:0; right:0; max-height:200px; overflow-y:auto; background:#fff; border:1px solid #ccc; border-radius:4px; z-index:1000; box-shadow:0 2px 6px rgba(0,0,0,0.15);"></div>
             </div>
-            <div id="fustellaPreviewWrap" class="flex-grow-1" style="position:relative; width:100%; min-height:140px; overflow:hidden; border-radius:6px; background:#f8f9fa; {{ empty($fustella) ? 'display:none;' : '' }}">
+            <div id="fustellaPreviewWrap" class="flex-grow-1" style="position:relative; width:100%; min-height:140px; overflow:hidden; border-radius:6px; background:#525659; {{ empty($fustella) ? 'display:none;' : '' }}">
                 <embed id="fustellaEmbed" src="{{ !empty($fustella) ? $fustella['url'].'#toolbar=0&navpanes=0&scrollbar=0&view=FitH' : '' }}"
                        type="application/pdf"
                        style="width:100%; height:100%; border:0;">
