@@ -75,7 +75,7 @@
                         @else
                             <span class="badge bg-light text-dark badge-stato">{{ $statoFase ?: '-' }}</span>
                         @endif
-                        @if(($st !== null && in_array($st, [0, 1, 2, 5], true)) || $inPausa)
+                        @if($st === 5)
                             <br>
                             <button class="btn btn-sm btn-success fw-bold mt-1" style="font-size:11px;"
                                     onclick="esternoTerminaOwner({{ json_encode($riga->fasi_ids ?? []) }})">Rientro</button>
