@@ -109,6 +109,11 @@ class FaseStatoService
             $completata = false; // Prinect gestisce la terminazione della stampa
         }
 
+        // Skip auto-termine se fase riaperta manualmente entro 24h (user decide)
+        if ($fase->riaperta_at && \Carbon\Carbon::parse($fase->riaperta_at)->gt(now()->subHours(24))) {
+            $completata = false;
+        }
+
         if ($completata && $fase->stato < 3 && (int) $fase->stato !== 5) {
             $fase->stato = 3;
             $fase->data_fine = now()->format('Y-m-d H:i:s');
