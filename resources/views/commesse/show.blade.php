@@ -461,7 +461,7 @@
     @foreach($fasiGestibili as $fase)
         @if($fase->id === $faseSelezionataId)
         <div class="row mb-3">
-            <div class="{{ !empty($preview) ? 'col-md-8' : 'col-12' }}">
+            <div class="{{ (!empty($preview) || !empty($fustella)) ? 'col-md-8' : 'col-12' }}">
                 <div class="card border-primary h-100" id="card-fase-{{ $fase->id }}">
                     <div class="card-header bg-primary text-white">
                         <strong>{{ $fase->faseCatalogo->nome_display ?? '-' }}</strong>
@@ -581,15 +581,40 @@
                     </div>
                 </div>
             </div>
-            @if(!empty($preview))
+            @if(!empty($preview) || !empty($fustella))
             <div class="col-md-4">
-                <div class="card p-3 text-center shadow-sm h-100 d-flex align-items-center justify-content-center">
-                    <div class="fw-bold mb-2" style="font-size:13px;">📄 Anteprima foglio di stampa <small class="text-muted">(click per ingrandire)</small></div>
-                    <img id="anteprimaThumb" class="anteprima-foglio" src="data:{{ $preview['mimeType'] }};base64,{{ $preview['data'] }}"
-                         alt="Preview" style="max-width:100%; max-height:260px; border-radius:8px;"
-                         data-bs-toggle="modal" data-bs-target="#modalAnteprima">
+                <div class="d-flex flex-column gap-3 h-100">
+                    @if(!empty($preview))
+                    <div class="card p-3 text-center shadow-sm">
+                        <div class="fw-bold mb-2" style="font-size:13px;">📄 Anteprima foglio di stampa <small class="text-muted">(click per ingrandire)</small></div>
+                        <img id="anteprimaThumb" class="anteprima-foglio" src="data:{{ $preview['mimeType'] }};base64,{{ $preview['data'] }}"
+                             alt="Preview" style="max-width:100%; max-height:200px; border-radius:8px;"
+                             data-bs-toggle="modal" data-bs-target="#modalAnteprima">
+                    </div>
+                    @endif
+                    @if(!empty($fustella))
+                    <div class="card p-3 text-center shadow-sm">
+                        <div class="fw-bold mb-1" style="font-size:13px;">📐 Fustella <strong>{{ $fustella['codice'] }}</strong></div>
+                        @if(!empty($fustella['dimensioni']))
+                            <div class="mb-1" style="font-size:12px; color:#0d6efd; font-weight:600;">{{ $fustella['dimensioni'] }}</div>
+                        @endif
+                        @if(!empty($fustella['descrizione']))
+                            <div class="mb-2" style="font-size:11px; color:#666;">{{ Str::limit($fustella['descrizione'], 50) }}</div>
+                        @endif
+                        <div style="position:relative; width:100%; height:180px; overflow:hidden; border-radius:8px; background:#f8f9fa; cursor:zoom-in;"
+                             data-bs-toggle="modal" data-bs-target="#modalFustella">
+                            <embed src="{{ $fustella['url'] }}#toolbar=0&navpanes=0&scrollbar=0&view=FitH&zoom=page-fit"
+                                   type="application/pdf"
+                                   style="width:100%; height:100%; pointer-events:none; border:0;">
+                            <div style="position:absolute; inset:0;"></div>
+                        </div>
+                        <button class="btn btn-sm btn-outline-primary mt-2"
+                                data-bs-toggle="modal" data-bs-target="#modalFustella">Ingrandisci</button>
+                    </div>
+                    @endif
                 </div>
             </div>
+            @if(!empty($preview))
             <div class="modal fade" id="modalAnteprima" tabindex="-1">
                 <div class="modal-dialog modal-xl modal-dialog-centered">
                     <div class="modal-content" style="background:#0f172a;">
@@ -604,27 +629,6 @@
                 </div>
             </div>
             @endif
-            @if(!empty($fustella))
-            <div class="col-md-4">
-                <div class="card p-3 text-center shadow-sm h-100 d-flex flex-column align-items-center justify-content-center">
-                    <div class="fw-bold mb-2" style="font-size:13px;">📐 Fustella <strong>{{ $fustella['codice'] }}</strong> <small class="text-muted">(click per ingrandire)</small></div>
-                    @if(!empty($fustella['dimensioni']))
-                        <div class="mb-1" style="font-size:12px; color:#0d6efd; font-weight:600;">{{ $fustella['dimensioni'] }}</div>
-                    @endif
-                    @if(!empty($fustella['descrizione']))
-                        <div class="mb-2" style="font-size:11px; color:#666;">{{ Str::limit($fustella['descrizione'], 50) }}</div>
-                    @endif
-                    <div style="position:relative; width:100%; height:220px; overflow:hidden; border-radius:8px; background:#f8f9fa; cursor:zoom-in;"
-                         data-bs-toggle="modal" data-bs-target="#modalFustella">
-                        <embed src="{{ $fustella['url'] }}#toolbar=0&navpanes=0&scrollbar=0&view=FitH&zoom=page-fit"
-                               type="application/pdf"
-                               style="width:100%; height:100%; pointer-events:none; border:0;">
-                        <div style="position:absolute; inset:0;"></div>
-                    </div>
-                    <button class="btn btn-sm btn-outline-primary mt-2"
-                            data-bs-toggle="modal" data-bs-target="#modalFustella">Ingrandisci</button>
-                </div>
-            </div>
             <div class="modal fade" id="modalFustella" tabindex="-1">
                 <div class="modal-dialog modal-xl modal-dialog-centered">
                     <div class="modal-content" style="background:#0f172a;">
