@@ -513,7 +513,10 @@
                                 <div class="tag-row tag-colori"><span class="tag-icon">🎨</span><span class="tag-label">Colori</span><span class="tag-val">{{ $coloriCalc }}</span></div>
                                 @endif
                                 @if($fustellaCalc)
-                                <div class="tag-row tag-fustella"><span class="tag-icon">✂️</span><span class="tag-label">Fustella</span><span class="tag-val">{{ $fustellaCalc }}</span></div>
+                                <div class="tag-row tag-fustella"
+                                     @if(!empty($fustella)) style="cursor:pointer;" data-bs-toggle="modal" data-bs-target="#modalFustella" title="Apri PDF fustella" @endif>
+                                    <span class="tag-icon">✂️</span><span class="tag-label">Fustella</span><span class="tag-val">{{ $fustellaCalc }}</span>
+                                </div>
                                 @endif
                                 @if($clicheGruppiOp->isNotEmpty())
                                     @foreach($clicheGruppiOp as $numeroCl => $gruppoCl)

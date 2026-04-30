@@ -248,7 +248,9 @@
     </div>
     @endif
     @if($fustellaDett)
-    <div class="border rounded p-2 d-flex align-items-center gap-2" style="background:#e3f2fd; border-color:#42a5f5 !important;">
+    <div class="border rounded p-2 d-flex align-items-center gap-2"
+         style="background:#e3f2fd; border-color:#42a5f5 !important; {{ !empty($fustella) ? 'cursor:pointer;' : '' }}"
+         @if(!empty($fustella)) data-bs-toggle="modal" data-bs-target="#modalFustellaOwner" title="Apri PDF fustella" @endif>
         <strong style="color:#1565c0; font-size:13px;">✂️ Fustella:</strong>
         <span class="badge" style="background:#1565c0; color:white; font-size:12px;">{{ $fustellaDett }}</span>
     </div>
