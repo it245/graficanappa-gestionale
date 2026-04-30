@@ -217,14 +217,23 @@
             </div>
         </div>
         <div class="row g-2">
-            <div class="col-md-6">
+            @if(!$mirko)
+            <div class="col-md-4">
+                <div class="border rounded p-2 h-100 d-flex flex-column" style="background:#fff3cd;">
+                    <strong class="d-block mb-1">Operatore Prestampa</strong>
+                    <div contenteditable class="campo-editabile flex-grow-1" data-campo="responsabile" data-ordine="{{ $ordine->id }}"
+                         onblur="salvaCampoPrestampa(this)" style="min-height:80px;">{{ $ordine->responsabile ?: '' }}</div>
+                </div>
+            </div>
+            @endif
+            <div class="{{ $mirko ? 'col-md-6' : 'col-md-4' }}">
                 <div class="border rounded p-2 h-100 d-flex flex-column" style="background:#fff3cd;">
                     <strong class="d-block mb-1">Note Prestampa</strong>
                     <div contenteditable class="campo-editabile flex-grow-1" data-campo="note_prestampa" data-ordine="{{ $ordine->id }}"
                          onblur="salvaCampoPrestampa(this)" style="min-height:80px;">{{ $ordine->note_prestampa ?: '' }}</div>
                 </div>
             </div>
-            <div class="col-md-6">
+            <div class="{{ $mirko ? 'col-md-6' : 'col-md-4' }}">
                 <div class="border rounded p-2 h-100 d-flex flex-column" style="background:#fff3cd;">
                     <strong class="d-block mb-1">Commento Produzione</strong>
                     <div contenteditable class="campo-editabile flex-grow-1" data-campo="commento_produzione" data-ordine="{{ $ordine->id }}"
@@ -422,17 +431,6 @@ function caricaFustellaCorrente() {
 }
 </script>
 
-@if(!$mirko)
-<div class="row g-2 mb-3" style="font-size:13px;">
-    <div class="col-md-12">
-        <div class="border rounded p-2 h-100" style="background:#fff3cd">
-            <strong class="d-block mb-1">Operatore Prestampa</strong>
-            <div contenteditable class="campo-editabile" data-campo="responsabile" data-ordine="{{ $ordine->id }}"
-                 onblur="salvaCampoPrestampa(this)">{{ $ordine->responsabile ?: '' }}</div>
-        </div>
-    </div>
-</div>
-@endif
 
 {{-- Barra progresso fasi --}}
 @php
