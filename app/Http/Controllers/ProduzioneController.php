@@ -87,8 +87,10 @@ class ProduzioneController extends Controller
     }
 
     // Tiro obbligatorio per stampa a caldo (cm foil consumato)
+    // Skip per fasi esterne/rientro: il foil non viene consumato internamente
+    $isEsterno = (bool) ($fase->esterno ?? false) || in_array((int)($fase->stato ?? 0), [5], true) || $request->boolean('rientro');
     $fasiCaldo = ['STAMPACALDOJOH', 'STAMPACALDOJOHEST', 'STAMPALAMINAORO'];
-    if (in_array(strtoupper($fase->fase ?? ''), $fasiCaldo, true)) {
+    if (!$isEsterno && in_array(strtoupper($fase->fase ?? ''), $fasiCaldo, true)) {
         if ($request->tiro === null || $request->tiro === '' || (int) $request->tiro <= 0) {
             return response()->json([
                 'success' => false,
