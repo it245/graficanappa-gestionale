@@ -37,8 +37,8 @@ Schedule::command('prinect:sync')->everyTwoMinutes()->withoutOverlapping();
 // Controllo consegne BRT in ritardo — DISABILITATO
 // Schedule::command('brt:check-ritardi')->dailyAt('09:00');
 
-// Snapshot contatori Canon iPR V900 via SNMP (ogni giorno alle 23:55)
-Schedule::command('fiery:snapshot-contatori')->dailyAt('23:55');
+// Snapshot contatori Canon iPR V900 via SNMP (ore 16:30 lun-ven, prima spegnimento 17:00)
+Schedule::command('fiery:snapshot-contatori')->weekdays()->dailyAt('16:30');
 
 // Sync presenze NetTime ogni minuto (lun-ven 5:00-23:00)
 Schedule::command('presenze:sync')->everyMinute()->weekdays()->between('5:00', '23:00')->withoutOverlapping();
