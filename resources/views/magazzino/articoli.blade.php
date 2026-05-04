@@ -7,12 +7,17 @@
     @include('magazzino._sidebar')
 @endsection
 
+@section('styles')
+    @include('magazzino._styles')
+@endsection
+
 @section('content')
+<div class="mag-page">
 <div class="row g-4">
     {{-- Form nuovo articolo --}}
     <div class="col-lg-4">
-        <div class="card border-0 shadow-sm" style="background:var(--bg-card);">
-            <div class="card-header" style="background:transparent; border-bottom:1px solid var(--border-color);">
+        <div class="mag-card">
+            <div class="card-header" style="background:transparent; border-bottom:1px solid var(--mes-border, #e5e7eb);">
                 <strong>Nuovo articolo</strong>
             </div>
             <div class="card-body">
@@ -84,8 +89,8 @@
 
     {{-- Lista articoli --}}
     <div class="col-lg-8">
-        <div class="card border-0 shadow-sm" style="background:var(--bg-card);">
-            <div class="card-header d-flex justify-content-between align-items-center" style="background:transparent; border-bottom:1px solid var(--border-color);">
+        <div class="mag-card">
+            <div class="card-header d-flex justify-content-between align-items-center" style="background:transparent; border-bottom:1px solid var(--mes-border, #e5e7eb);">
                 <strong>Articoli ({{ $articoli->total() }})</strong>
                 <form class="d-flex gap-2" method="GET">
                     <input type="hidden" name="op_token" value="{{ request('op_token') }}">
@@ -95,20 +100,20 @@
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-sm table-hover mb-0" style="color:var(--text-primary);">
+                    <table class="table table-sm table-hover mb-0">
                         <thead><tr>
                             <th>Codice</th><th>Descrizione</th><th>Tipo</th><th>Formato</th><th>g</th><th>UM</th><th>Soglia</th><th>Fornitore</th>
                         </tr></thead>
                         <tbody>
                         @foreach($articoli as $art)
                             <tr>
-                                <td><code style="font-size:11px;">{{ $art->codice }}</code></td>
+                                <td><code class="mag-num" style="font-size:11px;">{{ $art->codice }}</code></td>
                                 <td>{{ Str::limit($art->descrizione, 35) }}</td>
                                 <td>{{ $art->categoria ?? '-' }}</td>
                                 <td>{{ $art->formato ?? '-' }}</td>
-                                <td>{{ $art->grammatura ?? '-' }}</td>
+                                <td class="mag-num">{{ $art->grammatura ?? '-' }}</td>
                                 <td>{{ $art->um }}</td>
-                                <td>{{ $art->soglia_minima > 0 ? number_format($art->soglia_minima, 0, ',', '.') : '-' }}</td>
+                                <td class="mag-num">{{ $art->soglia_minima > 0 ? number_format($art->soglia_minima, 0, ',', '.') : '-' }}</td>
                                 <td>{{ $art->fornitore ?? '-' }}</td>
                             </tr>
                         @endforeach
@@ -120,6 +125,7 @@
         </div>
     </div>
 </div>
+</div>{{-- /.mag-page --}}
 <script>
 function autoUM(categoria) {
     var umSelect = document.querySelector('select[name="um"]');

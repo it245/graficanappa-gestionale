@@ -7,9 +7,14 @@
     @include('magazzino._sidebar')
 @endsection
 
+@section('styles')
+    @include('magazzino._styles')
+@endsection
+
 @section('content')
+<div class="mag-page">
 {{-- Filtri --}}
-<div class="card border-0 shadow-sm mb-3" style="background:var(--bg-card);">
+<div class="mag-card mb-3">
     <div class="card-body py-2">
         <form method="GET" class="row g-2 align-items-end">
             <input type="hidden" name="op_token" value="{{ request('op_token') }}">
@@ -40,10 +45,10 @@
 </div>
 
 {{-- Tabella movimenti --}}
-<div class="card border-0 shadow-sm" style="background:var(--bg-card);">
+<div class="mag-card">
     <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table table-sm table-hover mb-0" style="color:var(--text-primary);">
+            <table class="table table-sm table-hover mb-0">
                 <thead><tr>
                     <th>Data</th><th>Tipo</th><th>Articolo</th><th class="text-end">Qta</th>
                     <th class="text-end">Giacenza dopo</th><th>Commessa</th><th>Lotto</th>
@@ -52,22 +57,22 @@
                 <tbody>
                 @foreach($movimenti as $mov)
                     <tr>
-                        <td>{{ $mov->created_at->format('d/m/Y H:i') }}</td>
+                        <td class="mag-num">{{ $mov->created_at->format('d/m/Y H:i') }}</td>
                         <td>
                             @php
-                                $badge = match($mov->tipo) {
-                                    'carico' => ['bg-success', 'CARICO'],
-                                    'scarico' => ['bg-warning text-dark', 'SCARICO'],
-                                    'reso' => ['bg-info', 'RESO'],
-                                    'rettifica' => ['bg-secondary', 'RETTIFICA'],
-                                    default => ['bg-light', $mov->tipo],
+                                $pill = match($mov->tipo) {
+                                    'carico'    => ['mag-pill-success', 'CARICO'],
+                                    'scarico'   => ['mag-pill-warning', 'SCARICO'],
+                                    'reso'      => ['mag-pill-info',    'RESO'],
+                                    'rettifica' => ['mag-pill-neutral', 'RETTIFICA'],
+                                    default     => ['mag-pill-neutral', strtoupper((string)$mov->tipo)],
                                 };
                             @endphp
-                            <span class="badge {{ $badge[0] }}" style="font-size:10px;">{{ $badge[1] }}</span>
+                            <span class="mag-pill {{ $pill[0] }}">{{ $pill[1] }}</span>
                         </td>
                         <td>{{ Str::limit($mov->articolo->descrizione ?? '-', 25) }}</td>
-                        <td class="text-end fw-bold">{{ $mov->quantita > 0 ? '+' : '' }}{{ number_format($mov->quantita, 2, ',', '.') }}</td>
-                        <td class="text-end">{{ number_format($mov->giacenza_dopo, 2, ',', '.') }}</td>
+                        <td class="text-end fw-bold mag-num">{{ $mov->quantita > 0 ? '+' : '' }}{{ number_format($mov->quantita, 2, ',', '.') }}</td>
+                        <td class="text-end mag-num">{{ number_format($mov->giacenza_dopo, 2, ',', '.') }}</td>
                         <td>{{ $mov->commessa ?? '-' }}</td>
                         <td>{{ $mov->lotto ?? '-' }}</td>
                         <td>{{ $mov->operatore?->nome ?? '-' }}</td>
@@ -83,4 +88,5 @@
         <div class="p-2">{{ $movimenti->appends(request()->query())->links() }}</div>
     </div>
 </div>
+</div>{{-- /.mag-page --}}
 @endsection
