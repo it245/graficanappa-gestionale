@@ -183,7 +183,11 @@
             : null;
         $isUrgente = $dataConsegna && $dataConsegna->isPast();
         $fornitoriRicerca = $gruppo->fasi
-            ->map(fn($f) => optional($f->ddtFornitore ?? null)->fornitore_nome ?? optional($f->ddtFornitore ?? null)->ragione_sociale ?? '')
+            ->flatMap(fn($f) => [
+                optional($f->ddtFornitore ?? null)->fornitore_nome ?? '',
+                optional($f->ddtFornitore ?? null)->ragione_sociale ?? '',
+                $f->note ?? '',
+            ])
             ->filter()->unique()->implode(' ');
     @endphp
     <div class="commessa-card searchable" data-search="{{ strtolower(($ordine->commessa ?? '') . ' ' . ($ordine->cliente_nome ?? '') . ' ' . ($ordine->descrizione ?? '') . ' ' . ($ordine->cod_art ?? '') . ' ' . $fornitoriRicerca) }}">
@@ -217,7 +221,7 @@
                         return (string) $s;
                     });
                 @endphp
-                @foreach($statiAggregati as $key => $set)
+                @forelse($statiAggregati as $key => $set)
                     @php
                         $n = $set->count();
                         $badgeMap = [
@@ -230,10 +234,12 @@
                             'ext_ok' => ['cls' => 'badge-ext-inviata', 'lbl' => 'EXT ✓', 'tt' => 'DDT inviato al fornitore'],
                             'pausa' => ['cls' => 'badge-pausa', 'lbl' => 'Pausa', 'tt' => 'In pausa'],
                         ];
-                        $b = $badgeMap[$key] ?? ['cls' => 'badge-dafare', 'lbl' => 'Stato ' . $key, 'tt' => 'Stato ' . $key];
+                        $b = $badgeMap[(string) $key] ?? ['cls' => 'badge-dafare', 'lbl' => 'Stato ' . $key, 'tt' => 'Stato ' . $key];
                     @endphp
                     <span class="badge-stato {{ $b['cls'] }}" title="{{ $b['tt'] }}" style="font-size:11px;">{{ $b['lbl'] }}@if($n > 1) ×{{ $n }}@endif</span>
-                @endforeach
+                @empty
+                    <span class="badge-stato badge-dafare" style="font-size:11px;">{{ $gruppo->fasi->count() }} fasi</span>
+                @endforelse
             </div>
         </div>
         <div class="commessa-body">
