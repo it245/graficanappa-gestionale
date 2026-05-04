@@ -1020,9 +1020,9 @@ tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !imp
                     #modalFasiLavorazione .fl-tab td { padding:8px 10px; border-bottom:1px solid #f1f5f9; vertical-align:middle; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
                     #modalFasiLavorazione .fl-tab tr:hover td { background:#f8fafc; }
                     #modalFasiLavorazione .fl-tab td.fl-cliente { max-width:140px; }
-                    #modalFasiLavorazione .fl-tab td.fl-desc { max-width:380px; }
-                    #modalFasiLavorazione .fl-tab td.fl-op { max-width:100px; font-size:11px; }
-                    #modalFasiLavorazione .fl-tab td.fl-fase { max-width:130px; font-size:11px; }
+                    #modalFasiLavorazione .fl-tab td.fl-desc { max-width:480px; }
+                    #modalFasiLavorazione .fl-tab td.fl-op { max-width:80px; font-size:11px; }
+                    #modalFasiLavorazione .fl-tab td.fl-fase { max-width:90px; font-size:11px; }
                 </style>
                 <div style="overflow-x:auto;">
                 <table class="fl-tab">
