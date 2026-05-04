@@ -3,187 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="robots" content="noindex,nofollow">
-    <title>ADMIN LOGIN | MES Grafica Nappa</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>ADMIN LOGIN | MES</title>
     <style>
-        :root {
-            --primary: #3b82f6;
-            --primary-hover: #2563eb;
-            --bg-input: #fafbfc;
-            --border: #e5e7eb;
-            --text-primary: #111827;
-            --text-secondary: #6b7280;
-            --danger: #dc2626;
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        html, body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
 
         body {
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
-            background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%);
-            padding: 20px;
+            height: 100vh;
+            background: linear-gradient(to top, #1a1a2e, #000);
         }
 
-        .login-card {
-            background: #fff;
-            padding: 40px;
-            border-radius: 16px;
-            box-shadow: 0 2px 8px rgba(0,0,0,.04), 0 12px 32px rgba(0,0,0,.12);
-            width: 100%;
-            max-width: 420px;
-        }
-
-        .brand {
+        .login-container {
+            background-color: #fff;
+            padding: 40px 50px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
             text-align: center;
-            margin-bottom: 28px;
+            width: 380px;
         }
-        .brand img {
-            width: 64px;
-            height: 64px;
+
+        .login-container img {
+            width: 100px;
+            height: 100px;
             border-radius: 50%;
+            margin-bottom: 20px;
             object-fit: cover;
-            margin-bottom: 12px;
-            border: 2px solid #f3f4f6;
-        }
-        .brand .logo-text {
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--text-primary);
-            letter-spacing: -0.3px;
-        }
-        .brand .tag {
-            font-size: 11px;
-            color: var(--text-secondary);
-            margin-top: 4px;
-            letter-spacing: 0.6px;
-            text-transform: uppercase;
+            border: 3px solid #1a1a2e;
         }
 
         h2 {
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 24px;
-            text-align: center;
+            margin-bottom: 30px;
+            color: #1a1a2e;
+            font-weight: 700;
         }
 
-        .field-group { margin-bottom: 18px; position: relative; }
-        .field-group label {
-            display: block;
-            font-size: 13px;
-            font-weight: 500;
-            color: #374151;
-            margin-bottom: 6px;
-        }
-
-        input[type="text"], input[type="password"] {
+        input[type="text"],
+        input[type="password"] {
             width: 100%;
-            border: 1px solid var(--border);
+            padding: 12px 15px;
+            margin: 10px 0;
             border-radius: 8px;
-            padding: 11px 14px;
-            font-size: 15px;
-            background: var(--bg-input);
-            font-family: inherit;
-            transition: border-color .2s cubic-bezier(.4,0,.2,1), background .2s, box-shadow .2s;
-        }
-        input[type="text"]:focus, input[type="password"]:focus {
-            outline: none;
-            border-color: var(--primary);
-            background: #fff;
-            box-shadow: 0 0 0 3px rgba(59,130,246,.1);
+            border: 1px solid #ccc;
+            font-size: 16px;
+            transition: 0.3s;
         }
 
-        button[type="submit"] {
+        input[type="text"]:focus,
+        input[type="password"]:focus {
+            border-color: #1a1a2e;
+            box-shadow: 0 0 8px rgba(26,26,46,0.4);
+            outline: none;
+        }
+
+        button {
             width: 100%;
-            background: var(--primary);
+            padding: 12px;
+            margin-top: 10px;
             border: none;
             border-radius: 8px;
-            padding: 12px;
+            background-color: #1a1a2e;
             color: #fff;
-            font-weight: 600;
-            font-size: 14px;
-            font-family: inherit;
-            letter-spacing: 0.3px;
+            font-size: 16px;
+            font-weight: bold;
             cursor: pointer;
-            transition: all .2s cubic-bezier(.4,0,.2,1);
-            box-shadow: 0 2px 4px rgba(59,130,246,.15);
-            margin-top: 4px;
+            transition: 0.3s;
         }
-        button[type="submit"]:hover:not(:disabled) {
-            background: var(--primary-hover);
-            box-shadow: 0 8px 16px rgba(59,130,246,.25);
-            transform: translateY(-1px);
+
+        button:hover {
+            background-color: #16213e;
         }
-        button[type="submit"]:disabled { opacity: .6; cursor: wait; }
 
         .error-message {
-            background: #fef2f2;
-            border-left: 3px solid var(--danger);
-            color: var(--danger);
-            padding: 10px 12px;
-            border-radius: 6px;
-            font-size: 13px;
-            margin-bottom: 16px;
+            color: #d11317;
+            margin-bottom: 15px;
+            font-size: 14px;
         }
 
         .info-message {
-            color: var(--text-secondary);
-            font-size: 12px;
-            margin-top: 22px;
-            text-align: center;
+            color: #555;
+            font-size: 13px;
+            margin-top: 20px;
         }
 
-        @media (max-width: 480px) {
-            .login-card { padding: 28px 22px; }
+        @media (max-width: 400px) {
+            .login-container { width: 90%; padding: 30px 20px; }
         }
     </style>
 </head>
 <body>
-    <div class="login-card">
-        <div class="brand">
-            <img src="{{ asset('images/logo_gn.png') }}" alt="Grafica Nappa">
-            <div class="logo-text">GRAFICA NAPPA</div>
-            <div class="tag">MES — Sistema Produzione</div>
-        </div>
-
-        <h2>Area Amministratore</h2>
+    <div class="login-container">
+        <img src="{{ asset('images/logo_gn.png') }}" alt="Logo Azienda">
+        <h2>ADMIN</h2>
 
         @if(session('warning'))
-            <div class="error-message">{{ session('warning') }}</div>
+            <p class="error-message">{{ session('warning') }}</p>
         @endif
         @if($errors->any())
-            <div class="error-message">{{ $errors->first() }}</div>
+            <p class="error-message">{{ $errors->first() }}</p>
         @endif
 
-        <form method="POST" action="{{ route('admin.login.post') }}" id="adminLoginForm">
+        <form method="POST" action="{{ route('admin.login.post') }}" onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').textContent='Caricamento...';">
             @csrf
-            <div class="field-group">
-                <label for="codice_operatore">Codice operatore</label>
-                <input id="codice_operatore" type="text" name="codice_operatore"
-                       placeholder="es. 001" required autofocus autocomplete="username">
-            </div>
-            <div class="field-group">
-                <label for="password">Password</label>
-                <input id="password" type="password" name="password"
-                       placeholder="••••••••" required autocomplete="current-password">
-            </div>
-            <button type="submit" id="adminLoginBtn">Accedi</button>
+            <input type="text" name="codice_operatore" placeholder="Codice operatore" required autofocus>
+            <input type="password" name="password" placeholder="Password" required>
+            <button type="submit">Accedi</button>
         </form>
 
         <p class="info-message">Accesso riservato all'amministratore</p>
     </div>
-
-    <script>
-        document.getElementById('adminLoginForm').addEventListener('submit', function() {
-            var b = document.getElementById('adminLoginBtn');
-            b.disabled = true; b.textContent = 'Accesso in corso...';
-        });
-    </script>
 </body>
 </html>
