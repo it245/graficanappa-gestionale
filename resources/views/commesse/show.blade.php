@@ -859,9 +859,6 @@ body.dark-mode .info-box-label { color: #94a3b8; }
                     @else
                         <small style="color:#94a3b8;">-</small>
                     @endif
-                    @if($fg->count > 1)
-                        <span style="background:#e2e8f0; padding:1px 6px; border-radius:8px; font-size:10px; font-weight:700; margin-left:4px;" title="{{ $fg->count }} fasi raggruppate">×{{ $fg->count }}</span>
-                    @endif
                 </td>
                 <td>
                     @foreach($fg->operatori->unique('id') as $op)
