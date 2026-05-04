@@ -1,0 +1,82 @@
+/* ============================================================
+   MES Grafica Nappa — Print Styles
+   ============================================================ */
+
+@media print {
+    /* Reset colori per stampa */
+    * {
+        background: transparent !important;
+        color: #000 !important;
+        box-shadow: none !important;
+        text-shadow: none !important;
+    }
+
+    /* Nascondi UI navigazione */
+    .mes-sidebar,
+    .mes-topbar,
+    .mes-darkmode-toggle,
+    .mes-topbar-logout,
+    .btn,
+    button[type="submit"],
+    nav,
+    .no-print,
+    .modal,
+    .toast-container,
+    aside {
+        display: none !important;
+    }
+
+    /* Layout full-width senza sidebar */
+    .mes-content,
+    .container-fluid,
+    body {
+        margin-left: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+    }
+
+    /* Tabelle leggibili */
+    table {
+        border-collapse: collapse !important;
+        width: 100% !important;
+        font-size: 11px !important;
+    }
+    thead th {
+        background: #1f2937 !important;
+        color: #fff !important;
+        border: 1px solid #000 !important;
+        padding: 6px !important;
+    }
+    tbody td {
+        border: 1px solid #999 !important;
+        padding: 4px 6px !important;
+    }
+
+    /* Page break smart */
+    tr, h1, h2, h3 {
+        page-break-inside: avoid;
+    }
+    h1, h2, h3 {
+        page-break-after: avoid;
+    }
+
+    /* Link visibile come testo, no underline blu */
+    a {
+        text-decoration: none !important;
+    }
+    a[href]:after {
+        content: "" !important;
+    }
+
+    /* Nascondi alert/toast */
+    .alert,
+    .mes-alert,
+    .mes-toast {
+        display: none !important;
+    }
+
+    /* Layout report: aggiungi header pagina */
+    @page {
+        margin: 1.5cm 1.2cm 1.5cm 1.2cm;
+    }
+}
