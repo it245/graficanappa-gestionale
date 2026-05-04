@@ -111,7 +111,7 @@ class FieryExportContatori extends Command
 
         // Header
         $s->setCellValue('A1', 'CONSUMI Canon ImagePRESS V900');
-        $s->mergeCells('A1:E1');
+        $s->mergeCells('A1:B1');
         $s->getStyle('A1')->applyFromArray([
             'font' => ['bold' => true, 'size' => 14, 'color' => ['rgb' => 'FFFFFF']],
             'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '0F172A']],
@@ -120,78 +120,81 @@ class FieryExportContatori extends Command
         $s->getRowDimension(1)->setRowHeight(28);
 
         $s->setCellValue('A2', $mese);
-        $s->mergeCells('A2:E2');
+        $s->mergeCells('A2:B2');
         $s->getStyle('A2')->applyFromArray([
             'font' => ['italic' => true, 'size' => 11],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
         ]);
 
-        // Tabella
+        // Tabella semplificata: solo Contatore | Scatti
         $s->setCellValue('A4', 'Contatore');
-        $s->setCellValue('B4', 'Lettura iniziale');
-        $s->setCellValue('C4', 'Lettura finale');
-        $s->setCellValue('D4', 'Scatti');
-        $s->setCellValue('E4', 'Note');
+        $s->setCellValue('B4', 'Scatti');
 
-        $s->getStyle('A4:E4')->applyFromArray([
+        $s->getStyle('A4:B4')->applyFromArray([
             'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
             'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '1E40AF']],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
         ]);
 
         $rows = [
-            ['B/N A4',     $inizio->nero_piccolo,   $fine->nero_piccolo,   $delta['bn_a4']],
-            ['Colore A4',  $inizio->colore_piccolo, $fine->colore_piccolo, $delta['colore_a4']],
-            ['B/N A3',     $inizio->nero_grande,    $fine->nero_grande,    $delta['bn_a3']],
-            ['Colore A3',  $inizio->colore_grande,  $fine->colore_grande,  $delta['colore_a3']],
-            ['Banner',     $inizio->foglio_lungo,   $fine->foglio_lungo,   $delta['banner']],
+            ['B/N A4',     $delta['bn_a4']],
+            ['Colore A4',  $delta['colore_a4']],
+            ['B/N A3',     $delta['bn_a3']],
+            ['Colore A3',  $delta['colore_a3']],
+            ['Banner',     $delta['banner']],
         ];
 
         $row = 5;
         foreach ($rows as $r) {
             $s->setCellValue("A{$row}", $r[0]);
             $s->setCellValue("B{$row}", $r[1]);
-            $s->setCellValue("C{$row}", $r[2]);
-            $s->setCellValue("D{$row}", $r[3]);
-            $s->getStyle("B{$row}:D{$row}")->getNumberFormat()->setFormatCode('#,##0');
-            $s->getStyle("D{$row}")->getFont()->setBold(true);
+            $s->getStyle("B{$row}")->getNumberFormat()->setFormatCode('#,##0');
+            $s->getStyle("B{$row}")->getFont()->setBold(true);
             $row++;
         }
 
         // Totale
         $s->setCellValue("A{$row}", 'TOTALE');
-        $s->setCellValue("D{$row}", $totale);
-        $s->getStyle("D{$row}")->getNumberFormat()->setFormatCode('#,##0');
-        $s->getStyle("A{$row}:E{$row}")->applyFromArray([
+        $s->setCellValue("B{$row}", $totale);
+        $s->getStyle("B{$row}")->getNumberFormat()->setFormatCode('#,##0');
+        $s->getStyle("A{$row}:B{$row}")->applyFromArray([
             'font' => ['bold' => true, 'size' => 12],
             'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'D1FAE5']],
         ]);
 
         // Borders
         $lastRow = $row;
-        $s->getStyle("A4:E{$lastRow}")->applyFromArray([
+        $s->getStyle("A4:B{$lastRow}")->applyFromArray([
             'borders' => [
                 'allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => '94A3B8']],
             ],
         ]);
 
-        // Snapshot info
+        // Info periodo + snapshot raw
         $row += 2;
+        $s->setCellValue("A{$row}", 'Periodo:');
+        $s->setCellValue("B{$row}", $mese);
+        $s->getStyle("A{$row}:B{$row}")->getFont()->setBold(true);
+        $row++;
         $s->setCellValue("A{$row}", 'Snapshot iniziale:');
         $s->setCellValue("B{$row}", $inizio->rilevato_at->format('d/m/Y H:i'));
         $row++;
         $s->setCellValue("A{$row}", 'Snapshot finale:');
         $s->setCellValue("B{$row}", $fine->rilevato_at->format('d/m/Y H:i'));
+        if (!empty($sottrai)) {
+            $row++;
+            $gg = implode(', ', array_map(fn($d) => \Carbon\Carbon::parse($d)->format('d/m/Y'), $sottrai));
+            $s->setCellValue("A{$row}", 'Giorni esclusi:');
+            $s->setCellValue("B{$row}", $gg);
+            $s->getStyle("A{$row}:B{$row}")->getFont()->setItalic(true);
+        }
         $row++;
         $s->setCellValue("A{$row}", 'Stampante:');
         $s->setCellValue("B{$row}", $fine->stampante);
 
         // Column widths
-        $s->getColumnDimension('A')->setWidth(20);
-        $s->getColumnDimension('B')->setWidth(18);
-        $s->getColumnDimension('C')->setWidth(18);
-        $s->getColumnDimension('D')->setWidth(15);
-        $s->getColumnDimension('E')->setWidth(25);
+        $s->getColumnDimension('A')->setWidth(22);
+        $s->getColumnDimension('B')->setWidth(35);
 
         // Save
         $dir = storage_path('app/exports');
