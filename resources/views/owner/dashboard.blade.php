@@ -314,9 +314,6 @@ thead th {
     padding-top: 6px;
     padding-bottom: 6px;
 }
-tbody tr:hover td {
-    background: #f9fafb;
-}
 
 /* =========================
    LARGHEZZA COLONNE (27 colonne) — ordine attuale:
