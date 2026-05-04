@@ -571,7 +571,7 @@ body.dark-mode .info-box-label { color: #94a3b8; }
         @if($fase->id === $faseSelezionataId)
         <div class="row mb-3">
             <div class="{{ (!empty($preview) || !empty($fustella)) ? 'col-md-8' : 'col-12' }}">
-                <div class="card border-primary h-100" id="card-fase-{{ $fase->id }}">
+                <div class="card border-primary" id="card-fase-{{ $fase->id }}">
                     <div class="card-header bg-primary text-white">
                         <strong>{{ $fase->faseCatalogo->nome_display ?? '-' }}</strong>
                         @php $badgeBg = [0=>'bg-secondary',1=>'bg-info',2=>'bg-warning text-dark',3=>'bg-success',5=>'bg-purple text-white']; @endphp
