@@ -37,6 +37,13 @@ Schedule::command('prinect:sync-attivita')->everyFiveMinutes()->withoutOverlappi
 // Snapshot contatori Canon iPR V900 via SNMP (ore 16:30 lun-ven, prima spegnimento 17:00)
 Schedule::command('fiery:snapshot-contatori')->weekdays()->dailyAt('16:30');
 
+// Report mensile contatori V900 — ultimo giorno del mese alle 16:45 (dopo snapshot 16:30)
+// Destinatari da .env: REPORT_CONTATORI_TO="it@graficanappa.com,anappa@graficanappa.com"
+$reportTo = env('REPORT_CONTATORI_TO', 'it@graficanappa.com');
+Schedule::command("fiery:export-contatori --mese-corrente --email={$reportTo}")
+    ->lastDayOfMonth('16:45')
+    ->withoutOverlapping();
+
 // Sync presenze NetTime ogni minuto (lun-ven 5:00-23:00)
 Schedule::command('presenze:sync')->everyMinute()->weekdays()->between('5:00', '23:00')->withoutOverlapping();
 
