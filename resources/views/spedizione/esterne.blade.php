@@ -204,7 +204,32 @@
             <div class="commessa-data {{ $isUrgente ? 'urgente' : '' }}">
                 {{ $dataConsegna ? $dataConsegna->format('d/m/Y') : '-' }}
             </div>
-            <div class="commessa-fasi-count">{{ $gruppo->fasi->count() }} {{ $gruppo->fasi->count() === 1 ? 'fase' : 'fasi' }}</div>
+            <div class="commessa-fasi-count" style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">
+                @php
+                    $statiAggregati = $gruppo->fasi->groupBy(function($f) {
+                        $s = $f->stato;
+                        if (is_string($s) && !is_numeric($s)) return 'pausa';
+                        if ((string)$s === '5') return $f->ddt_fornitore_id ? 'ext_ok' : 'ext';
+                        return (string) $s;
+                    });
+                @endphp
+                @foreach($statiAggregati as $key => $set)
+                    @php
+                        $n = $set->count();
+                        $badgeMap = [
+                            '0' => ['cls' => 'badge-dafare', 'lbl' => 'Da fare', 'tt' => 'Non iniziata'],
+                            '1' => ['cls' => 'badge-pronto', 'lbl' => 'Pronto', 'tt' => 'Pronto — da inviare'],
+                            '2' => ['cls' => 'badge-corso', 'lbl' => 'In corso', 'tt' => 'In corso — dal terzista'],
+                            '3' => ['cls' => 'badge-pronto', 'lbl' => 'Terminato', 'tt' => 'Terminato'],
+                            'ext' => ['cls' => 'badge-ext', 'lbl' => 'EXT', 'tt' => 'Esterno — DDT da inviare'],
+                            'ext_ok' => ['cls' => 'badge-ext-inviata', 'lbl' => 'EXT ✓', 'tt' => 'DDT inviato al fornitore'],
+                            'pausa' => ['cls' => 'badge-pausa', 'lbl' => 'Pausa', 'tt' => 'In pausa'],
+                        ];
+                        $b = $badgeMap[$key] ?? ['cls' => 'badge-dafare', 'lbl' => $key, 'tt' => $key];
+                    @endphp
+                    <span class="badge-stato {{ $b['cls'] }}" title="{{ $b['tt'] }}" style="font-size:11px;">{{ $b['lbl'] }}@if($n > 1) ×{{ $n }}@endif</span>
+                @endforeach
+            </div>
         </div>
         <div class="commessa-body">
             <table class="fase-table">
