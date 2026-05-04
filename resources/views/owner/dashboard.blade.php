@@ -635,7 +635,7 @@ tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !imp
             <span class="kpi-label">Ore lavorate oggi</span>
             <span class="kpi-val" style="color:#0d6efd;">{{ $oreLavorateOggi }}h</span>
         </div>
-        <div class="kpi-card" style="border-left:3px solid #6b7280;">
+        <div class="kpi-card" style="border-left:3px solid #6b7280;cursor:pointer;" data-bs-toggle="modal" data-bs-target="#modalConsegneOggi">
             <span class="kpi-label">Consegnate oggi</span>
             <span class="kpi-val" style="color:#374151;">{{ $commesseSpediteOggi }}</span>
         </div>
@@ -1003,6 +1003,65 @@ tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !imp
 
 </div>
 {{-- MODALE ORE LAVORATE OGGI PER OPERATORE --}}
+<div class="modal fade" id="modalConsegneOggi" tabindex="-1">
+    <div class="modal-dialog modal-dialog-scrollable" style="max-width:95vw;">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">Consegnate oggi — {{ $commesseSpediteOggi }} commesse</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-2">
+                @if($consegneOggi->isEmpty())
+                    <p class="text-muted text-center py-3">Nessuna consegna oggi</p>
+                @else
+                <style>
+                    #modalConsegneOggi table.fl-tab { font-size:12px; width:100%; border-collapse:collapse; table-layout:fixed; }
+                    #modalConsegneOggi .fl-tab th { background:#0f172a; color:#fff; padding:8px 10px; text-align:left; font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:0.04em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+                    #modalConsegneOggi .fl-tab td { padding:8px 10px; border-bottom:1px solid #f1f5f9; vertical-align:middle; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+                    #modalConsegneOggi .fl-tab tr:hover td { background:#f8fafc; }
+                    #modalConsegneOggi .fl-tab col.c-commessa { width:110px; }
+                    #modalConsegneOggi .fl-tab col.c-cliente { width:160px; }
+                    #modalConsegneOggi .fl-tab col.c-op { width:90px; }
+                    #modalConsegneOggi .fl-tab col.c-fine { width:90px; }
+                    #modalConsegneOggi .fl-tab col.c-desc { width:auto; }
+                </style>
+                <div style="overflow-x:auto;">
+                <table class="fl-tab">
+                    <colgroup>
+                        <col class="c-commessa">
+                        <col class="c-cliente">
+                        <col class="c-op">
+                        <col class="c-fine">
+                        <col class="c-desc">
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th>Commessa</th>
+                            <th>Cliente</th>
+                            <th>Operatori</th>
+                            <th>Fine</th>
+                            <th>Descrizione</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($consegneOggi as $f)
+                        <tr>
+                            <td><a href="{{ route('owner.dettaglioCommessa', $f->ordine->commessa ?? '-') }}" style="font-weight:700;color:#0d6efd;text-decoration:none;">{{ $f->ordine->commessa ?? '-' }}</a></td>
+                            <td title="{{ $f->ordine->cliente_nome ?? '' }}">{{ $f->ordine->cliente_nome ?? '-' }}</td>
+                            <td title="{{ $f->operatori->map(fn($o) => $o->nome.' '.($o->cognome ?? ''))->implode(', ') }}">{{ $f->operatori->map(fn($o) => $o->nome)->implode(', ') ?: '-' }}</td>
+                            <td>{{ $f->data_fine ? \Carbon\Carbon::parse($f->data_fine)->format('H:i') : '-' }}</td>
+                            <td title="{{ $f->ordine->descrizione ?? '' }}">{{ $f->ordine->descrizione ?? '-' }}</td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+                </div>
+                @endif
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="modal fade" id="modalFasiLavorazione" tabindex="-1">
     <div class="modal-dialog modal-dialog-scrollable" style="max-width:95vw;">
         <div class="modal-content">
@@ -1015,17 +1074,30 @@ tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !imp
                     <p class="text-muted text-center py-3">Nessuna fase in lavorazione</p>
                 @else
                 <style>
-                    #modalFasiLavorazione table.fl-tab { font-size:12px; width:100%; border-collapse:collapse; }
-                    #modalFasiLavorazione .fl-tab th { background:#0f172a; color:#fff; padding:8px 10px; text-align:left; font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:0.04em; white-space:nowrap; }
+                    #modalFasiLavorazione table.fl-tab { font-size:12px; width:100%; border-collapse:collapse; table-layout:fixed; }
+                    #modalFasiLavorazione .fl-tab th { background:#0f172a; color:#fff; padding:8px 10px; text-align:left; font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:0.04em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
                     #modalFasiLavorazione .fl-tab td { padding:8px 10px; border-bottom:1px solid #f1f5f9; vertical-align:middle; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
                     #modalFasiLavorazione .fl-tab tr:hover td { background:#f8fafc; }
-                    #modalFasiLavorazione .fl-tab td.fl-cliente { max-width:140px; }
-                    #modalFasiLavorazione .fl-tab td.fl-desc { max-width:480px; }
-                    #modalFasiLavorazione .fl-tab td.fl-op { max-width:80px; font-size:11px; }
-                    #modalFasiLavorazione .fl-tab td.fl-fase { max-width:90px; font-size:11px; }
+                    #modalFasiLavorazione .fl-tab col.c-commessa { width:110px; }
+                    #modalFasiLavorazione .fl-tab col.c-cliente { width:130px; }
+                    #modalFasiLavorazione .fl-tab col.c-fase { width:85px; }
+                    #modalFasiLavorazione .fl-tab col.c-reparto { width:115px; }
+                    #modalFasiLavorazione .fl-tab col.c-op { width:75px; }
+                    #modalFasiLavorazione .fl-tab col.c-inizio { width:90px; }
+                    #modalFasiLavorazione .fl-tab col.c-desc { width:auto; }
+                    #modalFasiLavorazione .fl-tab td.fl-fase, #modalFasiLavorazione .fl-tab td.fl-op { font-size:11px; }
                 </style>
                 <div style="overflow-x:auto;">
                 <table class="fl-tab">
+                    <colgroup>
+                        <col class="c-commessa">
+                        <col class="c-cliente">
+                        <col class="c-fase">
+                        <col class="c-reparto">
+                        <col class="c-op">
+                        <col class="c-inizio">
+                        <col class="c-desc">
+                    </colgroup>
                     <thead>
                         <tr>
                             <th>Commessa</th>

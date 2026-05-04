@@ -481,6 +481,17 @@ public function calcolaOreEPriorita($fase)
             ->orderBy('data_inizio')
             ->get();
 
+        // Lista consegne oggi per modale KPI (stato 4 + data_fine oggi, reparto spedizione)
+        $consegneOggi = collect();
+        if ($repartoSpedizione) {
+            $consegneOggi = OrdineFase::where('stato', 4)
+                ->whereDate('data_fine', $oggi)
+                ->whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', $repartoSpedizione->id))
+                ->with(['ordine:id,commessa,cliente_nome,descrizione', 'operatori:id,nome,cognome'])
+                ->orderByDesc('data_fine')
+                ->get();
+        }
+
         // Storico consegne ultimi 30 giorni (cache 5min — dati stabili)
         $storicoConsegne = collect();
         if ($repartoSpedizione) {
@@ -600,7 +611,7 @@ public function calcolaOreEPriorita($fase)
 
         return view('owner.dashboard', compact(
             'fasi', 'reparti', 'fasiCatalogo', 'spedizioniOggi', 'storicoConsegne',
-            'fasiCompletateOggi', 'oreLavorateOggi', 'orePerOperatoreOggi', 'commesseSpediteOggi', 'fasiAttive', 'fasiInLavorazione', 'spedizioniBRT', 'operatore', 'isReadonly',
+            'fasiCompletateOggi', 'oreLavorateOggi', 'orePerOperatoreOggi', 'commesseSpediteOggi', 'fasiAttive', 'fasiInLavorazione', 'consegneOggi', 'spedizioniBRT', 'operatore', 'isReadonly',
             'progressoCommesse', 'riempimento'
         ));
     }
