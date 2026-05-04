@@ -516,7 +516,13 @@ body.dark-mode .info-box-label { color: #94a3b8; }
 
     {{-- Note Fustelle (note inserite da Mirko/prestampa sulle singole fasi) --}}
     @php
-        $noteFasiOp = $ordini->flatMap(fn($o) => $o->fasi)->filter(fn($f) => !empty($f->note))->values();
+        $noteFasiOp = $ordini->flatMap(fn($o) => $o->fasi)
+            ->filter(function($f) {
+                $n = trim((string) ($f->note ?? ''));
+                return $n !== '' && $n !== '-';
+            })
+            ->unique(fn($f) => ($f->faseCatalogo->nome_display ?? $f->fase) . '|' . trim($f->note))
+            ->values();
     @endphp
     @if($noteFasiOp->isNotEmpty())
     <div class="info-box note-mirko-box mb-3">
