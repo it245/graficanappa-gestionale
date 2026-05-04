@@ -167,10 +167,29 @@
 
 <div class="esterne-toolbar">
     <input type="text" id="searchBox" class="search-box" placeholder="Cerca commessa, cliente, descrizione, fornitore...">
+    <button type="button" id="btnFiltri" onclick="toggleFiltriPanel()"
+            style="background:#fff; border:1px solid #d1d5db; border-radius:8px; padding:6px 12px; cursor:pointer; font-size:13px; font-weight:600; color:#374151; display:inline-flex; align-items:center; gap:6px; margin-left:6px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+        Filtra stato
+    </button>
     <span class="stat-pill"><strong>{{ $gruppiEsterne->count() }}</strong> commesse</span>
     <span class="stat-pill"><strong>{{ $fasiEsterne->count() }}</strong> fasi totali</span>
 </div>
 
+
+{{-- Pannello filtri stato (collapsible) --}}
+<div id="filtriPanel" style="display:none; margin: 0 8px 14px; padding:10px 14px; background:#fff; border:1px solid #e5e7eb; border-radius:10px; box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+    <div style="font-size:11px; font-weight:600; color:#6b7280; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:8px;">Filtra per stato (click per filtrare)</div>
+    <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
+        <button type="button" class="filtro-stato-btn active" data-filtro="" onclick="filtraPerStato('')" style="cursor:pointer; border:1px solid #d1d5db; background:#1f2937; color:#fff; padding:4px 12px; border-radius:14px; font-size:11px; font-weight:600;">Tutti</button>
+        <button type="button" class="filtro-stato-btn" data-filtro="0" onclick="filtraPerStato('0')" style="cursor:pointer; border:none; padding:0; background:none;"><span class="badge-stato badge-dafare">Da fare</span></button>
+        <button type="button" class="filtro-stato-btn" data-filtro="1" onclick="filtraPerStato('1')" style="cursor:pointer; border:none; padding:0; background:none;"><span class="badge-stato badge-pronto">Pronto</span></button>
+        <button type="button" class="filtro-stato-btn" data-filtro="2" onclick="filtraPerStato('2')" style="cursor:pointer; border:none; padding:0; background:none;"><span class="badge-stato badge-corso">In corso</span></button>
+        <button type="button" class="filtro-stato-btn" data-filtro="ext" onclick="filtraPerStato('ext')" style="cursor:pointer; border:none; padding:0; background:none;"><span class="badge-stato badge-ext">EXT</span></button>
+        <button type="button" class="filtro-stato-btn" data-filtro="ext_ok" onclick="filtraPerStato('ext_ok')" style="cursor:pointer; border:none; padding:0; background:none;"><span class="badge-stato badge-ext-inviata">EXT ✓</span></button>
+        <button type="button" class="filtro-stato-btn" data-filtro="pausa" onclick="filtraPerStato('pausa')" style="cursor:pointer; border:none; padding:0; background:none;"><span class="badge-stato badge-pausa">Pausa</span></button>
+    </div>
+</div>
 
 @forelse($gruppiEsterne as $gruppo)
     @php
@@ -192,7 +211,15 @@
             ])
             ->filter()->unique()->implode(' ');
     @endphp
-    <div class="commessa-card searchable" data-search="{{ strtolower(($ordine->commessa ?? '') . ' ' . ($ordine->cliente_nome ?? '') . ' ' . ($ordine->descrizione ?? '') . ' ' . ($ordine->cod_art ?? '') . ' ' . $fornitoriRicerca) }}">
+    @php
+        $statiCardArr = $gruppo->fasi->map(function($f) {
+            $s = $f->stato;
+            if (is_string($s) && !is_numeric($s)) return 'pausa';
+            if ((string)$s === '5') return $f->ddt_fornitore_id ? 'ext_ok' : 'ext';
+            return (string) $s;
+        })->unique()->values()->implode(' ');
+    @endphp
+    <div class="commessa-card searchable" data-search="{{ strtolower(($ordine->commessa ?? '') . ' ' . ($ordine->cliente_nome ?? '') . ' ' . ($ordine->descrizione ?? '') . ' ' . ($ordine->cod_art ?? '') . ' ' . $fornitoriRicerca) }}" data-stati="{{ $statiCardArr }}">
         <div class="commessa-header {{ $rowClass }}" onclick="toggleCard(this)">
             <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
             <div>
@@ -583,18 +610,50 @@ function esternoRiprendi(faseId, btn) {
 
 function filtraEsterne() {
     var query = document.getElementById('searchBox').value.toLowerCase().trim();
+    var statoFiltro = sessionStorage.getItem('filtroStatoEsterne') || '';
     sessionStorage.setItem('searchEsterne', query);
     document.querySelectorAll('.commessa-card.searchable').forEach(function(card) {
         var text = card.getAttribute('data-search') || '';
-        card.style.display = (!query || text.includes(query)) ? '' : 'none';
+        var stati = (card.getAttribute('data-stati') || '').split(' ');
+        var matchQuery = !query || text.includes(query);
+        var matchStato = !statoFiltro || stati.indexOf(statoFiltro) !== -1;
+        card.style.display = (matchQuery && matchStato) ? '' : 'none';
     });
 }
 document.getElementById('searchBox').addEventListener('input', filtraEsterne);
+
+function toggleFiltriPanel() {
+    var p = document.getElementById('filtriPanel');
+    p.style.display = (p.style.display === 'none' || !p.style.display) ? 'block' : 'none';
+}
+
+function filtraPerStato(stato) {
+    sessionStorage.setItem('filtroStatoEsterne', stato);
+    document.querySelectorAll('.filtro-stato-btn').forEach(function(b) {
+        var isActive = b.getAttribute('data-filtro') === stato;
+        b.classList.toggle('active', isActive);
+        // pulsante "Tutti"
+        if (b.getAttribute('data-filtro') === '') {
+            b.style.background = isActive ? '#1f2937' : '#f3f4f6';
+            b.style.color = isActive ? '#fff' : '#374151';
+        } else {
+            b.style.opacity = (stato === '' || isActive) ? '1' : '0.4';
+            b.style.transform = isActive ? 'scale(1.05)' : 'scale(1)';
+        }
+    });
+    filtraEsterne();
+}
 
 (function() {
     var saved = sessionStorage.getItem('searchEsterne');
     if (saved) {
         document.getElementById('searchBox').value = saved;
+    }
+    var statoSaved = sessionStorage.getItem('filtroStatoEsterne');
+    if (statoSaved) {
+        document.getElementById('filtriPanel').style.display = 'block';
+        filtraPerStato(statoSaved);
+    } else if (saved) {
         filtraEsterne();
     }
 })();
