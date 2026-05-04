@@ -12,7 +12,7 @@ class SeedTurni extends Command
 
     public function handle()
     {
-        $giorni = ['2026-04-27', '2026-04-28', '2026-04-29', '2026-04-30', '2026-05-01', '2026-05-02'];
+        $giorni = ['2026-05-04', '2026-05-05', '2026-05-06', '2026-05-07', '2026-05-08', '2026-05-09'];
 
         $dati = [
             'MENALE FIORE'              => ['T', 'T', 'T', 'T', 'T', ''],
@@ -23,28 +23,28 @@ class SeedTurni extends Command
             'CRISANTI LORENZO'          => ['T', 'T', 'T', 'T', 'T', ''],
             'SCARANO GIANGIUSEPPE'      => ['T', 'T', 'T', 'T', 'T', ''],
             'VERDE FRANCESCO'           => ['T', 'T', 'T', 'T', 'T', ''],
-            'MARFELLA DOMENICO'         => ['1', '1', '1', '1', '1', ''],
-            'BORTONE PAOLO'             => ['2', '2', '2', '2', '2', ''],
-            'GENNARO LA SCALA'          => ['2', '2', '2', '2', '2', ''],
-            'MENALE LUIGI'              => ['2', '2', '2', '2', '2', ''],
-            'MENALE FRANCESCO'          => ['1', '1', '1', '1', '1', ''],
-            'TORROMACCO GIANNANTONIO'   => ['1', '1', '1', '1', '1', ''],
-            'IULIANO PASQUALE'          => ['2', '2', '2', '2', '2', ''],
-            'CIRO RAO'                  => ['T', 'T', 'T', 'T', 'T', ''],
+            'MARFELLA DOMENICO'         => ['2', '2', '2', '2', '2', ''],
+            'BORTONE PAOLO'             => ['1', '1', '1', '1', '1', ''],
+            'GENNARO LA SCALA'          => ['1', '1', '1', '1', '1', ''],
+            'MENALE LUIGI'              => ['1', '1', '1', '1', '1', ''],
+            'MENALE FRANCESCO'          => ['2', '2', '2', '2', '2', ''],
+            'TORROMACCO GIANNANTONIO'   => ['T', 'T', 'T', 'T', 'T', ''],
+            'IULIANO PASQUALE'          => ['1', '1', '1', '1', '1', ''],
+            'CIRO RAO'                  => ['2', '2', '2', '2', '2', ''],
             'SORBO LUCA'                => ['T', 'T', 'T', 'T', 'T', ''],
             'CASTELLANO ANTONIO'        => ['T', 'T', 'T', 'T', 'T', ''],
             "D'ORAZIO MIRKO"            => ['T', 'T', 'T', 'T', 'T', ''],
             'FRANCESE FRANCESCO'        => ['T', 'T', 'T', 'T', 'T', ''],
             'RUSSO MICHELE'             => ['T', 'T', 'T', 'T', 'T', ''],
-            'GARGIULO VINCENZO'         => ['F', '2', '2', '2', '2', ''],
-            'PAGANO DIEGO'              => ['T', '1', '1', '1', '1', ''],
-            'MENALE BENITO'             => ['R', '1', '1', '2', '2', 'R'],
-            'MARINO LUIGI'              => ['T', 'R', '1', '1', '2', ''],
-            'MORMILE COSIMO'            => ['T', '3', 'R', '1', '1', '2'],
-            'CHRISTIAN SIMONETTI'       => ['2', '3', '3', 'R', '1', ''],
+            'GARGIULO VINCENZO'         => ['1', '1', '1', '1', '1', ''],
+            'PAGANO DIEGO'              => ['2', '2', '2', '2', '2', ''],
+            'MENALE BENITO'             => ['2', 'R', '1', '1', '2', '2'],
+            'MARINO LUIGI'              => ['1', '3', 'R', '1', '1', '2'],
+            'MORMILE COSIMO'            => ['2', '3', '3', 'R', '1', '1'],
             'VINCENZO MARRONE'          => ['2', '2', '3', '3', 'R', '1'],
-            'BARBATO RAFFAELE'          => ['1', '2', '2', '3', '3', 'R'],
-            'ZAMPELLA ALESSANDRO'       => ['1', '1', '2', '2', '3', 'R'],
+            'CHRISTIAN SIMONETTI'       => ['1', '2', '2', '3', '3', 'R'],
+            'BARBATO RAFFAELE'          => ['1', '1', '2', '2', '3', 'R'],
+            'ZAMPELLA ALESSANDRO'       => ['R', '1', '1', '2', '2', 'R'],
             'SANTORO MARIO'             => ['T', 'T', 'T', 'T', 'T', ''],
         ];
 
@@ -60,7 +60,7 @@ class SeedTurni extends Command
             }
         }
 
-        $this->info("Inseriti {$count} turni per la settimana 27 aprile - 2 maggio 2026.");
+        $this->info("Inseriti {$count} turni per la settimana 04 - 09 maggio 2026.");
         return 0;
     }
 }
