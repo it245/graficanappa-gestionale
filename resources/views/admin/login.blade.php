@@ -166,7 +166,7 @@
             <div class="field-group">
                 <label for="codice_operatore">Codice operatore</label>
                 <input id="codice_operatore" type="text" name="codice_operatore"
-                       placeholder="es. 001" required autofocus autocomplete="username">
+                       placeholder="Inserisci codice operatore" required autofocus autocomplete="username">
             </div>
             <div class="field-group">
                 <label for="password">Password</label>

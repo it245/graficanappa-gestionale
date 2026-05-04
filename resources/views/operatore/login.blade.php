@@ -166,8 +166,8 @@
             <div class="field-group">
                 <label for="codice_operatore">Codice operatore</label>
                 <input id="codice_operatore" type="text" name="codice_operatore"
-                       placeholder="es. 001" required autofocus
-                       inputmode="numeric" autocomplete="off">
+                       placeholder="Inserisci codice operatore" required autofocus
+                       autocomplete="off">
             </div>
             <button type="submit" id="opLoginBtn">Accedi</button>
         </form>
