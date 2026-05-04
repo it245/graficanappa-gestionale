@@ -627,9 +627,10 @@ tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !imp
 
     {{-- KPI GIORNALIERI --}}
     <style>
-        .kpi-card{background:#fff;border:1px solid #e5e7eb;padding:10px 14px;border-radius:6px;min-width:170px;flex:1;box-shadow:0 1px 2px rgba(0,0,0,.04);display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:58px;}
-        .kpi-card .kpi-label{font-size:10.5px;color:#6b7280;text-transform:uppercase;letter-spacing:.3px;font-weight:600;line-height:1.25;}
-        .kpi-card .kpi-val{font-size:24px;font-weight:700;line-height:1;white-space:nowrap;}
+        .kpi-card{background:#fff;border:1px solid #e5e7eb;padding:12px 16px;border-radius:10px;min-width:170px;flex:1;box-shadow:0 1px 3px rgba(0,0,0,.05),0 4px 12px rgba(0,0,0,.04);display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:62px;transition:transform .2s cubic-bezier(.4,0,.2,1),box-shadow .2s;}
+        .kpi-card:hover{transform:translateY(-2px);box-shadow:0 2px 6px rgba(0,0,0,.06),0 8px 20px rgba(0,0,0,.08);}
+        .kpi-card .kpi-label{font-size:10.5px;color:#6b7280;text-transform:uppercase;letter-spacing:.4px;font-weight:600;line-height:1.25;}
+        .kpi-card .kpi-val{font-size:26px;font-weight:700;line-height:1;white-space:nowrap;font-family:'IBM Plex Mono','SF Mono',Consolas,monospace;font-variant-numeric:tabular-nums;}
 
         /* === Dark mode fix legenda + KPI === */
         body.dark-mode #legendaBox {

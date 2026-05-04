@@ -142,31 +142,43 @@
         display: flex;
         align-items: center;
         gap: 10px;
-        padding: 10px 16px;
-        border-radius: 6px;
+        padding: 9px 14px;
+        margin: 1px 8px;
+        border-radius: 8px;
         text-decoration: none;
         color: #cbd5e1;
         font-size: 13px;
         font-weight: 500;
-        transition: background 0.15s, color 0.15s;
+        transition: background 0.18s cubic-bezier(0.4,0,0.2,1), color 0.18s, transform 0.18s;
         cursor: pointer;
         border: none;
         background: none;
-        width: 100%;
+        width: calc(100% - 16px);
         text-align: left;
+        position: relative;
     }
 
     .mes-sidebar-item:hover {
         background: var(--sidebar-hover);
-        color: #f1f5f9;
+        color: #f8fafc;
         text-decoration: none;
+        transform: translateX(2px);
     }
 
     .mes-sidebar-item.active {
-        background: rgba(37, 99, 235, 0.15);
-        color: #2563eb;
-        border-left: 3px solid #2563eb;
-        padding-left: 13px;
+        background: linear-gradient(90deg, rgba(59,130,246,0.18), rgba(59,130,246,0.05));
+        color: #60a5fa;
+        font-weight: 600;
+    }
+    .mes-sidebar-item.active::before {
+        content: '';
+        position: absolute;
+        left: -8px;
+        top: 6px;
+        bottom: 6px;
+        width: 3px;
+        background: #3b82f6;
+        border-radius: 0 3px 3px 0;
     }
 
     .mes-sidebar-item svg {
@@ -195,12 +207,14 @@
         height: var(--topbar-height);
         background: var(--bg-card);
         border-bottom: 1px solid var(--border-color);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
         display: flex;
         align-items: center;
         justify-content: space-between;
         padding: 0 24px;
         z-index: 999;
         transition: left 0.25s ease;
+        backdrop-filter: blur(8px);
     }
 
     .mes-topbar-title {
@@ -216,10 +230,15 @@
     }
 
     .mes-topbar-clock {
-        font-size: 12px;
+        font-family: 'IBM Plex Mono', 'SF Mono', Consolas, monospace;
+        font-size: 13px;
         font-weight: 500;
         color: var(--text-secondary);
         font-variant-numeric: tabular-nums;
+        padding: 4px 10px;
+        background: var(--bg-page);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
     }
 
     .mes-topbar-user {
@@ -246,18 +265,21 @@
 
     .mes-topbar-logout {
         font-size: 12px;
+        font-weight: 500;
         color: var(--text-secondary);
         text-decoration: none;
-        padding: 4px 10px;
-        border-radius: 4px;
+        padding: 6px 12px;
+        border-radius: 6px;
         border: 1px solid var(--border-color);
-        transition: background 0.15s, color 0.15s;
+        transition: all 0.18s cubic-bezier(0.4,0,0.2,1);
     }
 
     .mes-topbar-logout:hover {
         background: var(--danger);
         color: #fff;
         border-color: var(--danger);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(239,68,68,0.2);
     }
 
     /* Dark mode toggle */
