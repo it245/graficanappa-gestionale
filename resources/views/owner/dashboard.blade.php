@@ -639,7 +639,7 @@ tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !imp
             <span class="kpi-label">Consegnate oggi</span>
             <span class="kpi-val" style="color:#374151;">{{ $commesseSpediteOggi }}</span>
         </div>
-        <div class="kpi-card" style="border-left:3px solid #f59e0b;">
+        <div class="kpi-card" style="border-left:3px solid #f59e0b;cursor:pointer;" data-bs-toggle="modal" data-bs-target="#modalFasiLavorazione">
             <span class="kpi-label">Fasi in lavorazione</span>
             <span class="kpi-val" style="color:#d97706;">{{ $fasiAttive }}</span>
         </div>
@@ -1003,6 +1003,51 @@ tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !imp
 
 </div>
 {{-- MODALE ORE LAVORATE OGGI PER OPERATORE --}}
+<div class="modal fade" id="modalFasiLavorazione" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title">Fasi in lavorazione (stato 2) — {{ $fasiAttive }} fasi</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-2">
+                @if($fasiInLavorazione->isEmpty())
+                    <p class="text-muted text-center py-3">Nessuna fase in lavorazione</p>
+                @else
+                <table class="table table-sm table-hover" style="font-size:13px;">
+                    <thead style="background:#0f172a;color:#fff;">
+                        <tr>
+                            <th>Commessa</th>
+                            <th>Cliente</th>
+                            <th>Fase</th>
+                            <th>Reparto</th>
+                            <th>Operatori</th>
+                            <th>Inizio</th>
+                            <th>Consegna</th>
+                            <th>Descrizione</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($fasiInLavorazione as $f)
+                        <tr>
+                            <td><a href="{{ route('owner.dettaglioCommessa', $f->ordine->commessa ?? '-') }}" style="font-weight:bold;color:#000;text-decoration:underline;">{{ $f->ordine->commessa ?? '-' }}</a></td>
+                            <td>{{ $f->ordine->cliente_nome ?? '-' }}</td>
+                            <td><strong>{{ $f->faseCatalogo->nome_display ?? $f->fase ?? '-' }}</strong></td>
+                            <td>{{ $f->faseCatalogo->reparto->nome ?? '-' }}</td>
+                            <td style="font-size:11px;">{{ $f->operatori->map(fn($o) => $o->nome.' '.($o->cognome ?? ''))->implode(', ') ?: '-' }}</td>
+                            <td style="font-size:11px;">{{ $f->data_inizio ? \Carbon\Carbon::parse($f->data_inizio)->format('d/m H:i') : '-' }}</td>
+                            <td style="font-size:11px;">{{ $f->ordine->data_prevista_consegna ? \Carbon\Carbon::parse($f->ordine->data_prevista_consegna)->format('d/m/Y') : '-' }}</td>
+                            <td style="max-width:300px;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ $f->ordine->descrizione ?? '' }}">{{ \Illuminate\Support\Str::limit($f->ordine->descrizione ?? '-', 60) }}</td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+                @endif
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="modal fade" id="modalOreOggi" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
