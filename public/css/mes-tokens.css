@@ -1,0 +1,144 @@
+/* ============================================================
+   MES Grafica Nappa — Design Tokens
+   Linear/Vercel/Datadog enterprise SaaS style
+   ============================================================ */
+
+:root {
+    /* === Colors — Brand === */
+    --mes-primary: #3b82f6;
+    --mes-primary-hover: #2563eb;
+    --mes-primary-active: #1d4ed8;
+    --mes-primary-soft: rgba(59, 130, 246, 0.1);
+
+    /* === Colors — Status === */
+    --mes-success: #10b981;
+    --mes-success-hover: #059669;
+    --mes-success-soft: rgba(16, 185, 129, 0.1);
+
+    --mes-warning: #f59e0b;
+    --mes-warning-hover: #d97706;
+    --mes-warning-soft: rgba(245, 158, 11, 0.1);
+
+    --mes-danger: #ef4444;
+    --mes-danger-hover: #dc2626;
+    --mes-danger-soft: rgba(239, 68, 68, 0.1);
+
+    --mes-info: #06b6d4;
+    --mes-info-hover: #0891b2;
+    --mes-info-soft: rgba(6, 182, 212, 0.1);
+
+    --mes-external: #8b5cf6;
+    --mes-external-hover: #7c3aed;
+
+    /* === Colors — Neutrals === */
+    --mes-bg-page: #f8fafc;
+    --mes-bg-card: #ffffff;
+    --mes-bg-hover: #f9fafb;
+    --mes-bg-input: #fafbfc;
+
+    --mes-border: #e5e7eb;
+    --mes-border-strong: #d1d5db;
+    --mes-border-focus: #3b82f6;
+
+    --mes-text-primary: #111827;
+    --mes-text-secondary: #6b7280;
+    --mes-text-tertiary: #9ca3af;
+    --mes-text-inverse: #ffffff;
+
+    --mes-sidebar-bg: #1f2937;
+    --mes-sidebar-bg-active: #111827;
+    --mes-sidebar-text: #d1d5db;
+    --mes-sidebar-text-active: #ffffff;
+
+    /* === Typography === */
+    --mes-font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --mes-font-mono: 'IBM Plex Mono', 'SF Mono', Consolas, Monaco, monospace;
+
+    --mes-text-xs: 11px;
+    --mes-text-sm: 12px;
+    --mes-text-base: 13px;
+    --mes-text-md: 14px;
+    --mes-text-lg: 16px;
+    --mes-text-xl: 20px;
+    --mes-text-2xl: 24px;
+    --mes-text-3xl: 28px;
+
+    --mes-font-normal: 400;
+    --mes-font-medium: 500;
+    --mes-font-semibold: 600;
+    --mes-font-bold: 700;
+
+    --mes-leading-tight: 1.25;
+    --mes-leading-normal: 1.5;
+    --mes-leading-relaxed: 1.75;
+
+    /* === Spacing scale (4px baseline) === */
+    --mes-space-1: 4px;
+    --mes-space-2: 8px;
+    --mes-space-3: 12px;
+    --mes-space-4: 16px;
+    --mes-space-5: 20px;
+    --mes-space-6: 24px;
+    --mes-space-8: 32px;
+    --mes-space-10: 40px;
+    --mes-space-12: 48px;
+    --mes-space-16: 64px;
+
+    /* === Border radius === */
+    --mes-radius-sm: 4px;
+    --mes-radius-md: 8px;
+    --mes-radius-lg: 12px;
+    --mes-radius-xl: 16px;
+    --mes-radius-full: 9999px;
+
+    /* === Shadows (4-level scale) === */
+    --mes-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+    --mes-shadow-md: 0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 12px rgba(0, 0, 0, 0.08);
+    --mes-shadow-lg: 0 2px 8px rgba(0, 0, 0, 0.04), 0 12px 32px rgba(0, 0, 0, 0.12);
+    --mes-shadow-xl: 0 4px 16px rgba(0, 0, 0, 0.08), 0 24px 48px rgba(0, 0, 0, 0.18);
+
+    --mes-ring-primary: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    --mes-ring-danger: 0 0 0 3px rgba(239, 68, 68, 0.1);
+
+    /* === Easing curves === */
+    --mes-ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+    --mes-ease-emphasis: cubic-bezier(0.2, 0, 0, 1);
+    --mes-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+    --mes-duration-fast: 150ms;
+    --mes-duration-base: 200ms;
+    --mes-duration-slow: 300ms;
+
+    /* === Layout === */
+    --mes-container-max: 1400px;
+    --mes-sidebar-width: 240px;
+    --mes-topbar-height: 56px;
+
+    /* === Z-index === */
+    --mes-z-dropdown: 100;
+    --mes-z-sidebar: 200;
+    --mes-z-modal-backdrop: 900;
+    --mes-z-modal: 1000;
+    --mes-z-toast: 1100;
+}
+
+/* === Dark mode overrides === */
+body.dark-mode {
+    --mes-bg-page: #0f172a;
+    --mes-bg-card: #1e293b;
+    --mes-bg-hover: #334155;
+    --mes-bg-input: #1e293b;
+    --mes-border: #334155;
+    --mes-border-strong: #475569;
+    --mes-text-primary: #f1f5f9;
+    --mes-text-secondary: #cbd5e1;
+    --mes-text-tertiary: #94a3b8;
+}
+
+/* === Reduced motion === */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+    }
+}
