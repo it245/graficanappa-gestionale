@@ -183,8 +183,7 @@ class FieryExportContatori extends Command
         $ps->setFitToHeight(1);
         $ps->setHorizontalCentered(true);
         $s->getPageMargins()->setTop(0.75)->setBottom(0.75)->setLeft(0.5)->setRight(0.5);
-        $s->getPrintArea() === '' ?: null;
-        $s->getPageSetup()->setPrintArea("A1:B{$lastRow}");
+        $ps->setPrintArea("A1:B{$lastRow}");
 
         // Save
         $dir = storage_path('app/exports');
