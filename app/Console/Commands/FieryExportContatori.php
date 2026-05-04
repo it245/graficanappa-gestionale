@@ -170,27 +170,6 @@ class FieryExportContatori extends Command
             ],
         ]);
 
-        // Info periodo + snapshot raw
-        $row += 2;
-        $s->setCellValue("A{$row}", 'Periodo:');
-        $s->setCellValue("B{$row}", $mese);
-        $s->getStyle("A{$row}:B{$row}")->getFont()->setBold(true);
-        $row++;
-        $s->setCellValue("A{$row}", 'Snapshot iniziale:');
-        $s->setCellValue("B{$row}", $inizio->rilevato_at->format('d/m/Y H:i'));
-        $row++;
-        $s->setCellValue("A{$row}", 'Snapshot finale:');
-        $s->setCellValue("B{$row}", $fine->rilevato_at->format('d/m/Y H:i'));
-        if (!empty($sottrai)) {
-            $row++;
-            $gg = implode(', ', array_map(fn($d) => \Carbon\Carbon::parse($d)->format('d/m/Y'), $sottrai));
-            $s->setCellValue("A{$row}", 'Giorni esclusi:');
-            $s->setCellValue("B{$row}", $gg);
-            $s->getStyle("A{$row}:B{$row}")->getFont()->setItalic(true);
-        }
-        $row++;
-        $s->setCellValue("A{$row}", 'Stampante:');
-        $s->setCellValue("B{$row}", $fine->stampante);
 
         // Column widths
         $s->getColumnDimension('A')->setWidth(22);
