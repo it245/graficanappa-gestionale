@@ -87,7 +87,16 @@
     }
     h2, h4, p { margin-left:8px; margin-right:8px; }
     table th, table td { white-space:nowrap; }
-    td.desc-col, td:nth-child(7){ white-space:normal; min-width:150px; max-width:220px; }
+    td.desc-col, td:nth-child(7){
+        max-width: 220px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    td.desc-col:hover {
+        white-space: normal;
+        overflow: visible;
+    }
 
     .btn-consegna {
         color: #fff;
