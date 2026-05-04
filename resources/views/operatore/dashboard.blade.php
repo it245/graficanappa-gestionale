@@ -406,6 +406,8 @@ function segnaLetta(id, btn) {
                         <option value="{{ $nomeFase }}">{{ $nomeFase }}</option>
                     @endforeach
                 </select>
+                <label>Commessa:</label>
+                <input type="text" class="filtro-commessa" placeholder="Cerca commessa..." oninput="applicaFiltri(this)">
                 <label>Cliente:</label>
                 <input type="text" class="filtro-cliente" placeholder="Cerca cliente..." oninput="applicaFiltri(this)">
                 <label>Descrizione:</label>
@@ -474,6 +476,8 @@ function segnaLetta(id, btn) {
                 <option value="{{ $nomeFase }}">{{ $nomeFase }}</option>
             @endforeach
         </select>
+        <label>Commessa:</label>
+        <input type="text" class="filtro-commessa" placeholder="Cerca commessa..." oninput="applicaFiltri(this)">
         <label>Cliente:</label>
         <input type="text" class="filtro-cliente" placeholder="Cerca cliente..." oninput="applicaFiltri(this)">
         <label>Descrizione:</label>
@@ -568,6 +572,8 @@ function applicaFiltri(el) {
     var filtroFase = bar.querySelector('.filtro-fase').value.trim();
     var filtroCliente = bar.querySelector('.filtro-cliente').value.toLowerCase().trim();
     var filtroDescrizione = bar.querySelector('.filtro-descrizione').value.toLowerCase().trim();
+    var filtroCommessaEl = bar.querySelector('.filtro-commessa');
+    var filtroCommessa = filtroCommessaEl ? filtroCommessaEl.value.toLowerCase().trim() : '';
 
     // Trova la tabella associata a questa barra filtri
     var tableWrapper = bar.nextElementSibling;
@@ -584,6 +590,7 @@ function applicaFiltri(el) {
         var faseCell = riga.querySelector('.td-fase');
         var clienteCell = riga.querySelector('.td-cliente');
         var descCell = riga.querySelector('.td-descrizione');
+        var commessaCell = riga.querySelector('.td-commessa');
 
         // Le fasi in pausa sono sempre visibili (stato non numerico = motivo pausa)
         var statoText = statoCell ? statoCell.textContent.trim() : '';
@@ -597,8 +604,9 @@ function applicaFiltri(el) {
         var faseOk = !filtroFase || (faseCell && faseCell.textContent.trim() === filtroFase);
         var clienteOk = !filtroCliente || (clienteCell && clienteCell.textContent.toLowerCase().includes(filtroCliente));
         var descOk = !filtroDescrizione || (descCell && descCell.textContent.toLowerCase().includes(filtroDescrizione));
+        var commessaOk = !filtroCommessa || (commessaCell && commessaCell.textContent.toLowerCase().includes(filtroCommessa));
 
-        riga.style.display = (statoOk && faseOk && clienteOk && descOk) ? '' : 'none';
+        riga.style.display = (statoOk && faseOk && clienteOk && descOk && commessaOk) ? '' : 'none';
     });
 }
 
@@ -608,6 +616,8 @@ function resetFiltri(el) {
     bar.querySelector('.filtro-fase').value = '';
     bar.querySelector('.filtro-cliente').value = '';
     bar.querySelector('.filtro-descrizione').value = '';
+    var commessaEl = bar.querySelector('.filtro-commessa');
+    if (commessaEl) commessaEl.value = '';
     applicaFiltri(el);
 }
 
