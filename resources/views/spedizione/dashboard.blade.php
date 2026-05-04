@@ -43,19 +43,19 @@
     <div class="mes-sidebar-section-label">Sezioni</div>
     <a href="#sezDaConsegnare" class="mes-sidebar-item">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-        Da consegnare <span class="ms-auto badge" style="background:var(--success); color:#fff; font-size:10px;">{{ $fasiDaSpedire->count() }}</span>
+        Da consegnare <span class="ms-auto sped-badge sped-badge-success" aria-label="{{ $fasiDaSpedire->count() }} fasi da consegnare">{{ $fasiDaSpedire->count() }}</span>
     </a>
     <a href="#sezInAttesa" class="mes-sidebar-item">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        In attesa <span class="ms-auto badge" style="background:var(--warning); color:#000; font-size:10px;">{{ $fasiInAttesa->count() }}</span>
+        In attesa <span class="ms-auto sped-badge sped-badge-warning" aria-label="{{ $fasiInAttesa->count() }} fasi in attesa">{{ $fasiInAttesa->count() }}</span>
     </a>
     <a href="#sezDDT" class="mes-sidebar-item">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-        DDT Emesse <span class="ms-auto badge" style="background:var(--external); color:#fff; font-size:10px;">{{ $fasiDDT->count() }}</span>
+        DDT Emesse <span class="ms-auto sped-badge sped-badge-external" aria-label="{{ $fasiDDT->count() }} DDT emesse">{{ $fasiDDT->count() }}</span>
     </a>
     <a href="#sezParziali" class="mes-sidebar-item">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-        Parziali <span class="ms-auto badge" style="background:var(--warning); color:#000; font-size:10px;">{{ $fasiParziali->count() }}</span>
+        Parziali <span class="ms-auto sped-badge sped-badge-warning" aria-label="{{ $fasiParziali->count() }} consegne parziali">{{ $fasiParziali->count() }}</span>
     </a>
     <a href="#" class="mes-sidebar-item" data-bs-toggle="modal" data-bs-target="#modalSpediteOggi">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
@@ -142,21 +142,80 @@
 
     .progress-bar-custom {
         height: 18px;
-        border-radius: 10px;
-        background: #e9ecef;
+        border-radius: var(--mes-radius-md, 8px);
+        background: #f3f4f6;
         overflow: hidden;
         min-width: 80px;
+        box-shadow: inset 0 1px 2px rgba(0,0,0,0.06);
     }
     .progress-bar-custom .fill {
         height: 100%;
-        border-radius: 10px;
+        border-radius: var(--mes-radius-md, 8px);
         transition: width 0.3s ease;
         text-align: center;
         font-size: 10px;
         line-height: 18px;
         color: #fff;
-        font-weight: bold;
+        font-weight: 600;
+        background-image: linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0) 60%);
     }
+    body.dark-mode .progress-bar-custom {
+        background: #334155;
+        box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+    }
+
+    /* === Section cards (DDT, Da consegnare, Parziali, In attesa) === */
+    .sped-section-card {
+        background: var(--mes-bg-card, #ffffff);
+        border: 1px solid var(--mes-border, #e5e7eb);
+        border-radius: var(--mes-radius-lg, 12px);
+        box-shadow: var(--mes-shadow-md, 0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.08));
+        padding: 16px 20px;
+        margin: 16px 8px;
+        transition: transform 200ms cubic-bezier(0.4,0,0.2,1), box-shadow 200ms cubic-bezier(0.4,0,0.2,1);
+    }
+    .sped-section-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--mes-shadow-lg, 0 2px 8px rgba(0,0,0,0.04), 0 12px 32px rgba(0,0,0,0.12));
+    }
+    .sped-section-card > h4 {
+        margin: 0 0 12px 0;
+        font-weight: 600;
+        font-size: 16px;
+        letter-spacing: -0.01em;
+    }
+    .sped-section-card .table-wrapper {
+        margin: 0;
+    }
+    body.dark-mode .sped-section-card {
+        background: var(--mes-bg-card, #1e293b);
+        border-color: #334155;
+        color: var(--mes-text-primary, #f1f5f9);
+    }
+    body.dark-mode .sped-section-card table { color: var(--mes-text-primary, #f1f5f9); }
+    body.dark-mode .sped-section-card .table-bordered > :not(caption) > * > * {
+        border-color: #334155;
+    }
+
+    /* === Sidebar badge counters (token-based) === */
+    .sped-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 22px;
+        padding: 3px 10px;
+        border-radius: var(--mes-radius-full, 9999px);
+        font-size: 11px;
+        font-weight: 600;
+        line-height: 1;
+        letter-spacing: 0.02em;
+        color: #ffffff;
+    }
+    .sped-badge-success { background: var(--mes-success, #10b981); }
+    .sped-badge-warning { background: var(--mes-warning, #f59e0b); color: #1f2937; }
+    .sped-badge-danger  { background: var(--mes-danger,  #ef4444); }
+    .sped-badge-primary { background: var(--mes-primary, #3b82f6); }
+    .sped-badge-external{ background: var(--mes-external, #8b5cf6); }
 
     .search-box {
         max-width: 600px;
@@ -342,7 +401,8 @@
 <!-- Tabella DDT Emesse da Onda -->
 <div id="sezDDT"></div>
 @if($fasiDDT->count() > 0)
-<h4 class="mx-2 mt-2" style="color:#6f42c1;">DDT Emesse da Onda</h4>
+<section class="sped-section-card" aria-labelledby="lblDDT">
+<h4 id="lblDDT" style="color:#6f42c1;">DDT Emesse da Onda</h4>
 <div class="table-wrapper">
     <table class="table table-bordered table-sm sortable" id="tabDDT">
         <thead style="background:#6f42c1; color:#fff;">
@@ -406,6 +466,7 @@
         </tbody>
     </table>
 </div>
+</section>
 @endif
 
 <!-- Ricerca PDF DDT commesse vecchie/consegnate -->
@@ -416,7 +477,8 @@
 </div>
 
 <!-- Tabella fasi da spedire -->
-<h4 class="mx-2 mt-2" id="sezDaConsegnare" style="color:#28a745;">Da consegnare</h4>
+<section class="sped-section-card" aria-labelledby="sezDaConsegnare">
+<h4 id="sezDaConsegnare" style="color:#28a745;">Da consegnare</h4>
 <div class="table-wrapper">
     <table class="table table-bordered table-sm table-striped sortable" id="tabDaSpedire">
         <thead class="table-dark">
@@ -468,11 +530,13 @@
         </tbody>
     </table>
 </div>
+</section>
 
 <!-- Tabella Consegne Parziali -->
 <div id="sezParziali"></div>
 @if($fasiParziali->count() > 0)
-<h4 class="mx-2 mt-4" style="color:#fd7e14;">Consegne Parziali</h4>
+<section class="sped-section-card" aria-labelledby="lblParziali">
+<h4 id="lblParziali" style="color:#fd7e14;">Consegne Parziali</h4>
 <div class="table-wrapper">
     <table class="table table-bordered table-sm sortable" id="tabParziali">
         <thead style="background:#fd7e14; color:#fff;">
@@ -513,12 +577,14 @@
         </tbody>
     </table>
 </div>
+</section>
 @endif
 
 <!-- Tabella fasi in attesa -->
 <div id="sezInAttesa"></div>
 @if($fasiInAttesa->count() > 0)
-<h4 class="mx-2 mt-4" style="color:#ffc107;">In attesa (lavorazione in corso)</h4>
+<section class="sped-section-card" aria-labelledby="lblInAttesa">
+<h4 id="lblInAttesa" style="color:#ffc107;">In attesa (lavorazione in corso)</h4>
 <div class="table-wrapper">
     <table class="table table-bordered table-sm sortable" id="tabInAttesa">
         <thead style="background:#ffc107; color:#000;">
@@ -560,6 +626,7 @@
         </tbody>
     </table>
 </div>
+</section>
 @endif
 
 <!-- Modal Consegna -->
