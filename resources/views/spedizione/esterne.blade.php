@@ -177,9 +177,9 @@
         $ordine = $gruppo->ordine;
         $rowClass = $ordine ? $ordine->getPercorsoClass() : '';
         $hasAttive = $gruppo->fasi->contains(fn($f) => in_array((string)$f->stato, ['2','5'], true) || (is_string($f->stato) && !is_numeric($f->stato)));
-        $fasiAttiveIds = $gruppo->fasi
-            ->filter(fn($f) => in_array((string)$f->stato, ['2','5'], true))
-            ->pluck('id')->values()->toJson();
+        $fasiAttiveColl = $gruppo->fasi->filter(fn($f) => in_array((string)$f->stato, ['2','5'], true));
+        $fasiAttiveIds = $fasiAttiveColl->pluck('id')->values()->toJson();
+        $nFasiAttive = $fasiAttiveColl->count();
         $dataConsegna = $ordine && $ordine->data_prevista_consegna
             ? \Carbon\Carbon::parse($ordine->data_prevista_consegna)
             : null;
@@ -199,7 +199,7 @@
                 @if($hasAttive)
                     <button type="button" class="btn-rientro-tutte"
                             onclick="event.stopPropagation(); rientroTutteFasi({{ $fasiAttiveIds }}, '{{ $ordine->commessa ?? '' }}')">
-                        Rientro tutte
+                        {{ $nFasiAttive === 1 ? 'Rientro' : 'Rientro tutte' }}
                     </button>
                 @endif
             </div>
