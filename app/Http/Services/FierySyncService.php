@@ -276,9 +276,13 @@ class FierySyncService
     {
         if ($fase->stato != 2) return;
 
-        // Skip auto-termine se riaperta manualmente entro 24h (user ha riaperto, decide lui)
+        // Riaperta manualmente entro 24h: skip SOLO se non ci sono nuove stampe (qta_prod <= snapshot).
+        // Se qta_prod ha superato lo snapshot, ristampa rilevata → auto-termine permesso.
         if ($fase->riaperta_at && \Carbon\Carbon::parse($fase->riaperta_at)->gt(now()->subHours(24))) {
-            return;
+            $snapshot = (int) ($fase->qta_prod_at_riapertura ?? 0);
+            if ((int) ($fase->qta_prod ?? 0) <= $snapshot) {
+                return;
+            }
         }
 
         $qtaProd = (int) ($fase->qta_prod ?: 0);

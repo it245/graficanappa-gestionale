@@ -110,9 +110,13 @@ class FaseStatoService
             $completata = false; // Prinect gestisce la terminazione della stampa
         }
 
-        // Skip auto-termine se fase riaperta manualmente entro 24h (user decide)
+        // Riaperta manualmente entro 24h: skip SOLO se qta_prod <= snapshot (nessuna ristampa).
+        // Se qta_prod > snapshot, ristampa avvenuta → permetti auto-termine.
         if ($fase->riaperta_at && \Carbon\Carbon::parse($fase->riaperta_at)->gt(now()->subHours(24))) {
-            $completata = false;
+            $snapshot = (int) ($fase->qta_prod_at_riapertura ?? 0);
+            if ((int) ($fase->qta_prod ?? 0) <= $snapshot) {
+                $completata = false;
+            }
         }
 
         if ($completata && $fase->stato < 3 && (int) $fase->stato !== 5) {
