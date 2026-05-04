@@ -4,6 +4,8 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Models\ContatoreStampante;
+use App\Models\FieryAccounting;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -20,7 +22,8 @@ class FieryExportContatori extends Command
         {--mese= : Etichetta periodo (es. APRILE 2026)}
         {--giorni-effettivi= : Numero giorni effettivi da fatturare (scala delta proporzionale, es. 30 per aprile)}
         {--email= : Indirizzi email separati da virgola (invia XLSX in allegato)}
-        {--mese-corrente : Auto: snapshot 1° del mese → oggi, etichetta mese corrente}';
+        {--mese-corrente : Auto: snapshot 1° del mese → oggi, etichetta mese corrente}
+        {--sottrai-data=* : Date Y-m-d da sottrarre dal delta (usa FieryAccounting). Ripetibile.}';
 
     protected $description = 'Esporta XLSX consumi Canon iPR V900 (delta tra 2 snapshot)';
 
@@ -68,6 +71,24 @@ class FieryExportContatori extends Command
             'colore_a3' => max(0, $fine->colore_grande - $inizio->colore_grande),
             'banner'    => max(0, $fine->foglio_lungo  - $inizio->foglio_lungo),
         ];
+
+        // Sottrazione giorni specifici da FieryAccounting
+        $sottrai = $this->option('sottrai-data') ?: [];
+        if (!empty($sottrai)) {
+            $stat = FieryAccounting::whereIn('data_stampa', $sottrai)
+                ->select(
+                    DB::raw("SUM(CASE WHEN tipo_formato='grande' THEN pagine_colore ELSE 0 END) as col_grande"),
+                    DB::raw("SUM(CASE WHEN tipo_formato='piccolo' THEN pagine_colore ELSE 0 END) as col_piccolo"),
+                    DB::raw("SUM(CASE WHEN tipo_formato='grande' THEN pagine_bn ELSE 0 END) as bn_grande"),
+                    DB::raw("SUM(CASE WHEN tipo_formato='piccolo' THEN pagine_bn ELSE 0 END) as bn_piccolo")
+                )->first();
+            $delta['colore_a3'] = max(0, $delta['colore_a3'] - (int) ($stat->col_grande ?? 0));
+            $delta['colore_a4'] = max(0, $delta['colore_a4'] - (int) ($stat->col_piccolo ?? 0));
+            $delta['bn_a3']     = max(0, $delta['bn_a3']     - (int) ($stat->bn_grande ?? 0));
+            $delta['bn_a4']     = max(0, $delta['bn_a4']     - (int) ($stat->bn_piccolo ?? 0));
+            $this->info("Sottratti " . array_sum([(int)$stat->col_grande,(int)$stat->col_piccolo,(int)$stat->bn_grande,(int)$stat->bn_piccolo])
+                . " scatti dei giorni: " . implode(',', $sottrai));
+        }
 
         // Scaling proporzionale (esclude giorni extra come 04/05 e marzo 30-31)
         $giorniEff = (int) $this->option('giorni-effettivi');
