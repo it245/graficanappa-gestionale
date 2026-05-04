@@ -41,7 +41,8 @@ class SecurityHeaders
         // TODO: migrare a CSP enforce dopo refactor inline scripts/styles
         if (!config('app.debug')) {
             $csp = "default-src 'self' https:; "
-                . "script-src 'self' 'unsafe-inline' 'unsafe-eval' https: data:; "
+                . "script-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob:; "
+                . "worker-src 'self' blob:; "
                 . "style-src 'self' 'unsafe-inline' https: data:; "
                 . "img-src 'self' data: https: blob:; "
                 . "font-src 'self' data: https://fonts.gstatic.com; "
