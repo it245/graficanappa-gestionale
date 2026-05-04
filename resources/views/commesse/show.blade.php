@@ -48,19 +48,20 @@
 }
 .badge-avvia.lampeggia { animation: lampeggio-avvia 1.2s ease-in-out infinite; }
 
-/* === Hero card commessa === */
+/* === Hero card commessa (premium con MES tokens) === */
 .hero-commessa {
     background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
     color: #fff;
-    border-radius: 14px;
-    padding: 18px 22px;
-    margin-bottom: 16px;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    border-radius: var(--mes-radius-xl, 16px);
+    padding: 28px 32px;
+    margin-bottom: 20px;
+    box-shadow: var(--mes-shadow-lg, 0 10px 25px rgba(0,0,0,0.12));
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 .hero-commessa h1 {
-    font-size: 26px;
+    font-size: 28px;
     font-weight: 800;
-    margin: 0 0 4px 0;
+    margin: 0 0 6px 0;
     letter-spacing: -0.5px;
 }
 .hero-commessa .hero-meta {
@@ -69,15 +70,21 @@
     flex-wrap: wrap;
     font-size: 14px;
     color: #cbd5e1;
+    align-items: center;
 }
 .hero-commessa .hero-meta strong { color: #fff; font-weight: 600; }
 .hero-commessa .hero-qta {
     display: inline-flex; align-items: baseline; gap: 6px;
     background: rgba(255,255,255,0.08);
-    padding: 4px 12px; border-radius: 20px;
+    padding: 6px 14px; border-radius: 999px;
     font-size: 13px;
+    font-weight: 500;
 }
-.hero-commessa .hero-qta .num { font-size: 18px; font-weight: 800; color: #fde68a; }
+.hero-commessa .hero-qta .num {
+    font-size: 18px; font-weight: 800; color: #fde68a;
+    font-family: 'IBM Plex Mono', 'Menlo', monospace;
+    font-variant-numeric: tabular-nums;
+}
 .hero-tags {
     display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px;
 }
@@ -86,13 +93,35 @@
     background: rgba(255,255,255,0.10);
     border: 1px solid rgba(255,255,255,0.18);
     color: #f1f5f9;
-    padding: 5px 12px;
+    padding: 4px 12px;
     border-radius: 999px;
-    font-size: 12px;
-    font-weight: 500;
+    font-size: 11px;
+    font-weight: 600;
 }
 .hero-pill b { color: #fde68a; font-weight: 700; }
 .hero-pill small { color: #cbd5e1; font-size: 11px; }
+
+/* Tag pills generici (numero commessa, cliente, ecc) */
+.mes-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    border: 1px solid transparent;
+}
+.mes-pill-primary { background: rgba(59,130,246,0.12); color: var(--mes-primary, #3b82f6); border-color: rgba(59,130,246,0.25); }
+.mes-pill-success { background: rgba(16,185,129,0.12); color: var(--mes-success, #10b981); border-color: rgba(16,185,129,0.25); }
+.mes-pill-warning { background: rgba(245,158,11,0.12); color: var(--mes-warning, #f59e0b); border-color: rgba(245,158,11,0.25); }
+.mes-pill-danger  { background: rgba(239,68,68,0.12);  color: var(--mes-danger, #ef4444);  border-color: rgba(239,68,68,0.25); }
+.mes-pill-info    { background: rgba(6,182,212,0.12);  color: var(--mes-info, #06b6d4);    border-color: rgba(6,182,212,0.25); }
+
+/* Numeri tabular-nums globale per dati di produzione */
+.mes-num, .info-box-val .num, .pc-frac, .pc-meta strong, .modern-table .num, .stato-cell {
+    font-family: 'IBM Plex Mono', 'Menlo', monospace;
+    font-variant-numeric: tabular-nums;
+}
 
 /* === Badge gruppi (colori, fustella, cliche) collapsabili === */
 .tag-group {
@@ -137,29 +166,58 @@
 
 /* === Box info griglia compatta === */
 .info-grid {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
-    margin-bottom: 12px;
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+    margin-bottom: 14px;
 }
 @media (max-width: 768px) { .info-grid { grid-template-columns: 1fr; } }
 .info-box {
-    background: #f8fafc; border: 1px solid #e2e8f0;
-    border-radius: 10px; padding: 10px 14px;
-    border-left: 3px solid #0d6efd;
+    background: var(--mes-bg-card, #fff);
+    border: 1px solid var(--mes-border, #e5e7eb);
+    border-radius: var(--mes-radius-lg, 12px);
+    padding: 12px 16px;
+    border-left: 3px solid var(--mes-primary, #3b82f6);
+    box-shadow: var(--mes-shadow-md, 0 4px 6px rgba(0,0,0,0.05));
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.info-box:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--mes-shadow-lg, 0 10px 25px rgba(0,0,0,0.1));
 }
 .info-box-label {
     font-size: 10px; font-weight: 700;
     text-transform: uppercase; letter-spacing: 0.5px;
     color: #64748b; margin-bottom: 3px;
 }
-.info-box-val { font-size: 14px; color: #0f172a; line-height: 1.35; }
-.info-box-val.muted { color: #94a3b8; font-style: italic; }
+.info-box-val { font-size: 14px; color: var(--mes-text-primary, #111827); line-height: 1.35; }
+.info-box-val.muted { color: var(--mes-text-secondary, #6b7280); font-style: italic; }
 .info-box.note-prestampa { border-left-color: #6b7280; }
 .info-box.responsabile { border-left-color: #f59e0b; }
 .info-box.commento { border-left-color: #10b981; }
 
 /* === Anteprima foglio cliccabile === */
-.anteprima-foglio { cursor: zoom-in; transition: transform 0.15s ease; border-radius: 8px; }
-.anteprima-foglio:hover { transform: scale(1.02); box-shadow: 0 6px 20px rgba(0,0,0,0.18); }
+.anteprima-foglio { cursor: zoom-in; transition: transform 0.2s ease, box-shadow 0.2s ease; border-radius: var(--mes-radius-md, 8px); }
+.anteprima-foglio:hover { transform: scale(1.02); box-shadow: var(--mes-shadow-lg, 0 10px 25px rgba(0,0,0,0.15)); }
+
+/* === Fustella preview card === */
+.card.shadow-sm {
+    border-radius: var(--mes-radius-lg, 12px) !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border-color: var(--mes-border, #e5e7eb) !important;
+}
+.card.shadow-sm:hover {
+    box-shadow: var(--mes-shadow-lg, 0 10px 25px rgba(0,0,0,0.12)) !important;
+    transform: translateY(-2px);
+}
+
+/* === Box note Mirko (viola) === */
+.note-mirko-box {
+    border-radius: var(--mes-radius-lg, 12px) !important;
+    background: rgba(139,92,246,0.08) !important;
+    border-left: 3px solid var(--mes-external, #7c3aed) !important;
+    border-top: 1px solid rgba(139,92,246,0.18);
+    border-right: 1px solid rgba(139,92,246,0.18);
+    border-bottom: 1px solid rgba(139,92,246,0.18);
+}
 
 /* === Section heading minimal === */
 .section-h {
@@ -183,12 +241,14 @@
     width: 100%;
     border-collapse: separate;
     border-spacing: 0;
-    background: #fff;
-    border-radius: 10px;
+    background: var(--mes-bg-card, #fff);
+    border-radius: var(--mes-radius-lg, 12px);
     overflow: hidden;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    box-shadow: var(--mes-shadow-md, 0 4px 6px rgba(0,0,0,0.05));
     font-size: 13px;
+    transition: box-shadow 0.2s ease;
 }
+.modern-table:hover { box-shadow: var(--mes-shadow-lg, 0 10px 25px rgba(0,0,0,0.08)); }
 .modern-table thead th {
     background: #0f172a;
     color: #fff;
@@ -314,6 +374,49 @@
 .fasi-timeline-step.active { background: #fef3c7; border-color: #f59e0b; color: #92400e; box-shadow: 0 0 0 4px rgba(245,158,11,0.2); }
 .fasi-timeline-step.todo { background: #fff; color: #64748b; }
 .fasi-timeline-step.consegnato { background: #e0e7ff; border-color: #6366f1; color: #3730a3; }
+
+/* Numeri monospace nelle quantità */
+.modern-table td strong, .modern-table td .num,
+.prossima-card .pc-meta strong, .prossima-card .pc-frac, .prossima-card .pc-num,
+.tag-row .tag-val, .info-box-val strong {
+    font-family: 'IBM Plex Mono', 'Menlo', monospace;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.2px;
+}
+
+/* === Dark mode override === */
+@media (prefers-color-scheme: dark) {
+    .info-box,
+    .modern-table,
+    .prossima-card,
+    .card.shadow-sm {
+        background: #1e293b !important;
+        border-color: #334155 !important;
+        color: #e2e8f0;
+    }
+    .info-box-val { color: #f1f5f9; }
+    .info-box-val.muted { color: #94a3b8; }
+    .info-box-label { color: #94a3b8; }
+    .modern-table tbody td { border-bottom-color: #334155; color: #e2e8f0; }
+    .modern-table tbody tr:hover { background: #0f172a; }
+    .prossima-card { color: #e2e8f0; }
+    .prossima-card:hover { color: #f1f5f9; }
+    .prossima-card .pc-cliente, .prossima-card .pc-desc, .prossima-card .pc-meta { color: #94a3b8; }
+    .prossima-card .pc-meta strong, .prossima-card .pc-frac { color: #f1f5f9; }
+    .fasi-timeline { background: #0f172a; }
+    .fasi-timeline-step { background: #1e293b; border-color: #334155; color: #cbd5e1; }
+    .section-h { color: #cbd5e1; }
+}
+body.dark-mode .info-box,
+body.dark-mode .modern-table,
+body.dark-mode .prossima-card,
+body.dark-mode .card.shadow-sm {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #e2e8f0;
+}
+body.dark-mode .info-box-val { color: #f1f5f9; }
+body.dark-mode .info-box-label { color: #94a3b8; }
 </style>
 
 @php
@@ -416,7 +519,7 @@
         $noteFasiOp = $ordini->flatMap(fn($o) => $o->fasi)->filter(fn($f) => !empty($f->note))->values();
     @endphp
     @if($noteFasiOp->isNotEmpty())
-    <div class="info-box mb-3" style="border-left-color:#7c3aed; background:#f5f3ff;">
+    <div class="info-box note-mirko-box mb-3">
         <div class="info-box-label" style="color:#7c3aed;">📌 Note Fustelle</div>
         @foreach($noteFasiOp as $nf)
             <div style="font-size:13px; padding:3px 0; {{ !$loop->last ? 'border-bottom:1px solid #ddd6fe;' : '' }}">
