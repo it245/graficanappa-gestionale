@@ -497,8 +497,10 @@ class PrinectSyncService
 
             // Se l'operatore ha avviato un'altra commessa → questa e terminata
             // Skip se riaperta manualmente entro 24h
+            // Skip auto-termine SOLO se riaperta + qta_prod <= snapshot (nessuna ristampa)
             $riapertaRecente = $fase->riaperta_at && Carbon::parse($fase->riaperta_at)->gt(now()->subHours(24));
-            if ($terminata && !in_array($fase->stato, [3, '3']) && !$riapertaRecente) {
+            $skipPerRiapertura = $riapertaRecente && (int) ($fase->qta_prod ?? 0) <= (int) ($fase->qta_prod_at_riapertura ?? 0);
+            if ($terminata && !in_array($fase->stato, [3, '3']) && !$skipPerRiapertura) {
                 $fase->stato = 3;
                 if (!$fase->data_fine && $dataFine) {
                     $fase->data_fine = $dataFine;
