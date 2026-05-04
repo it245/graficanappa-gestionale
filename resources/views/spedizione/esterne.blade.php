@@ -48,7 +48,7 @@
     .commessa-card.expanded { box-shadow:0 4px 12px rgba(0,0,0,0.08); }
 
     .commessa-header {
-        display:grid; grid-template-columns: 36px 130px 1fr 200px 120px 110px auto;
+        display:grid; grid-template-columns: 36px 120px 130px 1fr 200px 120px 110px;
         gap:14px; padding:14px 16px; align-items:center; cursor:pointer;
         background:#fafbfc; border-left:4px solid transparent;
     }
@@ -168,20 +168,6 @@
     <span class="stat-pill"><strong>{{ $fasiEsterne->count() }}</strong> fasi totali</span>
 </div>
 
-<div class="legenda">
-    <span class="legenda-titolo">Stati</span>
-    <span class="legenda-item"><span class="badge-stato badge-dafare">Da fare</span> non iniziata</span>
-    <span class="legenda-item"><span class="badge-stato badge-pronto">Pronto</span> da inviare</span>
-    <span class="legenda-item"><span class="badge-stato badge-corso">In corso</span> dal terzista</span>
-    <span class="legenda-item"><span class="badge-stato badge-ext">EXT</span> esterno - DDT da inviare</span>
-    <span class="legenda-item"><span class="badge-stato badge-ext-inviata">EXT ✓</span> esterno - DDT inviata</span>
-    <span class="legenda-item"><span class="badge-stato badge-pausa">Pausa</span> in pausa</span>
-    <span class="legenda-titolo" style="margin-left:18px;">Percorso</span>
-    <span class="legenda-item"><span class="legenda-bordo" style="border-left-color:#22c55e;"></span> Base</span>
-    <span class="legenda-item"><span class="legenda-bordo" style="border-left-color:#eab308;"></span> Rilievi</span>
-    <span class="legenda-item"><span class="legenda-bordo" style="border-left-color:#f96f2a;"></span> Caldo</span>
-    <span class="legenda-item"><span class="legenda-bordo" style="border-left-color:#dc2626;"></span> Completo</span>
-</div>
 
 @forelse($gruppiEsterne as $gruppo)
     @php
@@ -199,6 +185,14 @@
     <div class="commessa-card searchable" data-search="{{ strtolower(($ordine->commessa ?? '') . ' ' . ($ordine->cliente_nome ?? '') . ' ' . ($ordine->descrizione ?? '') . ' ' . ($ordine->cod_art ?? '')) }}">
         <div class="commessa-header {{ $rowClass }}" onclick="toggleCard(this)">
             <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+            <div>
+                @if($hasAttive)
+                    <button type="button" class="btn-rientro-tutte"
+                            onclick="event.stopPropagation(); rientroTutteFasi({{ $fasiAttiveIds }}, '{{ $ordine->commessa ?? '' }}')">
+                        Rientro tutte
+                    </button>
+                @endif
+            </div>
             <div class="commessa-codice">
                 <a href="{{ route('commesse.show', $ordine->commessa ?? '-') }}" onclick="event.stopPropagation()">{{ $ordine->commessa ?? '-' }}</a>
             </div>
@@ -211,14 +205,6 @@
                 {{ $dataConsegna ? $dataConsegna->format('d/m/Y') : '-' }}
             </div>
             <div class="commessa-fasi-count">{{ $gruppo->fasi->count() }} {{ $gruppo->fasi->count() === 1 ? 'fase' : 'fasi' }}</div>
-            <div>
-                @if($hasAttive)
-                    <button type="button" class="btn-rientro-tutte"
-                            onclick="event.stopPropagation(); rientroTutteFasi({{ $fasiAttiveIds }}, '{{ $ordine->commessa ?? '' }}')">
-                        Rientro tutte
-                    </button>
-                @endif
-            </div>
         </div>
         <div class="commessa-body">
             <table class="fase-table">
@@ -240,19 +226,19 @@
                             <td><strong>{{ $fase->faseCatalogo->nome_display ?? '-' }}</strong></td>
                             <td>
                                 @if($statoFase == 0)
-                                    <span class="badge-stato badge-dafare">Da fare</span>
+                                    <span class="badge-stato badge-dafare" title="Non iniziata">Da fare</span>
                                 @elseif($statoFase == 1)
-                                    <span class="badge-stato badge-pronto">Pronto</span>
+                                    <span class="badge-stato badge-pronto" title="Pronto — da inviare al fornitore">Pronto</span>
                                 @elseif($statoFase == 5)
                                     @if($fase->ddt_fornitore_id)
-                                        <span class="badge-stato badge-ext-inviata">EXT ✓</span>
+                                        <span class="badge-stato badge-ext-inviata" title="DDT inviato al fornitore">EXT ✓</span>
                                     @else
-                                        <span class="badge-stato badge-ext">EXT</span>
+                                        <span class="badge-stato badge-ext" title="Esterno — DDT da inviare">EXT</span>
                                     @endif
                                 @elseif($statoFase == 2)
-                                    <span class="badge-stato badge-corso">In corso</span>
+                                    <span class="badge-stato badge-corso" title="In corso — dal terzista">In corso</span>
                                 @elseif($inPausa)
-                                    <span class="badge-stato badge-pausa">Pausa: {{ $statoFase }}</span>
+                                    <span class="badge-stato badge-pausa" title="In pausa">Pausa: {{ $statoFase }}</span>
                                 @endif
                             </td>
                             <td>
