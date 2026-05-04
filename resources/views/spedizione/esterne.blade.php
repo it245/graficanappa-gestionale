@@ -48,10 +48,12 @@
     .commessa-card.expanded { box-shadow:0 4px 12px rgba(0,0,0,0.08); }
 
     .commessa-header {
-        display:grid; grid-template-columns: 36px 120px 130px 1fr 200px 120px 110px;
+        display:grid; grid-template-columns: 36px 120px 130px minmax(0, 1fr) 200px 120px 110px;
         gap:14px; padding:14px 16px; align-items:center; cursor:pointer;
         background:#fafbfc; border-left:4px solid transparent;
+        overflow: hidden;
     }
+    .commessa-header > div { min-width: 0; }
     .commessa-header:hover { background:#f3f4f6; }
     .commessa-header.percorso-base { border-left-color:#22c55e; }
     .commessa-header.percorso-rilievi { border-left-color:#eab308; }
