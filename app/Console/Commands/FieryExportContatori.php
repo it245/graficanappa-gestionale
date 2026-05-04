@@ -16,7 +16,8 @@ class FieryExportContatori extends Command
     protected $signature = 'fiery:export-contatori
         {--inizio= : ID snapshot iniziale (oppure data Y-m-d)}
         {--fine= : ID snapshot finale (oppure data Y-m-d, default: ultimo)}
-        {--mese= : Etichetta periodo (es. APRILE 2026)}';
+        {--mese= : Etichetta periodo (es. APRILE 2026)}
+        {--giorni-effettivi= : Numero giorni effettivi da fatturare (scala delta proporzionale, es. 30 per aprile)}';
 
     protected $description = 'Esporta XLSX consumi Canon iPR V900 (delta tra 2 snapshot)';
 
@@ -47,6 +48,18 @@ class FieryExportContatori extends Command
             'colore_a3' => max(0, $fine->colore_grande - $inizio->colore_grande),
             'banner'    => max(0, $fine->foglio_lungo  - $inizio->foglio_lungo),
         ];
+
+        // Scaling proporzionale (esclude giorni extra come 04/05 e marzo 30-31)
+        $giorniEff = (int) $this->option('giorni-effettivi');
+        if ($giorniEff > 0) {
+            $giorniTot = max(1, (int) round($inizio->rilevato_at->diffInDays($fine->rilevato_at)));
+            $fattore = $giorniEff / $giorniTot;
+            foreach ($delta as $k => $v) {
+                $delta[$k] = (int) round($v * $fattore);
+            }
+            $this->info("Scaling: {$giorniEff}/{$giorniTot} giorni = " . round($fattore * 100, 1) . '%');
+        }
+
         $totale = array_sum($delta);
 
         $mese = $this->option('mese') ?: 'PERIODO ' . $inizio->rilevato_at->format('d/m/Y') . ' - ' . $fine->rilevato_at->format('d/m/Y');
