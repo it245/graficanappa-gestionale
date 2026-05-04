@@ -1022,7 +1022,6 @@ tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !imp
                     #modalConsegneOggi .fl-tab col.c-commessa { width:110px; }
                     #modalConsegneOggi .fl-tab col.c-cliente { width:160px; }
                     #modalConsegneOggi .fl-tab col.c-op { width:90px; }
-                    #modalConsegneOggi .fl-tab col.c-fine { width:90px; }
                     #modalConsegneOggi .fl-tab col.c-desc { width:auto; }
                 </style>
                 <div style="overflow-x:auto;">
@@ -1031,7 +1030,6 @@ tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !imp
                         <col class="c-commessa">
                         <col class="c-cliente">
                         <col class="c-op">
-                        <col class="c-fine">
                         <col class="c-desc">
                     </colgroup>
                     <thead>
@@ -1039,7 +1037,6 @@ tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !imp
                             <th>Commessa</th>
                             <th>Cliente</th>
                             <th>Operatori</th>
-                            <th>Fine</th>
                             <th>Descrizione</th>
                         </tr>
                     </thead>
@@ -1049,7 +1046,6 @@ tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !imp
                             <td><a href="{{ route('owner.dettaglioCommessa', $f->ordine->commessa ?? '-') }}" style="font-weight:700;color:#0d6efd;text-decoration:none;">{{ $f->ordine->commessa ?? '-' }}</a></td>
                             <td title="{{ $f->ordine->cliente_nome ?? '' }}">{{ $f->ordine->cliente_nome ?? '-' }}</td>
                             <td title="{{ $f->operatori->map(fn($o) => $o->nome.' '.($o->cognome ?? ''))->implode(', ') }}">{{ $f->operatori->map(fn($o) => $o->nome)->implode(', ') ?: '-' }}</td>
-                            <td>{{ $f->data_fine ? \Carbon\Carbon::parse($f->data_fine)->format('H:i') : '-' }}</td>
                             <td title="{{ $f->ordine->descrizione ?? '' }}">{{ $f->ordine->descrizione ?? '-' }}</td>
                         </tr>
                         @endforeach
