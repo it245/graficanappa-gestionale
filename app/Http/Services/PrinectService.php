@@ -12,14 +12,19 @@ class PrinectService
 
     public function __construct()
     {
-        $this->baseUrl = env('PRINECT_API_URL');
-        $this->user = env('PRINECT_API_USER');
-        $this->pass = env('PRINECT_API_PASS');
+        $this->baseUrl = (string) env('PRINECT_API_URL', '');
+        $this->user = (string) env('PRINECT_API_USER', '');
+        $this->pass = (string) env('PRINECT_API_PASS', '');
     }
 
     private function api()
     {
         return Http::withBasicAuth($this->user, $this->pass)->timeout(15);
+    }
+
+    public function isConfigured(): bool
+    {
+        return $this->baseUrl !== '' && $this->user !== '' && $this->pass !== '';
     }
 
     // ===== DEVICE API =====
