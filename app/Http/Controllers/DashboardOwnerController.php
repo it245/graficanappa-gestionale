@@ -477,7 +477,7 @@ public function calcolaOreEPriorita($fase)
 
         // Lista fasi in lavorazione (stato 2) per modale KPI
         $fasiInLavorazione = OrdineFase::where('stato', 2)
-            ->with(['ordine:id,commessa,cliente_nome,descrizione,data_prevista_consegna', 'faseCatalogo:id,nome,nome_display,reparto_id', 'faseCatalogo.reparto:id,nome', 'operatori:id,nome,cognome'])
+            ->with(['ordine:id,commessa,cliente_nome,descrizione,data_prevista_consegna', 'faseCatalogo', 'faseCatalogo.reparto:id,nome', 'operatori:id,nome,cognome'])
             ->orderBy('data_inizio')
             ->get();
 
