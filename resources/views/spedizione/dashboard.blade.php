@@ -87,14 +87,7 @@
     }
     h2, h4, p { margin-left:8px; margin-right:8px; }
     table th, table td { white-space:nowrap; }
-    td.desc-col, td:nth-child(7){
-        white-space:normal; min-width:150px; max-width:220px;
-        overflow:hidden; text-overflow:ellipsis;
-        display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical;
-        line-height:1.35; max-height:5.4em;
-        word-break:break-word;
-    }
-    td.desc-col:hover { -webkit-line-clamp:unset; max-height:none; background:#fffbe6; cursor:help; }
+    td.desc-col, td:nth-child(7){ white-space:normal; min-width:150px; max-width:220px; }
 
     .btn-consegna {
         color: #fff;
@@ -107,29 +100,38 @@
         transition: all 0.2s;
         white-space: nowrap;
     }
+    .btn-consegna {
+        border-radius: 10px;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+        transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
     .btn-consegna-green {
-        background: linear-gradient(135deg, #28a745, #218838);
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        box-shadow: 0 1px 3px rgba(16,185,129,0.2), 0 4px 12px rgba(16,185,129,0.15);
     }
     .btn-consegna-green:hover {
-        background: linear-gradient(135deg, #218838, #1e7e34);
-        transform: translateY(-1px);
-        box-shadow: 0 3px 8px rgba(40,167,69,0.35);
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        transform: translateY(-3px);
+        box-shadow: 0 2px 8px rgba(16,185,129,0.3), 0 12px 28px rgba(16,185,129,0.25);
     }
     .btn-consegna-red {
-        background: linear-gradient(135deg, #dc3545, #c82333);
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        box-shadow: 0 1px 3px rgba(239,68,68,0.2), 0 4px 12px rgba(239,68,68,0.15);
     }
     .btn-consegna-red:hover {
-        background: linear-gradient(135deg, #c82333, #a71d2a);
-        transform: translateY(-1px);
-        box-shadow: 0 3px 8px rgba(220,53,69,0.35);
+        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+        transform: translateY(-3px);
+        box-shadow: 0 2px 8px rgba(239,68,68,0.3), 0 12px 28px rgba(239,68,68,0.25);
     }
     .btn-consegna-orange {
-        background: linear-gradient(135deg, #fd7e14, #e8690b);
+        background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+        box-shadow: 0 1px 3px rgba(249,115,22,0.2), 0 4px 12px rgba(249,115,22,0.15);
     }
     .btn-consegna-orange:hover {
-        background: linear-gradient(135deg, #e8690b, #d35400);
-        transform: translateY(-1px);
-        box-shadow: 0 3px 8px rgba(253,126,20,0.35);
+        background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+        transform: translateY(-3px);
+        box-shadow: 0 2px 8px rgba(249,115,22,0.3), 0 12px 28px rgba(249,115,22,0.25);
     }
     .btn-consegna:disabled {
         background: #6c757d !important;

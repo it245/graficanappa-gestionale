@@ -305,9 +305,17 @@ td:focus, td[contenteditable]:focus {
 }
 
 thead th {
-    background: #000000;
+    background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
     color: #ffffff;
     font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    border-bottom: 2px solid #374151 !important;
+    padding-top: 6px;
+    padding-bottom: 6px;
+}
+tbody tr:hover td {
+    background: #f9fafb;
 }
 
 /* =========================
@@ -1433,7 +1441,7 @@ function salvaNotaTv() {
             btn.textContent = '✓ Salvata!';
             btn.classList.replace('btn-danger', 'btn-success');
             setTimeout(function() { bootstrap.Modal.getInstance(document.getElementById('modalNotaTv')).hide(); btn.textContent = 'Salva e pubblica'; btn.classList.replace('btn-success', 'btn-danger'); }, 1000);
-        } else { alert('Errore'); }
+        } else { MES.toast('Errore','danger'); }
     });
 }
 // Carica nota TV corrente
@@ -1744,7 +1752,7 @@ function aggiornaCampo(faseId, campo, valore, targetEl){
     if(campiNumerici.includes(campo)){
         valore = valore.replace(',', '.');
         if(isNaN(parseFloat(valore))){
-            alert('Valore numerico non valido');
+            MES.toast('Valore numerico non valido','warning');
             return;
         }
     }
@@ -1761,15 +1769,15 @@ function aggiornaCampo(faseId, campo, valore, targetEl){
         body: JSON.stringify({ fase_id: faseId, campo: campo, valore: valore })
     })
     .then(function(r) {
-        if (r.status === 419) { alert('Sessione scaduta. Ricarica la pagina (F5).'); throw new Error('csrf'); }
-        if (r.status === 429) { alert('Troppe richieste. Attendi qualche secondo.'); throw new Error('throttle'); }
+        if (r.status === 419) { MES.toast('Sessione scaduta. Ricarica F5','warning'); throw new Error('csrf'); }
+        if (r.status === 429) { MES.toast('Troppe richieste, attendi','warning'); throw new Error('throttle'); }
         if (!r.ok) throw new Error('http-' + r.status);
         return r.json();
     })
     .then(function(d) {
         if (!d.success) {
             if (cell) cell.style.background = '#f8d7da';
-            alert('Errore salvataggio: ' + (d.messaggio || ''));
+            MES.toast('Errore salvataggio: ' + (d.messaggio || ''),'danger');
             return;
         }
         if (cell) {
@@ -1794,7 +1802,7 @@ function aggiornaCampo(faseId, campo, valore, targetEl){
         console.error('aggiornaCampo:', err);
         if (err.message === 'csrf' || err.message === 'throttle') return;
         if (cell) cell.style.background = '#f8d7da';
-        alert('Errore salvataggio (server)');
+        MES.toast('Errore salvataggio (server)','danger');
     });
 }
 
@@ -1828,13 +1836,13 @@ function applicaPrioritaATutte(commessa, priorita) {
     .then(r => r.json())
     .then(d => {
         if (d.success) {
-            alert('Priorità applicata a ' + d.count + ' fasi');
+            MES.toast('Priorità applicata a ' + d.count + ' fasi','success');
             window.location.reload();
         } else {
-            alert('Errore: ' + (d.messaggio || ''));
+            MES.toast('Errore: ' + (d.messaggio || ''),'danger');
         }
     })
-    .catch(() => alert('Errore di connessione'));
+    .catch(() => MES.toast('Errore di connessione','danger'));
 }
 
 function aggiornaStato(faseId, testo) {
@@ -1843,7 +1851,7 @@ function aggiornaStato(faseId, testo) {
     if (val === 'EXT') return;
     const nuovoStato = parseInt(val);
     if (isNaN(nuovoStato) || nuovoStato < 0 || (nuovoStato > 3 && nuovoStato !== 5)) {
-        alert('Stato non valido. Usa: 0, 1, 2, 3');
+        MES.toast('Stato non valido. Usa 0/1/2/3','warning');
         return;
     }
     fetch(urlToken('{{ route("owner.aggiornaStato") }}'), {
@@ -1854,7 +1862,7 @@ function aggiornaStato(faseId, testo) {
     .then(r => r.json())
     .then(d => {
         if (!d.success) {
-            alert('Errore: ' + (d.messaggio || ''));
+            MES.toast('Errore: ' + (d.messaggio || ''),'danger');
         } else {
             const bgMap = {0: '#e9ecef', 1: '#cfe2ff', 2: '#fff3cd', 3: '#d1e7dd', 5: '#e0cffc'};
             const row = document.querySelector('tr[data-id="' + faseId + '"]');
@@ -1867,7 +1875,7 @@ function aggiornaStato(faseId, testo) {
             }
         }
     })
-    .catch(err => { console.error(err); alert('Errore di connessione'); });
+    .catch(err => { console.error(err); MES.toast('Errore di connessione','danger'); });
 }
 </script>
 <script>
