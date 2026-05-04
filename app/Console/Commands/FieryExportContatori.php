@@ -10,6 +10,7 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
+use Illuminate\Support\Facades\Mail;
 
 class FieryExportContatori extends Command
 {
@@ -17,12 +18,31 @@ class FieryExportContatori extends Command
         {--inizio= : ID snapshot iniziale (oppure data Y-m-d)}
         {--fine= : ID snapshot finale (oppure data Y-m-d, default: ultimo)}
         {--mese= : Etichetta periodo (es. APRILE 2026)}
-        {--giorni-effettivi= : Numero giorni effettivi da fatturare (scala delta proporzionale, es. 30 per aprile)}';
+        {--giorni-effettivi= : Numero giorni effettivi da fatturare (scala delta proporzionale, es. 30 per aprile)}
+        {--email= : Indirizzi email separati da virgola (invia XLSX in allegato)}
+        {--mese-corrente : Auto: snapshot 1° del mese → oggi, etichetta mese corrente}';
 
     protected $description = 'Esporta XLSX consumi Canon iPR V900 (delta tra 2 snapshot)';
 
     public function handle(): int
     {
+        // Modalità auto-mese: cerca snapshot più vicino al 1° del mese e ultimo
+        if ($this->option('mese-corrente')) {
+            $primoMese = now()->startOfMonth()->toDateString();
+            $inizio = ContatoreStampante::where('stampante', 'Canon iPR V900')
+                ->whereDate('rilevato_at', '<=', $primoMese)
+                ->orderByDesc('rilevato_at')->first();
+            $fine = ContatoreStampante::where('stampante', 'Canon iPR V900')
+                ->orderByDesc('rilevato_at')->first();
+            if (!$inizio || !$fine) {
+                $this->error('Snapshot inizio/fine non trovati');
+                return 1;
+            }
+            $meseLabel = strtoupper(now()->locale('it')->translatedFormat('F Y'));
+            $this->generaEInvia($inizio, $fine, $meseLabel);
+            return 0;
+        }
+
         $inizio = $this->resolveSnapshot($this->option('inizio'));
         if (!$inizio) {
             $this->error('Snapshot iniziale non trovato');
@@ -163,7 +183,41 @@ class FieryExportContatori extends Command
 
         $this->info("Excel salvato: {$path}");
         $this->line("Totale scatti: " . number_format($totale, 0, ',', '.'));
+
+        // Invio email opzionale
+        $emailOpt = $this->option('email');
+        if ($emailOpt) {
+            $destinatari = array_filter(array_map('trim', explode(',', $emailOpt)));
+            $body = "Report consumi Canon ImagePRESS V900\n\n"
+                  . "Periodo: {$mese}\n"
+                  . "Snapshot iniziale: " . $inizio->rilevato_at->format('d/m/Y H:i') . "\n"
+                  . "Snapshot finale: " . $fine->rilevato_at->format('d/m/Y H:i') . "\n\n"
+                  . "Totale scatti: " . number_format($totale, 0, ',', '.') . "\n\n"
+                  . "Dettaglio in allegato XLSX.\n\n-- MES Grafica Nappa";
+            try {
+                Mail::raw($body, function ($m) use ($destinatari, $path, $mese, $filename) {
+                    $m->to($destinatari)
+                      ->subject("Report Consumi V900 — {$mese}")
+                      ->attach($path, ['as' => $filename]);
+                });
+                $this->info('Email inviata a: ' . implode(', ', $destinatari));
+            } catch (\Throwable $e) {
+                $this->error('Errore invio email: ' . $e->getMessage());
+                \Log::error('FieryExportContatori email fail', ['err' => $e->getMessage()]);
+            }
+        }
+
         return 0;
+    }
+
+    private function generaEInvia(ContatoreStampante $inizio, ContatoreStampante $fine, string $mese): void
+    {
+        // Wrapper per --mese-corrente: chiama handle reimpostando opzioni
+        $this->input->setOption('inizio', (string) $inizio->id);
+        $this->input->setOption('fine', (string) $fine->id);
+        $this->input->setOption('mese', $mese);
+        $this->input->setOption('mese-corrente', false);
+        $this->handle();
     }
 
     private function resolveSnapshot(?string $val): ?ContatoreStampante
