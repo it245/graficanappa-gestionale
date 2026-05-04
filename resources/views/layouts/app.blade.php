@@ -21,6 +21,10 @@
     <meta name="apple-mobile-web-app-title" content="MES">
     <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ asset('css/mes-tokens.css') }}?v=1">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         /* Percorso produttivo — colori riga */
@@ -205,5 +209,7 @@
         });
     }
     </script>
+    <script src="{{ asset('js/mes-ui.js') }}?v=1"></script>
+    @yield('scripts')
     </body>
 </html>
