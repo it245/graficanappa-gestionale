@@ -598,19 +598,37 @@
                     @if(!empty($fustella))
                     <div class="card p-3 text-center shadow-sm">
                         <div class="fw-bold mb-1" style="font-size:13px;">📐 Fustella <strong>{{ $fustella['codice'] }}</strong></div>
-                        @if(!empty($fustella['dimensioni']))
-                            <div class="mb-1" style="font-size:12px; color:#0d6efd; font-weight:600;">{{ $fustella['dimensioni'] }}</div>
-                        @endif
                         @if(!empty($fustella['descrizione']))
                             <div class="mb-2" style="font-size:11px; color:#666;">{{ Str::limit($fustella['descrizione'], 50) }}</div>
                         @endif
-                        <div style="position:relative; width:100%; height:180px; overflow:hidden; border-radius:8px; background:#f8f9fa; cursor:zoom-in;"
+                        <div id="fustellaCanvasWrap" style="position:relative; width:100%; min-height:180px; overflow:hidden; border-radius:8px; background:#fff; cursor:zoom-in;"
                              data-bs-toggle="modal" data-bs-target="#modalFustella">
-                            <embed src="{{ $fustella['url'] }}#toolbar=0&navpanes=0&scrollbar=0&view=FitH&zoom=page-fit"
-                                   type="application/pdf"
-                                   style="width:100%; height:100%; pointer-events:none; border:0;">
-                            <div style="position:absolute; inset:0;"></div>
+                            <canvas id="fustellaCanvas" style="width:100%; display:block; background:#fff;"></canvas>
                         </div>
+                        <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+                        <script>
+                        if (window.pdfjsLib) {
+                            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+                        }
+                        (async function(){
+                            try {
+                                const pdf = await pdfjsLib.getDocument(@json($fustella['url'])).promise;
+                                const page = await pdf.getPage(1);
+                                const canvas = document.getElementById('fustellaCanvas');
+                                const wrap = document.getElementById('fustellaCanvasWrap');
+                                const w = wrap.clientWidth - 4;
+                                const v1 = page.getViewport({scale: 1});
+                                const scale = w / v1.width;
+                                const v = page.getViewport({scale});
+                                canvas.width = v.width;
+                                canvas.height = v.height;
+                                const ctx = canvas.getContext('2d');
+                                ctx.fillStyle = '#fff';
+                                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                                await page.render({canvasContext: ctx, viewport: v}).promise;
+                            } catch(e) { console.warn('PDF fustella render fail:', e); }
+                        })();
+                        </script>
                         <button class="btn btn-sm btn-outline-primary mt-2"
                                 data-bs-toggle="modal" data-bs-target="#modalFustella">Ingrandisci</button>
                     </div>
