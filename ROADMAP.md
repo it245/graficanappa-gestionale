@@ -194,6 +194,37 @@ L'AI assistita non sarà solo strumento di sviluppo (come oggi con Claude Code),
 - Stima 2030: $1.000-3.000/mese (volume crescente)
 - ROI: ore IT risparmiate + decisioni migliori + zero downtime macchine
 
+## 🐍 Microservizio Python — FastAPI Scheduler (v4.0+)
+
+Lo scheduler Mossa37 evolve in **microservizio Python dedicato** affiancato al MES Laravel:
+
+**Tech stack**:
+- **FastAPI** async (porta 8000 su .60)
+- **OR-Tools** Google → solver constraint optimization
+- **NumPy/Pandas** → analytics carichi macchine
+- **scikit-learn / PyTorch** → ML predizione tempi fasi
+- **SQLAlchemy** readonly su MySQL condiviso
+- **Anthropic SDK Python** → integrazione Claude API native
+
+**Capability**:
+1. **Piano scheduling 4 settimane ottimizzato** — assegna fase→macchina→slot temporale
+2. **Predizione tempo fasi ±10%** — train su storico Prinect (avviamento + esecuzione)
+3. **What-if analysis** — "aggiungo 3° turno JOH?" → simula impatto ritardi
+4. **Auto-batching cliché** — raggruppa ordini stesso cliché entro ±5gg
+5. **Alert ritardi anticipati** — identifica catene a rischio
+6. **Suggerimenti operatore live** — "fase X sblocca 5 successive → priorità"
+7. **Heatmap saturazione macchine** — dashboard visiva colli bottiglia
+
+**Architettura**:
+- Laravel POST `/schedule` → FastAPI ritorna JSON piano
+- MES salva su `sched_*` fields esistenti (`ordine_fasi.sched_macchina`, `sched_inizio`, ...)
+- WebSocket dashboard → updates live durante simulazione
+- Eventi Laravel (PhaseCompleted) → POST FastAPI per re-schedule
+
+**Effort**: 1-2 mesi part-time MVP. v4.0 (Q4 2026) base, v8.0 (2027) con ML training.
+
+**Costo**: $25-50/mese Claude API + $0 hosting (stesso .60).
+
 📄 **Roadmap completa con dettaglio versioni**: `ROADMAP.html` (timeline Gantt + checklist v1.0-v10.0)
 
 **Nota**: il piano biennale 2026-2028 copre lo sviluppo intensivo delle feature core. Da 2028+ il MES entra in **manutenzione attiva** (bug fix, security continua, integrazione nuove macchine officina, compliance, evoluzione tecnologica). Il ruolo di Responsabile IT Grafica Nappa è **permanente**, non legato al piano sviluppo.
