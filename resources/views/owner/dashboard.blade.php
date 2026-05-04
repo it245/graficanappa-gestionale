@@ -1019,9 +1019,10 @@ tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !imp
                     #modalFasiLavorazione .fl-tab th { background:#0f172a; color:#fff; padding:8px 10px; text-align:left; font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:0.04em; white-space:nowrap; }
                     #modalFasiLavorazione .fl-tab td { padding:8px 10px; border-bottom:1px solid #f1f5f9; vertical-align:middle; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
                     #modalFasiLavorazione .fl-tab tr:hover td { background:#f8fafc; }
-                    #modalFasiLavorazione .fl-tab td.fl-cliente { max-width:180px; }
-                    #modalFasiLavorazione .fl-tab td.fl-desc { max-width:280px; }
-                    #modalFasiLavorazione .fl-tab td.fl-op { max-width:150px; font-size:11px; }
+                    #modalFasiLavorazione .fl-tab td.fl-cliente { max-width:140px; }
+                    #modalFasiLavorazione .fl-tab td.fl-desc { max-width:380px; }
+                    #modalFasiLavorazione .fl-tab td.fl-op { max-width:100px; font-size:11px; }
+                    #modalFasiLavorazione .fl-tab td.fl-fase { max-width:130px; font-size:11px; }
                 </style>
                 <div style="overflow-x:auto;">
                 <table class="fl-tab">
@@ -1033,7 +1034,6 @@ tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !imp
                             <th>Reparto</th>
                             <th>Operatori</th>
                             <th>Inizio</th>
-                            <th>Consegna</th>
                             <th>Descrizione</th>
                         </tr>
                     </thead>
@@ -1042,11 +1042,10 @@ tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !imp
                         <tr>
                             <td><a href="{{ route('owner.dettaglioCommessa', $f->ordine->commessa ?? '-') }}" style="font-weight:700;color:#0d6efd;text-decoration:none;">{{ $f->ordine->commessa ?? '-' }}</a></td>
                             <td class="fl-cliente" title="{{ $f->ordine->cliente_nome ?? '' }}">{{ $f->ordine->cliente_nome ?? '-' }}</td>
-                            <td><strong>{{ $f->faseCatalogo->nome_display ?? $f->fase ?? '-' }}</strong></td>
+                            <td class="fl-fase" title="{{ $f->faseCatalogo->nome_display ?? $f->fase ?? '' }}"><strong>{{ $f->faseCatalogo->nome_display ?? $f->fase ?? '-' }}</strong></td>
                             <td>{{ $f->faseCatalogo->reparto->nome ?? '-' }}</td>
                             <td class="fl-op" title="{{ $f->operatori->map(fn($o) => $o->nome.' '.($o->cognome ?? ''))->implode(', ') }}">{{ $f->operatori->map(fn($o) => $o->nome)->implode(', ') ?: '-' }}</td>
                             <td>{{ $f->data_inizio ? \Carbon\Carbon::parse($f->data_inizio)->format('d/m H:i') : '-' }}</td>
-                            <td>{{ $f->ordine->data_prevista_consegna ? \Carbon\Carbon::parse($f->ordine->data_prevista_consegna)->format('d/m/Y') : '-' }}</td>
                             <td class="fl-desc" title="{{ $f->ordine->descrizione ?? '' }}">{{ $f->ordine->descrizione ?? '-' }}</td>
                         </tr>
                         @endforeach
