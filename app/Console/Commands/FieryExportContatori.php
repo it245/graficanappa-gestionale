@@ -175,6 +175,17 @@ class FieryExportContatori extends Command
         $s->getColumnDimension('A')->setWidth(22);
         $s->getColumnDimension('B')->setWidth(35);
 
+        // Page setup A4 verticale, centrato, fit-to-page
+        $ps = $s->getPageSetup();
+        $ps->setPaperSize(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::PAPERSIZE_A4);
+        $ps->setOrientation(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::ORIENTATION_PORTRAIT);
+        $ps->setFitToWidth(1);
+        $ps->setFitToHeight(1);
+        $ps->setHorizontalCentered(true);
+        $s->getPageMargins()->setTop(0.75)->setBottom(0.75)->setLeft(0.5)->setRight(0.5);
+        $s->getPrintArea() === '' ?: null;
+        $s->getPageSetup()->setPrintArea("A1:B{$lastRow}");
+
         // Save
         $dir = storage_path('app/exports');
         if (!is_dir($dir)) mkdir($dir, 0755, true);
