@@ -172,22 +172,38 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
         Filtra stato
     </button>
+    <button type="button" id="btnLegenda" onclick="toggleLegendaPanel()"
+            style="background:#fff; border:1px solid #d1d5db; border-radius:8px; padding:6px 12px; cursor:pointer; font-size:13px; font-weight:600; color:#374151; display:inline-flex; align-items:center; gap:6px; margin-left:6px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        Legenda
+    </button>
     <span class="stat-pill"><strong>{{ $gruppiEsterne->count() }}</strong> commesse</span>
     <span class="stat-pill"><strong>{{ $fasiEsterne->count() }}</strong> fasi totali</span>
 </div>
 
+
+{{-- Pannello legenda stati (collapsible) --}}
+<div id="legendaPanel" style="display:none; margin: 0 8px 14px; padding:14px 18px; background:#fff; border:1px solid #e5e7eb; border-radius:10px; box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+    <div style="font-size:11px; font-weight:600; color:#6b7280; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:10px;">Legenda stati</div>
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:8px 16px;">
+        <div style="display:flex; align-items:center; gap:10px;"><span class="badge-stato badge-dafare">Da fare</span><span style="font-size:12px; color:#374151;">Non ancora iniziata</span></div>
+        <div style="display:flex; align-items:center; gap:10px;"><span class="badge-stato badge-pronto">Pronto</span><span style="font-size:12px; color:#374151;">Pronta — da inviare al terzista</span></div>
+        <div style="display:flex; align-items:center; gap:10px;"><span class="badge-stato badge-ext">EXT</span><span style="font-size:12px; color:#374151;">Esterno — DDT NON ancora inviato</span></div>
+        <div style="display:flex; align-items:center; gap:10px;"><span class="badge-stato badge-ext-inviata">EXT ✓</span><span style="font-size:12px; color:#374151;">Esterno — DDT inviato, dal terzista</span></div>
+        <div style="display:flex; align-items:center; gap:10px;"><span class="badge-stato badge-pausa">Pausa</span><span style="font-size:12px; color:#374151;">In pausa</span></div>
+    </div>
+</div>
 
 {{-- Pannello filtri stato (collapsible) --}}
 <div id="filtriPanel" style="display:none; margin: 0 8px 14px; padding:10px 14px; background:#fff; border:1px solid #e5e7eb; border-radius:10px; box-shadow:0 1px 3px rgba(0,0,0,0.04);">
     <div style="font-size:11px; font-weight:600; color:#6b7280; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:8px;">Filtra per stato (click per filtrare)</div>
     <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
         <button type="button" class="filtro-stato-btn active" data-filtro="" onclick="filtraPerStato('')" style="cursor:pointer; border:1px solid #d1d5db; background:#1f2937; color:#fff; padding:4px 12px; border-radius:14px; font-size:11px; font-weight:600;">Tutti</button>
-        <button type="button" class="filtro-stato-btn" data-filtro="0" onclick="filtraPerStato('0')" style="cursor:pointer; border:none; padding:0; background:none;"><span class="badge-stato badge-dafare">Da fare</span></button>
-        <button type="button" class="filtro-stato-btn" data-filtro="1" onclick="filtraPerStato('1')" style="cursor:pointer; border:none; padding:0; background:none;"><span class="badge-stato badge-pronto">Pronto</span></button>
-        <button type="button" class="filtro-stato-btn" data-filtro="2" onclick="filtraPerStato('2')" style="cursor:pointer; border:none; padding:0; background:none;"><span class="badge-stato badge-corso">In corso</span></button>
-        <button type="button" class="filtro-stato-btn" data-filtro="ext" onclick="filtraPerStato('ext')" style="cursor:pointer; border:none; padding:0; background:none;"><span class="badge-stato badge-ext">EXT</span></button>
-        <button type="button" class="filtro-stato-btn" data-filtro="ext_ok" onclick="filtraPerStato('ext_ok')" style="cursor:pointer; border:none; padding:0; background:none;"><span class="badge-stato badge-ext-inviata">EXT ✓</span></button>
-        <button type="button" class="filtro-stato-btn" data-filtro="pausa" onclick="filtraPerStato('pausa')" style="cursor:pointer; border:none; padding:0; background:none;"><span class="badge-stato badge-pausa">Pausa</span></button>
+        <button type="button" class="filtro-stato-btn" data-filtro="0" onclick="filtraPerStato('0')" title="Non ancora iniziata" style="cursor:pointer; border:none; padding:0; background:none;"><span class="badge-stato badge-dafare">Da fare</span></button>
+        <button type="button" class="filtro-stato-btn" data-filtro="1" onclick="filtraPerStato('1')" title="Pronta — da inviare al terzista" style="cursor:pointer; border:none; padding:0; background:none;"><span class="badge-stato badge-pronto">Pronto</span></button>
+        <button type="button" class="filtro-stato-btn" data-filtro="ext" onclick="filtraPerStato('ext')" title="Esterno — DDT NON ancora inviato al terzista" style="cursor:pointer; border:none; padding:0; background:none;"><span class="badge-stato badge-ext">EXT — Da inviare</span></button>
+        <button type="button" class="filtro-stato-btn" data-filtro="ext_ok" onclick="filtraPerStato('ext_ok')" title="Esterno — DDT inviato, lavorazione presso terzista" style="cursor:pointer; border:none; padding:0; background:none;"><span class="badge-stato badge-ext-inviata">EXT — Dal terzista ✓</span></button>
+        <button type="button" class="filtro-stato-btn" data-filtro="pausa" onclick="filtraPerStato('pausa')" title="In pausa" style="cursor:pointer; border:none; padding:0; background:none;"><span class="badge-stato badge-pausa">Pausa</span></button>
     </div>
 </div>
 
@@ -255,12 +271,12 @@
                         $n = $set->count();
                         $badgeMap = [
                             '0' => ['cls' => 'badge-dafare', 'lbl' => 'Da fare', 'tt' => 'Non iniziata'],
-                            '1' => ['cls' => 'badge-pronto', 'lbl' => 'Pronto', 'tt' => 'Pronto — da inviare'],
-                            '2' => ['cls' => 'badge-corso', 'lbl' => 'In corso', 'tt' => 'In corso — dal terzista'],
+                            '1' => ['cls' => 'badge-pronto', 'lbl' => 'Pronto', 'tt' => 'Pronta — da inviare al terzista'],
+                            '2' => ['cls' => 'badge-corso', 'lbl' => 'Interno', 'tt' => 'Avviata internamente (prima di essere mandata fuori)'],
                             '3' => ['cls' => 'badge-pronto', 'lbl' => 'Terminato', 'tt' => 'Terminato'],
                             '4' => ['cls' => 'badge-ext-inviata', 'lbl' => 'Consegnato', 'tt' => 'Consegnato'],
-                            'ext' => ['cls' => 'badge-ext', 'lbl' => 'EXT', 'tt' => 'Esterno — DDT da inviare'],
-                            'ext_ok' => ['cls' => 'badge-ext-inviata', 'lbl' => 'EXT ✓', 'tt' => 'DDT inviato al fornitore'],
+                            'ext' => ['cls' => 'badge-ext', 'lbl' => 'EXT', 'tt' => 'Esterno — DDT NON ancora inviato al terzista'],
+                            'ext_ok' => ['cls' => 'badge-ext-inviata', 'lbl' => 'EXT ✓', 'tt' => 'Esterno — DDT inviato, lavorazione presso terzista'],
                             'pausa' => ['cls' => 'badge-pausa', 'lbl' => 'Pausa', 'tt' => 'In pausa'],
                         ];
                         $b = $badgeMap[(string) $key] ?? ['cls' => 'badge-dafare', 'lbl' => 'Stato ' . $key, 'tt' => 'Stato ' . $key];
@@ -624,6 +640,11 @@ document.getElementById('searchBox').addEventListener('input', filtraEsterne);
 
 function toggleFiltriPanel() {
     var p = document.getElementById('filtriPanel');
+    p.style.display = (p.style.display === 'none' || !p.style.display) ? 'block' : 'none';
+}
+
+function toggleLegendaPanel() {
+    var p = document.getElementById('legendaPanel');
     p.style.display = (p.style.display === 'none' || !p.style.display) ? 'block' : 'none';
 }
 

@@ -1,7 +1,14 @@
 {{-- Sidebar Magazzino --}}
+@php
+    // Admin/Owner usa guard 'web' (default), Operatore usa guard 'operatore'
+    $isOperatore = auth('operatore')->check() && !auth()->check();
+    $dashboardRoute = $isOperatore
+        ? route('operatore.dashboard', ['op_token' => request('op_token')])
+        : route('owner.dashboard', ['op_token' => request('op_token')]);
+@endphp
 <div class="mes-sidebar-section">
     <div class="mes-sidebar-section-label">Navigazione</div>
-    <a href="{{ route('owner.dashboard', ['op_token' => request('op_token')]) }}" class="mes-sidebar-item">
+    <a href="{{ $dashboardRoute }}" class="mes-sidebar-item">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
         Dashboard MES
     </a>
