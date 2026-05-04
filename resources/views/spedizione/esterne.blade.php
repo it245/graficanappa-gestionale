@@ -72,9 +72,10 @@
     .commessa-desc { font-size:12px; color:#6b7280; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
     .commessa-fasi-count {
-        background:#e0f2fe; color:#0369a1; padding:4px 10px;
-        border-radius:14px; font-size:12px; font-weight:600; text-align:center;
+        font-size:12px; font-weight:600;
+        display:flex !important; flex-wrap:wrap; gap:4px; align-items:center; justify-content:flex-end;
     }
+    .commessa-fasi-count .badge-stato { white-space:nowrap; }
     .commessa-data {
         font-size:12px; color:#374151; font-weight:500;
     }
@@ -163,7 +164,7 @@
 </style>
 
 <div class="esterne-toolbar">
-    <input type="text" id="searchBox" class="search-box" placeholder="Cerca commessa, cliente, descrizione...">
+    <input type="text" id="searchBox" class="search-box" placeholder="Cerca commessa, cliente, descrizione, fornitore...">
     <span class="stat-pill"><strong>{{ $gruppiEsterne->count() }}</strong> commesse</span>
     <span class="stat-pill"><strong>{{ $fasiEsterne->count() }}</strong> fasi totali</span>
 </div>
@@ -181,8 +182,11 @@
             ? \Carbon\Carbon::parse($ordine->data_prevista_consegna)
             : null;
         $isUrgente = $dataConsegna && $dataConsegna->isPast();
+        $fornitoriRicerca = $gruppo->fasi
+            ->map(fn($f) => optional($f->ddtFornitore ?? null)->fornitore_nome ?? optional($f->ddtFornitore ?? null)->ragione_sociale ?? '')
+            ->filter()->unique()->implode(' ');
     @endphp
-    <div class="commessa-card searchable" data-search="{{ strtolower(($ordine->commessa ?? '') . ' ' . ($ordine->cliente_nome ?? '') . ' ' . ($ordine->descrizione ?? '') . ' ' . ($ordine->cod_art ?? '')) }}">
+    <div class="commessa-card searchable" data-search="{{ strtolower(($ordine->commessa ?? '') . ' ' . ($ordine->cliente_nome ?? '') . ' ' . ($ordine->descrizione ?? '') . ' ' . ($ordine->cod_art ?? '') . ' ' . $fornitoriRicerca) }}">
         <div class="commessa-header {{ $rowClass }}" onclick="toggleCard(this)">
             <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
             <div>
@@ -221,11 +225,12 @@
                             '1' => ['cls' => 'badge-pronto', 'lbl' => 'Pronto', 'tt' => 'Pronto — da inviare'],
                             '2' => ['cls' => 'badge-corso', 'lbl' => 'In corso', 'tt' => 'In corso — dal terzista'],
                             '3' => ['cls' => 'badge-pronto', 'lbl' => 'Terminato', 'tt' => 'Terminato'],
+                            '4' => ['cls' => 'badge-ext-inviata', 'lbl' => 'Consegnato', 'tt' => 'Consegnato'],
                             'ext' => ['cls' => 'badge-ext', 'lbl' => 'EXT', 'tt' => 'Esterno — DDT da inviare'],
                             'ext_ok' => ['cls' => 'badge-ext-inviata', 'lbl' => 'EXT ✓', 'tt' => 'DDT inviato al fornitore'],
                             'pausa' => ['cls' => 'badge-pausa', 'lbl' => 'Pausa', 'tt' => 'In pausa'],
                         ];
-                        $b = $badgeMap[$key] ?? ['cls' => 'badge-dafare', 'lbl' => $key, 'tt' => $key];
+                        $b = $badgeMap[$key] ?? ['cls' => 'badge-dafare', 'lbl' => 'Stato ' . $key, 'tt' => 'Stato ' . $key];
                     @endphp
                     <span class="badge-stato {{ $b['cls'] }}" title="{{ $b['tt'] }}" style="font-size:11px;">{{ $b['lbl'] }}@if($n > 1) ×{{ $n }}@endif</span>
                 @endforeach
