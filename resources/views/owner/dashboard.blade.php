@@ -1026,17 +1026,11 @@ tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !imp
                 </style>
                 <div style="overflow-x:auto;">
                 <table class="fl-tab">
-                    <colgroup>
-                        <col class="c-commessa">
-                        <col class="c-cliente">
-                        <col class="c-op">
-                        <col class="c-desc">
-                    </colgroup>
                     <thead>
                         <tr>
-                            <th>Commessa</th>
-                            <th>Cliente</th>
-                            <th>Operatori</th>
+                            <th style="width:95px;">Commessa</th>
+                            <th style="width:130px;">Cliente</th>
+                            <th style="width:75px;">Operatori</th>
                             <th>Descrizione</th>
                         </tr>
                     </thead>
