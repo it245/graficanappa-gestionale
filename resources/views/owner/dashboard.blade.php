@@ -630,6 +630,30 @@ tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !imp
         .kpi-card{background:#fff;border:1px solid #e5e7eb;padding:10px 14px;border-radius:6px;min-width:170px;flex:1;box-shadow:0 1px 2px rgba(0,0,0,.04);display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:58px;}
         .kpi-card .kpi-label{font-size:10.5px;color:#6b7280;text-transform:uppercase;letter-spacing:.3px;font-weight:600;line-height:1.25;}
         .kpi-card .kpi-val{font-size:24px;font-weight:700;line-height:1;white-space:nowrap;}
+
+        /* === Dark mode fix legenda + KPI === */
+        body.dark-mode #legendaBox {
+            background: #1e293b !important;
+            border-color: #334155 !important;
+            color: #f1f5f9 !important;
+        }
+        body.dark-mode #legendaBox > div > div > div[style*="color:#666"] {
+            color: #cbd5e1 !important;
+        }
+        body.dark-mode #legendaBox > div > div[style*="border-left"] {
+            border-left-color: #334155 !important;
+        }
+        body.dark-mode .kpi-card {
+            background: #1e293b !important;
+            border-color: #334155 !important;
+            color: #f1f5f9 !important;
+        }
+        body.dark-mode .kpi-card .kpi-label {
+            color: #94a3b8 !important;
+        }
+        body.dark-mode .kpi-card .kpi-val {
+            filter: brightness(1.3);
+        }
     </style>
     <div class="d-flex gap-2 mb-1 mx-0 flex-wrap" style="max-width:1100px;">
         <a href="{{ route('owner.fasiTerminate', ['oggi' => 1]) }}" class="kpi-card text-decoration-none" style="border-left:3px solid #198754;" title="Visualizza fasi completate oggi">
