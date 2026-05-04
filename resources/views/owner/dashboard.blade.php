@@ -1019,9 +1019,9 @@ tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !imp
                     #modalConsegneOggi .fl-tab th { background:#0f172a; color:#fff; padding:8px 10px; text-align:left; font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:0.04em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
                     #modalConsegneOggi .fl-tab td { padding:8px 10px; border-bottom:1px solid #f1f5f9; vertical-align:middle; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
                     #modalConsegneOggi .fl-tab tr:hover td { background:#f8fafc; }
-                    #modalConsegneOggi .fl-tab col.c-commessa { width:110px; }
-                    #modalConsegneOggi .fl-tab col.c-cliente { width:160px; }
-                    #modalConsegneOggi .fl-tab col.c-op { width:90px; }
+                    #modalConsegneOggi .fl-tab col.c-commessa { width:95px; }
+                    #modalConsegneOggi .fl-tab col.c-cliente { width:130px; }
+                    #modalConsegneOggi .fl-tab col.c-op { width:75px; }
                     #modalConsegneOggi .fl-tab col.c-desc { width:auto; }
                 </style>
                 <div style="overflow-x:auto;">
