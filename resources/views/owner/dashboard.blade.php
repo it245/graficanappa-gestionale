@@ -1807,18 +1807,6 @@ function aggiornaCampo(faseId, campo, valore, targetEl){
             cell.style.background = '#d1e7dd';
             setTimeout(function() { cell.style.background = ''; }, 1200);
         }
-        if (campo === 'priorita' && cell) {
-            try {
-                var row = cell.closest('tr');
-                var commessaCell = row ? row.querySelector('td:first-child') : null;
-                var commessa = commessaCell ? commessaCell.innerText.trim() : '';
-                console.log('[popover] commessa:', commessa, 'valore:', valore, 'cell:', cell);
-                if (commessa) mostraPopoverApplicaTutte(cell, commessa, valore);
-                else console.warn('[popover] commessa vuota');
-            } catch (e) { console.error('[popover]', e); }
-        } else if (campo === 'priorita' && !cell) {
-            console.warn('[popover] cell undefined, skip');
-        }
         if (d.reload) window.location.reload();
     })
     .catch(function(err) {
@@ -1827,50 +1815,6 @@ function aggiornaCampo(faseId, campo, valore, targetEl){
         if (cell) cell.style.background = '#f8d7da';
         MES.toast('Errore salvataggio (server)','danger');
     });
-}
-
-function mostraPopoverApplicaTutte(cell, commessa, priorita) {
-    var existing = document.getElementById('popApplicaTutte');
-    if (existing) existing.remove();
-
-    var rect = cell.getBoundingClientRect();
-    var pop = document.createElement('div');
-    pop.id = 'popApplicaTutte';
-    pop.style.cssText = 'position:fixed; z-index:9999; background:#fff; border:2px solid #f57f17; border-radius:6px; padding:8px 12px; box-shadow:0 4px 12px rgba(0,0,0,0.2); font-size:13px;';
-    pop.style.top = (rect.bottom + 4) + 'px';
-    pop.style.left = rect.left + 'px';
-    pop.innerHTML = '<button class="btn btn-sm btn-warning fw-bold" onclick="applicaPrioritaATutte(\'' + commessa + '\', ' + priorita + ')">Applica ' + priorita + ' a tutte le fasi di ' + commessa + '</button> <button class="btn btn-sm btn-link text-muted p-0 ms-2" onclick="document.getElementById(\'popApplicaTutte\').remove()">✕</button>';
-    document.body.appendChild(pop);
-    setTimeout(function() {
-        var p = document.getElementById('popApplicaTutte');
-        if (p) p.remove();
-    }, 8000);
-}
-
-function applicaPrioritaATutte(commessa, priorita) {
-    var pop = document.getElementById('popApplicaTutte');
-    if (pop) pop.remove();
-    MES.confirm('Applicare priorità a tutte', 'Priorità ' + priorita + ' a TUTTE le fasi (stato <3) della commessa ' + commessa + '?', 'Applica', 'btn-warning').then(function(ok) {
-        if (!ok) return;
-        eseguiApplicaPrioritaATutte(commessa, priorita);
-    });
-}
-function eseguiApplicaPrioritaATutte(commessa, priorita) {
-    fetch('{{ route("owner.applicaPrioritaCommessa") }}', {
-        method: 'POST',
-        headers: {'X-CSRF-TOKEN': csrfToken(), 'Content-Type': 'application/json'},
-        body: JSON.stringify({ commessa: commessa, priorita: priorita })
-    })
-    .then(r => r.json())
-    .then(d => {
-        if (d.success) {
-            MES.toast('Priorità applicata a ' + d.count + ' fasi','success');
-            window.location.reload();
-        } else {
-            MES.toast('Errore: ' + (d.messaggio || ''),'danger');
-        }
-    })
-    .catch(() => MES.toast('Errore di connessione','danger'));
 }
 
 function aggiornaStato(faseId, testo) {
