@@ -763,24 +763,26 @@ body.dark-mode .info-box-label { color: #94a3b8; }
                 </div>
             </div>
             @endif
+            @if(!empty($fustella))
             <div class="modal fade" id="modalFustella" tabindex="-1">
                 <div class="modal-dialog modal-xl modal-dialog-centered">
                     <div class="modal-content" style="background:#0f172a;">
                         <div class="modal-header border-0">
-                            <h5 class="modal-title text-white">Fustella {{ $fustella['codice'] }}
+                            <h5 class="modal-title text-white">Fustella {{ $fustella['codice'] ?? '-' }}
                                 @if(!empty($fustella['dimensioni']))
                                     <span class="ms-2 badge bg-info">{{ $fustella['dimensioni'] }}</span>
                                 @endif
                             </h5>
-                            <a href="{{ $fustella['url'] }}" target="_blank" class="btn btn-sm btn-light me-2">Apri PDF</a>
+                            <a href="{{ $fustella['url'] ?? '#' }}" target="_blank" class="btn btn-sm btn-light me-2">Apri PDF</a>
                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body p-2">
-                            <iframe src="{{ $fustella['url'] }}" style="width:100%; height:80vh; border:0; border-radius:8px; background:#fff;"></iframe>
+                            <iframe src="{{ $fustella['url'] ?? '' }}" style="width:100%; height:80vh; border:0; border-radius:8px; background:#fff;"></iframe>
                         </div>
                     </div>
                 </div>
             </div>
+            @endif
             @endif
         </div>
         @endif
