@@ -639,9 +639,9 @@ function salvaScarti(faseId, valore) {
                 setTimeout(function() { input.style.borderColor = '#ced4da'; }, 1500);
             }
         } else {
-            alert('Errore nel salvataggio');
+            MES.toast('Errore salvataggio','danger');
         }
-    }).catch(function() { alert('Errore di connessione'); });
+    }).catch(function() { MES.toast('Errore di connessione','danger'); });
 }
 
 function salvaQtaProd(faseId, valore) {
@@ -663,9 +663,9 @@ function salvaQtaProd(faseId, valore) {
                 setTimeout(function() { input.style.borderColor = '#ced4da'; }, 1500);
             }
         } else {
-            alert('Errore nel salvataggio');
+            MES.toast('Errore salvataggio','danger');
         }
-    }).catch(function() { alert('Errore di connessione'); });
+    }).catch(function() { MES.toast('Errore di connessione','danger'); });
 }
 
 
@@ -769,11 +769,11 @@ function confermaScarico() {
     var lotto = document.getElementById('scarico-lotto').value;
 
     if (!articoloId) {
-        alert('Seleziona un articolo dalla lista suggerimenti');
+        MES.toast('Seleziona un articolo dalla lista','warning');
         return;
     }
     if (!quantita || parseInt(quantita) <= 0) {
-        alert('Inserisci una quantità valida');
+        MES.toast('Inserisci una quantità valida','warning');
         return;
     }
 

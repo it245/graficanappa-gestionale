@@ -950,7 +950,7 @@ function getHdrs() {
 
 function parseResponse(res) {
     if (!res.ok && res.status === 401) {
-        alert('Sessione scaduta. Effettua di nuovo il login.');
+        MES.toast('Sessione scaduta, effettua di nuovo il login','warning',6000);
         window.location.reload();
         return Promise.reject('session_expired');
     }
@@ -980,9 +980,9 @@ function inviaConsegna(tipo) {
     .then(parseResponse)
     .then(data => {
         if (data.success) { window.location.reload(); }
-        else { alert('Errore: ' + (data.messaggio || data.message || 'operazione fallita')); }
+        else { MES.toast('Errore: ' + (data.messaggio || data.message || 'operazione fallita'),'danger'); }
     })
-    .catch(err => { if (err !== 'session_expired') { console.error('Errore:', err); alert('Errore: ' + err); } });
+    .catch(err => { if (err !== 'session_expired') { console.error('Errore:', err); MES.toast('Errore: ' + err,'danger'); } });
 }
 
 function apriModalConsegnaDDT(faseId, tipo) {
@@ -995,9 +995,9 @@ function apriModalConsegnaDDT(faseId, tipo) {
     .then(parseResponse)
     .then(data => {
         if (data.success) { window.location.reload(); }
-        else { alert('Errore: ' + (data.messaggio || data.message || 'operazione fallita')); }
+        else { MES.toast('Errore: ' + (data.messaggio || data.message || 'operazione fallita'),'danger'); }
     })
-    .catch(err => { if (err !== 'session_expired') { console.error('Errore:', err); alert('Errore: ' + err); } });
+    .catch(err => { if (err !== 'session_expired') { console.error('Errore:', err); MES.toast('Errore: ' + err,'danger'); } });
 }
 
 function aggiornaNota(faseId, valore) {
@@ -1006,7 +1006,7 @@ function aggiornaNota(faseId, valore) {
         body: JSON.stringify({ fase_id: faseId, campo: 'note', valore: valore })
     })
     .then(parseResponse)
-    .then(data => { if (!data.success) alert('Errore salvataggio nota'); })
+    .then(data => { if (!data.success) MES.toast('Errore salvataggio nota','danger'); })
     .catch(err => { if (err !== 'session_expired') console.error('Errore:', err); });
 }
 
@@ -1020,9 +1020,9 @@ function recuperaConsegna(faseId, btn) {
     .then(parseResponse)
     .then(data => {
         if (data.success) { window.location.reload(); }
-        else { alert('Errore: ' + (data.messaggio || 'operazione fallita')); btn.disabled = false; }
+        else { MES.toast('Errore: ' + (data.messaggio || 'operazione fallita'),'danger'); btn.disabled = false; }
     })
-    .catch(err => { if (err !== 'session_expired') { console.error('Errore:', err); alert('Errore: ' + err); } btn.disabled = false; });
+    .catch(err => { if (err !== 'session_expired') { console.error('Errore:', err); MES.toast('Errore: ' + err,'danger'); } btn.disabled = false; });
 }
 
 // Tracking BRT
@@ -1247,7 +1247,7 @@ function avviaScanner(scannerId, inputId) {
         function() { /* ignore scan errors */ }
     ).catch(function(err) {
         console.error('Errore avvio scanner:', err);
-        alert('Impossibile avviare la fotocamera. Verifica i permessi.');
+        MES.toast('Impossibile avviare la fotocamera. Verifica i permessi.','danger',6000);
         container.classList.remove('active');
     });
 }

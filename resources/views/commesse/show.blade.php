@@ -1018,8 +1018,8 @@ function salvaScartiCommessa(faseId, valore) {
         if (r.ok) {
             var input = document.querySelector('input[onchange*="salvaScartiCommessa(' + faseId + '"]');
             if (input) { input.style.borderColor = '#28a745'; setTimeout(function() { input.style.borderColor = '#ced4da'; }, 1500); }
-        } else { alert('Errore nel salvataggio'); }
-    }).catch(function() { alert('Errore di connessione'); });
+        } else { MES.toast('Errore salvataggio','danger'); }
+    }).catch(function() { MES.toast('Errore di connessione','danger'); });
 }
 
 function aggiornaStato(faseId, azione, checked){
@@ -1043,7 +1043,7 @@ function aggiornaStato(faseId, azione, checked){
             updateButtons(faseId, 2);
             if(data.operatori) updateOperatori(faseId, data.operatori);
         } else {
-            alert('Errore: ' + (data.messaggio || 'operazione fallita'));
+            MES.toast('Errore: ' + (data.messaggio || 'operazione fallita'),'danger');
         }
     })
     .catch(err=>console.error('Errore:', err));
@@ -1081,11 +1081,11 @@ function confermaTermina() {
     var tiro = document.getElementById('terminaTiro').value;
 
     if (qtaProdotta === '' || parseInt(qtaProdotta) <= 0) {
-        alert('Inserire la quantita prodotta (deve essere maggiore di 0)');
+        MES.toast('Inserire la quantità prodotta (>0)','warning');
         return;
     }
     if (isCaldo && (tiro === '' || parseInt(tiro) <= 0)) {
-        alert('Inserire il tiro (cm foil consumato)');
+        MES.toast('Inserire il tiro (cm foil consumato)','warning');
         document.getElementById('terminaTiro').focus();
         return;
     }
@@ -1107,7 +1107,7 @@ function confermaTermina() {
             updateButtons(faseId, 3);
             updateOperatori(faseId, []);
         } else {
-            alert('Errore: ' + (data.messaggio || 'operazione fallita'));
+            MES.toast('Errore: ' + (data.messaggio || 'operazione fallita'),'danger');
             document.getElementById('termina-'+faseId).checked = false;
         }
     })
@@ -1147,7 +1147,7 @@ function toggleAltroPausa() {
 function confermaPausa() {
     var sel = document.getElementById('pausaMotivoSelect').value;
     var motivo = sel === '__altro__' ? (document.getElementById('pausaAltroInput').value.trim() || 'Altro') : sel;
-    if (!motivo) { alert('Seleziona un motivo'); return; }
+    if (!motivo) { MES.toast('Seleziona un motivo','warning'); return; }
     var faseId = document.getElementById('pausaFaseId').value;
     bootstrap.Modal.getInstance(document.getElementById('modalPausa')).hide();
 
@@ -1162,7 +1162,7 @@ function confermaPausa() {
             updateBadge(faseId, data.nuovo_stato);
             updateButtons(faseId, data.nuovo_stato);
         } else {
-            alert('Errore: ' + (data.messaggio || 'operazione fallita'));
+            MES.toast('Errore: ' + (data.messaggio || 'operazione fallita'),'danger');
         }
     })
     .catch(err=>console.error('Errore:', err));
@@ -1189,7 +1189,7 @@ function riprendiFase(faseId, checked){
                 }
             }
         } else {
-            alert('Errore: ' + (data.messaggio || 'operazione fallita'));
+            MES.toast('Errore: ' + (data.messaggio || 'operazione fallita'),'danger');
             document.getElementById('riprendi-'+faseId).checked = false;
         }
     })
@@ -1204,7 +1204,7 @@ function aggiornaCampo(faseId, campo, valore){
     })
     .then(res=>res.json())
     .then(data=>{
-        if(!data.success) alert('Errore durante il salvataggio: '+data.messaggio);
+        if(!data.success) MES.toast('Errore salvataggio: '+data.messaggio,'danger');
     })
     .catch(err=>console.error('Errore:', err));
 }
@@ -1212,7 +1212,7 @@ function aggiornaCampo(faseId, campo, valore){
 function inviaNotaFS(ordineId, faseId) {
     var textarea = document.getElementById('nuova-nota-fs-'+faseId);
     var testo = textarea.value.trim();
-    if (!testo) { alert('Scrivi una nota prima di inviare'); return; }
+    if (!testo) { MES.toast('Scrivi una nota prima di inviare','warning'); return; }
 
     @php
         $opNome = $operatore ? ($operatore->nome . ' ' . ($operatore->cognome ?? '')) : 'Operatore';
@@ -1238,7 +1238,7 @@ function inviaNotaFS(ordineId, faseId) {
         if (data.success) {
             location.reload();
         } else {
-            alert('Errore: ' + (data.messaggio || JSON.stringify(data.errors)));
+            MES.toast('Errore: ' + (data.messaggio || JSON.stringify(data.errors)),'danger');
         }
     })
     .catch(err => console.error('Errore:', err));
