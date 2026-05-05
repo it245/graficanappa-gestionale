@@ -16,11 +16,17 @@
             $releaseDef2Row = config('mes.release_def2_at', '2026-12-31 23:59:59');
             $dopoIntegrazione = $fase->data_fine
                 && \Carbon\Carbon::parse($fase->data_fine)->gte($releaseDef2Row);
+            // Prelievo gia fatto da fase sorella (es. tagliacarte): non chiedere prelievo qui
+            $ordineScaricoDone = !empty($fase->ordine_scarico_done);
         @endphp
-        @if($fase->stato == 3 && $produceScarti && $dopoIntegrazione && ($scartiVuoti || $scaricoNonFatto))
-            @if($repNomeStato === 'digitale' || !$scartiVuoti)
-                {{-- Digitale: sempre via modal (con scarti opzionali se mancanti).
-                     Offset con scarti gia inseriti: solo prelievo. --}}
+        @if($fase->stato == 3 && $produceScarti && $dopoIntegrazione && ($scartiVuoti || ($scaricoNonFatto && !$ordineScaricoDone)))
+            @if($ordineScaricoDone && $scartiVuoti)
+                {{-- Sibling ha gia prelevato: serve solo inserire scarti --}}
+                <br><a href="javascript:void(0)" onclick="focusInputScarti({{ $fase->id }})"
+                       style="font-weight:600; color:#dc3545; font-size:11px; text-decoration:underline; cursor:pointer;"
+                       title="Prelievo carta gia eseguito da altra fase. Inserisci solo gli scarti.">Inserisci scarti</a>
+            @elseif($repNomeStato === 'digitale' || !$scartiVuoti)
+                {{-- Digitale: modal con scarti opzionali. Offset con scarti gia inseriti: solo prelievo. --}}
                 <br><a href="javascript:void(0)"
                        data-fase-id="{{ $fase->id }}"
                        data-commessa="{{ $fase->ordine->commessa ?? '' }}"

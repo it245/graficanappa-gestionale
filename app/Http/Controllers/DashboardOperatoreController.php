@@ -43,11 +43,20 @@ class DashboardOperatoreController extends Controller
                 $q->orWhere(function ($q2) use ($releaseDef2) {
                     $q2->where('stato', 3)
                         ->where(function ($qs) {
-                            $qs->whereNull('scarti')
-                               ->orWhere('scarti', 0)
-                               ->orWhere(function ($qss) {
-                                   $qss->where(fn($q3) => $q3->whereNull('scarico_eseguito')->orWhere('scarico_eseguito', false));
-                               });
+                            // Mostra fase se: scarti mancanti
+                            $qs->whereNull('scarti')->orWhere('scarti', 0);
+                            // OPPURE prelievo proprio mancante E nessuna fase
+                            // sorella consumatrice carta dello stesso ordine ha già
+                            // fatto il prelievo (prelievo unico per commessa)
+                            $qs->orWhere(function ($qss) {
+                                $qss->where(function ($q3) {
+                                        $q3->whereNull('scarico_eseguito')->orWhere('scarico_eseguito', false);
+                                    })
+                                    ->whereDoesntHave('ordine.fasi', function ($qsib) {
+                                        $qsib->where('scarico_eseguito', true)
+                                             ->whereHas('faseCatalogo.reparto', fn($r) => $r->whereIn('nome', ['stampa offset', 'digitale', 'tagliacarte']));
+                                    });
+                            });
                         })
                         ->where('data_fine', '>=', $releaseDef2)
                         ->whereHas('faseCatalogo.reparto', fn($r) => $r->whereIn('nome', ['stampa offset', 'digitale']));
@@ -59,8 +68,28 @@ class DashboardOperatoreController extends Controller
             ->whereHas('faseCatalogo', function ($q) use ($reparti) {
                 $q->whereIn('reparto_id', $reparti);
             })
-            ->with(['ordine.fasi.faseCatalogo', 'faseCatalogo.reparto', 'operatori'])
+            ->with(['ordine.fasi.faseCatalogo.reparto', 'faseCatalogo.reparto', 'operatori'])
             ->get()
+            ->map(function ($fase) use ($fasiInfo) {
+                // Prelievo carta unico per commessa: se una qualsiasi fase consumatrice
+                // (stampa offset / digitale / tagliacarte) dello stesso ordine ha già
+                // scarico_eseguito, le altre NON devono richiedere prelievo.
+                $repartiCarta = ['stampa offset', 'digitale', 'tagliacarte'];
+                $ordineScaricoDone = false;
+                if ($fase->ordine && $fase->ordine->fasi) {
+                    foreach ($fase->ordine->fasi as $sib) {
+                        if (!empty($sib->scarico_eseguito)) {
+                            $repSib = strtolower(optional(optional($sib->faseCatalogo)->reparto)->nome ?? '');
+                            if (in_array($repSib, $repartiCarta, true)) {
+                                $ordineScaricoDone = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                $fase->ordine_scarico_done = $ordineScaricoDone;
+                return $fase;
+            })
             ->map(function ($fase) use ($fasiInfo) {
                 $qta_carta = $fase->ordine->qta_carta ?? 0;
                 $infoFase = $fasiInfo[$fase->fase] ?? ['avviamento' => 0, 'copieh' => 0];

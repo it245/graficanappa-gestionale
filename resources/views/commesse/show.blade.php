@@ -685,6 +685,20 @@ body.dark-mode .info-box-label { color: #94a3b8; }
                             <input type="checkbox" id="pausa-{{ $fase->id }}" onchange="gestisciPausa({{ $fase->id }}, this.checked)">
                             <label for="pausa-{{ $fase->id }}" class="badge-pausa">Pausa</label>
 
+                            @php
+                                $repartiCartaTrm = ['stampa offset', 'digitale', 'tagliacarte'];
+                                $ordineScaricoDoneTrm = false;
+                                if ($ordine && $ordine->fasi) {
+                                    foreach ($ordine->fasi as $sib) {
+                                        if (!empty($sib->scarico_eseguito)) {
+                                            $repSibT = strtolower(optional(optional($sib->faseCatalogo)->reparto)->nome ?? '');
+                                            if (in_array($repSibT, $repartiCartaTrm, true)) {
+                                                $ordineScaricoDoneTrm = true; break;
+                                            }
+                                        }
+                                    }
+                                }
+                            @endphp
                             <input type="checkbox" id="termina-{{ $fase->id }}"
                                    data-qta-fase="{{ $ordine->qta_richiesta ?? 0 }}"
                                    data-fogli-buoni="{{ $fase->fogli_buoni ?? 0 }}"
@@ -693,6 +707,7 @@ body.dark-mode .info-box-label { color: #94a3b8; }
                                    data-fase-nome="{{ $fase->fase ?? '' }}"
                                    data-reparto="{{ strtolower(optional(optional($fase->faseCatalogo)->reparto)->nome ?? '') }}"
                                    data-cod-carta="{{ $ordine->cod_carta ?? '' }}"
+                                   data-ordine-scarico-done="{{ $ordineScaricoDoneTrm ? '1' : '0' }}"
                                    onchange="aggiornaStato({{ $fase->id }}, 'termina', this.checked)">
                             <label for="termina-{{ $fase->id }}" class="badge-termina">Termina</label>
                         </div>
@@ -1113,10 +1128,13 @@ function apriModalTermina(faseId) {
     document.getElementById('terminaTiro').value = '';
 
     // Sezione PRELIEVO CARTA: visibile solo per reparti che consumano carta
+    // E solo se nessuna fase sorella ha gia eseguito il prelievo per la commessa
     var consumaCarta = ['stampa offset', 'digitale', 'tagliacarte'].indexOf(reparto) !== -1;
-    document.getElementById('terminaConsumaCarta').value = consumaCarta ? '1' : '0';
-    document.getElementById('terminaPrelievoWrap').style.display = consumaCarta ? '' : 'none';
-    if (consumaCarta) {
+    var ordineScaricoDone = cb && cb.getAttribute('data-ordine-scarico-done') === '1';
+    var mostraPrelievo = consumaCarta && !ordineScaricoDone;
+    document.getElementById('terminaConsumaCarta').value = mostraPrelievo ? '1' : '0';
+    document.getElementById('terminaPrelievoWrap').style.display = mostraPrelievo ? '' : 'none';
+    if (mostraPrelievo) {
         document.getElementById('terminaArticoloId').value = '';
         document.getElementById('terminaArticoloLibero').value = '';
         document.getElementById('terminaArticoloInput').value = codCarta;
