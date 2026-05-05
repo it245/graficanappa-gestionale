@@ -9,7 +9,9 @@ class CheckStampaOffsetSenzaScarti extends Command
 {
     protected $signature = 'check:stampa-offset-senza-scarti
                             {--reparto=stampa offset : Reparto da controllare}
-                            {--giorni=30 : Filtra fasi terminate negli ultimi N giorni}';
+                            {--giorni=30 : Filtra fasi terminate negli ultimi N giorni (0=tutto)}
+                            {--da-data= : Solo fasi con data_fine >= YYYY-MM-DD (esclude bulk import storico)}
+                            {--escludi-data= : Esclude fasi con data_fine = YYYY-MM-DD HH:MM esatta}';
 
     protected $description = 'Conta + lista fasi stato 3 nel reparto specificato senza scarti registrati';
 
@@ -23,6 +25,12 @@ class CheckStampaOffsetSenzaScarti extends Command
 
         if ($giorni > 0) {
             $base->where('data_fine', '>=', now()->subDays($giorni));
+        }
+        if ($daData = $this->option('da-data')) {
+            $base->where('data_fine', '>=', $daData . ' 00:00:00');
+        }
+        if ($escludi = $this->option('escludi-data')) {
+            $base->where('data_fine', '!=', $escludi);
         }
 
         $totale     = (clone $base)->count();
