@@ -30,8 +30,8 @@
     <link rel="stylesheet" href="{{ asset('css/mes-tokens.css') }}?v=1">
     <link rel="stylesheet" href="{{ asset('css/mes-print.css') }}?v=1" media="print">
 
-    {{-- Vendor CSS --}}
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    {{-- Vendor CSS (locale, no CDN latency) --}}
+    <link rel="stylesheet" href="{{ asset('css/bootstrap-5.3.0.min.css') }}?v=1">
     @yield('vendor-css')
 
     {{-- Preload risorse critiche --}}
