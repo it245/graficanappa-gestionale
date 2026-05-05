@@ -194,6 +194,7 @@ Route::prefix('produzione')->middleware(['operatore.auth'])->group(function() {
     // Scarico carta legato a fase STAMPA
     Route::get('/cerca-articolo', [ProduzioneController::class, 'cercaArticolo'])->name('produzione.cercaArticolo');
     Route::post('/scarica-carta', [ProduzioneController::class, 'scaricaCarta'])->name('produzione.scaricaCarta');
+    Route::post('/conferma-scarico-fase', [ProduzioneController::class, 'confermaScaricoFase'])->name('produzione.confermaScaricoFase');
     Route::get('/stato-scarico/{faseId}', [ProduzioneController::class, 'statoScarico'])->whereNumber('faseId')->name('produzione.statoScarico');
 });
 

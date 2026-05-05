@@ -1112,6 +1112,10 @@ function confermaTermina() {
             updateBadge(faseId, 3);
             updateButtons(faseId, 3);
             updateOperatori(faseId, []);
+            // Se richiesto, apri modal conferma scarico carta
+            if (data.richiedi_scarico && data.scarico) {
+                apriModalScaricoCarta(data.scarico);
+            }
         } else {
             MES.toast('Errore: ' + (data.messaggio || 'operazione fallita'),'danger');
             document.getElementById('termina-'+faseId).checked = false;
@@ -1250,5 +1254,151 @@ function inviaNotaFS(ordineId, faseId) {
     .catch(err => console.error('Errore:', err));
 }
 
+// ====== MODAL SCARICO CARTA POST-TERMINA ======
+function apriModalScaricoCarta(payload) {
+    var m = document.getElementById('modalScaricoCarta');
+    if (!m) {
+        console.error('Modal scarico carta non trovato');
+        return;
+    }
+    document.getElementById('scfFaseId').value = payload.fase_id;
+    document.getElementById('scfCommessaDisp').textContent = payload.commessa || '-';
+    document.getElementById('scfFaseDisp').textContent = payload.fase_nome || '-';
+    document.getElementById('scfQtaProd').textContent = (payload.qta_prod || 0).toLocaleString('it-IT');
+    document.getElementById('scfScarti').textContent = (payload.scarti || 0).toLocaleString('it-IT');
+    document.getElementById('scfQtaTotale').value = payload.qta_totale || 0;
+    document.getElementById('scfCodCartaDisp').textContent = payload.cod_carta || '-';
+    document.getElementById('scfDescCartaDisp').textContent = payload.desc_carta || '-';
+    document.getElementById('scfArticoloLibero').value = '';
+    document.getElementById('scfArticoloId').value = '';
+    document.getElementById('scfArticoloInput').value = payload.cod_carta || '';
+    document.getElementById('scfLotto').value = '';
+    document.getElementById('scfSuggest').innerHTML = '';
+    // Auto-search default cod_carta
+    if (payload.cod_carta) cercaArticoloScf(payload.cod_carta);
+    new bootstrap.Modal(m).show();
+}
+
+var _scfTimer = null;
+function cercaArticoloScf(q) {
+    clearTimeout(_scfTimer);
+    var box = document.getElementById('scfSuggest');
+    if (!q || q.length < 2) { box.innerHTML=''; return; }
+    _scfTimer = setTimeout(function() {
+        fetch('/produzione/cerca-articolo?q=' + encodeURIComponent(q), {
+            headers: { 'X-Op-Token': window.opToken ? window.opToken() : '' }
+        })
+        .then(function(r){return r.json();})
+        .then(function(items){
+            var html = '';
+            items.forEach(function(a){
+                html += '<div class="scf-item" data-id="'+a.id+'" data-cod="'+a.codice.replace(/"/g,'&quot;')+'" '
+                     + 'style="padding:6px 10px; border-bottom:1px solid #eee; cursor:pointer; font-size:13px;">'
+                     + '<b>'+a.codice+'</b> — '+(a.descrizione||'')+' <small style="color:#666;">(giac '+a.giacenza+' '+a.um+')</small></div>';
+            });
+            box.innerHTML = html || '<div style="padding:6px; color:#999; font-size:12px;">Nessun articolo. Userai campo libero.</div>';
+            box.querySelectorAll('.scf-item').forEach(function(el){
+                el.addEventListener('click', function(){
+                    document.getElementById('scfArticoloId').value = el.dataset.id;
+                    document.getElementById('scfArticoloInput').value = el.dataset.cod;
+                    document.getElementById('scfArticoloLibero').value = '';
+                    box.innerHTML = '';
+                });
+            });
+        });
+    }, 250);
+}
+
+function confermaScaricoFaseSubmit(salta) {
+    var faseId = document.getElementById('scfFaseId').value;
+    var payload = {
+        fase_id: parseInt(faseId),
+        salta: !!salta,
+        articolo_id: document.getElementById('scfArticoloId').value || null,
+        articolo_libero: document.getElementById('scfArticoloLibero').value || null,
+        quantita_totale: parseInt(document.getElementById('scfQtaTotale').value) || 0,
+        lotto: document.getElementById('scfLotto').value || null,
+    };
+
+    fetch('{{ route("produzione.confermaScaricoFase") }}', {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': csrfToken(), 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(function(r){return r.json();})
+    .then(function(d){
+        if (d.success) {
+            MES.toast(salta ? 'Scarico saltato' : 'Scarico carta confermato ('+d.qta+' fg)', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('modalScaricoCarta')).hide();
+        } else {
+            MES.toast('Errore: ' + (d.messaggio || 'operazione fallita'), 'danger');
+        }
+    })
+    .catch(function(){ MES.toast('Errore di connessione','danger'); });
+}
+
 </script>
+
+{{-- Modal conferma scarico carta (post-termina fase) --}}
+<div class="modal fade" id="modalScaricoCarta" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#0d6efd; color:#fff;">
+                <h5 class="modal-title">📦 Conferma Prelievo Carta</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="scfFaseId">
+                <input type="hidden" id="scfArticoloId">
+
+                <div class="row mb-2 small text-muted">
+                    <div class="col-6">Commessa: <strong id="scfCommessaDisp" class="text-dark"></strong></div>
+                    <div class="col-6">Fase: <strong id="scfFaseDisp" class="text-dark"></strong></div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <small class="text-muted">Qta prodotta</small>
+                        <div style="font-size:20px; font-weight:700; font-family:monospace;" id="scfQtaProd">0</div>
+                    </div>
+                    <div class="col-md-4">
+                        <small class="text-muted">Scarti</small>
+                        <div style="font-size:20px; font-weight:700; font-family:monospace;" id="scfScarti">0</div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="small text-muted mb-1">Quantità totale prelievo (modificabile)</label>
+                        <input type="number" id="scfQtaTotale" class="form-control fw-bold" min="0">
+                    </div>
+                </div>
+
+                <div class="alert alert-light border" style="font-size:12px;">
+                    Codice carta ordine: <strong id="scfCodCartaDisp">-</strong> · Descrizione: <strong id="scfDescCartaDisp">-</strong>
+                </div>
+
+                <div class="mb-3">
+                    <label class="small fw-bold">Articolo magazzino (cerca o usa quello dell'ordine)</label>
+                    <input type="text" id="scfArticoloInput" class="form-control"
+                           placeholder="Codice o descrizione carta..."
+                           oninput="cercaArticoloScf(this.value)">
+                    <div id="scfSuggest" style="max-height:200px; overflow-y:auto; border:1px solid #eee; border-radius:4px; margin-top:4px;"></div>
+                </div>
+
+                <div class="row mb-2">
+                    <div class="col-md-7">
+                        <label class="small fw-bold">…oppure descrizione libera (no scarico magazzino, solo log)</label>
+                        <input type="text" id="scfArticoloLibero" class="form-control" placeholder="Es. Carta extra non in lista">
+                    </div>
+                    <div class="col-md-5">
+                        <label class="small fw-bold">Lotto (opzionale)</label>
+                        <input type="text" id="scfLotto" class="form-control" placeholder="es. L2026-04-01">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="confermaScaricoFaseSubmit(true)">↷ Salta scarico</button>
+                <button type="button" class="btn btn-primary" onclick="confermaScaricoFaseSubmit(false)">✓ Conferma e Preleva</button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection

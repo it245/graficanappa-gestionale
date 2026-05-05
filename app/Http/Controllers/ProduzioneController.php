@@ -168,10 +168,39 @@ class ProduzioneController extends Controller
         FaseStatoService::ricalcolaStati($fase->ordine_id);
     }
 
+    // Determina se richiedere conferma scarico carta (solo STAMPA + tagliacarte, no esterne, no già scaricate)
+    $faseUpper = strtoupper($fase->fase ?? '');
+    $repNome = strtolower(optional(optional($fase->faseCatalogo)->reparto)->nome ?? '');
+    $isStampaOTaglio = str_starts_with($faseUpper, 'STAMPA')
+        || str_contains($repNome, 'tagliacart')
+        || str_contains($faseUpper, 'TAGLIO');
+    $richiediScarico = $isStampaOTaglio && !$fase->scarico_eseguito && !$fase->esterno;
+
+    $payloadScarico = null;
+    if ($richiediScarico) {
+        $qtaTotale = (int) ($qtaProdotta + ($request->scarti ?? 0));
+        $payloadScarico = [
+            'fase_id'      => $fase->id,
+            'commessa'     => $fase->ordine?->commessa,
+            'fase_nome'    => $fase->faseCatalogo?->nome_display ?? $fase->fase,
+            'qta_prod'     => (int) $qtaProdotta,
+            'scarti'       => (int) ($request->scarti ?? 0),
+            'qta_totale'   => $qtaTotale,
+            'cod_carta'    => $fase->ordine?->cod_carta,
+            'desc_carta'   => $fase->ordine?->carta,
+            'qta_carta_richiesta' => $fase->ordine?->qta_carta,
+        ];
+        // Marca pending finché operatore non conferma
+        $fase->pending_scarico = true;
+        $fase->save();
+    }
+
     return response()->json([
         'success' => true,
         'nuovo_stato' => $this->statoLabel($fase->stato),
-        'operatori' => [] // nessuno rimane
+        'operatori' => [], // nessuno rimane
+        'richiedi_scarico' => $richiediScarico,
+        'scarico' => $payloadScarico,
     ]);
 }
 
@@ -428,6 +457,88 @@ public function aggiornaCampo(Request $request)
      * Ritorna se una fase ha già uno scarico carta registrato e la quantità.
      * GET /produzione/stato-scarico/{faseId}
      */
+    /**
+     * Conferma scarico carta al termine fase (post-stato 3).
+     * Body: fase_id, articolo_id (nullable), articolo_libero (nullable string),
+     *       quantita_totale, lotto (nullable), salta (boolean: termina senza scaricare)
+     */
+    public function confermaScaricoFase(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'fase_id'         => 'required|exists:ordine_fasi,id',
+            'salta'           => 'nullable|boolean',
+            'articolo_id'     => 'nullable|exists:magazzino_articoli,id',
+            'articolo_libero' => 'nullable|string|max:200',
+            'quantita_totale' => 'nullable|numeric|min:0',
+            'lotto'           => 'nullable|string|max:100',
+        ]);
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+        }
+
+        $fase = OrdineFase::with('ordine')->findOrFail($request->fase_id);
+
+        // Se già scaricato, idempotente
+        if ($fase->scarico_eseguito) {
+            return response()->json(['success' => true, 'messaggio' => 'Scarico già eseguito', 'idempotent' => true]);
+        }
+
+        $operatoreId = $request->attributes->get('operatore_id') ?? session('operatore_id');
+
+        // Caso "salta": chiude la fase senza scaricare magazzino (es. carta gestita esternamente)
+        if ($request->boolean('salta')) {
+            $fase->scarico_eseguito = true;
+            $fase->pending_scarico = false;
+            $fase->scarico_at = now();
+            $fase->save();
+            return response()->json(['success' => true, 'skipped' => true, 'messaggio' => 'Scarico saltato']);
+        }
+
+        // Validazione: serve articolo_id O articolo_libero + quantita_totale > 0
+        if (!$request->articolo_id && !$request->articolo_libero) {
+            return response()->json(['success' => false, 'messaggio' => 'Seleziona articolo o inserisci descrizione libera'], 422);
+        }
+        if (!$request->quantita_totale || $request->quantita_totale <= 0) {
+            return response()->json(['success' => false, 'messaggio' => 'Quantità deve essere > 0'], 422);
+        }
+
+        try {
+            \Illuminate\Support\Facades\DB::transaction(function () use ($request, $fase, $operatoreId) {
+                // Articolo standard → registra scarico magazzino
+                if ($request->articolo_id) {
+                    \App\Services\MagazzinoService::registraScarico([
+                        'articolo_id'  => $request->articolo_id,
+                        'quantita'     => (int) $request->quantita_totale,
+                        'lotto'        => $request->lotto,
+                        'commessa'     => $fase->ordine?->commessa,
+                        'fase'         => $fase->fase,
+                        'operatore_id' => $operatoreId,
+                        'note'         => "Scarico automatico fine fase #{$fase->id}",
+                    ]);
+                    $fase->articolo_carta_id = $request->articolo_id;
+                }
+                // Articolo libero → solo log, no scarico magazzino
+                $fase->qta_carta_prelevata = (int) $request->quantita_totale;
+                $fase->lotto_carta = $request->lotto;
+                $fase->scarico_eseguito = true;
+                $fase->pending_scarico = false;
+                $fase->scarico_at = now();
+                $fase->save();
+            });
+
+            return response()->json([
+                'success' => true,
+                'messaggio' => 'Scarico carta confermato',
+                'qta' => (int) $request->quantita_totale,
+            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('confermaScaricoFase errore', [
+                'fase_id' => $fase->id, 'error' => $e->getMessage(),
+            ]);
+            return response()->json(['success' => false, 'messaggio' => 'Errore: ' . $e->getMessage()], 500);
+        }
+    }
+
     public function statoScarico($faseId)
     {
         $fase = OrdineFase::findOrFail($faseId);
