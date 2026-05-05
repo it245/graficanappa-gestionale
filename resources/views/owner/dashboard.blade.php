@@ -314,9 +314,6 @@ thead th {
     border-bottom: 2px solid #374151 !important;
     padding-top: 6px;
     padding-bottom: 6px;
-    position: sticky;
-    top: 0;
-    z-index: 10;
 }
 
 /* =========================
