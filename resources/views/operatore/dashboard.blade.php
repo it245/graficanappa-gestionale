@@ -441,7 +441,6 @@ function segnaLetta(id, btn) {
                             <th>Operatori</th>
                             <th>Note Operatore</th>
                             <th>Timeout</th>
-                            <th>Scarico Carta</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -449,7 +448,7 @@ function segnaLetta(id, btn) {
                             @include('operatore._fase_row', ['fase' => $fase])
                         @empty
                             <tr>
-                                <td colspan="{{ 21 + ($showColori ? 1 : 0) + ($showEsterno ? 1 : 0) }}">
+                                <td colspan="{{ 20 + ($showColori ? 1 : 0) + ($showEsterno ? 1 : 0) }}">
                                     <x-mes.empty-state icon="check" title="Nessuna fase attiva nel reparto" subtitle="Tutte le fasi sono completate o in pausa." compact />
                                 </td>
                             </tr>
@@ -642,10 +641,42 @@ function salvaScarti(faseId, valore) {
                 input.style.borderColor = '#28a745';
                 setTimeout(function() { input.style.borderColor = '#ced4da'; }, 1500);
             }
+            // Dopo salvataggio scarti, se la fase è a stato 3 e reparto carta + non scaricato → apri modal scarico precompilato
+            triggerScaricoSeNeeded(faseId, valore);
         } else {
             MES.toast('Errore salvataggio','danger');
         }
     }).catch(function() { MES.toast('Errore di connessione','danger'); });
+}
+
+function triggerScaricoSeNeeded(faseId, scartiValue) {
+    var row = document.getElementById('fase-' + faseId);
+    if (!row) return;
+    var statoCell = row.querySelector('.td-stato');
+    if (!statoCell) return;
+    var stato = parseInt(statoCell.textContent.trim());
+    if (stato !== 3) return;
+    // Reparto + dati: chiamiamo endpoint per sapere se serve modal
+    fetch('/produzione/stato-scarico/' + faseId, {
+        headers: { 'X-Op-Token': window.opToken() }
+    })
+    .then(function(r){return r.json();})
+    .then(function(d){
+        if (d && d.richiedi && !d.scarico_eseguito) {
+            // Apri modal scarico precompilato
+            var btnFake = {
+                dataset: {
+                    faseId: faseId,
+                    commessa: d.commessa || '',
+                    faseNome: d.fase_nome || '',
+                    codCarta: d.cod_carta || '',
+                    qtaSuggerita: (parseInt(d.qta_prod || 0) + parseInt(scartiValue || 0))
+                }
+            };
+            apriDialogScarico(btnFake);
+        }
+    })
+    .catch(function(){});
 }
 
 function salvaQtaProd(faseId, valore) {

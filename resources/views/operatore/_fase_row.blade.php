@@ -11,22 +11,6 @@
         @if($fase->stato == 3 && $fase->data_fine && \Carbon\Carbon::parse($fase->data_fine)->gt(now()->subHour()))
             <br><small style="font-weight:normal; color:#dc3545;">Inserisci scarti</small>
         @endif
-        @php
-            $repCarta = strtolower(optional(optional($fase->faseCatalogo)->reparto)->nome ?? '');
-            $consumaCartaScf = in_array($repCarta, ['stampa offset', 'digitale', 'tagliacarte'], true);
-        @endphp
-        @if($fase->stato == 3 && $consumaCartaScf && empty($fase->scarico_eseguito) && empty($fase->esterno))
-            @php $opzionale = ($repCarta === 'tagliacarte'); @endphp
-            <br><a href="javascript:void(0)"
-                   data-fase-id="{{ $fase->id }}"
-                   data-commessa="{{ $fase->ordine->commessa ?? '' }}"
-                   data-fase-nome="{{ $fase->faseCatalogo->nome_display ?? $fase->fase }}"
-                   data-cod-carta="{{ $fase->ordine->cod_carta ?? '' }}"
-                   data-qta-suggerita="{{ (int) ($fase->qta_prod ?? 0) + (int) ($fase->scarti ?? 0) }}"
-                   onclick="apriDialogScarico(this)"
-                   style="font-weight:600; color:{{ $opzionale ? '#6c757d' : '#0d6efd' }}; font-size:11px; text-decoration:underline;"
-                   title="{{ $opzionale ? 'Prelievo carta opzionale (tagliacarte). Click per inserire o salta dal modal.' : 'Conferma prelievo carta (qta = prodotti + scarti)' }}">📦 {{ $opzionale ? 'Prelievo carta (opzionale)' : 'Inserisci prelievo carta' }}</a>
-        @endif
     </td>
 
     {{-- COMMESSA CLICCABILE --}}
@@ -103,26 +87,4 @@
         @endif
     </td>
     <td id="timeout-{{ $fase->id }}">{{ $fase->timeout ?? '-' }}</td>
-    @php
-        $repNome = strtolower(optional(optional($fase->faseCatalogo)->reparto)->nome ?? '');
-        $consentiScarico = in_array($repNome, ['stampa offset', 'digitale', 'tagliacarte'], true);
-    @endphp
-    <td id="scarico-{{ $fase->id }}" style="text-align:center; white-space:nowrap;">
-        @if($consentiScarico && $fase->stato >= 2)
-            <button type="button" class="btn-scarico" data-fase-id="{{ $fase->id }}"
-                    data-commessa="{{ $fase->ordine->commessa ?? '' }}"
-                    data-fase-nome="{{ $fase->fase }}"
-                    data-cod-carta="{{ $fase->ordine->cod_carta ?? '' }}"
-                    data-qta-suggerita="{{ $fase->ordine->qta_carta ?? '' }}"
-                    onclick="apriDialogScarico(this)"
-                    style="background:#0d6efd;color:#fff;border:none;border-radius:4px;padding:4px 8px;font-size:11px;cursor:pointer;">
-                📦 Scarica
-            </button>
-            <div class="scarico-stato" id="scarico-stato-{{ $fase->id }}" style="font-size:10px;color:#6c757d;margin-top:2px;">
-                <span class="scarico-loading">...</span>
-            </div>
-        @else
-            <span style="color:#adb5bd;">—</span>
-        @endif
-    </td>
 </tr>

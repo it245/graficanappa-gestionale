@@ -549,7 +549,7 @@ public function aggiornaCampo(Request $request)
 
     public function statoScarico($faseId)
     {
-        $fase = OrdineFase::findOrFail($faseId);
+        $fase = OrdineFase::with('faseCatalogo.reparto', 'ordine')->findOrFail($faseId);
         $movimenti = \App\Models\MagazzinoMovimento::where('tipo', 'scarico')
             ->where('fase', $fase->fase)
             ->where('commessa', $fase->ordine->commessa ?? null)
@@ -558,9 +558,22 @@ public function aggiornaCampo(Request $request)
 
         $qtaTotale = $movimenti->sum('quantita');
 
+        // Info per trigger modal scarico inline (operatore inserisce scarti)
+        $repNome = strtolower(optional(optional($fase->faseCatalogo)->reparto)->nome ?? '');
+        $consumaCarta = in_array($repNome, ['stampa offset', 'digitale', 'tagliacarte'], true);
+        $richiedi = $consumaCarta && (int) $fase->stato === 3
+            && empty($fase->scarico_eseguito) && empty($fase->esterno);
+
         return response()->json([
             'fase_id' => $fase->id,
             'scaricato' => $movimenti->isNotEmpty(),
+            'scarico_eseguito' => (bool) $fase->scarico_eseguito,
+            'richiedi' => $richiedi,
+            'commessa' => $fase->ordine?->commessa,
+            'fase_nome' => $fase->faseCatalogo?->nome_display ?? $fase->fase,
+            'cod_carta' => $fase->ordine?->cod_carta,
+            'qta_prod' => (int) ($fase->qta_prod ?? 0),
+            'scarti' => (int) ($fase->scarti ?? 0),
             'quantita_totale' => $qtaTotale,
             'movimenti' => $movimenti->map(fn($m) => [
                 'id' => $m->id,
