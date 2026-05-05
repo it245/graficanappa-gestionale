@@ -16,6 +16,7 @@
             $consumaCartaScf = in_array($repCarta, ['stampa offset', 'digitale', 'tagliacarte'], true);
         @endphp
         @if($fase->stato == 3 && $consumaCartaScf && empty($fase->scarico_eseguito) && empty($fase->esterno))
+            @php $opzionale = ($repCarta === 'tagliacarte'); @endphp
             <br><a href="javascript:void(0)"
                    data-fase-id="{{ $fase->id }}"
                    data-commessa="{{ $fase->ordine->commessa ?? '' }}"
@@ -23,8 +24,8 @@
                    data-cod-carta="{{ $fase->ordine->cod_carta ?? '' }}"
                    data-qta-suggerita="{{ (int) ($fase->qta_prod ?? 0) + (int) ($fase->scarti ?? 0) }}"
                    onclick="apriDialogScarico(this)"
-                   style="font-weight:600; color:#0d6efd; font-size:11px; text-decoration:underline;"
-                   title="Conferma prelievo carta (qta = prodotti + scarti)">📦 Inserisci prelievo carta</a>
+                   style="font-weight:600; color:{{ $opzionale ? '#6c757d' : '#0d6efd' }}; font-size:11px; text-decoration:underline;"
+                   title="{{ $opzionale ? 'Prelievo carta opzionale (tagliacarte). Click per inserire o salta dal modal.' : 'Conferma prelievo carta (qta = prodotti + scarti)' }}">📦 {{ $opzionale ? 'Prelievo carta (opzionale)' : 'Inserisci prelievo carta' }}</a>
         @endif
     </td>
 

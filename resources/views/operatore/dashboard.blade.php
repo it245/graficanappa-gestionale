@@ -856,6 +856,37 @@ function chiudiScannerQrScarico() {
     document.getElementById('scarico-qr-wrap').style.display = 'none';
 }
 
+function saltaScaricoFase() {
+    var faseId = document.getElementById('scarico-fase-id').value;
+    if (!faseId) return;
+    fetch('{{ route("produzione.confermaScaricoFase") }}', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': window.csrfToken(),
+            'X-Op-Token': window.opToken(),
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({ fase_id: parseInt(faseId), salta: true })
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+        if (d.success) {
+            MES.toast('Scarico saltato (fase chiusa senza scaricare magazzino)','info');
+            chiudiDialogScarico();
+            // Nasconde link "Inserisci prelievo carta" su questa fase
+            var row = document.getElementById('fase-' + faseId);
+            if (row) {
+                var link = row.querySelector('a[onclick*="apriDialogScarico"]');
+                if (link) link.style.display = 'none';
+            }
+        } else {
+            MES.toast('Errore: ' + (d.messaggio || 'operazione fallita'),'danger');
+        }
+    })
+    .catch(function(){ MES.toast('Errore di connessione','danger'); });
+}
+
 function confermaScarico() {
     var faseId = document.getElementById('scarico-fase-id').value;
     var articoloId = document.getElementById('scarico-articolo-id').value;
@@ -984,8 +1015,9 @@ function confermaScarico() {
 
         <div id="scarico-messaggio" style="font-size:13px;min-height:20px;margin:6px 0;"></div>
 
-        <div style="display:flex;gap:8px;justify-content:flex-end;border-top:1px solid #e9ecef;padding-top:12px;">
+        <div style="display:flex;gap:8px;justify-content:flex-end;border-top:1px solid #e9ecef;padding-top:12px;flex-wrap:wrap;">
             <button type="button" onclick="chiudiDialogScarico()" style="background:#6c757d;color:#fff;border:none;border-radius:4px;padding:8px 14px;cursor:pointer;">Annulla</button>
+            <button type="button" onclick="saltaScaricoFase()" style="background:#fff;color:#6c757d;border:1px solid #6c757d;border-radius:4px;padding:8px 14px;cursor:pointer;" title="Chiude la fase senza scaricare carta dal magazzino">↷ Salta scarico</button>
             <button type="button" onclick="confermaScarico()" style="background:#0d6efd;color:#fff;border:none;border-radius:4px;padding:8px 14px;cursor:pointer;font-weight:600;">Conferma Scarico</button>
         </div>
     </div>
