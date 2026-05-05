@@ -44,13 +44,8 @@ class DashboardOperatoreController extends Controller
                         ->where('data_fine', '>=', '2026-02-28 00:00:00')
                         ->whereHas('faseCatalogo.reparto', fn($r) => $r->whereIn('nome', ['stampa offset', 'digitale']));
                 });
-                // + tagliacarte terminate SENZA scarico carta (no scarti, ma serve conferma prelievo)
-                $q->orWhere(function ($q3) {
-                    $q3->where('stato', 3)
-                        ->where(fn($qs) => $qs->whereNull('scarico_eseguito')->orWhere('scarico_eseguito', false))
-                        ->where('data_fine', '>=', '2026-02-28 00:00:00')
-                        ->whereHas('faseCatalogo.reparto', fn($r) => $r->where('nome', 'tagliacarte'));
-                });
+                // Tagliacarte: NON viene mostrato a stato 3 — operatore termina manualmente
+                // con modal Termina che include già il prelievo carta inline (in commesse/show)
             })
             ->where(fn($q) => $q->where('esterno', false)->orWhereNull('esterno'))
             ->whereHas('faseCatalogo', function ($q) use ($reparti) {

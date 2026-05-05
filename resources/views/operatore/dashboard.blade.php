@@ -765,13 +765,15 @@ function apriDialogScarico(btn) {
     var commessa = btn.dataset.commessa || '';
     var faseNome = btn.dataset.faseNome || '';
     var codCarta = btn.dataset.codCarta || '';
+    var descCarta = btn.dataset.descCarta || '';
     var qtaSugg = btn.dataset.qtaSuggerita || '';
 
     document.getElementById('scarico-fase-id').value = faseId;
     document.getElementById('scarico-commessa-display').textContent = commessa;
     document.getElementById('scarico-fase-display').textContent = faseNome;
     document.getElementById('scarico-articolo-id').value = '';
-    document.getElementById('scarico-articolo-input').value = codCarta;
+    // Mostra descrizione carta nell'input (più leggibile del codice)
+    document.getElementById('scarico-articolo-input').value = descCarta || codCarta;
     document.getElementById('scarico-quantita').value = qtaSugg;
     document.getElementById('scarico-lotto').value = '';
     document.getElementById('scarico-suggest').innerHTML = '';
@@ -779,8 +781,10 @@ function apriDialogScarico(btn) {
 
     document.getElementById('modal-scarico').style.display = 'flex';
 
-    if (codCarta.length >= 2) {
-        cercaArticoliScarico(codCarta);
+    // Cerca articolo: priorità a codice (più preciso) poi descrizione come fallback
+    var queryCerca = codCarta || descCarta;
+    if (queryCerca && queryCerca.length >= 2) {
+        cercaArticoliScarico(queryCerca);
     }
 }
 

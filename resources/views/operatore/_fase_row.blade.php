@@ -22,16 +22,6 @@
             <br><a href="javascript:void(0)" onclick="focusInputScarti({{ $fase->id }})"
                    style="font-weight:600; color:#dc3545; font-size:11px; text-decoration:underline; cursor:pointer;"
                    title="Click per inserire scarti">Inserisci scarti</a>
-        @elseif($fase->stato == 3 && $isTagliacarteStato && $scaricoNonFatto && $dopoIntegrazione)
-            <br><a href="javascript:void(0)"
-                   data-fase-id="{{ $fase->id }}"
-                   data-commessa="{{ $fase->ordine->commessa ?? '' }}"
-                   data-fase-nome="{{ $fase->faseCatalogo->nome_display ?? $fase->fase }}"
-                   data-cod-carta="{{ $fase->ordine->cod_carta ?? '' }}"
-                   data-qta-suggerita="{{ (int) ($fase->qta_prod ?? 0) }}"
-                   onclick="apriDialogScarico(this)"
-                   style="font-weight:600; color:#0d6efd; font-size:11px; text-decoration:underline; cursor:pointer;"
-                   title="Conferma prelievo carta (opzionale per tagliacarte)">📦 Prelievo carta</a>
         @endif
     </td>
 
