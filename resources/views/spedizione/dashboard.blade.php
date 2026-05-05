@@ -989,8 +989,12 @@ function inviaConsegna(tipo) {
 }
 
 function apriModalConsegnaDDT(faseId, tipo) {
-    if (!confirm('Confermi consegna ' + tipo + '?')) return;
-
+    MES.confirm('Conferma consegna', 'Confermi consegna come "' + tipo + '"?', 'Conferma', 'btn-success').then(function(ok) {
+        if (!ok) return;
+        eseguiConsegnaDDT(faseId, tipo);
+    });
+}
+function eseguiConsegnaDDT(faseId, tipo) {
     fetch('{{ route("spedizione.invio") }}', {
         method: 'POST', headers: getHdrs(),
         body: JSON.stringify({ fase_id: parseInt(faseId), tipo_consegna: tipo, forza: true })
@@ -1014,7 +1018,12 @@ function aggiornaNota(faseId, valore) {
 }
 
 function recuperaConsegna(faseId, btn) {
-    if (!confirm('Annullare la consegna? La commessa tornerà in "Da consegnare".')) return;
+    MES.confirm('Annullare consegna?', 'La commessa tornerà in "Da consegnare".', 'Annulla consegna', 'btn-warning').then(function(ok) {
+        if (!ok) return;
+        eseguiRecuperaConsegna(faseId, btn);
+    });
+}
+function eseguiRecuperaConsegna(faseId, btn) {
     btn.disabled = true;
     fetch('{{ route("spedizione.recupera") }}', {
         method: 'POST', headers: getHdrs(),

@@ -589,11 +589,15 @@ function inviaEsterno() {
     var fornitore = sel === '__altro__'
         ? document.getElementById('esternoFornitoreAltro').value.trim()
         : sel;
-    if (!faseId) { alert('Seleziona una fase'); return; }
-    if (!fornitore) { alert('Seleziona un fornitore esterno'); return; }
+    if (!faseId) { MES.toast('Seleziona una fase','warning'); return; }
+    if (!fornitore) { MES.toast('Seleziona un fornitore esterno','warning'); return; }
 
-    if (!confirm('Confermi invio all\'esterno a "' + fornitore + '"?')) return;
-
+    MES.confirm('Invio all\'esterno', 'Confermi invio a "' + fornitore + '"?', 'Invia', 'btn-warning').then(function(ok) {
+        if (!ok) return;
+        eseguiInvioEsterno(faseId, fornitore);
+    });
+}
+function eseguiInvioEsterno(faseId, fornitore) {
     // 1. Segna come esterno
     fetch('{{ route("owner.aggiornaCampo") }}', {
         method: 'POST',
@@ -612,18 +616,22 @@ function inviaEsterno() {
     .then(function(r) { return r.json(); })
     .then(function(d) {
         if (d.success) {
-            alert('Fase inviata all\'esterno a: ' + fornitore);
-            window.location.reload();
+            MES.toast('Fase inviata all\'esterno a: ' + fornitore, 'success');
+            setTimeout(function() { window.location.reload(); }, 800);
         } else {
-            alert('Errore: ' + (d.messaggio || ''));
+            MES.toast('Errore: ' + (d.messaggio || ''), 'danger');
         }
     })
-    .catch(function(err) { console.error(err); alert('Errore di connessione'); });
+    .catch(function(err) { console.error(err); MES.toast('Errore di connessione','danger'); });
 }
 
 function eliminaFase(faseId) {
-    if (!confirm('Sei sicuro di voler eliminare questa fase?')) return;
-
+    MES.confirm('Eliminare fase?', 'Operazione irreversibile.', 'Elimina', 'btn-danger').then(function(ok) {
+        if (!ok) return;
+        eseguiEliminaFase(faseId);
+    });
+}
+function eseguiEliminaFase(faseId) {
     fetch('{{ route("owner.eliminaFase") }}', {
         method: 'POST',
         headers: {

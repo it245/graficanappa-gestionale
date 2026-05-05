@@ -111,7 +111,7 @@
                         <td class="ean-display">{{ $ean->codice_ean }}</td>
                         <td class="ean-display">
                             <button type="button" class="btn btn-sm btn-outline-primary btn-ean-edit" data-id="{{ $ean->id }}">Modifica</button>
-                            <form method="POST" action="{{ route('admin.ean.elimina', $ean->id) }}" style="display:inline;" onsubmit="return confirm('Eliminare questo codice EAN?')">
+                            <form method="POST" action="{{ route('admin.ean.elimina', $ean->id) }}" style="display:inline;" onsubmit="event.preventDefault(); var f=this; MES.confirm('Eliminare codice EAN?','Operazione irreversibile.','Elimina','btn-danger').then(function(ok){ if(ok) f.submit(); }); return false;">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="btn btn-sm btn-outline-danger">Elimina</button>

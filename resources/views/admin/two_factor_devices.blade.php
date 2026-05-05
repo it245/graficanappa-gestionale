@@ -33,7 +33,7 @@
                                 <td>{{ $d->last_used_at ? \Carbon\Carbon::parse($d->last_used_at)->format('d/m/Y H:i') : '-' }}</td>
                                 <td>{{ \Carbon\Carbon::parse($d->created_at)->format('d/m/Y') }}</td>
                                 <td>
-                                    <form method="POST" action="{{ route('admin.2fa.revokeDevice', $d->id) }}" onsubmit="return confirm('Revocare questo dispositivo?')">
+                                    <form method="POST" action="{{ route('admin.2fa.revokeDevice', $d->id) }}" onsubmit="event.preventDefault(); var f=this; MES.confirm('Revocare dispositivo?','Il dispositivo dovrà autenticarsi nuovamente.','Revoca','btn-danger').then(function(ok){ if(ok) f.submit(); }); return false;">
                                         @csrf
                                         @method('DELETE')
                                         <button class="btn btn-sm btn-outline-danger">Revoca</button>

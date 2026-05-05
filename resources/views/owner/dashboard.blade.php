@@ -1850,7 +1850,12 @@ function mostraPopoverApplicaTutte(cell, commessa, priorita) {
 function applicaPrioritaATutte(commessa, priorita) {
     var pop = document.getElementById('popApplicaTutte');
     if (pop) pop.remove();
-    if (!confirm('Applicare priorità ' + priorita + ' a TUTTE le fasi (stato <3) della commessa ' + commessa + '?')) return;
+    MES.confirm('Applicare priorità a tutte', 'Priorità ' + priorita + ' a TUTTE le fasi (stato <3) della commessa ' + commessa + '?', 'Applica', 'btn-warning').then(function(ok) {
+        if (!ok) return;
+        eseguiApplicaPrioritaATutte(commessa, priorita);
+    });
+}
+function eseguiApplicaPrioritaATutte(commessa, priorita) {
     fetch('{{ route("owner.applicaPrioritaCommessa") }}', {
         method: 'POST',
         headers: {'X-CSRF-TOKEN': csrfToken(), 'Content-Type': 'application/json'},

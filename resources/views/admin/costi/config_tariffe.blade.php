@@ -68,7 +68,7 @@
                                             </button>
                                         @endif
                                         @if($corrente)
-                                            <form method="POST" action="{{ route('admin.costi.eliminaTariffa', $corrente->id) }}" class="d-inline" onsubmit="return confirm('Eliminare la tariffa corrente?')">
+                                            <form method="POST" action="{{ route('admin.costi.eliminaTariffa', $corrente->id) }}" class="d-inline" onsubmit="event.preventDefault(); var f=this; MES.confirm('Eliminare tariffa corrente?','Operazione irreversibile.','Elimina','btn-danger').then(function(ok){ if(ok) f.submit(); }); return false;">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button class="btn btn-outline-danger btn-sm" title="Elimina corrente">X</button>
@@ -89,7 +89,7 @@
                                                             <td>{{ $s->valido_al->format('d/m/Y') }}</td>
                                                             <td>{{ $s->note ?? '' }}</td>
                                                             <td>
-                                                                <form method="POST" action="{{ route('admin.costi.eliminaTariffa', $s->id) }}" class="d-inline" onsubmit="return confirm('Eliminare?')">
+                                                                <form method="POST" action="{{ route('admin.costi.eliminaTariffa', $s->id) }}" class="d-inline" onsubmit="event.preventDefault(); var f=this; MES.confirm('Eliminare tariffa?','Operazione irreversibile.','Elimina','btn-danger').then(function(ok){ if(ok) f.submit(); }); return false;">
                                                                     @csrf @method('DELETE')
                                                                     <button class="btn btn-outline-danger btn-sm py-0 px-1">X</button>
                                                                 </form>
