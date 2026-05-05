@@ -448,7 +448,11 @@ function segnaLetta(id, btn) {
                         @forelse($info['fasi'] as $fase)
                             @include('operatore._fase_row', ['fase' => $fase])
                         @empty
-                            <tr><td colspan="{{ 21 + ($showColori ? 1 : 0) + ($showEsterno ? 1 : 0) }}" class="text-center text-muted">Nessuna fase attiva</td></tr>
+                            <tr>
+                                <td colspan="{{ 21 + ($showColori ? 1 : 0) + ($showEsterno ? 1 : 0) }}">
+                                    <x-mes.empty-state icon="check" title="Nessuna fase attiva nel reparto" subtitle="Tutte le fasi sono completate o in pausa." compact />
+                                </td>
+                            </tr>
                         @endforelse
                     </tbody>
                 </table>

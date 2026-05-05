@@ -533,7 +533,9 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="9" class="text-center text-muted py-3">Nessuna consegna in coda</td>
+                    <td colspan="9">
+                        <x-mes.empty-state icon="truck" title="Nessuna consegna in coda" subtitle="Tutte le commesse in attesa di consegna appariranno qui." />
+                    </td>
                 </tr>
             @endforelse
         </tbody>
@@ -718,7 +720,7 @@
                     </tbody>
                 </table>
                 @else
-                <p class="text-muted text-center py-3">Nessuna consegna effettuata oggi</p>
+                <x-mes.empty-state icon="check" title="Nessuna consegna effettuata oggi" compact />
                 @endif
             </div>
         </div>
@@ -780,7 +782,7 @@
                 </table>
                 @endforeach
                 @else
-                <p class="text-muted text-center py-3">Nessuna consegna negli ultimi 30 giorni</p>
+                <x-mes.empty-state icon="box" title="Nessuna consegna negli ultimi 30 giorni" compact />
                 @endif
             </div>
         </div>
@@ -858,7 +860,7 @@
                     </tbody>
                 </table>
                 @else
-                <p class="text-muted text-center py-4" style="font-size:16px;">Nessuna spedizione BRT</p>
+                <x-mes.empty-state icon="truck" title="Nessuna spedizione BRT" subtitle="Le spedizioni gestite da BRT compariranno qui." />
                 @endif
             </div>
             <div class="modal-footer" style="padding:14px 24px;">
