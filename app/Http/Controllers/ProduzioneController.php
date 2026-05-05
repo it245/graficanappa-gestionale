@@ -434,6 +434,15 @@ public function aggiornaCampo(Request $request)
                 'note' => "Scarico da fase #{$fase->id} — {$fase->fase}",
             ]);
 
+            // Marca fase come scaricata (idempotente)
+            $fase->scarico_eseguito = true;
+            $fase->pending_scarico = false;
+            $fase->articolo_carta_id = $request->articolo_id;
+            $fase->qta_carta_prelevata = (int) $request->quantita;
+            $fase->lotto_carta = $request->lotto;
+            $fase->scarico_at = now();
+            $fase->save();
+
             return response()->json([
                 'success' => true,
                 'movimento_id' => $movimento->id,
