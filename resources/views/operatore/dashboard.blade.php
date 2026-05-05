@@ -624,6 +624,27 @@ function resetFiltri(el) {
     applicaFiltri(el);
 }
 
+function focusInputScarti(faseId) {
+    var row = document.getElementById('fase-' + faseId);
+    if (!row) return;
+    var inp = row.querySelector('input[onchange*="salvaScarti"]');
+    if (inp) {
+        inp.focus();
+        inp.select();
+        inp.style.borderColor = '#dc3545';
+        inp.style.boxShadow = '0 0 0 3px rgba(220,53,69,.25)';
+        setTimeout(function(){
+            inp.style.borderColor = '#ced4da';
+            inp.style.boxShadow = '';
+        }, 1500);
+    } else {
+        // Fallback: scrolla alla riga
+        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        row.style.background = '#fff3cd';
+        setTimeout(function(){ row.style.background = ''; }, 1500);
+    }
+}
+
 function salvaScarti(faseId, valore) {
     fetch('{{ route("produzione.aggiornaCampo") }}', {
         method: 'POST',
