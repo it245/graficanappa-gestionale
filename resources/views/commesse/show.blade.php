@@ -521,7 +521,11 @@ body.dark-mode .info-box-label { color: #94a3b8; }
                 $n = trim((string) ($f->note ?? ''));
                 return $n !== '' && $n !== '-';
             })
-            ->unique(fn($f) => ($f->faseCatalogo->nome_display ?? $f->fase) . '|' . trim($f->note))
+            ->unique(function($f) {
+                $nome = $f->faseCatalogo->nome_display ?? $f->fase ?? '';
+                $note = trim((string) ($f->note ?? ''));
+                return $nome . '|' . $note;
+            })
             ->values();
     @endphp
     @if($noteFasiOp->isNotEmpty())
