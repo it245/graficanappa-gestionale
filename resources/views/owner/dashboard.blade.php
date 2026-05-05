@@ -81,13 +81,14 @@
         Storico Presenze
     </a>
     @if(!($isReadonly ?? false))
-    <form method="POST" action="{{ route('owner.syncOnda') }}" style="margin:0;" id="formSyncOnda" onsubmit="this.querySelector('button').disabled=true;">
+    <form method="POST" action="{{ route('owner.syncOnda') }}" style="margin:0;" id="formSyncOnda" onsubmit="var b=this.querySelector('button');b.disabled=true;b.querySelector('.lbl').textContent='Sincronizzazione...';b.querySelector('svg').style.animation='mes-sidebar-spin 1s linear infinite';">
         @csrf
         <button type="submit" class="mes-sidebar-item" style="width:100%; background:none; border:none; text-align:left;">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6"/><path d="M2.5 22v-6h6"/><path d="M2.5 11.5a10 10 0 0 1 18.8-4.3"/><path d="M21.5 12.5a10 10 0 0 1-18.8 4.2"/></svg>
-            Sincronizza Onda
+            <span class="lbl">Sincronizza Onda</span>
         </button>
     </form>
+    <style>@keyframes mes-sidebar-spin { to { transform: rotate(360deg); } }</style>
     <button type="button" class="mes-sidebar-item" data-bs-toggle="modal" data-bs-target="#aggiungiRigaModal">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
         Aggiungi Riga
@@ -313,6 +314,9 @@ thead th {
     border-bottom: 2px solid #374151 !important;
     padding-top: 6px;
     padding-bottom: 6px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
 }
 
 /* =========================

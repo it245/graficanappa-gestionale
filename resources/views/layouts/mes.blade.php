@@ -329,19 +329,29 @@
         background: none;
         border: none;
         cursor: pointer;
-        padding: 8px;
+        padding: 10px;
         margin-right: 8px;
-        border-radius: 4px;
+        border-radius: 8px;
         color: var(--text-primary);
+        min-width: 44px;
+        min-height: 44px;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.15s;
     }
 
-    .mes-hamburger:hover {
+    .mes-hamburger:hover, .mes-hamburger:focus-visible {
         background: var(--border-color);
+        outline: none;
+    }
+
+    .mes-hamburger:active {
+        background: var(--mes-primary-soft, rgba(59,130,246,0.15));
     }
 
     .mes-hamburger svg {
-        width: 20px;
-        height: 20px;
+        width: 24px;
+        height: 24px;
     }
 
     .mes-sidebar-overlay {

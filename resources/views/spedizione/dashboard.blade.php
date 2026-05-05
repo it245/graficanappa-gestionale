@@ -8,15 +8,16 @@
 @endsection
 
 @section('topbar-actions')
-<form method="POST" action="{{ route('spedizione.syncOnda') }}" style="margin:0;" onsubmit="this.querySelector('button').disabled=true; this.querySelector('button span').textContent='Sync...';">
+<form method="POST" action="{{ route('spedizione.syncOnda') }}" style="margin:0;" onsubmit="var b=this.querySelector('button');b.disabled=true;b.style.opacity='0.6';b.querySelector('span').textContent='Sincronizzazione...';b.querySelector('svg').style.animation='mes-spin-icon 1s linear infinite';">
     @csrf
-    <button type="submit" style="background:none; border:1px solid var(--border-color); border-radius:6px; padding:4px 12px; cursor:pointer; display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-secondary);">
+    <button type="submit" style="background:none; border:1px solid var(--border-color); border-radius:6px; padding:4px 12px; cursor:pointer; display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-secondary); transition:opacity .2s;">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21.5 2v6h-6"/><path d="M2.5 22v-6h6"/><path d="M2.5 11.5a10 10 0 0 1 18.8-4.3"/><path d="M21.5 12.5a10 10 0 0 1-18.8 4.2"/>
         </svg>
         <span>Sync Onda</span>
     </button>
 </form>
+<style>@keyframes mes-spin-icon { to { transform: rotate(360deg); } }</style>
 @endsection
 
 @section('sidebar-items')
