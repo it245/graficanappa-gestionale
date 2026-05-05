@@ -171,7 +171,7 @@ class ProduzioneController extends Controller
     // Conferma scarico carta SOLO per reparti che consumano carta: stampa offset + digitale
     // Escluso: stampa caldo (foil), tagliacarte, fustella, finitura, allestimento, ecc.
     $repNome = strtolower(optional(optional($fase->faseCatalogo)->reparto)->nome ?? '');
-    $repartiCarta = ['stampa offset', 'digitale'];
+    $repartiCarta = ['stampa offset', 'digitale', 'tagliacarte'];
     $consumaCarta = in_array($repNome, $repartiCarta, true);
     $richiediScarico = $consumaCarta && !$fase->scarico_eseguito && !$fase->esterno;
 
