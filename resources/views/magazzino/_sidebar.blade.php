@@ -15,8 +15,13 @@
     </a>
 </div>
 <script>
-    // Torna al referer se è una dashboard MES, altrimenti fallback ruolo
+    // Torna a sessionStorage 'mesLastDashboard' (settato da layouts/mes.blade.php),
+    // altrimenti referer se dashboard MES, altrimenti fallback ruolo
     function goToLastDashboard(fallback) {
+        try {
+            var saved = sessionStorage.getItem('mesLastDashboard');
+            if (saved) { location.href = saved; return; }
+        } catch (e) {}
         var ref = document.referrer;
         if (ref && /\/(owner|operatore|spedizione|fiery)\//.test(ref)) {
             location.href = ref;

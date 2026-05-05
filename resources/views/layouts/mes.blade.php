@@ -574,6 +574,18 @@
 </head>
 <body>
 
+    {{-- Memorizza dashboard di provenienza (per "Dashboard MES" da magazzino/altre sezioni satellite) --}}
+    <script>
+        (function() {
+            try {
+                var p = location.pathname;
+                if (!p.startsWith('/magazzino') && !p.startsWith('/login') && !p.startsWith('/admin/login')) {
+                    sessionStorage.setItem('mesLastDashboard', p + location.search);
+                }
+            } catch (e) {}
+        })();
+    </script>
+
     {{-- Loading bar per navigazione veloce --}}
     <div id="mesLoadingBar" style="position:fixed;top:0;left:0;width:0;height:3px;background:var(--accent,#2563eb);z-index:99999;transition:width 0.3s ease;"></div>
     <style>
