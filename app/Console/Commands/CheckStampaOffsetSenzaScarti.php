@@ -55,7 +55,7 @@ class CheckStampaOffsetSenzaScarti extends Command
             'Fase'      => $f->fase,
             'Qta prod'  => $f->qta_prod ?? 0,
             'Scarti'    => $f->scarti ?? 'NULL',
-            'Data fine' => $f->data_fine?->format('d/m/Y H:i') ?? '-',
+            'Data fine' => $f->data_fine ? \Carbon\Carbon::parse($f->data_fine)->format('d/m/Y H:i') : '-',
         ])->toArray();
 
         $this->table(
