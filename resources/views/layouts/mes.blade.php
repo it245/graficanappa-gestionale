@@ -574,12 +574,12 @@
 </head>
 <body>
 
-    {{-- Memorizza dashboard di provenienza (per "Dashboard MES" da magazzino/altre sezioni satellite) --}}
+    {{-- Memorizza dashboard PRINCIPALE di provenienza (solo /owner/dashboard, /operatore/dashboard, /spedizione/dashboard) --}}
     <script>
         (function() {
             try {
                 var p = location.pathname;
-                if (!p.startsWith('/magazzino') && !p.startsWith('/login') && !p.startsWith('/admin/login')) {
+                if (/^\/(owner|operatore|spedizione)\/dashboard\/?$/.test(p)) {
                     sessionStorage.setItem('mesLastDashboard', p + location.search);
                 }
             } catch (e) {}
