@@ -766,6 +766,96 @@ function selezionaArticoloScarico(id, codice) {
     document.getElementById('scarico-suggest').innerHTML = '';
 }
 
+// === Scanner QR inline (modal scarico) ===
+var _scaricoQrInst = null;
+function apriScannerQrScarico() {
+    var wrap = document.getElementById('scarico-qr-wrap');
+    wrap.style.display = 'block';
+
+    function startCam() {
+        if (!window.Html5Qrcode) {
+            MES.toast('Scanner non disponibile (lib non caricata)','danger');
+            return;
+        }
+        try {
+            _scaricoQrInst = new Html5Qrcode('scarico-qr-reader');
+            _scaricoQrInst.start(
+                { facingMode: 'environment' },
+                { fps: 10, qrbox: { width: 220, height: 220 } },
+                onScaricoQrSuccess,
+                function(){}
+            ).catch(function(err){
+                MES.toast('Camera non disponibile: ' + err,'danger',5000);
+                wrap.style.display = 'none';
+            });
+        } catch(e) {
+            MES.toast('Errore scanner: ' + e.message,'danger');
+        }
+    }
+
+    // Lazy load html5-qrcode lib se non già presente
+    if (!window.Html5Qrcode) {
+        var s = document.createElement('script');
+        s.src = 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
+        s.onload = startCam;
+        s.onerror = function(){ MES.toast('Impossibile caricare scanner','danger'); };
+        document.head.appendChild(s);
+    } else {
+        startCam();
+    }
+}
+
+function onScaricoQrSuccess(decodedText) {
+    if (!_scaricoQrInst) return;
+    _scaricoQrInst.pause();
+
+    var qr = decodedText;
+    if (decodedText.includes('qr=')) {
+        try { qr = new URL(decodedText).searchParams.get('qr'); } catch(e) {}
+    }
+
+    fetch('{{ route("magazzino.scan.lookup") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': window.csrfToken(),
+            'X-Op-Token': window.opToken()
+        },
+        body: JSON.stringify({ qr: qr })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.found) {
+            // Popola modal scarico
+            document.getElementById('scarico-articolo-id').value = data.articolo.id;
+            document.getElementById('scarico-articolo-input').value = data.articolo.codice;
+            document.getElementById('scarico-suggest').innerHTML = '';
+            // Lotto se presente in QR
+            if (data.lotto) {
+                document.getElementById('scarico-lotto').value = data.lotto;
+            }
+            MES.toast('Articolo: ' + data.articolo.codice + ' — giac. ' + data.giacenza,'success');
+            chiudiScannerQrScarico();
+            // Focus su quantità
+            setTimeout(function(){ document.getElementById('scarico-quantita').focus(); }, 100);
+        } else {
+            MES.toast('QR non riconosciuto','warning');
+            setTimeout(function(){ if (_scaricoQrInst) _scaricoQrInst.resume(); }, 1500);
+        }
+    })
+    .catch(function(){
+        MES.toast('Errore lookup','danger');
+        if (_scaricoQrInst) _scaricoQrInst.resume();
+    });
+}
+
+function chiudiScannerQrScarico() {
+    if (_scaricoQrInst) {
+        try { _scaricoQrInst.stop().then(function(){ _scaricoQrInst.clear(); _scaricoQrInst = null; }); } catch(e) { _scaricoQrInst = null; }
+    }
+    document.getElementById('scarico-qr-wrap').style.display = 'none';
+}
+
 function confermaScarico() {
     var faseId = document.getElementById('scarico-fase-id').value;
     var articoloId = document.getElementById('scarico-articolo-id').value;
@@ -856,11 +946,27 @@ function confermaScarico() {
         <input type="hidden" id="scarico-articolo-id">
 
         <div style="margin-bottom:10px;">
-            <label style="font-size:12px;font-weight:600;">Articolo (cerca per codice o descrizione)</label>
-            <input type="text" id="scarico-articolo-input" placeholder="Es. GC1, Performa White, ..."
-                   oninput="cercaArticoliScarico(this.value)"
-                   style="width:100%;padding:8px;border:1px solid #ced4da;border-radius:4px;font-size:14px;">
+            <label style="font-size:12px;font-weight:600;">Articolo (scansiona QR o cerca testo)</label>
+            <div style="display:flex;gap:6px;">
+                <input type="text" id="scarico-articolo-input" placeholder="Es. GC1, Performa White, ..."
+                       oninput="cercaArticoliScarico(this.value)"
+                       style="flex:1;padding:8px;border:1px solid #ced4da;border-radius:4px;font-size:14px;">
+                <button type="button" onclick="apriScannerQrScarico()"
+                        style="background:#198754;color:#fff;border:none;border-radius:4px;padding:8px 14px;cursor:pointer;font-weight:600;display:flex;align-items:center;gap:6px;"
+                        title="Scansiona QR bancale">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                    QR
+                </button>
+            </div>
             <div id="scarico-suggest" style="max-height:180px;overflow-y:auto;border:1px solid #eee;border-radius:4px;margin-top:4px;"></div>
+            {{-- Scanner QR inline --}}
+            <div id="scarico-qr-wrap" style="display:none;margin-top:8px;border:2px solid #198754;border-radius:6px;padding:8px;background:#f8f9fa;">
+                <div id="scarico-qr-reader" style="width:100%;max-width:320px;margin:0 auto;"></div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">
+                    <small style="color:#6c757d;">Inquadra il QR sul bancale</small>
+                    <button type="button" onclick="chiudiScannerQrScarico()" style="background:#dc3545;color:#fff;border:none;border-radius:4px;padding:4px 10px;cursor:pointer;font-size:12px;">Chiudi</button>
+                </div>
+            </div>
         </div>
 
         <div style="display:flex;gap:10px;margin-bottom:10px;">

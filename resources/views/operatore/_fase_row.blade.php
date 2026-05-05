@@ -90,9 +90,12 @@
     @php
         $faseUpper = strtoupper($fase->fase ?? '');
         $isStampa = str_starts_with($faseUpper, 'STAMPA');
+        $repNome = strtolower(optional(optional($fase->faseCatalogo)->reparto)->nome ?? '');
+        $isTagliacarte = str_contains($repNome, 'tagliacart') || str_contains($faseUpper, 'TAGLIO');
+        $consentiScarico = ($isStampa || $isTagliacarte);
     @endphp
     <td id="scarico-{{ $fase->id }}" style="text-align:center; white-space:nowrap;">
-        @if($isStampa && $fase->stato >= 2)
+        @if($consentiScarico && $fase->stato >= 2)
             <button type="button" class="btn-scarico" data-fase-id="{{ $fase->id }}"
                     data-commessa="{{ $fase->ordine->commessa ?? '' }}"
                     data-fase-nome="{{ $fase->fase }}"
