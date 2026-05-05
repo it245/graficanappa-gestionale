@@ -2,17 +2,29 @@
 @php
     // Admin/Owner usa guard 'web' (default), Operatore usa guard 'operatore'
     $isOperatore = auth('operatore')->check() && !auth()->check();
-    $dashboardRoute = $isOperatore
+    $fallbackRoute = $isOperatore
         ? route('operatore.dashboard', ['op_token' => request('op_token')])
         : route('owner.dashboard', ['op_token' => request('op_token')]);
 @endphp
 <div class="mes-sidebar-section">
     <div class="mes-sidebar-section-label">Navigazione</div>
-    <a href="{{ $dashboardRoute }}" class="mes-sidebar-item">
+    <a href="{{ $fallbackRoute }}" class="mes-sidebar-item" id="btnBackToDashboard"
+       onclick="event.preventDefault(); goToLastDashboard('{{ $fallbackRoute }}');">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
         Dashboard MES
     </a>
 </div>
+<script>
+    // Torna al referer se è una dashboard MES, altrimenti fallback ruolo
+    function goToLastDashboard(fallback) {
+        var ref = document.referrer;
+        if (ref && /\/(owner|operatore|spedizione|fiery)\//.test(ref)) {
+            location.href = ref;
+        } else {
+            location.href = fallback;
+        }
+    }
+</script>
 <div class="mes-sidebar-section">
     <div class="mes-sidebar-section-label">Magazzino</div>
     <a href="{{ route('magazzino.dashboard', ['op_token' => request('op_token')]) }}" class="mes-sidebar-item {{ request()->routeIs('magazzino.dashboard') ? 'active' : '' }}">
