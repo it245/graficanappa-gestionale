@@ -521,6 +521,63 @@ Anticipa parzialmente v6.0 (Q2 2027). Audit base: `reference_security_audit.md` 
 
 ---
 
+## Performance LCP Owner Dashboard — Piano (05/05/2026)
+
+LCP attuale: **4.65s** (target <2.5s). LCP element = `<td>` tabella commesse → bottleneck server-side TTFB.
+CLS 0.00 ✅, INP 160ms ✅. Solo TTFB da ottimizzare.
+
+**Vincolo**: NO cache controller (owner deve vedere real-time, no stale data 20s).
+
+### Fix proposti (zero impatto freshness dati)
+
+- [ ] **A1. Gzip Apache** (5 min, -800-1500ms LCP)
+  - File: `C:\Apache24\conf\httpd.conf`
+  - Aggiungere `LoadModule deflate_module modules/mod_deflate.so` + Location filter DEFLATE
+  - Escludere binari (img, woff2)
+  - HTML 800KB → 250-300KB wire
+  - Restart Apache fuori orario
+  - Rischio: nullo, standard
+
+- [ ] **A2. Cache DescrizioneParser** (20 min, -200-500ms)
+  - File: `app/Http/Controllers/DashboardOwnerController.php:373-379`
+  - `Cache::remember("parsec:" . md5($desc.$cli.$rep), 3600, fn() => parser)`
+  - Stessa descrizione → 1 parse, hit rate ~95%
+  - Rischio: nullo, parser idempotente
+
+- [ ] **A3. `select()` mirato Eloquent** (15 min, -100-300ms)
+  - File: `app/Http/Controllers/DashboardOwnerController.php:338`
+  - Eager load con `:id,col1,col2,...` invece di tutte le colonne
+  - Riduce bytes MySQL → PHP → memoria → serializzazione
+  - Rischio: basso (verificare view non usi colonne escluse)
+
+- [ ] **A4. Indici DB ordine_fasi** (10 min, -200-500ms)
+  - Migration: `index(['stato','priorita'])`, `index('data_fine')`, `index('fase_catalogo_id')`
+  - Full table scan → index seek su query owner main
+  - Rischio: basso, write leggermente più lente
+
+### Stima totale
+
+LCP target: 4.65s → **~2-3s** (sotto soglia "good" 2.5s con A1+A4 quasi).
+
+**Tempo**: ~50 min (A2+A3+A4 codice ora, A1 dopo orario).
+
+### Alternative scartate
+
+- ❌ **Cache controller 20s**: owner perde real-time (rifiutato)
+- ⏳ **Skeleton + lazy table** (~2h, refactor view): valutare in futuro se A1-A4 non bastano
+- ⏳ **Defer 121 modali Bootstrap** (~4h): rimandato, rischio alto refactor
+- ⏳ **HTTP/2 + cache static asset**: dopo HTTPS funzionante
+
+### Bug perf bonus identificati
+
+- Owner dashboard scrollbar lag fix → ✅ FIXATO 05/05/2026 (commit 0c8a53e)
+  - MutationObserver subtree:true → debounce 200ms + childList only
+  - Listener scroll passive:true
+  - vis() in requestAnimationFrame (no forced layout)
+  - tableScroll: will-change + translateZ(0) + contain:layout (GPU layer)
+
+---
+
 ## DONE recenti (28/04/2026)
 
 - ✅ Fiery resilience: retry + stale cache 30 min + warm command
