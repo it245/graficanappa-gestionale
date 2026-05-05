@@ -691,6 +691,8 @@ body.dark-mode .info-box-label { color: #94a3b8; }
                                    data-fogli-scarto="{{ $fase->fogli_scarto ?? 0 }}"
                                    data-qta-prod="{{ $fase->qta_prod ?? 0 }}"
                                    data-fase-nome="{{ $fase->fase ?? '' }}"
+                                   data-reparto="{{ strtolower(optional(optional($fase->faseCatalogo)->reparto)->nome ?? '') }}"
+                                   data-cod-carta="{{ $ordine->cod_carta ?? '' }}"
                                    onchange="aggiornaStato({{ $fase->id }}, 'termina', this.checked)">
                             <label for="termina-{{ $fase->id }}" class="badge-termina">Termina</label>
                         </div>
@@ -906,9 +908,9 @@ body.dark-mode .info-box-label { color: #94a3b8; }
     </div>
 </div>
 
-<!-- Modal Termina Fase -->
+<!-- Modal Termina Fase (con prelievo carta integrato per stampa offset/digitale/tagliacarte) -->
 <div class="modal fade" id="modalTermina" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
                 <h5 class="modal-title">Termina Fase</h5>
@@ -916,17 +918,50 @@ body.dark-mode .info-box-label { color: #94a3b8; }
             </div>
             <div class="modal-body">
                 <input type="hidden" id="terminaFaseId">
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Qta prodotta <span class="text-danger">*</span></label>
-                    <input type="number" id="terminaQtaProdotta" class="form-control" min="0" required>
+                <input type="hidden" id="terminaConsumaCarta" value="0">
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Qta prodotta <span class="text-danger">*</span></label>
+                        <input type="number" id="terminaQtaProdotta" class="form-control" min="0" required oninput="ricalcolaQtaPrelievo()">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Scarti</label>
+                        <input type="number" id="terminaScarti" class="form-control" min="0" value="0" oninput="ricalcolaQtaPrelievo()">
+                    </div>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Scarti</label>
-                    <input type="number" id="terminaScarti" class="form-control" min="0" value="0">
-                </div>
+
                 <div class="mb-3" id="terminaTiroWrap" style="display:none;">
-                    <label class="form-label fw-bold">Tiro (cm) <span class="text-danger">*</span></label>
+                    <label class="form-label fw-bold">Tiro (cm foil) <span class="text-danger">*</span></label>
                     <input type="number" id="terminaTiro" class="form-control" min="1">
+                </div>
+
+                {{-- Sezione PRELIEVO CARTA (visibile solo per reparti che consumano carta) --}}
+                <div id="terminaPrelievoWrap" style="display:none; border-top:2px dashed #dee2e6; padding-top:14px; margin-top:8px;">
+                    <h6 class="fw-bold mb-3" style="color:#0d6efd;">📦 Prelievo carta dal magazzino</h6>
+
+                    <div class="mb-2">
+                        <label class="form-label fw-bold mb-1">Quantità totale prelievo (prodotta + scarti)</label>
+                        <input type="number" id="terminaQtaPrelievo" class="form-control fw-bold" min="0">
+                        <small class="text-muted">Auto-calcolata. Modificabile se diverso dalla carta usata realmente.</small>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label fw-bold mb-1">Articolo magazzino (scrivi o cerca)</label>
+                        <input type="text" id="terminaArticoloInput" class="form-control" placeholder="Codice o descrizione carta..." oninput="cercaArticoloTermina(this.value)">
+                        <input type="hidden" id="terminaArticoloId">
+                        <input type="hidden" id="terminaArticoloLibero">
+                        <div id="terminaArticoloSuggest" style="max-height:160px; overflow-y:auto; border:1px solid #eee; border-radius:4px; margin-top:4px;"></div>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label fw-bold mb-1">Lotto (opzionale)</label>
+                        <input type="text" id="terminaLotto" class="form-control" placeholder="es. L2026-04-01">
+                    </div>
+
+                    <div id="terminaSaltaInfo" class="form-text" style="font-size:11px;">
+                        Lasciando l'articolo vuoto la fase verrà chiusa <strong>senza scaricare il magazzino</strong>.
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -1062,6 +1097,8 @@ function apriModalTermina(faseId) {
     var fogliScarto = parseInt(cb ? cb.getAttribute('data-fogli-scarto') : 0) || 0;
     var qtaProd = parseInt(cb ? cb.getAttribute('data-qta-prod') : 0) || 0;
     var faseNome = (cb ? cb.getAttribute('data-fase-nome') || '' : '').toUpperCase();
+    var reparto = (cb ? cb.getAttribute('data-reparto') || '' : '').toLowerCase();
+    var codCarta = cb ? cb.getAttribute('data-cod-carta') || '' : '';
 
     document.getElementById('terminaFaseId').value = faseId;
 
@@ -1075,7 +1112,59 @@ function apriModalTermina(faseId) {
     document.getElementById('terminaTiroWrap').style.display = isCaldo ? '' : 'none';
     document.getElementById('terminaTiro').value = '';
 
+    // Sezione PRELIEVO CARTA: visibile solo per reparti che consumano carta
+    var consumaCarta = ['stampa offset', 'digitale', 'tagliacarte'].indexOf(reparto) !== -1;
+    document.getElementById('terminaConsumaCarta').value = consumaCarta ? '1' : '0';
+    document.getElementById('terminaPrelievoWrap').style.display = consumaCarta ? '' : 'none';
+    if (consumaCarta) {
+        document.getElementById('terminaArticoloId').value = '';
+        document.getElementById('terminaArticoloLibero').value = '';
+        document.getElementById('terminaArticoloInput').value = codCarta;
+        document.getElementById('terminaLotto').value = '';
+        document.getElementById('terminaArticoloSuggest').innerHTML = '';
+        ricalcolaQtaPrelievo();
+        if (codCarta && codCarta.length >= 2) cercaArticoloTermina(codCarta);
+    }
+
     new bootstrap.Modal(document.getElementById('modalTermina')).show();
+}
+
+function ricalcolaQtaPrelievo() {
+    var qtaP = parseInt(document.getElementById('terminaQtaProdotta').value) || 0;
+    var scarti = parseInt(document.getElementById('terminaScarti').value) || 0;
+    var el = document.getElementById('terminaQtaPrelievo');
+    if (el) el.value = qtaP + scarti;
+}
+
+var _terminaSearchTimer = null;
+function cercaArticoloTermina(q) {
+    clearTimeout(_terminaSearchTimer);
+    var box = document.getElementById('terminaArticoloSuggest');
+    if (!q || q.length < 2) { box.innerHTML = ''; return; }
+    _terminaSearchTimer = setTimeout(function() {
+        fetch('/produzione/cerca-articolo?q=' + encodeURIComponent(q), {
+            headers: { 'X-Op-Token': window.opToken ? window.opToken() : '' }
+        })
+        .then(function(r){return r.json();})
+        .then(function(items){
+            var html = '';
+            items.forEach(function(a){
+                var safeCod = String(a.codice).replace(/"/g,'&quot;');
+                html += '<div class="termina-art-item" data-id="'+a.id+'" data-cod="'+safeCod+'" '
+                     + 'style="padding:6px 10px; border-bottom:1px solid #eee; cursor:pointer; font-size:13px;">'
+                     + '<b>'+a.codice+'</b> — '+(a.descrizione||'')+' <small style="color:#666;">(giac '+a.giacenza+' '+a.um+')</small></div>';
+            });
+            box.innerHTML = html || '<div style="padding:6px; color:#999; font-size:12px;">Nessun articolo. Lascia campo libero o vuoto per saltare scarico.</div>';
+            box.querySelectorAll('.termina-art-item').forEach(function(el){
+                el.addEventListener('click', function(){
+                    document.getElementById('terminaArticoloId').value = el.dataset.id;
+                    document.getElementById('terminaArticoloLibero').value = '';
+                    document.getElementById('terminaArticoloInput').value = el.dataset.cod;
+                    box.innerHTML = '';
+                });
+            });
+        });
+    }, 250);
 }
 
 function confermaTermina() {
@@ -1112,9 +1201,9 @@ function confermaTermina() {
             updateBadge(faseId, 3);
             updateButtons(faseId, 3);
             updateOperatori(faseId, []);
-            // Se richiesto, apri modal conferma scarico carta
-            if (data.richiedi_scarico && data.scarico) {
-                apriModalScaricoCarta(data.scarico);
+            // Se reparto consuma carta E modal aveva sezione prelievo → invia scarico inline
+            if (data.richiedi_scarico && document.getElementById('terminaConsumaCarta').value === '1') {
+                inviaScaricoInline(faseId);
             }
         } else {
             MES.toast('Errore: ' + (data.messaggio || 'operazione fallita'),'danger');
@@ -1125,6 +1214,51 @@ function confermaTermina() {
         console.error('Errore:', err);
         document.getElementById('termina-'+faseId).checked = false;
     });
+}
+
+function inviaScaricoInline(faseId) {
+    var qtaTotale = parseInt(document.getElementById('terminaQtaPrelievo').value) || 0;
+    var articoloId = document.getElementById('terminaArticoloId').value || null;
+    var articoloLibero = document.getElementById('terminaArticoloInput').value.trim() || null;
+    var lotto = document.getElementById('terminaLotto').value || null;
+
+    // Se nessun articolo selezionato/libero E qta=0 → salta scarico
+    if (!articoloId && !articoloLibero) {
+        // Salta scarico: chiude solo la fase
+        fetch('{{ route("produzione.confermaScaricoFase") }}', {
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': csrfToken(), 'Content-Type': 'application/json' },
+            body: JSON.stringify({ fase_id: parseInt(faseId), salta: true })
+        })
+        .then(function(r){return r.json();})
+        .then(function(d){
+            if (d.success) MES.toast('Fase chiusa senza scarico carta','info');
+        });
+        return;
+    }
+
+    var payload = {
+        fase_id: parseInt(faseId),
+        articolo_id: articoloId,
+        articolo_libero: articoloId ? null : articoloLibero,
+        quantita_totale: qtaTotale,
+        lotto: lotto,
+    };
+
+    fetch('{{ route("produzione.confermaScaricoFase") }}', {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': csrfToken(), 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(function(r){return r.json();})
+    .then(function(d){
+        if (d.success) {
+            MES.toast('Carta scaricata: ' + qtaTotale + ' fg', 'success');
+        } else {
+            MES.toast('Errore scarico: ' + (d.messaggio || ''), 'danger');
+        }
+    })
+    .catch(function(){ MES.toast('Errore scarico (rete)','danger'); });
 }
 
 // Reset checkbox when modal is dismissed without confirming
