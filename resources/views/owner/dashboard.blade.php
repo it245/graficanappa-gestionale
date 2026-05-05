@@ -2201,7 +2201,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Salva filtri in sessionStorage dopo ogni modifica
     function salvaFiltri() {
-        sessionStorage.setItem('ownerFilters', JSON.stringify({
+        localStorage.setItem('ownerFilters', JSON.stringify({
             commessa: fCommessa.value,
             cliente: fCliente.value,
             descrizione: fDescrizione.value,
@@ -2227,12 +2227,12 @@ document.addEventListener('DOMContentLoaded', () => {
         choiceFase.removeActiveItems();
         choiceReparto.removeActiveItems();
         rowData.forEach(data => { data.row.style.display = ''; });
-        sessionStorage.removeItem('ownerFilters');
+        localStorage.removeItem('ownerFilters');
     });
 
     // Ripristina filtri da sessionStorage al caricamento
     try {
-        var saved = JSON.parse(sessionStorage.getItem('ownerFilters'));
+        var saved = JSON.parse(localStorage.getItem('ownerFilters'));
         if (saved) {
             var hasFilter = false;
             if (saved.commessa) { fCommessa.value = saved.commessa; hasFilter = true; }
