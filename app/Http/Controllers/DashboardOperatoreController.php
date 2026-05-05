@@ -36,15 +36,20 @@ class DashboardOperatoreController extends Controller
         $fasiVisibili = OrdineFase::where(function ($q) use ($reparti) {
                 // Fasi attive (stato < 3)
                 $q->where('stato', '<', 3);
-                // + fasi stampa offset terminate SENZA scarti dichiarati (spariscono solo dopo inserimento)
-                // ESCLUSE fasi pre-MES (data_fine < 2026-02-28) — bulk import legacy non gestito da operatori
-                $q->orWhere(function ($q2) use ($reparti) {
+                // + stampa offset/digitale terminate SENZA scarti dichiarati (producono scarti)
+                // ESCLUSE fasi pre-MES (data_fine < 2026-02-28) — bulk import legacy
+                $q->orWhere(function ($q2) {
                     $q2->where('stato', 3)
                         ->where(fn($qs) => $qs->whereNull('scarti')->orWhere('scarti', 0))
                         ->where('data_fine', '>=', '2026-02-28 00:00:00')
-                        ->whereHas('faseCatalogo', function ($q3) {
-                            $q3->whereHas('reparto', fn($r) => $r->where('nome', 'stampa offset'));
-                        });
+                        ->whereHas('faseCatalogo.reparto', fn($r) => $r->whereIn('nome', ['stampa offset', 'digitale']));
+                });
+                // + tagliacarte terminate SENZA scarico carta (no scarti, ma serve conferma prelievo)
+                $q->orWhere(function ($q3) {
+                    $q3->where('stato', 3)
+                        ->where(fn($qs) => $qs->whereNull('scarico_eseguito')->orWhere('scarico_eseguito', false))
+                        ->where('data_fine', '>=', '2026-02-28 00:00:00')
+                        ->whereHas('faseCatalogo.reparto', fn($r) => $r->where('nome', 'tagliacarte'));
                 });
             })
             ->where(fn($q) => $q->where('esterno', false)->orWhereNull('esterno'))
