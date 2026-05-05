@@ -168,13 +168,12 @@ class ProduzioneController extends Controller
         FaseStatoService::ricalcolaStati($fase->ordine_id);
     }
 
-    // Determina se richiedere conferma scarico carta (solo STAMPA + tagliacarte, no esterne, no già scaricate)
-    $faseUpper = strtoupper($fase->fase ?? '');
+    // Conferma scarico carta SOLO per reparti che consumano carta: stampa offset + digitale
+    // Escluso: stampa caldo (foil), tagliacarte, fustella, finitura, allestimento, ecc.
     $repNome = strtolower(optional(optional($fase->faseCatalogo)->reparto)->nome ?? '');
-    $isStampaOTaglio = str_starts_with($faseUpper, 'STAMPA')
-        || str_contains($repNome, 'tagliacart')
-        || str_contains($faseUpper, 'TAGLIO');
-    $richiediScarico = $isStampaOTaglio && !$fase->scarico_eseguito && !$fase->esterno;
+    $repartiCarta = ['stampa offset', 'digitale'];
+    $consumaCarta = in_array($repNome, $repartiCarta, true);
+    $richiediScarico = $consumaCarta && !$fase->scarico_eseguito && !$fase->esterno;
 
     $payloadScarico = null;
     if ($richiediScarico) {

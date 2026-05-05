@@ -88,11 +88,8 @@
     </td>
     <td id="timeout-{{ $fase->id }}">{{ $fase->timeout ?? '-' }}</td>
     @php
-        $faseUpper = strtoupper($fase->fase ?? '');
-        $isStampa = str_starts_with($faseUpper, 'STAMPA');
         $repNome = strtolower(optional(optional($fase->faseCatalogo)->reparto)->nome ?? '');
-        $isTagliacarte = str_contains($repNome, 'tagliacart') || str_contains($faseUpper, 'TAGLIO');
-        $consentiScarico = ($isStampa || $isTagliacarte);
+        $consentiScarico = in_array($repNome, ['stampa offset', 'digitale'], true);
     @endphp
     <td id="scarico-{{ $fase->id }}" style="text-align:center; white-space:nowrap;">
         @if($consentiScarico && $fase->stato >= 2)
