@@ -593,6 +593,20 @@ function fasiHtml(fasi) {
 
 function fmt(n) { return Number(n || 0).toLocaleString('it-IT'); }
 
+// XSS guard: escape HTML su tutti i dati provenienti da API/DB prima di inserirli via innerHTML
+function fieryEsc(s) {
+    if (s === null || s === undefined) return '';
+    var d = document.createElement('div');
+    d.textContent = String(s);
+    return d.innerHTML;
+}
+// Whitelist stati noti per evitare classe CSS/HTML iniettati (sb-XXX dot-XXX)
+function fieryStatoSafe(s) {
+    var valid = ['idle','printing','warming','offline','error','ready','busy'];
+    var v = String(s || '').toLowerCase().replace(/[^a-z]/g,'');
+    return valid.indexOf(v) !== -1 ? v : 'offline';
+}
+
 setInterval(function() {
     fetch('{{ route("mes.fiery.status") }}')
         .then(function(r) { return r.json(); })
@@ -603,7 +617,8 @@ setInterval(function() {
             }
 
             // Stato
-            document.getElementById('stato-container').innerHTML = '<span class="status-badge sb-' + data.stato + '"><span class="status-dot dot-' + data.stato + '"></span>' + data.stato.charAt(0).toUpperCase() + data.stato.slice(1) + '</span>';
+            var statoSafe = fieryStatoSafe(data.stato);
+            document.getElementById('stato-container').innerHTML = '<span class="status-badge sb-' + statoSafe + '"><span class="status-dot dot-' + statoSafe + '"></span>' + statoSafe.charAt(0).toUpperCase() + statoSafe.slice(1) + '</span>';
 
             // Avviso
             var avvBox = document.getElementById('avviso-box');
@@ -618,7 +633,7 @@ setInterval(function() {
 
             // RIP
             var rc = document.getElementById('rip-container');
-            if (data.rip && !data.rip.idle && data.rip.documento) { rc.innerHTML = '<span class="rip-chip rip-active">&#9654; RIP: ' + data.rip.documento + '</span>'; }
+            if (data.rip && !data.rip.idle && data.rip.documento) { rc.innerHTML = '<span class="rip-chip rip-active">&#9654; RIP: ' + fieryEsc(data.rip.documento) + '</span>'; }
             else { rc.innerHTML = '<span class="rip-chip rip-idle">RIP idle</span>'; }
 
             // Job in stampa
@@ -626,14 +641,15 @@ setInterval(function() {
             if (data.stampa && data.stampa.documento) {
                 var commHtml = '';
                 if (data.commessa) {
-                    commHtml = '<div class="mt-2"><span class="commessa-chip">' + data.commessa.commessa + '</span><span style="color:var(--mes-text-secondary);margin-left:8px;font-size:13px;">' + data.commessa.cliente + '</span></div>';
+                    commHtml = '<div class="mt-2"><span class="commessa-chip">' + fieryEsc(data.commessa.commessa) + '</span><span style="color:var(--mes-text-secondary);margin-left:8px;font-size:13px;">' + fieryEsc(data.commessa.cliente) + '</span></div>';
                 }
-                sc.innerHTML = '<div class="print-doc">' + data.stampa.documento + '</div>' + commHtml +
-                    '<div class="prog-bar-wrap"><div class="prog-bar"><div class="prog-fill" style="width:' + data.stampa.progresso + '%"></div><div class="prog-text">' + data.stampa.progresso + '%</div></div>' +
-                    '<div class="prog-stats"><span>Copie: <strong>' + data.stampa.copie_fatte + '</strong> / ' + data.stampa.copie_totali + '</span><span>Pagine: ' + data.stampa.pagine + '</span><span>Utente: ' + (data.stampa.utente || '') + '</span></div></div>';
+                var progSafe = parseInt(data.stampa.progresso) || 0;
+                sc.innerHTML = '<div class="print-doc">' + fieryEsc(data.stampa.documento) + '</div>' + commHtml +
+                    '<div class="prog-bar-wrap"><div class="prog-bar"><div class="prog-fill" style="width:' + progSafe + '%"></div><div class="prog-text">' + progSafe + '%</div></div>' +
+                    '<div class="prog-stats"><span>Copie: <strong>' + fieryEsc(data.stampa.copie_fatte) + '</strong> / ' + fieryEsc(data.stampa.copie_totali) + '</span><span>Pagine: ' + fieryEsc(data.stampa.pagine) + '</span><span>Utente: ' + fieryEsc(data.stampa.utente || '') + '</span></div></div>';
                 if (data.jobs && data.jobs.commessa_sheets && data.jobs.commessa_sheets.fogli_totali > 0) {
                     var cs = data.jobs.commessa_sheets;
-                    sc.innerHTML += '<div style="margin-top:10px;padding:8px 14px;background:#dbeafe;border:1px solid #93c5fd;border-radius:8px;font-size:12px;color:var(--mes-text-secondary);">Fogli totali: <strong style="color:var(--mes-primary);">' + cs.fogli_totali + '</strong> <span style="margin-left:8px;">' + cs.copie_totali + ' copie</span> <span style="margin-left:8px;color:var(--mes-text-tertiary);">' + cs.run_count + ' run</span></div>';
+                    sc.innerHTML += '<div style="margin-top:10px;padding:8px 14px;background:#dbeafe;border:1px solid #93c5fd;border-radius:8px;font-size:12px;color:var(--mes-text-secondary);">Fogli totali: <strong style="color:var(--mes-primary);">' + fieryEsc(cs.fogli_totali) + '</strong> <span style="margin-left:8px;">' + fieryEsc(cs.copie_totali) + ' copie</span> <span style="margin-left:8px;color:var(--mes-text-tertiary);">' + fieryEsc(cs.run_count) + ' run</span></div>';
                 }
             } else {
                 sc.innerHTML = '<div class="no-job">Nessun job in stampa</div>';
@@ -642,7 +658,7 @@ setInterval(function() {
             // Sidebar commessa
             var cd = document.getElementById('commessa-detail');
             if (cd && data.commessa) {
-                cd.innerHTML = '<div class="mb-2"><div class="info-lbl">Commessa</div><div class="info-val">' + data.commessa.commessa + '</div></div><div class="mb-2"><div class="info-lbl">Cliente</div><div class="info-val-sm">' + data.commessa.cliente + '</div></div>';
+                cd.innerHTML = '<div class="mb-2"><div class="info-lbl">Commessa</div><div class="info-val">' + fieryEsc(data.commessa.commessa) + '</div></div><div class="mb-2"><div class="info-lbl">Cliente</div><div class="info-val-sm">' + fieryEsc(data.commessa.cliente) + '</div></div>';
             } else if (cd) { cd.innerHTML = ''; }
 
             // Stats
@@ -658,18 +674,18 @@ setInterval(function() {
                     var qh = '';
                     data.jobs.queue.forEach(function(j) {
                         var m = j.mes;
-                        qh += '<div class="q-card"><div><div class="q-title">' + j.title + '</div>';
+                        qh += '<div class="q-card"><div><div class="q-title">' + fieryEsc(j.title) + '</div>';
                         if (m) {
-                            qh += '<div style="margin-bottom:6px;"><span class="commessa-chip">' + m.commessa + '</span><span style="font-size:10px;color:var(--mes-text-tertiary);margin-left:6px;">' + m.cliente + '</span></div>';
-                            qh += '<div class="q-desc">' + (m.descrizione || '').substring(0, 100) + '</div>';
-                            if (m.note_prestampa) qh += '<div class="q-notes">' + m.note_prestampa + '</div>';
+                            qh += '<div style="margin-bottom:6px;"><span class="commessa-chip">' + fieryEsc(m.commessa) + '</span><span style="font-size:10px;color:var(--mes-text-tertiary);margin-left:6px;">' + fieryEsc(m.cliente) + '</span></div>';
+                            qh += '<div class="q-desc">' + fieryEsc((m.descrizione || '').substring(0, 100)) + '</div>';
+                            if (m.note_prestampa) qh += '<div class="q-notes">' + fieryEsc(m.note_prestampa) + '</div>';
                             qh += fasiHtml(m.fasi);
                         }
                         qh += '</div><div>';
-                        if (m && m.carta) qh += '<div class="q-carta-lbl">Carta</div><div class="q-carta-val">' + m.carta + '</div><div class="q-carta-sub">' + (m.cod_carta || '') + '</div>';
+                        if (m && m.carta) qh += '<div class="q-carta-lbl">Carta</div><div class="q-carta-val">' + fieryEsc(m.carta) + '</div><div class="q-carta-sub">' + fieryEsc(m.cod_carta || '') + '</div>';
                         qh += '</div><div class="q-qta">';
-                        if (m) { qh += '<div class="q-num">' + fmt(m.qta_richiesta) + '</div><div class="q-sub">pezzi</div>'; if (m.qta_carta) qh += '<div class="q-sub">' + fmt(m.qta_carta) + ' fg</div>'; }
-                        qh += '</div><div class="q-meta"><div class="q-date">' + (m ? m.data_prevista || '-' : '-') + '</div><div class="q-copies">' + (j.num_copies || '-') + ' copie</div></div></div>';
+                        if (m) { qh += '<div class="q-num">' + fieryEsc(fmt(m.qta_richiesta)) + '</div><div class="q-sub">pezzi</div>'; if (m.qta_carta) qh += '<div class="q-sub">' + fieryEsc(fmt(m.qta_carta)) + ' fg</div>'; }
+                        qh += '</div><div class="q-meta"><div class="q-date">' + fieryEsc(m ? m.data_prevista || '-' : '-') + '</div><div class="q-copies">' + fieryEsc(j.num_copies || '-') + ' copie</div></div></div>';
                     });
                     qc.innerHTML = qh;
                 }
@@ -682,10 +698,10 @@ setInterval(function() {
                         var pct = j.num_copies > 0 ? Math.round((j.copies_printed / j.num_copies) * 100) : 100;
                         var mesHtml = '', cartaHtml = '';
                         if (j.mes) {
-                            mesHtml = '<span class="commessa-chip">' + j.mes.commessa + '</span><span style="font-size:10px;color:var(--mes-text-tertiary);margin-left:4px;">' + j.mes.cliente + '</span>';
-                            cartaHtml = j.mes.carta || '';
+                            mesHtml = '<span class="commessa-chip">' + fieryEsc(j.mes.commessa) + '</span><span style="font-size:10px;color:var(--mes-text-tertiary);margin-left:4px;">' + fieryEsc(j.mes.cliente) + '</span>';
+                            cartaHtml = fieryEsc(j.mes.carta || '');
                         }
-                        ch += '<tr><td class="c-title">' + j.title + '</td><td>' + mesHtml + '</td><td style="font-size:11px;">' + cartaHtml + '</td><td><div class="mini-bar"><div class="fill" style="width:' + pct + '%"></div></div><span class="copies-sm">' + j.copies_printed + '/' + j.num_copies + '</span></td><td style="font-weight:600;color:var(--mes-text-primary);">' + j.total_sheets + '</td><td>' + (j.duplex ? 'Si' : '-') + '</td><td style="font-size:11px;color:var(--mes-text-tertiary);white-space:nowrap;">' + j.date + '</td></tr>';
+                        ch += '<tr><td class="c-title">' + fieryEsc(j.title) + '</td><td>' + mesHtml + '</td><td style="font-size:11px;">' + cartaHtml + '</td><td><div class="mini-bar"><div class="fill" style="width:' + pct + '%"></div></div><span class="copies-sm">' + fieryEsc(j.copies_printed) + '/' + fieryEsc(j.num_copies) + '</span></td><td style="font-weight:600;color:var(--mes-text-primary);">' + fieryEsc(j.total_sheets) + '</td><td>' + (j.duplex ? 'Si' : '-') + '</td><td style="font-size:11px;color:var(--mes-text-tertiary);white-space:nowrap;">' + fieryEsc(j.date) + '</td></tr>';
                     });
                     cb.innerHTML = ch;
                 }
@@ -708,9 +724,11 @@ setInterval(function() {
                     data.snmp.toner.forEach(function(t) {
                         var c = tonerColors[t.nome] || '#6b7280';
                         var w = t.livello >= 0 && t.livello <= 15;
-                        th += '<div class="toner-item"><div class="toner-label">' + t.nome + '</div>' +
-                            '<div class="toner-bar-v"><div class="toner-fill-v ' + (w ? 'toner-warn' : '') + '" style="height:' + Math.max(t.livello,0) + '%;background:' + c + ';"></div></div>' +
-                            '<div class="toner-pct ' + (w ? 'toner-warn' : '') + '" style="color:' + c + '">' + (t.livello >= 0 ? t.livello + '%' : '?') + '</div></div>';
+                        var livSafe = parseInt(t.livello);
+                        if (isNaN(livSafe)) livSafe = -1;
+                        th += '<div class="toner-item"><div class="toner-label">' + fieryEsc(t.nome) + '</div>' +
+                            '<div class="toner-bar-v"><div class="toner-fill-v ' + (w ? 'toner-warn' : '') + '" style="height:' + Math.max(livSafe,0) + '%;background:' + c + ';"></div></div>' +
+                            '<div class="toner-pct ' + (w ? 'toner-warn' : '') + '" style="color:' + c + '">' + (livSafe >= 0 ? livSafe + '%' : '?') + '</div></div>';
                     });
                     tc.innerHTML = th;
                 }
@@ -722,14 +740,15 @@ setInterval(function() {
                     data.snmp.vassoi.forEach(function(v, i) {
                         var p = v.percentuale;
                         var low = p !== null && p >= 0 && p <= 20;
+                        var pSafe = (p === null || p === undefined) ? null : parseInt(p);
                         var info = '-';
-                        if (p === -1) info = 'Presente';
-                        else if (p !== null) info = p + '%';
+                        if (pSafe === -1) info = 'Presente';
+                        else if (pSafe !== null) info = pSafe + '%';
                         trh += '<div class="tray-item ' + (low ? 'low' : '') + '">' +
-                            '<div class="tray-name">' + (v.nome || 'Vassoio '+(i+1)) + '</div>' +
-                            '<div class="tray-bar-h"><div class="tray-fill-h" style="width:' + (p !== null && p >= 0 ? p : 0) + '%;' + (low ? 'background:var(--mes-danger);' : '') + '"></div></div>' +
+                            '<div class="tray-name">' + fieryEsc(v.nome || 'Vassoio '+(i+1)) + '</div>' +
+                            '<div class="tray-bar-h"><div class="tray-fill-h" style="width:' + (pSafe !== null && pSafe >= 0 ? pSafe : 0) + '%;' + (low ? 'background:var(--mes-danger);' : '') + '"></div></div>' +
                             '<div class="tray-info">' + info + '</div>' +
-                            (v.tipo ? '<div class="tray-type">' + v.tipo + '</div>' : '') + '</div>';
+                            (v.tipo ? '<div class="tray-type">' + fieryEsc(v.tipo) + '</div>' : '') + '</div>';
                     });
                     tr.innerHTML = trh;
                 }
@@ -739,9 +758,11 @@ setInterval(function() {
                 if (fc && data.snmp.punti) {
                     var fh = '';
                     data.snmp.punti.forEach(function(p) {
-                        var low = p.livello >= 0 && p.livello <= 20;
-                        fh += '<div class="fin-item ' + (low ? 'low' : '') + '"><div class="fin-name">' + p.nome + '</div>' +
-                            '<div class="fin-pct" style="' + (low ? 'color:var(--mes-danger);' : '') + '">' + (p.livello >= 0 ? p.livello + '%' : '?') + '</div></div>';
+                        var livSafe = parseInt(p.livello);
+                        if (isNaN(livSafe)) livSafe = -1;
+                        var low = livSafe >= 0 && livSafe <= 20;
+                        fh += '<div class="fin-item ' + (low ? 'low' : '') + '"><div class="fin-name">' + fieryEsc(p.nome) + '</div>' +
+                            '<div class="fin-pct" style="' + (low ? 'color:var(--mes-danger);' : '') + '">' + (livSafe >= 0 ? livSafe + '%' : '?') + '</div></div>';
                     });
                     fc.innerHTML = fh;
                 }
@@ -749,7 +770,7 @@ setInterval(function() {
                 // Alert
                 var ab = document.getElementById('snmp-alert');
                 if (ab) {
-                    if (data.snmp.alert) { ab.className = 'alert-strip warn'; ab.innerHTML = '&#9888; ' + data.snmp.alert; }
+                    if (data.snmp.alert) { ab.className = 'alert-strip warn'; ab.innerHTML = '&#9888; ' + fieryEsc(data.snmp.alert); }
                     else { ab.className = 'alert-strip ok'; ab.innerHTML = '&#10003; Nessun avviso attivo sulla macchina'; }
                 }
             }

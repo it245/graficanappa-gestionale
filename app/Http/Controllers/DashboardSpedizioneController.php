@@ -291,9 +291,10 @@ class DashboardSpedizioneController extends Controller
                 'messaggio' => ($tipoConsegna === 'parziale' ? 'Consegna parziale' : 'Consegnato') . ' - commessa ' . $commessa
             ]);
         } catch (\Exception $e) {
+            \Log::error('consegna spedizione errore', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return response()->json([
                 'success' => false,
-                'messaggio' => 'Errore server: ' . $e->getMessage()
+                'messaggio' => 'Errore server. Riprova o contatta IT.'
             ], 500);
         }
     }
@@ -481,9 +482,10 @@ class DashboardSpedizioneController extends Controller
                 'messaggio' => 'Consegna annullata - commessa ' . $commessa
             ]);
         } catch (\Exception $e) {
+            \Log::error('annullaConsegna errore', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return response()->json([
                 'success' => false,
-                'messaggio' => 'Errore server: ' . $e->getMessage()
+                'messaggio' => 'Errore server. Riprova o contatta IT.'
             ], 500);
         }
     }

@@ -215,6 +215,9 @@ class DashboardOperatoreController extends Controller
         $operatore = $request->attributes->get('operatore') ?? auth()->guard('operatore')->user();
         if (!$operatore) abort(403, 'Accesso negato');
 
+        // Estende GROUP_CONCAT max len (default MySQL 1024 byte tronca descrizioni lunghe)
+        \Illuminate\Support\Facades\DB::statement('SET SESSION group_concat_max_len = 65535');
+
         // Commesse con almeno una fase attiva (stato < 3), raggruppate per commessa (1 riga per commessa)
         $commesse = \App\Models\Ordine::whereHas('fasi', fn($q) => $q->where('stato', '<', 3))
             ->select('commessa',

@@ -20,7 +20,7 @@ Artisan::command('priorita:ricalcola', function () {
 })->describe('Ricalcola tutte le priorità degli ordini');
 
 // Sync automatico Onda ogni ora (h24)
-Schedule::command('onda:sync')->hourly();
+Schedule::command('onda:sync')->hourly()->withoutOverlapping();
 
 // Sync bidirezionale Excel ↔ DB ogni 2 minuti (h24)
 Schedule::command('excel:sync')->everyTwoMinutes()->withoutOverlapping();

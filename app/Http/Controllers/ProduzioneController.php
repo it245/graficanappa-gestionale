@@ -60,7 +60,7 @@ class ProduzioneController extends Controller
             ]);
         } catch (\Exception $e) {
             \Log::error('avviaFase errore: ' . $e->getMessage(), ['fase_id' => $request->fase_id, 'trace' => $e->getTraceAsString()]);
-            return response()->json(['success' => false, 'messaggio' => $e->getMessage()], 500);
+            return response()->json(['success' => false, 'messaggio' => 'Errore server. Riprova o contatta IT.'], 500);
         }
     }
 
@@ -456,7 +456,7 @@ public function aggiornaCampo(Request $request)
             ]);
             return response()->json([
                 'success' => false,
-                'messaggio' => 'Errore scarico: ' . $e->getMessage(),
+                'messaggio' => 'Errore durante lo scarico carta. Riprova o contatta IT.',
             ], 500);
         }
     }
@@ -543,7 +543,7 @@ public function aggiornaCampo(Request $request)
             \Illuminate\Support\Facades\Log::error('confermaScaricoFase errore', [
                 'fase_id' => $fase->id, 'error' => $e->getMessage(),
             ]);
-            return response()->json(['success' => false, 'messaggio' => 'Errore: ' . $e->getMessage()], 500);
+            return response()->json(['success' => false, 'messaggio' => 'Errore durante la conferma scarico. Riprova o contatta IT.'], 500);
         }
     }
 
