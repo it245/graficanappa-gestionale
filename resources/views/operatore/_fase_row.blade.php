@@ -11,17 +11,34 @@
         @php
             $repNomeStato = strtolower(optional(optional($fase->faseCatalogo)->reparto)->nome ?? '');
             $produceScarti = in_array($repNomeStato, ['stampa offset', 'digitale'], true);
-            $isTagliacarteStato = $repNomeStato === 'tagliacarte';
             $scartiVuoti = empty($fase->scarti) || (int) $fase->scarti === 0;
-            $scaricoNonFatto = empty($fase->scarico_eseguito ?? false);
-            // Esclude bulk import storico pre-MES (data_fine < 28/02/2026)
+            $scaricoNonFatto = empty($fase->scarico_eseguito);
+            $releaseDef2Row = config('mes.release_def2_at', '2026-12-31 23:59:59');
             $dopoIntegrazione = $fase->data_fine
-                && \Carbon\Carbon::parse($fase->data_fine)->gte('2026-02-28 00:00:00');
+                && \Carbon\Carbon::parse($fase->data_fine)->gte($releaseDef2Row);
         @endphp
-        @if($fase->stato == 3 && $produceScarti && $scartiVuoti && $dopoIntegrazione)
-            <br><a href="javascript:void(0)" onclick="focusInputScarti({{ $fase->id }})"
-                   style="font-weight:600; color:#dc3545; font-size:11px; text-decoration:underline; cursor:pointer;"
-                   title="Click per inserire scarti">Inserisci scarti</a>
+        @if($fase->stato == 3 && $produceScarti && $dopoIntegrazione && ($scartiVuoti || $scaricoNonFatto))
+            @if($repNomeStato === 'digitale' || !$scartiVuoti)
+                {{-- Digitale: sempre via modal (con scarti opzionali se mancanti).
+                     Offset con scarti gia inseriti: solo prelievo. --}}
+                <br><a href="javascript:void(0)"
+                       data-fase-id="{{ $fase->id }}"
+                       data-commessa="{{ $fase->ordine->commessa ?? '' }}"
+                       data-fase-nome="{{ $fase->faseCatalogo->nome_display ?? $fase->fase }}"
+                       data-cod-carta="{{ $fase->ordine->cod_carta ?? '' }}"
+                       data-desc-carta="{{ $fase->ordine->carta ?? '' }}"
+                       data-qta-suggerita="{{ (int) ($fase->qta_prod ?? 0) }}"
+                       data-scarti-attuali="{{ (int) ($fase->scarti ?? 0) }}"
+                       data-mostra-scarti="{{ $scartiVuoti ? '1' : '0' }}"
+                       onclick="apriDialogScarico(this)"
+                       style="font-weight:600; color:#0d6efd; font-size:11px; text-decoration:underline; cursor:pointer;"
+                       title="Apri modale prelievo carta">📦 Inserisci prelievo</a>
+            @else
+                {{-- Offset senza scarti: focus input inline --}}
+                <br><a href="javascript:void(0)" onclick="focusInputScarti({{ $fase->id }})"
+                       style="font-weight:600; color:#dc3545; font-size:11px; text-decoration:underline; cursor:pointer;"
+                       title="Click per inserire scarti">Inserisci scarti</a>
+            @endif
         @endif
     </td>
 

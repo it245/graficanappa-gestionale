@@ -646,7 +646,7 @@ function focusInputScarti(faseId) {
 }
 
 function salvaScarti(faseId, valore) {
-    fetch('{{ route("produzione.aggiornaCampo") }}', {
+    return fetch('{{ route("produzione.aggiornaCampo") }}', {
         method: 'POST',
         headers: {
             'X-CSRF-TOKEN': window.csrfToken(),
@@ -778,6 +778,13 @@ function apriDialogScarico(btn) {
     document.getElementById('scarico-lotto').value = '';
     document.getElementById('scarico-suggest').innerHTML = '';
     document.getElementById('scarico-messaggio').innerHTML = '';
+
+    // Campo scarti opzionale: visibile solo se la fase non ha già scarti
+    var mostraScarti = btn.dataset.mostraScarti === '1';
+    var wrapScarti = document.getElementById('scarico-scarti-wrap');
+    var inputScarti = document.getElementById('scarico-scarti');
+    inputScarti.value = '';
+    wrapScarti.style.display = mostraScarti ? '' : 'none';
 
     document.getElementById('modal-scarico').style.display = 'flex';
 
@@ -948,6 +955,8 @@ function confermaScarico() {
     var articoloId = document.getElementById('scarico-articolo-id').value;
     var quantita = document.getElementById('scarico-quantita').value;
     var lotto = document.getElementById('scarico-lotto').value;
+    var scartiInput = document.getElementById('scarico-scarti');
+    var scartiVal = (scartiInput && scartiInput.offsetParent !== null) ? scartiInput.value : '';
 
     if (!articoloId) {
         MES.toast('Seleziona un articolo dalla lista','warning');
@@ -961,20 +970,28 @@ function confermaScarico() {
     var msgDiv = document.getElementById('scarico-messaggio');
     msgDiv.innerHTML = '<span style="color:#0d6efd;">Salvataggio...</span>';
 
-    fetch('{{ route("produzione.scaricaCarta") }}', {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': window.csrfToken(),
-            'X-Op-Token': window.opToken(),
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-            fase_id: faseId,
-            articolo_id: articoloId,
-            quantita: parseInt(quantita),
-            lotto: lotto || null
-        })
+    // 1) Se scarti facoltativi inseriti (solo digitale): salva prima nel campo scarti della fase
+    var preStep = Promise.resolve(true);
+    if (scartiVal !== '' && parseInt(scartiVal) >= 0) {
+        preStep = salvaScarti(faseId, parseInt(scartiVal)).then(function(){ return true; }).catch(function(){ return true; });
+    }
+
+    preStep.then(function() {
+        return fetch('{{ route("produzione.scaricaCarta") }}', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': window.csrfToken(),
+                'X-Op-Token': window.opToken(),
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                fase_id: faseId,
+                articolo_id: articoloId,
+                quantita: parseInt(quantita),
+                lotto: lotto || null
+            })
+        });
     })
     .then(function(r) { return r.json(); })
     .then(function(data) {
@@ -1066,6 +1083,12 @@ function confermaScarico() {
                 <label style="font-size:12px;font-weight:600;">Lotto (opzionale)</label>
                 <input type="text" id="scarico-lotto"
                        style="width:100%;padding:8px;border:1px solid #ced4da;border-radius:4px;font-size:14px;">
+            </div>
+            <div id="scarico-scarti-wrap" style="flex:1;display:none;">
+                <label style="font-size:12px;font-weight:600;">Scarti (facoltativo)</label>
+                <input type="number" id="scarico-scarti" min="0"
+                       style="width:100%;padding:8px;border:1px solid #ced4da;border-radius:4px;font-size:14px;"
+                       placeholder="0">
             </div>
         </div>
 

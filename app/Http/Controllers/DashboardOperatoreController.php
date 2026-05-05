@@ -33,15 +33,23 @@ class DashboardOperatoreController extends Controller
         $fasiInfo = config('fasi_ore', []);
 
         // Recupera le fasi visibili per i reparti dell'operatore
-        $fasiVisibili = OrdineFase::where(function ($q) use ($reparti) {
+        $releaseDef2 = config('mes.release_def2_at', '2026-12-31 23:59:59');
+        $fasiVisibili = OrdineFase::where(function ($q) use ($reparti, $releaseDef2) {
                 // Fasi attive (stato < 3)
                 $q->where('stato', '<', 3);
-                // + stampa offset/digitale terminate SENZA scarti dichiarati (producono scarti)
-                // ESCLUSE fasi pre-MES (data_fine < 2026-02-28) — bulk import legacy
-                $q->orWhere(function ($q2) {
+                // + stampa offset/digitale terminate ma con scarti mancanti
+                //   OPPURE prelievo carta non confermato.
+                // ESCLUSE fasi pre-release def2 (data_fine < release date)
+                $q->orWhere(function ($q2) use ($releaseDef2) {
                     $q2->where('stato', 3)
-                        ->where(fn($qs) => $qs->whereNull('scarti')->orWhere('scarti', 0))
-                        ->where('data_fine', '>=', '2026-02-28 00:00:00')
+                        ->where(function ($qs) {
+                            $qs->whereNull('scarti')
+                               ->orWhere('scarti', 0)
+                               ->orWhere(function ($qss) {
+                                   $qss->where(fn($q3) => $q3->whereNull('scarico_eseguito')->orWhere('scarico_eseguito', false));
+                               });
+                        })
+                        ->where('data_fine', '>=', $releaseDef2)
                         ->whereHas('faseCatalogo.reparto', fn($r) => $r->whereIn('nome', ['stampa offset', 'digitale']));
                 });
                 // Tagliacarte: NON viene mostrato a stato 3 — operatore termina manualmente
