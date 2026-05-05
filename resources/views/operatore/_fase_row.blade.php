@@ -17,7 +17,9 @@
                 && \Carbon\Carbon::parse($fase->data_fine)->gte('2026-02-28 00:00:00');
         @endphp
         @if($fase->stato == 3 && $consumaCartaStato && $scartiVuoti && $dopoIntegrazione)
-            <br><small style="font-weight:normal; color:#dc3545;">Inserisci scarti</small>
+            <br><a href="javascript:void(0)" onclick="focusInputScarti({{ $fase->id }})"
+                   style="font-weight:600; color:#dc3545; font-size:11px; text-decoration:underline; cursor:pointer;"
+                   title="Click per inserire scarti">Inserisci scarti</a>
         @endif
     </td>
 
