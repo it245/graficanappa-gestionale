@@ -447,6 +447,80 @@ Step roadmap originale:
 
 ---
 
+## Security Hardening — Piano completo (05/05/2026)
+
+Anticipa parzialmente v6.0 (Q2 2027). Audit base: `reference_security_audit.md` (16/03/2026) + integrazione GDPR/Statuto Lavoratori (05/05/2026).
+
+**Documenti firmati**: ✅ DOC-SEC-MES-001, ✅ DOC-GDPR-MES-001 (05/05/2026).
+
+### Sprint Security 1 — CRITICO (1-2 giorni, bloccante rollout)
+
+- [ ] **1. Credenziali → .env**: `SyncPresenze.php:41` password share NetTime hardcoded → `NETTIME_SHARE_USER` + `NETTIME_SHARE_PASS`
+- [ ] **2. HTTPS funzionante**: cert valido (mkcert / Cloudflare Tunnel) + `.env` produzione fix `SESSION_ENCRYPT`/CSRF (vedi sessione 29/04 fallita)
+- [ ] **3. Backup automatico mysqldump**: cron daily 02:00 → NAS o storage off-server, retention 30gg, test restore mensile
+- [ ] **4. Auth tracking BRT**: middleware `auth` su `routes/web.php:155-156` (endpoint pubblici tracking BRT)
+- [ ] **5. Error handling**: rimuovere `$e->getMessage()` da response utente (`DashboardOwnerController.php:656,864`), log only via Log::error
+- [ ] **6. Whitelist campi ProduzioneController:252**: `$fase->{$request->campo}` → array allow-list (`['scarti','qta_prod','note', ...]`)
+
+### Sprint Security 2 — ALTO (2-3 giorni)
+
+- [ ] **7. 2FA Owner**: estendere middleware `OwnerMiddleware.php` con check `session('2fa_pending')` (riusare `TwoFactorService` esistente, già attivo per Admin)
+- [ ] **8. Audit log strutturato**: tabella `audit_logs` (user_id, action, model, model_id, before JSON, after JSON, ip, user_agent, ts) + Eloquent observer su Ordine, OrdineFase, User. Pattern enterprise ISO 27001 A.12.4
+- [ ] **9. Rate limiting**: middleware `throttle:5,1` su login + endpoint pubblici (anti brute-force)
+- [ ] **10. XSS sanitize**: `{!! !!}` → `{{ }}` o `Str::sanitizeHtml()` in `spedizione/dashboard.blade.php:723` + `owner/dashboard.blade.php:1115`
+- [ ] **11. IDOR check**: `eliminaFase` policy/gate con check ruolo + ownership
+- [ ] **12. SSL verify true**: `BrtService.php:32,58` `verify => true` con CA root path corretto
+
+### Sprint Security 3 — MEDIO (1-2 giorni)
+
+- [ ] **13. Op_token TTL**: scadenza 8h con refresh, oppure logout fine turno
+- [ ] **14. Fillable restrittivo**: model `Ordine` whitelist precisa, no mass assignment
+- [ ] **15. CSP headers**: middleware `Content-Security-Policy` (script-src, style-src, img-src) — esiste `SecurityHeaders.php`, da estendere
+- [ ] **16. Session encrypt**: rifare `SESSION_ENCRYPT=true` con `SESSION_DOMAIN` corretto (no breaking CSRF)
+- [ ] **17. Permessi filesystem**: `.env` chmod 600, `storage/` chmod 750, owner www-data
+
+### Sprint Security 4 — BASSO (continuous)
+
+- [ ] **18. Upload limits**: `importOrdini` request validation `max:5120` (5MB) + `mimes:xlsx,xls`
+- [ ] **19. Password policy**: min 12 char, complexity, rotation 90gg (Admin + Owner)
+- [ ] **20. Disable directory listing** Apache: `Options -Indexes` su vhost
+- [ ] **21. Headers sicurezza** (estendere `SecurityHeaders.php`): X-Frame-Options DENY, X-Content-Type-Options nosniff, Referrer-Policy strict-origin-when-cross-origin, Permissions-Policy
+- [ ] **22. Failed login lockout**: dopo 5 tentativi blocco 15min (Laravel Fortify `RateLimited` o custom)
+- [ ] **23. Composer audit**: `composer audit` weekly Task Scheduler → email alert se CVE
+
+### Sprint Security INFRA — Futuro v6.0+ (Q2 2027+)
+
+- [ ] **24. VLAN segmentation IT/OT**: VLAN ufficio (10.0.10.0/24) + VLAN macchine (10.0.20.0/24) — al prossimo rinnovo network. Topic CCNA modulo 2
+- [ ] **25. Firewall L3** (PfSense / OPNsense / Cisco ASA): filtro flussi server↔macchine (whitelist porte)
+- [ ] **26. WAF**: ModSecurity Apache OWASP CRS davanti a Laravel
+- [ ] **27. SIEM/log aggregator**: Wazuh OSS o Graylog — log audit centrali su server separato (forensics-readiness)
+- [ ] **28. Endpoint protection** PC operatori: antivirus enterprise (Bitdefender / ESET / Sophos)
+- [ ] **29. DR plan**: RTO/RPO definiti, test ripristino backup ogni 6 mesi, runbook documentato
+
+### Compliance — non-tecnico (BLOCCANTE rollout completo)
+
+- [ ] **C1. Procedura sindacale art. 4 Statuto Lavoratori**: accordo RSU/RSA o autorizzazione ITL — MES + NetTime tracciano produttività individuale
+- [ ] **C2. Informativa GDPR art. 13**: documento firmato da ogni dipendente (cosa raccogliamo, perché, retention, diritti art. 15-22)
+- [ ] **C3. DPIA**: Data Protection Impact Assessment per profilazione produttività
+- [ ] **C4. Nomina DPO** (Data Protection Officer) — interno o esterno
+- [ ] **C5. Procedura data breach**: notifica Garante 72h (art. 33 GDPR) — runbook scritto
+- [ ] **C6. Revisione registro trattamenti annuale** — reminder gennaio 2027
+- [ ] **C7. Verifica perimetro NIS2** (recepita ottobre 2024): se Grafica Nappa rientra "essential entity", obblighi cybersecurity rinforzati
+
+### Stato 2FA
+
+| Ruolo | 2FA | Note |
+|-------|-----|------|
+| Admin | ✅ | Google2FA via TwoFactorService, AdminAuth middleware |
+| Owner | ❌ | OwnerMiddleware da estendere (riuso TwoFactorService) |
+| Operatore | ❌ | Codice + op_token, 2FA non applicabile (workflow tablet) |
+| Spedizione | ❌ | Da valutare |
+| Magazzino | ❌ | Da valutare |
+| Prestampa | ❌ | Da valutare |
+| Fiery | ❌ | Da valutare |
+
+---
+
 ## DONE recenti (28/04/2026)
 
 - ✅ Fiery resilience: retry + stale cache 30 min + warm command
