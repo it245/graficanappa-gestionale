@@ -813,7 +813,7 @@ tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !imp
 @endphp
 
     {{-- TABELLA --}}
-    <div id="tableScroll" style="width:100%; overflow-x:auto;">
+    <div id="tableScroll" style="width:100%; overflow-x:auto; will-change:scroll-position; transform:translateZ(0); contain:layout;">
         <table id="tabellaOrdini" class="table table-bordered table-sm table-striped" style="white-space:nowrap;">
             <thead class="table-dark">
                 <tr>
@@ -2569,18 +2569,33 @@ document.addEventListener('DOMContentLoaded', function() {
     if(!ts||!sb) return;
     function sync(){ si.style.width = ts.scrollWidth+'px'; }
     sync();
-    window.addEventListener('resize', sync);
-    new MutationObserver(sync).observe(ts,{childList:true,subtree:true});
+    window.addEventListener('resize', sync, {passive:true});
+    // Debounce mutation observer: tantissime mutazioni -> 1 sync ogni 200ms
+    var syncTimer;
+    new MutationObserver(function(){
+        clearTimeout(syncTimer);
+        syncTimer = setTimeout(sync, 200);
+    }).observe(ts, {childList:true}); // no subtree -> evita osservare ogni cella
+
     var lock=false;
-    sb.addEventListener('scroll',function(){ if(lock)return; lock=true; ts.scrollLeft=sb.scrollLeft; lock=false; });
-    ts.addEventListener('scroll',function(){ if(lock)return; lock=true; sb.scrollLeft=ts.scrollLeft; lock=false; });
+    sb.addEventListener('scroll', function(){ if(lock)return; lock=true; ts.scrollLeft=sb.scrollLeft; lock=false; }, {passive:true});
+    ts.addEventListener('scroll', function(){ if(lock)return; lock=true; sb.scrollLeft=ts.scrollLeft; lock=false; }, {passive:true});
+
+    // vis() legge getBoundingClientRect = forced layout. requestAnimationFrame
+    // sincronizza con il frame e coalesca chiamate ravvicinate.
+    var visScheduled = false;
     function vis(){
-        var r=ts.getBoundingClientRect();
-        sb.style.display = r.bottom > window.innerHeight ? 'block':'none';
+        var r = ts.getBoundingClientRect();
+        sb.style.display = r.bottom > window.innerHeight ? 'block' : 'none';
+    }
+    function visRaf(){
+        if (visScheduled) return;
+        visScheduled = true;
+        requestAnimationFrame(function(){ vis(); visScheduled = false; });
     }
     vis();
-    window.addEventListener('scroll',vis);
-    window.addEventListener('resize',vis);
+    window.addEventListener('scroll', visRaf, {passive:true});
+    window.addEventListener('resize', visRaf, {passive:true});
 })();
 </script>
 
