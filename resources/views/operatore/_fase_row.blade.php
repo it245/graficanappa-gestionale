@@ -12,8 +12,11 @@
             $repNomeStato = strtolower(optional(optional($fase->faseCatalogo)->reparto)->nome ?? '');
             $consumaCartaStato = in_array($repNomeStato, ['stampa offset', 'digitale', 'tagliacarte'], true);
             $scartiVuoti = empty($fase->scarti) || (int) $fase->scarti === 0;
+            // Esclude bulk import storico pre-MES (data_fine < 28/02/2026)
+            $dopoIntegrazione = $fase->data_fine
+                && \Carbon\Carbon::parse($fase->data_fine)->gte('2026-02-28 00:00:00');
         @endphp
-        @if($fase->stato == 3 && $consumaCartaStato && $scartiVuoti)
+        @if($fase->stato == 3 && $consumaCartaStato && $scartiVuoti && $dopoIntegrazione)
             <br><small style="font-weight:normal; color:#dc3545;">Inserisci scarti</small>
         @endif
     </td>
