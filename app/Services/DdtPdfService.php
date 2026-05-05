@@ -258,6 +258,24 @@ class DdtPdfService
     private static function normalizza(string $desc): string
     {
         $desc = mb_strtoupper($desc);
+
+        // Stoplist categorie generiche (nel DDT Onda compaiono come "VASSOI", in Excel come "ASTUCCI" ecc.)
+        // Rimuovi parole-contenitore per matchare solo il "soggetto" della descrizione
+        $stopwords = [
+            'ASTUCCIO', 'ASTUCCI', 'AST.', 'AST',
+            'VASSOIO', 'VASSOI', 'VASS.', 'VASS',
+            'BOX', 'PACK', 'SCATOLA', 'CONFEZIONE',
+            'FORMATO', 'SLEEVE', 'KIT', 'SET',
+            'CARTONATO', 'COFANETTO',
+        ];
+        // Alias: CADEAU ↔ CADEAUX (singolare/plurale francese)
+        $desc = preg_replace('/\bCADEAUX?\b/', 'CADEAU', $desc);
+
+        // Rimuovi stopwords come parole intere (boundary)
+        foreach ($stopwords as $w) {
+            $desc = preg_replace('/\b' . preg_quote($w, '/') . '\b/u', '', $desc);
+        }
+
         return preg_replace('/[^A-Z0-9]/', '', $desc);
     }
 
