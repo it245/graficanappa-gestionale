@@ -20,11 +20,10 @@
 @section('content')
 <style>
     .dc-table {
-        width: max-content;
-        max-width: 100%;
+        width: 100%;
         border-collapse: collapse;
         font-size: 13px;
-        table-layout: fixed;
+        table-layout: auto;
     }
     .dc-table thead th {
         background: var(--bg-sidebar);
@@ -62,13 +61,15 @@
         cursor: pointer;
     }
     .desc-clamp {
-        display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
-        overflow:hidden; text-overflow:ellipsis; word-break:break-word;
-        line-height:1.3; max-height:2.6em; cursor:help;
-        font-size:11px; color:#666;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 11px;
+        color: #666;
+        cursor: help;
     }
-    .desc-clamp:hover { -webkit-line-clamp:unset; max-height:none; background:#fffbe6; color:#000; }
-    td.desc-clamp { max-width:240px; }
+    .desc-clamp:hover { white-space: normal; background: #fffbe6; color: #000; }
+    td.desc-clamp { max-width: 280px; }
 
     /* 15 colonne: Priorità, Stato, Fase, Reparto, QtaCarta, QtaProd, QtaProdPrinect, ScartiPrinect, ScartiR, Operatori, Note, Descrizione, DataInizio, DataFine, Azioni */
     .dc-table th:nth-child(1), .dc-table td:nth-child(1) { width: 70px; text-align: center; }
@@ -80,9 +81,9 @@
     .dc-table th:nth-child(7), .dc-table td:nth-child(7) { width: 75px; text-align: center; }
     .dc-table th:nth-child(8), .dc-table td:nth-child(8) { width: 75px; text-align: center; }
     .dc-table th:nth-child(9), .dc-table td:nth-child(9) { width: 75px; text-align: center; }
-    .dc-table th:nth-child(10), .dc-table td:nth-child(10) { width: 130px; }
-    .dc-table th:nth-child(11), .dc-table td:nth-child(11) { width: 170px; }
-    .dc-table th:nth-child(12), .dc-table td:nth-child(12) { width: 280px; }
+    .dc-table th:nth-child(10), .dc-table td:nth-child(10) { min-width: 130px; max-width: 220px; }
+    .dc-table th:nth-child(11), .dc-table td:nth-child(11) { min-width: 170px; max-width: 280px; }
+    .dc-table th:nth-child(12), .dc-table td:nth-child(12) { min-width: 280px; max-width: 500px; }
     .dc-table th:nth-child(13), .dc-table td:nth-child(13) { width: 130px; text-align: center; white-space: nowrap; font-size: 11px; }
     .dc-table th:nth-child(14), .dc-table td:nth-child(14) { width: 130px; text-align: center; white-space: nowrap; font-size: 11px; }
     .dc-table th:nth-child(15), .dc-table td:nth-child(15) { width: 115px; text-align: center; }
