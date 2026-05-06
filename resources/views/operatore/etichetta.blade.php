@@ -1159,13 +1159,12 @@ function stampaBatch() {
             console.log('[batch] task', t, '/', tasks.length, '-', b.articolo);
             var clone = tplEtichetta.cloneNode(true);
             clone.id = 'etichetta-batch-' + idCounter;
-            // Imposta articolo (font fisso, NO auto-resize per evitare reflow pesanti)
+            // Imposta articolo (mantieni font-size default del template, no override)
             var artEl = clone.querySelector('#print-articolo');
             if (artEl) {
                 artEl.textContent = b.articolo;
                 artEl.id = 'art-' + idCounter;
-                // Font fisso medio: copre la maggior parte dei nomi articolo
-                artEl.style.fontSize = b.articolo.length > 35 ? '14pt' : (b.articolo.length > 25 ? '16pt' : '20pt');
+                // Niente fontSize override: usa default CSS della classe
             }
             container.appendChild(clone);
             var clEl = clone.querySelector('#print-cliente');
@@ -1186,7 +1185,7 @@ function stampaBatch() {
                 var plainData = '01' + gtin + '30' + qty + (lottoClean ? '10' + lottoClean : '');
                 try {
                     bwipjs.toCanvas(canvasOriginal, {
-                        bcid: 'datamatrix', text: plainData, scale: 6, padding: 4
+                        bcid: 'datamatrix', text: plainData, scale: 10, padding: 4
                     });
                     imgEl.src = canvasOriginal.toDataURL('image/png');
                     imgEl.style.display = '';
