@@ -187,15 +187,29 @@
             margin: 0;
         }
         /* Batch mode: nascondi anteprima singola, mostra solo container batch */
-        body.batch-print-mode .etichetta-preview { display: none !important; }
+        body.batch-print-mode #etichetta { display: none !important; }
+        body.batch-print-mode #batch-print-container {
+            position: static !important;
+            left: 0 !important;
+            visibility: visible !important;
+        }
         body.batch-print-mode #batch-print-container .etichetta-preview {
             display: flex !important;
             page-break-after: always;
+            visibility: visible !important;
         }
     }
-    /* Batch container: nascosto a schermo, visibile solo in stampa */
-    #batch-print-container { display: none; }
-    body.batch-print-mode #batch-print-container { display: block; }
+    /* Batch container: offscreen a schermo (per layout corretto), in posizione su stampa */
+    #batch-print-container {
+        position: absolute;
+        left: -99999px;
+        top: 0;
+        visibility: hidden;
+    }
+    body.batch-print-mode #batch-print-container {
+        position: static;
+        visibility: visible;
+    }
     /* Item batch (panel selezionati) */
     .batch-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid #cfe2ff; font-size: 13px; }
     .batch-item:last-child { border-bottom: none; }
@@ -791,16 +805,17 @@ eanData.forEach(function(it) {
 // Usa Jaccard similarity sulle keyword non-stopword.
 function bestMatchPerDescrizione(desc, dataset) {
     var kwDesc = new Set(estraiKeywords(desc));
-    if (kwDesc.size === 0) return null;
+    if (kwDesc.size < 2) return null;  // desc troppo corta -> skip
     var best = null;
     var bestScore = 0;
     dataset.forEach(function(it) {
         var kwArt = new Set(estraiKeywords(it.articolo || ''));
         var inter = 0;
         kwDesc.forEach(function(k) { if (kwArt.has(k)) inter++; });
-        if (inter < 2) return;  // serve almeno 2 keyword in comune
+        if (inter < 3) return;  // serve almeno 3 keyword in comune (era 2 = troppo lasco)
         var union = kwDesc.size + kwArt.size - inter;
         var sim = union > 0 ? (inter / union) : 0;
+        if (sim < 0.20) return;  // minimum similarity 20% (Jaccard)
         if (sim > bestScore) {
             bestScore = sim;
             best = it;
