@@ -844,13 +844,15 @@ function bestMatchPerDescrizione(desc, dataset) {
         var matchAD = paroleChiaveArt.filter(function(p) { return matchInString(p, descLc); }).length;
         var pctAD = paroleChiaveArt.length > 0 ? matchAD / paroleChiaveArt.length : 0;
 
-        // Entrambe direzioni >= 70%: match preciso. Sotto soglia -> scarta.
-        if (pctDA < 0.7 || pctAD < 0.7) return;
+        // Soglia minima desc->art 60%. Reciprocita art->desc anch'essa >=60%
+        // per evitare match completamente fuori contesto (es. caffe vs nocciola).
+        if (pctDA < 0.6 || pctAD < 0.6) return;
 
         var score = (pctDA + pctAD) / 2;
         if (score > bestScore) {
             bestScore = score;
             best = it;
+            best._matchIncerto = (pctAD < 0.85);  // flag se art ha parole extra non in desc
         }
     });
     return best;
@@ -1066,7 +1068,8 @@ function renderFasiCommessa() {
         else if (match) { icon = '⚠'; color = '#dc3545'; }
         else { icon = '?'; color = '#fd7e14'; }
         var descBreve = desc.length > 70 ? desc.substring(0, 70) + '…' : desc;
-        var matchText = match ? ' → ' + match.articolo : ' (nessun articolo trovato)';
+        var incertoIcon = (match && match._matchIncerto) ? ' <span title="Match incerto: verifica" style="color:#fd7e14;">⚠</span>' : '';
+        var matchText = match ? ' → ' + match.articolo + incertoIcon : ' (nessun articolo trovato)';
         div.innerHTML = '<span style="color:' + color + ';font-weight:700;font-size:14px;">' + icon + '</span> ' +
                         '<span>' + descBreve + '</span>' +
                         '<small style="color:#666;display:block;margin-left:18px;">' + matchText + '</small>';
