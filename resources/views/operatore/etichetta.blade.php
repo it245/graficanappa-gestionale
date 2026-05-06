@@ -1272,6 +1272,22 @@ function stampaBatch() {
 
 // Apre nuova finestra con HTML del container, fa print lì (no conflitto layout main)
 function stampaContainerInWindow(container) {
+    // Converti TUTTI i canvas DataMatrix in <img> base64 (necessario per popup —
+    // canvas non si trasferisce via innerHTML, va serializzato come dataURL)
+    container.querySelectorAll('canvas').forEach(function(canvas) {
+        try {
+            var url = canvas.toDataURL('image/png');
+            var img = document.createElement('img');
+            img.src = url;
+            img.style.cssText = canvas.style.cssText;
+            img.style.width = '30mm';
+            img.style.height = '30mm';
+            img.style.imageRendering = 'pixelated';
+            img.style.display = '';
+            canvas.parentNode.replaceChild(img, canvas);
+        } catch (e) { console.error('canvas->img errore', e); }
+    });
+
     var html = container.innerHTML;
     if (!html.trim()) { alert('Nessuna etichetta generata.'); return; }
 
