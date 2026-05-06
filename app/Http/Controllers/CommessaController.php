@@ -15,7 +15,7 @@ class CommessaController extends Controller
         $ordini = Ordine::where('commessa', $commessa)
                         ->select(['id','commessa','descrizione','cliente_nome','cod_art','qta_richiesta','qta_carta','carta','cod_carta','um','data_registrazione','data_prevista_consegna','note_prestampa','responsabile','commento_produzione','colori','note_fasi_successive','ddt_vendita_id'])
                         ->with([
-                            'fasi:id,ordine_id,fase,fase_catalogo_id,stato,priorita,priorita_manuale,esterno,fornitore_esterno,qta_prod,scarti,fogli_buoni,fogli_scarto,tiro,note,data_inizio,data_fine,timeout,tempo_avviamento_sec,tempo_esecuzione_sec,tipo_consegna,scarico_eseguito',
+                            'fasi:id,ordine_id,fase,fase_catalogo_id,stato,priorita,priorita_manuale,esterno,qta_prod,scarti,fogli_buoni,fogli_scarto,tiro,note,data_inizio,data_fine,timeout,tempo_avviamento_sec,tempo_esecuzione_sec,tipo_consegna,scarico_eseguito',
                             'fasi.faseCatalogo:id,nome,reparto_id',
                             'fasi.faseCatalogo.reparto:id,nome',
                             'fasi.operatori:operatori.id,nome',
