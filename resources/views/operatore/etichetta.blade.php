@@ -795,33 +795,42 @@ function eseguiRicerca() {
     dropdown.innerHTML = '';
     activeIndex = -1;
 
+    var risultati;
+
     if (q.length < 2) {
-        dropdown.style.display = 'none';
-        return;
-    }
-
-    var parole = q.split(/\s+/).filter(function(p) { return p.length > 0; });
-
-    var risultati = eanData.filter(function(item) {
-        return matchEan(item, parole, q);
-    });
-    // Sort: prima per score commessa desc, poi alfabetico articolo
-    risultati.sort(function(a, b) {
-        if (b._score !== a._score) return b._score - a._score;
-        return a._art_lc.localeCompare(b._art_lc);
-    });
-    risultati = risultati.slice(0, 30);
-
-    if (risultati.length === 0) {
-        dropdown.innerHTML = '<div class="ean-item" style="color:#999;cursor:default;">Nessun articolo trovato per "' + q + '"</div>';
-        dropdown.style.display = 'block';
-        return;
+        // Input vuoto / 1 char: mostra suggerimenti basati su fasi PI commessa
+        risultati = eanData.filter(function(item) { return item._score > 0; });
+        risultati.sort(function(a, b) {
+            if (b._score !== a._score) return b._score - a._score;
+            return a._art_lc.localeCompare(b._art_lc);
+        });
+        risultati = risultati.slice(0, 30);
+        if (risultati.length === 0) {
+            dropdown.style.display = 'none';
+            return;
+        }
+    } else {
+        var parole = q.split(/\s+/).filter(function(p) { return p.length > 0; });
+        risultati = eanData.filter(function(item) {
+            return matchEan(item, parole, q);
+        });
+        risultati.sort(function(a, b) {
+            if (b._score !== a._score) return b._score - a._score;
+            return a._art_lc.localeCompare(b._art_lc);
+        });
+        risultati = risultati.slice(0, 30);
+        if (risultati.length === 0) {
+            dropdown.innerHTML = '<div class="ean-item" style="color:#999;cursor:default;">Nessun articolo trovato per "' + q + '"</div>';
+            dropdown.style.display = 'block';
+            return;
+        }
     }
 
     risultati.forEach(function(item, idx) {
         var div = document.createElement('div');
         div.className = 'ean-item';
-        div.innerHTML = item.articolo + ' <small>(' + item.codice_ean + ')</small>';
+        var badge = item._score > 0 ? '<span style="color:#0d6efd;font-weight:600;">★</span> ' : '';
+        div.innerHTML = badge + item.articolo + ' <small>(' + item.codice_ean + ')</small>';
         div.dataset.index = idx;
         div.addEventListener('click', function() {
             selezionaEan(item);
@@ -833,10 +842,9 @@ function eseguiRicerca() {
 }
 
 searchInput.addEventListener('input', eseguiRicerca);
-// Focus: se input ha gia testo, riapri dropdown (fix bug "prima volta non esce nulla")
-searchInput.addEventListener('focus', function() {
-    if (this.value.trim().length >= 2) eseguiRicerca();
-});
+// Focus / click: mostra subito suggerimenti commessa anche con input vuoto
+searchInput.addEventListener('focus', eseguiRicerca);
+searchInput.addEventListener('click', eseguiRicerca);
 
 searchInput.addEventListener('keydown', function(e) {
     var items = dropdown.querySelectorAll('.ean-item');
