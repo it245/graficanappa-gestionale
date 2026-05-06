@@ -809,8 +809,8 @@ function chiaveArticolo(desc) {
     raw = raw.replace(/\b\d+\s*(?:kg|gr|g|ml|cl|fg|pz)\b/gi, ' ');
     // Strip numeri puri
     raw = raw.replace(/\b\d+\b/g, ' ');
-    // Strip parole tecniche di lavorazione (NON varianti di prodotto come classico/sfumato)
-    var tecniche = ['stampa','colori','colore','caldo','oro','drip','off','usare','lastrina','riserva','rilievo','fustellatura','fustella','finestratura','incollaggio','plastificazione','opaca','lucida','soft','touch','kg','gr','pant','pantone','ml','cl','vernice','iml','ks'];
+    // Strip parole tecniche di lavorazione + articoli linguistici (les, gli, ecc.)
+    var tecniche = ['stampa','colori','colore','caldo','oro','drip','off','usare','lastrina','riserva','rilievo','fustellatura','fustella','finestratura','incollaggio','plastificazione','opaca','lucida','soft','touch','kg','gr','pant','pantone','ml','cl','vernice','iml','ks','les','gli','del','dei','della','delle','degli'];
     var splitW = raw.split(/\s+/).filter(function(w) {
         return w.length > 0 && tecniche.indexOf(w) === -1;
     });
@@ -829,7 +829,14 @@ function bestMatchPerDescrizione(desc, dataset) {
 
     function matchInString(parola, str) {
         if (parola.length === 1) return new RegExp('\\b' + parola + '\\b', 'i').test(str);
-        return str.indexOf(parola) !== -1;
+        // Match substring esatto
+        if (str.indexOf(parola) !== -1) return true;
+        // Match prefisso: gestisce plurali (nuance <-> nuances)
+        var paroleStr = str.split(/[^a-zà-ù0-9]+/i).filter(function(w) { return w.length > 0; });
+        return paroleStr.some(function(w) {
+            if (w.length < 4 || parola.length < 4) return false;
+            return w.startsWith(parola) || parola.startsWith(w);
+        });
     }
 
     dataset.forEach(function(it) {
