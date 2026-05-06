@@ -205,6 +205,10 @@
             margin: 0;
         }
     }
+    /* Item batch (panel articoli) */
+    .batch-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid #cfe2ff; font-size: 13px; }
+    .batch-item:last-child { border-bottom: none; }
+    .batch-item .art-name { flex: 1; }
 </style>
 
 {{-- ===== FORM (nascosto in stampa) ===== --}}
@@ -270,6 +274,21 @@
                 <div id="ean-selezionato" class="mt-2" style="display:none;">
                     <span class="badge bg-success fs-6" id="ean-badge"></span>
                     <button type="button" class="btn btn-sm btn-outline-danger ms-2" onclick="clearEan()">X</button>
+                </div>
+
+                {{-- Lista articoli aggiunti (navigabile con ◀ ▶) --}}
+                <div id="batch-wrap" class="mt-3" style="display:none; padding:10px; background:#e7f1ff; border:1px solid #0d6efd; border-radius:6px;">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <strong style="font-size:14px;">📋 Articoli da stampare</strong>
+                        <div>
+                            <button type="button" class="btn btn-sm btn-outline-primary me-1" onclick="navigaBatch(-1)" title="Precedente">◀</button>
+                            <span id="batch-preview-pos" style="font-size:12px; min-width:50px; display:inline-block; text-align:center; font-weight:600;">-</span>
+                            <button type="button" class="btn btn-sm btn-outline-primary ms-1" onclick="navigaBatch(1)" title="Successivo">▶</button>
+                            <button type="button" class="btn btn-sm btn-outline-danger ms-2" onclick="svuotaBatch()" style="font-size:11px;">Svuota</button>
+                        </div>
+                    </div>
+                    <div id="batch-list"></div>
+                    <small class="text-muted d-block mt-2">Naviga con ◀ ▶ poi click "Stampa Etichetta" per ognuno.</small>
                 </div>
 
                 {{-- Inserimento manuale EAN nuovo --}}
@@ -389,6 +408,7 @@
         @endif
     </div>
     @endif
+
 {{-- ===== PANNELLO LATERALE: Card gestione fase ===== --}}
 @if(($fasiOperatore ?? collect())->isNotEmpty())
 <div class="no-print" id="pannello-fase" style="position:fixed; top:10px; right:10px; width:520px; max-height:calc(100vh - 20px); overflow-y:auto; z-index:50;">
@@ -882,12 +902,25 @@ function eseguiRicerca() {
     risultati.forEach(function(item, idx) {
         var div = document.createElement('div');
         div.className = 'ean-item';
-        var badge = item._score > 0 ? '<span style="color:#0d6efd;font-weight:600;">★</span> ' : '';
-        div.innerHTML = badge + item.articolo + ' <small>(' + item.codice_ean + ')</small>';
-        div.dataset.index = idx;
-        div.addEventListener('click', function() {
-            selezionaEan(item);
-        });
+        div.style.display = 'flex';
+        div.style.justifyContent = 'space-between';
+        div.style.alignItems = 'center';
+        var badge = item._suggerito ? '<span style="color:#0d6efd;font-weight:600;">★</span> ' : '';
+        var nameSpan = document.createElement('span');
+        nameSpan.style.flex = '1';
+        nameSpan.style.cursor = 'pointer';
+        nameSpan.innerHTML = badge + item.articolo + ' <small>(' + item.codice_ean + ')</small>';
+        nameSpan.addEventListener('click', function(e) { e.stopPropagation(); selezionaEan(item); });
+        var addBtn = document.createElement('button');
+        addBtn.type = 'button';
+        addBtn.className = 'btn btn-sm btn-outline-primary ms-2';
+        addBtn.style.fontSize = '11px';
+        addBtn.style.padding = '2px 8px';
+        addBtn.textContent = '+';
+        addBtn.title = 'Aggiungi alla lista';
+        addBtn.addEventListener('click', function(e) { e.stopPropagation(); aggiungiBatch(item); });
+        div.appendChild(nameSpan);
+        div.appendChild(addBtn);
         dropdown.appendChild(div);
     });
 
@@ -958,6 +991,90 @@ function clearEan() {
     searchInput.value = '';
     document.getElementById('ean-selezionato').style.display = 'none';
     aggiornaAnteprima();
+}
+
+// ===== Lista articoli (navigabile con < >) per stampa singola sequenziale =====
+var batchItems = [];
+var batchPreviewIdx = 0;
+
+function aggiungiBatch(item) {
+    var esistente = batchItems.find(function(b) { return b.codice_ean === item.codice_ean; });
+    if (!esistente) {
+        batchItems.push({ articolo: item.articolo, codice_ean: item.codice_ean });
+    }
+    batchPreviewIdx = batchItems.findIndex(function(b) { return b.codice_ean === item.codice_ean; });
+    renderBatch();
+    mostraPreviewBatch();
+    dropdown.style.display = 'none';
+}
+
+function rimuoviBatch(ean) {
+    batchItems = batchItems.filter(function(b) { return b.codice_ean !== ean; });
+    if (batchPreviewIdx >= batchItems.length) batchPreviewIdx = Math.max(0, batchItems.length - 1);
+    renderBatch();
+    if (batchItems.length > 0) mostraPreviewBatch();
+}
+
+function svuotaBatch() {
+    batchItems = [];
+    batchPreviewIdx = 0;
+    renderBatch();
+}
+
+function navigaBatch(dir) {
+    if (batchItems.length === 0) return;
+    batchPreviewIdx = (batchPreviewIdx + dir + batchItems.length) % batchItems.length;
+    renderBatch();
+    mostraPreviewBatch();
+}
+
+function mostraPreviewBatch() {
+    if (batchItems.length === 0) return;
+    var item = batchItems[batchPreviewIdx];
+    if (!item) return;
+    document.getElementById('campo-articolo').value = item.articolo;
+    document.getElementById('campo-ean').value = item.codice_ean;
+    searchInput.value = item.articolo;
+    document.getElementById('ean-selezionato').style.display = '';
+    document.getElementById('ean-badge').textContent = item.articolo + ' — ' + item.codice_ean;
+    aggiornaAnteprima();
+}
+
+function renderBatch() {
+    var wrap = document.getElementById('batch-wrap');
+    var list = document.getElementById('batch-list');
+    var pos = document.getElementById('batch-preview-pos');
+    if (batchItems.length === 0) {
+        wrap.style.display = 'none';
+        if (pos) pos.textContent = '-';
+        return;
+    }
+    wrap.style.display = 'block';
+    if (pos) pos.textContent = (batchPreviewIdx + 1) + '/' + batchItems.length;
+    list.innerHTML = '';
+    batchItems.forEach(function(b, idx) {
+        var div = document.createElement('div');
+        div.className = 'batch-item';
+        if (idx === batchPreviewIdx) div.style.background = '#cfe2ff';
+        var nameSpan = document.createElement('span');
+        nameSpan.className = 'art-name';
+        nameSpan.style.cursor = 'pointer';
+        nameSpan.textContent = (idx === batchPreviewIdx ? '▶ ' : '') + b.articolo;
+        nameSpan.addEventListener('click', function() {
+            batchPreviewIdx = idx;
+            renderBatch();
+            mostraPreviewBatch();
+        });
+        var rmBtn = document.createElement('button');
+        rmBtn.type = 'button';
+        rmBtn.className = 'btn btn-sm btn-outline-danger';
+        rmBtn.style.padding = '2px 8px';
+        rmBtn.textContent = '×';
+        rmBtn.addEventListener('click', function() { rimuoviBatch(b.codice_ean); });
+        div.appendChild(nameSpan);
+        div.appendChild(rmBtn);
+        list.appendChild(div);
+    });
 }
 
 @else
