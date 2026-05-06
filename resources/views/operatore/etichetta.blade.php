@@ -743,45 +743,48 @@ function estraiKeywords(str) {
             return true;
         });
 }
-var contestoBase = @json($ordine->descrizione ?? '') + ' ' + @json(collect($righeFS ?? [])->pluck('testo')->implode(' '));
-var contestoPI = @json($notePI ?? '');
+var descrizioniPI = @json($descrizioniPI ?? []);
 
-var keywordsBase = [...new Set(estraiKeywords(contestoBase))];
-var keywordsPI   = [...new Set(estraiKeywords(contestoPI))];
-
-// Filtra keyword troppo comuni (compaiono in > 25% degli articoli = generiche)
-function filtraKeywordsComuni(keywords, dataset) {
-    var soglia = Math.max(5, Math.floor(dataset.length * 0.25));
-    return keywords.filter(function(kw) {
-        var count = 0;
-        for (var i = 0; i < dataset.length; i++) {
-            if ((dataset[i].articolo || '').toLowerCase().indexOf(kw) !== -1) {
-                count++;
-                if (count > soglia) return false;
-            }
-        }
-        return count > 0;
-    });
-}
-keywordsBase = filtraKeywordsComuni(keywordsBase, eanData);
-keywordsPI   = filtraKeywordsComuni(keywordsPI, eanData);
-
-// Pre-calcola lowercase + score relevance per match veloce
+// Pre-calcola lowercase
 eanData.forEach(function(it) {
     it._art_lc = (it.articolo || '').toLowerCase();
     it._ean_lc = (it.codice_ean || '').toLowerCase();
-    var scoreBase = keywordsBase.reduce(function(acc, kw) {
-        return acc + (it._art_lc.indexOf(kw) !== -1 ? 1 : 0);
-    }, 0);
-    var scorePI = keywordsPI.reduce(function(acc, kw) {
-        return acc + (it._art_lc.indexOf(kw) !== -1 ? 1 : 0);
-    }, 0);
-    // Score totale: PI pesa 2x
-    it._score = scoreBase + (scorePI * 2);
 });
 
-// Soglia: per mostrare suggerimento auto serve almeno 2 keyword match
-var SOGLIA_SUGGERIMENTO = 2;
+// Per ogni descrizione PI: trova il MIGLIOR match (TOP 1) tra eanData
+// Usa Jaccard similarity sulle keyword non-stopword.
+function bestMatchPerDescrizione(desc, dataset) {
+    var kwDesc = new Set(estraiKeywords(desc));
+    if (kwDesc.size === 0) return null;
+    var best = null;
+    var bestScore = 0;
+    dataset.forEach(function(it) {
+        var kwArt = new Set(estraiKeywords(it.articolo || ''));
+        var inter = 0;
+        kwDesc.forEach(function(k) { if (kwArt.has(k)) inter++; });
+        if (inter < 2) return;  // serve almeno 2 keyword in comune
+        var union = kwDesc.size + kwArt.size - inter;
+        var sim = union > 0 ? (inter / union) : 0;
+        if (sim > bestScore) {
+            bestScore = sim;
+            best = it;
+        }
+    });
+    return best;
+}
+
+// Costruisci set di articoli suggeriti (1 per ogni descrizione PI)
+var suggeritiSet = new Set();
+descrizioniPI.forEach(function(desc) {
+    var match = bestMatchPerDescrizione(desc, eanData);
+    if (match) suggeritiSet.add(match.codice_ean);
+});
+
+// Marca articoli suggeriti
+eanData.forEach(function(it) {
+    it._suggerito = suggeritiSet.has(it.codice_ean);
+    it._score = it._suggerito ? 10 : 0;
+});
 var searchInput = document.getElementById('ean-search');
 var dropdown = document.getElementById('ean-dropdown');
 var activeIndex = -1;
@@ -804,13 +807,9 @@ function eseguiRicerca() {
     var risultati;
 
     if (q.length < 2) {
-        // Input vuoto / 1 char: mostra solo suggerimenti rilevanti (score >= soglia)
-        risultati = eanData.filter(function(item) { return item._score >= SOGLIA_SUGGERIMENTO; });
-        risultati.sort(function(a, b) {
-            if (b._score !== a._score) return b._score - a._score;
-            return a._art_lc.localeCompare(b._art_lc);
-        });
-        risultati = risultati.slice(0, 10);
+        // Input vuoto / 1 char: mostra solo articoli suggeriti (TOP 1 per ogni desc PI)
+        risultati = eanData.filter(function(item) { return item._suggerito; });
+        risultati.sort(function(a, b) { return a._art_lc.localeCompare(b._art_lc); });
         if (risultati.length === 0) {
             dropdown.style.display = 'none';
             return;
@@ -835,7 +834,7 @@ function eseguiRicerca() {
     risultati.forEach(function(item, idx) {
         var div = document.createElement('div');
         div.className = 'ean-item';
-        var badge = item._score > 0 ? '<span style="color:#0d6efd;font-weight:600;">★</span> ' : '';
+        var badge = item._suggerito ? '<span style="color:#0d6efd;font-weight:600;">★</span> ' : '';
         div.innerHTML = badge + item.articolo + ' <small>(' + item.codice_ean + ')</small>';
         div.dataset.index = idx;
         div.addEventListener('click', function() {
