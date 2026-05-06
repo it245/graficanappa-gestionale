@@ -1148,13 +1148,15 @@ function stampaBatch() {
 
     var idCounter = 0;
     function processChunk(startIdx) {
-        var CHUNK = 5;
+        var CHUNK = 3;
         var endIdx = Math.min(startIdx + CHUNK, tasks.length);
         for (var t = startIdx; t < endIdx; t++) {
+            try {
             var task = tasks[t];
             var b = task.b;
             var pzcassaItem = task.pzcassaItem;
             idCounter++;
+            console.log('[batch] task', t, '/', tasks.length, '-', b.articolo);
             var clone = tplEtichetta.cloneNode(true);
             clone.id = 'etichetta-batch-' + idCounter;
             // Imposta articolo, EAN, datamatrix
@@ -1206,6 +1208,10 @@ function stampaBatch() {
             if (lotEl) lotEl.textContent = lotto;
             var dataEl = clone.querySelector('.print-data, [id^="print-data"]');
             if (dataEl) dataEl.textContent = data;
+            } catch (e) {
+                console.error('[batch] errore task', t, e);
+                // Continua con i prossimi task invece di bloccare
+            }
         }
         // Aggiorna progress
         btn.innerHTML = '⏳ Generazione ' + endIdx + '/' + tasks.length + '...';
