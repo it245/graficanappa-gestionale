@@ -837,25 +837,22 @@ function bestMatchPerDescrizione(desc, dataset) {
         var chiaveArt = chiaveArticolo(it.articolo || '');
         var paroleChiaveArt = [...new Set((chiaveArt || '').split(/\s+/).filter(function(w) { return w.length > 0; }))];
 
-        // Match desc -> art: % parole desc presenti in art
         var matchDA = paroleChiaveDesc.filter(function(p) { return matchInString(p, artLc); }).length;
         var pctDA = paroleChiaveDesc.length > 0 ? matchDA / paroleChiaveDesc.length : 0;
 
-        // Match art -> desc: % parole chiave art presenti in desc (reciprocita)
         var descLc = (desc || '').toLowerCase();
         var matchAD = paroleChiaveArt.filter(function(p) { return matchInString(p, descLc); }).length;
         var pctAD = paroleChiaveArt.length > 0 ? matchAD / paroleChiaveArt.length : 0;
 
-        // Entrambe le direzioni devono essere >= 60% (evita falsi positivi tipo
-        // 'noisettes nuance salvia' -> 'les noisettes nuances salvia 1kg' dove 'les'
-        // distingue prodotti, o 'bon bon cream nocciola' -> 'bon bon cream caffe')
-        if (pctDA < 0.6 || pctAD < 0.6) return;
+        // Soglia minima desc->art 60% (sufficiente per match base).
+        // Reciprocita art->desc usata solo per flag "match incerto" (vedi sotto).
+        if (pctDA < 0.6) return;
 
-        // Score combinato
         var score = (pctDA + pctAD) / 2;
         if (score > bestScore) {
             bestScore = score;
             best = it;
+            best._matchIncerto = (pctAD < 0.8);  // flag se art ha parole extra non in desc
         }
     });
     return best;
@@ -1070,9 +1067,9 @@ function renderFasiCommessa() {
         if (preso) { icon = '✓'; color = '#198754'; }
         else if (match) { icon = '⚠'; color = '#dc3545'; }
         else { icon = '?'; color = '#fd7e14'; }
-        // Estrai versione breve della descrizione (max 60 char prima di codice/parentesi)
         var descBreve = desc.length > 70 ? desc.substring(0, 70) + '…' : desc;
-        var matchText = match ? ' → ' + match.articolo : ' (nessun articolo trovato)';
+        var incertoIcon = (match && match._matchIncerto) ? ' <span title="Match incerto: l\'articolo ha parole non presenti nella descrizione (es. les noisettes vs noisettes)" style="color:#fd7e14;">⚠</span>' : '';
+        var matchText = match ? ' → ' + match.articolo + incertoIcon : ' (nessun articolo trovato)';
         div.innerHTML = '<span style="color:' + color + ';font-weight:700;font-size:14px;">' + icon + '</span> ' +
                         '<span>' + descBreve + '</span>' +
                         '<small style="color:#666;display:block;margin-left:18px;">' + matchText + '</small>';
