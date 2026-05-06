@@ -96,13 +96,15 @@ class DashboardOperatoreController extends Controller
                     $fase->priorita = round($giorni_rimasti - ($fase->ore / 24) + ($fasePriorita / 10000), 2);
                 }
 
-                // Colori e Fustella dalla descrizione
+                // Colori e Fustella dalla descrizione (cache 1h: stesso desc -> 1 parse)
                 $desc = $fase->ordine->descrizione ?? '';
                 $cliente = $fase->ordine->cliente_nome ?? '';
                 $repNome = optional($fase->faseCatalogo)->reparto->nome ?? '';
-                $fase->colori = DescrizioneParser::parseColori($desc, $cliente, $repNome);
                 $notePre = $fase->ordine->note_prestampa ?? '';
-                $fase->fustella_codice = DescrizioneParser::parseFustella($desc, $cliente, $notePre);
+                $keyColori = 'parseColori:' . md5($desc . '|' . $cliente . '|' . $repNome);
+                $keyFust   = 'parseFust:'   . md5($desc . '|' . $cliente . '|' . $notePre);
+                $fase->colori = \Illuminate\Support\Facades\Cache::remember($keyColori, 3600, fn() => DescrizioneParser::parseColori($desc, $cliente, $repNome));
+                $fase->fustella_codice = \Illuminate\Support\Facades\Cache::remember($keyFust, 3600, fn() => DescrizioneParser::parseFustella($desc, $cliente, $notePre));
 
                 // Fornitore esterno: estrai "Inviato a: XXX" dalla note
                 $fase->fornitore_esterno = preg_match('/Inviato a:\s*(.+)/i', $fase->note ?? '', $m) ? trim($m[1]) : null;
