@@ -1122,15 +1122,20 @@ function stampaBatch() {
         return;
     }
 
-    // Pulisci container batch
     var container = document.getElementById('batch-print-container');
     container.innerHTML = '';
-
-    // Template etichetta originale
     var tplEtichetta = document.getElementById('etichetta');
+    if (!tplEtichetta) { alert('Template etichetta non trovato'); return; }
 
     var totale = batchItems.reduce(function(acc, b) { return acc + (parseInt(b.qty) || 0); }, 0);
     if (totale > 100 && !confirm('Stai per stampare ' + totale + ' etichette. Confermi?')) return;
+    console.log('[batch] inizio generazione', totale, 'etichette');
+
+    // Indicatore loading sul bottone
+    var btn = document.getElementById('btn-stampa-batch');
+    var btnText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '⏳ Generazione in corso...';
 
     // Per ogni articolo selezionato: clona N volte etichetta + popola
     var idCounter = 0;
@@ -1170,7 +1175,7 @@ function stampaBatch() {
                 var gtin = b.codice_ean.trim();
                 while (gtin.length < 14) gtin = '0' + gtin;
                 if (gtin.length > 14) gtin = gtin.substring(0, 14);
-                var qty = String(parseInt(pzcassa, 10)).padStart(8, '0');
+                var qty = String(parseInt(pzcassaItem, 10)).padStart(8, '0');
                 var lottoClean = lotto ? lotto.replace(/-/g, '') : '';
                 var plainData = '01' + gtin + '30' + qty + (lottoClean ? '10' + lottoClean : '');
                 try {
@@ -1184,7 +1189,7 @@ function stampaBatch() {
             }
             // Pz x cassa, Lotto, Data nel print
             var pzcEl = clone.querySelector('.print-pzcassa, [id^="print-pzcassa"]');
-            if (pzcEl) pzcEl.textContent = pzcassa;
+            if (pzcEl) pzcEl.textContent = pzcassaItem;
             var lotEl = clone.querySelector('.print-lotto, [id^="print-lotto"]');
             if (lotEl) lotEl.textContent = lotto;
             var dataEl = clone.querySelector('.print-data, [id^="print-data"]');
@@ -1192,14 +1197,23 @@ function stampaBatch() {
         }
     });
 
-    // Attiva modalita batch print + window.print
-    document.body.classList.add('batch-print-mode');
-    window.print();
-    // Cleanup dopo stampa
+    console.log('[batch] generate', idCounter, 'cloni completato');
+    // Reset bottone + attiva print con piccolo delay
+    btn.disabled = false;
+    btn.innerHTML = btnText;
     setTimeout(function() {
-        document.body.classList.remove('batch-print-mode');
-        container.innerHTML = '';
-    }, 500);
+        document.body.classList.add('batch-print-mode');
+        try {
+            window.print();
+        } catch (e) {
+            console.error('[batch] print errore', e);
+            alert('Errore stampa: ' + e.message);
+        }
+        setTimeout(function() {
+            document.body.classList.remove('batch-print-mode');
+            container.innerHTML = '';
+        }, 1000);
+    }, 200);
 }
 
 @else
