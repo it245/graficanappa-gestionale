@@ -20,7 +20,8 @@
 @section('content')
 <style>
     .dc-table {
-        width: 100%;
+        width: max-content;
+        max-width: 100%;
         border-collapse: collapse;
         font-size: 13px;
         table-layout: fixed;
@@ -81,7 +82,7 @@
     .dc-table th:nth-child(9), .dc-table td:nth-child(9) { width: 75px; text-align: center; }
     .dc-table th:nth-child(10), .dc-table td:nth-child(10) { width: 130px; }
     .dc-table th:nth-child(11), .dc-table td:nth-child(11) { width: 170px; }
-    .dc-table th:nth-child(12), .dc-table td:nth-child(12) { width: auto; min-width: 240px; }
+    .dc-table th:nth-child(12), .dc-table td:nth-child(12) { width: 280px; }
     .dc-table th:nth-child(13), .dc-table td:nth-child(13) { width: 130px; text-align: center; white-space: nowrap; font-size: 11px; }
     .dc-table th:nth-child(14), .dc-table td:nth-child(14) { width: 130px; text-align: center; white-space: nowrap; font-size: 11px; }
     .dc-table th:nth-child(15), .dc-table td:nth-child(15) { width: 115px; text-align: center; }
