@@ -99,7 +99,9 @@ class FierySyncService
         // Avvia le fasi digitali della commessa corrente
         $faseAvviata = null;
         foreach ($fasiDigitali as $fase) {
-            if (in_array($fase->stato, [0, '0', 1, '1'])) {
+            // stato stringa non-numerica (es. "prova") = motivo pausa → trattare come avviabile
+            $inPausa = is_string($fase->stato) && !is_numeric($fase->stato) && $fase->stato !== 'EXT';
+            if (in_array($fase->stato, [0, '0', 1, '1']) || $inPausa) {
                 $fase->stato = 2;
                 if (!$fase->data_inizio) {
                     $fase->data_inizio = now()->format('Y-m-d H:i:s');
@@ -193,7 +195,15 @@ class FierySyncService
         $ordiniIds = Ordine::whereIn('commessa', $commesseCodes)->pluck('id');
         if ($ordiniIds->isEmpty()) return;
 
-        $fasiDigitali = OrdineFase::whereIn('stato', [0, 1, 2])
+        // Includi fasi in pausa (stato = stringa non-numerica, NON 'EXT')
+        $fasiDigitali = OrdineFase::where(function ($q) {
+                $q->whereIn('stato', [0, 1, 2])
+                  ->orWhere(function ($sub) {
+                      $sub->whereNotNull('stato')
+                          ->where('stato', '!=', 'EXT')
+                          ->whereRaw("stato NOT REGEXP '^[0-9]+$'");
+                  });
+            })
             ->whereIn('ordine_id', $ordiniIds)
             ->where(function ($q) {
                 $q->whereHas('faseCatalogo', function ($sub) {
@@ -227,8 +237,8 @@ class FierySyncService
                     $this->autoTerminaSeCompletata($fase, $operatore);
                     $fase->save();
                 }
-            } elseif (in_array($fase->stato, [0, 1])) {
-                // Riapertura manuale: avvia solo se accounting > snapshot (ristampa vera)
+            } elseif (in_array($fase->stato, [0, 1]) || (is_string($fase->stato) && !is_numeric($fase->stato) && $fase->stato !== 'EXT')) {
+                // Riapertura manuale o fase in pausa: avvia solo se accounting > snapshot (ristampa vera)
                 if ($fase->riaperta_at && \Carbon\Carbon::parse($fase->riaperta_at)->gt(now()->subHours(24))) {
                     $snapshot = (int) ($fase->qta_prod_at_riapertura ?? $fase->qta_prod ?? 0);
                     if ($qtaProdotta <= $snapshot) {
