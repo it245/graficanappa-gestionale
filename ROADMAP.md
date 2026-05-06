@@ -456,3 +456,12 @@ Step roadmap originale:
 - ✅ Counter rinominato "Conteggio" → "Qta Prodotta" su dettaglio commessa
 - ✅ Branch `feature/multi-tenant` cancellato (MES non più SaaS commerciale)
 - ✅ File pitch SaaS rimossi (`docs/demo.pdf`, `MES_GraficaNappa_Overview.*`, `make_memo_pdf.py`)
+
+## Backlog Tecnico — Fiery Sync Accuracy
+
+- **Soluzione (C) delta accounting per fase singola**: snapshot iniziale al primo polling + termina solo se delta accounting >= qta_carta. Elimina falsi positivi pausa-ripresa + ristampe storiche. Target accuracy 99%+.
+- **Webhook Fiery push** (sostituisce polling 1 min): ridurre latenza avvio/termine fase da max 60s a <5s. Da valutare se Fiery EX-i ha REST callback support.
+
+## Backlog Console — Errori frontend
+
+- **Reverb/WebSocket errors**: Echo client carica ovunque, se Reverb non attivo genera retry continui in console. Fix: disabilitare Echo se Reverb off, o lazy load solo dove serve (notifiche owner/spedizione).
