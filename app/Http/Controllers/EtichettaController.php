@@ -94,7 +94,8 @@ class EtichettaController extends Controller
     {
         $filtro = $request->get('q', '');
 
-        $query = Ordine::whereHas('fasi', fn($q) => $q->where('stato', '<', 4));
+        // Mostra TUTTE le commesse (anche con fasi consegnate stato=4) per ristampe etichette
+        $query = Ordine::whereHas('fasi');
 
         if ($filtro) {
             $query->where(function ($q) use ($filtro) {
