@@ -924,9 +924,16 @@ function eseguiRicerca() {
 }
 
 searchInput.addEventListener('input', eseguiRicerca);
-// Focus / click: mostra subito suggerimenti commessa anche con input vuoto
-searchInput.addEventListener('focus', eseguiRicerca);
-searchInput.addEventListener('click', eseguiRicerca);
+// Focus / click: svuota input (se aveva articolo selezionato) e mostra suggerimenti commessa
+function onSearchFocus() {
+    // Se c'e gia un articolo selezionato, svuota input visivamente per riaprire dropdown
+    if (document.getElementById('campo-articolo').value && searchInput.value === document.getElementById('campo-articolo').value) {
+        searchInput.value = '';
+    }
+    eseguiRicerca();
+}
+searchInput.addEventListener('focus', onSearchFocus);
+searchInput.addEventListener('click', onSearchFocus);
 
 searchInput.addEventListener('keydown', function(e) {
     var items = dropdown.querySelectorAll('.ean-item');
