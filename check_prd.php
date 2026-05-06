@@ -7,13 +7,13 @@ $cerca = $argv[1] ?? '67296';
 
 echo "=== PRDDocTeste (commesse produzione) ===\n";
 $prd = DB::connection('onda')->select(
-    "SELECT TOP 10 CodCommessa, IdDoc, DataDocumento FROM PRDDocTeste WHERE CodCommessa LIKE ?",
+    "SELECT TOP 10 CodCommessa, IdDoc FROM PRDDocTeste WHERE CodCommessa LIKE ?",
     ["%$cerca%"]
 );
 if (empty($prd)) {
     echo "Nessun PRDDocTeste per '$cerca' (commessa esiste ma SENZA ordine produzione)\n";
 } else {
-    foreach ($prd as $r) echo "  {$r->CodCommessa} | IdDoc={$r->IdDoc} | {$r->DataDocumento}\n";
+    foreach ($prd as $r) echo "  {$r->CodCommessa} | IdDoc={$r->IdDoc}\n";
 }
 
 echo "\n=== ATTDocTeste (commesse cliente) ===\n";
