@@ -260,7 +260,10 @@
 
                 {{-- Pannello stato fasi commessa (PI): vedi al volo cosa non e stato ancora aggiunto --}}
                 <div id="fasi-commessa-wrap" class="mt-3" style="display:none; padding:8px 10px; background:#fff8e1; border:1px solid #ffc107; border-radius:6px; font-size:12px;">
-                    <strong>📌 Articoli commessa</strong>
+                    <div id="fasi-commessa-header" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;" onclick="toggleFasiCommessa()">
+                        <strong>📌 Articoli commessa</strong>
+                        <span id="fasi-commessa-toggle" style="font-size:14px; font-weight:bold;">^</span>
+                    </div>
                     <div id="fasi-commessa-list" class="mt-1"></div>
                 </div>
 
@@ -1060,6 +1063,16 @@ function renderFasiCommessa() {
                         '<small style="color:#666;display:block;margin-left:18px;">' + matchText + '</small>';
         list.appendChild(div);
     });
+}
+
+// Toggle apri/chiudi pannello articoli commessa
+function toggleFasiCommessa() {
+    var list = document.getElementById('fasi-commessa-list');
+    var toggle = document.getElementById('fasi-commessa-toggle');
+    if (!list || !toggle) return;
+    var isOpen = list.style.display !== 'none';
+    list.style.display = isOpen ? 'none' : '';
+    toggle.textContent = isOpen ? '⌄' : '^';
 }
 
 // Render iniziale al caricamento
