@@ -1159,23 +1159,15 @@ function stampaBatch() {
             console.log('[batch] task', t, '/', tasks.length, '-', b.articolo);
             var clone = tplEtichetta.cloneNode(true);
             clone.id = 'etichetta-batch-' + idCounter;
-            // Imposta articolo, EAN, datamatrix
+            // Imposta articolo (font fisso, NO auto-resize per evitare reflow pesanti)
             var artEl = clone.querySelector('#print-articolo');
             if (artEl) {
                 artEl.textContent = b.articolo;
                 artEl.id = 'art-' + idCounter;
-                // Auto-resize
-                var sizes = [24, 22, 20, 18, 16, 14, 12];
-                clone.style.visibility = 'hidden';
-                container.appendChild(clone);
-                for (var s = 0; s < sizes.length; s++) {
-                    artEl.style.fontSize = sizes[s] + 'pt';
-                    if (clone.scrollHeight <= clone.clientHeight) break;
-                }
-                clone.style.visibility = '';
-            } else {
-                container.appendChild(clone);
+                // Font fisso medio: copre la maggior parte dei nomi articolo
+                artEl.style.fontSize = b.articolo.length > 35 ? '14pt' : (b.articolo.length > 25 ? '16pt' : '20pt');
             }
+            container.appendChild(clone);
             var clEl = clone.querySelector('#print-cliente');
             if (clEl) { clEl.textContent = cliente; clEl.id = 'cli-' + idCounter; }
             // Datamatrix per questo clone
@@ -1194,7 +1186,7 @@ function stampaBatch() {
                 var plainData = '01' + gtin + '30' + qty + (lottoClean ? '10' + lottoClean : '');
                 try {
                     bwipjs.toCanvas(canvasOriginal, {
-                        bcid: 'datamatrix', text: plainData, scale: 10, padding: 4
+                        bcid: 'datamatrix', text: plainData, scale: 6, padding: 4
                     });
                     imgEl.src = canvasOriginal.toDataURL('image/png');
                     imgEl.style.display = '';
