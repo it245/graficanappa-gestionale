@@ -281,8 +281,9 @@
                     </div>
                     <div id="batch-list"></div>
                     <button type="button" class="btn btn-success w-100 mt-2 fw-bold" id="btn-stampa-batch" onclick="stampaBatch()">
-                        🖨️ Stampa tutte (<span id="batch-totale">0</span> etichette)
+                        🖨️ Stampa <span id="batch-totale">0</span> etichette (1 per articolo)
                     </button>
+                    <small class="text-muted d-block mt-1">Imposta il numero di copie nel dialog di stampa del browser.</small>
                 </div>
 
                 {{-- Inserimento manuale EAN nuovo --}}
@@ -1071,18 +1072,6 @@ function renderBatch() {
         pzInput.placeholder = 'pz';
         pzInput.title = 'Pezzi per cassa';
         pzInput.addEventListener('input', function() { cambiaPzcassaBatch(b.codice_ean, this.value); });
-        // Etichette qty
-        var qtyLabel = document.createElement('small');
-        qtyLabel.textContent = 'etich.';
-        qtyLabel.style.color = '#666';
-        var qtyInput = document.createElement('input');
-        qtyInput.type = 'number';
-        qtyInput.min = '1';
-        qtyInput.value = b.qty;
-        qtyInput.className = 'form-control form-control-sm';
-        qtyInput.style.width = '60px';
-        qtyInput.title = 'Numero etichette da stampare';
-        qtyInput.addEventListener('input', function() { cambiaQtyBatch(b.codice_ean, this.value); });
         var rmBtn = document.createElement('button');
         rmBtn.type = 'button';
         rmBtn.className = 'btn btn-sm btn-outline-danger';
@@ -1092,8 +1081,6 @@ function renderBatch() {
         div.appendChild(nameSpan);
         div.appendChild(pzLabel);
         div.appendChild(pzInput);
-        div.appendChild(qtyLabel);
-        div.appendChild(qtyInput);
         div.appendChild(rmBtn);
         list.appendChild(div);
     });
@@ -1101,8 +1088,7 @@ function renderBatch() {
 }
 
 function aggiornaTotaleBatch() {
-    var tot = batchItems.reduce(function(acc, b) { return acc + (parseInt(b.qty) || 0); }, 0);
-    document.getElementById('batch-totale').textContent = tot;
+    document.getElementById('batch-totale').textContent = batchItems.length;
 }
 
 function stampaBatch() {
@@ -1127,12 +1113,8 @@ function stampaBatch() {
     var tplEtichetta = document.getElementById('etichetta');
     if (!tplEtichetta) { alert('Template etichetta non trovato'); return; }
 
-    var totale = batchItems.reduce(function(acc, b) { return acc + (parseInt(b.qty) || 0); }, 0);
-    var MAX_BATCH = 50;
-    var numBatch = Math.ceil(totale / MAX_BATCH);
-    if (numBatch > 1) {
-        if (!confirm('Stampi ' + totale + ' etichette suddivise in ' + numBatch + ' batch da max ' + MAX_BATCH + '.\nDopo ogni stampa si aprira la successiva. Continua?')) return;
-    }
+    var totale = batchItems.length;
+    if (totale === 0) { alert('Nessun articolo nel batch.'); return; }
     console.log('[batch] inizio generazione', totale, 'etichette');
 
     // Indicatore loading sul bottone
@@ -1141,20 +1123,13 @@ function stampaBatch() {
     btn.disabled = true;
     btn.innerHTML = '⏳ Generazione in corso...';
 
-    // Costruisci tasks list (uno per ogni etichetta da generare)
-    var allTasks = [];
-    batchItems.forEach(function(b) {
+    // 1 etichetta per articolo (qta copie scelta da user nel print dialog)
+    var allTasks = batchItems.map(function(b) {
         var pzcassaItem = b.pzcassa > 0 ? b.pzcassa : pzcassaGlobal;
-        for (var i = 0; i < b.qty; i++) {
-            allTasks.push({ b: b, pzcassaItem: pzcassaItem });
-        }
+        return { b: b, pzcassaItem: pzcassaItem };
     });
 
-    // Split in batch da MAX_BATCH
-    var batchChunks = [];
-    for (var i = 0; i < allTasks.length; i += MAX_BATCH) {
-        batchChunks.push(allTasks.slice(i, i + MAX_BATCH));
-    }
+    var batchChunks = [allTasks];
     var currentBatchIdx = 0;
     var idCounter = 0;
     var tasks = batchChunks[0];
