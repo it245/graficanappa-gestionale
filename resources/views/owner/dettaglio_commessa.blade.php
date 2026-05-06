@@ -68,7 +68,7 @@
     th:nth-child(9), td:nth-child(9) { width: 80px; text-align: center; }       /* Scarti R */
     th:nth-child(10), td:nth-child(10) { width: 140px; }                        /* Operatori */
     th:nth-child(11), td:nth-child(11) { width: 160px; }                        /* Note */
-    th:nth-child(12), td:nth-child(12) { width: 200px; }                        /* Descrizione */
+    th:nth-child(12), td:nth-child(12) { width: auto; min-width: 200px; }       /* Descrizione: assorbe extra */
     th:nth-child(13), td:nth-child(13) { width: 130px; text-align: center; font-size: 11px; }    /* Data Inizio */
     th:nth-child(14), td:nth-child(14) { width: 130px; text-align: center; font-size: 11px; }    /* Data Fine */
     th:nth-child(15), td:nth-child(15) { width: 60px; text-align: center; }     /* × */
