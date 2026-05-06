@@ -747,27 +747,34 @@ function salvaEusaNuovoEan() {
 // ===== Dropdown ricerca EAN (Italiana Confetti) =====
 var eanData = @json($eanProdotti);
 
-// Contesto commessa per boost rilevanza: descrizione ordine + note fasi successive
-var contestoCommessa = (
-    @json($ordine->descrizione ?? '') + ' ' +
-    @json(collect($righeFS ?? [])->pluck('testo')->implode(' '))
-).toLowerCase();
-// Estrai parole chiave (>3 caratteri, no stop words)
-var stopWords = ['stampa','colori','colore','cliente','articolo','codice','ordine','con','sul','per','dal','dei','del','della','delle','degli','rev','copie','pag','grammi','formato','pantone'];
-var keywordsCommessa = (contestoCommessa.match(/[a-zà-ù0-9]+/gi) || [])
-    .map(function(w) { return w.toLowerCase(); })
-    .filter(function(w) { return w.length > 3 && stopWords.indexOf(w) === -1; });
-// Dedup
-keywordsCommessa = [...new Set(keywordsCommessa)];
+// Contesto commessa per boost rilevanza:
+// descrizione ordine + note fasi successive (peso 1)
+// + note fasi reparto Piegaincolla (peso 2 = priorità maggiore)
+var stopWords = ['stampa','colori','colore','cliente','articolo','codice','ordine','con','sul','per','dal','dei','del','della','delle','degli','rev','copie','pag','grammi','formato','pantone','punto'];
+
+function estraiKeywords(str) {
+    return (str.toLowerCase().match(/[a-zà-ù0-9]+/gi) || [])
+        .map(function(w) { return w.toLowerCase(); })
+        .filter(function(w) { return w.length > 3 && stopWords.indexOf(w) === -1; });
+}
+var contestoBase = @json($ordine->descrizione ?? '') + ' ' + @json(collect($righeFS ?? [])->pluck('testo')->implode(' '));
+var contestoPI = @json($notePI ?? '');
+
+var keywordsBase = [...new Set(estraiKeywords(contestoBase))];
+var keywordsPI   = [...new Set(estraiKeywords(contestoPI))];
 
 // Pre-calcola lowercase + score relevance per match veloce
 eanData.forEach(function(it) {
     it._art_lc = (it.articolo || '').toLowerCase();
     it._ean_lc = (it.codice_ean || '').toLowerCase();
-    // Score: quante keyword commessa trova nell'articolo
-    it._score = keywordsCommessa.reduce(function(acc, kw) {
+    var scoreBase = keywordsBase.reduce(function(acc, kw) {
         return acc + (it._art_lc.indexOf(kw) !== -1 ? 1 : 0);
     }, 0);
+    var scorePI = keywordsPI.reduce(function(acc, kw) {
+        return acc + (it._art_lc.indexOf(kw) !== -1 ? 1 : 0);
+    }, 0);
+    // Score totale: PI pesa 2x (priorità reparto piegaincolla)
+    it._score = scoreBase + (scorePI * 2);
 });
 var searchInput = document.getElementById('ean-search');
 var dropdown = document.getElementById('ean-dropdown');
