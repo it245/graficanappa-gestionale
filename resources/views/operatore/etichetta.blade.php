@@ -272,7 +272,12 @@
                 <div id="batch-wrap" class="mt-3" style="display:none; padding:10px; background:#e7f1ff; border:1px solid #0d6efd; border-radius:6px;">
                     <div class="d-flex align-items-center justify-content-between mb-2">
                         <strong style="font-size:14px;">📋 Etichette da stampare</strong>
-                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="svuotaBatch()" style="font-size:11px;">Svuota</button>
+                        <div>
+                            <button type="button" class="btn btn-sm btn-outline-secondary me-1" onclick="navigaBatch(-1)" title="Anteprima precedente">◀</button>
+                            <span id="batch-preview-pos" style="font-size:12px; min-width:50px; display:inline-block; text-align:center;">-</span>
+                            <button type="button" class="btn btn-sm btn-outline-secondary ms-1" onclick="navigaBatch(1)" title="Anteprima successiva">▶</button>
+                            <button type="button" class="btn btn-sm btn-outline-danger ms-2" onclick="svuotaBatch()" style="font-size:11px;">Svuota</button>
+                        </div>
                     </div>
                     <div id="batch-list"></div>
                     <button type="button" class="btn btn-success w-100 mt-2 fw-bold" id="btn-stampa-batch" onclick="stampaBatch()">
@@ -344,8 +349,8 @@
         </div>
     </div>
 
-    <button type="button" class="btn btn-primary btn-lg w-100" onclick="stampa()">
-        Stampa Etichetta
+    <button type="button" class="btn btn-primary btn-lg w-100" id="btn-stampa-singola" onclick="stampa()">
+        Stampa Etichetta singola
     </button>
 </div>
 
@@ -950,23 +955,34 @@ function clearEan() {
 }
 
 // ===== Multi-select batch etichette =====
-var batchItems = [];  // [{articolo, codice_ean, qty}]
+var batchItems = [];  // [{articolo, codice_ean, qty, pzcassa}]
+var batchPreviewIdx = 0;
 
 function aggiungiBatch(item) {
     var esistente = batchItems.find(function(b) { return b.codice_ean === item.codice_ean; });
     if (esistente) {
         esistente.qty++;
     } else {
-        batchItems.push({ articolo: item.articolo, codice_ean: item.codice_ean, qty: 1 });
+        var pzcassaCur = parseInt(document.getElementById('campo-pzcassa').value) || 0;
+        batchItems.push({
+            articolo: item.articolo,
+            codice_ean: item.codice_ean,
+            qty: 1,
+            pzcassa: pzcassaCur
+        });
     }
     renderBatch();
+    batchPreviewIdx = batchItems.length - 1;
+    mostraPreviewBatch();
     dropdown.style.display = 'none';
     searchInput.value = '';
 }
 
 function rimuoviBatch(ean) {
     batchItems = batchItems.filter(function(b) { return b.codice_ean !== ean; });
+    if (batchPreviewIdx >= batchItems.length) batchPreviewIdx = Math.max(0, batchItems.length - 1);
     renderBatch();
+    mostraPreviewBatch();
 }
 
 function cambiaQtyBatch(ean, qty) {
@@ -977,31 +993,95 @@ function cambiaQtyBatch(ean, qty) {
     }
 }
 
+function cambiaPzcassaBatch(ean, pz) {
+    var item = batchItems.find(function(b) { return b.codice_ean === ean; });
+    if (item) {
+        item.pzcassa = Math.max(0, parseInt(pz) || 0);
+        // Se sto vedendo questo item in preview, aggiorna
+        if (batchItems[batchPreviewIdx] && batchItems[batchPreviewIdx].codice_ean === ean) {
+            mostraPreviewBatch();
+        }
+    }
+}
+
 function svuotaBatch() {
     batchItems = [];
+    batchPreviewIdx = 0;
     renderBatch();
+}
+
+function navigaBatch(dir) {
+    if (batchItems.length === 0) return;
+    batchPreviewIdx = (batchPreviewIdx + dir + batchItems.length) % batchItems.length;
+    mostraPreviewBatch();
+}
+
+function mostraPreviewBatch() {
+    var pos = document.getElementById('batch-preview-pos');
+    if (batchItems.length === 0) {
+        if (pos) pos.textContent = '-';
+        return;
+    }
+    if (pos) pos.textContent = (batchPreviewIdx + 1) + '/' + batchItems.length;
+    var item = batchItems[batchPreviewIdx];
+    if (!item) return;
+    // Imposta form values temporaneamente per vedere anteprima dell'item
+    document.getElementById('campo-articolo').value = item.articolo;
+    document.getElementById('campo-ean').value = item.codice_ean;
+    searchInput.value = item.articolo;
+    if (item.pzcassa > 0) document.getElementById('campo-pzcassa').value = item.pzcassa;
+    aggiornaAnteprima();
 }
 
 function renderBatch() {
     var wrap = document.getElementById('batch-wrap');
     var list = document.getElementById('batch-list');
+    var btnSingola = document.getElementById('btn-stampa-singola');
     if (batchItems.length === 0) {
         wrap.style.display = 'none';
+        if (btnSingola) btnSingola.style.display = '';
         return;
     }
     wrap.style.display = 'block';
+    if (btnSingola) btnSingola.style.display = 'none';
     list.innerHTML = '';
-    batchItems.forEach(function(b) {
+    batchItems.forEach(function(b, idx) {
         var div = document.createElement('div');
         div.className = 'batch-item';
+        if (idx === batchPreviewIdx) div.style.background = '#cfe2ff';
         var nameSpan = document.createElement('span');
         nameSpan.className = 'art-name';
-        nameSpan.textContent = b.articolo + ' (' + b.codice_ean + ')';
+        nameSpan.style.cursor = 'pointer';
+        nameSpan.textContent = b.articolo;
+        nameSpan.addEventListener('click', function() {
+            batchPreviewIdx = idx;
+            renderBatch();
+            mostraPreviewBatch();
+        });
+        // Pz/cassa input
+        var pzLabel = document.createElement('small');
+        pzLabel.textContent = 'pz/cassa';
+        pzLabel.style.color = '#666';
+        var pzInput = document.createElement('input');
+        pzInput.type = 'number';
+        pzInput.min = '0';
+        pzInput.value = b.pzcassa || '';
+        pzInput.className = 'form-control form-control-sm';
+        pzInput.style.width = '70px';
+        pzInput.placeholder = 'pz';
+        pzInput.title = 'Pezzi per cassa';
+        pzInput.addEventListener('input', function() { cambiaPzcassaBatch(b.codice_ean, this.value); });
+        // Etichette qty
+        var qtyLabel = document.createElement('small');
+        qtyLabel.textContent = 'etich.';
+        qtyLabel.style.color = '#666';
         var qtyInput = document.createElement('input');
         qtyInput.type = 'number';
         qtyInput.min = '1';
         qtyInput.value = b.qty;
         qtyInput.className = 'form-control form-control-sm';
+        qtyInput.style.width = '60px';
+        qtyInput.title = 'Numero etichette da stampare';
         qtyInput.addEventListener('input', function() { cambiaQtyBatch(b.codice_ean, this.value); });
         var rmBtn = document.createElement('button');
         rmBtn.type = 'button';
@@ -1010,6 +1090,9 @@ function renderBatch() {
         rmBtn.textContent = '×';
         rmBtn.addEventListener('click', function() { rimuoviBatch(b.codice_ean); });
         div.appendChild(nameSpan);
+        div.appendChild(pzLabel);
+        div.appendChild(pzInput);
+        div.appendChild(qtyLabel);
         div.appendChild(qtyInput);
         div.appendChild(rmBtn);
         list.appendChild(div);
@@ -1027,11 +1110,17 @@ function stampaBatch() {
         alert('Aggiungi almeno un articolo al batch.');
         return;
     }
-    var pzcassa = document.getElementById('campo-pzcassa').value;
+    var pzcassaGlobal = parseInt(document.getElementById('campo-pzcassa').value) || 0;
     var lotto = document.getElementById('campo-lotto').value;
     var data = document.getElementById('campo-data').value;
     var cliente = document.getElementById('campo-cliente').value;
-    if (!pzcassa) { alert('Inserisci pezzi per cassa.'); return; }
+
+    // Verifica che ogni item abbia pz/cassa (per item o globale)
+    var senzaPz = batchItems.filter(function(b) { return !(b.pzcassa > 0) && !(pzcassaGlobal > 0); });
+    if (senzaPz.length > 0) {
+        alert('Inserisci pz/cassa (riga "' + senzaPz[0].articolo + '" o globale).');
+        return;
+    }
 
     // Pulisci container batch
     var container = document.getElementById('batch-print-container');
@@ -1046,6 +1135,7 @@ function stampaBatch() {
     // Per ogni articolo selezionato: clona N volte etichetta + popola
     var idCounter = 0;
     batchItems.forEach(function(b) {
+        var pzcassaItem = b.pzcassa > 0 ? b.pzcassa : pzcassaGlobal;
         for (var i = 0; i < b.qty; i++) {
             idCounter++;
             var clone = tplEtichetta.cloneNode(true);
