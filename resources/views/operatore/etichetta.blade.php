@@ -820,29 +820,39 @@ function chiaveArticolo(desc) {
 function bestMatchPerDescrizione(desc, dataset) {
     var chiave = chiaveArticolo(desc);
     if (!chiave || chiave.length < 3) return null;
-    var paroleChiave = chiave.split(/\s+/).filter(function(w) { return w.length > 0; });
-    if (paroleChiave.length === 0) return null;
+    // Dedup parole chiave (evita doppi 'bon bon' che gonfiano il match)
+    var paroleChiaveDesc = [...new Set(chiave.split(/\s+/).filter(function(w) { return w.length > 0; }))];
+    if (paroleChiaveDesc.length === 0) return null;
 
     var best = null;
     var bestScore = 0;
 
+    function matchInString(parola, str) {
+        if (parola.length === 1) return new RegExp('\\b' + parola + '\\b', 'i').test(str);
+        return str.indexOf(parola) !== -1;
+    }
+
     dataset.forEach(function(it) {
         var artLc = (it.articolo || '').toLowerCase();
-        // Score = num parole chiave presenti come substring nell'articolo
-        var matched = 0;
-        paroleChiave.forEach(function(p) {
-            // Match con word boundary per parole singole (es. "m"), substring per parole lunghe
-            if (p.length === 1) {
-                if (new RegExp('\\b' + p + '\\b', 'i').test(artLc)) matched++;
-            } else {
-                if (artLc.indexOf(p) !== -1) matched++;
-            }
-        });
-        // Soglia: serve match >= 60% delle parole chiave (min 1)
-        var requiredMatch = Math.max(1, Math.ceil(paroleChiave.length * 0.6));
-        if (matched < requiredMatch) return;
+        var chiaveArt = chiaveArticolo(it.articolo || '');
+        var paroleChiaveArt = [...new Set((chiaveArt || '').split(/\s+/).filter(function(w) { return w.length > 0; }))];
 
-        var score = matched / paroleChiave.length;
+        // Match desc -> art: % parole desc presenti in art
+        var matchDA = paroleChiaveDesc.filter(function(p) { return matchInString(p, artLc); }).length;
+        var pctDA = paroleChiaveDesc.length > 0 ? matchDA / paroleChiaveDesc.length : 0;
+
+        // Match art -> desc: % parole chiave art presenti in desc (reciprocita)
+        var descLc = (desc || '').toLowerCase();
+        var matchAD = paroleChiaveArt.filter(function(p) { return matchInString(p, descLc); }).length;
+        var pctAD = paroleChiaveArt.length > 0 ? matchAD / paroleChiaveArt.length : 0;
+
+        // Entrambe le direzioni devono essere >= 60% (evita falsi positivi tipo
+        // 'noisettes nuance salvia' -> 'les noisettes nuances salvia 1kg' dove 'les'
+        // distingue prodotti, o 'bon bon cream nocciola' -> 'bon bon cream caffe')
+        if (pctDA < 0.6 || pctAD < 0.6) return;
+
+        // Score combinato
+        var score = (pctDA + pctAD) / 2;
         if (score > bestScore) {
             bestScore = score;
             best = it;
