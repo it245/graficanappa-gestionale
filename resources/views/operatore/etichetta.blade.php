@@ -1137,11 +1137,23 @@ function stampaBatch() {
     btn.disabled = true;
     btn.innerHTML = '⏳ Generazione in corso...';
 
-    // Per ogni articolo selezionato: clona N volte etichetta + popola
-    var idCounter = 0;
+    // Costruisci tasks list (uno per ogni etichetta da generare)
+    var tasks = [];
     batchItems.forEach(function(b) {
         var pzcassaItem = b.pzcassa > 0 ? b.pzcassa : pzcassaGlobal;
         for (var i = 0; i < b.qty; i++) {
+            tasks.push({ b: b, pzcassaItem: pzcassaItem });
+        }
+    });
+
+    var idCounter = 0;
+    function processChunk(startIdx) {
+        var CHUNK = 5;
+        var endIdx = Math.min(startIdx + CHUNK, tasks.length);
+        for (var t = startIdx; t < endIdx; t++) {
+            var task = tasks[t];
+            var b = task.b;
+            var pzcassaItem = task.pzcassaItem;
             idCounter++;
             var clone = tplEtichetta.cloneNode(true);
             clone.id = 'etichetta-batch-' + idCounter;
@@ -1195,25 +1207,32 @@ function stampaBatch() {
             var dataEl = clone.querySelector('.print-data, [id^="print-data"]');
             if (dataEl) dataEl.textContent = data;
         }
-    });
-
-    console.log('[batch] generate', idCounter, 'cloni completato');
-    // Reset bottone + attiva print con piccolo delay
-    btn.disabled = false;
-    btn.innerHTML = btnText;
-    setTimeout(function() {
-        document.body.classList.add('batch-print-mode');
-        try {
-            window.print();
-        } catch (e) {
-            console.error('[batch] print errore', e);
-            alert('Errore stampa: ' + e.message);
+        // Aggiorna progress
+        btn.innerHTML = '⏳ Generazione ' + endIdx + '/' + tasks.length + '...';
+        if (endIdx < tasks.length) {
+            // Yield al browser, prosegui async
+            setTimeout(function() { processChunk(endIdx); }, 10);
+        } else {
+            // Tutti generati → stampa
+            console.log('[batch] generate', idCounter, 'cloni completato');
+            btn.disabled = false;
+            btn.innerHTML = btnText;
+            setTimeout(function() {
+                document.body.classList.add('batch-print-mode');
+                try {
+                    window.print();
+                } catch (e) {
+                    console.error('[batch] print errore', e);
+                    alert('Errore stampa: ' + e.message);
+                }
+                setTimeout(function() {
+                    document.body.classList.remove('batch-print-mode');
+                    container.innerHTML = '';
+                }, 1000);
+            }, 200);
         }
-        setTimeout(function() {
-            document.body.classList.remove('batch-print-mode');
-            container.innerHTML = '';
-        }, 1000);
-    }, 200);
+    }
+    processChunk(0);
 }
 
 @else
