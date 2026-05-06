@@ -110,17 +110,17 @@ class EtichettaController extends Controller
     {
         $filtro = $request->get('q', '');
 
-        // Default: solo commesse con fasi non consegnate. Con filtro ricerca: include
-        // anche stato=4 (consegnate) per permettere ristampe etichette.
+        // Tutte commesse ultimi 90gg (incluso consegnate per ristampe).
+        // Filtro client-side via JS.
+        $query = Ordine::whereHas('fasi')
+            ->where('data_registrazione', '>=', now()->subDays(90)->format('Y-m-d'));
+
         if ($filtro) {
-            $query = Ordine::whereHas('fasi')
-                ->where(function ($q) use ($filtro) {
-                    $q->where('commessa', 'like', "%{$filtro}%")
-                      ->orWhere('cliente_nome', 'like', "%{$filtro}%")
-                      ->orWhere('descrizione', 'like', "%{$filtro}%");
-                });
-        } else {
-            $query = Ordine::whereHas('fasi', fn($q) => $q->where('stato', '<', 4));
+            $query->where(function ($q) use ($filtro) {
+                $q->where('commessa', 'like', "%{$filtro}%")
+                  ->orWhere('cliente_nome', 'like', "%{$filtro}%")
+                  ->orWhere('descrizione', 'like', "%{$filtro}%");
+            });
         }
 
         $commesse = $query->orderByDesc('data_registrazione')
