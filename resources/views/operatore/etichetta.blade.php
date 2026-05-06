@@ -1128,8 +1128,10 @@ function stampaBatch() {
     if (!tplEtichetta) { alert('Template etichetta non trovato'); return; }
 
     var totale = batchItems.reduce(function(acc, b) { return acc + (parseInt(b.qty) || 0); }, 0);
-    if (totale > 50) {
-        if (!confirm('Stai per stampare ' + totale + ' etichette. La generazione richiedera ' + Math.ceil(totale * 0.3) + ' secondi circa. Confermi?')) return;
+    var MAX_BATCH = 50;
+    if (totale > MAX_BATCH) {
+        alert('Massimo ' + MAX_BATCH + ' etichette per batch (' + totale + ' richieste).\nRiduci le quantità o fai più batch.\nIl browser si blocca con troppe pagine in stampa.');
+        return;
     }
     console.log('[batch] inizio generazione', totale, 'etichette');
 
