@@ -72,23 +72,17 @@
     th:nth-child(14), td:nth-child(14) { width: 130px; text-align: center; font-size: 11px; }    /* Data Fine */
     th:nth-child(15), td:nth-child(15) { width: 60px; text-align: center; }     /* × */
     td { white-space: nowrap; }
-    /* Descrizione: clamp 2 righe + font ridotto + tooltip via title */
+    /* Descrizione: 1 riga ellipsis ... + tooltip via title */
     td.desc-col, td:nth-child(12) {
-        white-space: normal;
-        max-height: 2.6em;
+        white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
         font-size: 11px;
         color: #666;
-        line-height: 1.3;
         cursor: help;
     }
     td.desc-col:hover, td:nth-child(12):hover {
-        -webkit-line-clamp: unset;
-        max-height: none;
+        white-space: normal;
         background: #fffbe6 !important;
         color: #000;
     }
