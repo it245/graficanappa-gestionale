@@ -809,8 +809,8 @@ function chiaveArticolo(desc) {
     raw = raw.replace(/\b\d+\s*(?:kg|gr|g|ml|cl|fg|pz)\b/gi, ' ');
     // Strip numeri puri
     raw = raw.replace(/\b\d+\b/g, ' ');
-    // Strip parole tecniche di lavorazione + articoli linguistici (les, gli, ecc.)
-    var tecniche = ['stampa','colori','colore','caldo','oro','drip','off','usare','lastrina','riserva','rilievo','fustellatura','fustella','finestratura','incollaggio','plastificazione','opaca','lucida','soft','touch','kg','gr','pant','pantone','ml','cl','vernice','iml','ks','les','gli','del','dei','della','delle','degli'];
+    // Strip parole tecniche di lavorazione (NON 'les' o varianti — sono distinguenti)
+    var tecniche = ['stampa','colori','colore','caldo','oro','drip','off','usare','lastrina','riserva','rilievo','fustellatura','fustella','finestratura','incollaggio','plastificazione','opaca','lucida','soft','touch','kg','gr','pant','pantone','ml','cl','vernice','iml','ks'];
     var splitW = raw.split(/\s+/).filter(function(w) {
         return w.length > 0 && tecniche.indexOf(w) === -1;
     });
