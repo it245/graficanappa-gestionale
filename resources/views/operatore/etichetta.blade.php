@@ -1255,45 +1255,53 @@ function stampaBatch() {
         // Aggiorna progress
         btn.innerHTML = '⏳ Generazione ' + endIdx + '/' + tasks.length + '...';
         if (endIdx < tasks.length) {
-            // Yield al browser - delay per liberare memoria
             setTimeout(function() { processChunk(endIdx); }, 30);
         } else {
-            // Batch corrente generato → stampa
-            console.log('[batch] chunk', currentBatchIdx + 1, '/', batchChunks.length, 'pronto (', tasks.length, 'etichette)');
-            btn.innerHTML = '🖨️ Stampa batch ' + (currentBatchIdx + 1) + '/' + batchChunks.length + '...';
+            console.log('[batch]', tasks.length, 'cloni pronti, apro print window');
+            btn.innerHTML = '🖨️ Apertura stampa...';
             setTimeout(function() {
-                document.body.classList.add('batch-print-mode');
-                try {
-                    window.print();
-                } catch (e) {
-                    console.error('[batch] print errore', e);
-                    alert('Errore stampa: ' + e.message);
-                }
-                setTimeout(function() {
-                    document.body.classList.remove('batch-print-mode');
-                    container.innerHTML = '';
-                    currentBatchIdx++;
-                    if (currentBatchIdx < batchChunks.length) {
-                        // Prossimo batch
-                        tasks = batchChunks[currentBatchIdx];
-                        if (!confirm('Batch ' + currentBatchIdx + ' stampato.\nProcedere con batch ' + (currentBatchIdx + 1) + '/' + batchChunks.length + '?')) {
-                            btn.disabled = false;
-                            btn.innerHTML = btnText;
-                            return;
-                        }
-                        btn.innerHTML = '⏳ Generazione batch ' + (currentBatchIdx + 1) + '/' + batchChunks.length + '...';
-                        processChunk(0);
-                    } else {
-                        // Tutto fatto
-                        btn.disabled = false;
-                        btn.innerHTML = btnText;
-                        if (batchChunks.length > 1) alert('Stampati ' + totale + ' etichette in ' + batchChunks.length + ' batch.');
-                    }
-                }, 1500);
-            }, 200);
+                stampaContainerInWindow(container);
+                btn.disabled = false;
+                btn.innerHTML = btnText;
+                container.innerHTML = '';
+            }, 100);
         }
     }
     processChunk(0);
+}
+
+// Apre nuova finestra con HTML del container, fa print lì (no conflitto layout main)
+function stampaContainerInWindow(container) {
+    var html = container.innerHTML;
+    if (!html.trim()) { alert('Nessuna etichetta generata.'); return; }
+
+    // Recupera CSS print esistente per riprodurlo
+    var w = window.open('', 'print-batch', 'width=900,height=700');
+    if (!w) { alert('Popup bloccato. Abilita popup per stampare batch.'); return; }
+    w.document.open();
+    w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Stampa Etichette</title>');
+    // Copia tutti gli style/link CSS dal main doc
+    document.querySelectorAll('link[rel="stylesheet"], style').forEach(function(el) {
+        w.document.write(el.outerHTML);
+    });
+    w.document.write('<style>');
+    w.document.write('body { margin: 0; padding: 0; }');
+    w.document.write('.etichetta-preview { display: flex !important; width: 150mm; height: 100mm; page-break-after: always; box-shadow: none; border: none; visibility: visible !important; }');
+    w.document.write('@page { size: 150mm 100mm; margin: 0; }');
+    w.document.write('@media print { .etichetta-preview { page-break-after: always; } }');
+    w.document.write('</style>');
+    w.document.write('</head><body>');
+    w.document.write(html);
+    w.document.write('</body></html>');
+    w.document.close();
+    // Aspetta caricamento font/CSS, poi print
+    w.onload = function() {
+        setTimeout(function() {
+            w.focus();
+            w.print();
+            setTimeout(function() { w.close(); }, 500);
+        }, 300);
+    };
 }
 
 @else
