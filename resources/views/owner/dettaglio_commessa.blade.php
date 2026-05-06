@@ -61,12 +61,13 @@
         cursor: pointer;
     }
     .desc-clamp {
-        display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical;
+        display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
         overflow:hidden; text-overflow:ellipsis; word-break:break-word;
-        line-height:1.35; max-height:5.4em; cursor:help;
+        line-height:1.3; max-height:2.6em; cursor:help;
+        font-size:11px; color:#666;
     }
-    .desc-clamp:hover { -webkit-line-clamp:unset; max-height:none; background:#fffbe6; }
-    td.desc-clamp { max-width:280px; }
+    .desc-clamp:hover { -webkit-line-clamp:unset; max-height:none; background:#fffbe6; color:#000; }
+    td.desc-clamp { max-width:240px; }
 
     /* 15 colonne: Priorità, Stato, Fase, Reparto, QtaCarta, QtaProd, QtaProdPrinect, ScartiPrinect, ScartiR, Operatori, Note, Descrizione, DataInizio, DataFine, Azioni */
     .dc-table th:nth-child(1), .dc-table td:nth-child(1) { width: 70px; text-align: center; }
