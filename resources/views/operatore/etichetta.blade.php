@@ -1128,7 +1128,9 @@ function stampaBatch() {
     if (!tplEtichetta) { alert('Template etichetta non trovato'); return; }
 
     var totale = batchItems.reduce(function(acc, b) { return acc + (parseInt(b.qty) || 0); }, 0);
-    if (totale > 100 && !confirm('Stai per stampare ' + totale + ' etichette. Confermi?')) return;
+    if (totale > 50) {
+        if (!confirm('Stai per stampare ' + totale + ' etichette. La generazione richiedera ' + Math.ceil(totale * 0.3) + ' secondi circa. Confermi?')) return;
+    }
     console.log('[batch] inizio generazione', totale, 'etichette');
 
     // Indicatore loading sul bottone
@@ -1148,7 +1150,7 @@ function stampaBatch() {
 
     var idCounter = 0;
     function processChunk(startIdx) {
-        var CHUNK = 3;
+        var CHUNK = 2;  // 2 alla volta -> tempo per browser di gestire memoria/eventi
         var endIdx = Math.min(startIdx + CHUNK, tasks.length);
         for (var t = startIdx; t < endIdx; t++) {
             try {
@@ -1185,10 +1187,14 @@ function stampaBatch() {
                 var plainData = '01' + gtin + '30' + qty + (lottoClean ? '10' + lottoClean : '');
                 try {
                     bwipjs.toCanvas(canvasOriginal, {
-                        bcid: 'datamatrix', text: plainData, scale: 10, padding: 4
+                        bcid: 'datamatrix', text: plainData, scale: 5, padding: 4
                     });
-                    imgEl.src = canvasOriginal.toDataURL('image/png');
-                    imgEl.style.display = '';
+                    // Mostra il canvas direttamente senza toDataURL (evita esplosione memoria)
+                    canvasOriginal.style.display = '';
+                    canvasOriginal.style.width = '30mm';
+                    canvasOriginal.style.height = '30mm';
+                    canvasOriginal.style.imageRendering = 'pixelated';
+                    if (imgEl) imgEl.style.display = 'none';  // nascondi img, usiamo canvas
                     if (eanText) eanText.textContent = plainData;
                 } catch (e) { console.error('DM err', e); }
             }
@@ -1207,8 +1213,8 @@ function stampaBatch() {
         // Aggiorna progress
         btn.innerHTML = '⏳ Generazione ' + endIdx + '/' + tasks.length + '...';
         if (endIdx < tasks.length) {
-            // Yield al browser, prosegui async
-            setTimeout(function() { processChunk(endIdx); }, 10);
+            // Yield al browser - delay maggiore per liberare memoria
+            setTimeout(function() { processChunk(endIdx); }, 30);
         } else {
             // Tutti generati → stampa
             console.log('[batch] generate', idCounter, 'cloni completato');
