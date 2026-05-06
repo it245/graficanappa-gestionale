@@ -276,6 +276,15 @@
                     <button type="button" class="btn btn-sm btn-outline-danger ms-2" onclick="clearEan()">X</button>
                 </div>
 
+                {{-- Pannello stato fasi commessa (PI): vedi al volo cosa non e stato ancora aggiunto --}}
+                <div id="fasi-commessa-wrap" class="mt-3" style="display:none; padding:8px 10px; background:#fff8e1; border:1px solid #ffc107; border-radius:6px; font-size:12px;">
+                    <div id="fasi-commessa-header" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;" onclick="toggleFasiCommessa()">
+                        <strong>📌 Articoli commessa</strong>
+                        <span id="fasi-commessa-toggle" style="font-size:14px; font-weight:bold;">⌄</span>
+                    </div>
+                    <div id="fasi-commessa-list" class="mt-1" style="display:none;"></div>
+                </div>
+
                 {{-- Lista articoli aggiunti (navigabile con ◀ ▶) --}}
                 <div id="batch-wrap" class="mt-3" style="display:none; padding:10px; background:#e7f1ff; border:1px solid #0d6efd; border-radius:6px;">
                     <div class="d-flex align-items-center justify-content-between mb-2">
@@ -291,21 +300,27 @@
                     <small class="text-muted d-block mt-2">Naviga con ◀ ▶ poi click "Stampa Etichetta" per ognuno.</small>
                 </div>
 
-                {{-- Inserimento manuale EAN nuovo --}}
+
+                {{-- Inserimento manuale EAN nuovo (collapsible) --}}
                 <div class="mt-3 p-2 border rounded" style="background:#fff8e1;">
-                    <label class="form-label mb-1" style="font-size:13px; font-weight:600;">📝 Oppure inserisci nuovo EAN</label>
-                    <div class="row g-2">
-                        <div class="col-5">
-                            <input type="text" id="nuovo-articolo" class="form-control form-control-sm" placeholder="Nome articolo">
-                        </div>
-                        <div class="col-5">
-                            <input type="text" id="nuovo-ean" class="form-control form-control-sm" placeholder="Codice EAN">
-                        </div>
-                        <div class="col-2">
-                            <button type="button" class="btn btn-sm btn-warning w-100" onclick="salvaEusaNuovoEan()">Usa</button>
-                        </div>
+                    <div id="nuovo-ean-header" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;" onclick="toggleNuovoEan()">
+                        <label class="form-label mb-0" style="font-size:13px; font-weight:600; cursor:pointer;">📝 Oppure inserisci nuovo EAN</label>
+                        <span id="nuovo-ean-toggle" style="font-size:14px; font-weight:bold;">⌄</span>
                     </div>
-                    <small class="text-muted">Il nuovo EAN verrà salvato per usi futuri.</small>
+                    <div id="nuovo-ean-body" style="display:none;" class="mt-2">
+                        <div class="row g-2">
+                            <div class="col-5">
+                                <input type="text" id="nuovo-articolo" class="form-control form-control-sm" placeholder="Nome articolo">
+                            </div>
+                            <div class="col-5">
+                                <input type="text" id="nuovo-ean" class="form-control form-control-sm" placeholder="Codice EAN">
+                            </div>
+                            <div class="col-2">
+                                <button type="button" class="btn btn-sm btn-warning w-100" onclick="salvaEusaNuovoEan()">Usa</button>
+                            </div>
+                        </div>
+                        <small class="text-muted">Il nuovo EAN verrà salvato per usi futuri.</small>
+                    </div>
                 </div>
             </div>
         </div>
@@ -570,6 +585,7 @@
                         <option>Pranzo</option>
                         <option>Fine turno</option>
                         <option value="Acconto">Acconto (quantità prodotta)</option>
+                        <option value="Taglio per fase successiva">Taglio per fase successiva</option>
                         <option value="__altro__">Altro...</option>
                     </select>
                 </div>
@@ -788,19 +804,30 @@ eanData.forEach(function(it) {
     it._ean_lc = (it.codice_ean || '').toLowerCase();
 });
 
+// Per ogni descrizione PI: trova il MIGLIOR match (TOP 1) tra eanData
+// Usa Jaccard similarity sulle keyword non-stopword.
 // Estrai "chiave articolo" da descrizione ordine: tipo + variante
 // Ignora codici fustella, formati, numeri, parole tecniche di lavorazione.
+// Es: "ASTUCCIO LETTERE FS0902 M STAMPA 2 COLORI..." -> "lettere m"
+//     "ASTUCCIO DONUTS MAXTRIS VANIGLIA FS2551..."  -> "donuts maxtris vaniglia"
+//     "AST.1 KG MAXTRIS NOIR"                       -> "maxtris noir"
 function chiaveArticolo(desc) {
     var s = (desc || '').toLowerCase();
+    // Trova prefisso ASTUCCIO/AST. e prendi parole successive
     var m = s.match(/(?:astuccio|astucci|ast\.)\s*(.+?)(?:\s*[(,]|\s+stampa\b|\s+f\.to\b|\s+rev\b|$)/i);
     if (!m) {
+        // Fallback: prendi prime 5 parole significative
         m = s.match(/^(.{0,80})/);
         if (!m) return '';
     }
     var raw = m[1];
+    // Strip codici fustella
     raw = raw.replace(/\b(?:fs|fff|fst|f\.s\.)\s*\d+/gi, ' ');
+    // Strip numeri con unità (1kg, 500gr, 250g, ecc.)
     raw = raw.replace(/\b\d+\s*(?:kg|gr|g|ml|cl|fg|pz)\b/gi, ' ');
+    // Strip numeri puri
     raw = raw.replace(/\b\d+\b/g, ' ');
+    // Strip parole tecniche di lavorazione (NON 'les' o varianti — sono distinguenti)
     var tecniche = ['stampa','colori','colore','caldo','oro','drip','off','usare','lastrina','riserva','rilievo','fustellatura','fustella','finestratura','incollaggio','plastificazione','opaca','lucida','soft','touch','kg','gr','pant','pantone','ml','cl','vernice','iml','ks'];
     var splitW = raw.split(/\s+/).filter(function(w) {
         return w.length > 0 && tecniche.indexOf(w) === -1;
@@ -811,40 +838,60 @@ function chiaveArticolo(desc) {
 function bestMatchPerDescrizione(desc, dataset) {
     var chiave = chiaveArticolo(desc);
     if (!chiave || chiave.length < 3) return null;
-    var paroleChiave = chiave.split(/\s+/).filter(function(w) { return w.length > 0; });
-    if (paroleChiave.length === 0) return null;
+    // Dedup parole chiave (evita doppi 'bon bon' che gonfiano il match)
+    var paroleChiaveDesc = [...new Set(chiave.split(/\s+/).filter(function(w) { return w.length > 0; }))];
+    if (paroleChiaveDesc.length === 0) return null;
 
     var best = null;
     var bestScore = 0;
 
+    function matchInString(parola, str) {
+        if (parola.length === 1) return new RegExp('\\b' + parola + '\\b', 'i').test(str);
+        // Match substring esatto
+        if (str.indexOf(parola) !== -1) return true;
+        // Match prefisso: gestisce plurali (nuance <-> nuances)
+        var paroleStr = str.split(/[^a-zà-ù0-9]+/i).filter(function(w) { return w.length > 0; });
+        return paroleStr.some(function(w) {
+            if (w.length < 4 || parola.length < 4) return false;
+            return w.startsWith(parola) || parola.startsWith(w);
+        });
+    }
+
     dataset.forEach(function(it) {
         var artLc = (it.articolo || '').toLowerCase();
-        var matched = 0;
-        paroleChiave.forEach(function(p) {
-            if (p.length === 1) {
-                if (new RegExp('\\b' + p + '\\b', 'i').test(artLc)) matched++;
-            } else {
-                if (artLc.indexOf(p) !== -1) matched++;
-            }
-        });
-        var requiredMatch = Math.max(1, Math.ceil(paroleChiave.length * 0.8));
-        if (matched < requiredMatch) return;
+        var chiaveArt = chiaveArticolo(it.articolo || '');
+        var paroleChiaveArt = [...new Set((chiaveArt || '').split(/\s+/).filter(function(w) { return w.length > 0; }))];
 
-        var score = matched / paroleChiave.length;
+        var matchDA = paroleChiaveDesc.filter(function(p) { return matchInString(p, artLc); }).length;
+        var pctDA = paroleChiaveDesc.length > 0 ? matchDA / paroleChiaveDesc.length : 0;
+
+        var descLc = (desc || '').toLowerCase();
+        var matchAD = paroleChiaveArt.filter(function(p) { return matchInString(p, descLc); }).length;
+        var pctAD = paroleChiaveArt.length > 0 ? matchAD / paroleChiaveArt.length : 0;
+
+        // Soglia 70% bidirezionale:
+        // - 'noisettes nuance salvia' / 'les noisettes nuances salvia': 100% / 75% -> passa
+        // - 'bon bon cream nocciola' / 'bon bon cream caffe': 66% / 66% -> scarta
+        if (pctDA < 0.7 || pctAD < 0.7) return;
+
+        var score = (pctDA + pctAD) / 2;
         if (score > bestScore) {
             bestScore = score;
             best = it;
+            best._matchIncerto = (pctAD < 0.9);  // flag se art ha parole extra non in desc
         }
     });
     return best;
 }
 
+// Costruisci set di articoli suggeriti (1 per ogni descrizione PI)
 var suggeritiSet = new Set();
 descrizioniPI.forEach(function(desc) {
     var match = bestMatchPerDescrizione(desc, eanData);
     if (match) suggeritiSet.add(match.codice_ean);
 });
 
+// Marca articoli suggeriti
 eanData.forEach(function(it) {
     it._suggerito = suggeritiSet.has(it.codice_ean);
     it._score = it._suggerito ? 10 : 0;
@@ -869,15 +916,15 @@ function eseguiRicerca() {
     activeIndex = -1;
 
     var risultati;
+    // Set dei codice_ean gia aggiunti al batch (per nasconderli dai suggerimenti)
+    var aggiuntiSet = new Set(batchItems.map(function(b) { return b.codice_ean; }));
 
     if (q.length < 2) {
-        // Input vuoto / 1 char: mostra solo suggerimenti rilevanti (score >= soglia)
-        risultati = eanData.filter(function(item) { return item._score >= SOGLIA_SUGGERIMENTO; });
-        risultati.sort(function(a, b) {
-            if (b._score !== a._score) return b._score - a._score;
-            return a._art_lc.localeCompare(b._art_lc);
+        // Input vuoto / 1 char: mostra solo articoli suggeriti (TOP 1 per ogni desc PI)
+        risultati = eanData.filter(function(item) {
+            return item._suggerito && !aggiuntiSet.has(item.codice_ean);
         });
-        risultati = risultati.slice(0, 10);
+        risultati.sort(function(a, b) { return a._art_lc.localeCompare(b._art_lc); });
         if (risultati.length === 0) {
             dropdown.style.display = 'none';
             return;
@@ -885,6 +932,7 @@ function eseguiRicerca() {
     } else {
         var parole = q.split(/\s+/).filter(function(p) { return p.length > 0; });
         risultati = eanData.filter(function(item) {
+            if (aggiuntiSet.has(item.codice_ean)) return false;
             return matchEan(item, parole, q);
         });
         risultati.sort(function(a, b) {
@@ -1004,14 +1052,17 @@ function aggiungiBatch(item) {
     }
     batchPreviewIdx = batchItems.findIndex(function(b) { return b.codice_ean === item.codice_ean; });
     renderBatch();
+    renderFasiCommessa();
     mostraPreviewBatch();
     dropdown.style.display = 'none';
+    searchInput.value = '';
 }
 
 function rimuoviBatch(ean) {
     batchItems = batchItems.filter(function(b) { return b.codice_ean !== ean; });
     if (batchPreviewIdx >= batchItems.length) batchPreviewIdx = Math.max(0, batchItems.length - 1);
     renderBatch();
+    renderFasiCommessa();
     if (batchItems.length > 0) mostraPreviewBatch();
 }
 
@@ -1019,7 +1070,63 @@ function svuotaBatch() {
     batchItems = [];
     batchPreviewIdx = 0;
     renderBatch();
+    renderFasiCommessa();
 }
+
+// Mostra elenco descrizioni PI commessa con stato ✓ aggiunto / ⚠ mancante
+function renderFasiCommessa() {
+    var wrap = document.getElementById('fasi-commessa-wrap');
+    var list = document.getElementById('fasi-commessa-list');
+    if (!wrap || !list) return;
+    if (!descrizioniPI || descrizioniPI.length === 0) {
+        wrap.style.display = 'none';
+        return;
+    }
+    wrap.style.display = 'block';
+    list.innerHTML = '';
+    descrizioniPI.forEach(function(desc) {
+        var match = bestMatchPerDescrizione(desc, eanData);
+        var preso = match && batchItems.some(function(b) { return b.codice_ean === match.codice_ean; });
+        var div = document.createElement('div');
+        div.style.padding = '3px 0';
+        var icon, color;
+        if (preso) { icon = '✓'; color = '#198754'; }
+        else if (match) { icon = '⚠'; color = '#dc3545'; }
+        else { icon = '?'; color = '#fd7e14'; }
+        var descBreve = desc.length > 70 ? desc.substring(0, 70) + '…' : desc;
+        var incertoIcon = (match && match._matchIncerto) ? ' <span title="Match incerto: verifica" style="color:#fd7e14;">⚠</span>' : '';
+        var matchText = match ? ' → ' + match.articolo + incertoIcon : ' (nessun articolo trovato)';
+        div.innerHTML = '<span style="color:' + color + ';font-weight:700;font-size:14px;">' + icon + '</span> ' +
+                        '<span>' + descBreve + '</span>' +
+                        '<small style="color:#666;display:block;margin-left:18px;">' + matchText + '</small>';
+        list.appendChild(div);
+    });
+}
+
+// Toggle apri/chiudi pannello articoli commessa
+function toggleFasiCommessa() {
+    var list = document.getElementById('fasi-commessa-list');
+    var toggle = document.getElementById('fasi-commessa-toggle');
+    if (!list || !toggle) return;
+    var isOpen = list.style.display !== 'none';
+    list.style.display = isOpen ? 'none' : '';
+    toggle.textContent = isOpen ? '⌄' : '^';
+}
+
+// Toggle apri/chiudi pannello nuovo EAN
+function toggleNuovoEan() {
+    var body = document.getElementById('nuovo-ean-body');
+    var toggle = document.getElementById('nuovo-ean-toggle');
+    if (!body || !toggle) return;
+    var isOpen = body.style.display !== 'none';
+    body.style.display = isOpen ? 'none' : '';
+    toggle.textContent = isOpen ? '⌄' : '^';
+}
+
+// Render iniziale al caricamento
+document.addEventListener('DOMContentLoaded', renderFasiCommessa);
+// Fallback: chiama subito (se script eseguito dopo DOMContentLoaded)
+setTimeout(renderFasiCommessa, 100);
 
 function navigaBatch(dir) {
     if (batchItems.length === 0) return;
@@ -1076,6 +1183,7 @@ function renderBatch() {
         list.appendChild(div);
     });
 }
+
 
 @else
 // ===== Scanner barcode (altri clienti) =====

@@ -81,20 +81,25 @@ class EtichettaController extends Controller
         if (!is_array($righeFS)) $righeFS = [];
 
         // Descrizioni ordini fratelli (stessa commessa) con fase Piegaincolla (PI):
-        // boost rilevanza search per articoli relativi a quegli ordini PI.
-        // Note operatore escluse (testo libero non rilevante).
-        $notePI = '';
+        // ARRAY di descrizioni separate, una per ogni ordine PI. Lato client
+        // troviamo il match TOP-1 per ogni descrizione (es. 4 ordini PI = 4 articoli).
+        $descrizioniPI = [];
         if (!empty($ordine->commessa)) {
-            $ordiniConPI = Ordine::where('commessa', $ordine->commessa)
+            $descrizioniPI = Ordine::where('commessa', $ordine->commessa)
                 ->whereHas('fasi.faseCatalogo.reparto', fn($q) => $q->where('nome', 'piegaincolla'))
-                ->pluck('descrizione');
-            $notePI = trim($ordiniConPI->filter()->implode(' '));
+                ->pluck('descrizione')
+                ->filter()
+                ->unique()
+                ->values()
+                ->toArray();
         }
+        // Backward-compat: notePI ancora disponibile come stringa unica (per boost legacy)
+        $notePI = trim(implode(' ', $descrizioniPI));
 
         return view('operatore.etichetta', compact(
             'ordine', 'lotto', 'cliente', 'data',
             'isItalianaConfetti', 'isSimpleLabel', 'isNoHeader', 'isTifataPlastica', 'eanProdotti', 'articoloDefault', 'eanSalvato',
-            'fasiOperatore', 'faseOperatore', 'operatore', 'righeFS', 'notePI'
+            'fasiOperatore', 'faseOperatore', 'operatore', 'righeFS', 'notePI', 'descrizioniPI'
         ));
     }
 
