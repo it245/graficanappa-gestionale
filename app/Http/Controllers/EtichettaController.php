@@ -80,16 +80,16 @@ class EtichettaController extends Controller
         $righeFS = $noteFS ? json_decode($noteFS, true) : [];
         if (!is_array($righeFS)) $righeFS = [];
 
-        // Note fasi reparto Piegaincolla (PI) — usate per boost rilevanza search
+        // Descrizioni ordini fratelli (stessa commessa) con fase Piegaincolla (PI):
+        // boost rilevanza search per articoli relativi a quegli ordini PI.
+        // Note operatore escluse (testo libero non rilevante).
         $notePI = '';
-        $fasiPI = OrdineFase::where('ordine_id', $ordine->id)
-            ->whereHas('faseCatalogo.reparto', fn($q) => $q->where('nome', 'piegaincolla'))
-            ->get(['note', 'fase']);
-        foreach ($fasiPI as $f) {
-            if (!empty($f->note)) $notePI .= ' ' . $f->note;
-            if (!empty($f->fase)) $notePI .= ' ' . $f->fase;
+        if (!empty($ordine->commessa)) {
+            $ordiniConPI = Ordine::where('commessa', $ordine->commessa)
+                ->whereHas('fasi.faseCatalogo.reparto', fn($q) => $q->where('nome', 'piegaincolla'))
+                ->pluck('descrizione');
+            $notePI = trim($ordiniConPI->filter()->implode(' '));
         }
-        $notePI = trim($notePI);
 
         return view('operatore.etichetta', compact(
             'ordine', 'lotto', 'cliente', 'data',
