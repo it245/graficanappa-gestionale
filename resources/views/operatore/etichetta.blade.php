@@ -258,6 +258,12 @@
                     <button type="button" class="btn btn-sm btn-outline-danger ms-2" onclick="clearEan()">X</button>
                 </div>
 
+                {{-- Pannello stato fasi commessa (PI): vedi al volo cosa non e stato ancora aggiunto --}}
+                <div id="fasi-commessa-wrap" class="mt-3" style="display:none; padding:8px 10px; background:#fff8e1; border:1px solid #ffc107; border-radius:6px; font-size:12px;">
+                    <strong>📌 Fasi commessa (PI)</strong>
+                    <div id="fasi-commessa-list" class="mt-1"></div>
+                </div>
+
                 {{-- Lista articoli aggiunti (navigabile con ◀ ▶) --}}
                 <div id="batch-wrap" class="mt-3" style="display:none; padding:10px; background:#e7f1ff; border:1px solid #0d6efd; border-radius:6px;">
                     <div class="d-flex align-items-center justify-content-between mb-2">
@@ -795,7 +801,7 @@ function chiaveArticolo(desc) {
     raw = raw.replace(/\b\d+\s*(?:kg|gr|g|ml|cl|fg|pz)\b/gi, ' ');
     // Strip numeri puri
     raw = raw.replace(/\b\d+\b/g, ' ');
-    // Strip parole tecniche
+    // Strip parole tecniche di lavorazione (NON varianti di prodotto come classico/sfumato)
     var tecniche = ['stampa','colori','colore','caldo','oro','drip','off','usare','lastrina','riserva','rilievo','fustellatura','fustella','finestratura','incollaggio','plastificazione','opaca','lucida','soft','touch','kg','gr','pant','pantone','ml','cl','vernice','iml','ks'];
     var splitW = raw.split(/\s+/).filter(function(w) {
         return w.length > 0 && tecniche.indexOf(w) === -1;
@@ -824,8 +830,8 @@ function bestMatchPerDescrizione(desc, dataset) {
                 if (artLc.indexOf(p) !== -1) matched++;
             }
         });
-        // Soglia: serve match >= 80% delle parole chiave (min 1)
-        var requiredMatch = Math.max(1, Math.ceil(paroleChiave.length * 0.8));
+        // Soglia: serve match >= 60% delle parole chiave (min 1)
+        var requiredMatch = Math.max(1, Math.ceil(paroleChiave.length * 0.6));
         if (matched < requiredMatch) return;
 
         var score = matched / paroleChiave.length;
@@ -869,10 +875,14 @@ function eseguiRicerca() {
     activeIndex = -1;
 
     var risultati;
+    // Set dei codice_ean gia aggiunti al batch (per nasconderli dai suggerimenti)
+    var aggiuntiSet = new Set(batchItems.map(function(b) { return b.codice_ean; }));
 
     if (q.length < 2) {
         // Input vuoto / 1 char: mostra solo articoli suggeriti (TOP 1 per ogni desc PI)
-        risultati = eanData.filter(function(item) { return item._suggerito; });
+        risultati = eanData.filter(function(item) {
+            return item._suggerito && !aggiuntiSet.has(item.codice_ean);
+        });
         risultati.sort(function(a, b) { return a._art_lc.localeCompare(b._art_lc); });
         if (risultati.length === 0) {
             dropdown.style.display = 'none';
@@ -881,6 +891,7 @@ function eseguiRicerca() {
     } else {
         var parole = q.split(/\s+/).filter(function(p) { return p.length > 0; });
         risultati = eanData.filter(function(item) {
+            if (aggiuntiSet.has(item.codice_ean)) return false;
             return matchEan(item, parole, q);
         });
         risultati.sort(function(a, b) {
@@ -1000,14 +1011,17 @@ function aggiungiBatch(item) {
     }
     batchPreviewIdx = batchItems.findIndex(function(b) { return b.codice_ean === item.codice_ean; });
     renderBatch();
+    renderFasiCommessa();
     mostraPreviewBatch();
     dropdown.style.display = 'none';
+    searchInput.value = '';
 }
 
 function rimuoviBatch(ean) {
     batchItems = batchItems.filter(function(b) { return b.codice_ean !== ean; });
     if (batchPreviewIdx >= batchItems.length) batchPreviewIdx = Math.max(0, batchItems.length - 1);
     renderBatch();
+    renderFasiCommessa();
     if (batchItems.length > 0) mostraPreviewBatch();
 }
 
@@ -1015,7 +1029,43 @@ function svuotaBatch() {
     batchItems = [];
     batchPreviewIdx = 0;
     renderBatch();
+    renderFasiCommessa();
 }
+
+// Mostra elenco descrizioni PI commessa con stato ✓ aggiunto / ⚠ mancante
+function renderFasiCommessa() {
+    var wrap = document.getElementById('fasi-commessa-wrap');
+    var list = document.getElementById('fasi-commessa-list');
+    if (!wrap || !list) return;
+    if (!descrizioniPI || descrizioniPI.length === 0) {
+        wrap.style.display = 'none';
+        return;
+    }
+    wrap.style.display = 'block';
+    list.innerHTML = '';
+    descrizioniPI.forEach(function(desc) {
+        var match = bestMatchPerDescrizione(desc, eanData);
+        var preso = match && batchItems.some(function(b) { return b.codice_ean === match.codice_ean; });
+        var div = document.createElement('div');
+        div.style.padding = '3px 0';
+        var icon, color;
+        if (preso) { icon = '✓'; color = '#198754'; }
+        else if (match) { icon = '⚠'; color = '#dc3545'; }
+        else { icon = '?'; color = '#fd7e14'; }
+        // Estrai versione breve della descrizione (max 60 char prima di codice/parentesi)
+        var descBreve = desc.length > 70 ? desc.substring(0, 70) + '…' : desc;
+        var matchText = match ? ' → ' + match.articolo : ' (nessun articolo trovato)';
+        div.innerHTML = '<span style="color:' + color + ';font-weight:700;font-size:14px;">' + icon + '</span> ' +
+                        '<span>' + descBreve + '</span>' +
+                        '<small style="color:#666;display:block;margin-left:18px;">' + matchText + '</small>';
+        list.appendChild(div);
+    });
+}
+
+// Render iniziale al caricamento
+document.addEventListener('DOMContentLoaded', renderFasiCommessa);
+// Fallback: chiama subito (se script eseguito dopo DOMContentLoaded)
+setTimeout(renderFasiCommessa, 100);
 
 function navigaBatch(dir) {
     if (batchItems.length === 0) return;
