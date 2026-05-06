@@ -1455,12 +1455,12 @@ class OndaSyncService
     public static function sincronizzaDDTFornitureLavorazioni(): int
     {
         $mappingLavorazioni = [
-            ['pattern' => '/uv\s*spot\s*spessorat/iu', 'fasi' => ['UVSPOTSPESSEST', 'UVSPOTEST', 'UVSPOT.MGI.30M', 'UVSPOT.MGI.9M']],
-            ['pattern' => '/uv\s*spot/iu', 'fasi' => ['UVSPOTEST', 'UVSPOT.MGI.30M', 'UVSPOT.MGI.9M', 'UVSPOTSPESSEST']],
-            ['pattern' => '/verniciare\s*uv/iu', 'fasi' => ['UVSPOTEST', 'UVSPOTSPESSEST', 'UVSPOT.MGI.30M']],
-            ['pattern' => '/plastificare\s*opac/iu', 'fasi' => ['PLAOPA1LATO', 'PLAOPABV']],
-            ['pattern' => '/plastificare\s*lucid/iu', 'fasi' => ['PLALUX1LATO', 'PLALUXBV']],
-            ['pattern' => '/plastificar/iu', 'fasi' => ['PLAOPA1LATO', 'PLAOPABV', 'PLALUX1LATO', 'PLALUXBV', 'PLASOFTTOUCH1']],
+            ['pattern' => '/uv\s*spot\s*spessorat/iu', 'fasi' => ['UVSPOTSPESSEST', 'EXTUVSPOTSPESS', 'UVSPOTEST', 'EXTUVSPOTEST', 'UVSPOT.MGI.30M', 'UVSPOT.MGI.9M']],
+            ['pattern' => '/uv\s*spot/iu', 'fasi' => ['UVSPOTEST', 'EXTUVSPOTEST', 'UVSPOT.MGI.30M', 'UVSPOT.MGI.9M', 'UVSPOTSPESSEST', 'EXTUVSPOTSPESS']],
+            ['pattern' => '/verniciare\s*uv/iu', 'fasi' => ['UVSPOTEST', 'EXTUVSPOTEST', 'UVSPOTSPESSEST', 'EXTUVSPOTSPESS', 'UVSPOT.MGI.30M']],
+            ['pattern' => '/plastificare\s*opac/iu', 'fasi' => ['PLAOPA1LATO', 'PLAOPABV', 'EXTPLAOPA']],
+            ['pattern' => '/plastificare\s*lucid/iu', 'fasi' => ['PLALUX1LATO', 'PLALUXBV', 'EXTPLALUX']],
+            ['pattern' => '/plastificar/iu', 'fasi' => ['PLAOPA1LATO', 'PLAOPABV', 'PLALUX1LATO', 'PLALUXBV', 'PLASOFTTOUCH1', 'EXTPLAOPA', 'EXTPLALUX']],
             ['pattern' => '/stamp\w*\s*a\s*caldo/iu', 'fasi' => ['STAMPACALDOJOHEST', 'STAMPACALDOJOH', 'stampalaminaoro', 'STAMPALAMINAORO']],
             ['pattern' => '/oro\s*a\s*caldo/iu', 'fasi' => ['STAMPACALDOJOHEST', 'STAMPACALDOJOH', 'stampalaminaoro']],
             ['pattern' => '/foil\s*oro|foil\s+\w+/iu', 'fasi' => ['FOIL.MGI.30M', 'FOIL.MGI.9M', 'FOILMGI', 'FOIL.MGI']],
@@ -1468,10 +1468,11 @@ class OndaSyncService
             ['pattern' => '/fustellatura|fustellare|da\s*fustellare/iu', 'fasi' => ['FUSTBOBST75X106', 'FUSTBIML75X106', 'FUSTSTELG33.44', 'FUSTSTELP25.35', 'FUST.STARPACK.74X104']],
             ['pattern' => '/brossura\s*filo\s*refe/iu', 'fasi' => ['BROSSFILOREFE/A4EST', 'BROSSFILOREFE/A5EST', 'BROSSCOPEST']],
             ['pattern' => '/brossura\s*fresat/iu', 'fasi' => ['BROSSFRESATA/A5EST', 'BROSSFRESATA/A4EST']],
-            ['pattern' => '/punt[io]\s*metallic/iu', 'fasi' => ['PUNTOMETALLICOEST', 'PUNTOMETALLICO']],
+            ['pattern' => '/punt[io]\s*metallic/iu', 'fasi' => ['PUNTOMETALLICOEST', 'EXTPUNTOMETALLICOEST', 'PUNTOMETALLICO']],
+            ['pattern' => '/arrotonda|angoli\s*arrotond|4\s*angoli/iu', 'fasi' => ['ARROT4ANGOLI', 'ARROTONDAMENTO', 'EXTARROT4ANGOLI']],
             ['pattern' => '/incollare|incollaggio|piega\s*incolla/iu', 'fasi' => ['PI01', 'PI02', 'PI03']],
             ['pattern' => '/accoppiar/iu', 'fasi' => ['accopp+fust', 'ACCOPPIATURA.FOGLI', 'ACCOPPIATURA.FOG.33.48INT']],
-            ['pattern' => '/allestimento|allestire/iu', 'fasi' => ['Allest.Manuale', 'ALLEST.SHOPPER', 'ALLESTIMENTO.ESPOSITORI']],
+            ['pattern' => '/allestimento|allestire|allestiti?o?/iu', 'fasi' => ['Allest.Manuale', 'ALLEST.SHOPPER', 'ALLESTIMENTO.ESPOSITORI', 'PUNTOMETALLICOEST', 'EXTPUNTOMETALLICOEST', 'ARROT4ANGOLI', 'EXTARROT4ANGOLI']],
         ];
 
         $righeDDT = DB::connection('onda')->select("
