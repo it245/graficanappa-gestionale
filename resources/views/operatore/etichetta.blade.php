@@ -260,7 +260,7 @@
 
                 {{-- Pannello stato fasi commessa (PI): vedi al volo cosa non e stato ancora aggiunto --}}
                 <div id="fasi-commessa-wrap" class="mt-3" style="display:none; padding:8px 10px; background:#fff8e1; border:1px solid #ffc107; border-radius:6px; font-size:12px;">
-                    <strong>📌 Fasi commessa (PI)</strong>
+                    <strong>📌 Articoli commessa</strong>
                     <div id="fasi-commessa-list" class="mt-1"></div>
                 </div>
 
