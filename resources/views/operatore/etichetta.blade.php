@@ -851,15 +851,16 @@ function bestMatchPerDescrizione(desc, dataset) {
         var matchAD = paroleChiaveArt.filter(function(p) { return matchInString(p, descLc); }).length;
         var pctAD = paroleChiaveArt.length > 0 ? matchAD / paroleChiaveArt.length : 0;
 
-        // Soglia minima desc->art 60%. Reciprocita art->desc anch'essa >=60%
-        // per evitare match completamente fuori contesto (es. caffe vs nocciola).
-        if (pctDA < 0.6 || pctAD < 0.6) return;
+        // Soglia 70% bidirezionale:
+        // - 'noisettes nuance salvia' / 'les noisettes nuances salvia': 100% / 75% -> passa
+        // - 'bon bon cream nocciola' / 'bon bon cream caffe': 66% / 66% -> scarta
+        if (pctDA < 0.7 || pctAD < 0.7) return;
 
         var score = (pctDA + pctAD) / 2;
         if (score > bestScore) {
             bestScore = score;
             best = it;
-            best._matchIncerto = (pctAD < 0.85);  // flag se art ha parole extra non in desc
+            best._matchIncerto = (pctAD < 0.9);  // flag se art ha parole extra non in desc
         }
     });
     return best;
