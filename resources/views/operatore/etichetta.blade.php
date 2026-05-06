@@ -747,21 +747,41 @@ function salvaEusaNuovoEan() {
 // ===== Dropdown ricerca EAN (Italiana Confetti) =====
 var eanData = @json($eanProdotti);
 
-// Contesto commessa per boost rilevanza:
-// descrizione ordine + note fasi successive (peso 1)
-// + note fasi reparto Piegaincolla (peso 2 = priorità maggiore)
-var stopWords = ['stampa','colori','colore','cliente','articolo','codice','ordine','con','sul','per','dal','dei','del','della','delle','degli','rev','copie','pag','grammi','formato','pantone','punto'];
+// Contesto commessa per boost rilevanza
+var stopWords = ['stampa','colori','colore','cliente','articolo','codice','ordine','con','sul','per','dal','dei','del','della','delle','degli','rev','copie','pag','grammi','formato','pantone','punto','ast','astuccio','astucci','vassoio','fondo','coperchio','semilav','semilavstampa','fustella','foglio','fogli'];
 
 function estraiKeywords(str) {
     return (str.toLowerCase().match(/[a-zà-ù0-9]+/gi) || [])
         .map(function(w) { return w.toLowerCase(); })
-        .filter(function(w) { return w.length > 3 && stopWords.indexOf(w) === -1; });
+        .filter(function(w) {
+            if (w.length < 3) return false;
+            if (stopWords.indexOf(w) !== -1) return false;
+            if (/^\d+$/.test(w)) return false;  // puro numero
+            return true;
+        });
 }
 var contestoBase = @json($ordine->descrizione ?? '') + ' ' + @json(collect($righeFS ?? [])->pluck('testo')->implode(' '));
 var contestoPI = @json($notePI ?? '');
 
 var keywordsBase = [...new Set(estraiKeywords(contestoBase))];
 var keywordsPI   = [...new Set(estraiKeywords(contestoPI))];
+
+// Filtra keyword troppo comuni (compaiono in > 25% degli articoli = generiche)
+function filtraKeywordsComuni(keywords, dataset) {
+    var soglia = Math.max(5, Math.floor(dataset.length * 0.25));
+    return keywords.filter(function(kw) {
+        var count = 0;
+        for (var i = 0; i < dataset.length; i++) {
+            if ((dataset[i].articolo || '').toLowerCase().indexOf(kw) !== -1) {
+                count++;
+                if (count > soglia) return false;
+            }
+        }
+        return count > 0;
+    });
+}
+keywordsBase = filtraKeywordsComuni(keywordsBase, eanData);
+keywordsPI   = filtraKeywordsComuni(keywordsPI, eanData);
 
 // Pre-calcola lowercase + score relevance per match veloce
 eanData.forEach(function(it) {
@@ -773,9 +793,12 @@ eanData.forEach(function(it) {
     var scorePI = keywordsPI.reduce(function(acc, kw) {
         return acc + (it._art_lc.indexOf(kw) !== -1 ? 1 : 0);
     }, 0);
-    // Score totale: PI pesa 2x (priorità reparto piegaincolla)
+    // Score totale: PI pesa 2x
     it._score = scoreBase + (scorePI * 2);
 });
+
+// Soglia: per mostrare suggerimento auto serve almeno 2 keyword match
+var SOGLIA_SUGGERIMENTO = 2;
 var searchInput = document.getElementById('ean-search');
 var dropdown = document.getElementById('ean-dropdown');
 var activeIndex = -1;
@@ -798,13 +821,13 @@ function eseguiRicerca() {
     var risultati;
 
     if (q.length < 2) {
-        // Input vuoto / 1 char: mostra suggerimenti basati su fasi PI commessa
-        risultati = eanData.filter(function(item) { return item._score > 0; });
+        // Input vuoto / 1 char: mostra solo suggerimenti rilevanti (score >= soglia)
+        risultati = eanData.filter(function(item) { return item._score >= SOGLIA_SUGGERIMENTO; });
         risultati.sort(function(a, b) {
             if (b._score !== a._score) return b._score - a._score;
             return a._art_lc.localeCompare(b._art_lc);
         });
-        risultati = risultati.slice(0, 30);
+        risultati = risultati.slice(0, 10);
         if (risultati.length === 0) {
             dropdown.style.display = 'none';
             return;
