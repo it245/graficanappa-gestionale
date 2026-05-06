@@ -102,6 +102,11 @@ class FierySyncService
             // stato stringa non-numerica (es. "prova") = motivo pausa → trattare come avviabile
             $inPausa = is_string($fase->stato) && !is_numeric($fase->stato) && $fase->stato !== 'EXT';
             if (in_array($fase->stato, [0, '0', 1, '1']) || $inPausa) {
+                // Snapshot al momento riapertura da pausa: evita auto-termina su accounting storico
+                if ($inPausa) {
+                    $fase->riaperta_at = now();
+                    $fase->qta_prod_at_riapertura = max((int)($fase->qta_prod ?? 0), $copieFatte);
+                }
                 $fase->stato = 2;
                 if (!$fase->data_inizio) {
                     $fase->data_inizio = now()->format('Y-m-d H:i:s');
@@ -238,6 +243,12 @@ class FierySyncService
                     $fase->save();
                 }
             } elseif (in_array($fase->stato, [0, 1]) || (is_string($fase->stato) && !is_numeric($fase->stato) && $fase->stato !== 'EXT')) {
+                // Snapshot al momento riapertura da pausa: accounting corrente diventa la baseline
+                $inPausa2 = is_string($fase->stato) && !is_numeric($fase->stato) && $fase->stato !== 'EXT';
+                if ($inPausa2 && !$fase->riaperta_at) {
+                    $fase->riaperta_at = now();
+                    $fase->qta_prod_at_riapertura = max((int)($fase->qta_prod ?? 0), $qtaProdotta);
+                }
                 // Riapertura manuale o fase in pausa: avvia solo se accounting > snapshot (ristampa vera)
                 if ($fase->riaperta_at && \Carbon\Carbon::parse($fase->riaperta_at)->gt(now()->subHours(24))) {
                     $snapshot = (int) ($fase->qta_prod_at_riapertura ?? $fase->qta_prod ?? 0);
