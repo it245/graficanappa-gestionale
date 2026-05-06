@@ -803,21 +803,63 @@ eanData.forEach(function(it) {
 
 // Per ogni descrizione PI: trova il MIGLIOR match (TOP 1) tra eanData
 // Usa Jaccard similarity sulle keyword non-stopword.
+// Estrai "chiave articolo" da descrizione ordine: tipo + variante
+// Ignora codici fustella, formati, numeri, parole tecniche di lavorazione.
+// Es: "ASTUCCIO LETTERE FS0902 M STAMPA 2 COLORI..." -> "lettere m"
+//     "ASTUCCIO DONUTS MAXTRIS VANIGLIA FS2551..."  -> "donuts maxtris vaniglia"
+//     "AST.1 KG MAXTRIS NOIR"                       -> "maxtris noir"
+function chiaveArticolo(desc) {
+    var s = (desc || '').toLowerCase();
+    // Trova prefisso ASTUCCIO/AST. e prendi parole successive
+    var m = s.match(/(?:astuccio|astucci|ast\.)\s*(.+?)(?:\s*[(,]|\s+stampa\b|\s+f\.to\b|\s+rev\b|$)/i);
+    if (!m) {
+        // Fallback: prendi prime 5 parole significative
+        m = s.match(/^(.{0,80})/);
+        if (!m) return '';
+    }
+    var raw = m[1];
+    // Strip codici fustella
+    raw = raw.replace(/\b(?:fs|fff|fst|f\.s\.)\s*\d+/gi, ' ');
+    // Strip numeri con unità (1kg, 500gr, 250g, ecc.)
+    raw = raw.replace(/\b\d+\s*(?:kg|gr|g|ml|cl|fg|pz)\b/gi, ' ');
+    // Strip numeri puri
+    raw = raw.replace(/\b\d+\b/g, ' ');
+    // Strip parole tecniche
+    var tecniche = ['stampa','colori','colore','caldo','oro','drip','off','usare','lastrina','riserva','rilievo','fustellatura','fustella','finestratura','incollaggio','plastificazione','opaca','lucida','soft','touch','kg','gr','pant','pantone','ml','cl','vernice','iml','ks'];
+    var splitW = raw.split(/\s+/).filter(function(w) {
+        return w.length > 0 && tecniche.indexOf(w) === -1;
+    });
+    return splitW.join(' ').replace(/\s+/g, ' ').trim();
+}
+
 function bestMatchPerDescrizione(desc, dataset) {
-    var kwDesc = new Set(estraiKeywords(desc));
-    if (kwDesc.size < 2) return null;  // desc troppo corta -> skip
+    var chiave = chiaveArticolo(desc);
+    if (!chiave || chiave.length < 3) return null;
+    var paroleChiave = chiave.split(/\s+/).filter(function(w) { return w.length > 0; });
+    if (paroleChiave.length === 0) return null;
+
     var best = null;
     var bestScore = 0;
+
     dataset.forEach(function(it) {
-        var kwArt = new Set(estraiKeywords(it.articolo || ''));
-        var inter = 0;
-        kwDesc.forEach(function(k) { if (kwArt.has(k)) inter++; });
-        if (inter < 3) return;  // serve almeno 3 keyword in comune (era 2 = troppo lasco)
-        var union = kwDesc.size + kwArt.size - inter;
-        var sim = union > 0 ? (inter / union) : 0;
-        if (sim < 0.20) return;  // minimum similarity 20% (Jaccard)
-        if (sim > bestScore) {
-            bestScore = sim;
+        var artLc = (it.articolo || '').toLowerCase();
+        // Score = num parole chiave presenti come substring nell'articolo
+        var matched = 0;
+        paroleChiave.forEach(function(p) {
+            // Match con word boundary per parole singole (es. "m"), substring per parole lunghe
+            if (p.length === 1) {
+                if (new RegExp('\\b' + p + '\\b', 'i').test(artLc)) matched++;
+            } else {
+                if (artLc.indexOf(p) !== -1) matched++;
+            }
+        });
+        // Soglia: serve match >= 80% delle parole chiave (min 1)
+        var requiredMatch = Math.max(1, Math.ceil(paroleChiave.length * 0.8));
+        if (matched < requiredMatch) return;
+
+        var score = matched / paroleChiave.length;
+        if (score > bestScore) {
+            bestScore = score;
             best = it;
         }
     });
