@@ -186,35 +186,11 @@
             size: 150mm 100mm;
             margin: 0;
         }
-        /* Batch mode: nascondi anteprima singola, mostra solo container batch */
-        body.batch-print-mode #etichetta { display: none !important; }
-        body.batch-print-mode #batch-print-container {
-            position: static !important;
-            left: 0 !important;
-            visibility: visible !important;
-        }
-        body.batch-print-mode #batch-print-container .etichetta-preview {
-            display: flex !important;
-            page-break-after: always;
-            visibility: visible !important;
-        }
     }
-    /* Batch container: offscreen a schermo (per layout corretto), in posizione su stampa */
-    #batch-print-container {
-        position: absolute;
-        left: -99999px;
-        top: 0;
-        visibility: hidden;
-    }
-    body.batch-print-mode #batch-print-container {
-        position: static;
-        visibility: visible;
-    }
-    /* Item batch (panel selezionati) */
+    /* Item batch (panel articoli) */
     .batch-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid #cfe2ff; font-size: 13px; }
     .batch-item:last-child { border-bottom: none; }
     .batch-item .art-name { flex: 1; }
-    .batch-item input[type=number] { width: 60px; }
 </style>
 
 {{-- ===== FORM (nascosto in stampa) ===== --}}
@@ -282,23 +258,21 @@
                     <button type="button" class="btn btn-sm btn-outline-danger ms-2" onclick="clearEan()">X</button>
                 </div>
 
-                {{-- Multi-selezione: lista articoli da stampare in batch --}}
+                {{-- Lista articoli aggiunti (navigabile con ◀ ▶) --}}
                 <div id="batch-wrap" class="mt-3" style="display:none; padding:10px; background:#e7f1ff; border:1px solid #0d6efd; border-radius:6px;">
                     <div class="d-flex align-items-center justify-content-between mb-2">
-                        <strong style="font-size:14px;">📋 Etichette da stampare</strong>
+                        <strong style="font-size:14px;">📋 Articoli da stampare</strong>
                         <div>
-                            <button type="button" class="btn btn-sm btn-outline-secondary me-1" onclick="navigaBatch(-1)" title="Anteprima precedente">◀</button>
-                            <span id="batch-preview-pos" style="font-size:12px; min-width:50px; display:inline-block; text-align:center;">-</span>
-                            <button type="button" class="btn btn-sm btn-outline-secondary ms-1" onclick="navigaBatch(1)" title="Anteprima successiva">▶</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary me-1" onclick="navigaBatch(-1)" title="Precedente">◀</button>
+                            <span id="batch-preview-pos" style="font-size:12px; min-width:50px; display:inline-block; text-align:center; font-weight:600;">-</span>
+                            <button type="button" class="btn btn-sm btn-outline-primary ms-1" onclick="navigaBatch(1)" title="Successivo">▶</button>
                             <button type="button" class="btn btn-sm btn-outline-danger ms-2" onclick="svuotaBatch()" style="font-size:11px;">Svuota</button>
                         </div>
                     </div>
                     <div id="batch-list"></div>
-                    <button type="button" class="btn btn-success w-100 mt-2 fw-bold" id="btn-stampa-batch" onclick="stampaBatch()">
-                        🖨️ Stampa <span id="batch-totale">0</span> etichette (1 per articolo)
-                    </button>
-                    <small class="text-muted d-block mt-1">Imposta il numero di copie nel dialog di stampa del browser.</small>
+                    <small class="text-muted d-block mt-2">Naviga con ◀ ▶ poi click "Stampa Etichetta" per ognuno.</small>
                 </div>
+
 
                 {{-- Inserimento manuale EAN nuovo --}}
                 <div class="mt-3 p-2 border rounded" style="background:#fff8e1;">
@@ -364,8 +338,8 @@
         </div>
     </div>
 
-    <button type="button" class="btn btn-primary btn-lg w-100" id="btn-stampa-singola" onclick="stampa()">
-        Stampa Etichetta singola
+    <button type="button" class="btn btn-primary btn-lg w-100" onclick="stampa()">
+        Stampa Etichetta
     </button>
 </div>
 
@@ -417,9 +391,6 @@
         @endif
     </div>
     @endif
-
-{{-- ===== CONTAINER BATCH PRINT (popolato dinamicamente in stampaBatch) ===== --}}
-<div id="batch-print-container"></div>
 
 {{-- ===== PANNELLO LATERALE: Card gestione fase ===== --}}
 @if(($fasiOperatore ?? collect())->isNotEmpty())
@@ -931,19 +902,18 @@ function eseguiRicerca() {
         div.style.justifyContent = 'space-between';
         div.style.alignItems = 'center';
         var badge = item._suggerito ? '<span style="color:#0d6efd;font-weight:600;">★</span> ' : '';
-        // Span testo (cliccabile = seleziona singola)
         var nameSpan = document.createElement('span');
         nameSpan.style.flex = '1';
         nameSpan.style.cursor = 'pointer';
         nameSpan.innerHTML = badge + item.articolo + ' <small>(' + item.codice_ean + ')</small>';
         nameSpan.addEventListener('click', function(e) { e.stopPropagation(); selezionaEan(item); });
-        // Bottone +Aggiungi (multi-select batch)
         var addBtn = document.createElement('button');
         addBtn.type = 'button';
         addBtn.className = 'btn btn-sm btn-outline-primary ms-2';
         addBtn.style.fontSize = '11px';
         addBtn.style.padding = '2px 8px';
-        addBtn.textContent = '+ Aggiungi';
+        addBtn.textContent = '+';
+        addBtn.title = 'Aggiungi alla lista';
         addBtn.addEventListener('click', function(e) { e.stopPropagation(); aggiungiBatch(item); });
         div.appendChild(nameSpan);
         div.appendChild(addBtn);
@@ -1012,54 +982,26 @@ function clearEan() {
     aggiornaAnteprima();
 }
 
-// ===== Multi-select batch etichette =====
-var batchItems = [];  // [{articolo, codice_ean, qty, pzcassa}]
+// ===== Lista articoli (navigabile con < >) per stampa singola sequenziale =====
+var batchItems = [];
 var batchPreviewIdx = 0;
 
 function aggiungiBatch(item) {
     var esistente = batchItems.find(function(b) { return b.codice_ean === item.codice_ean; });
-    if (esistente) {
-        esistente.qty++;
-    } else {
-        var pzcassaCur = parseInt(document.getElementById('campo-pzcassa').value) || 0;
-        batchItems.push({
-            articolo: item.articolo,
-            codice_ean: item.codice_ean,
-            qty: 1,
-            pzcassa: pzcassaCur
-        });
+    if (!esistente) {
+        batchItems.push({ articolo: item.articolo, codice_ean: item.codice_ean });
     }
+    batchPreviewIdx = batchItems.findIndex(function(b) { return b.codice_ean === item.codice_ean; });
     renderBatch();
-    batchPreviewIdx = batchItems.length - 1;
     mostraPreviewBatch();
     dropdown.style.display = 'none';
-    searchInput.value = '';
 }
 
 function rimuoviBatch(ean) {
     batchItems = batchItems.filter(function(b) { return b.codice_ean !== ean; });
     if (batchPreviewIdx >= batchItems.length) batchPreviewIdx = Math.max(0, batchItems.length - 1);
     renderBatch();
-    mostraPreviewBatch();
-}
-
-function cambiaQtyBatch(ean, qty) {
-    var item = batchItems.find(function(b) { return b.codice_ean === ean; });
-    if (item) {
-        item.qty = Math.max(1, parseInt(qty) || 1);
-        aggiornaTotaleBatch();
-    }
-}
-
-function cambiaPzcassaBatch(ean, pz) {
-    var item = batchItems.find(function(b) { return b.codice_ean === ean; });
-    if (item) {
-        item.pzcassa = Math.max(0, parseInt(pz) || 0);
-        // Se sto vedendo questo item in preview, aggiorna
-        if (batchItems[batchPreviewIdx] && batchItems[batchPreviewIdx].codice_ean === ean) {
-            mostraPreviewBatch();
-        }
-    }
+    if (batchItems.length > 0) mostraPreviewBatch();
 }
 
 function svuotaBatch() {
@@ -1071,37 +1013,33 @@ function svuotaBatch() {
 function navigaBatch(dir) {
     if (batchItems.length === 0) return;
     batchPreviewIdx = (batchPreviewIdx + dir + batchItems.length) % batchItems.length;
+    renderBatch();
     mostraPreviewBatch();
 }
 
 function mostraPreviewBatch() {
-    var pos = document.getElementById('batch-preview-pos');
-    if (batchItems.length === 0) {
-        if (pos) pos.textContent = '-';
-        return;
-    }
-    if (pos) pos.textContent = (batchPreviewIdx + 1) + '/' + batchItems.length;
+    if (batchItems.length === 0) return;
     var item = batchItems[batchPreviewIdx];
     if (!item) return;
-    // Imposta form values temporaneamente per vedere anteprima dell'item
     document.getElementById('campo-articolo').value = item.articolo;
     document.getElementById('campo-ean').value = item.codice_ean;
     searchInput.value = item.articolo;
-    if (item.pzcassa > 0) document.getElementById('campo-pzcassa').value = item.pzcassa;
+    document.getElementById('ean-selezionato').style.display = '';
+    document.getElementById('ean-badge').textContent = item.articolo + ' — ' + item.codice_ean;
     aggiornaAnteprima();
 }
 
 function renderBatch() {
     var wrap = document.getElementById('batch-wrap');
     var list = document.getElementById('batch-list');
-    var btnSingola = document.getElementById('btn-stampa-singola');
+    var pos = document.getElementById('batch-preview-pos');
     if (batchItems.length === 0) {
         wrap.style.display = 'none';
-        if (btnSingola) btnSingola.style.display = '';
+        if (pos) pos.textContent = '-';
         return;
     }
     wrap.style.display = 'block';
-    if (btnSingola) btnSingola.style.display = 'none';
+    if (pos) pos.textContent = (batchPreviewIdx + 1) + '/' + batchItems.length;
     list.innerHTML = '';
     batchItems.forEach(function(b, idx) {
         var div = document.createElement('div');
@@ -1110,25 +1048,12 @@ function renderBatch() {
         var nameSpan = document.createElement('span');
         nameSpan.className = 'art-name';
         nameSpan.style.cursor = 'pointer';
-        nameSpan.textContent = b.articolo;
+        nameSpan.textContent = (idx === batchPreviewIdx ? '▶ ' : '') + b.articolo;
         nameSpan.addEventListener('click', function() {
             batchPreviewIdx = idx;
             renderBatch();
             mostraPreviewBatch();
         });
-        // Pz/cassa input
-        var pzLabel = document.createElement('small');
-        pzLabel.textContent = 'pz/cassa';
-        pzLabel.style.color = '#666';
-        var pzInput = document.createElement('input');
-        pzInput.type = 'number';
-        pzInput.min = '0';
-        pzInput.value = b.pzcassa || '';
-        pzInput.className = 'form-control form-control-sm';
-        pzInput.style.width = '70px';
-        pzInput.placeholder = 'pz';
-        pzInput.title = 'Pezzi per cassa';
-        pzInput.addEventListener('input', function() { cambiaPzcassaBatch(b.codice_ean, this.value); });
         var rmBtn = document.createElement('button');
         rmBtn.type = 'button';
         rmBtn.className = 'btn btn-sm btn-outline-danger';
@@ -1136,189 +1061,11 @@ function renderBatch() {
         rmBtn.textContent = '×';
         rmBtn.addEventListener('click', function() { rimuoviBatch(b.codice_ean); });
         div.appendChild(nameSpan);
-        div.appendChild(pzLabel);
-        div.appendChild(pzInput);
         div.appendChild(rmBtn);
         list.appendChild(div);
     });
-    aggiornaTotaleBatch();
 }
 
-function aggiornaTotaleBatch() {
-    document.getElementById('batch-totale').textContent = batchItems.length;
-}
-
-function stampaBatch() {
-    if (batchItems.length === 0) {
-        alert('Aggiungi almeno un articolo al batch.');
-        return;
-    }
-    var pzcassaGlobal = parseInt(document.getElementById('campo-pzcassa').value) || 0;
-    var lotto = document.getElementById('campo-lotto').value;
-    var data = document.getElementById('campo-data').value;
-    var cliente = document.getElementById('campo-cliente').value;
-
-    // Verifica che ogni item abbia pz/cassa (per item o globale)
-    var senzaPz = batchItems.filter(function(b) { return !(b.pzcassa > 0) && !(pzcassaGlobal > 0); });
-    if (senzaPz.length > 0) {
-        alert('Inserisci pz/cassa (riga "' + senzaPz[0].articolo + '" o globale).');
-        return;
-    }
-
-    var container = document.getElementById('batch-print-container');
-    container.innerHTML = '';
-    var tplEtichetta = document.getElementById('etichetta');
-    if (!tplEtichetta) { alert('Template etichetta non trovato'); return; }
-
-    var totale = batchItems.length;
-    if (totale === 0) { alert('Nessun articolo nel batch.'); return; }
-    console.log('[batch] inizio generazione', totale, 'etichette');
-
-    // Indicatore loading sul bottone
-    var btn = document.getElementById('btn-stampa-batch');
-    var btnText = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '⏳ Generazione in corso...';
-
-    // 1 etichetta per articolo (qta copie scelta da user nel print dialog)
-    var allTasks = batchItems.map(function(b) {
-        var pzcassaItem = b.pzcassa > 0 ? b.pzcassa : pzcassaGlobal;
-        return { b: b, pzcassaItem: pzcassaItem };
-    });
-
-    var batchChunks = [allTasks];
-    var currentBatchIdx = 0;
-    var idCounter = 0;
-    var tasks = batchChunks[0];
-
-    function processChunk(startIdx) {
-        var CHUNK = 2;  // 2 alla volta -> tempo per browser di gestire memoria/eventi
-        var endIdx = Math.min(startIdx + CHUNK, tasks.length);
-        for (var t = startIdx; t < endIdx; t++) {
-            try {
-            var task = tasks[t];
-            var b = task.b;
-            var pzcassaItem = task.pzcassaItem;
-            idCounter++;
-            console.log('[batch] task', t, '/', tasks.length, '-', b.articolo);
-            var clone = tplEtichetta.cloneNode(true);
-            clone.id = 'etichetta-batch-' + idCounter;
-            // Imposta articolo (mantieni font-size default del template, no override)
-            var artEl = clone.querySelector('#print-articolo');
-            if (artEl) {
-                artEl.textContent = b.articolo;
-                artEl.id = 'art-' + idCounter;
-                // Niente fontSize override: usa default CSS della classe
-            }
-            container.appendChild(clone);
-            var clEl = clone.querySelector('#print-cliente');
-            if (clEl) { clEl.textContent = cliente; clEl.id = 'cli-' + idCounter; }
-            // Datamatrix per questo clone
-            var canvasOriginal = clone.querySelector('#datamatrix');
-            var imgEl = clone.querySelector('#datamatrix-img');
-            var eanText = clone.querySelector('#print-ean');
-            if (canvasOriginal && imgEl && b.codice_ean) {
-                canvasOriginal.id = 'dm-' + idCounter;
-                imgEl.id = 'dmi-' + idCounter;
-                if (eanText) eanText.id = 'eanT-' + idCounter;
-                var gtin = b.codice_ean.trim();
-                while (gtin.length < 14) gtin = '0' + gtin;
-                if (gtin.length > 14) gtin = gtin.substring(0, 14);
-                var qty = String(parseInt(pzcassaItem, 10)).padStart(8, '0');
-                var lottoClean = lotto ? lotto.replace(/-/g, '') : '';
-                var plainData = '01' + gtin + '30' + qty + (lottoClean ? '10' + lottoClean : '');
-                try {
-                    bwipjs.toCanvas(canvasOriginal, {
-                        bcid: 'datamatrix', text: plainData, scale: 5, padding: 4
-                    });
-                    // Mostra il canvas direttamente senza toDataURL (evita esplosione memoria)
-                    canvasOriginal.style.display = '';
-                    canvasOriginal.style.width = '30mm';
-                    canvasOriginal.style.height = '30mm';
-                    canvasOriginal.style.imageRendering = 'pixelated';
-                    if (imgEl) imgEl.style.display = 'none';  // nascondi img, usiamo canvas
-                    if (eanText) eanText.textContent = plainData;
-                } catch (e) { console.error('DM err', e); }
-            }
-            // Pz x cassa, Lotto, Data nel print
-            var pzcEl = clone.querySelector('.print-pzcassa, [id^="print-pzcassa"]');
-            if (pzcEl) pzcEl.textContent = pzcassaItem;
-            var lotEl = clone.querySelector('.print-lotto, [id^="print-lotto"]');
-            if (lotEl) lotEl.textContent = lotto;
-            var dataEl = clone.querySelector('.print-data, [id^="print-data"]');
-            if (dataEl) dataEl.textContent = data;
-            } catch (e) {
-                console.error('[batch] errore task', t, e);
-                // Continua con i prossimi task invece di bloccare
-            }
-        }
-        // Aggiorna progress
-        btn.innerHTML = '⏳ Generazione ' + endIdx + '/' + tasks.length + '...';
-        if (endIdx < tasks.length) {
-            setTimeout(function() { processChunk(endIdx); }, 30);
-        } else {
-            console.log('[batch]', tasks.length, 'cloni pronti, apro print window');
-            btn.innerHTML = '🖨️ Apertura stampa...';
-            setTimeout(function() {
-                stampaContainerInWindow(container);
-                btn.disabled = false;
-                btn.innerHTML = btnText;
-                container.innerHTML = '';
-            }, 100);
-        }
-    }
-    processChunk(0);
-}
-
-// Apre nuova finestra con HTML del container, fa print lì (no conflitto layout main)
-function stampaContainerInWindow(container) {
-    // Converti TUTTI i canvas DataMatrix in <img> base64 (necessario per popup —
-    // canvas non si trasferisce via innerHTML, va serializzato come dataURL)
-    container.querySelectorAll('canvas').forEach(function(canvas) {
-        try {
-            var url = canvas.toDataURL('image/png');
-            var img = document.createElement('img');
-            img.src = url;
-            img.style.cssText = canvas.style.cssText;
-            img.style.width = '30mm';
-            img.style.height = '30mm';
-            img.style.imageRendering = 'pixelated';
-            img.style.display = '';
-            canvas.parentNode.replaceChild(img, canvas);
-        } catch (e) { console.error('canvas->img errore', e); }
-    });
-
-    var html = container.innerHTML;
-    if (!html.trim()) { alert('Nessuna etichetta generata.'); return; }
-
-    // Recupera CSS print esistente per riprodurlo
-    var w = window.open('', 'print-batch', 'width=900,height=700');
-    if (!w) { alert('Popup bloccato. Abilita popup per stampare batch.'); return; }
-    w.document.open();
-    w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Stampa Etichette</title>');
-    // Copia tutti gli style/link CSS dal main doc
-    document.querySelectorAll('link[rel="stylesheet"], style').forEach(function(el) {
-        w.document.write(el.outerHTML);
-    });
-    w.document.write('<style>');
-    w.document.write('body { margin: 0; padding: 0; }');
-    w.document.write('.etichetta-preview { display: flex !important; width: 150mm; height: 100mm; page-break-after: always; box-shadow: none; border: none; visibility: visible !important; }');
-    w.document.write('@page { size: 150mm 100mm; margin: 0; }');
-    w.document.write('@media print { .etichetta-preview { page-break-after: always; } }');
-    w.document.write('</style>');
-    w.document.write('</head><body>');
-    w.document.write(html);
-    w.document.write('</body></html>');
-    w.document.close();
-    // Aspetta caricamento font/CSS, poi print
-    w.onload = function() {
-        setTimeout(function() {
-            w.focus();
-            w.print();
-            setTimeout(function() { w.close(); }, 500);
-        }, 300);
-    };
-}
 
 @else
 // ===== Scanner barcode (altri clienti) =====
