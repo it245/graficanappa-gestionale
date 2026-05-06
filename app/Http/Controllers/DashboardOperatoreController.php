@@ -69,8 +69,8 @@ class DashboardOperatoreController extends Controller
             ->with([
                 'ordine:id,commessa,descrizione,cliente_nome,qta_richiesta,qta_carta,carta,cod_carta,data_prevista_consegna,data_registrazione,note_prestampa,um,cod_art,note_fasi_successive',
                 'ordine.fasi:id,ordine_id,fase,fase_catalogo_id,stato,data_fine,scarico_eseguito,esterno',
-                'ordine.fasi.faseCatalogo:id,nome,reparto_id,nome_display',
-                'faseCatalogo:id,nome,reparto_id,nome_display',
+                'ordine.fasi.faseCatalogo:id,nome,reparto_id',
+                'faseCatalogo:id,nome,reparto_id',
                 'faseCatalogo.reparto:id,nome',
                 'operatori:operatori.id,nome',
             ])
