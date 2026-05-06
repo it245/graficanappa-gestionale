@@ -1,4 +1,5 @@
-{{-- Laravel Echo via CDN (Reverb WebSocket) --}}
+{{-- Laravel Echo via CDN (Reverb WebSocket) — caricato SOLO se Reverb attivo --}}
+@if(env('BROADCAST_CONNECTION') === 'reverb' && env('REVERB_APP_KEY'))
 <script src="https://cdn.jsdelivr.net/npm/pusher-js@8.3.0/dist/web/pusher.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/laravel-echo@1.16.1/dist/echo.iife.js"></script>
 <script>

@@ -297,12 +297,20 @@ class FierySyncService
     {
         if ($fase->stato != 2) return;
 
-        // Riaperta manualmente entro 24h: skip SOLO se non ci sono nuove stampe (qta_prod <= snapshot).
-        // Se qta_prod ha superato lo snapshot, ristampa rilevata → auto-termine permesso.
-        if ($fase->riaperta_at && \Carbon\Carbon::parse($fase->riaperta_at)->gt(now()->subHours(24))) {
+        // Riaperta da pausa entro 48h: termine basato su DELTA post-riapertura.
+        // qta_prod include accounting storico aggregato → autoTermina deve confrontare
+        // (qta_prod_attuale - snapshot) >= qta_carta, NON qta_prod assoluta.
+        // Evita auto-termina prematura su fasi appena riprese da pausa.
+        if ($fase->riaperta_at && \Carbon\Carbon::parse($fase->riaperta_at)->gt(now()->subHours(48))) {
             $snapshot = (int) ($fase->qta_prod_at_riapertura ?? 0);
-            if ((int) ($fase->qta_prod ?? 0) <= $snapshot) {
-                return;
+            $delta = max(0, (int) ($fase->qta_prod ?? 0) - $snapshot);
+            $qtaCartaCheck = (int) ($fase->ordine->qta_carta ?? 0);
+            $qtaRichiestaCheck = (int) ($fase->ordine->qta_richiesta ?? 0);
+            $qtaFaseCheck = (int) ($fase->qta_fase ?? 0);
+            // Target = primo valido tra qta_richiesta, qta_fase, qta_carta
+            $target = $qtaRichiestaCheck ?: ($qtaFaseCheck ?: $qtaCartaCheck);
+            if ($target > 0 && $delta < $target) {
+                return; // Stampe post-riapertura insufficienti
             }
         }
 
