@@ -717,12 +717,14 @@ body.dark-mode .info-box-label { color: #94a3b8; }
             @if(!empty($preview) || !empty($fustella))
             <div class="col-md-4">
                 <div class="d-flex flex-column gap-3 h-100">
-                    @if(!empty($preview))
+                    @if(!empty($preview['url']))
                     <div class="card p-3 text-center shadow-sm">
                         <div class="fw-bold mb-2" style="font-size:13px;">📄 Anteprima foglio di stampa <small class="text-muted">(click per ingrandire)</small></div>
-                        <img id="anteprimaThumb" class="anteprima-foglio" src="data:{{ $preview['mimeType'] }};base64,{{ $preview['data'] }}"
-                             alt="Preview" style="max-width:100%; max-height:200px; border-radius:8px;"
-                             data-bs-toggle="modal" data-bs-target="#modalAnteprima">
+                        <img id="anteprimaThumb" class="anteprima-foglio" src="{{ $preview['url'] }}"
+                             alt="Preview" loading="lazy" decoding="async"
+                             style="max-width:100%; max-height:200px; border-radius:8px;"
+                             data-bs-toggle="modal" data-bs-target="#modalAnteprima"
+                             onerror="this.parentElement.style.display='none'">
                     </div>
                     @endif
                     @if(!empty($fustella))
@@ -774,7 +776,7 @@ body.dark-mode .info-box-label { color: #94a3b8; }
                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body text-center p-2">
-                            <img src="data:{{ $preview['mimeType'] }};base64,{{ $preview['data'] }}" alt="Preview full" style="max-width:100%; max-height:80vh; border-radius:8px;">
+                            <img src="{{ $preview['url'] }}" alt="Preview full" loading="lazy" style="max-width:100%; max-height:80vh; border-radius:8px;">
                         </div>
                     </div>
                 </div>

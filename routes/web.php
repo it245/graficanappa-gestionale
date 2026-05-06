@@ -302,6 +302,11 @@ Route::get('/commesse/{commessa}', [App\Http\Controllers\CommessaController::cla
 ->middleware('operatore.auth')
     ->name('commesse.show');
 
+// Endpoint preview Prinect lazy-load (img separata da HTML, no base64 inline)
+Route::get('/commesse/{commessa}/preview', [App\Http\Controllers\CommessaController::class, 'preview'])
+    ->middleware('operatore.auth')
+    ->name('commesse.preview');
+
 
 // TV Kiosk (no auth) — dati reali
 Route::get('/kiosk', [\App\Http\Controllers\KioskController::class, 'index']);

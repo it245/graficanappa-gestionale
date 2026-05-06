@@ -83,25 +83,12 @@ class CommessaController extends Controller
             ->values();
 
 
-        // Anteprima foglio di stampa da Prinect API
+        // Anteprima foglio: solo flag presenza (immagine caricata lazy via endpoint dedicato)
+        // Evita chiamata Prinect bloccante durante page load + base64 inline pesante.
         $preview = null;
         $jobId = ltrim(substr($commessa, 0, 7), '0');
         if ($jobId && is_numeric($jobId)) {
-            try {
-                $wsData = $prinect->getJobWorksteps($jobId);
-                foreach ($wsData['worksteps'] ?? [] as $ws) {
-                    if (isset($ws['types']) && in_array('ConventionalPrinting', $ws['types'])) {
-                        $prevData = $prinect->getWorkstepPreview($jobId, $ws['id']);
-                        $previews = $prevData['previews'] ?? [];
-                        if (!empty($previews)) {
-                            $preview = $previews[0];
-                        }
-                        break;
-                    }
-                }
-            } catch (\Exception $e) {
-                // Prinect non disponibile, nessuna anteprima
-            }
+            $preview = ['exists' => true, 'url' => route('commesse.preview', ['commessa' => $commessa])];
         }
 
         // Fustella PDF (cerca in public/fustelle/ matchando il codice FS#### dalla descrizione/note)
@@ -114,5 +101,37 @@ class CommessaController extends Controller
         $fustella = \App\Helpers\FustellaResolver::resolve($fustellaCodice);
 
         return view('commesse.show', compact('ordine', 'ordini', 'prossime', 'operatore', 'preview', 'fustella'));
+    }
+
+    /**
+     * Endpoint preview Prinect: ritorna binary image, cacheable.
+     * Evita base64 inline bloccante nel HTML principale.
+     */
+    public function preview($commessa, \App\Http\Services\PrinectService $prinect)
+    {
+        $jobId = ltrim(substr($commessa, 0, 7), '0');
+        if (!$jobId || !is_numeric($jobId)) abort(404);
+
+        $cacheKey = 'preview_commessa_' . $commessa;
+        $data = \Illuminate\Support\Facades\Cache::remember($cacheKey, 3600, function () use ($prinect, $jobId) {
+            try {
+                $wsData = $prinect->getJobWorksteps($jobId);
+                foreach ($wsData['worksteps'] ?? [] as $ws) {
+                    if (isset($ws['types']) && in_array('ConventionalPrinting', $ws['types'])) {
+                        $prevData = $prinect->getWorkstepPreview($jobId, $ws['id']);
+                        $previews = $prevData['previews'] ?? [];
+                        if (!empty($previews)) return $previews[0];
+                    }
+                }
+            } catch (\Exception $e) { /* prinect non disponibile */ }
+            return null;
+        });
+
+        if (!$data || empty($data['data'])) abort(404);
+        $bin = base64_decode($data['data']);
+        return response($bin, 200, [
+            'Content-Type' => $data['mimeType'] ?? 'image/png',
+            'Cache-Control' => 'public, max-age=3600',
+        ]);
     }
 }
