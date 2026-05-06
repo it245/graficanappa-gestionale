@@ -290,14 +290,18 @@
         ->sum('qta_prod');
     $qtaProdottaStampa = $qtaOffset > 0 ? $qtaOffset : $qtaDigitale;
 @endphp
+{{-- Descrizione: riga full-width, leggibile --}}
 <div class="row g-2 mb-2" style="font-size:13px;">
-    <div class="col-md-3">
-        <div class="border rounded p-2 h-100" style="background:#e8f4fd">
+    <div class="col-12">
+        <div class="border rounded p-2" style="background:#e8f4fd">
             <strong class="d-block mb-1">Descrizione</strong>
-            <span class="desc-clamp" title="{{ $ordine->descrizione ?: '-' }}">{{ $ordine->descrizione ?: '-' }}</span>
+            <div class="desc-full" style="line-height:1.5; white-space:pre-wrap; word-break:break-word; max-height:6em; overflow-y:auto;">{{ $ordine->descrizione ?: '-' }}</div>
         </div>
     </div>
-    <div class="col-md-2">
+</div>
+{{-- Anagrafica: 5 campi in riga --}}
+<div class="row g-2 mb-2" style="font-size:13px;">
+    <div class="col-md-3">
         <div class="border rounded p-2 h-100" style="background:#e8f4fd">
             <strong class="d-block mb-1">Cliente</strong>
             <span>{{ $ordine->cliente_nome ?: '-' }}</span>
@@ -309,13 +313,13 @@
             <span>{{ $ordine->cod_art ?: '-' }}</span>
         </div>
     </div>
-    <div class="col-md-1">
+    <div class="col-md-2">
         <div class="border rounded p-2 h-100" style="background:#e8f4fd">
             <strong class="d-block mb-1">Quantit&agrave;</strong>
             <span>{{ $ordine->qta_richiesta ? number_format($ordine->qta_richiesta, 0, ',', '.') : '-' }}</span>
         </div>
     </div>
-    <div class="col-md-2">
+    <div class="col-md-3">
         <div class="border rounded p-2 h-100" style="background:#fff4e6; border-color:#f59e0b !important;">
             <strong class="d-block mb-1" style="color:#b45309;">Qta Prodotta</strong>
             <span>{{ $qtaProdottaStampa > 0 ? number_format($qtaProdottaStampa, 0, ',', '.') : '-' }}</span>
