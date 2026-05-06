@@ -262,9 +262,9 @@
                 <div id="fasi-commessa-wrap" class="mt-3" style="display:none; padding:8px 10px; background:#fff8e1; border:1px solid #ffc107; border-radius:6px; font-size:12px;">
                     <div id="fasi-commessa-header" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;" onclick="toggleFasiCommessa()">
                         <strong>📌 Articoli commessa</strong>
-                        <span id="fasi-commessa-toggle" style="font-size:14px; font-weight:bold;">^</span>
+                        <span id="fasi-commessa-toggle" style="font-size:14px; font-weight:bold;">⌄</span>
                     </div>
-                    <div id="fasi-commessa-list" class="mt-1"></div>
+                    <div id="fasi-commessa-list" class="mt-1" style="display:none;"></div>
                 </div>
 
                 {{-- Lista articoli aggiunti (navigabile con ◀ ▶) --}}
@@ -283,21 +283,26 @@
                 </div>
 
 
-                {{-- Inserimento manuale EAN nuovo --}}
+                {{-- Inserimento manuale EAN nuovo (collapsible) --}}
                 <div class="mt-3 p-2 border rounded" style="background:#fff8e1;">
-                    <label class="form-label mb-1" style="font-size:13px; font-weight:600;">📝 Oppure inserisci nuovo EAN</label>
-                    <div class="row g-2">
-                        <div class="col-5">
-                            <input type="text" id="nuovo-articolo" class="form-control form-control-sm" placeholder="Nome articolo">
-                        </div>
-                        <div class="col-5">
-                            <input type="text" id="nuovo-ean" class="form-control form-control-sm" placeholder="Codice EAN">
-                        </div>
-                        <div class="col-2">
-                            <button type="button" class="btn btn-sm btn-warning w-100" onclick="salvaEusaNuovoEan()">Usa</button>
-                        </div>
+                    <div id="nuovo-ean-header" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;" onclick="toggleNuovoEan()">
+                        <label class="form-label mb-0" style="font-size:13px; font-weight:600; cursor:pointer;">📝 Oppure inserisci nuovo EAN</label>
+                        <span id="nuovo-ean-toggle" style="font-size:14px; font-weight:bold;">⌄</span>
                     </div>
-                    <small class="text-muted">Il nuovo EAN verrà salvato per usi futuri.</small>
+                    <div id="nuovo-ean-body" style="display:none;" class="mt-2">
+                        <div class="row g-2">
+                            <div class="col-5">
+                                <input type="text" id="nuovo-articolo" class="form-control form-control-sm" placeholder="Nome articolo">
+                            </div>
+                            <div class="col-5">
+                                <input type="text" id="nuovo-ean" class="form-control form-control-sm" placeholder="Codice EAN">
+                            </div>
+                            <div class="col-2">
+                                <button type="button" class="btn btn-sm btn-warning w-100" onclick="salvaEusaNuovoEan()">Usa</button>
+                            </div>
+                        </div>
+                        <small class="text-muted">Il nuovo EAN verrà salvato per usi futuri.</small>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1072,6 +1077,16 @@ function toggleFasiCommessa() {
     if (!list || !toggle) return;
     var isOpen = list.style.display !== 'none';
     list.style.display = isOpen ? 'none' : '';
+    toggle.textContent = isOpen ? '⌄' : '^';
+}
+
+// Toggle apri/chiudi pannello nuovo EAN
+function toggleNuovoEan() {
+    var body = document.getElementById('nuovo-ean-body');
+    var toggle = document.getElementById('nuovo-ean-toggle');
+    if (!body || !toggle) return;
+    var isOpen = body.style.display !== 'none';
+    body.style.display = isOpen ? 'none' : '';
     toggle.textContent = isOpen ? '⌄' : '^';
 }
 
