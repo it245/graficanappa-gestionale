@@ -1507,43 +1507,92 @@ class OndaSyncService
             }
             if (empty($lavorazioniTrovate)) continue;
 
+            // Estrai keyword "tipo articolo" dalla descrizione DDT per filtrare ordini target.
+            // Match priorita:
+            // 1. ALLESTITO/ALLESTIMENTO -> match TUTTI ordini commessa (allestimento finale)
+            // 2. COPERTINA -> ordine I.copertina
+            // 3. OPUSCOL/CATALOGO senza ALLESTI -> ordine I.Opuscol* (interno)
+            // 4. ASTUCC -> ordine I.Astucci o cod_art con ASTUCC
+            // 5. SCHED/CARTELLIN/etc -> match generico cod_art
+            $keywordTipo = null;
+            $codArtPattern = null;
+            if (preg_match('/allesti(to|mento|ti|te)/iu', $descrizione)) {
+                $keywordTipo = 'allestito';   // tutti gli ordini
+            } elseif (preg_match('/coperti?/iu', $descrizione)) {
+                $keywordTipo = 'copertina';
+                $codArtPattern = '%coper%';
+            } elseif (preg_match('/(opuscol|catalogo)/iu', $descrizione)) {
+                $keywordTipo = 'opuscolo';
+                $codArtPattern = '%opuscol%';
+            } elseif (preg_match('/astucc/iu', $descrizione)) {
+                $keywordTipo = 'astuccio';
+                $codArtPattern = '%astucci%';
+            } elseif (preg_match('/(scheda|schede)/iu', $descrizione)) {
+                $keywordTipo = 'scheda';
+                $codArtPattern = '%schede%';
+            }
+
+            // Trova ordini target: se keyword specifica esiste, filtra; altrimenti tutti.
+            $ordiniTargetIds = Ordine::where('commessa', $numCommessa)
+                ->when($codArtPattern, function ($q) use ($codArtPattern) {
+                    $q->where(function ($q2) use ($codArtPattern) {
+                        $q2->where('cod_art', 'LIKE', $codArtPattern)
+                           ->orWhere('descrizione', 'LIKE', $codArtPattern);
+                    });
+                })
+                ->pluck('id')
+                ->toArray();
+
+            // Fallback: se filtro non trova niente, usa tutti gli ordini commessa
+            if (empty($ordiniTargetIds)) {
+                $ordiniTargetIds = Ordine::where('commessa', $numCommessa)->pluck('id')->toArray();
+            }
+            if (empty($ordiniTargetIds)) continue;
+
             $fasiGiaMatchate = [];
             foreach ($lavorazioniTrovate as $lav) {
-                $fase = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $numCommessa))
+                // Cerca TUTTE le fasi candidate (non solo prima) per matchare ogni ordine target
+                $fasiCandidate = OrdineFase::whereIn('ordine_id', $ordiniTargetIds)
                     ->whereIn('fase', $lav['fasi'])
                     ->where(fn($q) => $q->where('esterno', false)->orWhereNull('esterno'))
                     ->whereNull('ddt_fornitore_id')
                     ->whereRaw("stato REGEXP '^[0-9]+$' AND stato < 3")
                     ->orderBy('id')
-                    ->first();
+                    ->get();
 
-                if (!$fase) {
+                if ($fasiCandidate->isEmpty()) {
                     foreach ($lav['fasi'] as $nomeFase) {
-                        $fase = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $numCommessa))
+                        $fasiCandidate = OrdineFase::whereIn('ordine_id', $ordiniTargetIds)
                             ->where('fase', 'LIKE', $nomeFase . '%')
                             ->where(fn($q) => $q->where('esterno', false)->orWhereNull('esterno'))
                             ->whereNull('ddt_fornitore_id')
                             ->whereRaw("stato REGEXP '^[0-9]+$' AND stato < 3")
                             ->orderBy('id')
-                            ->first();
-                        if ($fase) break;
+                            ->get();
+                        if ($fasiCandidate->isNotEmpty()) break;
                     }
                 }
 
-                if (!$fase || in_array($fase->id, $fasiGiaMatchate)) continue;
-                if ($fase->esterno && $fase->ddt_fornitore_id) continue;
-                $fasiGiaMatchate[] = $fase->id;
+                foreach ($fasiCandidate as $fase) {
+                    if (in_array($fase->id, $fasiGiaMatchate)) continue;
+                    if ($fase->esterno && $fase->ddt_fornitore_id) continue;
+                    $fasiGiaMatchate[] = $fase->id;
 
-                $fase->update([
-                    'esterno' => 1,
-                    'stato' => 5,
-                    'data_inizio' => $dataDoc,
-                    'note' => 'Inviato a: ' . $fornitore,
-                    'ddt_fornitore_id' => $idDoc,
-                ]);
+                    $fase->update([
+                        'esterno' => 1,
+                        'stato' => 5,
+                        'data_inizio' => $dataDoc,
+                        'note' => 'Inviato a: ' . $fornitore,
+                        'ddt_fornitore_id' => $idDoc,
+                    ]);
 
-                $aggiornate++;
-                Log::info("DDT Fornitore lavorazione: fase {$fase->fase} (#{$fase->id}) → esterno per commessa {$numCommessa} (DDT {$idDoc}, fornitore: {$fornitore})");
+                    $aggiornate++;
+                    Log::info("DDT Fornitore lavorazione: fase {$fase->fase} (#{$fase->id}) ord={$fase->ordine_id} → esterno per commessa {$numCommessa} (DDT {$idDoc}, fornitore: {$fornitore}, keyword: " . ($keywordTipo ?? 'tutti') . ")");
+
+                    // Per keyword specifica (copertina/opuscolo/ecc.) prendiamo solo 1 fase per pattern.
+                    // Per "allestito" (ordini multipli) prendiamo tutte le fasi candidate.
+                    if ($keywordTipo !== 'allestito') break;
+                }
             }
         }
 
