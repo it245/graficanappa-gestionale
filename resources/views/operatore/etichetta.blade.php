@@ -1129,9 +1129,9 @@ function stampaBatch() {
 
     var totale = batchItems.reduce(function(acc, b) { return acc + (parseInt(b.qty) || 0); }, 0);
     var MAX_BATCH = 50;
-    if (totale > MAX_BATCH) {
-        alert('Massimo ' + MAX_BATCH + ' etichette per batch (' + totale + ' richieste).\nRiduci le quantità o fai più batch.\nIl browser si blocca con troppe pagine in stampa.');
-        return;
+    var numBatch = Math.ceil(totale / MAX_BATCH);
+    if (numBatch > 1) {
+        if (!confirm('Stampi ' + totale + ' etichette suddivise in ' + numBatch + ' batch da max ' + MAX_BATCH + '.\nDopo ogni stampa si aprira la successiva. Continua?')) return;
     }
     console.log('[batch] inizio generazione', totale, 'etichette');
 
@@ -1142,15 +1142,23 @@ function stampaBatch() {
     btn.innerHTML = '⏳ Generazione in corso...';
 
     // Costruisci tasks list (uno per ogni etichetta da generare)
-    var tasks = [];
+    var allTasks = [];
     batchItems.forEach(function(b) {
         var pzcassaItem = b.pzcassa > 0 ? b.pzcassa : pzcassaGlobal;
         for (var i = 0; i < b.qty; i++) {
-            tasks.push({ b: b, pzcassaItem: pzcassaItem });
+            allTasks.push({ b: b, pzcassaItem: pzcassaItem });
         }
     });
 
+    // Split in batch da MAX_BATCH
+    var batchChunks = [];
+    for (var i = 0; i < allTasks.length; i += MAX_BATCH) {
+        batchChunks.push(allTasks.slice(i, i + MAX_BATCH));
+    }
+    var currentBatchIdx = 0;
     var idCounter = 0;
+    var tasks = batchChunks[0];
+
     function processChunk(startIdx) {
         var CHUNK = 2;  // 2 alla volta -> tempo per browser di gestire memoria/eventi
         var endIdx = Math.min(startIdx + CHUNK, tasks.length);
@@ -1215,13 +1223,12 @@ function stampaBatch() {
         // Aggiorna progress
         btn.innerHTML = '⏳ Generazione ' + endIdx + '/' + tasks.length + '...';
         if (endIdx < tasks.length) {
-            // Yield al browser - delay maggiore per liberare memoria
+            // Yield al browser - delay per liberare memoria
             setTimeout(function() { processChunk(endIdx); }, 30);
         } else {
-            // Tutti generati → stampa
-            console.log('[batch] generate', idCounter, 'cloni completato');
-            btn.disabled = false;
-            btn.innerHTML = btnText;
+            // Batch corrente generato → stampa
+            console.log('[batch] chunk', currentBatchIdx + 1, '/', batchChunks.length, 'pronto (', tasks.length, 'etichette)');
+            btn.innerHTML = '🖨️ Stampa batch ' + (currentBatchIdx + 1) + '/' + batchChunks.length + '...';
             setTimeout(function() {
                 document.body.classList.add('batch-print-mode');
                 try {
@@ -1233,7 +1240,24 @@ function stampaBatch() {
                 setTimeout(function() {
                     document.body.classList.remove('batch-print-mode');
                     container.innerHTML = '';
-                }, 1000);
+                    currentBatchIdx++;
+                    if (currentBatchIdx < batchChunks.length) {
+                        // Prossimo batch
+                        tasks = batchChunks[currentBatchIdx];
+                        if (!confirm('Batch ' + currentBatchIdx + ' stampato.\nProcedere con batch ' + (currentBatchIdx + 1) + '/' + batchChunks.length + '?')) {
+                            btn.disabled = false;
+                            btn.innerHTML = btnText;
+                            return;
+                        }
+                        btn.innerHTML = '⏳ Generazione batch ' + (currentBatchIdx + 1) + '/' + batchChunks.length + '...';
+                        processChunk(0);
+                    } else {
+                        // Tutto fatto
+                        btn.disabled = false;
+                        btn.innerHTML = btnText;
+                        if (batchChunks.length > 1) alert('Stampati ' + totale + ' etichette in ' + batchChunks.length + ' batch.');
+                    }
+                }, 1500);
             }, 200);
         }
     }
