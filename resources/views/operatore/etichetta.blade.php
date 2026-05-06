@@ -746,10 +746,28 @@ function salvaEusaNuovoEan() {
 @if($isItalianaConfetti)
 // ===== Dropdown ricerca EAN (Italiana Confetti) =====
 var eanData = @json($eanProdotti);
-// Pre-calcola lowercase per match veloce (evita .toLowerCase() per ogni filtro)
+
+// Contesto commessa per boost rilevanza: descrizione ordine + note fasi successive
+var contestoCommessa = (
+    @json($ordine->descrizione ?? '') + ' ' +
+    @json(collect($righeFS ?? [])->pluck('testo')->implode(' '))
+).toLowerCase();
+// Estrai parole chiave (>3 caratteri, no stop words)
+var stopWords = ['stampa','colori','colore','cliente','articolo','codice','ordine','con','sul','per','dal','dei','del','della','delle','degli','rev','copie','pag','grammi','formato','pantone'];
+var keywordsCommessa = (contestoCommessa.match(/[a-zà-ù0-9]+/gi) || [])
+    .map(function(w) { return w.toLowerCase(); })
+    .filter(function(w) { return w.length > 3 && stopWords.indexOf(w) === -1; });
+// Dedup
+keywordsCommessa = [...new Set(keywordsCommessa)];
+
+// Pre-calcola lowercase + score relevance per match veloce
 eanData.forEach(function(it) {
     it._art_lc = (it.articolo || '').toLowerCase();
     it._ean_lc = (it.codice_ean || '').toLowerCase();
+    // Score: quante keyword commessa trova nell'articolo
+    it._score = keywordsCommessa.reduce(function(acc, kw) {
+        return acc + (it._art_lc.indexOf(kw) !== -1 ? 1 : 0);
+    }, 0);
 });
 var searchInput = document.getElementById('ean-search');
 var dropdown = document.getElementById('ean-dropdown');
@@ -779,7 +797,13 @@ function eseguiRicerca() {
 
     var risultati = eanData.filter(function(item) {
         return matchEan(item, parole, q);
-    }).slice(0, 30);
+    });
+    // Sort: prima per score commessa desc, poi alfabetico articolo
+    risultati.sort(function(a, b) {
+        if (b._score !== a._score) return b._score - a._score;
+        return a._art_lc.localeCompare(b._art_lc);
+    });
+    risultati = risultati.slice(0, 30);
 
     if (risultati.length === 0) {
         dropdown.innerHTML = '<div class="ean-item" style="color:#999;cursor:default;">Nessun articolo trovato per "' + q + '"</div>';
