@@ -121,11 +121,31 @@ class EtichettaController extends Controller
 
     public function searchEan(Request $request)
     {
-        $q = $request->input('q', '');
+        $q = trim($request->input('q', ''));
 
-        $risultati = EanProdotto::where('articolo', 'like', "%{$q}%")
-            ->orWhere('codice_ean', 'like', "%{$q}%")
-            ->orderBy('articolo')
+        // Multi-word search: ogni parola deve esistere (AND) nell'articolo
+        // "ast lettere" trova "Astuccio lettere M" anche se la stringa
+        // letterale "ast lettere" non e substring di "Astuccio lettere M".
+        $parole = array_filter(preg_split('/\s+/', $q));
+
+        $query = EanProdotto::query();
+
+        if (empty($parole)) {
+            return response()->json([]);
+        }
+
+        $query->where(function ($qb) use ($parole, $q) {
+            // Match sull'articolo: tutte le parole presenti (AND)
+            $qb->where(function ($q1) use ($parole) {
+                foreach ($parole as $p) {
+                    $q1->where('articolo', 'like', "%{$p}%");
+                }
+            });
+            // OR match esatto sull'EAN (codice intero come stringa)
+            $qb->orWhere('codice_ean', 'like', "%{$q}%");
+        });
+
+        $risultati = $query->orderBy('articolo')
             ->limit(30)
             ->get(['id', 'articolo', 'codice_ean']);
 

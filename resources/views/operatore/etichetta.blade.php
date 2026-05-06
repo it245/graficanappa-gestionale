@@ -729,12 +729,27 @@ function salvaEusaNuovoEan() {
 @if($isItalianaConfetti)
 // ===== Dropdown ricerca EAN (Italiana Confetti) =====
 var eanData = @json($eanProdotti);
+// Pre-calcola lowercase per match veloce (evita .toLowerCase() per ogni filtro)
+eanData.forEach(function(it) {
+    it._art_lc = (it.articolo || '').toLowerCase();
+    it._ean_lc = (it.codice_ean || '').toLowerCase();
+});
 var searchInput = document.getElementById('ean-search');
 var dropdown = document.getElementById('ean-dropdown');
 var activeIndex = -1;
 
-searchInput.addEventListener('input', function() {
-    var q = this.value.toLowerCase().trim();
+// Match multi-parola con AND: "ast lettere" trova "Astuccio lettere M"
+function matchEan(item, parole, qFull) {
+    // Match articolo: tutte le parole presenti (AND)
+    var allMatch = parole.every(function(p) { return item._art_lc.indexOf(p) !== -1; });
+    if (allMatch) return true;
+    // OR match esatto sull'EAN
+    if (item._ean_lc.indexOf(qFull) !== -1) return true;
+    return false;
+}
+
+function eseguiRicerca() {
+    var q = searchInput.value.toLowerCase().trim();
     dropdown.innerHTML = '';
     activeIndex = -1;
 
@@ -743,12 +758,15 @@ searchInput.addEventListener('input', function() {
         return;
     }
 
+    var parole = q.split(/\s+/).filter(function(p) { return p.length > 0; });
+
     var risultati = eanData.filter(function(item) {
-        return item.articolo.toLowerCase().includes(q) || item.codice_ean.toLowerCase().includes(q);
+        return matchEan(item, parole, q);
     }).slice(0, 30);
 
     if (risultati.length === 0) {
-        dropdown.style.display = 'none';
+        dropdown.innerHTML = '<div class="ean-item" style="color:#999;cursor:default;">Nessun articolo trovato per "' + q + '"</div>';
+        dropdown.style.display = 'block';
         return;
     }
 
@@ -764,6 +782,12 @@ searchInput.addEventListener('input', function() {
     });
 
     dropdown.style.display = 'block';
+}
+
+searchInput.addEventListener('input', eseguiRicerca);
+// Focus: se input ha gia testo, riapri dropdown (fix bug "prima volta non esce nulla")
+searchInput.addEventListener('focus', function() {
+    if (this.value.trim().length >= 2) eseguiRicerca();
 });
 
 searchInput.addEventListener('keydown', function(e) {
@@ -781,9 +805,10 @@ searchInput.addEventListener('keydown', function(e) {
     } else if (e.key === 'Enter') {
         e.preventDefault();
         if (activeIndex >= 0 && items[activeIndex]) {
+            var qEnter = searchInput.value.toLowerCase().trim();
+            var paroleEnter = qEnter.split(/\s+/).filter(function(p) { return p.length > 0; });
             var filtrato = eanData.filter(function(item) {
-                var q = searchInput.value.toLowerCase().trim();
-                return item.articolo.toLowerCase().includes(q) || item.codice_ean.toLowerCase().includes(q);
+                return matchEan(item, paroleEnter, qEnter);
             });
             if (filtrato[activeIndex]) selezionaEan(filtrato[activeIndex]);
         }
