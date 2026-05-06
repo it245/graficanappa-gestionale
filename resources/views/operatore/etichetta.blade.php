@@ -760,45 +760,75 @@ function estraiKeywords(str) {
             return true;
         });
 }
-var contestoBase = @json($ordine->descrizione ?? '') + ' ' + @json(collect($righeFS ?? [])->pluck('testo')->implode(' '));
-var contestoPI = @json($notePI ?? '');
+var descrizioniPI = @json($descrizioniPI ?? []);
 
-var keywordsBase = [...new Set(estraiKeywords(contestoBase))];
-var keywordsPI   = [...new Set(estraiKeywords(contestoPI))];
-
-// Filtra keyword troppo comuni (compaiono in > 25% degli articoli = generiche)
-function filtraKeywordsComuni(keywords, dataset) {
-    var soglia = Math.max(5, Math.floor(dataset.length * 0.25));
-    return keywords.filter(function(kw) {
-        var count = 0;
-        for (var i = 0; i < dataset.length; i++) {
-            if ((dataset[i].articolo || '').toLowerCase().indexOf(kw) !== -1) {
-                count++;
-                if (count > soglia) return false;
-            }
-        }
-        return count > 0;
-    });
-}
-keywordsBase = filtraKeywordsComuni(keywordsBase, eanData);
-keywordsPI   = filtraKeywordsComuni(keywordsPI, eanData);
-
-// Pre-calcola lowercase + score relevance per match veloce
+// Pre-calcola lowercase
 eanData.forEach(function(it) {
     it._art_lc = (it.articolo || '').toLowerCase();
     it._ean_lc = (it.codice_ean || '').toLowerCase();
-    var scoreBase = keywordsBase.reduce(function(acc, kw) {
-        return acc + (it._art_lc.indexOf(kw) !== -1 ? 1 : 0);
-    }, 0);
-    var scorePI = keywordsPI.reduce(function(acc, kw) {
-        return acc + (it._art_lc.indexOf(kw) !== -1 ? 1 : 0);
-    }, 0);
-    // Score totale: PI pesa 2x
-    it._score = scoreBase + (scorePI * 2);
 });
 
-// Soglia: per mostrare suggerimento auto serve almeno 2 keyword match
-var SOGLIA_SUGGERIMENTO = 2;
+// Estrai "chiave articolo" da descrizione ordine: tipo + variante
+// Ignora codici fustella, formati, numeri, parole tecniche di lavorazione.
+function chiaveArticolo(desc) {
+    var s = (desc || '').toLowerCase();
+    var m = s.match(/(?:astuccio|astucci|ast\.)\s*(.+?)(?:\s*[(,]|\s+stampa\b|\s+f\.to\b|\s+rev\b|$)/i);
+    if (!m) {
+        m = s.match(/^(.{0,80})/);
+        if (!m) return '';
+    }
+    var raw = m[1];
+    raw = raw.replace(/\b(?:fs|fff|fst|f\.s\.)\s*\d+/gi, ' ');
+    raw = raw.replace(/\b\d+\s*(?:kg|gr|g|ml|cl|fg|pz)\b/gi, ' ');
+    raw = raw.replace(/\b\d+\b/g, ' ');
+    var tecniche = ['stampa','colori','colore','caldo','oro','drip','off','usare','lastrina','riserva','rilievo','fustellatura','fustella','finestratura','incollaggio','plastificazione','opaca','lucida','soft','touch','kg','gr','pant','pantone','ml','cl','vernice','iml','ks'];
+    var splitW = raw.split(/\s+/).filter(function(w) {
+        return w.length > 0 && tecniche.indexOf(w) === -1;
+    });
+    return splitW.join(' ').replace(/\s+/g, ' ').trim();
+}
+
+function bestMatchPerDescrizione(desc, dataset) {
+    var chiave = chiaveArticolo(desc);
+    if (!chiave || chiave.length < 3) return null;
+    var paroleChiave = chiave.split(/\s+/).filter(function(w) { return w.length > 0; });
+    if (paroleChiave.length === 0) return null;
+
+    var best = null;
+    var bestScore = 0;
+
+    dataset.forEach(function(it) {
+        var artLc = (it.articolo || '').toLowerCase();
+        var matched = 0;
+        paroleChiave.forEach(function(p) {
+            if (p.length === 1) {
+                if (new RegExp('\\b' + p + '\\b', 'i').test(artLc)) matched++;
+            } else {
+                if (artLc.indexOf(p) !== -1) matched++;
+            }
+        });
+        var requiredMatch = Math.max(1, Math.ceil(paroleChiave.length * 0.8));
+        if (matched < requiredMatch) return;
+
+        var score = matched / paroleChiave.length;
+        if (score > bestScore) {
+            bestScore = score;
+            best = it;
+        }
+    });
+    return best;
+}
+
+var suggeritiSet = new Set();
+descrizioniPI.forEach(function(desc) {
+    var match = bestMatchPerDescrizione(desc, eanData);
+    if (match) suggeritiSet.add(match.codice_ean);
+});
+
+eanData.forEach(function(it) {
+    it._suggerito = suggeritiSet.has(it.codice_ean);
+    it._score = it._suggerito ? 10 : 0;
+});
 var searchInput = document.getElementById('ean-search');
 var dropdown = document.getElementById('ean-dropdown');
 var activeIndex = -1;
