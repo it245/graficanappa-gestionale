@@ -16,11 +16,10 @@
     }
     .btn-back:hover { background: #555; color: #fff; }
     table {
-        width: max-content;
-        max-width: 100%;
+        width: 100%;
         border-collapse: collapse;
         font-size: 13px;
-        table-layout: fixed;
+        table-layout: auto;
     }
     thead th {
         background: #000;
@@ -56,8 +55,7 @@
         font-weight: bold;
         cursor: pointer;
     }
-    /* Tabella fissa: 15 colonne, larghezze esplicite, somma ~1515px */
-    table { table-layout: fixed; }
+    /* 15 colonne: fisse a sx, flex (Operatori/Note/Descrizione) assorbono extra */
     th:nth-child(1), td:nth-child(1) { width: 70px; text-align: center; }       /* Priorità */
     th:nth-child(2), td:nth-child(2) { width: 90px; text-align: center; }       /* Stato */
     th:nth-child(3), td:nth-child(3) { width: 130px; }                          /* Fase */
@@ -67,9 +65,9 @@
     th:nth-child(7), td:nth-child(7) { width: 100px; text-align: center; }      /* Qta Prod Prinect */
     th:nth-child(8), td:nth-child(8) { width: 85px; text-align: center; }       /* Scarti Prinect */
     th:nth-child(9), td:nth-child(9) { width: 80px; text-align: center; }       /* Scarti R */
-    th:nth-child(10), td:nth-child(10) { width: 140px; }                        /* Operatori */
-    th:nth-child(11), td:nth-child(11) { width: 160px; }                        /* Note */
-    th:nth-child(12), td:nth-child(12) { width: 280px; }                        /* Descrizione */
+    th:nth-child(10), td:nth-child(10) { min-width: 140px; max-width: 220px; }  /* Operatori (flex) */
+    th:nth-child(11), td:nth-child(11) { min-width: 160px; max-width: 280px; }  /* Note (flex) */
+    th:nth-child(12), td:nth-child(12) { min-width: 280px; max-width: 500px; }  /* Descrizione (flex) */
     th:nth-child(13), td:nth-child(13) { width: 130px; text-align: center; font-size: 11px; }    /* Data Inizio */
     th:nth-child(14), td:nth-child(14) { width: 130px; text-align: center; font-size: 11px; }    /* Data Fine */
     th:nth-child(15), td:nth-child(15) { width: 60px; text-align: center; }     /* × */
