@@ -11,6 +11,7 @@ use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use App\Events\PhaseCompleted;
 use App\Listeners\PropagateAvailability;
+use App\Modules\Reportistica\Listeners\InvalidaReportistica;
 use App\Models\OrdineFase;
 use App\Observers\OrdineFaseObserver;
 
@@ -31,6 +32,9 @@ class AppServiceProvider extends ServiceProvider
     {
         // Mossa 37: propaga disponibilità quando una fase viene completata
         Event::listen(PhaseCompleted::class, PropagateAvailability::class);
+
+        // Reportistica: invalida cache KPI/ReportOre/Panoramica al completamento fase
+        Event::listen(PhaseCompleted::class, InvalidaReportistica::class);
 
         // Audit Log: traccia automaticamente cambio stato e eliminazione fasi
         OrdineFase::observe(OrdineFaseObserver::class);

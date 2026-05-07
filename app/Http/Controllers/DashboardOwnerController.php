@@ -35,6 +35,10 @@ use App\Modules\Notifiche\Services\NotificaService;
 use App\Modules\Notifiche\ValueObjects\Notifica;
 use App\Modules\Notifiche\Enums\CanaleNotifica;
 use App\Modules\Notifiche\Enums\PrioritaNotifica;
+use App\Modules\Reportistica\Services\PanoramicaRepartiService;
+use App\Modules\Reportistica\Services\ReportOreService;
+use App\Modules\Reportistica\Services\FustelleReportService;
+use App\Modules\Reportistica\Services\EsterneReportService;
 
 class DashboardOwnerController extends Controller
 {
@@ -51,6 +55,10 @@ class DashboardOwnerController extends Controller
         private readonly CapacitaService $capacita,
         private readonly NoteFustellaService $noteFustella,
         private readonly NotificaService $notifiche,
+        private readonly PanoramicaRepartiService $panoramicaReparti,
+        private readonly ReportOreService $reportOreService,
+        private readonly FustelleReportService $fustelleReport,
+        private readonly EsterneReportService $esterneReport,
     ) {}
 
     /**
@@ -142,87 +150,11 @@ class DashboardOwnerController extends Controller
      */
     public function repartiOverview(Request $request)
     {
-        // Ordine ciclo produttivo
-        $ordineReparti = [
-            'prestampa', 'stampa offset', 'digitale', 'stampa a caldo',
-            'plastificazione', 'fustella', 'fustella piana', 'fustella cilindrica',
-            'tagliacarte', 'finestratura', 'piegaincolla', 'legatoria',
-            'finitura digitale', 'generico', 'produzione', 'magazzino',
-            'spedizione', 'esterno',
-        ];
-        // Strangler Fig: RepartoService::tutti() è cached 1h (1 query invece
-        // che a ogni page-load) e la sort è in-memory.
-        $reparti = $this->reparti->tutti()->sortBy(function ($r) use ($ordineReparti) {
-            $pos = array_search(strtolower($r->nome), $ordineReparti);
-            return $pos !== false ? $pos : 999;
-        });
-
-        $data = [];
-        foreach ($reparti as $reparto) {
-            // Fasi in corso (stato 2) in questo reparto, non esterne
-            $fasi = OrdineFase::query()
-                ->join('ordini', 'ordini.id', '=', 'ordine_fasi.ordine_id')
-                ->join('fasi_catalogo', 'ordine_fasi.fase_catalogo_id', '=', 'fasi_catalogo.id')
-                ->where('fasi_catalogo.reparto_id', $reparto->id)
-                ->where('ordine_fasi.stato', StatoFase::AVVIATA)
-                ->where(fn($q) => $q->where('ordine_fasi.esterno', false)->orWhereNull('ordine_fasi.esterno'))
-                ->whereNull('ordine_fasi.deleted_at')
-                ->select([
-                    'ordini.commessa',
-                    'ordini.cliente_nome',
-                    'ordini.descrizione',
-                    'ordini.data_prevista_consegna',
-                    'ordini.qta_richiesta',
-                    'ordine_fasi.id as fase_id',
-                    'ordine_fasi.fase',
-                    'ordine_fasi.stato as fase_stato',
-                    'ordine_fasi.priorita',
-                    'ordine_fasi.priorita_manuale',
-                    'ordine_fasi.qta_prod',
-                    'ordine_fasi.operatore_id',
-                    'fasi_catalogo.nome as fase_catalogo_nome',
-                ])
-                ->orderBy('ordine_fasi.priorita')
-                ->get();
-
-            // Raggruppa per commessa
-            $fasiInfo = $this->fasiInfo;
-            $commesse = $fasi->groupBy('commessa')->map(function ($group) use ($fasiInfo) {
-                $first = $group->first();
-                $stati = $group->pluck('fase_stato');
-                // Calcola ore previste per commessa in questo reparto
-                $orePreviste = $group->sum(function ($f) use ($fasiInfo) {
-                    $info = $fasiInfo[$f->fase] ?? ['avviamento' => 0.5, 'copieh' => 1000];
-                    $copieh = $info['copieh'] ?: 1000;
-                    return $info['avviamento'] + (($f->qta_richiesta ?: 0) / $copieh);
-                });
-                return (object)[
-                    'commessa'    => $first->commessa,
-                    'cliente'     => $first->cliente_nome ?: '-',
-                    'descrizione' => $first->descrizione ?: '-',
-                    'consegna'    => $first->data_prevista_consegna,
-                    'qta'         => $first->qta_richiesta,
-                    'priorita'    => $group->min('priorita'),
-                    'n_fasi'      => $group->count(),
-                    'n_inizio'    => $stati->filter(fn($s) => $s == 1)->count(),
-                    'n_terminato' => $stati->filter(fn($s) => $s == 2)->count(),
-                    'n_attesa'    => $stati->filter(fn($s) => $s == 0)->count(),
-                    'fasi'        => $group->pluck('fase_catalogo_nome')->unique()->values()->all(),
-                    'ore_previste' => round($orePreviste, 1),
-                ];
-            })->sortBy('priorita')->values();
-
-            $data[] = (object)[
-                'reparto'  => $reparto,
-                'commesse' => $commesse,
-                'totale'   => $commesse->count(),
-            ];
-        }
-
-        // Rimuovi reparti senza commesse attive
-        $data = collect($data)->filter(fn($r) => $r->totale > 0)->values();
-
-        $totReparti = $reparti->count();
+        // Strangler Fig: la logica di aggregazione vive in
+        // App\Modules\Reportistica\Services\PanoramicaRepartiService
+        // (cached 10 min, invalidata su PhaseCompleted).
+        $data = $this->panoramicaReparti->overview();
+        $totReparti = $this->reparti->tutti()->count();
         $opToken = request()->query('op_token') ?? request()->attributes->get('op_token');
 
         return view('owner.reparti_overview', compact('data', 'opToken', 'totReparti'));
@@ -1239,107 +1171,33 @@ public function calcolaOreEPriorita($fase)
     public function reportOre(Request $request)
     {
         $filtroCommessa = $request->query('commessa');
-        $filtroReparto = $request->query('reparto');
-        $filtroDal = $request->query('dal');
-        $filtroAl = $request->query('al');
+        $filtroReparto  = $request->query('reparto');
+        $filtroDal      = $request->query('dal');
+        $filtroAl       = $request->query('al');
 
-        // Escludi reparto spedizione (via RepartoService cache 1h)
-        $repartoSpedizione = $this->reparti->byCodice(CodiceReparto::SPEDIZIONE);
+        // Range default: ultimo anno (lo storico controller non aveva limite,
+        // ma con i filtri "dal"/"al" forniti dall'utente sostituiamo).
+        $from = $filtroDal ? Carbon::parse($filtroDal) : Carbon::now()->subYear();
+        $to   = $filtroAl  ? Carbon::parse($filtroAl)  : Carbon::now();
 
-        $query = OrdineFase::with(['ordine.fasi.faseCatalogo', 'faseCatalogo.reparto', 'operatori'])
-            ->whereHas('ordine');
+        // Strangler Fig: aggregazione delegata a ReportOreService
+        // (priorità Prinect → fallback pivot operatori, cfr. memoria 9/03/2026).
+        $payload = $this->reportOreService->perTemplate(
+            $from,
+            $to,
+            $filtroCommessa,
+            $filtroReparto ? (int) $filtroReparto : null,
+        );
 
-        // Escludi BRT e reparto spedizione
-        $query->whereNotIn('fase', ['BRT1', 'brt1', 'BRT']);
-        if ($repartoSpedizione) {
-            $query->where(function ($q) use ($repartoSpedizione) {
-                $q->whereDoesntHave('faseCatalogo')
-                  ->orWhereHas('faseCatalogo', fn($q2) => $q2->where('reparto_id', '!=', $repartoSpedizione->id));
-            });
-        }
-
-        if ($filtroCommessa) {
-            $query->whereHas('ordine', fn($q) => $q->where('commessa', 'like', "%{$filtroCommessa}%"));
-        }
-        if ($filtroReparto) {
-            $query->whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', $filtroReparto));
-        }
-
-        // Filtro date
-        if ($filtroDal) {
-            $query->where('data_fine', '>=', Carbon::parse($filtroDal)->startOfDay());
-        }
-        if ($filtroAl) {
-            $query->where('data_fine', '<=', Carbon::parse($filtroAl)->endOfDay());
-        }
-
-        // Solo fasi terminate o consegnate (stato 3/4)
-        $fasi = $query->where('stato', '>', 2)
-            ->get()
-            ->map(function ($fase) {
-                // Ore previste
-                $qta_carta = $fase->ordine->qta_carta ?? 0;
-                $infoFase = $this->fasiInfo[$fase->fase] ?? ['avviamento' => 0.5, 'copieh' => 1000];
-                $copieh = $infoFase['copieh'] ?: 1000;
-                $fase->ore_previste = round($infoFase['avviamento'] + ($qta_carta / $copieh), 2);
-
-                // Ore lavorate: prima da Prinect (tempo_avviamento + tempo_esecuzione), poi da pivot operatore
-                $secPrinect = ($fase->tempo_avviamento_sec ?? 0) + ($fase->tempo_esecuzione_sec ?? 0);
-                if ($secPrinect > 0) {
-                    $fase->ore_lavorate = round($secPrinect / 3600, 2);
-                    $fase->fonte_ore = 'Prinect';
-                } else {
-                    $oreTotali = 0;
-                    foreach ($fase->operatori as $op) {
-                        $inizio = $op->pivot->data_inizio;
-                        $fine = $op->pivot->data_fine;
-                        $pausa = $op->pivot->secondi_pausa ?? 0;
-                        if ($inizio && $fine) {
-                            $secondi = Carbon::parse($inizio)->diffInSeconds(Carbon::parse($fine));
-                            $secondi = max(0, $secondi - $pausa);
-                            $oreTotali += $secondi / 3600;
-                        }
-                    }
-                    $fase->ore_lavorate = round($oreTotali, 2);
-                    $fase->fonte_ore = $oreTotali > 0 ? 'MES' : '';
-                }
-
-                return $fase;
-            });
-
-        // Raggruppa per commessa
-        $commesse = $fasi->groupBy(fn($f) => $f->ordine->commessa ?? '-')->map(function ($fasiCommessa, $commessa) {
-            $first = $fasiCommessa->first();
-            $ordine = $first->ordine;
-            return (object) [
-                'commessa' => $commessa,
-                'cliente' => $ordine->cliente_nome ?? '-',
-                'descrizione' => $ordine->descrizione ?? '-',
-                'data_consegna' => $ordine->data_prevista_consegna,
-                'responsabile' => $ordine->responsabile ?? '-',
-                'ore_previste' => round($fasiCommessa->sum('ore_previste'), 2),
-                'ore_lavorate' => round($fasiCommessa->sum('ore_lavorate'), 2),
-                'fasi' => $fasiCommessa->sortBy(fn($f) => config('fasi_priorita')[$f->fase] ?? 500),
-                'num_fasi' => $fasiCommessa->count(),
-                'num_terminate' => $fasiCommessa->where('stato', '>=', StatoFase::TERMINATA)->count(),
-                'num_avviate' => $fasiCommessa->where('stato', StatoFase::AVVIATA)->count(),
-            ];
-        })->sortBy('commessa');
-
-        // Statistiche per reparto
-        $orePerReparto = $fasi->groupBy(fn($f) => optional($f->faseCatalogo)->reparto->nome ?? 'Altro')
-            ->map(fn($group) => (object)[
-                'previste' => round($group->sum('ore_previste'), 1),
-                'lavorate' => round($group->sum('ore_lavorate'), 1),
-                'fasi' => $group->count(),
-            ])->sortByDesc('lavorate');
+        $commesse      = $payload['commesse'];
+        $orePerReparto = $payload['orePerReparto'];
 
         $reparti = $this->reparti->tutti()
             ->reject(fn ($r) => strtolower((string) $r->nome) === 'spedizione')
             ->sortBy('nome')
             ->pluck('nome', 'id');
 
-        // Commesse con fasi terminate oggi
+        // Commesse con fasi terminate oggi (subset client-side per il template).
         $oggi = Carbon::today();
         $commesseOggi = $commesse->filter(function ($c) use ($oggi) {
             return $c->fasi->contains(function ($f) use ($oggi) {
@@ -1587,72 +1445,9 @@ public function calcolaOreEPriorita($fase)
 
     public function esterne()
     {
-        $repartoEsterno = $this->reparti->byCodice(CodiceReparto::ESTERNO);
-
-        // Fasi esterne: reparto "esterno" OPPURE flag esterno=1 (inviate dal owner)
-        // Include stato < 3 (attive) e stato 5 (esterno dedicato)
-        $fasiEsterne = OrdineFase::where(fn($q) => $q->where('stato', '<', StatoFase::TERMINATA)->orWhere('stato', StatoFase::ESTERNO))
-            ->where(function ($q) use ($repartoEsterno) {
-                if ($repartoEsterno) {
-                    $q->whereHas('faseCatalogo', fn($q2) => $q2->where('reparto_id', $repartoEsterno->id));
-                }
-                $q->orWhere('esterno', 1);
-            })
-            ->with(['ordine.fasi.faseCatalogo', 'faseCatalogo'])
-            ->get();
-
-        $commesseEsterne = collect();
-        if ($fasiEsterne->isNotEmpty()) {
-
-            // Raggruppa per commessa, solo quelle con fornitore (DDT sincronizzata)
-            $commesseEsterne = $fasiEsterne->groupBy('ordine_id')->map(function ($fasi) {
-                $prima = $fasi->first();
-                $ordine = $prima->ordine;
-
-                // Estrai fornitore dalla nota della prima fase con "Inviato a:"
-                $fornitore = '-';
-                foreach ($fasi as $f) {
-                    if (preg_match('/Inviato a:\s*(.+)/i', $f->note ?? '', $mf)) {
-                        $fornitore = trim($mf[1]);
-                        break;
-                    }
-                }
-
-                // Stato complessivo: il "peggiore" (priorità: pausa > in corso > pronto > da fare)
-                $stati = $fasi->pluck('stato');
-                if ($stati->contains(fn($s) => is_string($s) && !is_numeric($s))) {
-                    $statoPausa = $fasi->first(fn($f) => is_string($f->stato) && !is_numeric($f->stato));
-                    $stato = $statoPausa->stato;
-                } elseif ($stati->contains(5)) {
-                    $stato = 5;
-                } elseif ($stati->contains(2)) {
-                    $stato = 2;
-                } elseif ($stati->contains(1)) {
-                    $stato = 1;
-                } else {
-                    $stato = 0;
-                }
-
-                // Data invio: la prima data_inizio disponibile
-                $dataInvio = $fasi->whereNotNull('data_inizio')->min('data_inizio');
-
-                return (object) [
-                    'ordine'        => $ordine,
-                    'fornitore'     => $fornitore,
-                    'stato'         => $stato,
-                    'fasi'          => $fasi->pluck('faseCatalogo.nome_display', 'id')->filter()->values()->implode(', ') ?: $fasi->pluck('fase')->implode(', '),
-                    'fasi_dettaglio' => $fasi->map(fn($f) => [
-                        'id' => $f->id,
-                        'nome' => $f->faseCatalogo->nome_display ?? $f->fase,
-                        'qta' => $f->qta_fase ?? $f->ordine->qta_richiesta ?? 0,
-                    ])->values()->toArray(),
-                    'num_fasi'      => $fasi->count(),
-                    'fasi_ids'      => $fasi->pluck('id')->values()->toArray(),
-                    'data_invio'    => $dataInvio,
-                    'note'          => $fasi->pluck('note')->filter()->unique()->implode(' | '),
-                ];
-            })->sortBy(fn($c) => $c->ordine->data_prevista_consegna ?? '9999-12-31')->values();
-        }
+        // Strangler Fig: tracking esterno delegato a EsterneReportService
+        // (cached 10 min, invalidato su PhaseCompleted).
+        $commesseEsterne = $this->esterneReport->commesseEsterne();
 
         return view('owner.esterne', compact('commesseEsterne'));
     }
@@ -1662,50 +1457,9 @@ public function calcolaOreEPriorita($fase)
      */
     public function fustelleOverview()
     {
-        // RepartoService risolve dinamicamente gli id (fustella, fustella piana,
-        // fustella cilindrica) — niente più magic numbers [5, 15, 16].
-        $repartiFustella = $this->repartiFustellaIds();
-
-        $fasi = OrdineFase::where('stato', '<', 3)
-            ->where(fn($q) => $q->where('esterno', false)->orWhereNull('esterno'))
-            ->whereHas('faseCatalogo', function ($q) use ($repartiFustella) {
-                $q->whereIn('reparto_id', $repartiFustella);
-            })
-            ->whereHas('ordine', function ($q) {
-                $q->where('data_prevista_consegna', '<=', Carbon::today()->addDays(30));
-            })
-            ->with(['ordine', 'faseCatalogo.reparto'])
-            ->get();
-
-        $fustelleMap = [];
-        foreach ($fasi as $fase) {
-            $desc = $fase->ordine->descrizione ?? '';
-            $cliente = $fase->ordine->cliente_nome ?? '';
-            $notePre = $fase->ordine->note_prestampa ?? '';
-            $fsCodice = DescrizioneParser::parseFustella($desc, $cliente, $notePre);
-
-            if (!$fsCodice) continue;
-
-            $codici = array_map('trim', explode('/', $fsCodice));
-            foreach ($codici as $codice) {
-                if (!isset($fustelleMap[$codice])) {
-                    $fustelleMap[$codice] = [];
-                }
-                $commessa = $fase->ordine->commessa;
-                if (!isset($fustelleMap[$codice][$commessa])) {
-                    $fustelleMap[$codice][$commessa] = [
-                        'commessa' => $commessa,
-                        'cliente' => $fase->ordine->cliente_nome ?? '-',
-                        'descrizione' => $fase->ordine->descrizione ?? '-',
-                        'data_consegna' => $fase->ordine->data_prevista_consegna,
-                        'stato' => $fase->stato,
-                        'fase' => $fase->faseCatalogo->reparto->nome ?? $fase->fase,
-                    ];
-                }
-            }
-        }
-
-        ksort($fustelleMap);
+        // Strangler Fig: parsing/aggregazione delegata a FustelleReportService
+        // (cached 10 min, no magic numbers reparti via RepartoService).
+        $fustelleMap = $this->fustelleReport->overview();
 
         return view('owner.fustelle', compact('fustelleMap'));
     }

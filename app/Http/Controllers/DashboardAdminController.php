@@ -17,9 +17,31 @@ use App\Exports\ReportDirezioneExport;
 use App\Exports\ReportPrinectExport;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Services\AuditService;
+use App\Modules\Reportistica\Services\KpiService;
+use App\Modules\Reportistica\Services\ReportOreService;
+use App\Modules\Reportistica\Services\PanoramicaRepartiService;
+use App\Modules\Reportistica\Services\FustelleReportService;
+use App\Modules\Reportistica\Services\EsterneReportService;
+use App\Modules\Reportistica\Services\ProduttivitaOperatoriService;
+use App\Modules\Reportistica\Services\ProgressoCommesseService;
 
 class DashboardAdminController extends Controller
 {
+    /**
+     * Strangler Fig: aggregazioni report estratte in App\Modules\Reportistica.
+     * I metodi cruscotto/reportDirezione/reportProduzione delegano ai service
+     * (cached) invece di replicare le query inline.
+     */
+    public function __construct(
+        private readonly KpiService $kpi,
+        private readonly ReportOreService $reportOre,
+        private readonly PanoramicaRepartiService $panoramica,
+        private readonly FustelleReportService $fustelleReport,
+        private readonly EsterneReportService $esterneReport,
+        private readonly ProduttivitaOperatoriService $produttivita,
+        private readonly ProgressoCommesseService $progressoReport,
+    ) {}
+
     public function index()
     {
         $operatori = Operatore::with('reparti')->orderBy('attivo', 'desc')->orderBy('nome')->get();
@@ -515,13 +537,9 @@ class DashboardAdminController extends Controller
         $prossimi7gg = Carbon::today()->addDays(7);
 
         // --- 1. Ordini attivi (commesse con almeno 1 fase non completata) ---
-        $ordiniAttivi = Ordine::select('commessa')
-            ->groupBy('commessa')
-            ->get()
-            ->filter(function ($row) {
-                return OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $row->commessa))
-                    ->where('stato', '<', 3)->exists();
-            })->count();
+        // Strangler Fig: KPI delegato al modulo Reportistica (cached 5 min)
+        $kpiCommesseAttive = $this->kpi->unico(\App\Modules\Reportistica\Enums\TipoKpi::COMMESSE_ATTIVE);
+        $ordiniAttivi = $kpiCommesseAttive ? (int) $kpiCommesseAttive->valore : 0;
 
         // --- 2. Completate ultimi 30gg ---
         $commesseCompletate30gg = DB::table('fase_operatore')
@@ -532,25 +550,18 @@ class DashboardAdminController extends Controller
             ->select('ordini.commessa')
             ->distinct()
             ->get()
-            ->filter(function ($row) {
-                return OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $row->commessa))
-                    ->where('stato', '<', 3)->count() === 0;
-            })->count();
+            ->filter(fn ($row) => $this->progressoReport->isCompletata($row->commessa))
+            ->count();
 
         // --- 3. Commesse in ritardo ---
         $commesseInRitardo = Ordine::where('data_prevista_consegna', '<', $oggi->toDateString())
             ->select('commessa', 'cliente_nome', 'data_prevista_consegna')
             ->groupBy('commessa', 'cliente_nome', 'data_prevista_consegna')
             ->get()
-            ->filter(function ($row) {
-                return OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $row->commessa))
-                    ->where('stato', '<', 3)->count() > 0;
-            })
+            ->filter(fn ($row) => !$this->progressoReport->isCompletata($row->commessa))
             ->map(function ($row) use ($oggi) {
                 $row->giorni_ritardo = Carbon::parse($row->data_prevista_consegna)->diffInDays($oggi);
-                $fasiTot = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $row->commessa))->count();
-                $fasiDone = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $row->commessa))->where('stato', '>=', 3)->where('stato', '!=', 5)->count();
-                $row->avanzamento = $fasiTot > 0 ? round(($fasiDone / $fasiTot) * 100) : 0;
+                $row->avanzamento = $this->progressoReport->avanzamento($row->commessa);
                 return $row;
             })
             ->sortByDesc('giorni_ritardo')
@@ -567,10 +578,7 @@ class DashboardAdminController extends Controller
             ->select('ordini.commessa', 'ordini.data_prevista_consegna', DB::raw('MAX(fase_operatore.data_fine) as ultima_fine'))
             ->groupBy('ordini.commessa', 'ordini.data_prevista_consegna')
             ->get()
-            ->filter(function ($row) {
-                return OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $row->commessa))
-                    ->where('stato', '<', 3)->count() === 0;
-            });
+            ->filter(fn ($row) => $this->progressoReport->isCompletata($row->commessa));
 
         $puntuali = $commesseConConsegna->filter(function ($row) {
             return $row->ultima_fine && Carbon::parse($row->ultima_fine)->lte(Carbon::parse($row->data_prevista_consegna)->endOfDay());
@@ -689,14 +697,9 @@ class DashboardAdminController extends Controller
             ->select('commessa', 'cliente_nome', 'data_prevista_consegna')
             ->groupBy('commessa', 'cliente_nome', 'data_prevista_consegna')
             ->get()
-            ->filter(function ($row) {
-                return OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $row->commessa))
-                    ->where('stato', '<', 3)->exists();
-            })
+            ->filter(fn ($row) => !$this->progressoReport->isCompletata($row->commessa))
             ->map(function ($row) use ($oggi) {
-                $fasiTot = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $row->commessa))->count();
-                $fasiDone = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $row->commessa))->where('stato', '>=', 3)->where('stato', '!=', 5)->count();
-                $row->avanzamento = $fasiTot > 0 ? round(($fasiDone / $fasiTot) * 100) : 0;
+                $row->avanzamento = $this->progressoReport->avanzamento($row->commessa);
                 $row->giorni_mancanti = $oggi->diffInDays(Carbon::parse($row->data_prevista_consegna));
                 return $row;
             })
@@ -752,6 +755,7 @@ class DashboardAdminController extends Controller
         $oreLavorate = round(max($secLavorati, 0) / 3600, 1);
 
         // --- Commesse completate nel periodo ---
+        // Strangler Fig: ProgressoCommesseService::isCompletata centralizza la logica.
         $commesseCompletate = DB::table('fase_operatore')
             ->join('ordine_fasi', 'ordine_fasi.id', '=', 'fase_operatore.fase_id')
             ->join('ordini', 'ordini.id', '=', 'ordine_fasi.ordine_id')
@@ -760,10 +764,7 @@ class DashboardAdminController extends Controller
             ->select('ordini.commessa')
             ->distinct()
             ->get()
-            ->filter(function ($row) {
-                return OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $row->commessa))
-                    ->where('stato', '<', 3)->count() === 0;
-            });
+            ->filter(fn ($row) => $this->progressoReport->isCompletata($row->commessa));
 
         $numCommesseCompletate = $commesseCompletate->count();
 
@@ -772,20 +773,15 @@ class DashboardAdminController extends Controller
             ->select('commessa', 'cliente_nome', 'data_prevista_consegna')
             ->groupBy('commessa', 'cliente_nome', 'data_prevista_consegna')
             ->get()
-            ->filter(function ($row) {
-                return OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $row->commessa))
-                    ->where('stato', '<', 3)->count() > 0;
-            })
+            ->filter(fn ($row) => !$this->progressoReport->isCompletata($row->commessa))
             ->map(function ($row) use ($oggi) {
                 $row->giorni_ritardo = Carbon::parse($row->data_prevista_consegna)->diffInDays($oggi);
-                $fasiTot = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $row->commessa))->count();
-                $fasiDone = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $row->commessa))->where('stato', '>=', 3)->where('stato', '!=', 5)->count();
-                $row->avanzamento = $fasiTot > 0 ? round(($fasiDone / $fasiTot) * 100) : 0;
-                $fasi = OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $row->commessa))
+                $row->avanzamento = $this->progressoReport->avanzamento($row->commessa);
+                $fasi = OrdineFase::whereHas('ordine', fn ($q) => $q->where('commessa', $row->commessa))
                     ->where('stato', '<', 3)
                     ->with('faseCatalogo')
                     ->get();
-                $row->fasi_mancanti = $fasi->map(fn($f) => $f->faseCatalogo->nome ?? $f->fase)->implode(', ');
+                $row->fasi_mancanti = $fasi->map(fn ($f) => $f->faseCatalogo->nome ?? $f->fase)->implode(', ');
                 return $row;
             })
             ->sortByDesc('giorni_ritardo')
@@ -801,10 +797,7 @@ class DashboardAdminController extends Controller
             ->select('ordini.commessa', 'ordini.data_prevista_consegna', DB::raw('MAX(fase_operatore.data_fine) as ultima_fine'))
             ->groupBy('ordini.commessa', 'ordini.data_prevista_consegna')
             ->get()
-            ->filter(function ($row) {
-                return OrdineFase::whereHas('ordine', fn($q) => $q->where('commessa', $row->commessa))
-                    ->where('stato', '<', 3)->count() === 0;
-            });
+            ->filter(fn ($row) => $this->progressoReport->isCompletata($row->commessa));
 
         $puntuali = $commesseConConsegna->filter(function ($row) {
             return $row->ultima_fine && Carbon::parse($row->ultima_fine)->lte(Carbon::parse($row->data_prevista_consegna)->endOfDay());
@@ -898,37 +891,15 @@ class DashboardAdminController extends Controller
         $oreTrendGiornaliero = $trendRaw->mapWithKeys(fn($r) => [$r->periodo => round($r->secondi / 3600, 1)])->toArray();
 
         // --- Performance operatori ---
-        $operatoriPerf = DB::table('fase_operatore')
-            ->join('ordine_fasi', 'ordine_fasi.id', '=', 'fase_operatore.fase_id')
-            ->join('operatori', 'operatori.id', '=', 'fase_operatore.operatore_id')
-            ->where('ordine_fasi.stato', '>=', 3)->where('ordine_fasi.stato', '!=', 5)
-            ->whereBetween('fase_operatore.data_fine', [$da, $a])
-            ->whereNotNull('fase_operatore.data_inizio')
-            ->whereNotNull('fase_operatore.data_fine')
-            ->select(
-                'operatori.id',
-                'operatori.nome',
-                'operatori.cognome',
-                DB::raw('COUNT(*) as fasi_completate'),
-                DB::raw('SUM(ordine_fasi.qta_prod) as qta_prodotta'),
-                DB::raw('SUM(TIMESTAMPDIFF(SECOND, fase_operatore.data_inizio, fase_operatore.data_fine) - COALESCE(fase_operatore.secondi_pausa, 0)) as sec_totali')
-            )
-            ->groupBy('operatori.id', 'operatori.nome', 'operatori.cognome')
-            ->orderByDesc('fasi_completate')
-            ->get()
-            ->map(function ($op) use ($da, $a) {
-                $op->ore_lavorate = round($op->sec_totali / 3600, 1);
-                $op->tempo_medio_sec = $op->fasi_completate > 0 ? round($op->sec_totali / $op->fasi_completate) : 0;
-                $giorni = max(Carbon::parse($da)->diffInDays(Carbon::parse($a)), 1);
-                $op->fasi_giorno = round($op->fasi_completate / $giorni, 1);
-                // Reparti operatore
-                $repOp = DB::table('operatore_reparto')
-                    ->join('reparti', 'reparti.id', '=', 'operatore_reparto.reparto_id')
-                    ->where('operatore_reparto.operatore_id', $op->id)
-                    ->pluck('reparti.nome');
-                $op->reparti = $repOp->implode(', ');
-                return $op;
-            });
+        // Strangler Fig: delegato a ProduttivitaOperatoriService.
+        // ATTENZIONE GDPR/Art.4 SL — vedi note service per uso pubblicistico.
+        $periodoVO = new \App\Modules\Reportistica\ValueObjects\PeriodoReport(
+            from: Carbon::parse($da),
+            to:   Carbon::parse($a),
+            aggregazione: \App\Modules\Reportistica\Enums\PeriodoAggregazione::fromRequest($periodo),
+            label: '',
+        );
+        $operatoriPerf = $this->produttivita->performanceCompleta($periodoVO);
 
         // --- Pause ---
         $motiviPausa = PausaOperatore::whereBetween('data_ora', [$da, $a])
