@@ -17,6 +17,14 @@ use Carbon\Carbon;
  *
  * Formula: priorita = (fascia × 10000) + (urgenza_reale × 100) + sequenza
  * Fasce: 1=CRITICA (<0), 2=URGENTE (0-5), 3=NORMALE (5-15), 4=PIANIFICABILE (>15)
+ *
+ * @deprecated Usare {@see \App\Modules\Scheduling\Services\PrioritaService} per
+ *             le nuove integrazioni (combina UrgenzaRule + SequenzaFasiRule +
+ *             BatchAffinityRule in modo testabile). Questo servizio resta in
+ *             produzione perche persiste su `ordine_fasi` campi storici
+ *             (urgenza_reale, fascia_urgenza, batch_key, priorita_m37).
+ *             Lo Strangler Fig sostituira progressivamente i caller statici
+ *             con istanze del PrioritaService modulare.
  */
 class PriorityService
 {

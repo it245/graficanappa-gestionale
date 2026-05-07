@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Modules\Macchine\MacchinaRegistry;
 use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -173,8 +174,16 @@ class SchedulerExportService
             $ws->setTitle(substr($mid, 0, 31));
             $ws->getTabColor()->setRGB(self::$coloriTab[$mid] ?? '333333');
 
+            // Strangler Fig: il nome leggibile e i turni vengono dal
+             // MacchinaRegistry quando l'id e registrato; fallback alle
+             // mappe statiche per id "virtuali" (es. SPED) non presenti.
             $nomeMac = self::$nomiMacchine[$mid] ?? $mid;
             $turniLbl = $mid === 'XL106' ? '24h lun-ven' : '6-22 lun-ven';
+            if (MacchinaRegistry::exists($mid)) {
+                $regola = MacchinaRegistry::find($mid);
+                $nomeMac = $regola->getNome();
+                $turniLbl = $regola->getTurno();
+            }
             $ws->mergeCells("A1:" . chr(64 + $NC) . "1");
             $ws->setCellValue('A1', "$nomeMac ($turniLbl) — {$fasi->count()} fasi");
             $ws->getStyle('A1')->getFont()->setBold(true)->setSize(14)->getColor()->setRGB('1F4E79');

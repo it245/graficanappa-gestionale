@@ -54,7 +54,13 @@ final class UrgenzaRule
             return null;
         }
 
-        $raw = $ordine->data_consegna ?? $ordine->consegna ?? null;
+        // Lo schema reale `ordini` usa `data_prevista_consegna`. Manteniamo
+        // i fallback `data_consegna`/`consegna` per stub di test e per la
+        // futura tabella `Spedizione::data_consegna`.
+        $raw = $ordine->data_prevista_consegna
+            ?? $ordine->data_consegna
+            ?? $ordine->consegna
+            ?? null;
         if ($raw === null) {
             return null;
         }

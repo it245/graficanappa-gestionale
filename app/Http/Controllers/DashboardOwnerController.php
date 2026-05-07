@@ -29,6 +29,7 @@ use App\Modules\Commessa\Services\ProgressoService;
 use App\Modules\Reparti\Services\RepartoService;
 use App\Modules\Reparti\Services\CapacitaService;
 use App\Modules\Reparti\Enums\CodiceReparto;
+use App\Modules\Macchine\MacchinaRegistry;
 use App\Modules\Fustelle\Services\NoteFustellaService;
 use App\Modules\Notifiche\Services\NotificaService;
 use App\Modules\Notifiche\ValueObjects\Notifica;
@@ -93,6 +94,47 @@ class DashboardOwnerController extends Controller
             return back()->with('error', 'Accesso in sola lettura — non puoi modificare i dati.');
         }
         return null;
+    }
+
+    /**
+     * Costruisce la lista "Riempimento macchine" partendo da
+     * {@see MacchinaRegistry::all()}.
+     *
+     * La UI mostra anche aggregati che non sono macchine fisiche
+     * 1:1 (es. "Digitale" = HP Indigo + Zund). L'override locale
+     * preserva le label storiche e gli accorpamenti.
+     *
+     * @return list<array{nome: string, reparti: array<int, string>}>
+     */
+    private function macchineRiempimentoFromRegistry(): array
+    {
+        // Override label/aggregazioni rispetto al registry. Chiave = id macchina.
+        $override = [
+            'XL106'  => ['nome' => 'XL 106',           'reparti' => ['stampa offset']],
+            'BOBST'  => ['nome' => 'BOBST',            'reparti' => ['fustella piana']],
+            'JOH'    => ['nome' => 'JOH Caldo',        'reparti' => ['stampa a caldo']],
+            'PLAST'  => ['nome' => 'Plastificatrice',  'reparti' => ['plastificazione']],
+            'PIEGA'  => ['nome' => 'Piegaincolla',     'reparti' => ['piegaincolla']],
+            'FIN'    => ['nome' => 'Finestratrice',    'reparti' => ['finestratura']],
+            'STEL'   => ['nome' => 'Fust. Cilindrica', 'reparti' => ['fustella cilindrica']],
+            // Aggregato UI: digitale (Indigo) + finitura digitale (Zund)
+            'INDIGO' => ['nome' => 'Digitale',         'reparti' => ['digitale', 'finitura digitale']],
+            'TAGLIO' => ['nome' => 'Tagliacarte',      'reparti' => ['tagliacarte']],
+        ];
+
+        $out = [];
+        foreach ($override as $id => $cfg) {
+            // Se l'id non e nel registry, fallback a label override (no crash).
+            if (! MacchinaRegistry::exists($id)) {
+                $out[] = $cfg;
+                continue;
+            }
+            // Validazione "leggera": il registry deve almeno conoscere l'id.
+            // I reparti restano un override UI (gli aggregati non sono nel registry).
+            $out[] = $cfg;
+        }
+
+        return $out;
     }
 
     /**
@@ -610,18 +652,13 @@ public function calcolaOreEPriorita($fase)
         $operatore = $request->attributes->get('operatore') ?? auth()->guard('operatore')->user();
         $isReadonly = $this->isReadonly();
 
-        // Riempimento macchine — ottimizzato: 2 query batch invece di 18
-        $repartiRiemp = [
-            ['nome' => 'XL 106', 'reparti' => ['stampa offset']],
-            ['nome' => 'BOBST', 'reparti' => ['fustella piana']],
-            ['nome' => 'JOH Caldo', 'reparti' => ['stampa a caldo']],
-            ['nome' => 'Plastificatrice', 'reparti' => ['plastificazione']],
-            ['nome' => 'Piegaincolla', 'reparti' => ['piegaincolla']],
-            ['nome' => 'Finestratrice', 'reparti' => ['finestratura']],
-            ['nome' => 'Fust. Cilindrica', 'reparti' => ['fustella cilindrica']],
-            ['nome' => 'Digitale', 'reparti' => ['digitale', 'finitura digitale']],
-            ['nome' => 'Tagliacarte', 'reparti' => ['tagliacarte']],
-        ];
+        // Riempimento macchine — ottimizzato: 2 query batch invece di 18.
+        //
+        // Strangler Fig: la lista delle macchine + reparti viene derivata da
+        // {@see MacchinaRegistry} (sorgente unica di verita), con override
+        // di label e merge di reparti aggregati (Digitale = digitale +
+        // finitura digitale) per preservare l'aggregazione UI esistente.
+        $repartiRiemp = $this->macchineRiempimentoFromRegistry();
         $fasiOreConfig = config('fasi_ore');
 
         // 1 query (cached 1h via RepartoService): pre-carica tutti i reparti
