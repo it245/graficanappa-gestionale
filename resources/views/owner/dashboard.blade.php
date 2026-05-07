@@ -93,6 +93,14 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
         Aggiungi Riga
     </button>
+    <button type="button" class="mes-sidebar-item" data-bs-toggle="modal" data-bs-target="#modalNotaTv">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>
+        Nota TV
+    </button>
+    <a href="/kiosk" target="_blank" class="mes-sidebar-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        TV Kiosk
+    </a>
     @endif
     @if($isReadonly ?? false)
     <button type="button" class="mes-sidebar-item" onclick="filtraRiferimentiMarco()">
