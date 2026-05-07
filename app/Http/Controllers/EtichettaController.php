@@ -3,12 +3,24 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use App\Models\Ordine;
 use App\Models\OrdineFase;
 use App\Models\EanProdotto;
+use App\Modules\Documenti\Rules\GtinRule;
 
 class EtichettaController extends Controller
 {
+    /**
+     * Strangler Fig: cabling con il modulo `App\Modules\Documenti`.
+     * GtinRule centralizza la convenzione interna (A + 13 cifre, qty 8 zero-padded).
+     * Iniettato via DI per consentire fake/mock nei test.
+     */
+    public function __construct(
+        private readonly GtinRule $gtinRule = new GtinRule(),
+    ) {
+    }
+
     public function show(Request $request, $ordineId)
     {
         $ordine = Ordine::findOrFail($ordineId);
@@ -96,6 +108,19 @@ class EtichettaController extends Controller
         // Backward-compat: notePI ancora disponibile come stringa unica (per boost legacy)
         $notePI = trim(implode(' ', $descrizioniPI));
 
+        // Cabling Modulo Documenti: log generazione etichetta (single source of truth
+        // per la convenzione plain Data Matrix - A nel GTIN, qty 8 zero-padded).
+        // La build vera del datamatrix resta lato JS (bwip-js) per anteprima di stampa.
+        Log::info('Etichetta generata', [
+            'ordine_id' => $ordine->id,
+            'commessa' => $ordine->commessa,
+            'lotto' => $lotto,
+            'qta' => (int) ($ordine->qta_richiesta ?? 0),
+            'qta_padded' => str_pad((string) (int) ($ordine->qta_richiesta ?? 0), 8, '0', STR_PAD_LEFT),
+            'cliente' => $cliente,
+            'tipo' => 'datamatrix_plain',
+        ]);
+
         return view('operatore.etichetta', compact(
             'ordine', 'lotto', 'cliente', 'data',
             'isItalianaConfetti', 'isSimpleLabel', 'isNoHeader', 'isTifataPlastica', 'eanProdotti', 'articoloDefault', 'eanSalvato',
@@ -178,6 +203,16 @@ class EtichettaController extends Controller
 
         if (!$articolo || !$codiceEan) {
             return response()->json(['ok' => false, 'msg' => 'Articolo e codice EAN richiesti'], 422);
+        }
+
+        // Soft-validation via GtinRule (modulo Documenti). NON blocca il salvataggio
+        // perche' alcuni EAN cliente non rispettano la convenzione interna A+13 cifre,
+        // ma vogliamo tracciare i casi anomali nei log per audit.
+        if (!$this->gtinRule->valida($codiceEan)) {
+            Log::warning('EAN non conforme convenzione interna (A+13 cifre)', [
+                'articolo' => $articolo,
+                'codice_ean' => $codiceEan,
+            ]);
         }
 
         EanProdotto::updateOrCreate(

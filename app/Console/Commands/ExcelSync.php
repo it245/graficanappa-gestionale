@@ -3,24 +3,33 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use App\Http\Services\ExcelSyncService;
+use App\Http\Services\ExcelSyncService as ExcelSyncLegacy;
+use App\Modules\Documenti\Services\ExcelSyncService as ExcelSyncModule;
 
 class ExcelSync extends Command
 {
     protected $signature = 'excel:sync';
     protected $description = 'Sincronizza bidirezionalmente Excel e database MES';
 
-    public function handle()
+    public function handle(ExcelSyncModule $excelModule)
     {
         $this->info('Excel sync in corso...');
 
         try {
+            // Strangler Fig: il modulo `Documenti\ExcelSyncService` espone
+            // `watchFile()` per rilevare modifiche dashboard_mes.xlsx via cache
+            // (mtime persistito). E' un check informativo: il sync vero e
+            // proprio resta nel legacy che fa hash-based diff piu' robusto.
+            if ($excelModule->watchFile()) {
+                $this->info('[Modulo] dashboard_mes.xlsx modificato dall\'ultima sync.');
+            }
+
             // 1. Importa eventuali modifiche dal file Excel
-            ExcelSyncService::syncIfModified();
+            ExcelSyncLegacy::syncIfModified();
             $this->info('Import completato.');
 
             // 2. Esporta dati aggiornati nel file Excel
-            ExcelSyncService::exportToExcel();
+            ExcelSyncLegacy::exportToExcel();
             $this->info('Export completato.');
 
             $this->info('Excel sync terminato.');
