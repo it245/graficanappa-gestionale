@@ -4,10 +4,22 @@ namespace App\Http\Controllers;
 
 use App\Http\Services\PrinectSyncService;
 use App\Models\PrinectAttivita;
+use App\Modules\Prinect\Contracts\PrinectApiInterface;
+use App\Modules\Prinect\Services\PrinectJobsService;
 use App\Modules\Stampa\Adapters\PrinectAdapter;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
+/**
+ * Dashboard / report Prinect XL106.
+ *
+ * Strangler Fig: i metodi che fanno query "live" alla macchina XL106
+ * passano da {@see PrinectAdapter} (mantiene la mappatura status -> shape
+ * comune Stampa). Le query "puramente Prinect" (worksteps di un job)
+ * delegano a {@see PrinectJobsService} via DI di {@see PrinectApiInterface}.
+ *
+ * URL endpoint invariati — il refactor è interno al controller.
+ */
 class PrinectController extends Controller
 {
     public function index(PrinectAdapter $stampa, PrinectSyncService $syncService)
@@ -335,7 +347,7 @@ class PrinectController extends Controller
     /**
      * Report commessa con KPI e grafici
      */
-    public function reportCommessa($commessa, PrinectAdapter $stampa)
+    public function reportCommessa($commessa, PrinectAdapter $stampa, PrinectJobsService $jobsService)
     {
         $attivita = PrinectAttivita::where('commessa_gestionale', $commessa)
             ->orderBy('start_time')
@@ -359,9 +371,10 @@ class PrinectController extends Controller
         $jobIdNum = PrinectSyncService::estraiJobIdNumerico($jobId);
         if ($jobIdNum) {
             try {
-                $wsData = $stampa->prinectJobWorksteps($jobIdNum);
-                $worksteps = collect($wsData['worksteps'] ?? [])
-                    ->filter(fn($ws) => in_array('ConventionalPrinting', $ws['types'] ?? []))
+                // Worksteps di stampa convenzionale delegati al modulo Prinect.
+                // Filtro stato (COMPLETED/RUNNING) resta inline: è scelta locale
+                // del report (esclude WAITING/ABORTED dalla vista commessa).
+                $worksteps = $jobsService->getWorkstepsStampa($jobIdNum)
                     ->filter(fn($ws) => in_array($ws['status'] ?? '', ['COMPLETED', 'RUNNING']));
 
                 if ($worksteps->isNotEmpty()) {
