@@ -435,9 +435,14 @@
                 @continue(in_array($commessaCorrente, $commesseGiaMostrate, true))
                 @php $commesseGiaMostrate[] = $commessaCorrente; @endphp
                 @php
+                    $articoliCommessa = $fasiDDT->filter(fn($f) => ($f->ordine->commessa ?? '') === $commessaCorrente);
+                    $totaleQtaCommessa = $articoliCommessa->sum(fn($f) => (int)($f->ordine->qta_richiesta ?? 0));
+                    $totaleDdtCommessa = $articoliCommessa->sum(fn($f) => (float)($f->ordine->qta_ddt_vendita ?? 0));
+                    $altriArticoli = $articoliCommessa->filter(fn($f) => $f->id !== $fase->id);
+                    $numAltri = $altriArticoli->count();
                     $qtaOrdine = $fase->ordine->qta_richiesta ?? 0;
                     $qtaDDT = $fase->ordine->qta_ddt_vendita ?? 0;
-                    $suggerimento = $qtaDDT >= $qtaOrdine ? 'totale' : 'parziale';
+                    $suggerimento = $totaleDdtCommessa >= $totaleQtaCommessa ? 'totale' : 'parziale';
                     $numDDT = $fase->ordine->numero_ddt_vendita ?? '';
                     $vettore = $fase->ordine->vettore_ddt ?? '';
                     $isBRT = stripos($vettore, 'BRT') !== false;
@@ -452,10 +457,21 @@
                     </td>
                     <td><a href="{{ route('commesse.show', $fase->ordine->commessa ?? '-') }}" class="commessa-link">{{ $fase->ordine->commessa ?? '-' }}</a></td>
                     <td>{{ $fase->ordine->cliente_nome ?? '-' }}</td>
-                    <td>{{ $fase->ordine->cod_art ?? '-' }}</td>
+                    <td>
+                        {{ $fase->ordine->cod_art ?? '-' }}
+                        @if($numAltri > 0)
+                            <button type="button" class="btn btn-sm btn-link p-0 ms-1" style="font-size:11px;" onclick="toggleAltriArticoli('art-{{ $fase->id }}')">▼ +{{ $numAltri }} art.</button>
+                        @endif
+                    </td>
                     <td class="desc-col" title="{{ $fase->ordine->descrizione ?? '-' }}">{{ $fase->ordine->descrizione ?? '-' }}</td>
-                    <td>{{ $qtaOrdine }}</td>
-                    <td>{{ $qtaDDT }}</td>
+                    <td>
+                        {{ $qtaOrdine }}<br>
+                        <strong style="color:#6f42c1;">Σ {{ number_format($totaleQtaCommessa, 0, ',', '.') }}</strong>
+                    </td>
+                    <td>
+                        {{ $qtaDDT }}<br>
+                        <strong style="color:#6f42c1;">Σ {{ number_format($totaleDdtCommessa, 2, ',', '.') }}</strong>
+                    </td>
                     <td>
                         @if($suggerimento === 'totale')
                             <span class="badge bg-success">Totale</span>
@@ -476,6 +492,25 @@
                         @endif
                     </td>
                 </tr>
+                @if($numAltri > 0)
+                    <tr id="art-{{ $fase->id }}" class="altri-articoli-row" style="display:none; background:#f8f5fc;">
+                        <td colspan="9" style="padding:8px 20px;">
+                            <strong style="color:#6f42c1; font-size:12px;">Altri articoli commessa {{ $commessaCorrente }}:</strong>
+                            <table class="table table-sm mb-0 mt-1" style="background:transparent;">
+                                <tbody>
+                                    @foreach($altriArticoli as $altro)
+                                        <tr>
+                                            <td style="width:18%;">{{ $altro->ordine->cod_art ?? '-' }}</td>
+                                            <td style="width:50%; font-size:12px;">{{ Str::limit($altro->ordine->descrizione ?? '-', 80) }}</td>
+                                            <td style="width:16%;">Qta ord: <strong>{{ $altro->ordine->qta_richiesta ?? 0 }}</strong></td>
+                                            <td style="width:16%;">Qta DDT: <strong>{{ $altro->ordine->qta_ddt_vendita ?? 0 }}</strong></td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </td>
+                    </tr>
+                @endif
             @endforeach
         </tbody>
     </table>
@@ -947,6 +982,12 @@
 </div>
 
 <script>
+function toggleAltriArticoli(rowId) {
+    const row = document.getElementById(rowId);
+    if (!row) return;
+    row.style.display = row.style.display === 'none' || !row.style.display ? 'table-row' : 'none';
+}
+
 function getHdrs() {
     return {
         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
