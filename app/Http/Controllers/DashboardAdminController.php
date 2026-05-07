@@ -16,6 +16,7 @@ use Carbon\Carbon;
 use App\Exports\ReportDirezioneExport;
 use App\Exports\ReportPrinectExport;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Services\AuditService;
 
 class DashboardAdminController extends Controller
 {
@@ -77,6 +78,23 @@ class DashboardAdminController extends Controller
         $reparti = array_filter([$request->reparto_principale, $request->reparto_secondario]);
         $operatore->reparti()->sync($reparti);
 
+        AuditService::log(
+            'create',
+            'Operatore',
+            $operatore->id,
+            null,
+            [
+                'codice_operatore' => $operatore->codice_operatore,
+                'nome' => $operatore->nome,
+                'cognome' => $operatore->cognome,
+                'ruolo' => $operatore->ruolo,
+                'reparto_id' => $operatore->reparto_id,
+                'reparti' => $reparti,
+                'password_set' => (bool) $request->password,
+            ],
+            'Creazione operatore'
+        );
+
         return redirect()->route('admin.dashboard')->with('success', "Operatore $codice creato correttamente.");
     }
 
@@ -101,20 +119,58 @@ class DashboardAdminController extends Controller
             'codice_operatore' => 'required|string|max:20|unique:operatori,codice_operatore,' . $id,
         ]);
 
+        $oldValues = [
+            'codice_operatore' => $operatore->codice_operatore,
+            'nome' => $operatore->nome,
+            'cognome' => $operatore->cognome,
+            'ruolo' => $operatore->ruolo,
+            'reparto_id' => $operatore->reparto_id,
+        ];
+
         $operatore->nome = ucfirst(strtolower($request->nome));
         $operatore->cognome = ucfirst(strtolower($request->cognome));
         $operatore->ruolo = $request->ruolo;
         $operatore->codice_operatore = strtoupper($request->codice_operatore);
         $operatore->reparto_id = $request->reparto_principale;
 
+        $passwordChanged = false;
         if ($request->filled('password')) {
             $operatore->password = Hash::make($request->password);
+            $passwordChanged = true;
         }
 
         $operatore->save();
 
         $reparti = array_filter([$request->reparto_principale, $request->reparto_secondario]);
         $operatore->reparti()->sync($reparti);
+
+        AuditService::log(
+            'update',
+            'Operatore',
+            $operatore->id,
+            $oldValues,
+            [
+                'codice_operatore' => $operatore->codice_operatore,
+                'nome' => $operatore->nome,
+                'cognome' => $operatore->cognome,
+                'ruolo' => $operatore->ruolo,
+                'reparto_id' => $operatore->reparto_id,
+                'reparti' => $reparti,
+                'password_changed' => $passwordChanged,
+            ],
+            $passwordChanged ? 'Aggiornamento operatore (password modificata)' : 'Aggiornamento operatore'
+        );
+
+        if ($passwordChanged) {
+            AuditService::log(
+                'password_change',
+                'Operatore',
+                $operatore->id,
+                null,
+                null,
+                'Cambio password operatore ' . $operatore->codice_operatore
+            );
+        }
 
         return redirect()->route('admin.dashboard')->with('success', "Operatore {$operatore->codice_operatore} aggiornato.");
     }
@@ -186,10 +242,21 @@ class DashboardAdminController extends Controller
     public function toggleAttivo($id)
     {
         $operatore = Operatore::findOrFail($id);
+        $oldAttivo = (bool) $operatore->attivo;
         $operatore->attivo = !$operatore->attivo;
         $operatore->save();
 
         $stato = $operatore->attivo ? 'attivato' : 'disattivato';
+
+        AuditService::log(
+            $operatore->attivo ? 'enable' : 'disable',
+            'Operatore',
+            $operatore->id,
+            ['attivo' => $oldAttivo],
+            ['attivo' => (bool) $operatore->attivo],
+            "Operatore {$operatore->codice_operatore} $stato"
+        );
+
         return redirect()->route('admin.dashboard')->with('success', "Operatore {$operatore->codice_operatore} $stato.");
     }
 

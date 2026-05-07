@@ -57,17 +57,7 @@ class ClaudeApiClient
         }
 
         try {
-            $response = Http::withHeaders([
-                'x-api-key' => $this->apiKey,
-                'anthropic-version' => self::API_VERSION,
-                'content-type' => 'application/json',
-            ])
-                ->timeout(self::TIMEOUT_SECONDS)
-                ->retry(self::MAX_RETRIES, 1000, function ($exception) {
-                    // Retry solo su errori di rete/timeout, non 4xx
-                    return $exception instanceof \Illuminate\Http\Client\ConnectionException;
-                })
-                ->post(self::ENDPOINT, $payload);
+            $response = $this->httpClient($maxTokens)->post(self::ENDPOINT, $payload);
 
             if ($response->failed()) {
                 Log::warning('Claude API errore', [
@@ -88,6 +78,117 @@ class ClaudeApiClient
 
             return '[Errore interno]';
         }
+    }
+
+    /**
+     * Invia richiesta vision (immagine + prompt testuale) e ritorna response raw.
+     * Differenza vs sendMessages: ritorna array completo (per usage/model/raw text)
+     * e i chiamanti gestiscono parsing JSON specifico (DDT, bolle, ecc.).
+     *
+     * @return array{ok: bool, text?: string, usage?: array, model?: string, error?: string, status?: int}
+     */
+    public function sendVisionMessage(
+        string $imagePath,
+        string $prompt,
+        int $maxTokens = 1500,
+        int $timeoutSeconds = 60
+    ): array {
+        if (! $this->isConfigured()) {
+            return ['ok' => false, 'error' => 'API key non configurata'];
+        }
+
+        if (! file_exists($imagePath)) {
+            return ['ok' => false, 'error' => "File non trovato: {$imagePath}"];
+        }
+
+        $mediaType = $this->detectMediaType($imagePath);
+        $imageData = base64_encode((string) file_get_contents($imagePath));
+
+        $payload = [
+            'model' => $this->model,
+            'max_tokens' => $maxTokens,
+            'messages' => [[
+                'role' => 'user',
+                'content' => [
+                    [
+                        'type' => 'image',
+                        'source' => [
+                            'type' => 'base64',
+                            'media_type' => $mediaType,
+                            'data' => $imageData,
+                        ],
+                    ],
+                    ['type' => 'text', 'text' => $prompt],
+                ],
+            ]],
+        ];
+
+        try {
+            $response = $this->httpClient($maxTokens, $timeoutSeconds, true)
+                ->post(self::ENDPOINT, $payload);
+
+            if (! $response->successful()) {
+                Log::error('Claude Vision API errore', [
+                    'status' => $response->status(),
+                    'body' => mb_substr((string) $response->body(), 0, 500),
+                ]);
+
+                return [
+                    'ok' => false,
+                    'status' => $response->status(),
+                    'error' => 'API error: '.$response->status(),
+                ];
+            }
+
+            $body = $response->json() ?? [];
+
+            return [
+                'ok' => true,
+                'text' => $body['content'][0]['text'] ?? '',
+                'usage' => $body['usage'] ?? null,
+                'model' => $body['model'] ?? $this->model,
+            ];
+        } catch (\Throwable $e) {
+            Log::error('Claude Vision exception', ['message' => $e->getMessage()]);
+
+            return ['ok' => false, 'error' => $e->getMessage()];
+        }
+    }
+
+    private function httpClient(int $maxTokens, ?int $timeoutSeconds = null, bool $skipVerify = false): \Illuminate\Http\Client\PendingRequest
+    {
+        $client = Http::withHeaders([
+            'x-api-key' => $this->apiKey,
+            'anthropic-version' => self::API_VERSION,
+            'content-type' => 'application/json',
+        ])
+            ->timeout($timeoutSeconds ?? self::TIMEOUT_SECONDS)
+            ->retry(self::MAX_RETRIES, 1000, function ($exception) {
+                return $exception instanceof \Illuminate\Http\Client\ConnectionException;
+            });
+
+        if ($skipVerify) {
+            $client = $client->withoutVerifying();
+        }
+
+        return $client;
+    }
+
+    private function detectMediaType(string $path): string
+    {
+        $detected = function_exists('mime_content_type') ? @mime_content_type($path) : false;
+        if ($detected && in_array($detected, ['image/jpeg', 'image/png', 'image/webp', 'image/gif'], true)) {
+            return $detected;
+        }
+
+        $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+
+        return match ($ext) {
+            'png' => 'image/png',
+            'gif' => 'image/gif',
+            'webp' => 'image/webp',
+            default => 'image/jpeg',
+        };
     }
 
     /**

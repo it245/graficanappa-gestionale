@@ -14,6 +14,12 @@ use App\Services\DdtPdfService;
 
 class OndaSyncService
 {
+    /**
+     * Sincronizza ordini e fasi dal gestionale Onda al MES.
+     * Crea/aggiorna ordini, fasi e ricalcola stati.
+     *
+     * @return array<string, mixed> Riepilogo: ordini creati/aggiornati, fasi create, log dettagliato.
+     */
     public static function sincronizza(): array
     {
         $ordiniCreati = 0;
@@ -1691,6 +1697,11 @@ class OndaSyncService
         return $aggiornati;
     }
 
+    /**
+     * Mappa codice fase Onda → reparto MES.
+     *
+     * @return array<string, string> Chiave = codice fase Onda, valore = nome reparto.
+     */
     public static function getMappaReparti(): array
     {
         return [
@@ -1844,6 +1855,11 @@ class OndaSyncService
         ];
     }
 
+    /**
+     * Mappa codice fase Onda → tipo (multifase/singola).
+     *
+     * @return array<string, string> Chiave = codice fase Onda, valore = tipo reparto.
+     */
     public static function getTipoReparto(): array
     {
         return [

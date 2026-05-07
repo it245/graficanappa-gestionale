@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\TelegramWebhookRequest;
 use App\Models\MagazzinoArticolo;
 use App\Models\MagazzinoMovimento;
 use App\Services\MagazzinoService;
@@ -18,15 +19,18 @@ use Illuminate\Support\Str;
  */
 class TelegramWebhookController extends Controller
 {
-    public function handle(Request $request, string $secret)
+    public function handle(TelegramWebhookRequest $request, string $secret)
     {
-        // Verifica secret URL contro quello in .env
+        // Verifica secret URL contro quello in .env (constant-time compare).
         $expected = env('TELEGRAM_WEBHOOK_SECRET');
         if (!$expected || !hash_equals($expected, $secret)) {
             Log::warning('Telegram webhook secret non valido', ['ip' => $request->ip()]);
             abort(403);
         }
 
+        // Shape payload validata da TelegramWebhookRequest (update_id required, lunghezze testo).
+        // Passiamo $request->all() perché Telegram invia molti campi opzionali non whitelistati,
+        // ma update_id e i text sono già stati controllati dal FormRequest.
         $this->processUpdate($request->all());
         return response()->json(['ok' => true]);
     }

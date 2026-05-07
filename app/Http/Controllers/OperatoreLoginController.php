@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Http\Requests\OperatoreLoginRequest;
 use App\Models\Operatore;
 use App\Models\OperatoreToken;
 use Illuminate\Support\Facades\Auth;
@@ -18,18 +19,23 @@ class OperatoreLoginController extends Controller
     }
 
     // Login operatore
-    public function login(Request $request)
+    public function login(OperatoreLoginRequest $request)
     {
-        $request->validate([
-            'codice_operatore' => 'required|string'
-        ]);
-
+        // Validazione gestita da OperatoreLoginRequest (alfanumerico, max 50).
         $operatore = Operatore::where('codice_operatore', $request->codice_operatore)
                                 ->where('attivo', 1)
 
                                 ->first();
 
         if (!$operatore) {
+            AuditService::log(
+                'login_failed',
+                'Operatore',
+                null,
+                null,
+                ['codice_operatore' => $request->codice_operatore],
+                'Login operatore fallito (codice non trovato/inattivo)'
+            );
             return back()->withErrors(['codice_operatore' => 'Operatore non trovato o inattivo']);
         }
 

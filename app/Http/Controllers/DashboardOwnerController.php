@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Http\Requests\OwnerAggiornaCampoRequest;
+use App\Http\Requests\OwnerAggiungiRigaRequest;
 use App\Models\Ordine;
 use App\Models\OrdineFase;
 use App\Models\Operatore;
@@ -616,24 +618,14 @@ public function calcolaOreEPriorita($fase)
         ));
     }
 
-    public function aggiornaCampo(Request $request)
+    public function aggiornaCampo(OwnerAggiornaCampoRequest $request)
     {
         if ($deny = $this->denyIfReadonly()) return $deny;
-        $campiFase = ['qta_prod', 'qta_fase', 'note', 'stato', 'data_inizio', 'data_fine', 'ore', 'priorita', 'fase', 'esterno'];
-        $campiOrdine = ['cliente_nome', 'cod_art', 'descrizione', 'qta_richiesta', 'um',
-                        'data_registrazione', 'data_prevista_consegna',
-                        'cod_carta', 'carta', 'qta_carta', 'UM_carta'];
+        // Whitelist campi: definita in OwnerAggiornaCampoRequest::CAMPI_FASE/CAMPI_ORDINE.
+        $campiFase = OwnerAggiornaCampoRequest::CAMPI_FASE;
+        $campiOrdine = OwnerAggiornaCampoRequest::CAMPI_ORDINE;
 
-        $validator = Validator::make($request->all(), [
-            'fase_id' => 'required|exists:ordine_fasi,id',
-            'campo' => 'required|string',
-            'valore' => 'nullable'
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
-        }
-
+        // Validazione (fase_id exists, campo in whitelist, valore max 5000) gestita dal FormRequest.
         $fase = OrdineFase::with('ordine')->find($request->fase_id);
         $campo = $request->campo;
         $valore = $request->valore;
@@ -789,7 +781,7 @@ public function calcolaOreEPriorita($fase)
         return response()->json(['success' => true]);
     }
 
-    public function aggiungiRiga(Request $request)
+    public function aggiungiRiga(OwnerAggiungiRigaRequest $request)
     {
         if ($deny = $this->denyIfReadonly()) return $deny;
         $faseCatalogo = $request->fase_catalogo_id

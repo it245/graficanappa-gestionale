@@ -2,18 +2,16 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Http;
+use App\Services\Api\ClaudeApiClient;
 use Illuminate\Support\Facades\Log;
 
 /**
  * Integrazione API Anthropic Claude (Vision).
  * Analizza foto bolle fornitore e restituisce dati strutturati.
+ * HTTP delegato a ClaudeApiClient (DRY).
  */
 class ClaudeVisionService
 {
-    private const API_URL = 'https://api.anthropic.com/v1/messages';
-    private const API_VERSION = '2023-06-01';
-    private const DEFAULT_MODEL = 'claude-haiku-4-5-20251001';
     private const DEFAULT_MAX_TOKENS = 1024;
 
     /**
@@ -38,8 +36,6 @@ class ClaudeVisionService
         if (!in_array($mediaType, ['image/jpeg', 'image/png', 'image/webp', 'image/gif'])) {
             throw new \Exception("Formato immagine non supportato: {$mediaType}");
         }
-
-        $imageData = base64_encode(file_get_contents($imagePath));
 
         $prompt = <<<PROMPT
 Sei un assistente specializzato nell'analisi di bolle di trasporto cartacee italiane di fornitori di carta per stamperie.
@@ -67,72 +63,42 @@ REGOLE:
 - Se la foto non è una bolla valida, ritorna JSON con fornitore: "" e note: "foto non riconosciuta come bolla"
 PROMPT;
 
-        try {
-            $response = Http::withHeaders([
-                'x-api-key' => $apiKey,
-                'anthropic-version' => self::API_VERSION,
-                'content-type' => 'application/json',
-            ])->timeout(60)->post(self::API_URL, [
-                'model' => env('ANTHROPIC_MODEL', self::DEFAULT_MODEL),
-                'max_tokens' => self::DEFAULT_MAX_TOKENS,
-                'messages' => [[
-                    'role' => 'user',
-                    'content' => [
-                        [
-                            'type' => 'image',
-                            'source' => [
-                                'type' => 'base64',
-                                'media_type' => $mediaType,
-                                'data' => $imageData,
-                            ],
-                        ],
-                        ['type' => 'text', 'text' => $prompt],
-                    ],
-                ]],
-            ]);
+        $client = new ClaudeApiClient($apiKey);
+        $result = $client->sendVisionMessage($imagePath, $prompt, self::DEFAULT_MAX_TOKENS, 60);
 
-            if (!$response->successful()) {
-                Log::error('Claude Vision API error', [
-                    'status' => $response->status(),
-                    'body' => $response->body(),
-                ]);
-                throw new \Exception('Claude API non raggiungibile: ' . $response->status());
-            }
-
-            $data = $response->json();
-            $testoRisposta = $data['content'][0]['text'] ?? '';
-
-            // Rimuovi eventuali markdown ``` o ```json
-            $jsonText = preg_replace('/^```(?:json)?\s*|\s*```$/m', '', trim($testoRisposta));
-
-            $dati = json_decode($jsonText, true);
-            if (!is_array($dati)) {
-                Log::warning('Claude Vision: risposta non JSON', ['raw' => $testoRisposta]);
-                throw new \Exception('Risposta AI non è JSON valido');
-            }
-
-            // Normalizza campi per compatibilità con flusso esistente
-            return [
-                'fornitore' => $dati['fornitore'] ?? '',
-                'numero_bolla' => $dati['numero_bolla'] ?? '',
-                'data_bolla' => $dati['data_bolla'] ?? '',
-                'categoria' => $dati['categoria'] ?? '',
-                'descrizione' => $dati['descrizione_carta'] ?? '',
-                'grammatura' => $dati['grammatura'] ?? null,
-                'formato' => $dati['formato'] ?? '',
-                'quantita' => $dati['quantita'] ?? null,
-                'unita_misura' => $dati['unita_misura'] ?? 'fg',
-                'lotto' => $dati['lotto'] ?? '',
-                'note' => $dati['note'] ?? '',
-                'ocr_raw' => $testoRisposta,
-                'tokens_input' => $data['usage']['input_tokens'] ?? null,
-                'tokens_output' => $data['usage']['output_tokens'] ?? null,
-                'costo_stimato_eur' => self::calcolaCosto($data['usage'] ?? []),
-            ];
-        } catch (\Exception $e) {
-            Log::error('Claude Vision exception', ['error' => $e->getMessage()]);
-            throw $e;
+        if (!$result['ok']) {
+            throw new \Exception('Claude API non raggiungibile: ' . ($result['error'] ?? 'errore'));
         }
+
+        $testoRisposta = $result['text'] ?? '';
+
+        // Rimuovi eventuali markdown ``` o ```json
+        $jsonText = preg_replace('/^```(?:json)?\s*|\s*```$/m', '', trim($testoRisposta));
+
+        $dati = json_decode($jsonText, true);
+        if (!is_array($dati)) {
+            Log::warning('Claude Vision: risposta non JSON', ['raw' => $testoRisposta]);
+            throw new \Exception('Risposta AI non è JSON valido');
+        }
+
+        // Normalizza campi per compatibilità con flusso esistente
+        return [
+            'fornitore' => $dati['fornitore'] ?? '',
+            'numero_bolla' => $dati['numero_bolla'] ?? '',
+            'data_bolla' => $dati['data_bolla'] ?? '',
+            'categoria' => $dati['categoria'] ?? '',
+            'descrizione' => $dati['descrizione_carta'] ?? '',
+            'grammatura' => $dati['grammatura'] ?? null,
+            'formato' => $dati['formato'] ?? '',
+            'quantita' => $dati['quantita'] ?? null,
+            'unita_misura' => $dati['unita_misura'] ?? 'fg',
+            'lotto' => $dati['lotto'] ?? '',
+            'note' => $dati['note'] ?? '',
+            'ocr_raw' => $testoRisposta,
+            'tokens_input' => $result['usage']['input_tokens'] ?? null,
+            'tokens_output' => $result['usage']['output_tokens'] ?? null,
+            'costo_stimato_eur' => self::calcolaCosto($result['usage'] ?? []),
+        ];
     }
 
     /**

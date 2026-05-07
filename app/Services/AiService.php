@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Ordine;
 use App\Models\OrdineFase;
 use App\Models\Operatore;
+use App\Services\Api\ClaudeApiClient;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
@@ -26,7 +27,10 @@ class AiService
     }
 
     /**
-     * Invia un messaggio all'AI con contesto MES
+     * Invia un messaggio all'AI con contesto MES (KPI, fasi, ritardi, carichi).
+     *
+     * @param array<int, array{role: string, content: string}> $storico Ultimi messaggi della conversazione.
+     * @return string Risposta dell'AI in Markdown italiano.
      */
     public static function chat(string $messaggio, array $storico = []): string
     {
@@ -206,7 +210,7 @@ PROMPT;
     }
 
     /**
-     * Chiama Claude API (Anthropic)
+     * Chiama Claude API (Anthropic) tramite ClaudeApiClient (DRY).
      */
     private static function callClaude(string $messaggio, array $storico, string $systemPrompt): string
     {
@@ -221,30 +225,8 @@ PROMPT;
         }
         $messages[] = ['role' => 'user', 'content' => $messaggio];
 
-        try {
-            $response = Http::timeout(30)
-                ->withoutVerifying()
-                ->withHeaders([
-                    'x-api-key' => $apiKey,
-                    'anthropic-version' => '2023-06-01',
-                    'Content-Type' => 'application/json',
-                ])
-                ->post('https://api.anthropic.com/v1/messages', [
-                    'model' => config('ai.model', 'claude-sonnet-4-20250514'),
-                    'max_tokens' => 2000,
-                    'system' => $systemPrompt,
-                    'messages' => $messages,
-                ]);
+        $client = new ClaudeApiClient($apiKey, config('ai.model', 'claude-sonnet-4-20250514'));
 
-            if ($response->successful()) {
-                return $response->json('content.0.text') ?? 'Nessuna risposta dall\'AI.';
-            }
-
-            $error = $response->json('error.message') ?? $response->body();
-            return "**Errore Claude** ({$response->status()}): {$error}";
-
-        } catch (\Exception $e) {
-            return '**Errore di connessione**: ' . $e->getMessage();
-        }
+        return $client->sendMessages($messages, $systemPrompt, 2000);
     }
 }

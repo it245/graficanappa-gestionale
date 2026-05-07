@@ -48,7 +48,9 @@ class SchedulerService
     }
 
     /**
-     * Esegui lo scheduler completo e salva risultati nel DB
+     * Esegui lo scheduler completo: carica fasi, propaga sblocchi, simula e salva risultati.
+     *
+     * @return array<string, mixed> Riepilogo: fasi, schedulate, propagate, per_macchina.
      */
     public function esegui(): array
     {

@@ -19,6 +19,13 @@ class PrinectSyncService
         $this->prinect = $prinect;
     }
 
+    /**
+     * Sincronizza le attività Prinect XL106 degli ultimi 30 giorni.
+     * Importa nuove attività, aggiorna fogli/tempi sulle fasi di stampa offset,
+     * gestisce auto-terminazione e ripristino fasi.
+     *
+     * @return int Numero di attività importate.
+     */
     public function sincronizzaAttivita(): int
     {
         $deviceId = env('PRINECT_DEVICE_XL106_ID', '4001');
@@ -970,7 +977,7 @@ class PrinectSyncService
      * Estrae la parte numerica dal job ID Prinect.
      * Es. "66698 int" → "66698", "66410" → "66410", "abc" → null
      */
-    public static function estraiJobIdNumerico($jobId): ?string
+    public static function estraiJobIdNumerico(int|string|null $jobId): ?string
     {
         if (!$jobId) return null;
         if (is_numeric($jobId)) return (string) $jobId;
