@@ -3,15 +3,25 @@
 namespace App\Http\Controllers;
 
 use App\Models\OrdineFase;
-use App\Models\PausaOperatore;
+use App\Models\Operatore;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Ordine;
-use App\Services\FaseStatoService;
+use App\Modules\Fasi\Services\FaseTransitionService;
+use App\Modules\Fasi\Exceptions\FaseTransitionException;
 
 class ProduzioneController extends Controller
 {
+    /**
+     * Strangler Fig: la logica di transizione/pausa/ripresa è stata
+     * estratta in App\Modules\Fasi\Services\FaseTransitionService.
+     * Il controller resta sottile: validazione + call service + JSON response.
+     */
+    public function __construct(
+        private readonly FaseTransitionService $fasi,
+    ) {}
+
     public function index()
     {
         $fasiVisibili = OrdineFase::with(['ordine', 'faseCatalogo', 'operatori'])->get();
@@ -27,36 +37,24 @@ class ProduzioneController extends Controller
             }
 
             $operatoreId = $request->attributes->get('operatore_id') ?? session('operatore_id');
+            $terzista = $request->filled('terzista') ? (string) $request->input('terzista') : null;
 
-            // Aggiunge l'operatore se non presente
-            if ($operatoreId && !$fase->operatori->contains($operatoreId)) {
-                $fase->operatori()->attach($operatoreId, ['data_inizio' => now(),'data_fine'=>null]);
-            }
+            $result = $this->fasi->avvia($fase, $operatoreId ? (int) $operatoreId : null, $terzista);
+            $fase = $result['fase'];
 
-            // Se viene inviato il nome del terzista, salvalo nelle note
-            if ($request->filled('terzista')) {
-                $fase->note = 'Inviato a: ' . $request->input('terzista');
-            }
-
-            $fase->stato = 2; // fase avviata
-            if (!$fase->data_inizio) {
-                $fase->data_inizio = now()->format('Y-m-d H:i:s');
-            }
-            $fase->save();
-
-            $fase->load('operatori');
-
-            $operatori = $fase->operatori->map(function($op){
+            $operatori = $fase->operatori->map(function ($op) {
                 return [
                     'nome' => $op->nome,
-                    'data_inizio' => $op->pivot->data_inizio ? Carbon::parse($op->pivot->data_inizio)->format('d/m/Y H:i:s') : '-'
+                    'data_inizio' => $op->pivot->data_inizio
+                        ? Carbon::parse($op->pivot->data_inizio)->format('d/m/Y H:i:s')
+                        : '-',
                 ];
             });
 
             return response()->json([
                 'success' => true,
                 'nuovo_stato' => $this->statoLabel($fase->stato),
-                'operatori' => $operatori
+                'operatori' => $operatori,
             ]);
         } catch (\Exception $e) {
             \Log::error('avviaFase errore: ' . $e->getMessage(), ['fase_id' => $request->fase_id, 'trace' => $e->getTraceAsString()]);
@@ -64,144 +62,98 @@ class ProduzioneController extends Controller
         }
     }
 
-   public function terminaFase(Request $request)
-{
-    $validator = Validator::make($request->all(), [
-        'fase_id'       => 'required',
-        'qta_prodotta'  => 'nullable|integer|min:0',
-        'scarti'        => 'nullable|integer|min:0',
-        'tiro'          => 'nullable|integer|min:0',
-    ]);
+    public function terminaFase(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'fase_id'       => 'required',
+            'qta_prodotta'  => 'nullable|integer|min:0',
+            'scarti'        => 'nullable|integer|min:0',
+            'tiro'          => 'nullable|integer|min:0',
+        ]);
 
-    if ($validator->fails()) {
-        return response()->json([
-            'success' => false,
-            'messaggio' => 'Dati non validi.',
-            'errors' => $validator->errors()
-        ], 422);
-    }
-
-    $fase = OrdineFase::with('operatori')->find($request->fase_id);
-    if (!$fase) {
-        return response()->json(['success' => false, 'messaggio' => 'Fase non trovata']);
-    }
-
-    // Tiro obbligatorio per stampa a caldo (cm foil consumato)
-    $fasiCaldo = ['STAMPACALDOJOH', 'STAMPACALDOJOHEST', 'STAMPALAMINAORO'];
-    if (in_array(strtoupper($fase->fase ?? ''), $fasiCaldo, true)) {
-        if ($request->tiro === null || $request->tiro === '' || (int) $request->tiro <= 0) {
+        if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'messaggio' => 'Tiro (cm foil) obbligatorio per stampa a caldo.',
+                'messaggio' => 'Dati non validi.',
+                'errors' => $validator->errors(),
             ], 422);
         }
-    }
 
-    $operatoreId = $request->attributes->get('operatore_id') ?? session('operatore_id');
+        $fase = OrdineFase::with('operatori', 'ordine')->find($request->fase_id);
+        if (!$fase) {
+            return response()->json(['success' => false, 'messaggio' => 'Fase non trovata']);
+        }
 
-    // Auto-chiusura pausa aperta (se l'operatore termina senza aver ripreso)
-    $pausaAperta = PausaOperatore::where('operatore_id', $operatoreId)
-        ->where('ordine_id', $fase->ordine_id)
-        ->where('fase', $fase->fase)
-        ->whereNull('fine')
-        ->latest('data_ora')
-        ->first();
+        // Tiro obbligatorio per stampa a caldo (cm foil consumato)
+        $fasiCaldo = ['STAMPACALDOJOH', 'STAMPACALDOJOHEST', 'STAMPALAMINAORO'];
+        if (in_array(strtoupper($fase->fase ?? ''), $fasiCaldo, true)) {
+            if ($request->tiro === null || $request->tiro === '' || (int) $request->tiro <= 0) {
+                return response()->json([
+                    'success' => false,
+                    'messaggio' => 'Tiro (cm foil) obbligatorio per stampa a caldo.',
+                ], 422);
+            }
+        }
 
-    if ($pausaAperta) {
-        $pausaAperta->fine = now();
-        $pausaAperta->save();
+        $operatoreId = $request->attributes->get('operatore_id') ?? session('operatore_id');
 
-        $durataSecondi = Carbon::parse($pausaAperta->data_ora)->diffInSeconds(Carbon::parse($pausaAperta->fine));
+        $payload = [
+            'qta_prod' => $request->qta_prodotta,
+            'scarti'   => $request->scarti,
+            'tiro'     => $request->tiro,
+            'rientro'  => $request->boolean('rientro'),
+        ];
 
-        if ($fase->operatori->contains($operatoreId)) {
-            $currentSecondi = $fase->operatori->find($operatoreId)->pivot->secondi_pausa ?? 0;
-            $fase->operatori()->updateExistingPivot($operatoreId, [
-                'secondi_pausa' => $currentSecondi + $durataSecondi
+        try {
+            $fase = $this->fasi->termina($fase, $operatoreId ? (int) $operatoreId : null, $payload);
+        } catch (\Exception $e) {
+            \Log::error('terminaFase errore: ' . $e->getMessage(), ['fase_id' => $fase->id, 'trace' => $e->getTraceAsString()]);
+            return response()->json(['success' => false, 'messaggio' => 'Errore server. Riprova o contatta IT.'], 500);
+        }
+
+        // Caso "rientro" da esterno: stato = 1, no scarico carta
+        if ($request->boolean('rientro')) {
+            $fase->load('operatori');
+            return response()->json([
+                'success' => true,
+                'nuovo_stato' => $this->statoLabel($fase->stato),
+                'operatori' => $fase->operatori->map(fn ($op) => ['nome' => $op->nome]),
             ]);
         }
-    }
 
-    $qtaProdotta = $request->qta_prodotta;
-    if (!$qtaProdotta || $qtaProdotta <= 0) {
-        // Fallback: usa qta_fase o qta_richiesta (per spedizione/esterne)
-        $qtaProdotta = $fase->qta_fase ?: ($fase->ordine->qta_richiesta ?? 0);
-    }
-    $fase->qta_prod = $qtaProdotta;
-    $fase->scarti = $request->scarti ?? 0;
-    if ($request->tiro !== null && $request->tiro !== '') {
-        $fase->tiro = (int) $request->tiro;
-    }
-    $fase->timeout = null;
+        // Conferma scarico carta SOLO per reparti che consumano carta
+        $repNome = strtolower(optional(optional($fase->faseCatalogo)->reparto)->nome ?? '');
+        $repartiCarta = ['stampa offset', 'digitale', 'tagliacarte'];
+        $consumaCarta = in_array($repNome, $repartiCarta, true);
+        $richiediScarico = $consumaCarta && !$fase->scarico_eseguito && !$fase->esterno;
 
-    // Rientro da esterno con lavorazioni aggiuntive: stato 1 + rimuovi flag esterno
-    if ($request->boolean('rientro')) {
-        $fase->stato = 1;
-        $fase->esterno = false;
-        $fase->data_fine = null;
-        $fase->save();
-
-        FaseStatoService::ricalcolaStati($fase->ordine_id);
+        $payloadScarico = null;
+        if ($richiediScarico) {
+            $qtaProdotta = (int) ($fase->qta_prod ?? 0);
+            $qtaTotale = $qtaProdotta + (int) ($request->scarti ?? 0);
+            $payloadScarico = [
+                'fase_id'             => $fase->id,
+                'commessa'            => $fase->ordine?->commessa,
+                'fase_nome'           => $fase->faseCatalogo?->nome_display ?? $fase->fase,
+                'qta_prod'            => $qtaProdotta,
+                'scarti'              => (int) ($request->scarti ?? 0),
+                'qta_totale'          => $qtaTotale,
+                'cod_carta'           => $fase->ordine?->cod_carta,
+                'desc_carta'          => $fase->ordine?->carta,
+                'qta_carta_richiesta' => $fase->ordine?->qta_carta,
+            ];
+            $fase->pending_scarico = true;
+            $fase->save();
+        }
 
         return response()->json([
             'success' => true,
             'nuovo_stato' => $this->statoLabel($fase->stato),
-            'operatori' => $fase->operatori->map(fn($op) => ['nome' => $op->nome])
+            'operatori' => [], // nessuno rimane
+            'richiedi_scarico' => $richiediScarico,
+            'scarico' => $payloadScarico,
         ]);
     }
-
-    $fase->stato = 3; // fase terminata
-    $fase->data_fine = now()->format('Y-m-d H:i:s');
-    $fase->save();
-
-    // Aggiorna la data_fine nella pivot per l'operatore corrente
-    if ($fase->operatori->contains($operatoreId)) {
-        $fase->operatori()->updateExistingPivot($operatoreId, [
-            'data_fine' => now()
-        ]);
-    }
-
-    // Ricalcola stati fasi successive di tutta la commessa (non solo questo ordine)
-    $commessa = $fase->ordine->commessa ?? null;
-    if ($commessa) {
-        FaseStatoService::ricalcolaCommessa($commessa);
-    } else {
-        FaseStatoService::ricalcolaStati($fase->ordine_id);
-    }
-
-    // Conferma scarico carta SOLO per reparti che consumano carta: stampa offset + digitale
-    // Escluso: stampa caldo (foil), tagliacarte, fustella, finitura, allestimento, ecc.
-    $repNome = strtolower(optional(optional($fase->faseCatalogo)->reparto)->nome ?? '');
-    $repartiCarta = ['stampa offset', 'digitale', 'tagliacarte'];
-    $consumaCarta = in_array($repNome, $repartiCarta, true);
-    $richiediScarico = $consumaCarta && !$fase->scarico_eseguito && !$fase->esterno;
-
-    $payloadScarico = null;
-    if ($richiediScarico) {
-        $qtaTotale = (int) ($qtaProdotta + ($request->scarti ?? 0));
-        $payloadScarico = [
-            'fase_id'      => $fase->id,
-            'commessa'     => $fase->ordine?->commessa,
-            'fase_nome'    => $fase->faseCatalogo?->nome_display ?? $fase->fase,
-            'qta_prod'     => (int) $qtaProdotta,
-            'scarti'       => (int) ($request->scarti ?? 0),
-            'qta_totale'   => $qtaTotale,
-            'cod_carta'    => $fase->ordine?->cod_carta,
-            'desc_carta'   => $fase->ordine?->carta,
-            'qta_carta_richiesta' => $fase->ordine?->qta_carta,
-        ];
-        // Marca pending finché operatore non conferma
-        $fase->pending_scarico = true;
-        $fase->save();
-    }
-
-    return response()->json([
-        'success' => true,
-        'nuovo_stato' => $this->statoLabel($fase->stato),
-        'operatori' => [], // nessuno rimane
-        'richiedi_scarico' => $richiediScarico,
-        'scarico' => $payloadScarico,
-    ]);
-}
 
     public function pausaFase(Request $request)
     {
@@ -216,29 +168,21 @@ class ProduzioneController extends Controller
         }
 
         $operatoreId = $request->attributes->get('operatore_id') ?? session('operatore_id');
+        $operatore = $operatoreId ? Operatore::find($operatoreId) : null;
+        $qtaProdotta = $request->filled('qta_prodotta') ? (int) $request->input('qta_prodotta') : null;
 
-        // Crea record pausa aperta
-        PausaOperatore::create([
-            'operatore_id' => $operatoreId,
-            'ordine_id'    => $fase->ordine_id,
-            'fase'         => $fase->fase,
-            'motivo'       => $motivo,
-            'data_ora'     => now(),
-        ]);
-
-        // Acconto: salva la quantità prodotta finora
-        if ($motivo === 'Acconto' && $request->filled('qta_prodotta')) {
-            $fase->qta_prod = (int) $request->input('qta_prodotta');
+        try {
+            $this->fasi->pausa($fase, $motivo, $operatore, $qtaProdotta);
+        } catch (FaseTransitionException $e) {
+            return response()->json(['success' => false, 'messaggio' => $e->getMessage()], 422);
         }
 
-        $fase->stato = $motivo;
-        $fase->timeout = now();
-        $fase->save();
+        $fase->refresh();
 
         return response()->json([
             'success' => true,
             'nuovo_stato' => $fase->stato,
-            'timeout' => Carbon::parse($fase->timeout)->format('d/m/Y H:i:s')
+            'timeout' => $fase->timeout ? Carbon::parse($fase->timeout)->format('d/m/Y H:i:s') : null,
         ]);
     }
 
@@ -250,45 +194,22 @@ class ProduzioneController extends Controller
         }
 
         $operatoreId = $request->attributes->get('operatore_id') ?? session('operatore_id');
+        $operatore = $operatoreId ? Operatore::find($operatoreId) : null;
 
-        // Trova pausa aperta per questa fase (qualsiasi operatore — es. A mette in pausa, B riprende)
-        $pausa = PausaOperatore::where('ordine_id', $fase->ordine_id)
-            ->where('fase', $fase->fase)
-            ->whereNull('fine')
-            ->latest('data_ora')
-            ->first();
-
-        if ($pausa) {
-            $pausa->fine = now();
-            $pausa->save();
-
-            // Calcola durata pausa in secondi e accumula nel pivot dell'operatore che aveva messo in pausa
-            $durataSecondi = Carbon::parse($pausa->data_ora)->diffInSeconds(Carbon::parse($pausa->fine));
-            $operatorePausa = $pausa->operatore_id;
-
-            if ($fase->operatori->contains($operatorePausa)) {
-                $currentSecondi = $fase->operatori->find($operatorePausa)->pivot->secondi_pausa ?? 0;
-                $fase->operatori()->updateExistingPivot($operatorePausa, [
-                    'secondi_pausa' => $currentSecondi + $durataSecondi
-                ]);
-            }
+        try {
+            $this->fasi->riprendi($fase, $operatore);
+        } catch (FaseTransitionException $e) {
+            return response()->json(['success' => false, 'messaggio' => $e->getMessage()], 422);
         }
-
-        // Se chi riprende è un operatore diverso, aggiungilo alla fase (come avviaFase)
-        if ($operatoreId && !$fase->operatori->contains($operatoreId)) {
-            $fase->operatori()->attach($operatoreId, ['data_inizio' => now(), 'data_fine' => null]);
-        }
-
-        $fase->stato = 2; // Avviato
-        $fase->timeout = null;
-        $fase->save();
 
         $fase->load('operatori');
 
-        $operatori = $fase->operatori->map(function($op){
+        $operatori = $fase->operatori->map(function ($op) {
             return [
                 'nome' => $op->nome,
-                'data_inizio' => $op->pivot->data_inizio ? Carbon::parse($op->pivot->data_inizio)->format('d/m/Y H:i:s') : '-'
+                'data_inizio' => $op->pivot->data_inizio
+                    ? Carbon::parse($op->pivot->data_inizio)->format('d/m/Y H:i:s')
+                    : '-',
             ];
         });
 
@@ -299,49 +220,49 @@ class ProduzioneController extends Controller
         ]);
     }
 
-public function aggiornaCampo(Request $request)
-{
-    $validator = Validator::make($request->all(), [
-        'fase_id' => 'required|exists:ordine_fasi,id',
-        'campo'   => 'required|string|in:qta_prod,note,scarti',
-        'valore'  => 'nullable'
-    ]);
+    public function aggiornaCampo(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'fase_id' => 'required|exists:ordine_fasi,id',
+            'campo'   => 'required|string|in:qta_prod,note,scarti',
+            'valore'  => 'nullable',
+        ]);
 
-    if ($validator->fails()) {
-        return response()->json([
-            'success' => false,
-            'errors'  => $validator->errors()
-        ], 422);
-    }
-
-    $fase = OrdineFase::find($request->fase_id);
-
-    $fase->{$request->campo} = $request->valore;
-    $fase->save();
-
-    // Se aggiornato qta_prod, controlla se la fase è completata
-    if ($request->campo === 'qta_prod') {
-        \App\Services\FaseStatoService::controllaCompletamento($fase->id);
-    }
-
-    // Se note contengono "esterno" o "lavorato esternamente", segna come esterno
-    if ($request->campo === 'note') {
-        $esterno = preg_match('/\b(lavorato esternamente|esterno)\b/i', $request->valore ?? '');
-        if ($esterno && !$fase->esterno) {
-            $fase->esterno = true;
-            $fase->save();
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors'  => $validator->errors(),
+            ], 422);
         }
-    }
 
-    return response()->json(['success' => true]);
-}
+        $fase = OrdineFase::find($request->fase_id);
+
+        $fase->{$request->campo} = $request->valore;
+        $fase->save();
+
+        // Se aggiornato qta_prod, controlla se la fase è completata
+        if ($request->campo === 'qta_prod') {
+            \App\Services\FaseStatoService::controllaCompletamento($fase->id);
+        }
+
+        // Se note contengono "esterno" o "lavorato esternamente", segna come esterno
+        if ($request->campo === 'note') {
+            $esterno = preg_match('/\b(lavorato esternamente|esterno)\b/i', $request->valore ?? '');
+            if ($esterno && !$fase->esterno) {
+                $fase->esterno = true;
+                $fase->save();
+            }
+        }
+
+        return response()->json(['success' => true]);
+    }
 
     public function aggiornaOrdineCampo(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'ordine_id' => 'required|exists:ordini,id',
             'campo'     => 'required|string|in:note_fasi_successive',
-            'valore'    => 'nullable'
+            'valore'    => 'nullable',
         ]);
 
         if ($validator->fails()) {

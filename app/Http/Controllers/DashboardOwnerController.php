@@ -22,9 +22,23 @@ use App\Services\OndaSyncService;
 use App\Http\Services\PrinectService;
 use App\Http\Services\PrinectSyncService;
 use App\Http\Services\ExcelSyncService;
+use App\Modules\Fasi\Services\FaseTransitionService;
+use App\Modules\Fasi\Exceptions\FaseTransitionException;
+use App\Modules\Commessa\Services\CommessaService;
+use App\Modules\Commessa\Services\ProgressoService;
 
 class DashboardOwnerController extends Controller
 {
+    /**
+     * Strangler Fig: la logica di mutazione fasi/commesse delega ai
+     * moduli App\Modules\Fasi e App\Modules\Commessa.
+     */
+    public function __construct(
+        private readonly FaseTransitionService $fasi,
+        private readonly CommessaService $commesse,
+        private readonly ProgressoService $progresso,
+    ) {}
+
     private function isReadonly(): bool
     {
         return session('operatore_ruolo') === 'owner_readonly'
@@ -622,160 +636,25 @@ public function calcolaOreEPriorita($fase)
     public function aggiornaCampo(OwnerAggiornaCampoRequest $request)
     {
         if ($deny = $this->denyIfReadonly()) return $deny;
-        // Whitelist campi: definita in OwnerAggiornaCampoRequest::CAMPI_FASE/CAMPI_ORDINE.
-        $campiFase = OwnerAggiornaCampoRequest::CAMPI_FASE;
-        $campiOrdine = OwnerAggiornaCampoRequest::CAMPI_ORDINE;
 
-        // Validazione (fase_id exists, campo in whitelist, valore max 5000) gestita dal FormRequest.
         $fase = OrdineFase::with('ordine')->find($request->fase_id);
-        $campo = $request->campo;
-        $valore = $request->valore;
 
-        if (in_array($campo, ['data_registrazione','data_prevista_consegna','data_inizio','data_fine'])) {
-            if (in_array(trim($valore), ['-', ''])) $valore = null;
-            $formati = ['d/m/Y H:i:s', 'd/m/Y H:i', 'd/m/Y'];
-            $parsed = false;
-            foreach ($formati as $fmt) {
-                try {
-                    $valore = $valore ? Carbon::createFromFormat($fmt, trim($valore))->format('Y-m-d H:i:s') : null;
-                    $parsed = true;
-                    break;
-                } catch (\Exception $e) {}
-            }
-            if (!$parsed && $valore) {
-                return response()->json(['success' => false, 'messaggio' => 'Formato data non valido'], 422);
-            }
+        $result = $this->commesse->aggiornaCampo(
+            $fase,
+            $request->campo,
+            $request->valore,
+            OwnerAggiornaCampoRequest::CAMPI_FASE,
+            OwnerAggiornaCampoRequest::CAMPI_ORDINE,
+        );
+
+        if (! ($result['success'] ?? false)) {
+            return response()->json($result, 422);
         }
 
-        $campiNumerici = ['qta_prod', 'qta_carta', 'qta_richiesta', 'priorita', 'ore'];
-        if (in_array($campo, $campiNumerici)) {
-            $valore = $valore !== null ? (float)str_replace(',', '.', $valore) : 0;
-        }
-
-        if ($campo === 'fase') {
-            // Aggiorna nome fase + fase_catalogo_id
-            $nomeNuovo = trim($valore) ?: '-';
-            $fase->fase = $nomeNuovo;
-            if ($nomeNuovo !== '-') {
-                $faseCat = FasiCatalogo::where('nome', $nomeNuovo)->first();
-                if ($faseCat) {
-                    $fase->fase_catalogo_id = $faseCat->id;
-                }
-            }
-            $fase->save();
-        } elseif ($campo === 'reparto') {
-            // Aggiorna reparto del FasiCatalogo o crea nuovo FasiCatalogo
-            $nomeReparto = trim($valore) ?: 'generico';
-            $reparto = Reparto::firstOrCreate(['nome' => $nomeReparto]);
-            $faseNome = $fase->fase ?: '-';
-            $faseCat = FasiCatalogo::updateOrCreate(
-                ['nome' => $faseNome],
-                ['reparto_id' => $reparto->id]
-            );
-            $fase->fase_catalogo_id = $faseCat->id;
-            $fase->save();
-        } elseif (in_array($campo, $campiFase)) {
-            $valorePrima = $fase->{$campo};
-            $fase->{$campo} = $valore;
-
-            // Se priorità cambiata manualmente, segnala come manuale
-            if ($campo === 'priorita') {
-                $fase->priorita_manuale = true;
-                \Log::info("aggiornaCampo priorita: fase_id={$fase->id} commessa=" . ($fase->ordine->commessa ?? '-') . " fase={$fase->fase} {$valorePrima}→{$valore} manuale=true");
-            }
-
-            $saved = $fase->save();
-            if ($campo === 'priorita' && !$saved) {
-                \Log::warning("aggiornaCampo priorita SAVE FAILED fase_id={$fase->id}");
-            }
-
-            // Se aggiornata qta_prod, controlla completamento automatico
-            if ($campo === 'qta_prod') {
-                FaseStatoService::controllaCompletamento($fase->id);
-            }
-
-            // Se stato cambiato, gestisci data_fine, flag esterno e ricalcola
-            if ($campo === 'stato') {
-                $statoNum = (int) $valore;
-                // Terminata: imposta data_fine se mancante
-                if ($statoNum == 3 && !$fase->data_fine) {
-                    $fase->data_fine = now()->format('Y-m-d H:i:s');
-                    $fase->save();
-                }
-                // Recuperata (riportata a 2): azzera data_fine
-                if ($statoNum == 2) {
-                    $fase->data_fine = null;
-                    $fase->save();
-                }
-                // Se riportata a 0 o 1, pulisci: flag esterno, data_fine, nota "Inviato a:"
-                if ($statoNum <= 1) {
-                    $fase->data_fine = null;
-                    // Marca riapertura manuale + snapshot qta_prod corrente per detect ristampa
-                    $fase->riaperta_at = now();
-                    $fase->qta_prod_at_riapertura = (int) ($fase->qta_prod ?? 0);
-                    if ($fase->esterno) {
-                        $fase->esterno = false;
-                    }
-                    if ($fase->note && preg_match('/Inviato a:/i', $fase->note)) {
-                        $fase->note = preg_replace('/,?\s*Inviato a:.*$/i', '', $fase->note);
-                        $fase->note = trim($fase->note) ?: null;
-                    }
-                    $fase->save();
-                }
-                FaseStatoService::ricalcolaCommessa($fase->ordine->commessa);
-            }
-
-            // Se note contengono "esterno", "lavorato esternamente" o "Inviato a:", segna come esterno
-            if ($campo === 'note' && preg_match('/\b(lavorato esternamente|esterno)\b|Inviato a:/i', $valore ?? '')) {
-                if (!$fase->esterno) {
-                    $fase->esterno = true;
-                    $fase->save();
-                }
-            }
-
-            // Se note contengono "Inviato a:", notifica la spedizione + avvia la fase
-            if ($campo === 'note' && preg_match('/Inviato a:\s*(.+)/i', $valore ?? '', $mInv)) {
-                $fornitore = trim($mInv[1]);
-                $commessa = $fase->ordine->commessa ?? '';
-                $faseNome = $fase->faseCatalogo->nome_display ?? $fase->fase ?? '';
-                $descrizione = mb_substr($fase->ordine->descrizione ?? '', 0, 60);
-
-                // Segna come esterno (stato 5 = in lavorazione esterna)
-                if (in_array((int) $fase->stato, [0, 1])) {
-                    $fase->stato = 5;
-                    $fase->data_inizio = $fase->data_inizio ?? now();
-                    $fase->esterno = true;
-                    $fase->save();
-                }
-
-                // Notifica la spedizione
-                DB::table('notifiche_spedizione')->insert([
-                    'tipo' => 'invio_esterno',
-                    'commessa' => $commessa,
-                    'fase' => $faseNome,
-                    'fornitore' => $fornitore,
-                    'messaggio' => "{$faseNome} commessa {$commessa} inviata a {$fornitore} — {$descrizione}",
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            }
-        } elseif (in_array($campo, $campiOrdine)) {
-            $fase->ordine->{$campo} = $valore;
-            $fase->ordine->save();
-
-            // Se cambiata data consegna, aggiorna TUTTI gli ordini della stessa commessa
-            if ($campo === 'data_prevista_consegna') {
-                Ordine::where('commessa', $fase->ordine->commessa)
-                    ->where('id', '!=', $fase->ordine->id)
-                    ->update(['data_prevista_consegna' => $valore]);
-
-                FaseStatoService::ricalcolaStati($fase->ordine_id);
-
-                app()->terminating(fn() => ExcelSyncService::exportToExcel());
-                return response()->json(['success' => true, 'reload' => true]);
-            }
-        } else {
-            return response()->json(['success' => false, 'messaggio' => 'Campo non aggiornabile'], 422);
+        // Reload trigger (data_prevista_consegna su tutti gli ordini)
+        if (! empty($result['reload'])) {
+            app()->terminating(fn () => ExcelSyncService::exportToExcel());
+            return response()->json(['success' => true, 'reload' => true]);
         }
 
         // NOTA: ExcelSync NON eseguito qui (costoso) - cron ogni 2min lo fa
@@ -785,37 +664,8 @@ public function calcolaOreEPriorita($fase)
     public function aggiungiRiga(OwnerAggiungiRigaRequest $request)
     {
         if ($deny = $this->denyIfReadonly()) return $deny;
-        $faseCatalogo = $request->fase_catalogo_id
-            ? FasiCatalogo::with('reparto')->find($request->fase_catalogo_id)
-            : null;
 
-        // Auto-append anno (-26, -27, ecc.) se mancante
-        $commessa = trim($request->commessa);
-        $suffissoAnno = '-' . date('y');
-        if (!preg_match('/-\d{2}$/', $commessa)) {
-            $commessa .= $suffissoAnno;
-        }
-
-        $ordine = Ordine::create([
-            'commessa' => $commessa,
-            'cliente_nome' => trim($request->cliente_nome ?? ''),
-            'cod_art' => trim($request->cod_art ?? ''),
-            'descrizione' => trim($request->descrizione ?? ''),
-            'qta_richiesta' => $request->qta_richiesta ?? 0,
-            'um' => $request->um ?? 'FG',
-            'stato' => 0,
-            'data_registrazione' => now()->toDateString(),
-            'data_prevista_consegna' => $request->data_prevista_consegna ?? null,
-            'priorita' => $request->priorita ?? 0,
-        ]);
-
-        OrdineFase::create([
-            'ordine_id' => $ordine->id,
-            'fase' => $faseCatalogo ? $faseCatalogo->nome : '-',
-            'fase_catalogo_id' => $faseCatalogo?->id,
-            'stato' => 0,
-            'manuale' => true,
-        ]);
+        $this->commesse->aggiungiRiga($request->validated());
 
         return redirect()->back()->with('success', 'Riga aggiunta correttamente.');
     }
@@ -1086,8 +936,7 @@ public function calcolaOreEPriorita($fase)
         $fase = OrdineFase::find($request->fase_id);
         if (!$fase) return response()->json(['success' => false, 'messaggio' => 'Fase non trovata']);
 
-        $fase->operatori()->detach();
-        $fase->delete();
+        $this->commesse->eliminaRiga($fase);
 
         return response()->json(['success' => true]);
     }
@@ -1111,42 +960,22 @@ public function calcolaOreEPriorita($fase)
                 ], 422);
             }
             $fase->tiro = (int) $request->tiro;
+            $fase->save();
         }
 
-        $fase->stato = $nuovoStato;
-
-        if ($nuovoStato == 3 && !$fase->data_fine) {
-            $fase->data_fine = now()->format('Y-m-d H:i:s');
+        // Stato 3 con flag terminata_manualmente: gestito qui prima del riapri()
+        if ($nuovoStato === 3) {
+            $fase->stato = 3;
+            if (! $fase->data_fine) {
+                $fase->data_fine = now()->format('Y-m-d H:i:s');
+            }
             $fase->terminata_manualmente = true;
+            $fase->save();
+            FaseStatoService::ricalcolaStati($fase->ordine_id);
+        } else {
+            // Stati <= 2: delega al service modulo (riapertura)
+            $this->fasi->riapri($fase, $nuovoStato);
         }
-
-        // Se riportata a stato 2 (recuperata), azzera data_fine e flag manuale
-        if ($nuovoStato == 2) {
-            $fase->data_fine = null;
-            $fase->terminata_manualmente = false;
-        }
-
-        // Se riportata a 0 o 1, pulisci tutto: flag esterno, data_fine, nota "Inviato a:"
-        if ($nuovoStato <= 1) {
-            $fase->data_fine = null;
-            // Marca riapertura manuale + snapshot qta_prod corrente
-            $fase->riaperta_at = now();
-            $fase->qta_prod_at_riapertura = (int) ($fase->qta_prod ?? 0);
-            $fase->terminata_manualmente = false;
-            if ($fase->esterno) {
-                $fase->esterno = false;
-            }
-            // Rimuovi "Inviato a:" dalla nota
-            if ($fase->note && preg_match('/Inviato a:/i', $fase->note)) {
-                $fase->note = preg_replace('/,?\s*Inviato a:.*$/i', '', $fase->note);
-                $fase->note = trim($fase->note) ?: null;
-            }
-        }
-
-        $fase->save();
-
-        // Ricalcola stati delle fasi successive
-        FaseStatoService::ricalcolaStati($fase->ordine_id);
 
         app()->terminating(fn() => ExcelSyncService::exportToExcel());
         return response()->json(['success' => true, 'messaggio' => 'Stato aggiornato']);
@@ -1226,7 +1055,7 @@ public function calcolaOreEPriorita($fase)
     public function ricalcolaStati()
     {
         if ($deny = $this->denyIfReadonly()) return $deny;
-        FaseStatoService::ricalcolaTutti();
+        $this->commesse->ricalcolaTutto();
         return response()->json(['success' => true, 'messaggio' => 'Stati ricalcolati']);
     }
 
