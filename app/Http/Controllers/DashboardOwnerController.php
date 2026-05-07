@@ -495,7 +495,7 @@ public function calcolaOreEPriorita($fase)
         // Storico consegne ultimi 30 giorni (cache 5min — dati stabili)
         $storicoConsegne = collect();
         if ($repartoSpedizione) {
-            $storicoConsegne = \Illuminate\Support\Facades\Cache::remember('owner_storico_consegne', 300, function () use ($repartoSpedizione) {
+            $storicoConsegne = \Illuminate\Support\Facades\Cache::remember('owner_storico_consegne_v2', 300, function () use ($repartoSpedizione) {
                 return OrdineFase::where('stato', 4)
                     ->whereDate('data_fine', '<', Carbon::today())
                     ->whereDate('data_fine', '>=', Carbon::today()->subDays(30))
@@ -504,7 +504,7 @@ public function calcolaOreEPriorita($fase)
                     })
                     ->with(['ordine', 'faseCatalogo', 'operatori'])
                     ->orderByDesc('data_fine')
-                    ->limit(200)
+                    ->limit(2000)
                     ->get();
             });
         }
