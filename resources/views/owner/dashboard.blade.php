@@ -1348,17 +1348,17 @@ tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !imp
                     <span style="font-size:18px; font-weight:700; color:#0d6efd;">{{ \Carbon\Carbon::parse($dataStorico)->translatedFormat('l d/m/Y') }}</span>
                     <span class="badge ms-2" style="background:#0d6efd; font-size:13px;">{{ $fasiGiorno->count() }} consegne</span>
                 </div>
-                <table class="table table-hover table-sm mb-0" style="font-size:13px;">
+                <table class="table table-hover table-sm mb-0" style="font-size:13px; table-layout:fixed; width:100%;">
                     <thead>
                         <tr>
-                            <th style="width:110px; background:#e9ecef !important; color:#212529 !important; font-weight:700;">Commessa</th>
-                            <th style="background:#e9ecef !important; color:#212529 !important; font-weight:700;">Cliente</th>
-                            <th style="background:#e9ecef !important; color:#212529 !important; font-weight:700;">Articolo</th>
+                            <th style="width:90px; background:#e9ecef !important; color:#212529 !important; font-weight:700;">Commessa</th>
+                            <th style="width:140px; background:#e9ecef !important; color:#212529 !important; font-weight:700;">Cliente</th>
+                            <th style="width:100px; background:#e9ecef !important; color:#212529 !important; font-weight:700;">Articolo</th>
                             <th style="background:#e9ecef !important; color:#212529 !important; font-weight:700;">Descrizione</th>
-                            <th class="text-end" style="width:80px; background:#e9ecef !important; color:#212529 !important; font-weight:700;">Qta</th>
-                            <th class="text-center" style="width:90px; background:#e9ecef !important; color:#212529 !important; font-weight:700;">Tipo</th>
-                            <th class="text-center" style="width:60px; background:#e9ecef !important; color:#212529 !important; font-weight:700;">Ora</th>
-                            <th style="background:#e9ecef !important; color:#212529 !important; font-weight:700;">Operatore</th>
+                            <th class="text-end" style="width:75px; background:#e9ecef !important; color:#212529 !important; font-weight:700;">Qta</th>
+                            <th class="text-center" style="width:80px; background:#e9ecef !important; color:#212529 !important; font-weight:700;">Tipo</th>
+                            <th class="text-center" style="width:55px; background:#e9ecef !important; color:#212529 !important; font-weight:700;">Ora</th>
+                            <th style="width:110px; background:#e9ecef !important; color:#212529 !important; font-weight:700;">Operatore</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1367,7 +1367,7 @@ tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !imp
                             <td><strong style="color:#0d6efd;">{{ $faseStorico->ordine->commessa ?? '-' }}</strong></td>
                             <td>{{ $faseStorico->ordine->cliente_nome ?? '-' }}</td>
                             <td><small class="text-muted">{{ $faseStorico->ordine->cod_art ?? '-' }}</small></td>
-                            <td title="{{ $faseStorico->ordine->descrizione ?? '' }}" style="max-width:280px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ \Illuminate\Support\Str::limit($faseStorico->ordine->descrizione ?? '-', 60) }}</td>
+                            <td title="{{ $faseStorico->ordine->descrizione ?? '' }}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ $faseStorico->ordine->descrizione ?? '-' }}</td>
                             <td class="text-end fw-bold">{{ $faseStorico->ordine->qta_richiesta ? number_format($faseStorico->ordine->qta_richiesta, 0, ',', '.') : '-' }}</td>
                             <td class="text-center">
                                 @if($faseStorico->tipo_consegna === 'parziale')
