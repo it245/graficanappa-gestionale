@@ -1,0 +1,12 @@
+parameters:
+    level: 5
+    paths:
+        - app
+    excludePaths:
+        - app/Console/Commands/Telegram*.php
+    ignoreErrors:
+        - '#PHPDoc tag @var#'
+        - '#Call to an undefined method.*Builder.*#'
+    checkMissingIterableValueType: false
+    treatPhpDocTypesAsCertain: false
+    reportUnmatchedIgnoredErrors: false
