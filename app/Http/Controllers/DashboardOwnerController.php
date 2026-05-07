@@ -26,18 +26,57 @@ use App\Modules\Fasi\Services\FaseTransitionService;
 use App\Modules\Fasi\Exceptions\FaseTransitionException;
 use App\Modules\Commessa\Services\CommessaService;
 use App\Modules\Commessa\Services\ProgressoService;
+use App\Modules\Reparti\Services\RepartoService;
+use App\Modules\Reparti\Services\CapacitaService;
+use App\Modules\Reparti\Enums\CodiceReparto;
+use App\Modules\Fustelle\Services\NoteFustellaService;
+use App\Modules\Notifiche\Services\NotificaService;
+use App\Modules\Notifiche\ValueObjects\Notifica;
+use App\Modules\Notifiche\Enums\CanaleNotifica;
+use App\Modules\Notifiche\Enums\PrioritaNotifica;
 
 class DashboardOwnerController extends Controller
 {
     /**
      * Strangler Fig: la logica di mutazione fasi/commesse delega ai
-     * moduli App\Modules\Fasi e App\Modules\Commessa.
+     * moduli App\Modules\Fasi, App\Modules\Commessa, App\Modules\Reparti,
+     * App\Modules\Fustelle e App\Modules\Notifiche.
      */
     public function __construct(
         private readonly FaseTransitionService $fasi,
         private readonly CommessaService $commesse,
         private readonly ProgressoService $progresso,
+        private readonly RepartoService $reparti,
+        private readonly CapacitaService $capacita,
+        private readonly NoteFustellaService $noteFustella,
+        private readonly NotificaService $notifiche,
     ) {}
+
+    /**
+     * ID dei reparti fustella (fustella, fustella piana, fustella cilindrica).
+     * Risolti via RepartoService (cache 1h) invece di hard-coding [5,15,16].
+     *
+     * @return list<int>
+     */
+    private function repartiFustellaIds(): array
+    {
+        return $this->reparti->tutti()
+            ->filter(fn ($r) => str_contains(strtolower((string) $r->nome), 'fustella'))
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->values()
+            ->all();
+    }
+
+    /**
+     * True se la fase appartiene a un reparto fustella (per applicare
+     * il prefisso autore alle note via NoteFustellaService).
+     */
+    private function faseInRepartoFustella(OrdineFase $fase): bool
+    {
+        $repartoId = (int) ($fase->faseCatalogo->reparto_id ?? 0);
+        return $repartoId > 0 && in_array($repartoId, $this->repartiFustellaIds(), true);
+    }
 
     private function isReadonly(): bool
     {
@@ -69,7 +108,9 @@ class DashboardOwnerController extends Controller
             'finitura digitale', 'generico', 'produzione', 'magazzino',
             'spedizione', 'esterno',
         ];
-        $reparti = Reparto::all()->sortBy(function ($r) use ($ordineReparti) {
+        // Strangler Fig: RepartoService::tutti() è cached 1h (1 query invece
+        // che a ogni page-load) e la sort è in-memory.
+        $reparti = $this->reparti->tutti()->sortBy(function ($r) use ($ordineReparti) {
             $pos = array_search(strtolower($r->nome), $ordineReparti);
             return $pos !== false ? $pos : 999;
         });
@@ -398,11 +439,12 @@ public function calcolaOreEPriorita($fase)
 
         $fasi = $fasi->sortBy('priorita');
 
-        $reparti = Reparto::orderBy('nome')->pluck('nome', 'id');
+        // RepartoService cache 1h evita la query orderBy ad ogni request.
+        $reparti = $this->reparti->tutti()->sortBy('nome')->pluck('nome', 'id');
         $fasiCatalogo = FasiCatalogo::all();
 
         // Report spedizioni di oggi (stato 4 = consegnato)
-        $repartoSpedizione = Reparto::where('nome', 'spedizione')->first();
+        $repartoSpedizione = $this->reparti->byCodice(CodiceReparto::SPEDIZIONE);
         $spedizioniOggi = collect();
         if ($repartoSpedizione) {
             $spedizioniOggi = \Illuminate\Support\Facades\Cache::remember('owner_spedizioni_oggi', 60, function () use ($repartoSpedizione) {
@@ -582,8 +624,8 @@ public function calcolaOreEPriorita($fase)
         ];
         $fasiOreConfig = config('fasi_ore');
 
-        // 1 query: pre-carica tutti i reparti
-        $tuttiReparti = Reparto::all()->keyBy('nome');
+        // 1 query (cached 1h via RepartoService): pre-carica tutti i reparti
+        $tuttiReparti = $this->reparti->tutti()->keyBy('nome');
 
         // 2 query batch: tutte le fasi stato 0 e 1 con reparto, in una sola query per stato
         $fasiPerReparto = [];
@@ -637,7 +679,25 @@ public function calcolaOreEPriorita($fase)
     {
         if ($deny = $this->denyIfReadonly()) return $deny;
 
-        $fase = OrdineFase::with('ordine')->find($request->fase_id);
+        $fase = OrdineFase::with(['ordine', 'faseCatalogo'])->find($request->fase_id);
+
+        // Strangler Fig — note fustella: se il campo è "note", la fase è in
+        // reparto fustella e il valore non è un marker tecnico (Inviato a:
+        // / lavorato esternamente), delega a NoteFustellaService che fa
+        // append con prefisso "[Autore - dd/mm HH:MM]" invece di sovrascrivere.
+        // Vincolo memoria 20/03/2026: storia preservata, autore Mirko prefissato.
+        if (
+            $fase
+            && $request->campo === 'note'
+            && is_string($request->valore)
+            && trim($request->valore) !== ''
+            && $this->faseInRepartoFustella($fase)
+            && ! preg_match('/Inviato a:|lavorato esternamente|\besterno\b/i', (string) $request->valore)
+        ) {
+            $autore = (string) (auth()->user()->name ?? session('operatore_nome', 'owner'));
+            $this->noteFustella->aggiungi($fase, $autore, trim($request->valore));
+            return response()->json(['success' => true]);
+        }
 
         $result = $this->commesse->aggiornaCampo(
             $fase,
@@ -1146,8 +1206,8 @@ public function calcolaOreEPriorita($fase)
         $filtroDal = $request->query('dal');
         $filtroAl = $request->query('al');
 
-        // Escludi reparto spedizione
-        $repartoSpedizione = Reparto::where('nome', 'spedizione')->first();
+        // Escludi reparto spedizione (via RepartoService cache 1h)
+        $repartoSpedizione = $this->reparti->byCodice(CodiceReparto::SPEDIZIONE);
 
         $query = OrdineFase::with(['ordine.fasi.faseCatalogo', 'faseCatalogo.reparto', 'operatori'])
             ->whereHas('ordine');
@@ -1237,7 +1297,10 @@ public function calcolaOreEPriorita($fase)
                 'fasi' => $group->count(),
             ])->sortByDesc('lavorate');
 
-        $reparti = Reparto::where('nome', '!=', 'spedizione')->orderBy('nome')->pluck('nome', 'id');
+        $reparti = $this->reparti->tutti()
+            ->reject(fn ($r) => strtolower((string) $r->nome) === 'spedizione')
+            ->sortBy('nome')
+            ->pluck('nome', 'id');
 
         // Commesse con fasi terminate oggi
         $oggi = Carbon::today();
@@ -1487,7 +1550,7 @@ public function calcolaOreEPriorita($fase)
 
     public function esterne()
     {
-        $repartoEsterno = Reparto::where('nome', 'esterno')->first();
+        $repartoEsterno = $this->reparti->byCodice(CodiceReparto::ESTERNO);
 
         // Fasi esterne: reparto "esterno" OPPURE flag esterno=1 (inviate dal owner)
         // Include stato < 3 (attive) e stato 5 (esterno dedicato)
@@ -1562,7 +1625,9 @@ public function calcolaOreEPriorita($fase)
      */
     public function fustelleOverview()
     {
-        $repartiFustella = [5, 15, 16]; // fustella, fustella piana, fustella cilindrica
+        // RepartoService risolve dinamicamente gli id (fustella, fustella piana,
+        // fustella cilindrica) — niente più magic numbers [5, 15, 16].
+        $repartiFustella = $this->repartiFustellaIds();
 
         $fasi = OrdineFase::where('stato', '<', 3)
             ->where(fn($q) => $q->where('esterno', false)->orWhereNull('esterno'))
@@ -1686,6 +1751,30 @@ public function calcolaOreEPriorita($fase)
                 'priorita_manuale' => true,
                 'updated_at' => now(),
             ]);
+
+        // Strangler Fig: notifica via NotificaService (canale Telegram owner)
+        // invece di Http::post inline. Best-effort: errore canale → log, non
+        // rompe la response JSON.
+        $chatOwner = config('mes.notifiche.chat_owner') ?? config('services.telegram.chat_id_owner');
+        if ($count > 0 && $chatOwner) {
+            try {
+                $this->notifiche->inviaSuCanale(
+                    new Notifica(
+                        titolo:       'Priorità commessa aggiornata',
+                        messaggio:    "Commessa {$commessa}: priorità {$priorita} applicata a {$count} fasi (manuale).",
+                        canale:       CanaleNotifica::Telegram,
+                        priorita:     PrioritaNotifica::Alta,
+                        destinatario: $chatOwner,
+                        payload:      ['commessa' => $commessa, 'priorita' => $priorita, 'count' => $count],
+                    ),
+                    CanaleNotifica::Telegram,
+                );
+            } catch (\Throwable $e) {
+                \Log::warning('NotificaService priorità commessa fallita', [
+                    'commessa' => $commessa, 'err' => $e->getMessage(),
+                ]);
+            }
+        }
 
         return response()->json(['success' => true, 'count' => $count]);
     }
