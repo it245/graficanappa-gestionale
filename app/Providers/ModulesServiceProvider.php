@@ -26,6 +26,14 @@ use App\Modules\Documenti\Generators\EtichettaGenerator;
 // Scheduling
 use App\Modules\Scheduling\Contracts\SchedulerEngineInterface;
 
+// Onda
+use App\Modules\Onda\Contracts\OndaErpInterface;
+use App\Modules\Onda\Adapters\OndaErpAdapter;
+
+// Prinect (modulo dedicato XL106)
+use App\Modules\Prinect\Contracts\PrinectApiInterface;
+use App\Modules\Prinect\Adapters\PrinectHttpAdapter;
+
 /**
  * ModulesServiceProvider
  *
@@ -91,6 +99,19 @@ final class ModulesServiceProvider extends ServiceProvider
         });
 
         /*
+         | Prinect — PrinectApiInterface
+         |
+         | Modulo dedicato Heidelberg XL106. Espone una shape REST pulita
+         | (Contracts/PrinectApiInterface) che i Service del modulo consumano.
+         | L'adapter di default usa la Http facade di Laravel; in test si può
+         | sostituire con un fake PrinectApi senza toccare i Service.
+         |
+         | NB: PrinectAdapter (Modules/Stampa) e PrinectService legacy
+         | restano in produzione come wrapper di compatibilità.
+         */
+        $this->app->bind(PrinectApiInterface::class, PrinectHttpAdapter::class);
+
+        /*
          | Notifiche — NotificaSenderInterface
          |
          | Risolto contestualmente per "canale": l'interfaccia di default
@@ -140,6 +161,21 @@ final class ModulesServiceProvider extends ServiceProvider
             //       su classi non ancora pronte.
             return null;
         });
+
+        /*
+         | Onda — OndaErpInterface
+         |
+         | Adapter sopra la connessione SQL Server `config('database.connections.onda')`.
+         | I servizi del modulo Onda (OrdineSyncService, CommessaSyncService,
+         | ClienteSyncService) ricevono via DI questa interfaccia, NON la
+         | connessione DB raw — questo permette test unit con fake/mock
+         | senza dover collegare SQL Server in CI.
+         |
+         | Wrapper legacy {@see \App\Services\OndaSyncService} risolve l'interfaccia
+         | tramite app(OndaErpInterface::class) per backward compat con i caller
+         | statici esistenti (cron `onda:sync`, ImportExcelTutto).
+         */
+        $this->app->bind(OndaErpInterface::class, OndaErpAdapter::class);
     }
 
     /**

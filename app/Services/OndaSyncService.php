@@ -7,13 +7,33 @@ use App\Models\OrdineFase;
 use App\Models\FasiCatalogo;
 use App\Models\Reparto;
 use App\Models\DdtSpedizione;
+use App\Modules\Onda\Contracts\OndaErpInterface;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Services\FaseStatoService;
 use App\Services\DdtPdfService;
 
+/**
+ * @deprecated da iterare verso {@see \App\Modules\Onda\Services\OrdineSyncService}
+ *             e {@see \App\Modules\Onda\Services\CommessaSyncService}.
+ *             Questa classe è ora un wrapper: l'I/O SQL è delegato a
+ *             {@see \App\Modules\Onda\Contracts\OndaErpInterface} via container.
+ *             I metodi pubblici restano stabili (chiamati da SyncOnda artisan +
+ *             ImportExcelTutto) — saranno deprecati in modo incrementale.
+ */
 class OndaSyncService
 {
+    /**
+     * Adapter Onda risolto dal container (lazy).
+     *
+     * Static helper per non rompere i caller esistenti che invocano
+     * OndaSyncService::sincronizza() in modo statico.
+     */
+    private static function onda(): OndaErpInterface
+    {
+        return app(OndaErpInterface::class);
+    }
+
     /**
      * Sincronizza ordini e fasi dal gestionale Onda al MES.
      * Crea/aggiorna ordini, fasi e ricalcola stati.
@@ -34,10 +54,8 @@ class OndaSyncService
         $mappaPriorita = config('fasi_priorita');
         $oggi = now()->format('Y-m-d');
 
-        // Pre-fetch scarti previsti per macchina da Onda
-        $scartiMacchine = collect(DB::connection('onda')->select(
-            "SELECT CodMacchina, OC_FogliScartoIniz FROM PRDMacchinari WHERE OC_FogliScartoIniz > 0"
-        ))->pluck('OC_FogliScartoIniz', 'CodMacchina')->toArray();
+        // Pre-fetch scarti previsti per macchina da Onda (via Adapter)
+        $scartiMacchine = self::onda()->getScartiPrevistiPerMacchina();
 
         // Commesse gia completate nel MES (tutte le fasi stato >= 4) — le escludiamo dalla sync
         $commesseCompletate = DB::table('ordini')
@@ -57,65 +75,8 @@ class OndaSyncService
 
         Log::info("OndaSync: " . count($commesseCompletate) . " commesse completate escluse dalla sync");
 
-        // 1. Query ordini da Onda: solo quelli ancora attivi nel MES o nuovi
-        $righeOnda = DB::connection('onda')->select("
-            SELECT
-                t.CodCommessa,
-                p.IdDoc AS PrdIdDoc,
-                p.CodArt,
-                p.OC_Descrizione,
-                COALESCE(NULLIF(p.NCPRagioneSociale, ''), a.RagioneSociale) AS ClienteNome,
-                p.QtaDaProdurre,
-                p.DataPresConsegna,
-                t.DataRegistrazione,
-                carta.CodArt AS CodCarta,
-                carta.Descrizione AS DescrizioneCarta,
-                carta.Qta AS QtaCarta,
-                carta.CodUnMis AS UMCarta,
-                t.TotMerce,
-                t.ncpcommentoprestampa AS NotePrestampa,
-                t.ncprespocommessa AS Responsabile,
-                t.OC_CommentoProduz AS CommentoProduzione,
-                t.ncpordinecliente AS OrdineCliente,
-                materiali.CostoMateriali,
-                supporto.OC_SuppBaseCM AS SuppBaseCM,
-                supporto.OC_SuppAltezzaCM AS SuppAltezzaCM,
-                supporto.OC_Resa AS Resa,
-                supporto.OC_TotSupporti AS TotSupporti,
-                f.CodFase,
-                f.CodMacchina,
-                f.QtaDaLavorare,
-                f.CodUnMis AS UMFase,
-                f.TipoRiga AS TipoRigaFase,
-                rigaAtt.CodArt AS CodFaseRiga
-            FROM ATTDocTeste t
-            INNER JOIN PRDDocTeste p ON t.CodCommessa = p.CodCommessa
-            LEFT JOIN STDAnagrafiche a ON t.IdAnagrafica = a.IdAnagrafica
-            LEFT JOIN PRDDocFasi f ON p.IdDoc = f.IdDoc
-            OUTER APPLY (
-                SELECT TOP 1 r.CodArt
-                FROM ATTDocRighe r
-                WHERE r.IdDoc = t.IdDoc
-                  AND (r.CodArt = f.CodFase OR r.CodArt = SUBSTRING(f.CodFase, 4, LEN(f.CodFase)))
-            ) rigaAtt
-            OUTER APPLY (
-                SELECT TOP 1 r.CodArt, r.Descrizione, r.Qta, r.CodUnMis
-                FROM PRDDocRighe r WHERE r.IdDoc = p.IdDoc
-                ORDER BY r.Sequenza
-            ) carta
-            OUTER APPLY (
-                SELECT SUM(r2.Totale) AS CostoMateriali
-                FROM PRDDocRighe r2 WHERE r2.IdDoc = p.IdDoc
-            ) materiali
-            OUTER APPLY (
-                SELECT TOP 1 e.OC_SuppBaseCM, e.OC_SuppAltezzaCM, e.OC_Resa, e.OC_TotSupporti
-                FROM OC_ATTDocRigheExt e
-                WHERE e.OC_IdDoc = t.IdDoc
-                  AND e.OC_CodArtSupporto IS NOT NULL AND e.OC_CodArtSupporto != ''
-            ) supporto
-            WHERE t.TipoDocumento = '2'
-              AND t.DataRegistrazione >= CAST('20260227' AS datetime)
-        ");
+        // 1. Query ordini da Onda (via Adapter): finestra hardcoded 2026-02-27 come legacy
+        $righeOnda = self::onda()->getOrdiniDal(\Carbon\Carbon::create(2026, 2, 27));
 
         if (empty($righeOnda)) {
             return ['ordini_creati' => 0, 'ordini_aggiornati' => 0, 'fasi_create' => 0];
@@ -999,68 +960,9 @@ class OndaSyncService
         $mappaPriorita = config('fasi_priorita');
         $oggi = now()->format('Y-m-d');
 
-        $scartiMacchine = collect(DB::connection('onda')->select(
-            "SELECT CodMacchina, OC_FogliScartoIniz FROM PRDMacchinari WHERE OC_FogliScartoIniz > 0"
-        ))->pluck('OC_FogliScartoIniz', 'CodMacchina')->toArray();
-
-        $righeOnda = DB::connection('onda')->select("
-            SELECT
-                t.CodCommessa,
-                p.IdDoc AS PrdIdDoc,
-                p.CodArt,
-                p.OC_Descrizione,
-                COALESCE(NULLIF(p.NCPRagioneSociale, ''), a.RagioneSociale) AS ClienteNome,
-                p.QtaDaProdurre,
-                p.DataPresConsegna,
-                t.DataRegistrazione,
-                carta.CodArt AS CodCarta,
-                carta.Descrizione AS DescrizioneCarta,
-                carta.Qta AS QtaCarta,
-                carta.CodUnMis AS UMCarta,
-                t.TotMerce,
-                t.ncpcommentoprestampa AS NotePrestampa,
-                t.ncprespocommessa AS Responsabile,
-                t.OC_CommentoProduz AS CommentoProduzione,
-                t.ncpordinecliente AS OrdineCliente,
-                materiali.CostoMateriali,
-                supporto.OC_SuppBaseCM AS SuppBaseCM,
-                supporto.OC_SuppAltezzaCM AS SuppAltezzaCM,
-                supporto.OC_Resa AS Resa,
-                supporto.OC_TotSupporti AS TotSupporti,
-                f.CodFase,
-                f.CodMacchina,
-                f.QtaDaLavorare,
-                f.CodUnMis AS UMFase,
-                f.TipoRiga AS TipoRigaFase,
-                rigaAtt.CodArt AS CodFaseRiga
-            FROM ATTDocTeste t
-            INNER JOIN PRDDocTeste p ON t.CodCommessa = p.CodCommessa
-            LEFT JOIN STDAnagrafiche a ON t.IdAnagrafica = a.IdAnagrafica
-            LEFT JOIN PRDDocFasi f ON p.IdDoc = f.IdDoc
-            OUTER APPLY (
-                SELECT TOP 1 r.CodArt
-                FROM ATTDocRighe r
-                WHERE r.IdDoc = t.IdDoc
-                  AND (r.CodArt = f.CodFase OR r.CodArt = SUBSTRING(f.CodFase, 4, LEN(f.CodFase)))
-            ) rigaAtt
-            OUTER APPLY (
-                SELECT TOP 1 r.CodArt, r.Descrizione, r.Qta, r.CodUnMis
-                FROM PRDDocRighe r WHERE r.IdDoc = p.IdDoc
-                ORDER BY r.Sequenza
-            ) carta
-            OUTER APPLY (
-                SELECT SUM(r2.Totale) AS CostoMateriali
-                FROM PRDDocRighe r2 WHERE r2.IdDoc = p.IdDoc
-            ) materiali
-            OUTER APPLY (
-                SELECT TOP 1 e.OC_SuppBaseCM, e.OC_SuppAltezzaCM, e.OC_Resa, e.OC_TotSupporti
-                FROM OC_ATTDocRigheExt e
-                WHERE e.OC_IdDoc = t.IdDoc
-                  AND e.OC_CodArtSupporto IS NOT NULL AND e.OC_CodArtSupporto != ''
-            ) supporto
-            WHERE t.TipoDocumento = '2'
-              AND t.CodCommessa = ?
-        ", [$codCommessa]);
+        // Pre-fetch scarti + righe ordine via Adapter (I/O delegato a OndaErpAdapter)
+        $scartiMacchine = self::onda()->getScartiPrevistiPerMacchina();
+        $righeOnda = self::onda()->getOrdiniPerCommessa($codCommessa);
 
         if (empty($righeOnda)) {
             return ['trovata' => false, 'messaggio' => "Commessa $codCommessa non trovata in Onda"];
@@ -1383,16 +1285,8 @@ class OndaSyncService
     {
         $avviate = 0;
 
-        // Query DDT a fornitore degli ultimi 30 giorni
-        $righeDDT = DB::connection('onda')->select("
-            SELECT t.IdDoc, t.DataDocumento, t.IdAnagrafica, a.RagioneSociale,
-                   r.Descrizione, r.Qta, r.CodUnMis
-            FROM ATTDocTeste t
-            JOIN ATTDocRighe r ON t.IdDoc = r.IdDoc
-            LEFT JOIN STDAnagrafiche a ON t.IdAnagrafica = a.IdAnagrafica
-            WHERE t.TipoDocumento = 7
-              AND t.DataRegistrazione >= DATEADD(day, -30, GETDATE())
-        ");
+        // Query DDT a fornitore degli ultimi 30 giorni (via Adapter)
+        $righeDDT = self::onda()->getDdtFornitoreUltimiGiorni(30);
 
         if (empty($righeDDT)) {
             return 0;
@@ -1481,14 +1375,8 @@ class OndaSyncService
             ['pattern' => '/allestimento|allestire|allestiti?o?/iu', 'fasi' => ['Allest.Manuale', 'ALLEST.SHOPPER', 'ALLESTIMENTO.ESPOSITORI', 'PUNTOMETALLICOEST', 'EXTPUNTOMETALLICOEST', 'ARROT4ANGOLI', 'EXTARROT4ANGOLI']],
         ];
 
-        $righeDDT = DB::connection('onda')->select("
-            SELECT t.IdDoc, t.DataDocumento, t.IdAnagrafica, a.RagioneSociale, r.Descrizione
-            FROM ATTDocTeste t
-            JOIN ATTDocRighe r ON t.IdDoc = r.IdDoc
-            LEFT JOIN STDAnagrafiche a ON t.IdAnagrafica = a.IdAnagrafica
-            WHERE t.TipoDocumento = 7
-              AND t.DataRegistrazione >= DATEADD(day, -30, GETDATE())
-        ");
+        // DDT fornitore (versione lavorazioni per parsing keyword multi-fase) — via Adapter
+        $righeDDT = self::onda()->getDdtFornitoreLavorazioniUltimiGiorni(30);
 
         if (empty($righeDDT)) return 0;
 
