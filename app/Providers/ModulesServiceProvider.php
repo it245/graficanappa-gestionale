@@ -18,6 +18,8 @@ use App\Modules\Notifiche\Contracts\NotificaSenderInterface;
 use App\Modules\Notifiche\Senders\TelegramSender;
 use App\Modules\Notifiche\Senders\EmailSender;
 use App\Modules\Notifiche\Senders\BrowserPushSender;
+use App\Modules\Notifiche\Services\NotificaService;
+use App\Modules\Notifiche\Rules\CanaleSceltaRule;
 
 // Documenti
 use App\Modules\Documenti\Contracts\DocumentoGeneratorInterface;
@@ -133,6 +135,24 @@ final class ModulesServiceProvider extends ServiceProvider
                 'telegram'      => $app->make(TelegramSender::class),
                 default         => $app->make(TelegramSender::class),
             };
+        });
+
+        /*
+         | Notifiche — NotificaService (orchestratore con registry sender)
+         |
+         | Singleton: il registry è popolato una sola volta col fan-out
+         | Telegram + Email + BrowserPush. Listener (es. NotificaSottoSogliaListener)
+         | risolvono questo servizio via constructor injection.
+         */
+        $this->app->singleton(NotificaService::class, function (Application $app) {
+            return new NotificaService(
+                rule: $app->make(CanaleSceltaRule::class),
+                senders: [
+                    $app->make(TelegramSender::class),
+                    $app->make(EmailSender::class),
+                    $app->make(BrowserPushSender::class),
+                ],
+            );
         });
 
         /*

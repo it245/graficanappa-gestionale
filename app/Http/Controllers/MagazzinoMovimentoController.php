@@ -3,12 +3,35 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 use App\Models\MagazzinoArticolo;
 use App\Models\MagazzinoGiacenza;
 use App\Services\MagazzinoService;
+use App\Modules\Magazzino\Services\GiacenzaService;
+use App\Modules\Magazzino\Services\MovimentoService;
+use App\Modules\Magazzino\Enums\TipoMovimento;
 
+/**
+ * Controller carico/scarico/reso/rettifica.
+ *
+ * Strangler Fig (def2.0):
+ *  - Iniezione di App\Modules\Magazzino\Services\GiacenzaService e MovimentoService
+ *    via constructor (Laravel container DI, no bind necessario per concrete class).
+ *  - Le mutazioni di giacenza passano dal modulo (lockForUpdate + dispatch
+ *    SottoSogliaEvento), il legacy App\Services\MagazzinoService resta solo
+ *    per i flussi che dipendono da artefatti collaterali (etichetta QR sul
+ *    carico, rettifica per giacenza_id puntuale).
+ *  - Response shape JSON/redirect invariata: il frontend non cambia.
+ */
 class MagazzinoMovimentoController extends Controller
 {
+    public function __construct(
+        private readonly GiacenzaService $giacenze,
+        private readonly MovimentoService $movimenti,
+    ) {
+    }
+
     /**
      * Form registrazione carico (bolla fornitore).
      */
@@ -27,6 +50,10 @@ class MagazzinoMovimentoController extends Controller
 
     /**
      * Registra carico da bolla.
+     *
+     * Mantiene MagazzinoService::registraCarico legacy perché crea anche
+     * l'etichetta QR (artefatto fuori dominio modulo Magazzino). La giacenza
+     * viene comunque protetta da lockForUpdate dentro il legacy.
      */
     public function registraCarico(Request $request)
     {
@@ -80,6 +107,15 @@ class MagazzinoMovimentoController extends Controller
             'ocr_raw' => $request->session()->get('ocr_raw'),
         ]);
 
+        Log::info('Movimento magazzino', [
+            'tipo' => 'carico',
+            'articolo_id' => $articoloId,
+            'quantita' => (float) $request->quantita,
+            'lotto' => $request->lotto,
+            'fornitore' => $request->fornitore,
+            'operatore_id' => $operatore?->id,
+        ]);
+
         $request->session()->forget(['ocr_foto_bolla', 'ocr_raw', 'ocrDati']);
 
         return redirect()->route('magazzino.etichetta.stampa', [
@@ -121,7 +157,7 @@ class MagazzinoMovimentoController extends Controller
     }
 
     /**
-     * Registra reso.
+     * Registra reso (rientro fogli avanzati) tramite MovimentoService.
      */
     public function registraReso(Request $request)
     {
@@ -132,18 +168,39 @@ class MagazzinoMovimentoController extends Controller
         ]);
 
         $operatore = $request->attributes->get('operatore') ?? auth()->guard('operatore')->user();
+        $articolo = MagazzinoArticolo::findOrFail($request->articolo_id);
 
-        MagazzinoService::registraReso([
-            'articolo_id' => $request->articolo_id,
-            'quantita' => $request->quantita,
-            'lotto' => $request->lotto ?: null,
-            'commessa' => $request->commessa,
-            'operatore_id' => $operatore?->id,
-            'note' => $request->note,
-        ]);
+        try {
+            $this->movimenti->registraMovimento(
+                codArt: $articolo->codice,
+                tipo: TipoMovimento::Reso,
+                quantita: (float) $request->quantita,
+                causale: 'RESO',
+                meta: [
+                    'lotto' => $request->lotto ?: null,
+                    'commessa' => $request->commessa,
+                    'operatore_id' => $operatore?->id,
+                    'note' => $request->note,
+                ],
+            );
 
-        return redirect()->route('magazzino.dashboard', ['op_token' => $request->get('op_token')])
-            ->with('success', 'Reso registrato');
+            Log::info('Movimento magazzino', [
+                'tipo' => 'reso',
+                'articolo_id' => $articolo->id,
+                'quantita' => (float) $request->quantita,
+                'lotto' => $request->lotto,
+                'commessa' => $request->commessa,
+                'operatore_id' => $operatore?->id,
+            ]);
+
+            return redirect()->route('magazzino.dashboard', ['op_token' => $request->get('op_token')])
+                ->with('success', 'Reso registrato');
+        } catch (ValidationException $e) {
+            $msg = collect($e->errors())->flatten()->first() ?? 'Reso non valido';
+            return back()->withInput()->with('error', $msg);
+        } catch (\RuntimeException $e) {
+            return back()->withInput()->with('error', $e->getMessage());
+        }
     }
 
     /**
@@ -165,6 +222,10 @@ class MagazzinoMovimentoController extends Controller
 
     /**
      * Registra rettifica.
+     *
+     * Resta su MagazzinoService legacy: la rettifica lavora per giacenza_id
+     * puntuale (riga specifica con ubicazione/lotto), mentre il modulo aggrega
+     * sulla riga "principale". Il legacy ha già lockForUpdate sulla riga.
      */
     public function registraRettifica(Request $request)
     {
@@ -184,6 +245,13 @@ class MagazzinoMovimentoController extends Controller
                 $request->note
             );
 
+            Log::info('Movimento magazzino', [
+                'tipo' => 'rettifica',
+                'giacenza_id' => (int) $request->giacenza_id,
+                'nuova_quantita' => (float) $request->nuova_quantita,
+                'operatore_id' => $operatore?->id,
+            ]);
+
             return redirect()->route('magazzino.giacenze', ['op_token' => $request->get('op_token')])
                 ->with('success', 'Rettifica registrata');
         } catch (\RuntimeException $e) {
@@ -192,7 +260,11 @@ class MagazzinoMovimentoController extends Controller
     }
 
     /**
-     * Registra prelievo (scarico per STAMPA).
+     * Registra prelievo (scarico per produzione, fase STAMPA*).
+     *
+     * Validazione fase STAMPA mantenuta inline (regola di business legacy);
+     * lo scarico effettivo passa da MovimentoService -> GiacenzaService con
+     * lockForUpdate per evitare race condition tra tablet di reparto.
      */
     public function registraPrelievo(Request $request)
     {
@@ -204,20 +276,46 @@ class MagazzinoMovimentoController extends Controller
 
         $operatore = $request->attributes->get('operatore') ?? auth()->guard('operatore')->user();
 
+        $fase = strtoupper(trim($request->fase ?? 'STAMPA'));
+        if (!str_starts_with($fase, 'STAMPA')) {
+            return back()->withInput()->with(
+                'error',
+                'Scarico consentito solo per fasi di stampa (STAMPA, STAMPAXL106, STAMPAINDIGO, ecc.)'
+            );
+        }
+
+        $articolo = MagazzinoArticolo::findOrFail($request->articolo_id);
+
         try {
-            MagazzinoService::registraScarico([
-                'articolo_id' => $request->articolo_id,
-                'ubicazione_id' => $request->ubicazione_id ?: null,
-                'lotto' => $request->lotto ?: null,
-                'quantita' => $request->quantita,
+            $this->movimenti->registraMovimento(
+                codArt: $articolo->codice,
+                tipo: TipoMovimento::Scarico,
+                quantita: (float) $request->quantita,
+                causale: 'PRODUZIONE',
+                meta: [
+                    'ubicazione_id' => $request->ubicazione_id ?: null,
+                    'lotto' => $request->lotto ?: null,
+                    'commessa' => $request->commessa,
+                    'fase' => $fase,
+                    'operatore_id' => $operatore?->id,
+                    'note' => $request->note,
+                ],
+            );
+
+            Log::info('Movimento magazzino', [
+                'tipo' => 'scarico',
+                'articolo_id' => $articolo->id,
+                'quantita' => (float) $request->quantita,
                 'commessa' => $request->commessa,
-                'fase' => $request->fase ?? 'STAMPA',
+                'fase' => $fase,
                 'operatore_id' => $operatore?->id,
-                'note' => $request->note,
             ]);
 
             return redirect()->route('magazzino.dashboard', ['op_token' => $request->get('op_token')])
                 ->with('success', 'Prelievo registrato');
+        } catch (ValidationException $e) {
+            $msg = collect($e->errors())->flatten()->first() ?? 'Prelievo non valido';
+            return back()->withInput()->with('error', $msg);
         } catch (\RuntimeException $e) {
             return back()->withInput()->with('error', $e->getMessage());
         }

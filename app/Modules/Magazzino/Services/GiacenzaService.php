@@ -106,6 +106,23 @@ final class GiacenzaService
     }
 
     /**
+     * Scarica giacenza (scarico produzione). Wrapper convenience su aggiornaGiacenza.
+     * Lock-safe: aggiornaGiacenza usa lockForUpdate dentro DB::transaction.
+     */
+    public function scarica(string $codArt, float $qta, string $causale): void
+    {
+        $this->aggiornaGiacenza($codArt, -abs($qta), TipoMovimento::Scarico, $causale);
+    }
+
+    /**
+     * Carica giacenza (carico fornitore). Wrapper convenience su aggiornaGiacenza.
+     */
+    public function carica(string $codArt, float $qta, string $causale): void
+    {
+        $this->aggiornaGiacenza($codArt, abs($qta), TipoMovimento::Carico, $causale);
+    }
+
+    /**
      * Tutti gli articoli attualmente sotto la soglia configurata.
      *
      * @return Collection<int,MagazzinoArticolo>
