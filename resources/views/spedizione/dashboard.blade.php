@@ -351,7 +351,11 @@
             </tr>
         </thead>
         <tbody>
+            @php $commesseGiaMostrate = []; @endphp
             @foreach($fasiDDT as $fase)
+                @php $commessaCorrente = $fase->ordine->commessa ?? ''; @endphp
+                @continue(in_array($commessaCorrente, $commesseGiaMostrate, true))
+                @php $commesseGiaMostrate[] = $commessaCorrente; @endphp
                 @php
                     $qtaOrdine = $fase->ordine->qta_richiesta ?? 0;
                     $qtaDDT = $fase->ordine->qta_ddt_vendita ?? 0;
