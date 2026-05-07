@@ -1,6 +1,6 @@
 <?php
 /**
- * Query Onda SQL Server: trova righe DDT vendita reali.
+ * Query Onda DDT vendita: testa + righe reali con cod_art e qta.
  * Uso: php scripts\check_ddt_onda.php 0001177
  */
 require __DIR__ . '/../vendor/autoload.php';
@@ -9,67 +9,62 @@ $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
 use Illuminate\Support\Facades\DB;
 
-$ddt = $argv[1] ?? '0001177';
+$ddt = $argv[1] ?? null;
+if (!$ddt) {
+    echo "Uso: php scripts\\check_ddt_onda.php <numero_ddt>\n";
+    exit(1);
+}
 $ddtNum = ltrim($ddt, '0');
 
-echo "Query Onda DB per DDT $ddt (numerico: $ddtNum)\n\n";
+echo "=== TESTA ATTDocTeste per DDT $ddt ===\n";
+$teste = DB::connection('onda')->select("
+    SELECT IdDoc, TipoDocumento, NumeroDocumento, DataDocumento, IdAnagrafica
+    FROM ATTDocTeste
+    WHERE NumeroDocumento = ? OR NumeroDocumento = ?
+", [$ddtNum, $ddt]);
 
-// 1. View export comoda (se esiste)
-echo "=== View ATTViewExportDDTEmessiFornitore (cerca per num documento) ===\n";
-try {
-    $cols = DB::connection('onda')->select("
-        SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
-        WHERE TABLE_NAME = 'ATTViewExportDDTEmessiFornitore'
-        ORDER BY ORDINAL_POSITION
-    ");
-    echo "Colonne: " . count($cols) . "\n";
-    foreach ($cols as $c) echo "  - {$c->COLUMN_NAME}\n";
-} catch (\Throwable $e) {
-    echo "Errore: " . $e->getMessage() . "\n";
+if (empty($teste)) {
+    echo "Nessuna testa trovata. Provo wildcard...\n";
+    $teste = DB::connection('onda')->select("
+        SELECT TOP 10 IdDoc, TipoDocumento, NumeroDocumento, DataDocumento
+        FROM ATTDocTeste
+        WHERE NumeroDocumento LIKE ?
+    ", ['%' . $ddtNum]);
 }
 
-// 2. Trova tutte tabelle ATT* (DDT/Bolle vendita Onda)
-echo "\n=== Tutte tabelle ATT* in Onda ===\n";
-try {
-    $tabelle = DB::connection('onda')->select("
-        SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES
-        WHERE TABLE_TYPE = 'BASE TABLE' AND (TABLE_NAME LIKE 'ATT%' OR TABLE_NAME LIKE 'OC_%DDT%')
-        ORDER BY TABLE_NAME
-    ");
-    foreach ($tabelle as $t) echo "  - {$t->TABLE_NAME}\n";
-} catch (\Throwable $e) {
-    echo "Errore: " . $e->getMessage() . "\n";
+if (empty($teste)) {
+    echo "Nessun match.\n";
+    exit(1);
 }
 
-// 3. Cerca colonne con "NumDoc" + "Vendita" o "DDT"
-echo "\n=== Colonne con NumDoc/NumDocumento in tabelle ATT/DDT ===\n";
-try {
-    $cols = DB::connection('onda')->select("
-        SELECT TABLE_NAME, COLUMN_NAME
-        FROM INFORMATION_SCHEMA.COLUMNS
-        WHERE (TABLE_NAME LIKE 'ATT%' OR TABLE_NAME LIKE 'OC_%')
-          AND (COLUMN_NAME LIKE '%NumDoc%' OR COLUMN_NAME LIKE '%Numero%')
-        ORDER BY TABLE_NAME
-    ");
-    foreach ($cols as $c) echo "  - {$c->TABLE_NAME}.{$c->COLUMN_NAME}\n";
-} catch (\Throwable $e) {
-    echo "Errore: " . $e->getMessage() . "\n";
-}
+foreach ($teste as $t) {
+    echo "  IdDoc={$t->IdDoc} | Tipo={$t->TipoDocumento} | Num={$t->NumeroDocumento} | Data={$t->DataDocumento}\n";
 
-// 4. Trova OC_CreazioneAutomaticaDDT (ha DDT nel nome)
-echo "\n=== Schema OC_CreazioneAutomaticaDDT ===\n";
-try {
-    $cols = DB::connection('onda')->select("
-        SELECT COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS
-        WHERE TABLE_NAME = 'OC_CreazioneAutomaticaDDT'
-        ORDER BY ORDINAL_POSITION
-    ");
-    foreach ($cols as $c) echo "  - {$c->COLUMN_NAME} ({$c->DATA_TYPE})\n";
-    echo "\nRow sample (max 3):\n";
-    $rows = DB::connection('onda')->select("SELECT TOP 3 * FROM OC_CreazioneAutomaticaDDT WHERE 1=1");
-    foreach ($rows as $r) {
-        print_r($r);
+    // Anagrafica cliente
+    $anag = DB::connection('onda')->select("SELECT TOP 1 RagioneSociale FROM Anagrafica WHERE IdAnagrafica = ?", [$t->IdAnagrafica]);
+    if ($anag) echo "    Cliente: {$anag[0]->RagioneSociale}\n";
+
+    // Righe DDT
+    echo "\n  === RIGHE ATTDocRighe (IdDoc {$t->IdDoc}) ===\n";
+    $righe = DB::connection('onda')->select("
+        SELECT IdDoc, IdRiga, NrRiga, TipoRiga, CodArt, Descrizione, Qta, QtaConsegnata, CodUnMis
+        FROM ATTDocRighe
+        WHERE IdDoc = ?
+        ORDER BY NrRiga
+    ", [$t->IdDoc]);
+
+    if (empty($righe)) {
+        echo "  (nessuna riga)\n";
+        continue;
     }
-} catch (\Throwable $e) {
-    echo "Errore: " . $e->getMessage() . "\n";
+
+    foreach ($righe as $r) {
+        echo sprintf("  riga#%d | cod=%s | qta=%s %s | %s\n",
+            $r->NrRiga,
+            $r->CodArt ?: '-',
+            number_format((float) $r->Qta, 2, ',', '.'),
+            $r->CodUnMis ?: '',
+            mb_substr((string) $r->Descrizione, 0, 80)
+        );
+    }
 }
