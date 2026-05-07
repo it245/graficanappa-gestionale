@@ -1349,16 +1349,16 @@ tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !imp
                     <span class="badge ms-2" style="background:#0d6efd; font-size:13px;">{{ $fasiGiorno->count() }} consegne</span>
                 </div>
                 <table class="table table-hover table-sm mb-0" style="font-size:13px;">
-                    <thead style="background:#e9ecef;">
+                    <thead>
                         <tr>
-                            <th style="width:110px;">Commessa</th>
-                            <th>Cliente</th>
-                            <th>Articolo</th>
-                            <th>Descrizione</th>
-                            <th class="text-end" style="width:80px;">Qta</th>
-                            <th class="text-center" style="width:90px;">Tipo</th>
-                            <th class="text-center" style="width:60px;">Ora</th>
-                            <th>Operatore</th>
+                            <th style="width:110px; background:#e9ecef !important; color:#212529 !important; font-weight:700;">Commessa</th>
+                            <th style="background:#e9ecef !important; color:#212529 !important; font-weight:700;">Cliente</th>
+                            <th style="background:#e9ecef !important; color:#212529 !important; font-weight:700;">Articolo</th>
+                            <th style="background:#e9ecef !important; color:#212529 !important; font-weight:700;">Descrizione</th>
+                            <th class="text-end" style="width:80px; background:#e9ecef !important; color:#212529 !important; font-weight:700;">Qta</th>
+                            <th class="text-center" style="width:90px; background:#e9ecef !important; color:#212529 !important; font-weight:700;">Tipo</th>
+                            <th class="text-center" style="width:60px; background:#e9ecef !important; color:#212529 !important; font-weight:700;">Ora</th>
+                            <th style="background:#e9ecef !important; color:#212529 !important; font-weight:700;">Operatore</th>
                         </tr>
                     </thead>
                     <tbody>
