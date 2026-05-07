@@ -355,10 +355,17 @@
                 @php
                     $qtaOrdine = $fase->ordine->qta_richiesta ?? 0;
                     $qtaDDT = $fase->ordine->qta_ddt_vendita ?? 0;
-                    $suggerimento = $qtaDDT >= $qtaOrdine ? 'totale' : 'parziale';
                     $numDDT = $fase->ordine->numero_ddt_vendita ?? '';
                     $vettore = $fase->ordine->vettore_ddt ?? '';
                     $isBRT = stripos($vettore, 'BRT') !== false;
+                    // Altri articoli della stessa commessa (escluso l'ordine corrente)
+                    $altriArticoli = \App\Models\Ordine::where('commessa', $fase->ordine->commessa ?? '')
+                        ->where('id', '!=', $fase->ordine->id ?? 0)
+                        ->select('id', 'cod_art', 'descrizione', 'qta_richiesta')
+                        ->get();
+                    $qtaCommessaTotale = (int) $qtaOrdine + (int) $altriArticoli->sum('qta_richiesta');
+                    // Suggerimento basato su qta TOTALE commessa (non singolo articolo)
+                    $suggerimento = $qtaDDT >= $qtaCommessaTotale ? 'totale' : 'parziale';
                 @endphp
                 <tr class="searchable">
                     <td style="white-space:nowrap;">
@@ -371,8 +378,31 @@
                     <td><a href="{{ route('commesse.show', $fase->ordine->commessa ?? '-') }}" class="commessa-link">{{ $fase->ordine->commessa ?? '-' }}</a></td>
                     <td>{{ $fase->ordine->cliente_nome ?? '-' }}</td>
                     <td>{{ $fase->ordine->cod_art ?? '-' }}</td>
-                    <td class="desc-col">{{ $fase->ordine->descrizione ?? '-' }}</td>
-                    <td>{{ $qtaOrdine }}</td>
+                    <td class="desc-col">
+                        {{ $fase->ordine->descrizione ?? '-' }}
+                        @if($altriArticoli->count() > 0)
+                            <button type="button" class="btn btn-link btn-sm p-0 ms-1 toggle-altri-articoli" style="font-size:11px; text-decoration:none; color:#6f42c1;" onclick="toggleAltriArticoli(this)" title="Mostra altri articoli stessa commessa">
+                                <span class="arrow">▼</span> +{{ $altriArticoli->count() }} articoli
+                            </button>
+                            <div class="altri-articoli" style="display:none; margin-top:6px; font-size:11px; color:#555; padding:6px 8px; border-left:3px solid #6f42c1; background:#f8f4ff; border-radius:4px;">
+                                @foreach($altriArticoli as $art)
+                                    <div class="mb-1">
+                                        <strong style="color:#6f42c1;">{{ $art->cod_art ?: '-' }}</strong>
+                                        <span class="text-muted">({{ number_format((int) $art->qta_richiesta, 0, ',', '.') }} pz)</span>:
+                                        {{ \Illuminate\Support\Str::limit($art->descrizione ?? '-', 100) }}
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+                    </td>
+                    <td>
+                        {{ $qtaOrdine }}
+                        @if($altriArticoli->count() > 0)
+                            <div style="font-size:10px; color:#6f42c1; font-weight:600; margin-top:2px;" title="Totale qta tutti articoli commessa">
+                                Σ {{ number_format($qtaCommessaTotale, 0, ',', '.') }}
+                            </div>
+                        @endif
+                    </td>
                     <td>{{ $qtaDDT }}</td>
                     <td>
                         @if($suggerimento === 'totale')
@@ -914,6 +944,16 @@ function apriModalConsegnaDDT(faseId, tipo) {
         else { alert('Errore: ' + (data.messaggio || data.message || 'operazione fallita')); }
     })
     .catch(err => { if (err !== 'session_expired') { console.error('Errore:', err); alert('Errore: ' + err); } });
+}
+
+// Toggle accordion altri articoli stessa commessa (tabella DDT)
+function toggleAltriArticoli(btn) {
+    var box = btn.parentElement.querySelector('.altri-articoli');
+    var arrow = btn.querySelector('.arrow');
+    if (!box) return;
+    var aperto = box.style.display !== 'none';
+    box.style.display = aperto ? 'none' : 'block';
+    if (arrow) arrow.textContent = aperto ? '▼' : '▲';
 }
 
 function aggiornaNota(faseId, valore) {
