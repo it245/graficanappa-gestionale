@@ -36,6 +36,10 @@ use App\Modules\Onda\Adapters\OndaErpAdapter;
 use App\Modules\Prinect\Contracts\PrinectApiInterface;
 use App\Modules\Prinect\Adapters\PrinectHttpAdapter;
 
+// Presenze (NetTime)
+use App\Modules\Presenze\Contracts\TimbratureSourceInterface;
+use App\Modules\Presenze\Adapters\NetTimeShareAdapter;
+
 /**
  * ModulesServiceProvider
  *
@@ -196,6 +200,18 @@ final class ModulesServiceProvider extends ServiceProvider
          | statici esistenti (cron `onda:sync`, ImportExcelTutto).
          */
         $this->app->bind(OndaErpInterface::class, OndaErpAdapter::class);
+
+        /*
+         | Presenze — TimbratureSourceInterface
+         |
+         | Sorgente delle timbrature operatori. Default = NetTimeShareAdapter
+         | che legge da `nettime_timbrature` (popolata dal cron
+         | `presenze:sync` ogni 5 min, share \\.34\NetTime + fallback \\.253).
+         |
+         | In test si può sostituire con ManualeAdapter::da([...]) senza
+         | toccare i Service del modulo (PresenzeService, CalcoloOreService).
+         */
+        $this->app->bind(TimbratureSourceInterface::class, NetTimeShareAdapter::class);
     }
 
     /**
