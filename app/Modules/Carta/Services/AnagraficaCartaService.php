@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Modules\Carta\Services;
 
 use App\Models\Articolo;
+use App\Models\MagazzinoArticolo;
 use App\Modules\Carta\Enums\FamigliaCarta;
 use App\Modules\Carta\ValueObjects\CodiceArticoloOnda;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Servizio di lettura sull'anagrafica articoli carta.
@@ -20,6 +22,14 @@ use Illuminate\Database\Eloquent\Collection;
  */
 final class AnagraficaCartaService
 {
+    /**
+     * TTL cache per le lookup distinct (formati, grammature, marche).
+     * Le anagrafiche cambiano raramente: 1h è un buon compromesso.
+     */
+    public const CACHE_TTL = 3600;
+
+    private const CACHE_PREFIX = 'carta:lookup:';
+
     /**
      * Cerca un articolo per cod_art Onda esatto (es. "02W.ALASKA.GC1.300.003").
      */
@@ -98,5 +108,92 @@ final class AnagraficaCartaService
         }
 
         return CodiceArticoloOnda::provaDaStringa((string) $art->cod_art);
+    }
+
+    /**
+     * Lista distinct dei formati presenti nell'anagrafica magazzino (cached 1h).
+     *
+     * Sostituisce la query `MagazzinoArticolo::whereNotNull('formato')->distinct()->pluck('formato')`
+     * usata nei filtri lookup, evitando scan ripetuti sulla tabella.
+     *
+     * @return list<string>
+     */
+    public function formatiDisponibili(): array
+    {
+        return Cache::remember(
+            self::CACHE_PREFIX . 'formati',
+            self::CACHE_TTL,
+            fn () => MagazzinoArticolo::query()
+                ->whereNotNull('formato')
+                ->where('formato', '!=', '')
+                ->distinct()
+                ->orderBy('formato')
+                ->pluck('formato')
+                ->all(),
+        );
+    }
+
+    /**
+     * Lista distinct delle grammature presenti nell'anagrafica magazzino (cached 1h).
+     *
+     * @return list<int>
+     */
+    public function grammatureDisponibili(): array
+    {
+        return Cache::remember(
+            self::CACHE_PREFIX . 'grammature',
+            self::CACHE_TTL,
+            fn () => MagazzinoArticolo::query()
+                ->whereNotNull('grammatura')
+                ->distinct()
+                ->orderBy('grammatura')
+                ->pluck('grammatura')
+                ->map(fn ($g) => (int) $g)
+                ->all(),
+        );
+    }
+
+    /**
+     * Lista distinct delle marche/famiglie ricavate dal cod_art Onda (cached 1h).
+     *
+     * Itera solo gli articoli con prefisso `02W.` per limitare il parsing.
+     *
+     * @return list<string>
+     */
+    public function marcheDisponibili(): array
+    {
+        return Cache::remember(
+            self::CACHE_PREFIX . 'marche',
+            self::CACHE_TTL,
+            function (): array {
+                $codici = Articolo::query()
+                    ->where('cod_art', 'LIKE', CodiceArticoloOnda::PREFISSO . '.%')
+                    ->distinct()
+                    ->pluck('cod_art');
+
+                $marche = [];
+                foreach ($codici as $cod) {
+                    $vo = CodiceArticoloOnda::provaDaStringa((string) $cod);
+                    if ($vo !== null) {
+                        $marche[$vo->marca] = true;
+                    }
+                }
+
+                $out = array_keys($marche);
+                sort($out);
+
+                return $out;
+            },
+        );
+    }
+
+    /**
+     * Invalida la cache lookup (da chiamare quando l'anagrafica cambia).
+     */
+    public function invalidaCacheLookup(): void
+    {
+        Cache::forget(self::CACHE_PREFIX . 'formati');
+        Cache::forget(self::CACHE_PREFIX . 'grammature');
+        Cache::forget(self::CACHE_PREFIX . 'marche');
     }
 }

@@ -8,9 +8,22 @@ use App\Models\MagazzinoGiacenza;
 use App\Models\MagazzinoMovimento;
 use App\Services\MagazzinoService;
 use App\Services\FabbisognoService;
+use App\Modules\Carta\Services\AnagraficaCartaService;
+use App\Modules\Carta\ValueObjects\CodiceArticoloOnda;
 
 class MagazzinoController extends Controller
 {
+    /**
+     * Strangler Fig (def2.0):
+     *  - i filtri lookup distinct (formati, grammature) passano da
+     *    {@see AnagraficaCartaService} che li serve cached 1h.
+     *  - il parsing di codici Onda `02W.MARCA.TIPO.GR.SEQ` resta affidato
+     *    al VO {@see CodiceArticoloOnda}, nessuna regex inline.
+     */
+    public function __construct(
+        private readonly AnagraficaCartaService $anagraficaCarta,
+    ) {
+    }
     /**
      * Dashboard magazzino: KPI, giacenze basse, ultimi movimenti.
      */
@@ -79,6 +92,9 @@ class MagazzinoController extends Controller
             $request->only(['codice', 'descrizione', 'categoria', 'formato', 'grammatura', 'spessore', 'um', 'soglia_minima', 'fornitore', 'certificazioni'])
         );
 
+        // Anagrafica modificata: invalida cache lookup (formati/grammature/marche).
+        $this->anagraficaCarta->invalidaCacheLookup();
+
         return redirect()->route('magazzino.articoli', ['op_token' => $request->get('op_token')])
             ->with('success', 'Articolo salvato');
     }
@@ -104,10 +120,12 @@ class MagazzinoController extends Controller
 
         $giacenze = $query->orderBy('articolo_id')->paginate(30);
 
+        // Lookup serviti da AnagraficaCartaService (cached 1h) per evitare scan
+        // ripetuti su `magazzino_articoli` ad ogni rendering della pagina giacenze.
         $filtri = [
             'categorie' => MagazzinoArticolo::CATEGORIE,
-            'formati' => MagazzinoArticolo::whereNotNull('formato')->distinct()->pluck('formato'),
-            'grammature' => MagazzinoArticolo::whereNotNull('grammatura')->distinct()->pluck('grammatura'),
+            'formati' => $this->anagraficaCarta->formatiDisponibili(),
+            'grammature' => $this->anagraficaCarta->grammatureDisponibili(),
         ];
 
         return view('magazzino.giacenze', [

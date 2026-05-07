@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Magazzino\ValueObjects;
 
+use App\Modules\Carta\Rules\ConversioneFogliKgRule;
+use App\Modules\Carta\ValueObjects\Formato;
 use InvalidArgumentException;
 
 /**
@@ -48,7 +50,9 @@ final readonly class QuantitaCarta
     /**
      * Converte la quantità in fogli, dato peso unitario.
      *
-     * Formula: fogli = peso_totale_kg * 1000 / (grammatura_g_m2 * area_foglio_m2)
+     * Strangler Fig: la formula peso/foglio è single source of truth
+     * in {@see ConversioneFogliKgRule}. Qui si costruisce il Formato
+     * a partire dall'area indicata (assunto: foglio quadrato equivalente).
      *
      * @param float $grammatura     g/m² (es. 300)
      * @param float $areaFoglioM2   area in m² del singolo foglio (es. 70x100 cm = 0.70)
@@ -68,10 +72,15 @@ final readonly class QuantitaCarta
             throw new InvalidArgumentException('Grammatura e area foglio devono essere > 0');
         }
 
-        $pesoFoglioKg = ($grammatura * $areaFoglioM2) / 1000.0;
-        $fogli = $this->valore / $pesoFoglioKg;
+        // Costruisci un Formato quadrato equivalente all'area indicata,
+        // così la formula resta delegata interamente a ConversioneFogliKgRule.
+        $latoMm = (int) round(sqrt($areaFoglioM2) * 1000.0);
+        $formato = new Formato($latoMm, $latoMm);
 
-        return new self((float) round($fogli), self::UM_FOGLI);
+        $fogli = (new ConversioneFogliKgRule())
+            ->fogliDaKg((int) round($grammatura), $formato, $this->valore);
+
+        return new self((float) $fogli, self::UM_FOGLI);
     }
 
     /**
