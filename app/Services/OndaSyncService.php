@@ -1611,98 +1611,17 @@ class OndaSyncService
      * segna sull'ordine MES che è stata emessa una DDT vendita,
      * così la dashboard spedizione può mostrare le consegne da confermare.
      */
+    /**
+     * @deprecated Wrapper di compatibilità. Usa {@see \App\Modules\Spedizione\Services\DdtSyncService::syncFromOnda()}.
+     *
+     * Mantenuto per non rompere i caller esistenti (cron `php artisan onda:sync`,
+     * DashboardOwnerController, DashboardSpedizioneController).
+     */
     public static function sincronizzaDDTVendita(): int
     {
-        $aggiornati = 0;
+        $risultato = app(\App\Modules\Spedizione\Services\DdtSyncService::class)->syncFromOnda(7);
 
-        // CodCommessa + CodArt nelle RIGHE: GROUP BY anche cod_art per distinguere articoli stessa commessa
-        $righeDDT = DB::connection('onda')->select("
-            SELECT t.IdDoc, r.CodCommessa, r.CodArt, t.DataDocumento, t.NumeroDocumento,
-                   a.RagioneSociale AS Cliente,
-                   v.RagioneSociale AS Vettore,
-                   SUM(r.Qta) AS QtaDDT
-            FROM ATTDocTeste t
-            JOIN ATTDocRighe r ON t.IdDoc = r.IdDoc
-            LEFT JOIN STDAnagrafiche a ON t.IdAnagrafica = a.IdAnagrafica
-            LEFT JOIN ATTDocCoda c ON t.IdDoc = c.IdDoc
-            LEFT JOIN STDAnagrafiche v ON c.IdVettore1 = v.IdAnagrafica
-            WHERE t.TipoDocumento = 3
-              AND t.DataRegistrazione >= DATEADD(day, -7, GETDATE())
-              AND r.CodCommessa IS NOT NULL AND r.CodCommessa != ''
-              AND r.TipoRiga = 1
-            GROUP BY t.IdDoc, r.CodCommessa, r.CodArt, t.DataDocumento, t.NumeroDocumento, a.RagioneSociale, v.RagioneSociale
-        ");
-
-        if (empty($righeDDT)) {
-            return 0;
-        }
-
-        $pdfGenerati = []; // traccia DDT per cui abbiamo già generato il PDF
-
-        foreach ($righeDDT as $riga) {
-            $codCommessa = trim($riga->CodCommessa ?? '');
-            if (!$codCommessa) continue;
-
-            $idDoc = $riga->IdDoc;
-            $qtaDDT = (float) ($riga->QtaDDT ?? 0);
-            $numeroDDT = trim($riga->NumeroDocumento ?? '');
-            $vettore = trim($riga->Vettore ?? '');
-            $cliente = trim($riga->Cliente ?? '');
-            $codArt = trim($riga->CodArt ?? '');
-
-            // Match per commessa + cod_art (ordini diversi stessa commessa = articoli distinti)
-            // Fallback al primo ordine se cod_art non match (compatibilita' DDT vecchi)
-            $ordine = Ordine::where('commessa', $codCommessa)
-                ->where('cod_art', $codArt)
-                ->first();
-            if (!$ordine) {
-                $ordine = Ordine::where('commessa', $codCommessa)->first();
-            }
-
-            // Salva nella tabella ddt_spedizioni (supporta più DDT per commessa)
-            $ddtNuovo = false;
-            if ($ordine) {
-                $esistente = DdtSpedizione::where('onda_id_doc', $idDoc)->where('commessa', $codCommessa)->exists();
-                DdtSpedizione::updateOrCreate(
-                    ['onda_id_doc' => $idDoc, 'commessa' => $codCommessa],
-                    [
-                        'numero_ddt'   => $numeroDDT,
-                        'data_ddt'     => $riga->DataDocumento ? substr($riga->DataDocumento, 0, 10) : null,
-                        'vettore'      => $vettore,
-                        'cliente_nome' => $cliente,
-                        'ordine_id'    => $ordine->id,
-                        'qta'          => $qtaDDT,
-                    ]
-                );
-                if (!$esistente) $ddtNuovo = true;
-            }
-
-            // Aggiorna campo legacy sull'ordine (sempre, non solo prima volta)
-            // Cosi' ordini con cod_art diverso ricevono qta_ddt_vendita corretta
-            if ($ordine) {
-                $ordine->update([
-                    'ddt_vendita_id'      => $idDoc,
-                    'numero_ddt_vendita'  => $numeroDDT,
-                    'vettore_ddt'         => $vettore,
-                    'qta_ddt_vendita'     => $qtaDDT,
-                ]);
-            }
-
-            $aggiornati++;
-            Log::info("DDT Vendita: commessa {$codCommessa} DDT {$numeroDDT} (IdDoc {$idDoc}, qta: {$qtaDDT})");
-
-            // Genera PDF automaticamente solo per DDT nuovi (non già in DB)
-            if ($ddtNuovo && $numeroDDT && !in_array($numeroDDT, $pdfGenerati)) {
-                try {
-                    DdtPdfService::generaESalva($numeroDDT);
-                    $pdfGenerati[] = $numeroDDT;
-                } catch (\Exception $e) {
-                    Log::warning("DDT PDF: errore generazione DDT {$numeroDDT}: " . $e->getMessage());
-                }
-            }
-        }
-
-        return $aggiornati;
+        return ($risultato['inseriti'] ?? 0) + ($risultato['aggiornati'] ?? 0);
     }
 
     /**
