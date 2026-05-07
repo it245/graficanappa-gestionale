@@ -2,6 +2,8 @@
 
 namespace App\Http\Services;
 
+use App\Constants\RepartoId;
+use App\Constants\StatoFase;
 use App\Models\Ordine;
 use App\Models\OrdineFase;
 use App\Models\Operatore;
@@ -12,8 +14,8 @@ class FierySyncService
 {
     protected FieryService $fiery;
 
-    // Reparto digitale
-    const REPARTO_DIGITALE_ID = 4;
+    // Reparto digitale (mantenuto per backward-compat con codice esterno)
+    const REPARTO_DIGITALE_ID = RepartoId::DIGITALE;
 
     public function __construct(FieryService $fiery)
     {
@@ -101,13 +103,13 @@ class FierySyncService
         foreach ($fasiDigitali as $fase) {
             // stato stringa non-numerica (es. "prova") = motivo pausa → trattare come avviabile
             $inPausa = is_string($fase->stato) && !is_numeric($fase->stato) && $fase->stato !== 'EXT';
-            if (in_array($fase->stato, [0, '0', 1, '1']) || $inPausa) {
+            if (in_array($fase->stato, [StatoFase::NON_INIZIATA, '0', StatoFase::PRONTA, '1']) || $inPausa) {
                 // Snapshot al momento riapertura da pausa: evita auto-termina su accounting storico
                 if ($inPausa) {
                     $fase->riaperta_at = now();
                     $fase->qta_prod_at_riapertura = max((int)($fase->qta_prod ?? 0), $copieFatte);
                 }
-                $fase->stato = 2;
+                $fase->stato = StatoFase::AVVIATA;
                 if (!$fase->data_inizio) {
                     $fase->data_inizio = now()->format('Y-m-d H:i:s');
                 }
@@ -127,18 +129,18 @@ class FierySyncService
                 }
                 $faseAvviata = $fase;
 
-            } elseif ($fase->stato == 2) {
+            } elseif ($fase->stato == StatoFase::AVVIATA) {
                 // Fase già in corso: aggiorna qta_prod
                 if ($copieFatte > 0) {
                     $fase->qta_prod = $copieFatte;
                     // NON auto-terminare mentre il job è ancora in stampa sulla Fiery
                     $fase->save();
                 }
-            } elseif ($fase->stato == 3) {
+            } elseif ($fase->stato == StatoFase::TERMINATA) {
                 // Fase terminata manualmente dall'utente → NON toccare
                 if ($fase->terminata_manualmente) continue;
-                // Fase terminata automaticamente ma job ancora in stampa → ripristina a stato 2
-                $fase->stato = 2;
+                // Fase terminata automaticamente ma job ancora in stampa → ripristina ad avviata
+                $fase->stato = StatoFase::AVVIATA;
                 $fase->data_fine = null;
                 if ($copieFatte > 0) {
                     $fase->qta_prod = $copieFatte;
@@ -259,7 +261,7 @@ class FierySyncService
                     // Ristampa vera rilevata, riavvia e aggiorna qta
                 }
                 // Fase non ancora avviata ma job Fiery completato → avvia e termina
-                $fase->stato = 2;
+                $fase->stato = StatoFase::AVVIATA;
                 $fase->qta_prod = $qtaProdotta;
                 if (!$fase->data_inizio) {
                     $fase->data_inizio = now()->format('Y-m-d H:i:s');
@@ -346,7 +348,7 @@ class FierySyncService
         }
 
         if ($completata) {
-            $fase->stato = 3;
+            $fase->stato = StatoFase::TERMINATA;
             if (!$fase->data_fine) {
                 $fase->data_fine = now()->format('Y-m-d H:i:s');
             }
@@ -444,7 +446,7 @@ class FierySyncService
      */
     protected function terminaFasiPrecedenti(Operatore $operatore, array $ordineCorrenteIds): void
     {
-        $fasiDaValutare = OrdineFase::where('stato', 2)
+        $fasiDaValutare = OrdineFase::where('stato', StatoFase::AVVIATA)
             ->whereNotIn('ordine_id', $ordineCorrenteIds)
             ->where(function ($q) {
                 $q->whereHas('faseCatalogo', function ($sub) {
@@ -465,7 +467,7 @@ class FierySyncService
 
     protected function terminaFasiDopoOrario(Operatore $operatore): void
     {
-        $fasiAperte = OrdineFase::where('stato', 2)
+        $fasiAperte = OrdineFase::where('stato', StatoFase::AVVIATA)
             ->where(function ($q) {
                 $q->whereHas('faseCatalogo', function ($sub) {
                     $sub->where('reparto_id', self::REPARTO_DIGITALE_ID);

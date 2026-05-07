@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\Constants\StatoFase;
 use App\Helpers\DescrizioneParser;
 use App\Services\FaseStatoService;
 use App\Services\OndaSyncService;
@@ -66,7 +67,7 @@ class DashboardOwnerController extends Controller
                 ->join('ordini', 'ordini.id', '=', 'ordine_fasi.ordine_id')
                 ->join('fasi_catalogo', 'ordine_fasi.fase_catalogo_id', '=', 'fasi_catalogo.id')
                 ->where('fasi_catalogo.reparto_id', $reparto->id)
-                ->where('ordine_fasi.stato', 2)
+                ->where('ordine_fasi.stato', StatoFase::AVVIATA)
                 ->where(fn($q) => $q->where('ordine_fasi.esterno', false)->orWhereNull('ordine_fasi.esterno'))
                 ->whereNull('ordine_fasi.deleted_at')
                 ->select([
@@ -391,7 +392,7 @@ public function calcolaOreEPriorita($fase)
         $spedizioniOggi = collect();
         if ($repartoSpedizione) {
             $spedizioniOggi = \Illuminate\Support\Facades\Cache::remember('owner_spedizioni_oggi', 60, function () use ($repartoSpedizione) {
-                return OrdineFase::where('stato', 4)
+                return OrdineFase::where('stato', StatoFase::CONSEGNATA)
                     ->whereDate('data_fine', Carbon::today())
                     ->whereHas('faseCatalogo', function ($q) use ($repartoSpedizione) {
                         $q->where('reparto_id', $repartoSpedizione->id);
@@ -406,7 +407,7 @@ public function calcolaOreEPriorita($fase)
         $oggi = Carbon::today();
         $kpiCacheKey = 'owner_kpi_' . $oggi->format('Ymd');
         $kpi = \Illuminate\Support\Facades\Cache::remember($kpiCacheKey, 30, function () use ($oggi) {
-            $fasiCompletateOggi = OrdineFase::where('stato', '>=', 3)
+            $fasiCompletateOggi = OrdineFase::where('stato', '>=', StatoFase::TERMINATA)
                 ->where(function ($q) use ($oggi) {
                     $q->whereHas('operatori', fn($q2) => $q2->whereDate('fase_operatore.data_fine', $oggi))
                       ->orWhereDate('data_fine', $oggi);
@@ -425,7 +426,7 @@ public function calcolaOreEPriorita($fase)
                 $secNetto = max($secLordo - $secPausa, 0);
                 return min($secNetto / 3600, 24);
             });
-            $orePrinect = OrdineFase::where('stato', '>=', 3)
+            $orePrinect = OrdineFase::where('stato', '>=', StatoFase::TERMINATA)
                 ->whereDate('data_fine', $oggi)
                 ->where(function ($q) {
                     $q->where('tempo_avviamento_sec', '>', 0)
@@ -463,7 +464,7 @@ public function calcolaOreEPriorita($fase)
 
         $kpi2 = \Illuminate\Support\Facades\Cache::remember('owner_kpi2_' . $oggi->format('Ymd'), 30, function () use ($oggi) {
             return [
-                'commesseSpediteOggi' => OrdineFase::where('ordine_fasi.stato', 4)
+                'commesseSpediteOggi' => OrdineFase::where('ordine_fasi.stato', StatoFase::CONSEGNATA)
                     ->where(function ($q) use ($oggi) {
                         $q->whereHas('operatori', fn($q2) => $q2->whereDate('fase_operatore.data_fine', $oggi))
                           ->orWhereDate('ordine_fasi.data_fine', $oggi);
@@ -471,14 +472,14 @@ public function calcolaOreEPriorita($fase)
                     ->join('ordini', 'ordine_fasi.ordine_id', '=', 'ordini.id')
                     ->distinct('ordini.commessa')
                     ->count('ordini.commessa'),
-                'fasiAttive' => OrdineFase::where('stato', 2)->count(),
+                'fasiAttive' => OrdineFase::where('stato', StatoFase::AVVIATA)->count(),
             ];
         });
         $commesseSpediteOggi = $kpi2['commesseSpediteOggi'];
         $fasiAttive = $kpi2['fasiAttive'];
 
         // Lista fasi in lavorazione (stato 2) per modale KPI
-        $fasiInLavorazione = OrdineFase::where('stato', 2)
+        $fasiInLavorazione = OrdineFase::where('stato', StatoFase::AVVIATA)
             ->with(['ordine:id,commessa,cliente_nome,descrizione,data_prevista_consegna', 'faseCatalogo', 'faseCatalogo.reparto:id,nome', 'operatori:id,nome,cognome'])
             ->orderBy('data_inizio')
             ->get();
@@ -486,7 +487,7 @@ public function calcolaOreEPriorita($fase)
         // Lista consegne oggi per modale KPI (stato 4 + data_fine oggi, reparto spedizione)
         $consegneOggi = collect();
         if ($repartoSpedizione) {
-            $consegneOggi = OrdineFase::where('stato', 4)
+            $consegneOggi = OrdineFase::where('stato', StatoFase::CONSEGNATA)
                 ->whereDate('data_fine', $oggi)
                 ->whereHas('faseCatalogo', fn($q) => $q->where('reparto_id', $repartoSpedizione->id))
                 ->with(['ordine:id,commessa,cliente_nome,descrizione', 'operatori:id,nome,cognome'])
@@ -498,7 +499,7 @@ public function calcolaOreEPriorita($fase)
         $storicoConsegne = collect();
         if ($repartoSpedizione) {
             $storicoConsegne = \Illuminate\Support\Facades\Cache::remember('owner_storico_consegne_v2', 300, function () use ($repartoSpedizione) {
-                return OrdineFase::where('stato', 4)
+                return OrdineFase::where('stato', StatoFase::CONSEGNATA)
                     ->whereDate('data_fine', '<', Carbon::today())
                     ->whereDate('data_fine', '>=', Carbon::today()->subDays(30))
                     ->whereHas('faseCatalogo', function ($q) use ($repartoSpedizione) {
@@ -533,8 +534,8 @@ public function calcolaOreEPriorita($fase)
                 ->select(
                     'ordini.commessa',
                     DB::raw('COUNT(*) as totale'),
-                    DB::raw("SUM(CASE WHEN ordine_fasi.stato >= 3 THEN 1 ELSE 0 END) as terminate"),
-                    DB::raw("SUM(CASE WHEN ordine_fasi.stato = 2 THEN 1 ELSE 0 END) as avviate")
+                    DB::raw("SUM(CASE WHEN ordine_fasi.stato >= " . StatoFase::TERMINATA . " THEN 1 ELSE 0 END) as terminate"),
+                    DB::raw("SUM(CASE WHEN ordine_fasi.stato = " . StatoFase::AVVIATA . " THEN 1 ELSE 0 END) as avviate")
                 )
                 ->groupBy('ordini.commessa')
                 ->get();
@@ -1394,8 +1395,8 @@ public function calcolaOreEPriorita($fase)
                 'ore_lavorate' => round($fasiCommessa->sum('ore_lavorate'), 2),
                 'fasi' => $fasiCommessa->sortBy(fn($f) => config('fasi_priorita')[$f->fase] ?? 500),
                 'num_fasi' => $fasiCommessa->count(),
-                'num_terminate' => $fasiCommessa->where('stato', '>=', 3)->count(),
-                'num_avviate' => $fasiCommessa->where('stato', 2)->count(),
+                'num_terminate' => $fasiCommessa->where('stato', '>=', StatoFase::TERMINATA)->count(),
+                'num_avviate' => $fasiCommessa->where('stato', StatoFase::AVVIATA)->count(),
             ];
         })->sortBy('commessa');
 
@@ -1432,13 +1433,13 @@ public function calcolaOreEPriorita($fase)
     {
         // KPI
         $oggi = Carbon::today();
-        $fasiCompletateOggi = OrdineFase::where('stato', '>=', 3)
+        $fasiCompletateOggi = OrdineFase::where('stato', '>=', StatoFase::TERMINATA)
             ->where(function ($q) use ($oggi) {
                 $q->whereHas('operatori', fn($q2) => $q2->whereDate('fase_operatore.data_fine', $oggi))
                   ->orWhereDate('data_fine', $oggi);
             })->count();
-        $fasiAttive = OrdineFase::where('stato', 2)->count();
-        $commesseSpediteOggi = OrdineFase::where('stato', 4)
+        $fasiAttive = OrdineFase::where('stato', StatoFase::AVVIATA)->count();
+        $commesseSpediteOggi = OrdineFase::where('stato', StatoFase::CONSEGNATA)
             ->whereDate('data_fine', $oggi)->with('ordine')->get()
             ->pluck('ordine.commessa')->unique()->count();
 
@@ -1661,7 +1662,7 @@ public function calcolaOreEPriorita($fase)
 
         // Fasi esterne: reparto "esterno" OPPURE flag esterno=1 (inviate dal owner)
         // Include stato < 3 (attive) e stato 5 (esterno dedicato)
-        $fasiEsterne = OrdineFase::where(fn($q) => $q->where('stato', '<', 3)->orWhere('stato', 5))
+        $fasiEsterne = OrdineFase::where(fn($q) => $q->where('stato', '<', StatoFase::TERMINATA)->orWhere('stato', StatoFase::ESTERNO))
             ->where(function ($q) use ($repartoEsterno) {
                 if ($repartoEsterno) {
                     $q->whereHas('faseCatalogo', fn($q2) => $q2->where('reparto_id', $repartoEsterno->id));
