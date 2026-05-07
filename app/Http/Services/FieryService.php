@@ -5,6 +5,28 @@ namespace App\Http\Services;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
 
+/**
+ * Wrapper legacy del client REST Fiery (Canon V900 / HP Indigo via Fiery Server).
+ *
+ * @deprecated Use App\Modules\Stampa\Adapters\FieryAdapter / StampaIntegrationInterface instead.
+ *
+ * Storia: questa classe era il client HTTP monolitico verso il Fiery server.
+ * Nel branch def2.0 è stata estratta in `App\Modules\Stampa\Adapters\FieryAdapter`
+ * che la inietta dietro l'interfaccia `StampaIntegrationInterface` (Strangler Fig).
+ *
+ * Mantenuta in vita per:
+ *  - backward-compat con cron Console (`fiery:sync`, `fiery:warm`, `fiery:report`);
+ *  - non rompere `App\Modules\Stampa\Adapters\FieryAdapter` che la inietta direttamente;
+ *  - metodi Fiery-specifici (server status, accounting per commessa, login API v5)
+ *    non hanno controparte nell'interfaccia comune e restano qui.
+ *
+ * NUOVO CODICE: usare {@see \App\Modules\Stampa\Contracts\StampaIntegrationInterface}
+ * con DI per i casi standard (`getJobInStampa`, `getJobsCompletati`).
+ * Per casi Fiery-only continuare ad iniettare questo wrapper finché non viene
+ * promosso un Service nel modulo Stampa.
+ *
+ * Eliminazione fisica: solo quando 0 chiamanti residui.
+ */
 class FieryService
 {
     protected $host;
