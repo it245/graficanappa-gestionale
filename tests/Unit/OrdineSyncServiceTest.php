@@ -6,6 +6,9 @@ namespace Tests\Unit;
 
 use App\Modules\Onda\Contracts\OndaErpInterface;
 use App\Modules\Onda\Services\OrdineSyncService;
+use App\Modules\Reparti\Enums\CodiceReparto;
+use App\Modules\Reparti\Rules\AssegnazioneFaseReparto;
+use App\Modules\Reparti\Services\RepartoService;
 use Carbon\Carbon;
 use Mockery;
 use PHPUnit\Framework\TestCase;
@@ -14,12 +17,8 @@ use PHPUnit\Framework\TestCase;
  * Test unit di {@see OrdineSyncService} (Strangler Fig di OndaSyncService::sincronizza).
  *
  * Strategia: mock {@see OndaErpInterface} per isolare il servizio da SQL Server.
- * Il body principale del legacy non viene esercitato qui — verifichiamo
- * il contratto pubblico (forma del result, propagazione errori) e che
- * l'adapter sia accessibile per test futuri.
- *
- * Quando il body migrerà dentro OrdineSyncService::sync() (iterazioni successive),
- * questo test si arricchirà con scenari di parsing/dedup specifici.
+ * Test mirati su contratto pubblico + regole pure di mapping fase→reparto
+ * (la logica di sync DB-bound vive in Feature test con RefreshDatabase).
  */
 class OrdineSyncServiceTest extends TestCase
 {
@@ -33,10 +32,6 @@ class OrdineSyncServiceTest extends TestCase
      * Verifica il contratto pubblico: l'adapter passato in costruzione è
      * recuperabile via {@see OrdineSyncService::adapter()} e implementa
      * la giusta interfaccia.
-     *
-     * Sostituisce il caso "smoke test" finché il body non migra qui:
-     * conferma che la DI funziona e che qualunque caller che inietta
-     * OrdineSyncService via container ottiene un servizio "vivo".
      */
     public function test_dipende_da_onda_erp_interface(): void
     {
@@ -51,11 +46,6 @@ class OrdineSyncServiceTest extends TestCase
     /**
      * Verifica che il mock di OndaErpInterface possa essere interrogato come
      * sarà dal body futuro: getOrdiniDal(Carbon) → list<stdClass>.
-     *
-     * Questo test "guarda al futuro": quando sposteremo la business logic
-     * dentro OrdineSyncService::sync(), questa è la chiamata che il servizio
-     * dovrà fare — il test garantisce che il contratto dell'interfaccia
-     * regga lo use-case.
      */
     public function test_adapter_puo_essere_interrogato_per_finestra_temporale(): void
     {
@@ -90,22 +80,17 @@ class OrdineSyncServiceTest extends TestCase
     }
 
     /**
-     * Verifica la forma del return di sync() quando l'adapter non torna nulla.
+     * Verifica la forma del docblock del result di sync().
      *
-     * NOTA: in questa iterazione sync() delega al legacy OndaSyncService::sincronizza()
-     * che fa accesso DB reale — non possiamo eseguirlo in unit test puro senza Laravel.
-     * Quando il body migrerà qui, sostituiremo questo test con
-     * `test_returns_zero_counts_on_empty_payload()` che esercita la logica vera.
-     *
-     * Per ora documentiamo il contratto del result tramite reflection.
+     * Garantisce a colpo d'occhio che il contratto pubblico continui ad
+     * esporre le chiavi che i caller (cron `onda:sync`, controller MES)
+     * si aspettano.
      */
     public function test_sync_result_contiene_chiavi_attese(): void
     {
         $onda = Mockery::mock(OndaErpInterface::class);
         $service = new OrdineSyncService($onda);
 
-        // Reflection sul docblock: quando il body migrerà qui, sostituire con
-        // chiamata reale. Per ora basta verificare la struttura tramite phpdoc.
         $reflection = new \ReflectionMethod($service, 'sync');
         $docblock = $reflection->getDocComment();
 
@@ -114,5 +99,76 @@ class OrdineSyncServiceTest extends TestCase
         $this->assertStringContainsString('aggiornati:int', $docblock);
         $this->assertStringContainsString('errori:int', $docblock);
         $this->assertStringContainsString('fasi_create:int', $docblock);
+        $this->assertStringContainsString('duplicati_rimossi:int', $docblock);
+    }
+
+    /**
+     * Strangler Fig — verifica che la regola pura
+     * {@see AssegnazioneFaseReparto::reparto()} (riusata dal modulo Reparti)
+     * mappi correttamente i codici Onda usati dentro OrdineSyncService::sync().
+     *
+     * Questo test è il "contratto cross-modulo": se domani qualcuno
+     * aggiunge una nuova fase Onda al codice di sync, qui forziamo a
+     * registrare anche il mapping nella regola pura — niente fasi
+     * "fantasma" che finiscono nel reparto sbagliato.
+     */
+    public function test_mapping_fase_reparto_via_regola_pura(): void
+    {
+        $cases = [
+            'STAMPAXL106'      => CodiceReparto::STAMPA_OFFSET,
+            'STAMPAXL106.3'    => CodiceReparto::STAMPA_OFFSET,
+            'STAMPAINDIGO'     => CodiceReparto::DIGITALE,
+            'STAMPAINDIGOBN'   => CodiceReparto::DIGITALE,
+            'STAMPACALDOJOH'   => CodiceReparto::STAMPA_A_CALDO,
+            'PI01'             => CodiceReparto::PIEGAINCOLLA,
+            'PI02'             => CodiceReparto::PIEGAINCOLLA,
+            'FUSTBOBST75X106'  => CodiceReparto::FUSTELLA,
+            'FUSTSTELG33.44'   => CodiceReparto::FUSTELLA,
+            'BRT1'             => CodiceReparto::SPEDIZIONE,
+            'PLAOPA1LATO'      => CodiceReparto::PLASTIFICAZIONE,
+            'TAGLIACARTE'      => CodiceReparto::LEGATORIA,
+            'EXTBROSSCOPEST'   => CodiceReparto::ESTERNO,   // prefisso EXT → esterno
+            'est STAMPACALDOJOH' => CodiceReparto::ESTERNO, // prefisso "est " → esterno
+        ];
+
+        foreach ($cases as $codiceFase => $atteso) {
+            $this->assertSame(
+                $atteso,
+                AssegnazioneFaseReparto::reparto($codiceFase),
+                "fase '{$codiceFase}' deve mappare su {$atteso->value}"
+            );
+        }
+    }
+
+    /**
+     * Strangler Fig — verifica che la mappa granulare di
+     * {@see RepartoService::mappaSlugToId()} (usata dentro la sync per
+     * la logica di dedup) tenga distinti gli pseudo-reparti
+     * "fustella piana" / "fustella cilindrica" / "tagliacarte" /
+     * "finitura digitale" — che la regola pura collassa sui canonici.
+     *
+     * Se qualcuno collassasse questi nomi sui canonici, le regole di dedup
+     * dentro OrdineSyncService::sync() non scatterebbero più (es. dedup
+     * "fustella cilindrica" per ordine/cod_art vs "fustella piana" per
+     * commessa: distinzione critica per non duplicare lavorazioni).
+     */
+    public function test_pseudo_reparti_granulari_preservati_per_dedup(): void
+    {
+        $svc = new RepartoService();
+        $mappa = $svc->mappaSlugToId();
+
+        // Pseudo-reparti distinti dai canonici — necessari per la dedup logic
+        $this->assertSame('fustella piana',     $mappa['FUSTBOBST75X106']);
+        $this->assertSame('fustella cilindrica', $mappa['FUSTSTELG33.44']);
+        $this->assertSame('tagliacarte',        $mappa['TAGLIACARTE']);
+        $this->assertSame('finitura digitale',  $mappa['UVSPOT.MGI.30M']);
+        $this->assertSame('finestratura',       $mappa['FIN01']);
+
+        // Tipo per max-2-fasi STAMPAXL106
+        $tipi = $svc->tipoFromCodice();
+        $this->assertSame('monofase', $tipi['STAMPAXL106']);
+        // multifase
+        $this->assertSame('multifase', $tipi['PI01']);
+        $this->assertSame('multifase', $tipi['accopp+fust']);
     }
 }
