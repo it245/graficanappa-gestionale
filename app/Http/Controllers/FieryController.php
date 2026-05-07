@@ -2,20 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Services\FieryService;
 use App\Http\Services\FierySyncService;
 use App\Models\ContatoreStampante;
 use App\Models\Ordine;
 use App\Models\OrdineFase;
+use App\Modules\Stampa\Adapters\FieryAdapter;
 use Illuminate\Http\Request;
 
 class FieryController extends Controller
 {
-    public function index(FieryService $fiery, FierySyncService $syncService)
+    public function index(FieryAdapter $stampa, FierySyncService $syncService)
     {
         set_time_limit(60);
 
-        $status = $fiery->getServerStatus();
+        $status = $stampa->fieryServerStatus();
 
         // Se Fiery offline, non tentare altre chiamate API (risparmia 15s+ di timeout)
         if (!$status) {
@@ -27,7 +27,7 @@ class FieryController extends Controller
         $status['commessa'] = $this->cercaCommessa($status['stampa']['documento'] ?? null);
 
         // Accounting solo da cache (popolata dal warm command), evita chiamata API pesante
-        $jobs = $fiery->getJobs();
+        $jobs = $stampa->fieryJobs();
         $accounting = \Cache::get('fiery_accounting_commesse') ?: \Cache::get('fiery_accounting_commesse_stale');
         $jobData = $this->organizzaJobs($jobs, $accounting);
 
@@ -37,11 +37,11 @@ class FieryController extends Controller
         return view('fiery.dashboard', compact('status', 'jobData', 'snmp'));
     }
 
-    public function statusJson(FieryService $fiery, FierySyncService $syncService)
+    public function statusJson(FieryAdapter $stampa, FierySyncService $syncService)
     {
         set_time_limit(60);
 
-        $status = $fiery->getServerStatus();
+        $status = $stampa->fieryServerStatus();
 
         if (!$status) {
             return response()->json([
@@ -54,7 +54,7 @@ class FieryController extends Controller
         $status['commessa'] = $this->cercaCommessa($status['stampa']['documento'] ?? null);
 
         // Accounting solo da cache (popolata dal warm command), evita chiamata API pesante ad ogni polling
-        $jobs = $fiery->getJobs();
+        $jobs = $stampa->fieryJobs();
         $accounting = \Cache::get('fiery_accounting_commesse') ?: \Cache::get('fiery_accounting_commesse_stale');
         $status['jobs'] = $this->organizzaJobs($jobs, $accounting);
         $status['snmp'] = \Cache::remember('fiery_snmp_live', 30, fn() => $this->leggiContatoriSnmp());
@@ -173,11 +173,11 @@ class FieryController extends Controller
     /**
      * Diagnostica sync
      */
-    public function debugSync(FieryService $fiery, FierySyncService $syncService)
+    public function debugSync(FieryAdapter $stampa, FierySyncService $syncService)
     {
         $debug = [];
 
-        $status = $fiery->getServerStatus();
+        $status = $stampa->fieryServerStatus();
         $debug['1_fiery_online'] = $status ? true : false;
         $debug['1_stato'] = $status['stato'] ?? 'N/A';
 
@@ -258,7 +258,7 @@ class FieryController extends Controller
     /**
      * Pagina contatori Canon iPR V900 — SNMP live + storico da DB
      */
-    public function contatori(Request $request, FieryService $fiery)
+    public function contatori(Request $request, FieryAdapter $stampa)
     {
         set_time_limit(60);
 
@@ -286,7 +286,7 @@ class FieryController extends Controller
     /**
      * Vista stampabile (HTML print-friendly) del solo report categorie.
      */
-    public function reportCategoriePdf(Request $request, FieryService $fiery)
+    public function reportCategoriePdf(Request $request, FieryAdapter $stampa)
     {
         set_time_limit(180);
         $da = $request->get('da', now()->subDays(30)->format('Y-m-d'));
@@ -515,45 +515,15 @@ class FieryController extends Controller
     }
 
     /**
-     * Click (fogli/pagine colore/BN) per commessa dal Fiery Accounting API, filtrati per data
+     * Click (fogli/pagine colore/BN) per commessa dal Fiery Accounting API, filtrati per data.
+     * I/O delegato al FieryAdapter (login + fetch + logout); qui resta solo il
+     * filtro per data e l'aggregazione per commessa (business logic).
      */
-    private function getClickPerCommessa(FieryService $fiery, string $da, string $a): array
+    private function getClickPerCommessa(FieryAdapter $stampa, string $da, string $a): array
     {
-        $host = config('fiery.host');
-        $baseUrl = 'https://' . $host;
-
         try {
-            $loginR = \Illuminate\Support\Facades\Http::withoutVerifying()->timeout(15)
-                ->post($baseUrl . '/live/api/v5/login', [
-                    'username' => config('fiery.username'),
-                    'password' => config('fiery.password'),
-                    'accessrights' => config('fiery.api_key'),
-                ]);
-
-            if (!$loginR->successful()) return [];
-
-            $cookies = [];
-            foreach ($loginR->cookies() as $cookie) {
-                $cookies[$cookie->getName()] = $cookie->getValue();
-            }
-
-            $r = \Illuminate\Support\Facades\Http::withoutVerifying()
-                ->timeout(60)
-                ->withCookies($cookies, $host)
-                ->get($baseUrl . '/live/api/v5/accounting');
-
-            // Logout
-            try {
-                \Illuminate\Support\Facades\Http::withoutVerifying()
-                    ->withCookies($cookies, $host)
-                    ->post($baseUrl . '/live/api/v5/logout');
-            } catch (\Exception $e) {}
-
-            if (!$r->successful()) return [];
-
-            $json = $r->json();
-            $items = $json['data']['items'] ?? $json;
-            if (!is_array($items)) return [];
+            $items = $stampa->fieryFetchAccountingRaw();
+            if (empty($items)) return [];
 
             $daTs = strtotime($da);
             $aTs = strtotime($a . ' 23:59:59');
@@ -566,7 +536,7 @@ class FieryController extends Controller
                 if (!$ts || $ts < $daTs || $ts > $aTs) continue;
 
                 $title = $entry['title'] ?? '';
-                $commessa = $fiery->estraiCommessaDaTitolo($title) ?: '__senza_commessa__';
+                $commessa = $stampa->fieryEstraiCommessaDaTitolo($title) ?: '__senza_commessa__';
 
                 $fogli = (int) ($entry['total sheets printed'] ?? 0);
                 $colore = (int) ($entry['total color pages printed'] ?? 0);

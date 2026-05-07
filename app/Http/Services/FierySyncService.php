@@ -7,17 +7,25 @@ use App\Constants\StatoFase;
 use App\Models\Ordine;
 use App\Models\OrdineFase;
 use App\Models\Operatore;
+use App\Modules\Stampa\Adapters\FieryAdapter;
 use App\Services\FaseStatoService;
 use Carbon\Carbon;
 
 class FierySyncService
 {
-    protected FieryService $fiery;
+    protected FieryAdapter $fiery;
 
     // Reparto digitale (mantenuto per backward-compat con codice esterno)
     const REPARTO_DIGITALE_ID = RepartoId::DIGITALE;
 
-    public function __construct(FieryService $fiery)
+    /**
+     * Strangler Fig: dipendiamo dall'adapter del modulo Stampa, non più
+     * dal FieryService concreto. L'adapter resta thin wrapper su
+     * FieryService — l'I/O HTTP non si è spostato — ma il sync service
+     * ora è testabile via mock dell'adapter e la business logic
+     * (snapshot+delta riapertura, auto-termina) è isolata dall'I/O.
+     */
+    public function __construct(FieryAdapter $fiery)
     {
         $this->fiery = $fiery;
     }
@@ -30,7 +38,7 @@ class FierySyncService
      */
     public function sincronizza(): ?array
     {
-        $status = $this->fiery->getServerStatus();
+        $status = $this->fiery->fieryServerStatus();
         if (!$status || !$status['online']) return null;
 
         $operatore = $this->getOperatoreFiery();
@@ -166,11 +174,11 @@ class FierySyncService
     protected function syncJobCompletati(Operatore $operatore, ?string $commessaInStampa = null): void
     {
         // Usa Accounting API per fogli totali storici (tutti i run aggregati)
-        $accounting = $this->fiery->getAccountingPerCommessa();
+        $accounting = $this->fiery->fieryAccountingPerCommessa();
 
         // Fallback: se accounting non disponibile, usa job list
         if (!$accounting) {
-            $jobs = $this->fiery->getJobs();
+            $jobs = $this->fiery->fieryJobs();
             if (!$jobs) return;
 
             $accounting = [];

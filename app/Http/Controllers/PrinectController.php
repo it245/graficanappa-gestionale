@@ -2,26 +2,26 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Services\PrinectService;
 use App\Http\Services\PrinectSyncService;
 use App\Models\PrinectAttivita;
+use App\Modules\Stampa\Adapters\PrinectAdapter;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
 class PrinectController extends Controller
 {
-    public function index(PrinectService $service, PrinectSyncService $syncService)
+    public function index(PrinectAdapter $stampa, PrinectSyncService $syncService)
     {
         $deviceId = env('PRINECT_DEVICE_XL106_ID', '4001');
 
-        // Dati live dalla macchina
-        $devices = $service->getDevices();
+        // Dati live dalla macchina (via adapter, non più service diretto)
+        $devices = $stampa->prinectDevices();
         $device = $devices['devices'][0] ?? null;
 
         // ===== ATTIVITA OGGI: LIVE DALLA API PRINECT (non dal DB) =====
         $oggi = Carbon::today()->format('Y-m-d\TH:i:sP');
         $ora = Carbon::now()->format('Y-m-d\TH:i:sP');
-        $apiOggi = $service->getDeviceActivity($deviceId, $oggi, $ora);
+        $apiOggi = $stampa->prinectDeviceActivity($deviceId, $oggi, $ora);
         $rawOggiArray = collect($apiOggi['activities'] ?? [])
             ->filter(fn($a) => !empty($a['id']))
             ->values()
@@ -53,7 +53,7 @@ class PrinectController extends Controller
 
         // ===== ATTIVITA 7GG: LIVE DALLA API PRINECT =====
         $start7gg = Carbon::now()->subDays(7)->format('Y-m-d\TH:i:sP');
-        $api7gg = $service->getDeviceActivity($deviceId, $start7gg, $ora);
+        $api7gg = $stampa->prinectDeviceActivity($deviceId, $start7gg, $ora);
         $raw7gg = collect($api7gg['activities'] ?? [])
             ->filter(fn($a) => !empty($a['id']));
 
@@ -151,7 +151,7 @@ class PrinectController extends Controller
             })->sortByDesc('buoni')->take(10);
 
         // Consumption (lastre)
-        $consumption = $service->getDeviceConsumption($deviceId, $start7gg, $ora);
+        $consumption = $stampa->prinectDeviceConsumption($deviceId, $start7gg, $ora);
         $cambiLastra = $consumption['plateChanges'] ?? 0;
 
         // Media lastre per commessa
@@ -256,9 +256,9 @@ class PrinectController extends Controller
     /**
      * AJAX: stato macchina live (auto-refresh)
      */
-    public function apiStatus(PrinectService $service)
+    public function apiStatus(PrinectAdapter $stampa)
     {
-        $devices = $service->getDevices();
+        $devices = $stampa->prinectDevices();
         $device = $devices['devices'][0] ?? null;
 
         if (!$device) {
@@ -335,7 +335,7 @@ class PrinectController extends Controller
     /**
      * Report commessa con KPI e grafici
      */
-    public function reportCommessa($commessa, PrinectService $service)
+    public function reportCommessa($commessa, PrinectAdapter $stampa)
     {
         $attivita = PrinectAttivita::where('commessa_gestionale', $commessa)
             ->orderBy('start_time')
@@ -359,7 +359,7 @@ class PrinectController extends Controller
         $jobIdNum = PrinectSyncService::estraiJobIdNumerico($jobId);
         if ($jobIdNum) {
             try {
-                $wsData = $service->getJobWorksteps($jobIdNum);
+                $wsData = $stampa->prinectJobWorksteps($jobIdNum);
                 $worksteps = collect($wsData['worksteps'] ?? [])
                     ->filter(fn($ws) => in_array('ConventionalPrinting', $ws['types'] ?? []))
                     ->filter(fn($ws) => in_array($ws['status'] ?? '', ['COMPLETED', 'RUNNING']));
@@ -506,12 +506,12 @@ class PrinectController extends Controller
     /**
      * Lista job recenti con progresso e milestones decodificate
      */
-    public function jobs(PrinectService $service)
+    public function jobs(PrinectAdapter $stampa)
     {
         // Cache risposta API Prinect per 5 minuti
-        $cached = cache()->remember('prinect_jobs_list', 300, function () use ($service) {
-            $data = $service->getJobs();
-            $milestoneData = $service->getMilestones();
+        $cached = cache()->remember('prinect_jobs_list', 300, function () use ($stampa) {
+            $data = $stampa->prinectJobs();
+            $milestoneData = $stampa->prinectMilestones();
             return ['jobs' => $data['jobs'] ?? [], 'milestones' => $milestoneData['milestoneDefs'] ?? []];
         });
 
@@ -534,22 +534,22 @@ class PrinectController extends Controller
     /**
      * Dettaglio job completo: info live, worksteps, preview, elementi, ink
      */
-    public function jobDetail(PrinectService $service, $jobId)
+    public function jobDetail(PrinectAdapter $stampa, $jobId)
     {
         // Dettaglio job con creationDate, author, description
-        $jobData = $service->getJob($jobId);
+        $jobData = $stampa->prinectJob($jobId);
         $job = $jobData['job'] ?? null;
 
         // Worksteps
-        $wsData = $service->getJobWorksteps($jobId);
+        $wsData = $stampa->prinectJobWorksteps($jobId);
         $worksteps = $wsData['worksteps'] ?? [];
 
         // Elementi: fogli, pagine, lastre
-        $elemData = $service->getJobElements($jobId);
+        $elemData = $stampa->prinectJobElements($jobId);
         $elements = $elemData['elements'] ?? [];
 
         // Milestones decodificate
-        $milestoneData = $service->getMilestones();
+        $milestoneData = $stampa->prinectMilestones();
         $milestoneMap = [];
         foreach (($milestoneData['milestoneDefs'] ?? []) as $m) {
             $milestoneMap[$m['id']] = $m['name'];
@@ -561,12 +561,12 @@ class PrinectController extends Controller
             $ws['ink'] = null;
             $ws['quality'] = null;
             if (isset($ws['types']) && in_array('ConventionalPrinting', $ws['types'])) {
-                $ink = $service->getWorkstepInkConsumption($jobId, $ws['id']);
+                $ink = $stampa->prinectWorkstepInkConsumption($jobId, $ws['id']);
                 $ws['ink'] = $ink;
 
                 // Preview solo per il primo workstep di stampa
                 if (!$preview) {
-                    $prevData = $service->getWorkstepPreview($jobId, $ws['id']);
+                    $prevData = $stampa->prinectWorkstepPreview($jobId, $ws['id']);
                     $previews = $prevData['previews'] ?? [];
                     if (!empty($previews)) {
                         $preview = $previews[0];
@@ -574,7 +574,7 @@ class PrinectController extends Controller
                 }
 
                 // Quality measurements
-                $qualData = $service->getWorkstepQuality($jobId, $ws['id']);
+                $qualData = $stampa->prinectWorkstepQuality($jobId, $ws['id']);
                 $measurements = $qualData['quality']['printQuality']['colorMeasurements'] ?? [];
                 if (!empty($measurements)) {
                     $ws['quality'] = $measurements;

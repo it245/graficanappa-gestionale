@@ -14,6 +14,12 @@ use Throwable;
  *
  * Pattern: Adapter (GoF) — traduce le chiamate del dominio Stampa
  * verso i metodi specifici di PrinectService (Heidelberg XL106).
+ *
+ * Strangler Fig: i Controller HTTP NON parlano più direttamente con
+ * PrinectService ma passano da qui. I metodi `prinect*()` espongono
+ * funzionalità Prinect-specifiche (worksteps, ink consumption, ecc.)
+ * che non hanno controparte nel mondo Fiery — restano fuori dal
+ * contratto comune ma usano comunque l'adapter come dependency point.
  */
 final class PrinectAdapter implements StampaIntegrationInterface
 {
@@ -131,5 +137,73 @@ final class PrinectAdapter implements StampaIntegrationInterface
         } catch (Throwable $e) {
             return false;
         }
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Prinect-specific passthrough
+    |--------------------------------------------------------------------------
+    | Metodi non comuni a Fiery: device telemetry XL106, worksteps con ink
+    | consumption / quality / preview. Restano sull'adapter (non sul
+    | contratto) per mantenere il dominio Stampa pulito.
+    |
+    | Sono thin wrappers su PrinectService — l'I/O HTTP resta lì, ma il
+    | controller dipende dall'adapter (testabile via mock) anziché dal
+    | service concreto.
+    */
+
+    public function prinectDevices(): ?array
+    {
+        return $this->prinect->getDevices();
+    }
+
+    public function prinectDeviceActivity(string $deviceId, ?string $start = null, ?string $end = null): ?array
+    {
+        return $this->prinect->getDeviceActivity($deviceId, $start, $end);
+    }
+
+    public function prinectDeviceConsumption(string $deviceId, ?string $start = null, ?string $end = null): ?array
+    {
+        return $this->prinect->getDeviceConsumption($deviceId, $start, $end);
+    }
+
+    public function prinectJobs($modifiedSince = null, $globalStatus = null): ?array
+    {
+        return $this->prinect->getJobs($modifiedSince, $globalStatus);
+    }
+
+    public function prinectJob($jobId): ?array
+    {
+        return $this->prinect->getJob($jobId);
+    }
+
+    public function prinectJobWorksteps($jobId): ?array
+    {
+        return $this->prinect->getJobWorksteps($jobId);
+    }
+
+    public function prinectJobElements($jobId, string $query = 'ALL'): ?array
+    {
+        return $this->prinect->getJobElements($jobId, $query);
+    }
+
+    public function prinectWorkstepInkConsumption($jobId, $workstepId): ?array
+    {
+        return $this->prinect->getWorkstepInkConsumption($jobId, $workstepId);
+    }
+
+    public function prinectWorkstepPreview($jobId, $workstepId): ?array
+    {
+        return $this->prinect->getWorkstepPreview($jobId, $workstepId);
+    }
+
+    public function prinectWorkstepQuality($jobId, $workstepId): ?array
+    {
+        return $this->prinect->getWorkstepQuality($jobId, $workstepId);
+    }
+
+    public function prinectMilestones(): ?array
+    {
+        return $this->prinect->getMilestones();
     }
 }
