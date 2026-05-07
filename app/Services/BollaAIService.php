@@ -14,8 +14,8 @@ class BollaAIService
 {
     public static function analizzaBolla(string $imagePath): array
     {
-        $apiKey = env('ANTHROPIC_API_KEY');
-        if (!$apiKey) {
+        $client = new ClaudeApiClient();
+        if (!$client->isConfigured()) {
             Log::error('ANTHROPIC_API_KEY non configurata');
             return ['ok' => false, 'error' => 'API key mancante'];
         }
@@ -59,7 +59,6 @@ Se la foto non è una bolla leggibile, ritorna {"ok": false, "motivo": "spiegazi
 Non inventare valori. Se un campo non è leggibile, usa null. Sii preciso sui numeri (rispetta punti e virgole italiani).
 PROMPT;
 
-        $client = new ClaudeApiClient($apiKey);
         $result = $client->sendVisionMessage($imagePath, $prompt, 1500, 60);
 
         if (!$result['ok']) {
@@ -86,6 +85,12 @@ PROMPT;
         $parsed['ok'] = true;
         $parsed['_usage'] = $result['usage'] ?? null;
         $parsed['_model'] = $result['model'] ?? null;
+
+        Log::info('Bolla analizzata', [
+            'fornitore' => $parsed['fornitore'] ?? null,
+            'numero_ddt' => $parsed['numero_ddt'] ?? null,
+            'righe' => count($parsed['righe'] ?? []),
+        ]);
 
         return $parsed;
     }

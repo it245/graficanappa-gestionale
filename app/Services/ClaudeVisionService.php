@@ -23,18 +23,13 @@ class ClaudeVisionService
      */
     public static function estraiBolla(string $imagePath): array
     {
-        $apiKey = env('ANTHROPIC_API_KEY');
-        if (!$apiKey) {
+        $client = new ClaudeApiClient();
+        if (!$client->isConfigured()) {
             throw new \Exception('ANTHROPIC_API_KEY non configurata');
         }
 
         if (!file_exists($imagePath)) {
             throw new \Exception("File immagine non trovato: {$imagePath}");
-        }
-
-        $mediaType = mime_content_type($imagePath);
-        if (!in_array($mediaType, ['image/jpeg', 'image/png', 'image/webp', 'image/gif'])) {
-            throw new \Exception("Formato immagine non supportato: {$mediaType}");
         }
 
         $prompt = <<<PROMPT
@@ -63,7 +58,6 @@ REGOLE:
 - Se la foto non è una bolla valida, ritorna JSON con fornitore: "" e note: "foto non riconosciuta come bolla"
 PROMPT;
 
-        $client = new ClaudeApiClient($apiKey);
         $result = $client->sendVisionMessage($imagePath, $prompt, self::DEFAULT_MAX_TOKENS, 60);
 
         if (!$result['ok']) {
