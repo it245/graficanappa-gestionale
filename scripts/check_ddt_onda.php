@@ -16,11 +16,13 @@ if (!$ddt) {
 }
 $ddtNum = ltrim($ddt, '0');
 
-echo "=== TESTA ATTDocTeste per DDT $ddt ===\n";
+echo "=== TESTA ATTDocTeste per DDT $ddt (filtro anno 2024+) ===\n";
 $teste = DB::connection('onda')->select("
     SELECT IdDoc, TipoDocumento, NumeroDocumento, DataDocumento, IdAnagrafica
     FROM ATTDocTeste
-    WHERE NumeroDocumento = ? OR NumeroDocumento = ?
+    WHERE (NumeroDocumento = ? OR NumeroDocumento = ?)
+      AND DataDocumento >= '2024-01-01'
+    ORDER BY DataDocumento DESC
 ", [$ddtNum, $ddt]);
 
 if (empty($teste)) {
@@ -38,11 +40,7 @@ if (empty($teste)) {
 }
 
 foreach ($teste as $t) {
-    echo "  IdDoc={$t->IdDoc} | Tipo={$t->TipoDocumento} | Num={$t->NumeroDocumento} | Data={$t->DataDocumento}\n";
-
-    // Anagrafica cliente
-    $anag = DB::connection('onda')->select("SELECT TOP 1 RagioneSociale FROM Anagrafica WHERE IdAnagrafica = ?", [$t->IdAnagrafica]);
-    if ($anag) echo "    Cliente: {$anag[0]->RagioneSociale}\n";
+    echo "  IdDoc={$t->IdDoc} | Tipo={$t->TipoDocumento} | Num={$t->NumeroDocumento} | Data={$t->DataDocumento} | IdAnag={$t->IdAnagrafica}\n";
 
     // Righe DDT
     echo "\n  === RIGHE ATTDocRighe (IdDoc {$t->IdDoc}) ===\n";
