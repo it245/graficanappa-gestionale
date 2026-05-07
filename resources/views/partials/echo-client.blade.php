@@ -45,3 +45,16 @@ window.listenOrPoll = function(channelName, eventName, callback, pollFn, pollInt
     }, 5000);
 };
 </script>
+@else
+<script>
+// Reverb non attivo: stub per evitare errori JS sui chiamanti
+window.Echo = null;
+window.echoConnected = false;
+window.listenOrPoll = function(channelName, eventName, callback, pollFn, pollInterval) {
+    if (pollFn) {
+        setInterval(pollFn, pollInterval || 15000);
+        pollFn();
+    }
+};
+</script>
+@endif
