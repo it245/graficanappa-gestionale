@@ -1608,9 +1608,9 @@ class OndaSyncService
     {
         $aggiornati = 0;
 
-        // CodCommessa è nelle RIGHE della DDT, non nella testa
+        // CodCommessa + CodArt nelle RIGHE: GROUP BY anche cod_art per distinguere articoli stessa commessa
         $righeDDT = DB::connection('onda')->select("
-            SELECT t.IdDoc, r.CodCommessa, t.DataDocumento, t.NumeroDocumento,
+            SELECT t.IdDoc, r.CodCommessa, r.CodArt, t.DataDocumento, t.NumeroDocumento,
                    a.RagioneSociale AS Cliente,
                    v.RagioneSociale AS Vettore,
                    SUM(r.Qta) AS QtaDDT
@@ -1623,7 +1623,7 @@ class OndaSyncService
               AND t.DataRegistrazione >= DATEADD(day, -7, GETDATE())
               AND r.CodCommessa IS NOT NULL AND r.CodCommessa != ''
               AND r.TipoRiga = 1
-            GROUP BY t.IdDoc, r.CodCommessa, t.DataDocumento, t.NumeroDocumento, a.RagioneSociale, v.RagioneSociale
+            GROUP BY t.IdDoc, r.CodCommessa, r.CodArt, t.DataDocumento, t.NumeroDocumento, a.RagioneSociale, v.RagioneSociale
         ");
 
         if (empty($righeDDT)) {
@@ -1641,9 +1641,16 @@ class OndaSyncService
             $numeroDDT = trim($riga->NumeroDocumento ?? '');
             $vettore = trim($riga->Vettore ?? '');
             $cliente = trim($riga->Cliente ?? '');
+            $codArt = trim($riga->CodArt ?? '');
 
-            // Cerca ordine con match diretto
-            $ordine = Ordine::where('commessa', $codCommessa)->first();
+            // Match per commessa + cod_art (ordini diversi stessa commessa = articoli distinti)
+            // Fallback al primo ordine se cod_art non match (compatibilita' DDT vecchi)
+            $ordine = Ordine::where('commessa', $codCommessa)
+                ->where('cod_art', $codArt)
+                ->first();
+            if (!$ordine) {
+                $ordine = Ordine::where('commessa', $codCommessa)->first();
+            }
 
             // Salva nella tabella ddt_spedizioni (supporta più DDT per commessa)
             $ddtNuovo = false;
@@ -1663,8 +1670,9 @@ class OndaSyncService
                 if (!$esistente) $ddtNuovo = true;
             }
 
-            // Aggiorna anche il campo legacy sull'ordine (primo DDT trovato)
-            if ($ordine && !$ordine->ddt_vendita_id) {
+            // Aggiorna campo legacy sull'ordine (sempre, non solo prima volta)
+            // Cosi' ordini con cod_art diverso ricevono qta_ddt_vendita corretta
+            if ($ordine) {
                 $ordine->update([
                     'ddt_vendita_id'      => $idDoc,
                     'numero_ddt_vendita'  => $numeroDDT,
