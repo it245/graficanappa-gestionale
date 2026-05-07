@@ -1330,6 +1330,9 @@ tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !imp
 </div>
 
 <!-- Modal Storico Consegne -->
+<style>
+.desc-storico-cell.expanded { white-space: normal !important; word-break: break-word; background:#fff8dc; }
+</style>
 <div class="modal fade" id="modalStorico" tabindex="-1">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
@@ -1367,7 +1370,7 @@ tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !imp
                             <td><strong style="color:#0d6efd;">{{ $faseStorico->ordine->commessa ?? '-' }}</strong></td>
                             <td>{{ $faseStorico->ordine->cliente_nome ?? '-' }}</td>
                             <td><small class="text-muted">{{ $faseStorico->ordine->cod_art ?? '-' }}</small></td>
-                            <td title="{{ $faseStorico->ordine->descrizione ?? '' }}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ $faseStorico->ordine->descrizione ?? '-' }}</td>
+                            <td class="desc-storico-cell" title="Click per espandere" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; cursor:pointer;" onclick="this.classList.toggle('expanded')">{{ $faseStorico->ordine->descrizione ?? '-' }}</td>
                             <td class="text-end fw-bold">{{ $faseStorico->ordine->qta_richiesta ? number_format($faseStorico->ordine->qta_richiesta, 0, ',', '.') : '-' }}</td>
                             <td class="text-center">
                                 @if($faseStorico->tipo_consegna === 'parziale')
@@ -1498,21 +1501,21 @@ function closeSidebar() {
 document.getElementById('filtro-storico')?.addEventListener('input', function() {
     var q = this.value.toLowerCase().trim();
     var modal = document.getElementById('modalStorico');
-    var sezioni = modal.querySelectorAll('h6.mt-3');
-    sezioni.forEach(function(h6) {
-        var table = h6.nextElementSibling;
-        while (table && table.tagName !== 'TABLE') table = table.nextElementSibling;
+    var sezioni = modal.querySelectorAll('.mb-4');
+    sezioni.forEach(function(sez) {
+        var table = sez.querySelector('table');
         if (!table) return;
         var righe = table.querySelectorAll('tbody tr');
         var visibili = 0;
         righe.forEach(function(tr) {
             var testo = tr.textContent.toLowerCase();
+            var titoli = (tr.querySelectorAll('td[title]') || []);
+            titoli.forEach(function(td) { testo += ' ' + (td.getAttribute('title') || '').toLowerCase(); });
             var match = !q || testo.includes(q);
             tr.style.display = match ? '' : 'none';
             if (match) visibili++;
         });
-        h6.style.display = visibili > 0 ? '' : 'none';
-        table.style.display = visibili > 0 ? '' : 'none';
+        sez.style.display = visibili > 0 ? '' : 'none';
     });
 });
 // Sidebar ora è nel layout MES (mes.blade.php)
