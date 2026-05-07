@@ -1,6 +1,6 @@
 <?php
 /**
- * Query Onda SQL Server: righe DDT vendita con cod_art reale.
+ * Query Onda SQL Server: trova righe DDT vendita reali.
  * Uso: php scripts\check_ddt_onda.php 0001177
  */
 require __DIR__ . '/../vendor/autoload.php';
@@ -9,83 +9,67 @@ $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
 use Illuminate\Support\Facades\DB;
 
-$ddt = $argv[1] ?? null;
-if (!$ddt) {
-    echo "Uso: php scripts\\check_ddt_onda.php <numero_ddt>\n";
-    exit(1);
+$ddt = $argv[1] ?? '0001177';
+$ddtNum = ltrim($ddt, '0');
+
+echo "Query Onda DB per DDT $ddt (numerico: $ddtNum)\n\n";
+
+// 1. View export comoda (se esiste)
+echo "=== View ATTViewExportDDTEmessiFornitore (cerca per num documento) ===\n";
+try {
+    $cols = DB::connection('onda')->select("
+        SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_NAME = 'ATTViewExportDDTEmessiFornitore'
+        ORDER BY ORDINAL_POSITION
+    ");
+    echo "Colonne: " . count($cols) . "\n";
+    foreach ($cols as $c) echo "  - {$c->COLUMN_NAME}\n";
+} catch (\Throwable $e) {
+    echo "Errore: " . $e->getMessage() . "\n";
 }
 
-echo "Query Onda DB per DDT $ddt...\n\n";
-
-// Cerco struttura tabelle DDT in Onda
+// 2. Trova tutte tabelle ATT* (DDT/Bolle vendita Onda)
+echo "\n=== Tutte tabelle ATT* in Onda ===\n";
 try {
     $tabelle = DB::connection('onda')->select("
-        SELECT TABLE_NAME
-        FROM INFORMATION_SCHEMA.TABLES
-        WHERE TABLE_NAME LIKE '%DDT%' OR TABLE_NAME LIKE '%ATT%Vendita%' OR TABLE_NAME LIKE '%ATTVe%'
+        SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES
+        WHERE TABLE_TYPE = 'BASE TABLE' AND (TABLE_NAME LIKE 'ATT%' OR TABLE_NAME LIKE 'OC_%DDT%')
         ORDER BY TABLE_NAME
     ");
-    echo "Tabelle DDT/ATT trovate in Onda:\n";
-    foreach ($tabelle as $t) echo "  - " . $t->TABLE_NAME . "\n";
-    echo "\n";
+    foreach ($tabelle as $t) echo "  - {$t->TABLE_NAME}\n";
 } catch (\Throwable $e) {
-    echo "Errore connessione Onda: " . $e->getMessage() . "\n";
-    exit(1);
+    echo "Errore: " . $e->getMessage() . "\n";
 }
 
-// Tentativo standard Onda: ATTVeTeste + ATTVeRighe (DDT vendita)
-$ddtNum = ltrim($ddt, '0');
-$candidates = [
-    ['teste' => 'ATTVeTeste', 'righe' => 'ATTVeRighe', 'col_doc' => 'ATTVe_NumDocumento'],
-    ['teste' => 'DDTVeTeste', 'righe' => 'DDTVeRighe', 'col_doc' => 'DDTVe_NumDocumento'],
-];
+// 3. Cerca colonne con "NumDoc" + "Vendita" o "DDT"
+echo "\n=== Colonne con NumDoc/NumDocumento in tabelle ATT/DDT ===\n";
+try {
+    $cols = DB::connection('onda')->select("
+        SELECT TABLE_NAME, COLUMN_NAME
+        FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE (TABLE_NAME LIKE 'ATT%' OR TABLE_NAME LIKE 'OC_%')
+          AND (COLUMN_NAME LIKE '%NumDoc%' OR COLUMN_NAME LIKE '%Numero%')
+        ORDER BY TABLE_NAME
+    ");
+    foreach ($cols as $c) echo "  - {$c->TABLE_NAME}.{$c->COLUMN_NAME}\n";
+} catch (\Throwable $e) {
+    echo "Errore: " . $e->getMessage() . "\n";
+}
 
-foreach ($candidates as $c) {
-    try {
-        $teste = DB::connection('onda')->select("
-            SELECT TOP 5 * FROM {$c['teste']} WHERE {$c['col_doc']} = ? OR {$c['col_doc']} LIKE ?
-        ", [$ddtNum, '%' . $ddtNum]);
-
-        if (count($teste) === 0) continue;
-
-        echo "=== TESTA DDT (tabella {$c['teste']}) ===\n";
-        foreach ($teste as $t) {
-            $arr = (array) $t;
-            $idDoc = $arr['ATTVe_IdDocumento'] ?? $arr['DDTVe_IdDocumento'] ?? null;
-            $cliente = $arr['ATTVe_RagioneSociale'] ?? $arr['ATTVe_DescAnagrafica'] ?? '-';
-            $data = $arr['ATTVe_Data'] ?? '-';
-            echo "  IdDoc: $idDoc | Num: $ddtNum | Data: $data | Cliente: $cliente\n";
-
-            if ($idDoc) {
-                $righe = DB::connection('onda')->select("
-                    SELECT * FROM {$c['righe']} WHERE ATTVe_IdDocumento = ? OR DDTVe_IdDocumento = ?
-                ", [$idDoc, $idDoc]);
-
-                echo "  Righe: " . count($righe) . "\n";
-                foreach ($righe as $r) {
-                    $ar = (array) $r;
-                    $cod = $ar['ATTVe_CodiceArt'] ?? $ar['ATTVe_CodArt'] ?? '?';
-                    $desc = mb_substr($ar['ATTVe_Descrizione'] ?? '-', 0, 70);
-                    $qta = $ar['ATTVe_Quantita'] ?? $ar['ATTVe_Qta'] ?? 0;
-                    $um = $ar['ATTVe_UM'] ?? '';
-                    echo sprintf("    - cod=%s | qta=%s %s | desc=%s\n", $cod, $qta, $um, $desc);
-                }
-            }
-        }
-        exit(0);
-    } catch (\Throwable $e) {
-        // Tabella non esiste, prova prossima
-        continue;
+// 4. Trova OC_CreazioneAutomaticaDDT (ha DDT nel nome)
+echo "\n=== Schema OC_CreazioneAutomaticaDDT ===\n";
+try {
+    $cols = DB::connection('onda')->select("
+        SELECT COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_NAME = 'OC_CreazioneAutomaticaDDT'
+        ORDER BY ORDINAL_POSITION
+    ");
+    foreach ($cols as $c) echo "  - {$c->COLUMN_NAME} ({$c->DATA_TYPE})\n";
+    echo "\nRow sample (max 3):\n";
+    $rows = DB::connection('onda')->select("SELECT TOP 3 * FROM OC_CreazioneAutomaticaDDT WHERE 1=1");
+    foreach ($rows as $r) {
+        print_r($r);
     }
-}
-
-echo "Nessuna tabella DDT match. Mostro schema candidato (TOP 5 colonne ATTVe%)...\n";
-$cols = DB::connection('onda')->select("
-    SELECT TOP 30 TABLE_NAME, COLUMN_NAME
-    FROM INFORMATION_SCHEMA.COLUMNS
-    WHERE TABLE_NAME LIKE 'ATTVe%' OR TABLE_NAME LIKE 'DDTVe%'
-    ORDER BY TABLE_NAME, ORDINAL_POSITION
-");
-foreach ($cols as $c) {
-    echo "  {$c->TABLE_NAME}.{$c->COLUMN_NAME}\n";
+} catch (\Throwable $e) {
+    echo "Errore: " . $e->getMessage() . "\n";
 }
