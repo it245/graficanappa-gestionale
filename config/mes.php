@@ -46,4 +46,17 @@ return [
         'cambio_setup_bobst_h' => 1.0,
         'cambio_setup_piegaincolla_h' => 1.0,
     ],
+
+    /*
+     |--------------------------------------------------------------------------
+     | Audit — sink di persistenza
+     |--------------------------------------------------------------------------
+     | FQCN dell'adapter che implementa AuditSinkInterface.
+     | Valori: App\Modules\Audit\Adapters\DatabaseAuditSink (default)
+     |         App\Modules\Audit\Adapters\FileAuditSink     (JSONL append)
+     |         App\Modules\Audit\Adapters\NullAuditSink     (no-op test)
+     */
+    'audit' => [
+        'sink' => env('MES_AUDIT_SINK', \App\Modules\Audit\Adapters\DatabaseAuditSink::class),
+    ],
 ];

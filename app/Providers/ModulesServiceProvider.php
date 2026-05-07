@@ -40,6 +40,10 @@ use App\Modules\Prinect\Adapters\PrinectHttpAdapter;
 use App\Modules\Presenze\Contracts\TimbratureSourceInterface;
 use App\Modules\Presenze\Adapters\NetTimeShareAdapter;
 
+// Audit
+use App\Modules\Audit\Contracts\AuditSinkInterface;
+use App\Modules\Audit\Adapters\DatabaseAuditSink;
+
 /**
  * ModulesServiceProvider
  *
@@ -67,16 +71,28 @@ final class ModulesServiceProvider extends ServiceProvider
     private const LISTEN = [
         \App\Modules\Fasi\Events\FaseAvviata::class => [
             \App\Modules\Fasi\Listeners\TracciaInizioFaseListener::class,
+            \App\Modules\Audit\Listeners\LogFaseAvviata::class,
         ],
         \App\Modules\Fasi\Events\FaseTerminata::class => [
             \App\Modules\Fasi\Listeners\PropagaFasiSuccessiveListener::class,
             \App\Modules\Fasi\Listeners\NotificaCommessaCompletataListener::class,
+            \App\Modules\Audit\Listeners\LogFaseTerminata::class,
         ],
         \App\Modules\Magazzino\Events\SottoSogliaEvento::class => [
             \App\Modules\Magazzino\Listeners\NotificaSottoSogliaListener::class,
+            \App\Modules\Audit\Listeners\LogMovimentoMagazzino::class,
         ],
         \App\Modules\Spedizione\Events\SpedizioneInRitardo::class => [
             \App\Modules\Spedizione\Listeners\NotificaSpedizioneInRitardoListener::class,
+        ],
+        \App\Modules\Commessa\Events\CommessaCompletata::class => [
+            \App\Modules\Audit\Listeners\LogCommessaCompletata::class,
+        ],
+        \Illuminate\Auth\Events\Login::class => [
+            \App\Modules\Audit\Listeners\LogLoginRiuscito::class,
+        ],
+        \Illuminate\Auth\Events\Failed::class => [
+            \App\Modules\Audit\Listeners\LogLoginFallito::class,
         ],
     ];
 
@@ -212,6 +228,19 @@ final class ModulesServiceProvider extends ServiceProvider
          | toccare i Service del modulo (PresenzeService, CalcoloOreService).
          */
         $this->app->bind(TimbratureSourceInterface::class, NetTimeShareAdapter::class);
+
+        /*
+         | Audit — AuditSinkInterface
+         |
+         | Backend di persistenza dei log di audit. Default = DatabaseAuditSink
+         | (tabella `audit_logs`). Override via env MES_AUDIT_SINK con FQCN
+         | dell'adapter alternativo (FileAuditSink per debug, NullAuditSink per
+         | test). Il sink è risolto lazily: niente DB hit nel register().
+         */
+        $this->app->bind(AuditSinkInterface::class, function (Application $app) {
+            $fqcn = (string) config('mes.audit.sink', DatabaseAuditSink::class);
+            return $app->make($fqcn);
+        });
     }
 
     /**
