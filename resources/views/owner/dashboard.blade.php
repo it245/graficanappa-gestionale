@@ -1333,61 +1333,66 @@ tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !imp
 <div class="modal fade" id="modalStorico" tabindex="-1">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
-            <div class="modal-header" style="background:#6c757d; color:#fff;">
-                <h5 class="modal-title">Storico consegne (ultimi 30 giorni)</h5>
+            <div class="modal-header" style="background:linear-gradient(135deg,#0d6efd 0%,#0a58ca 100%); color:#fff;">
+                <h5 class="modal-title">📦 Storico Consegne <small style="opacity:0.85; font-weight:400;">— ultimi 30 giorni</small></h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body" style="overflow-x:auto;">
+            <div class="modal-body" style="background:#f8f9fa;">
                 <div class="mb-3">
-                    <input type="text" id="filtro-storico" class="form-control" placeholder="Cerca per commessa, cliente, descrizione..." autocomplete="off">
+                    <input type="text" id="filtro-storico" class="form-control form-control-lg" placeholder="🔍 Cerca per commessa, cliente, descrizione..." autocomplete="off" style="border-radius:8px;">
                 </div>
                 @if($storicoConsegne->count() > 0)
                 @foreach($storicoConsegne->groupBy(fn($f) => \Carbon\Carbon::parse($f->data_fine)->format('Y-m-d')) as $dataStorico => $fasiGiorno)
-                <h6 class="mt-3 mb-2 fw-bold" style="color:#333;">
-                    {{ \Carbon\Carbon::parse($dataStorico)->format('d/m/Y') }}
-                    <span class="badge bg-secondary ms-1">{{ $fasiGiorno->count() }}</span>
-                </h6>
-                <table class="table table-bordered table-sm mb-3" style="white-space:nowrap;">
-                    <thead class="table-light">
+                <div class="mb-4" style="background:#fff; border-radius:10px; padding:14px; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+                <div class="d-flex align-items-center mb-3" style="border-bottom:2px solid #0d6efd; padding-bottom:8px;">
+                    <span style="font-size:18px; font-weight:700; color:#0d6efd;">{{ \Carbon\Carbon::parse($dataStorico)->translatedFormat('l d/m/Y') }}</span>
+                    <span class="badge ms-2" style="background:#0d6efd; font-size:13px;">{{ $fasiGiorno->count() }} consegne</span>
+                </div>
+                <table class="table table-hover table-sm mb-0" style="font-size:13px;">
+                    <thead style="background:#e9ecef;">
                         <tr>
-                            <th>Commessa</th>
+                            <th style="width:110px;">Commessa</th>
                             <th>Cliente</th>
-                            <th>Cod. Articolo</th>
+                            <th>Articolo</th>
                             <th>Descrizione</th>
-                            <th>Qta</th>
-                            <th>Tipo</th>
-                            <th>Ora</th>
+                            <th class="text-end" style="width:80px;">Qta</th>
+                            <th class="text-center" style="width:90px;">Tipo</th>
+                            <th class="text-center" style="width:60px;">Ora</th>
                             <th>Operatore</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach($fasiGiorno as $faseStorico)
                         <tr>
-                            <td><strong>{{ $faseStorico->ordine->commessa ?? '-' }}</strong></td>
+                            <td><strong style="color:#0d6efd;">{{ $faseStorico->ordine->commessa ?? '-' }}</strong></td>
                             <td>{{ $faseStorico->ordine->cliente_nome ?? '-' }}</td>
-                            <td>{{ $faseStorico->ordine->cod_art ?? '-' }}</td>
-                            <td>{{ $faseStorico->ordine->descrizione ?? '-' }}</td>
-                            <td>{{ $faseStorico->ordine->qta_richiesta ?? '-' }}</td>
-                            <td>
+                            <td><small class="text-muted">{{ $faseStorico->ordine->cod_art ?? '-' }}</small></td>
+                            <td title="{{ $faseStorico->ordine->descrizione ?? '' }}" style="max-width:280px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ \Illuminate\Support\Str::limit($faseStorico->ordine->descrizione ?? '-', 60) }}</td>
+                            <td class="text-end fw-bold">{{ $faseStorico->ordine->qta_richiesta ? number_format($faseStorico->ordine->qta_richiesta, 0, ',', '.') : '-' }}</td>
+                            <td class="text-center">
                                 @if($faseStorico->tipo_consegna === 'parziale')
                                     <span class="badge bg-warning text-dark">Parziale</span>
                                 @else
                                     <span class="badge bg-success">Totale</span>
                                 @endif
                             </td>
-                            <td>{{ $faseStorico->data_fine ? \Carbon\Carbon::parse($faseStorico->data_fine)->format('H:i') : '-' }}</td>
+                            <td class="text-center"><small>{{ $faseStorico->data_fine ? \Carbon\Carbon::parse($faseStorico->data_fine)->format('H:i') : '-' }}</small></td>
                             <td>
                                 @foreach($faseStorico->operatori as $op)
-                                    {{ $op->nome }} {{ $op->cognome }}<br>
+                                    <span class="badge bg-light text-dark" style="font-weight:500;">{{ $op->nome }}</span>
                                 @endforeach
                             </td>
                         </tr>
                         @endforeach
                     </tbody>
                 </table>
+                </div>
                 @endforeach
                 @else
-                <p class="text-muted text-center py-3">Nessuna consegna negli ultimi 30 giorni</p>
+                <div class="text-center py-5">
+                    <div style="font-size:48px; opacity:0.3;">📭</div>
+                    <p class="text-muted mt-2">Nessuna consegna negli ultimi 30 giorni</p>
+                </div>
                 @endif
             </div>
         </div>
@@ -2343,18 +2348,20 @@ function showNoteToast(msg) {
     setTimeout(function() { if (toast.parentNode) toast.remove(); }, 8000);
 }
 
-// Nascondi badge quando apre le note
+// Nascondi badge + carica note quando apre il modal
 var _modalNote = document.getElementById('modalNoteSpedizione');
-if (_modalNote) {
-    _modalNote.addEventListener('show.bs.modal', function() {
+function _attachNoteListener(m) {
+    m.addEventListener('show.bs.modal', function() {
         document.getElementById('noteConsegneBadge').style.display = 'none';
+        caricaNoteSpedizione();
     });
+}
+if (_modalNote) {
+    _attachNoteListener(_modalNote);
 } else {
     document.addEventListener('DOMContentLoaded', function() {
         var m = document.getElementById('modalNoteSpedizione');
-        if (m) m.addEventListener('show.bs.modal', function() {
-            document.getElementById('noteConsegneBadge').style.display = 'none';
-        });
+        if (m) _attachNoteListener(m);
     });
 }
 
