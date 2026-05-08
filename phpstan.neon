@@ -19,6 +19,8 @@ parameters:
         - identifier: missingType.iterableValue
         - '#PHPDoc tag @var#'
         - '#Call to an undefined method.*Builder.*#'
+        - '#Call to an undefined method thiagoalessio\\TesseractOCR\\TesseractOCR::#'
+        - '#always exists and is not nullable#'
 
     checkOctaneCompatibility: false
     checkModelProperties: false
