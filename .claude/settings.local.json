@@ -32,7 +32,8 @@
       "Bash(git mv *)",
       "Bash(awk '/^    private \\\\$fasiInfo = \\\\[$/{flag=1} !flag{print} /^    \\\\];$/{if\\(flag\\){flag=0; next}}' app/Http/Controllers/DashboardOwnerController.php)",
       "Read(//tmp/**)",
-      "Bash(mv /tmp/owner.php app/Http/Controllers/DashboardOwnerController.php)"
+      "Bash(mv /tmp/owner.php app/Http/Controllers/DashboardOwnerController.php)",
+      "Bash(git rm *)"
     ]
   }
 }

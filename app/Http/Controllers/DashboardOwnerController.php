@@ -67,26 +67,13 @@ class DashboardOwnerController extends Controller
      * ID dei reparti fustella (fustella, fustella piana, fustella cilindrica).
      * Risolti via RepartoService (cache 1h) invece di hard-coding [5,15,16].
      *
-     * @return list<int>
-     */
-    private function repartiFustellaIds(): array
-    {
-        return $this->reparti->tutti()
-            ->filter(fn ($r) => str_contains(strtolower((string) $r->nome), 'fustella'))
-            ->pluck('id')
-            ->map(fn ($id) => (int) $id)
-            ->values()
-            ->all();
-    }
-
-    /**
      * True se la fase appartiene a un reparto fustella (per applicare
      * il prefisso autore alle note via NoteFustellaService).
      */
     private function faseInRepartoFustella(OrdineFase $fase): bool
     {
         $repartoId = (int) ($fase->faseCatalogo->reparto_id ?? 0);
-        return $repartoId > 0 && in_array($repartoId, $this->repartiFustellaIds(), true);
+        return $repartoId > 0 && in_array($repartoId, $this->fustelleReport->repartiFustellaIds(), true);
     }
 
     private function isReadonly(): bool
