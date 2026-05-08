@@ -200,18 +200,33 @@ class ProduzioneController extends Controller
             'data_ora'     => now(),
         ]);
 
-        // Acconto: salva la quantità prodotta finora
+        // Acconto: cumulativo qta_prod + storico in note (es. "Acconto 500 - 08/05 16:30 - Mario")
+        // Permette logistica di vedere ogni invio parziale + somma totale gia spedita.
         if ($motivo === 'Acconto' && $request->filled('qta_prodotta')) {
-            $fase->qta_prod = (int) $request->input('qta_prodotta');
+            $qtaAcconto = (int) $request->input('qta_prodotta');
+            if ($qtaAcconto > 0) {
+                $fase->qta_prod = (int) ($fase->qta_prod ?? 0) + $qtaAcconto;
+
+                $operatore = $operatoreId ? \App\Models\Operatore::find($operatoreId) : null;
+                $autore = $operatore?->nome ?? 'sistema';
+                $timestamp = now()->format('d/m H:i');
+                $rigaStorico = "Acconto {$qtaAcconto} - {$timestamp} - {$autore}";
+                $noteCorrenti = trim((string) ($fase->note ?? ''));
+                $fase->note = $noteCorrenti === ''
+                    ? $rigaStorico
+                    : $noteCorrenti . "\n" . $rigaStorico;
+            }
         }
 
         $fase->stato = $motivo;
         $fase->timeout = now();
         $fase->save();
 
-        // Taglio per fase successiva: promuove la prossima fase dello stesso ordine (stato 0, priorità maggiore) a stato 1
+        // Promuove la prossima fase a stato 1 (pronta) per:
+        //  - "Taglio per fase successiva" (legacy)
+        //  - "Acconto" (nuovo: parte qta gia inviata avanti, fase successiva puo iniziare)
         $faseSuccessivaId = null;
-        if ($motivo === 'Taglio per fase successiva') {
+        if ($motivo === 'Taglio per fase successiva' || $motivo === 'Acconto') {
             $prioritaCorrente = (float) ($fase->priorita ?? 0);
             $successiva = OrdineFase::where('ordine_id', $fase->ordine_id)
                 ->where('id', '!=', $fase->id)
