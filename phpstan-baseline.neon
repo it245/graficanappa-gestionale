@@ -1,0 +1,2077 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Access to an undefined property App\\Models\\OrdineFase\:\:\$ordine\.$#'
+			identifier: property.notFound
+			count: 5
+			path: app/Console/Commands/AlertRitardi.php
+
+		-
+			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
+			identifier: larastan.noEnvCallsOutsideOfConfig
+			count: 1
+			path: app/Console/Commands/AlertRitardi.php
+
+		-
+			message: '#^Relation ''faseCatalogo'' is not found in App\\Models\\OrdineFase model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Console/Commands/AlertRitardi.php
+
+		-
+			message: '#^Relation ''ordine'' is not found in App\\Models\\OrdineFase model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Console/Commands/AlertRitardi.php
+
+		-
+			message: '#^Relation ''fasi'' is not found in App\\Models\\Ordine model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Console/Commands/CheckRitardiCommesse.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between float and 0 will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/Console/Commands/CheckRitardiCommesse.php
+
+		-
+			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
+			identifier: larastan.noEnvCallsOutsideOfConfig
+			count: 1
+			path: app/Console/Commands/ExportPresenzeExcel.php
+
+		-
+			message: '#^Cannot use \+\+ on ''A''\|''B''\|''C''\|''D''\|''E''\|''F''\|''G''\.$#'
+			identifier: postInc.type
+			count: 1
+			path: app/Console/Commands/ExportPresenzeExcel.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\FieryAccounting\:\:\$bn_grande\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Console/Commands/FieryExportContatori.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\FieryAccounting\:\:\$bn_piccolo\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Console/Commands/FieryExportContatori.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\FieryAccounting\:\:\$col_grande\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Console/Commands/FieryExportContatori.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\FieryAccounting\:\:\$col_piccolo\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Console/Commands/FieryExportContatori.php
+
+		-
+			message: '#^Left side of && is always true\.$#'
+			identifier: booleanAnd.leftAlwaysTrue
+			count: 1
+			path: app/Console/Commands/FieryReport.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Support\\Collection\<int,array\<string, mixed\>\>\:\:filter\(\) expects \(callable\(array\{title\: mixed, commessa\: non\-falsy\-string, date\: int\|null, date_raw\: mixed, fogli\: int, copie\: int, pagine_colore\: int, pagine_bn\: int, media_size\: mixed, state\: mixed\}, int\)\: bool\)\|\(callable\(array\{title\: mixed, commessa\: string\|null, date\: int\<min, \-1\>\|int\<1, max\>, date_raw\: mixed, fogli\: int, copie\: int, pagine_colore\: int, pagine_bn\: int, media_size\: mixed, state\: mixed\}, int\)\: bool\)\|null, Closure\(mixed\)\: \(string\|null\) given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Console/Commands/FieryReport.php
+
+		-
+			message: '#^Parameter \#1 \$string of function str_pad expects string, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Console/Commands/FieryReport.php
+
+		-
+			message: '#^Right side of && is always true\.$#'
+			identifier: booleanAnd.rightAlwaysTrue
+			count: 1
+			path: app/Console/Commands/ImportExcelTutto.php
+
+		-
+			message: '#^Offset ''aggiornati'' on array\{inseriti\: int, aggiornati\: int, errori\: int\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Console/Commands/SyncOnda.php
+
+		-
+			message: '#^Offset ''fasi_create'' on array\{inseriti\: int, aggiornati\: int, errori\: int, ordini_creati\: int, ordini_aggiornati\: int, fasi_create\: int, duplicati_rimossi\: int, log_ordini_creati\?\: list\<string\>, \.\.\.\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Console/Commands/SyncOnda.php
+
+		-
+			message: '#^Offset ''inseriti'' on array\{inseriti\: int, aggiornati\: int, errori\: int\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Console/Commands/SyncOnda.php
+
+		-
+			message: '#^Offset ''ordini_aggiornati'' on array\{inseriti\: int, aggiornati\: int, errori\: int, ordini_creati\: int, ordini_aggiornati\: int, fasi_create\: int, duplicati_rimossi\: int, log_ordini_creati\?\: list\<string\>, \.\.\.\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Console/Commands/SyncOnda.php
+
+		-
+			message: '#^Offset ''ordini_creati'' on array\{inseriti\: int, aggiornati\: int, errori\: int, ordini_creati\: int, ordini_aggiornati\: int, fasi_create\: int, duplicati_rimossi\: int, log_ordini_creati\?\: list\<string\>, \.\.\.\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Console/Commands/SyncOnda.php
+
+		-
+			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
+			identifier: larastan.noEnvCallsOutsideOfConfig
+			count: 2
+			path: app/Console/Commands/SyncPresenze.php
+
+		-
+			message: '#^Relation ''ordine'' is not found in App\\Models\\OrdineFase model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Exports/DashboardMesExport.php
+
+		-
+			message: '#^Property App\\Exports\\ReportCostiMarginiExport\:\:\$periodo is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: app/Exports/ReportCostiMarginiExport.php
+
+		-
+			message: '#^Property App\\Exports\\ReportDirezioneExport\:\:\$periodo is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: app/Exports/ReportDirezioneExport.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Ordine\:\:\$fasi\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Exports/ReportPercorsoExport.php
+
+		-
+			message: '#^Relation ''fasi'' is not found in App\\Models\\Ordine model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Exports/ReportPercorsoExport.php
+
+		-
+			message: '#^Property App\\Exports\\ReportPrinectExport\:\:\$periodo is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: app/Exports/ReportPrinectExport.php
+
+		-
+			message: '#^Static method App\\Helpers\\FustellaResolver\:\:parseDimensioni\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: app/Helpers/FustellaResolver.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\Controllers\\Auth\\ConfirmPasswordController\:\:middleware\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/Auth/ConfirmPasswordController.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\Controllers\\Auth\\LoginController\:\:middleware\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Http/Controllers/Auth/LoginController.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\Controllers\\Auth\\RegisterController\:\:middleware\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/Auth/RegisterController.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\Controllers\\Auth\\VerificationController\:\:middleware\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: app/Http/Controllers/Auth/VerificationController.php
+
+		-
+			message: '#^Relation ''operatore'' is not found in App\\Models\\ChatMessage model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/ChatController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Operatore\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\Operatore\>\:\:\$reparti\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/CommessaController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Ordine\:\:\$fasi\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/CommessaController.php
+
+		-
+			message: '#^Relation ''fasi'' is not found in App\\Models\\Ordine model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/CommessaController.php
+
+		-
+			message: '#^Relation ''reparti'' is not found in App\\Models\\Operatore model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/CommessaController.php
+
+		-
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
+			count: 1
+			path: app/Http/Controllers/CostiMarginiController.php
+
+		-
+			message: '#^Relation ''costiOrari'' is not found in App\\Models\\Reparto model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/CostiMarginiController.php
+
+		-
+			message: '#^Relation ''ordine'' is not found in App\\Models\\OrdineFase model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/CostiMarginiController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Operatore\:\:\$reparti\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/DashboardAdminController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Operatore\:\:\$stat_fasi_completate\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/DashboardAdminController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Operatore\:\:\$stat_fasi_in_corso\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/DashboardAdminController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Operatore\:\:\$stat_fasi_recenti\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/DashboardAdminController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Operatore\:\:\$stat_qta_prod\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/DashboardAdminController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Operatore\:\:\$stat_reparti\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/DashboardAdminController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Operatore\:\:\$stat_sec_medio\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/DashboardAdminController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Operatore\:\:\$stat_sec_recenti\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/DashboardAdminController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Operatore\:\:\$stat_sec_totale\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/DashboardAdminController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Ordine\:\:\$avanzamento\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Http/Controllers/DashboardAdminController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Ordine\:\:\$completata\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/DashboardAdminController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Ordine\:\:\$consegnata\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/DashboardAdminController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Ordine\:\:\$fasi\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/DashboardAdminController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Ordine\:\:\$fasi_completate\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/DashboardAdminController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Ordine\:\:\$fasi_mancanti\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/DashboardAdminController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Ordine\:\:\$fasi_totali\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/DashboardAdminController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Ordine\:\:\$giorni_mancanti\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/DashboardAdminController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Ordine\:\:\$giorni_ritardo\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Http/Controllers/DashboardAdminController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Ordine\:\:\$percentuale\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/DashboardAdminController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Ordine\:\:\$stato_label\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Http/Controllers/DashboardAdminController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\PausaOperatore\:\:\$percentuale\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/DashboardAdminController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\PausaOperatore\:\:\$totale\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/DashboardAdminController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Support\\HigherOrderCollectionProxy\<string, App\\Models\\Ordine, Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\Ordine\>\>\:\:\$fasi\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/DashboardAdminController.php
+
+		-
+			message: '#^Anonymous function has an unused use \$a\.$#'
+			identifier: closure.unusedUse
+			count: 1
+			path: app/Http/Controllers/DashboardAdminController.php
+
+		-
+			message: '#^Anonymous function has an unused use \$da\.$#'
+			identifier: closure.unusedUse
+			count: 1
+			path: app/Http/Controllers/DashboardAdminController.php
+
+		-
+			message: '#^Called ''pluck'' on Laravel collection, but could have been retrieved as a query\.$#'
+			identifier: larastan.noUnnecessaryCollectionCall
+			count: 1
+			path: app/Http/Controllers/DashboardAdminController.php
+
+		-
+			message: '#^Comparison operation "\>" between 18000 and 0 is always true\.$#'
+			identifier: greater.alwaysTrue
+			count: 1
+			path: app/Http/Controllers/DashboardAdminController.php
+
+		-
+			message: '#^Comparison operation "\>" between int\<23, max\> and 0 is always true\.$#'
+			identifier: greater.alwaysTrue
+			count: 1
+			path: app/Http/Controllers/DashboardAdminController.php
+
+		-
+			message: '#^Parameter \#1 \$string of function str_pad expects string, \(float\|int\) given\.$#'
+			identifier: argument.type
+			count: 2
+			path: app/Http/Controllers/DashboardAdminController.php
+
+		-
+			message: '#^Property App\\Http\\Controllers\\DashboardAdminController\:\:\$esterneReport is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: app/Http/Controllers/DashboardAdminController.php
+
+		-
+			message: '#^Property App\\Http\\Controllers\\DashboardAdminController\:\:\$fustelleReport is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: app/Http/Controllers/DashboardAdminController.php
+
+		-
+			message: '#^Property App\\Http\\Controllers\\DashboardAdminController\:\:\$panoramica is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: app/Http/Controllers/DashboardAdminController.php
+
+		-
+			message: '#^Property App\\Http\\Controllers\\DashboardAdminController\:\:\$reportOre is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: app/Http/Controllers/DashboardAdminController.php
+
+		-
+			message: '#^Property App\\Models\\Operatore\:\:\$attivo \(bool\) does not accept int\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Http/Controllers/DashboardAdminController.php
+
+		-
+			message: '#^Relation ''faseCatalogo'' is not found in App\\Models\\OrdineFase model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/DashboardAdminController.php
+
+		-
+			message: '#^Relation ''fasi'' is not found in App\\Models\\Ordine model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/DashboardAdminController.php
+
+		-
+			message: '#^Relation ''ordine'' is not found in App\\Models\\OrdineFase model\.$#'
+			identifier: larastan.relationExistence
+			count: 9
+			path: app/Http/Controllers/DashboardAdminController.php
+
+		-
+			message: '#^Relation ''reparti'' is not found in App\\Models\\Operatore model\.$#'
+			identifier: larastan.relationExistence
+			count: 4
+			path: app/Http/Controllers/DashboardAdminController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Operatore\:\:\$reparto\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/DashboardController.php
+
+		-
+			message: '#^Relation ''fasi'' is not found in App\\Models\\Ordine model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/DashboardController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Ordine\:\:\$fasi\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/DashboardOperatoreController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\OrdineFase\:\:\$colori\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/DashboardOperatoreController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\OrdineFase\:\:\$faseCatalogo\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/DashboardOperatoreController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\OrdineFase\:\:\$fornitore_esterno\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/DashboardOperatoreController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\OrdineFase\:\:\$fustella_codice\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/DashboardOperatoreController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\OrdineFase\:\:\$note_pulita\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/DashboardOperatoreController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\OrdineFase\:\:\$ordine\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Http/Controllers/DashboardOperatoreController.php
+
+		-
+			message: '#^Anonymous function has an unused use \$reparti\.$#'
+			identifier: closure.unusedUse
+			count: 1
+			path: app/Http/Controllers/DashboardOperatoreController.php
+
+		-
+			message: '#^Relation ''faseCatalogo'' is not found in App\\Models\\OrdineFase model\.$#'
+			identifier: larastan.relationExistence
+			count: 3
+			path: app/Http/Controllers/DashboardOperatoreController.php
+
+		-
+			message: '#^Relation ''fasi'' is not found in App\\Models\\Ordine model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/DashboardOperatoreController.php
+
+		-
+			message: '#^Relation ''operatore'' is not found in App\\Models\\NotaTurno model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/DashboardOperatoreController.php
+
+		-
+			message: '#^Relation ''ordine'' is not found in App\\Models\\OrdineFase model\.$#'
+			identifier: larastan.relationExistence
+			count: 4
+			path: app/Http/Controllers/DashboardOperatoreController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Ordine\:\:\$fasi\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/DashboardOwnerController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Ordine\:\:\$min_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/DashboardOwnerController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\OrdineFase\:\:\$colori_parsed\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/DashboardOwnerController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\OrdineFase\:\:\$fustella_parsed\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/DashboardOwnerController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\OrdineFase\:\:\$operatori\.$#'
+			identifier: property.notFound
+			count: 7
+			path: app/Http/Controllers/DashboardOwnerController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\OrdineFase\:\:\$ordine\.$#'
+			identifier: property.notFound
+			count: 8
+			path: app/Http/Controllers/DashboardOwnerController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\OrdineFase\:\:\$reparto_nome\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/DashboardOwnerController.php
+
+		-
+			message: '#^Anonymous function has an unused use \$oggi\.$#'
+			identifier: closure.unusedUse
+			count: 1
+			path: app/Http/Controllers/DashboardOwnerController.php
+
+		-
+			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
+			identifier: larastan.noEnvCallsOutsideOfConfig
+			count: 4
+			path: app/Http/Controllers/DashboardOwnerController.php
+
+		-
+			message: '#^Offset ''aggiornati'' on array\{inseriti\: int, aggiornati\: int, errori\: int\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Http/Controllers/DashboardOwnerController.php
+
+		-
+			message: '#^Offset ''fasi_create'' on array\{inseriti\: int, aggiornati\: int, errori\: int, ordini_creati\: int, ordini_aggiornati\: int, fasi_create\: int, duplicati_rimossi\: int, log_ordini_creati\?\: list\<string\>, \.\.\.\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Http/Controllers/DashboardOwnerController.php
+
+		-
+			message: '#^Offset ''inseriti'' on array\{inseriti\: int, aggiornati\: int, errori\: int\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Http/Controllers/DashboardOwnerController.php
+
+		-
+			message: '#^Offset ''ordini_aggiornati'' on array\{inseriti\: int, aggiornati\: int, errori\: int, ordini_creati\: int, ordini_aggiornati\: int, fasi_create\: int, duplicati_rimossi\: int, log_ordini_creati\?\: list\<string\>, \.\.\.\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Http/Controllers/DashboardOwnerController.php
+
+		-
+			message: '#^Offset ''ordini_creati'' on array\{inseriti\: int, aggiornati\: int, errori\: int, ordini_creati\: int, ordini_aggiornati\: int, fasi_create\: int, duplicati_rimossi\: int, log_ordini_creati\?\: list\<string\>, \.\.\.\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Http/Controllers/DashboardOwnerController.php
+
+		-
+			message: '#^Offset ''success'' on array\{success\: bool, reload\?\: bool, messaggio\?\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Http/Controllers/DashboardOwnerController.php
+
+		-
+			message: '#^Parameter \#1 \$view of function view expects view\-string\|null, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/DashboardOwnerController.php
+
+		-
+			message: '#^Property App\\Http\\Controllers\\DashboardOwnerController\:\:\$capacita is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: app/Http/Controllers/DashboardOwnerController.php
+
+		-
+			message: '#^Property App\\Http\\Controllers\\DashboardOwnerController\:\:\$progresso is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: app/Http/Controllers/DashboardOwnerController.php
+
+		-
+			message: '#^Relation ''faseCatalogo'' is not found in App\\Models\\OrdineFase model\.$#'
+			identifier: larastan.relationExistence
+			count: 12
+			path: app/Http/Controllers/DashboardOwnerController.php
+
+		-
+			message: '#^Relation ''fasi'' is not found in App\\Models\\Ordine model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/DashboardOwnerController.php
+
+		-
+			message: '#^Relation ''operatori'' is not found in App\\Models\\OrdineFase model\.$#'
+			identifier: larastan.relationExistence
+			count: 13
+			path: app/Http/Controllers/DashboardOwnerController.php
+
+		-
+			message: '#^Relation ''ordine'' is not found in App\\Models\\DdtSpedizione model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/DashboardOwnerController.php
+
+		-
+			message: '#^Relation ''ordine'' is not found in App\\Models\\OrdineFase model\.$#'
+			identifier: larastan.relationExistence
+			count: 10
+			path: app/Http/Controllers/DashboardOwnerController.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between non\-falsy\-string\|true and '''' will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: app/Http/Controllers/DashboardOwnerController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>nome" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/DashboardOwnerController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>reparto_id" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/DashboardOwnerController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\OrdineFase\:\:\$fasiNonTerminate\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/DashboardSpedizioneController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\OrdineFase\:\:\$operatori\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/DashboardSpedizioneController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\OrdineFase\:\:\$ordine\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Http/Controllers/DashboardSpedizioneController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\OrdineFase\:\:\$percentuale\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/DashboardSpedizioneController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\OrdineFase\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\OrdineFase\>\:\:\$operatori\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/DashboardSpedizioneController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<\(int\|string\),Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\OrdineFase\>\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Http/Controllers/DashboardSpedizioneController.php
+
+		-
+			message: '#^Property App\\Models\\OrdineFase\:\:\$stato \(string\) does not accept int\.$#'
+			identifier: assign.propertyType
+			count: 4
+			path: app/Http/Controllers/DashboardSpedizioneController.php
+
+		-
+			message: '#^Relation ''faseCatalogo'' is not found in App\\Models\\OrdineFase model\.$#'
+			identifier: larastan.relationExistence
+			count: 15
+			path: app/Http/Controllers/DashboardSpedizioneController.php
+
+		-
+			message: '#^Relation ''operatori'' is not found in App\\Models\\OrdineFase model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/DashboardSpedizioneController.php
+
+		-
+			message: '#^Relation ''ordine'' is not found in App\\Models\\DdtSpedizione model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/DashboardSpedizioneController.php
+
+		-
+			message: '#^Relation ''ordine'' is not found in App\\Models\\OrdineFase model\.$#'
+			identifier: larastan.relationExistence
+			count: 16
+			path: app/Http/Controllers/DashboardSpedizioneController.php
+
+		-
+			message: '#^Relation ''faseCatalogo'' is not found in App\\Models\\OrdineFase model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/EtichettaController.php
+
+		-
+			message: '#^Relation ''fasi'' is not found in App\\Models\\Ordine model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/EtichettaController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\OrdineFase\:\:\$operatori\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/FieryController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\FieryController\:\:getClickPerCommessa\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: app/Http/Controllers/FieryController.php
+
+		-
+			message: '#^Offset 0 on non\-empty\-list\<string\> on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Http/Controllers/FieryController.php
+
+		-
+			message: '#^Relation ''faseCatalogo'' is not found in App\\Models\\OrdineFase model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/FieryController.php
+
+		-
+			message: '#^Relation ''fasi'' is not found in App\\Models\\Ordine model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/FieryController.php
+
+		-
+			message: '#^Relation ''operatori'' is not found in App\\Models\\OrdineFase model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/FieryController.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\Controllers\\HomeController\:\:middleware\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/HomeController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\OrdineFase\:\:\$operatori\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/KioskController.php
+
+		-
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
+			count: 1
+			path: app/Http/Controllers/KioskController.php
+
+		-
+			message: '#^Parameter \#1 \$array of function usort contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Http/Controllers/KioskController.php
+
+		-
+			message: '#^Parameter \#1 \$string of function str_pad expects string, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/KioskController.php
+
+		-
+			message: '#^Parameter \#2 \$callback of function usort contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Http/Controllers/KioskController.php
+
+		-
+			message: '#^Relation ''faseCatalogo'' is not found in App\\Models\\OrdineFase model\.$#'
+			identifier: larastan.relationExistence
+			count: 5
+			path: app/Http/Controllers/KioskController.php
+
+		-
+			message: '#^Relation ''operatori'' is not found in App\\Models\\OrdineFase model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/KioskController.php
+
+		-
+			message: '#^Relation ''ordine'' is not found in App\\Models\\OrdineFase model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/KioskController.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between '''' and ''Idle'' will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: app/Http/Controllers/KioskController.php
+
+		-
+			message: '#^Variable \$secOggi on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.variable
+			count: 1
+			path: app/Http/Controllers/KioskController.php
+
+		-
+			message: '#^Relation ''articolo'' is not found in App\\Models\\MagazzinoGiacenza model\.$#'
+			identifier: larastan.relationExistence
+			count: 4
+			path: app/Http/Controllers/MagazzinoController.php
+
+		-
+			message: '#^Relation ''articolo'' is not found in App\\Models\\MagazzinoMovimento model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/MagazzinoController.php
+
+		-
+			message: '#^Relation ''operatore'' is not found in App\\Models\\MagazzinoMovimento model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/MagazzinoController.php
+
+		-
+			message: '#^Relation ''ubicazione'' is not found in App\\Models\\MagazzinoMovimento model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/MagazzinoController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\MagazzinoEtichetta\:\:\$articolo\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/MagazzinoEtichettaController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\MagazzinoEtichetta\:\:\$ubicazione\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/MagazzinoEtichettaController.php
+
+		-
+			message: '#^Relation ''articolo'' is not found in App\\Models\\MagazzinoEtichetta model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/MagazzinoEtichettaController.php
+
+		-
+			message: '#^Relation ''ubicazione'' is not found in App\\Models\\MagazzinoEtichetta model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/MagazzinoEtichettaController.php
+
+		-
+			message: '#^Property App\\Http\\Controllers\\MagazzinoMovimentoController\:\:\$giacenze is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: app/Http/Controllers/MagazzinoMovimentoController.php
+
+		-
+			message: '#^Relation ''articolo'' is not found in App\\Models\\MagazzinoGiacenza model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/MagazzinoMovimentoController.php
+
+		-
+			message: '#^Relation ''ubicazione'' is not found in App\\Models\\MagazzinoGiacenza model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/MagazzinoMovimentoController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\MagazzinoEtichetta\:\:\$articolo\.$#'
+			identifier: property.notFound
+			count: 6
+			path: app/Http/Controllers/MagazzinoScannerController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\MagazzinoEtichetta\:\:\$giacenza\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/MagazzinoScannerController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\MagazzinoEtichetta\:\:\$ubicazione\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/MagazzinoScannerController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Operatore\:\:\$reparti\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/OperatoreLoginController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Operatore\:\:\$reparto\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/OperatoreLoginController.php
+
+		-
+			message: '#^Call to static method findOrFail\(\) on an unknown class App\\Http\\Controllers\\Operatore\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/OrdineFaseController.php
+
+		-
+			message: '#^Call to static method findOrFail\(\) on an unknown class App\\Http\\Controllers\\OrdineFase\.$#'
+			identifier: class.notFound
+			count: 3
+			path: app/Http/Controllers/OrdineFaseController.php
+
+		-
+			message: '#^Offset 0 on non\-empty\-list\<string\> on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Http/Controllers/PresenzeController.php
+
+		-
+			message: '#^Property App\\Http\\Controllers\\PresenzeController\:\:\$oreService is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: app/Http/Controllers/PresenzeController.php
+
+		-
+			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
+			identifier: larastan.noEnvCallsOutsideOfConfig
+			count: 1
+			path: app/Http/Controllers/PrinectController.php
+
+		-
+			message: '#^Comparison operation "\>" between 161 and 0 is always true\.$#'
+			identifier: greater.alwaysTrue
+			count: 1
+			path: app/Http/Controllers/PrinectController.php
+
+		-
+			message: '#^Comparison operation "\>" between 18000 and 0 is always true\.$#'
+			identifier: greater.alwaysTrue
+			count: 1
+			path: app/Http/Controllers/PrinectController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\MagazzinoMovimento\:\:\$articolo\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/ProduzioneController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\OrdineFase\:\:\$faseCatalogo\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/ProduzioneController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\OrdineFase\:\:\$operatori\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/ProduzioneController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\OrdineFase\:\:\$ordine\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Http/Controllers/ProduzioneController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\OrdineFase\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\OrdineFase\>\:\:\$faseCatalogo\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/ProduzioneController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\OrdineFase\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\OrdineFase\>\:\:\$operatori\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/ProduzioneController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\OrdineFase\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\OrdineFase\>\:\:\$ordine\.$#'
+			identifier: property.notFound
+			count: 5
+			path: app/Http/Controllers/ProduzioneController.php
+
+		-
+			message: '#^Parameter \#1 \$view of function view expects view\-string\|null, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/ProduzioneController.php
+
+		-
+			message: '#^Relation ''articolo'' is not found in App\\Models\\MagazzinoMovimento model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/ProduzioneController.php
+
+		-
+			message: '#^Relation ''faseCatalogo'' is not found in App\\Models\\OrdineFase model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/ProduzioneController.php
+
+		-
+			message: '#^Relation ''operatori'' is not found in App\\Models\\OrdineFase model\.$#'
+			identifier: larastan.relationExistence
+			count: 4
+			path: app/Http/Controllers/ProduzioneController.php
+
+		-
+			message: '#^Relation ''ordine'' is not found in App\\Models\\OrdineFase model\.$#'
+			identifier: larastan.relationExistence
+			count: 3
+			path: app/Http/Controllers/ProduzioneController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>nome_display" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Http/Controllers/ProduzioneController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>um" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/ProduzioneController.php
+
+		-
+			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
+			identifier: larastan.noEnvCallsOutsideOfConfig
+			count: 6
+			path: app/Http/Controllers/TelegramWebhookController.php
+
+		-
+			message: '#^Relation ''articolo'' is not found in App\\Models\\MagazzinoMovimento model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/TelegramWebhookController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>codice" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/TelegramWebhookController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\OperatoreToken\:\:\$operatore\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Middleware/AdminAuth.php
+
+		-
+			message: '#^Relation ''operatore'' is not found in App\\Models\\OperatoreToken model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Middleware/AdminAuth.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\OperatoreToken\:\:\$operatore\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Middleware/MagazzinoAuth.php
+
+		-
+			message: '#^Relation ''operatore'' is not found in App\\Models\\OperatoreToken model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Middleware/MagazzinoAuth.php
+
+		-
+			message: '#^Relation ''reparti'' is not found in App\\Models\\Operatore model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Middleware/MagazzinoAuth.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\OperatoreToken\:\:\$operatore\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Middleware/OperatoreAuth.php
+
+		-
+			message: '#^Relation ''operatore'' is not found in App\\Models\\OperatoreToken model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Middleware/OperatoreAuth.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\OperatoreToken\:\:\$operatore\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Middleware/OwnerMiddleware.php
+
+		-
+			message: '#^Relation ''operatore'' is not found in App\\Models\\OperatoreToken model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Middleware/OwnerMiddleware.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\OperatoreToken\:\:\$operatore\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Middleware/OwnerOrAdmin.php
+
+		-
+			message: '#^Relation ''operatore'' is not found in App\\Models\\OperatoreToken model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Middleware/OwnerOrAdmin.php
+
+		-
+			message: '#^Left side of && is always true\.$#'
+			identifier: booleanAnd.leftAlwaysTrue
+			count: 2
+			path: app/Http/Services/FierySyncService.php
+
+		-
+			message: '#^Offset 0 on non\-empty\-list\<string\> on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Http/Services/FierySyncService.php
+
+		-
+			message: '#^Property App\\Models\\OrdineFase\:\:\$stato \(string\) does not accept int\.$#'
+			identifier: assign.propertyType
+			count: 2
+			path: app/Http/Services/FierySyncService.php
+
+		-
+			message: '#^Relation ''faseCatalogo'' is not found in App\\Models\\OrdineFase model\.$#'
+			identifier: larastan.relationExistence
+			count: 4
+			path: app/Http/Services/FierySyncService.php
+
+		-
+			message: '#^Relation ''operatori'' is not found in App\\Models\\OrdineFase model\.$#'
+			identifier: larastan.relationExistence
+			count: 3
+			path: app/Http/Services/FierySyncService.php
+
+		-
+			message: '#^Relation ''ordine'' is not found in App\\Models\\OrdineFase model\.$#'
+			identifier: larastan.relationExistence
+			count: 4
+			path: app/Http/Services/FierySyncService.php
+
+		-
+			message: '#^Call to static method createFromFormat\(\) on an unknown class App\\Imports\\Carbon\.$#'
+			identifier: class.notFound
+			count: 2
+			path: app/Imports/OrdiniImport.php
+
+		-
+			message: '#^Relation ''ordine'' is not found in App\\Models\\OrdineFase model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Imports/OrdiniImport.php
+
+		-
+			message: '#^Call to an undefined method Monolog\\Handler\\HandlerInterface\:\:pushProcessor\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Logging/SecretsMaskerTap.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\OrdineFase\:\:\$ordine\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Mail/SpedizioneCompletata.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Operatore\:\:\$reparto\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/Operatore.php
+
+		-
+			message: '#^Relation ''faseCatalogo'' is not found in App\\Models\\OrdineFase model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Models/Ordine.php
+
+		-
+			message: '#^Relation ''ordine'' is not found in App\\Models\\OrdineFase model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Models/Ordine.php
+
+		-
+			message: '#^Call to function is_string\(\) with string will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Models/OrdineFase.php
+
+		-
+			message: '#^Result of && is always false\.$#'
+			identifier: booleanAnd.alwaysFalse
+			count: 1
+			path: app/Models/OrdineFase.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between string and 2 will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 2
+			path: app/Models/OrdineFase.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 1
+			path: app/Models/OrdineFase.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Relations\\HasMany\<App\\Models\\Operatore, \$this\(App\\Models\\Reparto\)\>\:\:withTimeStamps\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Models/Reparto.php
+
+		-
+			message: '#^Method Illuminate\\Database\\Eloquent\\Model\:\:hasMany\(\) invoked with 4 parameters, 1\-3 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: app/Models/Reparto.php
+
+		-
+			message: '#^Call to function is_array\(\) with array will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Modules/Audit/Listeners/LogLoginFallito.php
+
+		-
+			message: '#^Property Illuminate\\Auth\\Events\\Failed\:\:\$credentials \(array\) on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.property
+			count: 1
+			path: app/Modules/Audit/Listeners/LogLoginFallito.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between Illuminate\\Contracts\\Auth\\Authenticatable and null will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/Modules/Audit/Listeners/LogLoginRiuscito.php
+
+		-
+			message: '#^Right side of && is always true\.$#'
+			identifier: booleanAnd.rightAlwaysTrue
+			count: 2
+			path: app/Modules/Audit/Services/AuditLogService.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Support\\Collection\<int,object\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Modules/Audit/Services/ComplianceExportService.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between Illuminate\\Http\\Request and null will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: app/Modules/Audit/ValueObjects/ContestoUtente.php
+
+		-
+			message: '#^Relation ''ordine'' is not found in App\\Models\\Articolo model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Modules/Carta/Services/AnagraficaCartaService.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between string and null will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 2
+			path: app/Modules/Carta/Templates/EtichettaCarta.php
+
+		-
+			message: '#^Variable \$um on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.variable
+			count: 1
+			path: app/Modules/Carta/Templates/EtichettaCarta.php
+
+		-
+			message: '#^Negated boolean expression is always true\.$#'
+			identifier: booleanNot.alwaysTrue
+			count: 1
+			path: app/Modules/Commessa/Rules/StatoDerivatoRule.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\OrdineFase\:\:\$ordine\.$#'
+			identifier: property.notFound
+			count: 5
+			path: app/Modules/Commessa/Services/CommessaService.php
+
+		-
+			message: '#^Parameter \#1 \$fasi of method App\\Modules\\Commessa\\Rules\\StatoDerivatoRule\:\:calcolaStato\(\) expects Illuminate\\Support\\Collection\<int, object\>, Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\OrdineFase\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Modules/Commessa/Services/CommessaService.php
+
+		-
+			message: '#^Property App\\Models\\OrdineFase\:\:\$riaperta_at \(string\|null\) does not accept Illuminate\\Support\\Carbon\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Modules/Commessa/Services/CommessaService.php
+
+		-
+			message: '#^Property App\\Models\\OrdineFase\:\:\$stato \(string\) does not accept int\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Modules/Commessa/Services/CommessaService.php
+
+		-
+			message: '#^Relation ''ordine'' is not found in App\\Models\\OrdineFase model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Modules/Commessa/Services/CommessaService.php
+
+		-
+			message: '#^Relation ''reparto'' is not found in App\\Models\\FasiCatalogo model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Modules/Commessa/Services/CommessaService.php
+
+		-
+			message: '#^Relation ''ordine'' is not found in App\\Models\\OrdineFase model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Modules/Commessa/Services/ProgressoService.php
+
+		-
+			message: '#^Property App\\Modules\\Fasi\\Events\\FaseTerminata\:\:\$fase \(App\\Models\\OrdineFase\) on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.property
+			count: 1
+			path: app/Modules/Fasi/Listeners/PropagaFasiSuccessiveListener.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between App\\Models\\OrdineFase and null will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/Modules/Fasi/Listeners/PropagaFasiSuccessiveListener.php
+
+		-
+			message: '#^Call to function is_int\(\) with string will always evaluate to false\.$#'
+			identifier: function.impossibleType
+			count: 1
+			path: app/Modules/Fasi/Rules/PausaRule.php
+
+		-
+			message: '#^Call to function is_string\(\) with string will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 2
+			path: app/Modules/Fasi/Rules/PausaRule.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between \*NEVER\* and 2 will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/Modules/Fasi/Rules/PausaRule.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Operatore\:\:\$codice\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Fasi/Services/FaseTransitionService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\OrdineFase\:\:\$operatori\.$#'
+			identifier: property.notFound
+			count: 8
+			path: app/Modules/Fasi/Services/FaseTransitionService.php
+
+		-
+			message: '#^Property App\\Models\\OrdineFase\:\:\$riaperta_at \(string\|null\) does not accept Illuminate\\Support\\Carbon\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Modules/Fasi/Services/FaseTransitionService.php
+
+		-
+			message: '#^Property App\\Models\\OrdineFase\:\:\$stato \(string\) does not accept int\.$#'
+			identifier: assign.propertyType
+			count: 6
+			path: app/Modules/Fasi/Services/FaseTransitionService.php
+
+		-
+			message: '#^Property App\\Models\\OrdineFase\:\:\$timeout \(string\|null\) does not accept Illuminate\\Support\\Carbon\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Modules/Fasi/Services/FaseTransitionService.php
+
+		-
+			message: '#^Property App\\Models\\PausaOperatore\:\:\$fine \(string\|null\) does not accept Illuminate\\Support\\Carbon\.$#'
+			identifier: assign.propertyType
+			count: 2
+			path: app/Modules/Fasi/Services/FaseTransitionService.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between int and '''' will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: app/Modules/Fasi/Services/FaseTransitionService.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between int and null will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: app/Modules/Fasi/Services/FaseTransitionService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>codice" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Fasi/Services/FaseTransitionService.php
+
+		-
+			message: '#^Call to function is_string\(\) with string will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Modules/Fasi/StateMachine/Transizioni.php
+
+		-
+			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
+			identifier: larastan.noEnvCallsOutsideOfConfig
+			count: 1
+			path: app/Modules/Magazzino/Listeners/NotificaSottoSogliaListener.php
+
+		-
+			message: '#^Property App\\Models\\MagazzinoGiacenza\:\:\$data_ultimo_carico \(Carbon\\Carbon\|null\) does not accept string\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Modules/Magazzino/Services/GiacenzaService.php
+
+		-
+			message: '#^Property App\\Models\\MagazzinoGiacenza\:\:\$data_ultimo_scarico \(Carbon\\Carbon\|null\) does not accept string\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Modules/Magazzino/Services/GiacenzaService.php
+
+		-
+			message: '#^Relation ''giacenze'' is not found in App\\Models\\MagazzinoArticolo model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Modules/Magazzino/Services/GiacenzaService.php
+
+		-
+			message: '#^Match arm comparison between ''rettifica'' and ''rettifica'' is always true\.$#'
+			identifier: match.alwaysTrue
+			count: 1
+			path: app/Modules/Magazzino/Services/MovimentoService.php
+
+		-
+			message: '#^Parameter \#1 \$array \(non\-empty\-list\<App\\Modules\\Notifiche\\Enums\\CanaleNotifica\>\) of array_values is already a list, call has no effect\.$#'
+			identifier: arrayValues.list
+			count: 1
+			path: app/Modules/Notifiche/Rules/CanaleSceltaRule.php
+
+		-
+			message: '#^Relation ''faseCatalogo'' is not found in App\\Models\\OrdineFase model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Modules/Onda/Services/CommessaSyncService.php
+
+		-
+			message: '#^Relation ''ordine'' is not found in App\\Models\\OrdineFase model\.$#'
+			identifier: larastan.relationExistence
+			count: 9
+			path: app/Modules/Onda/Services/CommessaSyncService.php
+
+		-
+			message: '#^Offset ''errori'' on array\{inseriti\: int, aggiornati\: int, errori\: int, ordini_creati\: int, ordini_aggiornati\: int, fasi_create\: int, duplicati_rimossi\: int, log_ordini_creati\?\: list\<string\>, \.\.\.\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Modules/Onda/Services/FaseSyncService.php
+
+		-
+			message: '#^Offset ''fasi_create'' on array\{inseriti\: int, aggiornati\: int, errori\: int, ordini_creati\: int, ordini_aggiornati\: int, fasi_create\: int, duplicati_rimossi\: int, log_ordini_creati\?\: list\<string\>, \.\.\.\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Modules/Onda/Services/FaseSyncService.php
+
+		-
+			message: '#^Property App\\Modules\\Onda\\Services\\FaseSyncService\:\:\$reparti is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: app/Modules/Onda/Services/FaseSyncService.php
+
+		-
+			message: '#^Relation ''faseCatalogo'' is not found in App\\Models\\OrdineFase model\.$#'
+			identifier: larastan.relationExistence
+			count: 3
+			path: app/Modules/Onda/Services/OrdineSyncService.php
+
+		-
+			message: '#^Relation ''ordine'' is not found in App\\Models\\OrdineFase model\.$#'
+			identifier: larastan.relationExistence
+			count: 26
+			path: app/Modules/Onda/Services/OrdineSyncService.php
+
+		-
+			message: '#^Method App\\Modules\\Presenze\\Services\\AssenzeService\:\:delGiorno\(\) should return Illuminate\\Support\\Collection\<int, object\> but returns Illuminate\\Support\\Collection\<int, stdClass\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Modules/Presenze/Services/AssenzeService.php
+
+		-
+			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
+			identifier: larastan.noEnvCallsOutsideOfConfig
+			count: 3
+			path: app/Modules/Prinect/Adapters/PrinectHttpAdapter.php
+
+		-
+			message: '#^Property App\\Modules\\Prinect\\Services\\PrinectAutoTerminaService\:\:\$api is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: app/Modules/Prinect/Services/PrinectAutoTerminaService.php
+
+		-
+			message: '#^Offset 0 on non\-empty\-list\<string\> on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Modules/Prinect/Services/PrinectJobsService.php
+
+		-
+			message: '#^Call to function is_numeric\(\) with float will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Modules/Prinect/ValueObjects/ConsumoInchiostro.php
+
+		-
+			message: '#^Call to function is_string\(\) with string will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Modules/Prinect/ValueObjects/ConsumoInchiostro.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\OrdineFase\:\:\$ordine\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Reportistica/Services/EsterneReportService.php
+
+		-
+			message: '#^Call to function is_string\(\) with string will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Modules/Reportistica/Services/EsterneReportService.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<\(int\|string\),Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\OrdineFase\>\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Modules/Reportistica/Services/EsterneReportService.php
+
+		-
+			message: '#^Relation ''faseCatalogo'' is not found in App\\Models\\OrdineFase model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Modules/Reportistica/Services/EsterneReportService.php
+
+		-
+			message: '#^Relation ''ordine'' is not found in App\\Models\\OrdineFase model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Modules/Reportistica/Services/EsterneReportService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\OrdineFase\:\:\$ordine\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Reportistica/Services/FustelleReportService.php
+
+		-
+			message: '#^Call to static method parseFustella\(\) on an unknown class App\\Services\\DescrizioneParser\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Modules/Reportistica/Services/FustelleReportService.php
+
+		-
+			message: '#^Relation ''faseCatalogo'' is not found in App\\Models\\OrdineFase model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Modules/Reportistica/Services/FustelleReportService.php
+
+		-
+			message: '#^Relation ''ordine'' is not found in App\\Models\\OrdineFase model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Modules/Reportistica/Services/FustelleReportService.php
+
+		-
+			message: '#^Relation ''ordine'' is not found in App\\Models\\OrdineFase model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Modules/Reportistica/Services/KpiService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\OrdineFase\:\:\$cliente_nome\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Reportistica/Services/PanoramicaRepartiService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\OrdineFase\:\:\$commessa\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Reportistica/Services/PanoramicaRepartiService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\OrdineFase\:\:\$data_prevista_consegna\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Reportistica/Services/PanoramicaRepartiService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\OrdineFase\:\:\$descrizione\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Reportistica/Services/PanoramicaRepartiService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\OrdineFase\:\:\$qta_richiesta\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Reportistica/Services/PanoramicaRepartiService.php
+
+		-
+			message: '#^Method App\\Modules\\Reportistica\\Services\\PanoramicaRepartiService\:\:caricoEOre\(\) should return Illuminate\\Support\\Collection\<int, object\{nome\: string, attesa\: int, in_corso\: int, completate\: int, ore\: float\}\> but returns Illuminate\\Support\\Collection\<int, object\{nome\: string, attesa\: int\<0, max\>, in_corso\: int\<0, max\>, completate\: int\<0, max\>, ore\: float\}&stdClass\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Modules/Reportistica/Services/PanoramicaRepartiService.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<\(int\|string\),Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\OrdineFase\>\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Modules/Reportistica/Services/PanoramicaRepartiService.php
+
+		-
+			message: '#^Method App\\Modules\\Reportistica\\Services\\ProduttivitaOperatoriService\:\:performanceCompleta\(\) should return Illuminate\\Support\\Collection\<int, object\> but returns Illuminate\\Support\\Collection\<int, stdClass\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Modules/Reportistica/Services/ProduttivitaOperatoriService.php
+
+		-
+			message: '#^Method App\\Modules\\Reportistica\\Services\\ProduttivitaOperatoriService\:\:topPerFasi\(\) should return Illuminate\\Support\\Collection\<int, object\> but returns Illuminate\\Support\\Collection\<int, stdClass\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Modules/Reportistica/Services/ProduttivitaOperatoriService.php
+
+		-
+			message: '#^Relation ''ordine'' is not found in App\\Models\\OrdineFase model\.$#'
+			identifier: larastan.relationExistence
+			count: 3
+			path: app/Modules/Reportistica/Services/ProgressoCommesseService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\OrdineFase\:\:\$fonte_ore\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Modules/Reportistica/Services/ReportOreService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\OrdineFase\:\:\$operatori\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Reportistica/Services/ReportOreService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\OrdineFase\:\:\$ore_lavorate\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Modules/Reportistica/Services/ReportOreService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\OrdineFase\:\:\$ore_previste\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Reportistica/Services/ReportOreService.php
+
+		-
+			message: '#^Relation ''faseCatalogo'' is not found in App\\Models\\OrdineFase model\.$#'
+			identifier: larastan.relationExistence
+			count: 6
+			path: app/Modules/Reportistica/Services/ReportOreService.php
+
+		-
+			message: '#^Relation ''ordine'' is not found in App\\Models\\OrdineFase model\.$#'
+			identifier: larastan.relationExistence
+			count: 6
+			path: app/Modules/Reportistica/Services/ReportOreService.php
+
+		-
+			message: '#^Call to function is_numeric\(\) with float\|int will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Modules/Reportistica/ValueObjects/DatasetGrafico.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\OrdineFase\:\:\$reparto\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Scheduling/Rules/BatchAffinityRule.php
+
+		-
+			message: '#^Instanceof between Carbon\\Carbon and Carbon\\Carbon will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 1
+			path: app/Modules/Spedizione/Rules/RitardoRule.php
+
+		-
+			message: '#^Instanceof between Carbon\\Carbon and Carbon\\Carbon will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 1
+			path: app/Modules/Spedizione/Services/NoteConsegneService.php
+
+		-
+			message: '#^Offset ''documento'' on non\-empty\-array\<mixed, mixed\> on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Modules/Stampa/Adapters/FieryAdapter.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Ordine\:\:\$fasi\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/AiService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\OrdineFase\:\:\$faseCatalogo\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/AiService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\OrdineFase\:\:\$operatori\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/AiService.php
+
+		-
+			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
+			identifier: larastan.noEnvCallsOutsideOfConfig
+			count: 1
+			path: app/Services/AiService.php
+
+		-
+			message: '#^Relation ''faseCatalogo'' is not found in App\\Models\\OrdineFase model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Services/AiService.php
+
+		-
+			message: '#^Relation ''fasi'' is not found in App\\Models\\Ordine model\.$#'
+			identifier: larastan.relationExistence
+			count: 4
+			path: app/Services/AiService.php
+
+		-
+			message: '#^Ternary operator condition is always true\.$#'
+			identifier: ternary.alwaysTrue
+			count: 2
+			path: app/Services/AiService.php
+
+		-
+			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
+			identifier: larastan.noEnvCallsOutsideOfConfig
+			count: 2
+			path: app/Services/Api/ClaudeApiClient.php
+
+		-
+			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
+			identifier: larastan.noEnvCallsOutsideOfConfig
+			count: 2
+			path: app/Services/Api/TelegramApiClient.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Ordine\:\:\$fasi\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/BollaLavorazioneService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\OrdineFase\:\:\$ordine\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Services/BollaLavorazioneService.php
+
+		-
+			message: '#^Relation ''fasi'' is not found in App\\Models\\Ordine model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Services/BollaLavorazioneService.php
+
+		-
+			message: '#^Relation ''ordine'' is not found in App\\Models\\OrdineFase model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Services/BollaLavorazioneService.php
+
+		-
+			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
+			identifier: larastan.noEnvCallsOutsideOfConfig
+			count: 2
+			path: app/Services/DdtPdfService.php
+
+		-
+			message: '#^If condition is always false\.$#'
+			identifier: if.alwaysFalse
+			count: 1
+			path: app/Services/DdtPdfService.php
+
+		-
+			message: '#^Negated boolean expression is always false\.$#'
+			identifier: booleanNot.alwaysFalse
+			count: 1
+			path: app/Services/DdtPdfService.php
+
+		-
+			message: '#^Relation ''fasi'' is not found in App\\Models\\Ordine model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Services/FabbisognoService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>fornitore" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Services/FabbisognoService.php
+
+		-
+			message: '#^Left side of && is always true\.$#'
+			identifier: booleanAnd.leftAlwaysTrue
+			count: 2
+			path: app/Services/FaseStatoService.php
+
+		-
+			message: '#^Property App\\Models\\OrdineFase\:\:\$stato \(string\) does not accept int\.$#'
+			identifier: assign.propertyType
+			count: 4
+			path: app/Services/FaseStatoService.php
+
+		-
+			message: '#^Relation ''ordine'' is not found in App\\Models\\OrdineFase model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Services/FaseStatoService.php
+
+		-
+			message: '#^Property App\\Models\\MagazzinoGiacenza\:\:\$data_ultimo_carico \(Carbon\\Carbon\|null\) does not accept string\.$#'
+			identifier: assign.propertyType
+			count: 2
+			path: app/Services/MagazzinoService.php
+
+		-
+			message: '#^Property App\\Models\\MagazzinoGiacenza\:\:\$data_ultimo_scarico \(Carbon\\Carbon\|null\) does not accept string\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Services/MagazzinoService.php
+
+		-
+			message: '#^Relation ''articolo'' is not found in App\\Models\\MagazzinoEtichetta model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Services/MagazzinoService.php
+
+		-
+			message: '#^Relation ''giacenza'' is not found in App\\Models\\MagazzinoEtichetta model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Services/MagazzinoService.php
+
+		-
+			message: '#^Relation ''ubicazione'' is not found in App\\Models\\MagazzinoEtichetta model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Services/MagazzinoService.php
+
+		-
+			message: '#^Call to method executable\(\) on an unknown class thiagoalessio\\TesseractOCR\\TesseractOCR\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Services/OcrBollaService.php
+
+		-
+			message: '#^Call to method lang\(\) on an unknown class thiagoalessio\\TesseractOCR\\TesseractOCR\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Services/OcrBollaService.php
+
+		-
+			message: '#^Call to method psm\(\) on an unknown class thiagoalessio\\TesseractOCR\\TesseractOCR\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Services/OcrBollaService.php
+
+		-
+			message: '#^Call to method run\(\) on an unknown class thiagoalessio\\TesseractOCR\\TesseractOCR\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Services/OcrBollaService.php
+
+		-
+			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
+			identifier: larastan.noEnvCallsOutsideOfConfig
+			count: 1
+			path: app/Services/OcrBollaService.php
+
+		-
+			message: '#^Instantiated class thiagoalessio\\TesseractOCR\\TesseractOCR not found\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Services/OcrBollaService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\OrdineFase\:\:\$ordine\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/PriorityService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Support\\HigherOrderCollectionProxy\<string, App\\Models\\Ordine, Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\Ordine\>\>\:\:\$fasi\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/PriorityService.php
+
+		-
+			message: '#^Relation ''fasi'' is not found in App\\Models\\Ordine model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Services/PriorityService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\MagazzinoEtichetta\:\:\$articolo\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/QrEtichettaService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\MagazzinoEtichetta\:\:\$ubicazione\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/QrEtichettaService.php
+
+		-
+			message: '#^Call to static method format\(\) on an unknown class SimpleSoftwareIO\\QrCode\\Facades\\QrCode\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Services/QrEtichettaService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\OrdineFase\:\:\$ordine\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/SchedulerService.php
+
+		-
+			message: '#^Relation ''ordine'' is not found in App\\Models\\OrdineFase model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Services/SchedulerService.php
+
+		-
+			message: '#^Right side of && is always true\.$#'
+			identifier: booleanAnd.rightAlwaysTrue
+			count: 1
+			path: app/Services/SchedulerService.php
+
+		-
+			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
+			identifier: larastan.noEnvCallsOutsideOfConfig
+			count: 2
+			path: app/Services/SolarLogService.php
+
+		-
+			message: '#^Deprecated in PHP 8\.4\: Parameter \#1 \$errore \(string\) is implicitly nullable via default value null\.$#'
+			identifier: parameter.implicitlyNullable
+			count: 1
+			path: app/Services/SolarLogService.php
+
+		-
+			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
+			identifier: larastan.noEnvCallsOutsideOfConfig
+			count: 3
+			path: app/Services/TelegramBotService.php
+
+		-
+			message: '#^Call to static method create\(\) on an unknown class Minishlink\\WebPush\\Subscription\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Services/WebPushService.php

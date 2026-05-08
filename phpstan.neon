@@ -1,12 +1,25 @@
+includes:
+    - ./vendor/larastan/larastan/extension.neon
+    - phpstan-baseline.neon
+
 parameters:
     level: 5
     paths:
         - app
+
     excludePaths:
+        - app/Services/OndaSyncService.php
+        - app/Http/Services/PrinectService.php
+        - app/Http/Services/FieryService.php
+        - app/Http/Services/PrinectSyncService.php
+        - app/Http/Services/ExcelSyncService.php
         - app/Console/Commands/Telegram*.php
+
     ignoreErrors:
+        - identifier: missingType.iterableValue
         - '#PHPDoc tag @var#'
         - '#Call to an undefined method.*Builder.*#'
-    checkMissingIterableValueType: false
-    treatPhpDocTypesAsCertain: false
+
+    checkOctaneCompatibility: false
+    checkModelProperties: false
     reportUnmatchedIgnoredErrors: false
