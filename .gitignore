@@ -18,7 +18,19 @@
 /public/storage
 /storage/*.key
 /storage/pail
+/storage/framework/cache/*
+!/storage/framework/cache/.gitignore
+/storage/framework/views/*
+!/storage/framework/views/.gitignore
+/storage/framework/sessions/*
+!/storage/framework/sessions/.gitignore
+/storage/logs/*
+!/storage/logs/.gitignore
 /vendor
+
+# Excel/script una-tantum
+contatori_canon_aprile_*.xlsx
+crea_excel_canon_*.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
