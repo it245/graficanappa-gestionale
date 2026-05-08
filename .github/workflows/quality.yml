@@ -42,11 +42,8 @@ jobs:
           restore-keys: |
             composer-${{ runner.os }}-
 
-      - name: Show composer.lock zipstream version (debug)
-        run: grep -A1 "zipstream-php" composer.lock | head -5
-
       - name: Install dependencies
-        run: composer install --no-interaction --no-progress --no-scripts --prefer-dist -vvv
+        run: composer install --no-interaction --no-progress --no-scripts --prefer-dist --no-security-blocking
 
       - name: Prepare Laravel environment
         run: |
