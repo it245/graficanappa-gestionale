@@ -206,9 +206,18 @@ final class FaseTransitionService
                 ]);
             }
 
-            // Acconto: salva qta_prod parziale
-            if ($motivo === 'Acconto' && $qtaProdotta !== null) {
-                $fase->qta_prod = (int) $qtaProdotta;
+            // Acconto: cumulativo qta_prod + storico in note (es. "Acconto 500 - 08/05 10:00 - Mario").
+            // Permette logistica di vedere ogni invio parziale + somma totale gia spedita.
+            if ($motivo === 'Acconto' && $qtaProdotta !== null && $qtaProdotta > 0) {
+                $fase->qta_prod = (int) ($fase->qta_prod ?? 0) + (int) $qtaProdotta;
+
+                $autore = $operatore !== null ? ($operatore->nome ?? 'sistema') : 'sistema';
+                $timestamp = now()->format('d/m H:i');
+                $rigaStorico = "Acconto {$qtaProdotta} - {$timestamp} - {$autore}";
+                $noteCorrenti = trim((string) ($fase->note ?? ''));
+                $fase->note = $noteCorrenti === ''
+                    ? $rigaStorico
+                    : $noteCorrenti . "\n" . $rigaStorico;
             }
 
             $fase->stato   = $motivo;

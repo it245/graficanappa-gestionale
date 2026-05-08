@@ -53,6 +53,14 @@ class PriorityService
 
             self::calcolaSequenza($fase);
             self::calcolaDisponibile($fase, $tutteFasi);
+
+            // Auto-promote stato 0 (non iniziata) -> 1 (pronta) se disponibile.
+            // Permette ai reparti successivi di vedere fase pronta quando il
+            // predecessore termina O ha "acconto" (parte qta gia inviata).
+            if ($fase->disponibile && is_numeric($fase->stato) && (int) $fase->stato === 0) {
+                $fase->stato = 1;
+            }
+
             self::calcolaOre($fase, $ordine);
             self::calcolaGiorniLavoroResiduo($fase, $ordine, $tutteFasi);
             self::calcolaUrgenzaReale($fase, $ordine);
@@ -76,7 +84,8 @@ class PriorityService
     /**
      * Livello 1: Disponibilità fisica.
      * Una fase è disponibile se tutti i predecessori (sequenza inferiore)
-     * nella stessa commessa sono completati (stato >= 3).
+     * nella stessa commessa sono completati (stato >= 3) OPPURE hanno
+     * "acconto" nelle note/motivo pausa (parte qta gia inviata avanti).
      */
     public static function calcolaDisponibile(OrdineFase $fase, $tutteFasi): void
     {
@@ -92,8 +101,24 @@ class PriorityService
             // Nessun predecessore → prima fase del ciclo, sempre disponibile
             $fase->disponibile = true;
         } else {
-            $fase->disponibile = $predecessori->every(fn($f) => $f->stato >= 3);
+            $fase->disponibile = $predecessori->every(
+                fn($f) => $f->stato >= 3 || self::haAcconto($f)
+            );
         }
+    }
+
+    /**
+     * True se la fase ha "acconto" nelle note o nel motivo pausa.
+     * Indica che parte della qta e gia stata inviata alla fase successiva,
+     * quindi la successiva puo iniziare anche se questa fase non e terminata.
+     */
+    private static function haAcconto(OrdineFase $fase): bool
+    {
+        $note = strtolower((string) ($fase->note ?? ''));
+        $stato = (string) ($fase->stato ?? '');
+        $motivoPausa = is_numeric($stato) ? '' : strtolower($stato);
+
+        return str_contains($note, 'acconto') || str_contains($motivoPausa, 'acconto');
     }
 
     /**

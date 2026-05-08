@@ -1007,8 +1007,14 @@ body.dark-mode .info-box-label { color: #94a3b8; }
                         <option>Problema macchina</option>
                         <option>Pranzo</option>
                         <option>Fine turno</option>
+                        <option value="Acconto">Acconto (quantità prodotta)</option>
                         <option value="__altro__">Altro...</option>
                     </select>
+                </div>
+                <div class="mb-3" id="pausaAccontoWrap" style="display:none;">
+                    <label class="form-label fw-bold">Quantità prodotta in questo acconto</label>
+                    <input type="number" id="pausaAccontoQta" class="form-control" placeholder="es. 500" min="0">
+                    <small class="text-muted">Cumulativa: ogni acconto somma il totale gia prodotto</small>
                 </div>
                 <div class="mb-3" id="pausaAltroWrap" style="display:none;">
                     <label class="form-label fw-bold">Specifica motivo</label>
@@ -1304,8 +1310,9 @@ document.getElementById('modalPausa').addEventListener('hidden.bs.modal', functi
 });
 
 function toggleAltroPausa() {
-    document.getElementById('pausaAltroWrap').style.display =
-        document.getElementById('pausaMotivoSelect').value === '__altro__' ? '' : 'none';
+    var sel = document.getElementById('pausaMotivoSelect').value;
+    document.getElementById('pausaAltroWrap').style.display = sel === '__altro__' ? '' : 'none';
+    document.getElementById('pausaAccontoWrap').style.display = sel === 'Acconto' ? '' : 'none';
 }
 
 function confermaPausa() {
@@ -1313,12 +1320,20 @@ function confermaPausa() {
     var motivo = sel === '__altro__' ? (document.getElementById('pausaAltroInput').value.trim() || 'Altro') : sel;
     if (!motivo) { MES.toast('Seleziona un motivo','warning'); return; }
     var faseId = document.getElementById('pausaFaseId').value;
+    var body = {fase_id: faseId, motivo: motivo};
+
+    if (sel === 'Acconto') {
+        var qta = parseInt(document.getElementById('pausaAccontoQta').value) || 0;
+        if (qta <= 0) { MES.toast('Inserisci la quantita prodotta in questo acconto','warning'); return; }
+        body.qta_prodotta = qta;
+    }
+
     bootstrap.Modal.getInstance(document.getElementById('modalPausa')).hide();
 
     fetch('{{ route("produzione.pausa") }}',{
         method:'POST',
         headers:{'X-CSRF-TOKEN':csrfToken(),'Content-Type':'application/json'},
-        body:JSON.stringify({fase_id:faseId, motivo:motivo})
+        body:JSON.stringify(body)
     })
     .then(res=>res.json())
     .then(data=>{
