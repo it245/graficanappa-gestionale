@@ -22,7 +22,17 @@
       "WebFetch(domain:raw.githubusercontent.com)",
       "WebFetch(domain:efi.my.site.com)",
       "Bash(git checkout:*)",
-      "Bash(echo \"DONE: $?\")"
+      "Bash(echo \"DONE: $?\")",
+      "Bash(git -C \"C:\\\\Users\\\\Giovanni\\\\graficanappa-gestionale\" status --short)",
+      "Bash(git -C \"C:\\\\Users\\\\Giovanni\\\\graficanappa-gestionale\" log --oneline -5)",
+      "Bash(composer install *)",
+      "Bash(touch phpstan-baseline.neon)",
+      "Bash(vendor/bin/phpstan analyse *)",
+      "Bash(git restore *)",
+      "Bash(git mv *)",
+      "Bash(awk '/^    private \\\\$fasiInfo = \\\\[$/{flag=1} !flag{print} /^    \\\\];$/{if\\(flag\\){flag=0; next}}' app/Http/Controllers/DashboardOwnerController.php)",
+      "Read(//tmp/**)",
+      "Bash(mv /tmp/owner.php app/Http/Controllers/DashboardOwnerController.php)"
     ]
   }
 }

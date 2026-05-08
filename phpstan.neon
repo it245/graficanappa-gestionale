@@ -21,6 +21,7 @@ parameters:
         - '#Call to an undefined method.*Builder.*#'
         - '#Call to an undefined method thiagoalessio\\TesseractOCR\\TesseractOCR::#'
         - '#always exists and is not nullable#'
+        - identifier: larastan.relationExistence
 
     checkOctaneCompatibility: false
     checkModelProperties: false
