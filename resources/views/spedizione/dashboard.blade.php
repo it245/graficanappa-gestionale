@@ -555,6 +555,7 @@
                 <th>Cod. Articolo</th>
                 <th>Qta</th>
                 <th>Descrizione</th>
+                <th>Acconti</th>
                 <th data-sort="date" style="cursor:pointer;">Data Consegna <span class="sort-arrow">▼</span></th>
                 <th>Progresso fasi</th>
             </tr>
@@ -564,6 +565,18 @@
                 @php
                     $pct = $fase->percentuale ?? 0;
                     $pctColor = $pct >= 75 ? '#17a2b8' : ($pct >= 50 ? '#ffc107' : '#dc3545');
+
+                    // Estrai acconti da TUTTE le fasi non terminate della commessa
+                    $accontiCommessa = [];
+                    foreach (($fase->fasiNonTerminate ?? collect()) as $fNT) {
+                        if (empty($fNT->note)) continue;
+                        foreach (explode("\n", $fNT->note) as $riga) {
+                            if (preg_match('/Acconto\s+(\d+)\s*-\s*([^-]+)\s*-\s*(.+)/i', trim($riga), $m)) {
+                                $accontiCommessa[] = ['fase' => $fNT->fase, 'qta' => (int) $m[1], 'data' => trim($m[2]), 'autore' => trim($m[3])];
+                            }
+                        }
+                    }
+                    $totaleAcc = array_sum(array_column($accontiCommessa, 'qta'));
                 @endphp
                 <tr class="searchable">
                     <td style="text-align:center; vertical-align:middle;">
@@ -575,6 +588,16 @@
                     <td>{{ $fase->ordine->cod_art ?? '-' }}</td>
                     <td>{{ $fase->ordine->qta_richiesta ?? '-' }}</td>
                     <td class="desc-col">{{ $fase->ordine->descrizione ?? '-' }}</td>
+                    <td style="font-size:11px;">
+                        @if(!empty($accontiCommessa))
+                            <div style="color:#6f42c1;" title="@foreach($accontiCommessa as $a){{ $a['fase'] }}: {{ $a['qta'] }} ({{ $a['data'] }} - {{ $a['autore'] }}){{ "\n" }}@endforeach">
+                                <strong>📦 {{ collect($accontiCommessa)->pluck('qta')->implode('+') }}</strong>
+                                = <strong>{{ number_format($totaleAcc, 0, ',', '.') }}</strong>
+                            </div>
+                        @else
+                            <span class="text-muted">-</span>
+                        @endif
+                    </td>
                     <td>{{ $fase->ordine->data_prevista_consegna ? \Carbon\Carbon::parse($fase->ordine->data_prevista_consegna)->format('d/m/Y') : '-' }}</td>
                     <td>
                         <div class="progress-bar-custom">
