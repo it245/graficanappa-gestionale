@@ -40,9 +40,17 @@ class SyncPresenze extends Command
         if (!file_exists(self::TIMBRATURE_PATH_PRIMARY)) {
             $user = env('NETTIME_SHARE_USER', 'mes');
             $pass = env('NETTIME_SHARE_PASS', '');
-            @exec("net use \\\\192.168.1.34\\NetTime /user:{$user} {$pass} 2>&1", $out, $code);
+
+            // Hardening security: escape arguments per evitare command injection
+            // se NETTIME_SHARE_USER/PASS contengono caratteri speciali (";", "|", "&", ecc.)
+            $userEsc = escapeshellarg((string) $user);
+            $passEsc = escapeshellarg((string) $pass);
+            $cmd = "net use \\\\192.168.1.34\\NetTime /user:{$userEsc} {$passEsc} 2>&1";
+
+            @exec($cmd, $out, $code);
             if ($code !== 0) {
-                $this->warn("Share .34 non raggiungibile: " . implode(' ', $out));
+                // Non logghiamo $out perché potrebbe contenere la password in caso di errore
+                $this->warn("Share .34 non raggiungibile (codice: {$code})");
             }
         }
     }

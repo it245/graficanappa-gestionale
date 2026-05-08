@@ -237,17 +237,36 @@ class ProduzioneController extends Controller
 
         $fase = OrdineFase::find($request->fase_id);
 
-        $fase->{$request->campo} = $request->valore;
+        // Hardening security: assegnazione esplicita (no $fase->{$campo} dinamico).
+        // Il validator già whitelista i campi, ma defense-in-depth previene
+        // mass assignment se un domani qualcuno allarga la regola in:.
+        $campo = $request->campo;
+        $valore = $request->valore;
+
+        switch ($campo) {
+            case 'qta_prod':
+                $fase->qta_prod = $valore;
+                break;
+            case 'note':
+                $fase->note = $valore;
+                break;
+            case 'scarti':
+                $fase->scarti = $valore;
+                break;
+            default:
+                // Non dovrebbe mai capitare grazie al validator, ma blocchiamo comunque
+                return response()->json(['success' => false, 'errors' => ['campo' => ['Campo non consentito']]], 422);
+        }
         $fase->save();
 
         // Se aggiornato qta_prod, controlla se la fase è completata
-        if ($request->campo === 'qta_prod') {
+        if ($campo === 'qta_prod') {
             \App\Services\FaseStatoService::controllaCompletamento($fase->id);
         }
 
         // Se note contengono "esterno" o "lavorato esternamente", segna come esterno
-        if ($request->campo === 'note') {
-            $esterno = preg_match('/\b(lavorato esternamente|esterno)\b/i', $request->valore ?? '');
+        if ($campo === 'note') {
+            $esterno = preg_match('/\b(lavorato esternamente|esterno)\b/i', $valore ?? '');
             if ($esterno && !$fase->esterno) {
                 $fase->esterno = true;
                 $fase->save();

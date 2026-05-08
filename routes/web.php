@@ -224,8 +224,10 @@ Route::get('/spedizione/tracking-json/{segnacollo}', [DashboardSpedizioneControl
 // Prototipo nuova UI
 Route::get('/proto/owner', [DashboardOwnerController::class, 'prototipo'])->name('proto.owner');
 
-// Etichette — lista commesse (accesso libero)
-Route::get('/etichette', [EtichettaController::class, 'lista'])->name('etichette.lista');
+// Etichette — lista commesse (richiede auth operatore: contiene dati commerciali)
+Route::get('/etichette', [EtichettaController::class, 'lista'])
+    ->middleware('operatore.auth')
+    ->name('etichette.lista');
 
 // Chat
 Route::middleware('operatore.auth')->prefix('chat')->group(function () {
@@ -365,15 +367,15 @@ Route::get('/kiosk-demo', function() {
     ]);
 });
 
-// Report commesse per percorso produttivo (Excel)
+// Report commesse per percorso produttivo (Excel) — richiede auth (dati commerciali)
 Route::get('/report-percorso/excel', function () {
     return \Maatwebsite\Excel\Facades\Excel::download(
         new \App\Exports\ReportPercorsoExport(),
         'Commesse_Percorso_' . now()->format('Y-m-d') . '.xlsx'
     );
-});
+})->middleware('owner.or.admin');
 
-// Report commesse per percorso produttivo (HTML)
+// Report commesse per percorso produttivo (HTML) — richiede auth (dati commerciali)
 Route::get('/report-percorso', function () {
     $ordini = \App\Models\Ordine::whereHas('fasi', fn($q) => $q->where('stato', '<', 4))
         ->with(['fasi.faseCatalogo'])
@@ -405,17 +407,19 @@ Route::get('/report-percorso', function () {
     }
 
     return view('report.percorso', ['gruppi' => $gruppi, 'totale' => $ordini->count()]);
-});
+})->middleware('owner.or.admin');
 
-// DDT PDF
-Route::get('/ddt/pdf/{numeroDdt}', [DdtPdfController::class, 'genera'])->name('ddt.pdf');
+// DDT PDF — protetto: contiene dati commerciali (cliente, indirizzo, articoli)
+Route::get('/ddt/pdf/{numeroDdt}', [DdtPdfController::class, 'genera'])
+    ->middleware('operatore.auth')
+    ->name('ddt.pdf');
 
-// Fustella resolver API (lookup PDF da codice FS####)
+// Fustella resolver API (lookup PDF da codice FS####) — protetto
 Route::get('/api/fustella-resolve', function (\Illuminate\Http\Request $request) {
     $codice = $request->get('codice');
     $r = \App\Helpers\FustellaResolver::resolve($codice);
     return response()->json($r ?: ['url' => null]);
-})->name('api.fustella.resolve');
+})->middleware('operatore.auth')->name('api.fustella.resolve');
 
 // Homepage
 Route::get('/', fn() => view('welcome'));
