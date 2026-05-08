@@ -587,10 +587,20 @@ class DashboardSpedizioneController extends Controller
     {
         set_time_limit(120);
         try {
-            $risultato = \App\Services\OndaSyncService::sincronizza();
+            // Strangler Fig: ordini/fasi via modulo Onda, DDT vendita via modulo Spedizione.
+            // I metodi DDT Fornitore / Forniture Lavorazioni non sono ancora migrati
+            // in moduli dedicati: continuano a passare dal wrapper legacy
+            // (estrazione futura: DdtFornitoreSyncService, DdtLavorazioniSyncService).
+            $r = app(\App\Modules\Onda\Services\OrdineSyncService::class)->sync();
+            $risultato = [
+                'ordini_creati'     => $r['ordini_creati'] ?? 0,
+                'ordini_aggiornati' => $r['ordini_aggiornati'] ?? 0,
+                'fasi_create'       => $r['fasi_create'] ?? 0,
+            ];
             $ddtFornitore = \App\Services\OndaSyncService::sincronizzaDDTFornitore();
             $ddtLavorazioni = \App\Services\OndaSyncService::sincronizzaDDTFornitureLavorazioni();
-            $ddtVendita = \App\Services\OndaSyncService::sincronizzaDDTVendita();
+            $venditaR = app(\App\Modules\Spedizione\Services\DdtSyncService::class)->syncFromOnda(7);
+            $ddtVendita = ($venditaR['inseriti'] ?? 0) + ($venditaR['aggiornati'] ?? 0);
             $msg = "Sync Onda: {$risultato['ordini_creati']} creati, "
                  . "{$risultato['ordini_aggiornati']} aggiornati, {$risultato['fasi_create']} fasi.";
             $totDDT = $ddtFornitore + $ddtLavorazioni;

@@ -348,7 +348,14 @@ class DashboardOperatoreController extends Controller
         if (!$operatore) abort(403);
 
         try {
-            $risultato = \App\Services\OndaSyncService::sincronizza();
+            // Strangler Fig: chiama direttamente OrdineSyncService dal modulo Onda
+            // anziché il wrapper legacy OndaSyncService::sincronizza.
+            $r = app(\App\Modules\Onda\Services\OrdineSyncService::class)->sync();
+            $risultato = [
+                'ordini_creati'     => $r['ordini_creati'] ?? 0,
+                'ordini_aggiornati' => $r['ordini_aggiornati'] ?? 0,
+                'fasi_create'       => $r['fasi_create'] ?? 0,
+            ];
             $msg = "Sync Onda: {$risultato['ordini_creati']} creati, {$risultato['ordini_aggiornati']} aggiornati, {$risultato['fasi_create']} fasi.";
             return redirect()->route('operatore.prestampa', ['op_token' => $request->get('op_token')])->with('success', $msg);
         } catch (\Exception $e) {

@@ -1,6 +1,6 @@
 # Strangler Fig Progress
 
-Generato: 2026-05-07
+Generato: 2026-05-08
 Branch: `def2.0`
 
 Stato dell'estrazione modulare DDD nel MES Grafica Nappa. I "wrapper legacy"
@@ -27,7 +27,7 @@ la stabilità di produzione viene prima.
   - `App\Modules\Reparti\Services\RepartoService::tipoFromCodice()`
   - `App\Modules\Spedizione\Services\DdtSyncService::syncFromOnda()`
 
-- **Chiamanti residui** (5 file in `app/`):
+- **Chiamanti residui** (4 file in `app/`):
   - `app/Console/Commands/SyncOnda.php` — cron `onda:sync`. Migrato a
     `OrdineSyncService::sync()` + `CommessaSyncService::sync()` +
     `DdtSyncService::syncFromOnda()`. **Restano sul wrapper solo le 2
@@ -39,12 +39,12 @@ la stabilità di produzione viene prima.
   - `app/Http/Controllers/DashboardOwnerController.php` — endpoint sync
     manuale dal pannello owner. Migrato a `OrdineSyncService::sync()` +
     `DdtSyncService::syncFromOnda()`. Restano le 2 chiamate DDT Fornitore.
-  - `app/Http/Controllers/DashboardOperatoreController.php:351` — **non
-    migrato** (non era in scope inventory; 1 sola chiamata
-    `OndaSyncService::sincronizza()`).
-  - `app/Http/Controllers/DashboardSpedizioneController.php:590-593` —
-    **non migrato** (non era in scope inventory; 4 chiamate statiche batch
-    identiche al pattern owner).
+  - `app/Http/Controllers/DashboardSpedizioneController.php` — endpoint
+    sync manuale spedizione. **Migrato (2026-05-08)** a `OrdineSyncService::sync()`
+    + `DdtSyncService::syncFromOnda()`. Restano le 2 chiamate DDT Fornitore.
+  - `app/Http/Controllers/DashboardOperatoreController.php` — endpoint
+    sync manuale prestampa. **Migrato (2026-05-08)** a `OrdineSyncService::sync()`.
+    Nessun residuo wrapper.
   - Script standalone `confronta_tutte.php`, `import_commessa_onda.php` —
     skip (legacy una-tantum root).
 
@@ -79,6 +79,11 @@ la stabilità di produzione viene prima.
     `DashboardOwnerController` (`index`, `dettaglioCommessa`, `scheduling`)
     → ora iniettano `PrinectApiInterface` e usano `getWorksteps()` /
     `getWorkstepPreview()` / `getDeviceActivity()` / `getDevices()`.
+  - Migrato (2026-05-08): `app/Http/Services/PrinectSyncService.php` —
+    cron `prinect:sync`. Costruttore ora type-hinted su
+    `PrinectApiInterface` (binding registrato in `ModulesServiceProvider`
+    risolve a `PrinectHttpAdapter`). Stesso comportamento runtime, ma
+    testabile via mock del Contract.
   - Script standalone `retrofit_prinect_scarti.php` — skip (one-shot root).
 
 - **Migrazione sicura "1-line"?** Sì per i Controller (i metodi usati erano
@@ -157,7 +162,9 @@ separato).
 - [ ] Estrarre `sincronizzaDDTFornitore` in `App\Modules\Spedizione\Services\DdtFornitoreSyncService`
 - [ ] Estrarre `sincronizzaDDTFornitureLavorazioni` in `App\Modules\Spedizione\Services\DdtLavorazioniSyncService`
 - [ ] Migrare `SyncOnda` console command alle nuove DI
-- [ ] Migrare `DashboardOwnerController` (4 chiamate statiche) alle nuove DI
+- [x] Migrare `DashboardOwnerController` (residuano solo le 2 DDT Fornitore)
+- [x] Migrare `DashboardSpedizioneController` (residuano solo le 2 DDT Fornitore, 2026-05-08)
+- [x] Migrare `DashboardOperatoreController::prestampaSyncOnda` (2026-05-08)
 - [ ] Sostituire `ReflectionMethod(OndaSyncService, getMappaReparti)` con
       `app(RepartoService::class)->mappaSlugToId()` in `ImportExcelTutto`
 - [ ] Spostare `confronta_tutte.php` e `import_commessa_onda.php` come Artisan
@@ -169,8 +176,9 @@ separato).
       preview, ink, jobs) in `PrinectApiInterface`
 - [ ] Migrare `PrinectAdapter` (modulo Stampa) a iniettare
       `PrinectApiInterface` invece di `PrinectService`
-- [ ] Migrare `CommessaController::show/preview` alla DI di `PrinectApiInterface`
-- [ ] Migrare `KioskController` e `DashboardOwnerController` alla DI
+- [x] Migrare `CommessaController::show/preview` alla DI di `PrinectApiInterface`
+- [x] Migrare `KioskController` e `DashboardOwnerController` alla DI
+- [x] Migrare `PrinectSyncService` alla DI di `PrinectApiInterface` (2026-05-08)
 - [ ] Convertire o eliminare `retrofit_prinect_scarti.php`
 - [ ] Eliminare `app/Http/Services/PrinectService.php`
 

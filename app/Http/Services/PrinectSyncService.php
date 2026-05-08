@@ -7,6 +7,7 @@ use App\Models\Ordine;
 use App\Models\OrdineFase;
 use App\Models\Operatore;
 use App\Models\Reparto;
+use App\Modules\Prinect\Contracts\PrinectApiInterface;
 use App\Modules\Prinect\Services\PrinectAccountingService;
 use App\Modules\Prinect\Services\PrinectAutoTerminaService;
 use App\Modules\Prinect\Services\PrinectInkService;
@@ -36,14 +37,21 @@ use App\Services\FaseStatoService;
  */
 class PrinectSyncService
 {
-    protected PrinectService $prinect;
+    protected PrinectApiInterface $prinect;
     protected PrinectJobsService $jobsService;
     protected PrinectInkService $inkService;
     protected PrinectAccountingService $accountingService;
     protected PrinectAutoTerminaService $autoTerminaService;
 
+    /**
+     * Strangler Fig: dipendiamo dal Contract `PrinectApiInterface` (modulo
+     * Prinect) anziché dal wrapper concreto `PrinectService`. Stesso comportamento
+     * runtime — l'I/O HTTP è in `PrinectHttpAdapter`, registrato come implementazione
+     * dell'interface in `ModulesServiceProvider` — ma test possono mockare il
+     * contract senza una Heidelberg fisica.
+     */
     public function __construct(
-        PrinectService $prinect,
+        PrinectApiInterface $prinect,
         PrinectJobsService $jobsService,
         PrinectInkService $inkService,
         PrinectAccountingService $accountingService,
