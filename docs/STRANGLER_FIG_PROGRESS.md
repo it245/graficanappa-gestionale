@@ -27,23 +27,32 @@ la stabilità di produzione viene prima.
   - `App\Modules\Reparti\Services\RepartoService::tipoFromCodice()`
   - `App\Modules\Spedizione\Services\DdtSyncService::syncFromOnda()`
 
-- **Chiamanti residui** (5):
-  - `app/Console/Commands/SyncOnda.php:6,29,57,79,82,85` — cron `onda:sync`
-    (usa `sincronizza`, `sincronizzaSingolaCommessa`, `sincronizzaDDTFornitore`,
-    `sincronizzaDDTFornitureLavorazioni`, `sincronizzaDDTVendita`)
-  - `app/Console/Commands/ImportExcelTutto.php:10,297,301` — Reflection su
-    `OndaSyncService::getMappaReparti` per fallback mappa reparti
-  - `app/Http/Controllers/DashboardOwnerController.php:21,1134-1137` — endpoint
-    sync manuale dal pannello owner (4 chiamate statiche in batch)
-  - `confronta_tutte.php:7` — script ad-hoc root, usato manualmente per audit
-  - `import_commessa_onda.php:14` — script ad-hoc root per import singola commessa
+- **Chiamanti residui** (5 file in `app/`):
+  - `app/Console/Commands/SyncOnda.php` — cron `onda:sync`. Migrato a
+    `OrdineSyncService::sync()` + `CommessaSyncService::sync()` +
+    `DdtSyncService::syncFromOnda()`. **Restano sul wrapper solo le 2
+    chiamate `sincronizzaDDTFornitore` / `sincronizzaDDTFornitureLavorazioni`**
+    finché non viene estratto un modulo dedicato.
+  - `app/Console/Commands/ImportExcelTutto.php` — Reflection su
+    `OndaSyncService::getMappaReparti` per fallback mappa reparti (skip:
+    refactor pesante).
+  - `app/Http/Controllers/DashboardOwnerController.php` — endpoint sync
+    manuale dal pannello owner. Migrato a `OrdineSyncService::sync()` +
+    `DdtSyncService::syncFromOnda()`. Restano le 2 chiamate DDT Fornitore.
+  - `app/Http/Controllers/DashboardOperatoreController.php:351` — **non
+    migrato** (non era in scope inventory; 1 sola chiamata
+    `OndaSyncService::sincronizza()`).
+  - `app/Http/Controllers/DashboardSpedizioneController.php:590-593` —
+    **non migrato** (non era in scope inventory; 4 chiamate statiche batch
+    identiche al pattern owner).
+  - Script standalone `confronta_tutte.php`, `import_commessa_onda.php` —
+    skip (legacy una-tantum root).
 
 - **Migrazione sicura "1-line"?** No. I metodi `sincronizzaDDTFornitore` e
   `sincronizzaDDTFornitureLavorazioni` non hanno ancora controparte in un modulo
-  dedicato (solo `DdtSyncService` per le vendite). Migrare solo la chiamata
-  Vendita romperebbe l'unitarietà del batch in `DashboardOwnerController` e
-  `SyncOnda`. Inoltre `getMappaReparti` viene letto via `ReflectionMethod` —
-  modificarlo richiede una migrazione coordinata di `ImportExcelTutto`.
+  dedicato (solo `DdtSyncService` per le vendite). Inoltre `getMappaReparti`
+  viene letto via `ReflectionMethod` in `ImportExcelTutto` — modificarlo
+  richiede una migrazione coordinata.
 
 - **Stato eliminazione**: pronto quando 0 chiamanti.
 
@@ -61,27 +70,24 @@ la stabilità di produzione viene prima.
   - `App\Modules\Prinect\Services\*` (business logic: jobs, accounting, ink,
     auto-termina)
 
-- **Chiamanti residui** (5):
-  - `app/Http/Controllers/CommessaController.php:7,11,118` — `show()` e
-    `preview()`: usa `getJobWorksteps`, `getWorkstepPreview` per anteprima foglio
-  - `app/Http/Controllers/KioskController.php:8,46` — `app(PrinectService::class)`
-    in modalità kiosk
-  - `app/Http/Controllers/DashboardOwnerController.php:22,372,927,1349` —
-    `index()`, `dettaglioCommessa()`, `scheduling()`: chiamate REST per stato
-    macchine offset, devices, accounting
-  - `app/Modules/Stampa/Adapters/PrinectAdapter.php:7` — il modulo Stampa
-    inietta direttamente `PrinectService` (per ora — andrebbe migrato a
-    `PrinectApiInterface`)
-  - `retrofit_prinect_scarti.php:15` — script root one-shot
+- **Chiamanti residui** (1 file in `app/`):
+  - `app/Modules/Stampa/Adapters/PrinectAdapter.php` — il modulo Stampa
+    inietta direttamente `PrinectService` come compatibility layer
+    intenzionale (manterrà la dipendenza finché non promosso a
+    `PrinectApiInterface`).
+  - Migrati: `CommessaController` (`show`, `preview`), `KioskController`,
+    `DashboardOwnerController` (`index`, `dettaglioCommessa`, `scheduling`)
+    → ora iniettano `PrinectApiInterface` e usano `getWorksteps()` /
+    `getWorkstepPreview()` / `getDeviceActivity()` / `getDevices()`.
+  - Script standalone `retrofit_prinect_scarti.php` — skip (one-shot root).
 
-- **Migrazione sicura "1-line"?** No. I controller usano metodi specifici
-  (`getDevices`, `getDeviceActivity`, `getJobWorksteps`, `getWorkstepPreview`,
-  `getInkConsumption`, ecc.) di cui solo una parte è esposta via
-  `PrinectApiInterface`. Lo swap richiede di estendere il Contract o creare
-  Service di alto livello — non 1 riga.
+- **Migrazione sicura "1-line"?** Sì per i Controller (i metodi usati erano
+  già esposti da `PrinectApiInterface`, solo rinominato `getJobWorksteps` →
+  `getWorksteps`). Resta da migrare il `PrinectAdapter` per non dipendere
+  più da `PrinectService`.
 
-- **Stato eliminazione**: pronto quando 0 chiamanti E `PrinectAdapter` migra
-  l'iniezione a `PrinectApiInterface`.
+- **Stato eliminazione**: pronto quando `PrinectAdapter` migra l'iniezione
+  a `PrinectApiInterface`.
 
 ---
 
@@ -97,25 +103,26 @@ la stabilità di produzione viene prima.
     ancora estratti — restano in `FieryService` finché non viene promosso un
     modulo Stampa\Services\Fiery dedicato.
 
-- **Chiamanti residui** (4):
-  - `app/Modules/Stampa/Adapters/FieryAdapter.php:7` — il modulo Stampa
+- **Chiamanti residui** (1 file in `app/`):
+  - `app/Modules/Stampa/Adapters/FieryAdapter.php` — il modulo Stampa
     inietta `FieryService` come dipendenza per implementare l'interfaccia
     comune (caso intenzionale, non migrabile finché non si estraggono i
-    metodi Fiery-only)
-  - `app/Console/Commands/SyncFiery.php:6,15,31` — cron `fiery:sync`,
-    chiama `getServerStatus`, sync accounting → DB
-  - `app/Console/Commands/WarmFieryCache.php:5,13,18,21,24` — cron `fiery:warm`,
-    chiama `getServerStatus`, `getJobs`, `getAccountingPerCommessa`
-  - `app/Console/Commands/FieryReport.php:6,20,24` — comando report ad-hoc,
-    chiama `getAccountingRaw`
+    metodi Fiery-only).
+  - Migrati: `SyncFiery`, `WarmFieryCache`, `FieryReport` → ora iniettano
+    `FieryAdapter` e usano i passthrough `fieryServerStatus()` /
+    `fieryJobs()` / `fieryAccountingPerCommessa()` /
+    `fieryFetchAccountingRaw()` / `fieryEstraiCommessaDaTitolo()` /
+    `isOnline()`. Il login API v5 inline in `SyncFiery` e `FieryReport` è
+    stato sostituito dal metodo `fieryFetchAccountingRaw()` dell'Adapter.
 
-- **Migrazione sicura "1-line"?** No. I 3 console command usano metodi
-  Fiery-specifici (`getServerStatus`, `getJobs`, `getAccountingPerCommessa`,
-  `getAccountingRaw`) che NON sono in `StampaIntegrationInterface` (che
-  espone solo `getJobInStampa`, `getJobsCompletati`).
+- **Migrazione sicura "1-line"?** Sì per i 3 console command, perché il
+  `FieryAdapter` espone già passthrough Fiery-specifici. Resta da rifattorare
+  il `FieryAdapter` stesso quando i metodi Fiery-only saranno promossi in
+  Service nel modulo Stampa.
 
-- **Stato eliminazione**: pronto quando 0 chiamanti E i metodi Fiery-only
-  vengono promossi in un Service del modulo Stampa.
+- **Stato eliminazione**: pronto quando i metodi Fiery-only vengono promossi
+  in un Service del modulo Stampa e il `FieryAdapter` smette di iniettare
+  `FieryService`.
 
 ---
 

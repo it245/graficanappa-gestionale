@@ -3,7 +3,7 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use App\Http\Services\FieryService;
+use App\Modules\Stampa\Adapters\FieryAdapter;
 
 class FieryReport extends Command
 {
@@ -17,19 +17,14 @@ class FieryReport extends Command
 
     public function handle()
     {
-        $fiery = app(FieryService::class);
+        // Strangler Fig: passa dal FieryAdapter (modulo Stampa) invece del wrapper legacy.
+        $fiery = app(FieryAdapter::class);
 
         $this->info("Recupero dati Accounting dal Fiery...\n");
 
-        $json = $this->getAccountingRaw($fiery);
-        if (!$json) {
+        $items = $fiery->fieryFetchAccountingRaw();
+        if (empty($items)) {
             $this->error('Impossibile recuperare dati Accounting.');
-            return 1;
-        }
-
-        $items = $json['data']['items'] ?? $json;
-        if (!is_array($items) || count($items) === 0) {
-            $this->error('Nessun dato Accounting trovato.');
             return 1;
         }
 
@@ -48,7 +43,7 @@ class FieryReport extends Command
         // Filtra per date se specificate
         $filtrati = collect($items)->map(function ($entry) use ($fiery) {
             $title = $entry['title'] ?? '';
-            $commessa = $fiery->estraiCommessaDaTitolo($title);
+            $commessa = $fiery->fieryEstraiCommessaDaTitolo($title);
 
             // Parsa la data — il formato Fiery varia, proviamo i più comuni
             $dateStr = $entry['date'] ?? $entry['print date'] ?? '';
@@ -221,50 +216,5 @@ class FieryReport extends Command
         // Fallback strtotime
         $ts = strtotime($dateStr);
         return $ts !== false ? $ts : null;
-    }
-
-    /**
-     * Recupera dati raw dall'Accounting API (senza cache)
-     */
-    private function getAccountingRaw(FieryService $fiery)
-    {
-        // Usa reflection per accedere all'apiGet privato, oppure facciamo la chiamata diretta
-        $host = config('fiery.host');
-        $baseUrl = 'https://' . $host;
-
-        // Login
-        try {
-            $loginR = \Illuminate\Support\Facades\Http::withoutVerifying()->timeout(15)
-                ->post($baseUrl . '/live/api/v5/login', [
-                    'username' => config('fiery.username'),
-                    'password' => config('fiery.password'),
-                    'accessrights' => config('fiery.api_key'),
-                ]);
-
-            if (!$loginR->successful()) {
-                return null;
-            }
-
-            $cookies = [];
-            foreach ($loginR->cookies() as $cookie) {
-                $cookies[$cookie->getName()] = $cookie->getValue();
-            }
-
-            $r = \Illuminate\Support\Facades\Http::withoutVerifying()
-                ->timeout(60)
-                ->withCookies($cookies, $host)
-                ->get($baseUrl . '/live/api/v5/accounting');
-
-            // Logout
-            try {
-                \Illuminate\Support\Facades\Http::withoutVerifying()
-                    ->withCookies($cookies, $host)
-                    ->post($baseUrl . '/live/api/v5/logout');
-            } catch (\Exception $e) {}
-
-            return $r->successful() ? $r->json() : null;
-        } catch (\Exception $e) {
-            return null;
-        }
     }
 }

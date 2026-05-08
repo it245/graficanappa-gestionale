@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\OrdineFase;
 use App\Models\Ordine;
 use App\Models\Reparto;
-use App\Http\Services\PrinectService;
 use App\Http\Services\PrinectSyncService;
+use App\Modules\Prinect\Contracts\PrinectApiInterface;
 use App\Services\SolarLogService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -43,7 +43,7 @@ class KioskController extends Controller
         // === PRINECT LIVE per XL106 ===
         $prinectLive = null;
         try {
-            $prinect = app(PrinectService::class);
+            $prinect = app(PrinectApiInterface::class);
             $deviceData = $prinect->getDevices();
             $device = $deviceData['devices'][0] ?? $deviceData ?? null;
             if ($device && isset($device['deviceStatus'])) {

@@ -19,8 +19,10 @@ use App\Constants\StatoFase;
 use App\Helpers\DescrizioneParser;
 use App\Services\FaseStatoService;
 use App\Services\OndaSyncService;
-use App\Http\Services\PrinectService;
 use App\Http\Services\PrinectSyncService;
+use App\Modules\Onda\Services\OrdineSyncService;
+use App\Modules\Spedizione\Services\DdtSyncService;
+use App\Modules\Prinect\Contracts\PrinectApiInterface;
 use App\Http\Services\ExcelSyncService;
 use App\Modules\Fasi\Services\FaseTransitionService;
 use App\Modules\Fasi\Exceptions\FaseTransitionException;
@@ -343,7 +345,7 @@ public function calcolaOreEPriorita($fase)
         return $fase;
     }
 
-    public function index(Request $request, PrinectService $prinect, PrinectSyncService $syncService)
+    public function index(Request $request, PrinectApiInterface $prinect, PrinectSyncService $syncService)
     {
         // Sync Excel e Prinect girano via cron (excel:sync ogni 2min, prinect ogni minuto)
         // NON bloccare il page load con sync sincroni
@@ -893,7 +895,7 @@ public function calcolaOreEPriorita($fase)
     return view('owner.fasi_terminate', compact('fasiTerminate', 'soloOggi', 'kpiTotale', 'kpiCommesse', 'kpiOggi', 'repartiUnici', 'fasiUniche', 'operatoriUnici'));
 }
 
-    public function dettaglioCommessa($commessa, PrinectService $prinect, PrinectSyncService $syncService)
+    public function dettaglioCommessa($commessa, PrinectApiInterface $prinect, PrinectSyncService $syncService)
     {
         // Sync live: aggiorna fasi stampa da attivita Prinect di oggi
         try {
@@ -931,10 +933,10 @@ public function calcolaOreEPriorita($fase)
         $jobId = ltrim(substr($commessa, 0, 7), '0');
         if ($jobId && is_numeric($jobId)) {
             try {
-                $wsData = $prinect->getJobWorksteps($jobId);
+                $wsData = $prinect->getWorksteps((string) $jobId);
                 foreach ($wsData['worksteps'] ?? [] as $ws) {
                     if (isset($ws['types']) && in_array('ConventionalPrinting', $ws['types'])) {
-                        $prevData = $prinect->getWorkstepPreview($jobId, $ws['id']);
+                        $prevData = $prinect->getWorkstepPreview((string) $jobId, (string) $ws['id']);
                         $previews = $prevData['previews'] ?? [];
                         if (!empty($previews)) {
                             $preview = $previews[0];
@@ -1100,10 +1102,19 @@ public function calcolaOreEPriorita($fase)
             // Prima pulisci eventuali duplicati
             $duplicatiRimossi = $this->pulisciDuplicati();
 
-            $risultato = OndaSyncService::sincronizza();
+            // Strangler Fig: sync ordini/fasi va al modulo Onda; DDT vendita al modulo Spedizione.
+            // I due metodi DDT Fornitore/Forniture Lavorazioni restano sul wrapper legacy
+            // perché non hanno ancora controparte in un modulo dedicato.
+            $r = app(OrdineSyncService::class)->sync();
+            $risultato = [
+                'ordini_creati'     => $r['ordini_creati'] ?? 0,
+                'ordini_aggiornati' => $r['ordini_aggiornati'] ?? 0,
+                'fasi_create'       => $r['fasi_create'] ?? 0,
+            ];
             $ddtFornitore = OndaSyncService::sincronizzaDDTFornitore();
             $ddtLavorazioni = OndaSyncService::sincronizzaDDTFornitureLavorazioni();
-            $ddtVendita = OndaSyncService::sincronizzaDDTVendita();
+            $venditaR = app(DdtSyncService::class)->syncFromOnda(7);
+            $ddtVendita = ($venditaR['inseriti'] ?? 0) + ($venditaR['aggiornati'] ?? 0);
             $msg = "Sync Onda completato: {$risultato['ordini_creati']} ordini creati, "
                  . "{$risultato['ordini_aggiornati']} aggiornati, {$risultato['fasi_create']} fasi create.";
             $totDDT = $ddtFornitore + $ddtLavorazioni;
@@ -1241,7 +1252,7 @@ public function calcolaOreEPriorita($fase)
         ));
     }
 
-    public function scheduling(PrinectService $prinect, PrinectSyncService $syncService)
+    public function scheduling(PrinectApiInterface $prinect, PrinectSyncService $syncService)
     {
         // Sync live Prinect
         try {

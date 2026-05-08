@@ -3,16 +3,16 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use App\Http\Services\FieryService;
 use App\Http\Services\FierySyncService;
 use App\Models\FieryAccounting;
+use App\Modules\Stampa\Adapters\FieryAdapter;
 
 class SyncFiery extends Command
 {
     protected $signature = 'fiery:sync';
     protected $description = 'Sincronizza stato Fiery con le fasi digitali del MES';
 
-    public function handle(FieryService $fiery, FierySyncService $syncService)
+    public function handle(FieryAdapter $fiery, FierySyncService $syncService)
     {
         try {
             $risultato = $syncService->sincronizza();
@@ -40,15 +40,13 @@ class SyncFiery extends Command
      * Scarica i dati Accounting dal Fiery e li salva nel DB.
      * Usa updateOrCreate per non duplicare job già salvati.
      */
-    protected function syncAccountingToDb(FieryService $fiery): void
+    protected function syncAccountingToDb(FieryAdapter $fiery): void
     {
         if (!$fiery->isOnline()) return;
 
-        $json = $this->fetchAccounting($fiery);
-        if (!$json) return;
-
-        $items = $json['data']['items'] ?? $json;
-        if (!is_array($items)) return;
+        // Strangler Fig: il fetch + login API v5 è incapsulato nel FieryAdapter.
+        $items = $fiery->fieryFetchAccountingRaw();
+        if (empty($items)) return;
 
         $count = 0;
         foreach ($items as $entry) {
@@ -64,7 +62,7 @@ class SyncFiery extends Command
             $colore = (int) ($entry['total color pages printed'] ?? 0);
             $bn = (int) ($entry['total bw pages printed'] ?? 0);
             $mediaSize = $entry['media size'] ?? '';
-            $commessa = $fiery->estraiCommessaDaTitolo($title);
+            $commessa = $fiery->fieryEstraiCommessaDaTitolo($title);
 
             // Classifica grande/piccolo
             $tipo = 'piccolo';
@@ -94,39 +92,6 @@ class SyncFiery extends Command
         if ($count > 0) {
             $this->line("Fiery accounting: {$count} job salvati nel DB");
         }
-    }
-
-    protected function fetchAccounting(FieryService $fiery): ?array
-    {
-        $host = config('fiery.host');
-        $baseUrl = 'https://' . $host;
-
-        $loginR = \Illuminate\Support\Facades\Http::withoutVerifying()->timeout(5)
-            ->post($baseUrl . '/live/api/v5/login', [
-                'username' => config('fiery.username'),
-                'password' => config('fiery.password'),
-                'accessrights' => config('fiery.api_key'),
-            ]);
-
-        if (!$loginR->successful()) return null;
-
-        $cookies = [];
-        foreach ($loginR->cookies() as $cookie) {
-            $cookies[$cookie->getName()] = $cookie->getValue();
-        }
-
-        $r = \Illuminate\Support\Facades\Http::withoutVerifying()
-            ->timeout(120)
-            ->withCookies($cookies, $host)
-            ->get($baseUrl . '/live/api/v5/accounting');
-
-        try {
-            \Illuminate\Support\Facades\Http::withoutVerifying()
-                ->withCookies($cookies, $host)
-                ->post($baseUrl . '/live/api/v5/logout');
-        } catch (\Exception $e) {}
-
-        return $r->successful() ? $r->json() : null;
     }
 
     protected function parseFieryDate(string $dateStr): ?string

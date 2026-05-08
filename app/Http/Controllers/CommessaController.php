@@ -4,11 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Ordine;
 use App\Models\OrdineFase;
-use App\Http\Services\PrinectService;
+use App\Modules\Prinect\Contracts\PrinectApiInterface;
 
 class CommessaController extends Controller
 {
-    public function show($commessa, PrinectService $prinect)
+    public function show($commessa, PrinectApiInterface $prinect)
     {
         // Carica TUTTI gli ordini con questa commessa (fondente, latte, ecc.)
         // select() mirato: evita full SELECT * (50+ colonne)
@@ -115,7 +115,7 @@ class CommessaController extends Controller
      * Endpoint preview Prinect: ritorna binary image, cacheable.
      * Evita base64 inline bloccante nel HTML principale.
      */
-    public function preview($commessa, \App\Http\Services\PrinectService $prinect)
+    public function preview($commessa, PrinectApiInterface $prinect)
     {
         $jobId = ltrim(substr($commessa, 0, 7), '0');
         if (!$jobId || !is_numeric($jobId)) abort(404);
@@ -123,10 +123,10 @@ class CommessaController extends Controller
         $cacheKey = 'preview_commessa_' . $commessa;
         $data = \Illuminate\Support\Facades\Cache::remember($cacheKey, 3600, function () use ($prinect, $jobId) {
             try {
-                $wsData = $prinect->getJobWorksteps($jobId);
+                $wsData = $prinect->getWorksteps((string) $jobId);
                 foreach ($wsData['worksteps'] ?? [] as $ws) {
                     if (isset($ws['types']) && in_array('ConventionalPrinting', $ws['types'])) {
-                        $prevData = $prinect->getWorkstepPreview($jobId, $ws['id']);
+                        $prevData = $prinect->getWorkstepPreview((string) $jobId, (string) $ws['id']);
                         $previews = $prevData['previews'] ?? [];
                         if (!empty($previews)) return $previews[0];
                     }
