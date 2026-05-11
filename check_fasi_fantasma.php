@@ -75,18 +75,19 @@ foreach ($commesse as $commessa) {
 
     // SOLO fasi "rimovibili" (commerciali che cliente puo cancellare da OC)
     // Le altre (STAMPAXL/FIN/PI/FUST macchina) sono fasi produzione, SEMPRE valide.
+    // SOLO fasi commerciali che cliente puo rimuovere da OC.
+    // STAMPACALDOJOH/FUSTBOBST/STAMPAXL/FIN/PI sono fasi macchina interne, NON in lista.
     $rimovibili = [
         'PLALUX'    => ['plast', 'lux'],
         'PLAOPA'    => ['plast', 'opac'],
         'PLASOFT'   => ['plast', 'soft'],
-        'UVSPOT'    => ['uv', 'vernic', 'spot'],
-        'FOIL'      => ['foil', 'lamin'],
-        'STAMPALAMINAORO' => ['oro', 'lamin'],
-        'STAMPACALDO'     => ['caldo', 'oro'],
-        'PUNTOMETALLICO'  => ['metallic', 'punto'],
+        'UVSPOT'    => ['uv spot', 'vernic spot'],
+        'FOIL'      => ['foil'],
+        'STAMPALAMINAORO' => ['lamina oro', 'oro a caldo'],
+        'PUNTOMETALLICO'  => ['punto metallic'],
         'BROSSFILOREFE'   => ['brossur', 'filo refe'],
         'BROSSFRESATA'    => ['brossur', 'fresat'],
-        'ARROT4ANGOLI'    => ['arroton', 'angoli'],
+        'ARROT4ANGOLI'    => ['arroton'],
     ];
 
     $fantasme = [];
