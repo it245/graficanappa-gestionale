@@ -743,6 +743,15 @@ public function calcolaOreEPriorita($fase)
                 app()->terminating(fn() => ExcelSyncService::exportToExcel());
                 return response()->json(['success' => true, 'reload' => true]);
             }
+
+            // Se cambiata descrizione, propaga a TUTTI gli ordini della stessa commessa
+            // (header dettaglio + altre fasi mostrano la stessa desc unificata)
+            if ($campo === 'descrizione') {
+                Ordine::where('commessa', $fase->ordine->commessa)
+                    ->where('id', '!=', $fase->ordine->id)
+                    ->update(['descrizione' => $valore]);
+                return response()->json(['success' => true, 'reload' => true]);
+            }
         } else {
             return response()->json(['success' => false, 'messaggio' => 'Campo non aggiornabile'], 422);
         }
