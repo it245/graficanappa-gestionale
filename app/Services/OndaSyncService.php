@@ -58,6 +58,7 @@ class OndaSyncService
                 p.IdDoc AS PrdIdDoc,
                 p.CodArt,
                 p.OC_Descrizione,
+                attDesc.AttDescrizione,
                 COALESCE(NULLIF(p.NCPRagioneSociale, ''), a.RagioneSociale) AS ClienteNome,
                 p.QtaDaProdurre,
                 p.DataPresConsegna,
@@ -92,6 +93,13 @@ class OndaSyncService
                 WHERE r.IdDoc = t.IdDoc
                   AND (r.CodArt = f.CodFase OR r.CodArt = SUBSTRING(f.CodFase, 4, LEN(f.CodFase)))
             ) rigaAtt
+            OUTER APPLY (
+                SELECT TOP 1 r.Descrizione AS AttDescrizione
+                FROM ATTDocRighe r
+                WHERE r.IdDoc = t.IdDoc
+                  AND r.TipoRiga = 1
+                ORDER BY r.NrRiga
+            ) attDesc
             OUTER APPLY (
                 SELECT TOP 1 r.CodArt, r.Descrizione, r.Qta, r.CodUnMis
                 FROM PRDDocRighe r WHERE r.IdDoc = p.IdDoc
@@ -451,7 +459,7 @@ class OndaSyncService
             $prima = $righe->first();
             $commessa = trim($prima->CodCommessa ?? '');
             $codArt = trim($prima->CodArt ?? '');
-            $descrizione = preg_replace('/\s+/', ' ', trim($prima->OC_Descrizione ?? ''));
+            $descrizione = preg_replace('/\s+/', ' ', trim($prima->AttDescrizione ?? $prima->OC_Descrizione ?? ''));
 
             if (!$commessa) continue;
 
@@ -462,7 +470,8 @@ class OndaSyncService
                 ->where('descrizione', $descrizione)
                 ->first();
 
-            if (!$ordine && $descrizione === '') {
+            if (!$ordine) {
+                // Fallback: match solo commessa+cod_art (descrizione potrebbe essere cambiata in Onda)
                 $ordine = Ordine::where('commessa', $commessa)
                     ->where('cod_art', $codArt)
                     ->first();
@@ -1002,6 +1011,7 @@ class OndaSyncService
                 p.IdDoc AS PrdIdDoc,
                 p.CodArt,
                 p.OC_Descrizione,
+                attDesc.AttDescrizione,
                 COALESCE(NULLIF(p.NCPRagioneSociale, ''), a.RagioneSociale) AS ClienteNome,
                 p.QtaDaProdurre,
                 p.DataPresConsegna,
@@ -1036,6 +1046,13 @@ class OndaSyncService
                 WHERE r.IdDoc = t.IdDoc
                   AND (r.CodArt = f.CodFase OR r.CodArt = SUBSTRING(f.CodFase, 4, LEN(f.CodFase)))
             ) rigaAtt
+            OUTER APPLY (
+                SELECT TOP 1 r.Descrizione AS AttDescrizione
+                FROM ATTDocRighe r
+                WHERE r.IdDoc = t.IdDoc
+                  AND r.TipoRiga = 1
+                ORDER BY r.NrRiga
+            ) attDesc
             OUTER APPLY (
                 SELECT TOP 1 r.CodArt, r.Descrizione, r.Qta, r.CodUnMis
                 FROM PRDDocRighe r WHERE r.IdDoc = p.IdDoc
@@ -1094,7 +1111,7 @@ class OndaSyncService
             $prima = $righe->first();
             $commessa = trim($prima->CodCommessa ?? '');
             $codArt = trim($prima->CodArt ?? '');
-            $descrizione = preg_replace('/\s+/', ' ', trim($prima->OC_Descrizione ?? ''));
+            $descrizione = preg_replace('/\s+/', ' ', trim($prima->AttDescrizione ?? $prima->OC_Descrizione ?? ''));
 
             if (!$commessa) continue;
 
@@ -1103,7 +1120,8 @@ class OndaSyncService
                 ->where('descrizione', $descrizione)
                 ->first();
 
-            if (!$ordine && $descrizione === '') {
+            if (!$ordine) {
+                // Fallback: match solo commessa+cod_art (descrizione potrebbe essere cambiata in Onda)
                 $ordine = Ordine::where('commessa', $commessa)
                     ->where('cod_art', $codArt)
                     ->first();
@@ -1139,6 +1157,10 @@ class OndaSyncService
                 $clienteOnda = $datiOrdine['cliente_nome'];
                 if ($ordine->cliente_nome && $ordine->cliente_nome !== $clienteOnda && !empty($ordine->cliente_nome)) {
                     unset($datiOrdine['cliente_nome']);
+                }
+                // Aggiorna descrizione da Onda se diversa (cliente cambia OC in ATTDocRighe)
+                if ($descrizione && $ordine->descrizione !== $descrizione) {
+                    $ordine->descrizione = $descrizione;
                 }
                 $ordine->update($datiOrdine);
                 $ordiniAggiornati++;
