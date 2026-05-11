@@ -2681,19 +2681,19 @@ document.addEventListener('DOMContentLoaded', function() {
 <style>
 /* Drag-fill inline Excel-like */
 td[contenteditable] { position: relative; }
-td[contenteditable]:hover .drag-handle,
-td[contenteditable]:focus .drag-handle { display: block !important; }
+td.drag-active .drag-handle { display: block !important; }
 .drag-handle {
     position: absolute;
-    bottom: -2px;
-    right: -2px;
-    width: 10px;
-    height: 10px;
+    bottom: -3px;
+    right: -3px;
+    width: 12px;
+    height: 12px;
     background: #0d6efd;
-    border: 1px solid #fff;
+    border: 2px solid #fff;
     cursor: crosshair;
     display: none;
     z-index: 5;
+    box-shadow: 0 0 3px rgba(0,0,0,0.4);
 }
 .drag-fill-target {
     background: rgba(13, 110, 253, 0.18) !important;
@@ -2709,18 +2709,29 @@ td[contenteditable]:focus .drag-handle { display: block !important; }
 
     function extractCampoFromCell(td) {
         const ob = td.getAttribute('onblur') || '';
-        const m = ob.match(/aggiornaCampo\s*\(\s*\d+\s*,\s*['"](\w+)['"]/);
-        return m ? m[1] : null;
+        // aggiornaCampo(id, 'campo', ...)
+        let m = ob.match(/aggiornaCampo\s*\(\s*\d+\s*,\s*['"](\w+)['"]/);
+        if (m) return m[1];
+        // aggiornaStato(id, ...) -> campo='stato'
+        if (/aggiornaStato\s*\(/.test(ob)) return 'stato';
+        return null;
     }
     function extractFaseIdFromCell(td) {
         const ob = td.getAttribute('onblur') || '';
-        const m = ob.match(/aggiornaCampo\s*\(\s*(\d+)/);
+        const m = ob.match(/aggiorna(?:Campo|Stato)\s*\(\s*(\d+)/);
         return m ? parseInt(m[1], 10) : null;
     }
 
+    function clearActiveCell() {
+        document.querySelectorAll('td.drag-active').forEach(c => c.classList.remove('drag-active'));
+    }
+
     function attachHandles() {
-        document.querySelectorAll('td[contenteditable][onblur*="aggiornaCampo"]').forEach(td => {
+        document.querySelectorAll('td[contenteditable]').forEach(td => {
+            const ob = td.getAttribute('onblur') || '';
+            if (!ob.includes('aggiornaCampo') && !ob.includes('aggiornaStato')) return;
             if (td.querySelector('.drag-handle')) return;
+
             const h = document.createElement('div');
             h.className = 'drag-handle';
             h.title = 'Trascina per copiare valore Excel-style';
@@ -2738,8 +2749,20 @@ td[contenteditable]:focus .drag-handle { display: block !important; }
                 document.body.style.cursor = 'crosshair';
             });
             td.appendChild(h);
+
+            // Click to activate: handle visibile solo dopo click
+            td.addEventListener('click', (e) => {
+                if (e.target.classList.contains('drag-handle')) return;
+                clearActiveCell();
+                td.classList.add('drag-active');
+            });
         });
     }
+
+    // Click fuori tabella: deattiva
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('td[contenteditable]')) clearActiveCell();
+    });
 
     function clearHighlight() {
         highlighted.forEach(c => c.classList.remove('drag-fill-target'));
@@ -2772,10 +2795,11 @@ td[contenteditable]:focus .drag-handle { display: block !important; }
         const [from, to] = startIdx < endIdx ? [startIdx + 1, endIdx] : [endIdx, startIdx - 1];
         for (let i = from; i <= to; i++) {
             const cell = allTrs[i]?.children[colIdx];
-            if (cell && cell.hasAttribute('contenteditable')) {
-                cell.classList.add('drag-fill-target');
-                highlighted.push(cell);
-            }
+            if (!cell || !cell.hasAttribute('contenteditable')) continue;
+            const ob = cell.getAttribute('onblur') || '';
+            if (!ob.includes('aggiornaCampo') && !ob.includes('aggiornaStato')) continue;
+            cell.classList.add('drag-fill-target');
+            highlighted.push(cell);
         }
     }
 
