@@ -701,22 +701,12 @@ function aggiornaAnteprima() {
         if (lottoClean) plainData += '10' + lottoClean;
 
         try {
-            // CRITICO: clear esplicito canvas prima di ridisegnare.
-            // bwipjs.toCanvas auto-resize ma se la dimensione resta uguale
-            // (es. stesso plainData length) il canvas non viene azzerato
-            // e il DataMatrix precedente puo' "trasparire". Inoltre forzare
-            // resize azzera il bitmap garantendo PNG nuovo.
-            var ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
             bwipjs.toCanvas(canvas, {
                 bcid: 'datamatrix',
                 text: plainData,
                 scale: 10,
                 padding: 4,
             });
-            // Cache-bust dataURL via timestamp commento (forza decode browser).
-            // Senza questo, img.src = stesso dataURL non triggera re-decode
-            // e window.print() puo' stampare il PNG vecchio cached.
             dmImg.src = canvas.toDataURL('image/png');
             dmImg.style.display = '';
             document.getElementById('print-ean').textContent = plainData;
@@ -1247,28 +1237,6 @@ function stopScanner() {
 @endif
 
 // ===== Stampa =====
-// Helper: attende decode immagine DataMatrix prima di window.print().
-// Fix richiamo Italiana Confetti: cliccando "Aggiungi" su prodotti diversi
-// il PNG <img dmImg> veniva stampato cached (decode async), risultando
-// stesso barcode per etichette diverse anche se EAN visivamente corretto.
-function attendiDecodeETrampa() {
-    var dmImg = document.getElementById('datamatrix-img');
-    if (!dmImg || dmImg.style.display === 'none' || !dmImg.src) {
-        window.print();
-        return;
-    }
-    if (typeof dmImg.decode === 'function') {
-        dmImg.decode().then(function() {
-            requestAnimationFrame(function() { window.print(); });
-        }).catch(function() {
-            requestAnimationFrame(function() { window.print(); });
-        });
-    } else {
-        // Fallback browser legacy: piccolo delay per garantire decode
-        setTimeout(function() { window.print(); }, 150);
-    }
-}
-
 function stampa() {
     aggiornaAnteprima();
 
@@ -1323,7 +1291,7 @@ function stampa() {
     @endif
     @endif
 
-    attendiDecodeETrampa();
+    window.print();
 }
 
 // Aggiorna anteprima iniziale
