@@ -19,7 +19,7 @@ echo "\n=== Commessa: {$commessa} — revisioni Onda ===\n\n";
 echo "--- 1. PRDDocTeste (testate produzione) ---\n";
 try {
     $teste = $onda->select("
-        SELECT IdDoc, NumDoc, DataDocumento, DataRegistrazione, CodCommessa, TipoDocumento
+        SELECT IdDoc, DataDocumento, DataRegistrazione, CodCommessa, TipoDocumento
         FROM PRDDocTeste
         WHERE CodCommessa = ?
         ORDER BY DataDocumento DESC, IdDoc DESC
@@ -32,8 +32,8 @@ try {
             $data = $t->DataDocumento ? date('d/m/Y H:i', strtotime($t->DataDocumento)) : '-';
             $reg = $t->DataRegistrazione ? date('d/m/Y H:i', strtotime($t->DataRegistrazione)) : '-';
             echo sprintf(
-                "  IdDoc=%-8s NumDoc=%-12s Data=%-16s Reg=%-16s TipoDoc=%s\n",
-                $t->IdDoc, $t->NumDoc ?? '-', $data, $reg, $t->TipoDocumento ?? '-'
+                "  IdDoc=%-8s Data=%-16s Reg=%-16s TipoDoc=%s\n",
+                $t->IdDoc, $data, $reg, $t->TipoDocumento ?? '-'
             );
         }
         echo "  Totale: " . count($teste) . "\n";
@@ -74,7 +74,6 @@ try {
     $sync = $onda->select("
         SELECT
             t.IdDoc AS AttIdDoc,
-            t.NumDoc,
             t.DataRegistrazione,
             t.TipoDocumento,
             p.IdDoc AS PrdIdDoc,
@@ -93,8 +92,8 @@ try {
             $reg = $s->DataRegistrazione ? date('d/m/Y H:i', strtotime($s->DataRegistrazione)) : '-';
             $prd = $s->PrdData ? date('d/m/Y H:i', strtotime($s->PrdData)) : '-';
             echo sprintf(
-                "  ATT=%s NumDoc=%s RegATT=%s | PRD=%s DataPRD=%s\n",
-                $s->AttIdDoc, $s->NumDoc ?? '-', $reg, $s->PrdIdDoc, $prd
+                "  ATT=%s RegATT=%s | PRD=%s DataPRD=%s\n",
+                $s->AttIdDoc, $reg, $s->PrdIdDoc, $prd
             );
         }
     }
