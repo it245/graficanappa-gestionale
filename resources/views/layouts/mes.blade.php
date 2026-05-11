@@ -340,6 +340,13 @@
         align-items: center;
         justify-content: center;
         transition: background 0.15s;
+        /* iOS Safari 18+: rimuove delay double-tap zoom (300ms) e garantisce
+           tap immediato. Senza, l'icona reagisce all'hover ma il click non
+           parte. */
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: rgba(0,0,0,0.1);
+        position: relative;
+        z-index: 1000;
     }
 
     .mes-hamburger:hover, .mes-hamburger:focus-visible {
@@ -812,6 +819,25 @@
         document.getElementById('mesSidebar').classList.toggle('open');
         document.getElementById('sidebarOverlay').classList.toggle('open');
     }
+
+    // iOS Safari 18+: onclick inline talvolta non parte se l'elemento ha
+    // backdrop-filter parent. Listener esplicito su 'click' E 'touchend'
+    // garantisce tap reattivo. preventDefault su touchend evita doppio fire.
+    (function() {
+        var h = document.getElementById('mesHamburger');
+        if (!h) return;
+        var fired = false;
+        h.addEventListener('touchend', function(e) {
+            fired = true;
+            e.preventDefault();
+            toggleSidebar();
+            setTimeout(function() { fired = false; }, 350);
+        }, { passive: false });
+        h.addEventListener('click', function(e) {
+            if (fired) return;
+            toggleSidebar();
+        });
+    })();
 
     /* ===========================================
        Dark Mode Toggle
