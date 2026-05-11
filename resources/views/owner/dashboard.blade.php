@@ -2678,6 +2678,172 @@ document.addEventListener('DOMContentLoaded', function() {
 })();
 </script>
 
+<style>
+/* Drag-fill inline Excel-like */
+td[contenteditable] { position: relative; }
+td[contenteditable]:hover .drag-handle,
+td[contenteditable]:focus .drag-handle { display: block !important; }
+.drag-handle {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    width: 10px;
+    height: 10px;
+    background: #0d6efd;
+    border: 1px solid #fff;
+    cursor: crosshair;
+    display: none;
+    z-index: 5;
+}
+.drag-fill-target {
+    background: rgba(13, 110, 253, 0.18) !important;
+    outline: 1px dashed #0d6efd;
+}
+</style>
+
+<script>
+// ===== Drag-fill inline Excel-like (su <td contenteditable>) =====
+(function() {
+    let dragState = null;     // {sourceCell, value, columnIndex, faseColumn}
+    let highlighted = [];
+
+    function extractCampoFromCell(td) {
+        const ob = td.getAttribute('onblur') || '';
+        const m = ob.match(/aggiornaCampo\s*\(\s*\d+\s*,\s*['"](\w+)['"]/);
+        return m ? m[1] : null;
+    }
+    function extractFaseIdFromCell(td) {
+        const ob = td.getAttribute('onblur') || '';
+        const m = ob.match(/aggiornaCampo\s*\(\s*(\d+)/);
+        return m ? parseInt(m[1], 10) : null;
+    }
+
+    function attachHandles() {
+        document.querySelectorAll('td[contenteditable][onblur*="aggiornaCampo"]').forEach(td => {
+            if (td.querySelector('.drag-handle')) return;
+            const h = document.createElement('div');
+            h.className = 'drag-handle';
+            h.title = 'Trascina per copiare valore Excel-style';
+            h.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const colIdx = Array.from(td.parentNode.children).indexOf(td);
+                dragState = {
+                    sourceCell: td,
+                    value: td.innerText.trim(),
+                    campo: extractCampoFromCell(td),
+                    columnIndex: colIdx,
+                };
+                document.body.style.userSelect = 'none';
+                document.body.style.cursor = 'crosshair';
+            });
+            td.appendChild(h);
+        });
+    }
+
+    function clearHighlight() {
+        highlighted.forEach(c => c.classList.remove('drag-fill-target'));
+        highlighted = [];
+    }
+
+    document.addEventListener('mousemove', (e) => {
+        if (!dragState) return;
+        const td = e.target.closest('td');
+        if (!td) return;
+        const tr = td.closest('tr');
+        if (!tr) return;
+        const colIdx = Array.from(tr.children).indexOf(td);
+        if (colIdx !== dragState.columnIndex) return;
+
+        clearHighlight();
+
+        const srcTr = dragState.sourceCell.closest('tr');
+        const tbody = srcTr.parentNode;
+        const allTrs = Array.from(tbody.children).filter(n => n.tagName === 'TR');
+        const startIdx = allTrs.indexOf(srcTr);
+        const endIdx = allTrs.indexOf(tr);
+        if (startIdx < 0 || endIdx < 0 || startIdx === endIdx) return;
+
+        const [from, to] = startIdx < endIdx ? [startIdx + 1, endIdx] : [endIdx, startIdx - 1];
+        for (let i = from; i <= to; i++) {
+            const cell = allTrs[i]?.children[colIdx];
+            if (cell && cell.hasAttribute('contenteditable')) {
+                cell.classList.add('drag-fill-target');
+                highlighted.push(cell);
+            }
+        }
+    });
+
+    document.addEventListener('mouseup', () => {
+        if (!dragState) return;
+
+        const cellsToFill = highlighted.slice();
+        clearHighlight();
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+
+        if (cellsToFill.length === 0 || !dragState.campo) {
+            dragState = null;
+            return;
+        }
+
+        const valore = dragState.value;
+        const righe = [];
+        cellsToFill.forEach(td => {
+            const faseId = extractFaseIdFromCell(td);
+            const campo = extractCampoFromCell(td);
+            if (faseId && campo) {
+                righe.push({fase_id: faseId, campo: campo, valore: valore});
+            }
+        });
+
+        dragState = null;
+
+        if (righe.length === 0) return;
+        if (righe.length > 100) {
+            alert('Max 100 righe per drag-fill');
+            return;
+        }
+
+        // Optimistic UI: update celle subito
+        cellsToFill.forEach(td => { td.innerText = valore; });
+
+        fetch('{{ route("owner.aggiornaBulk") }}', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({righe: righe}),
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) {
+                console.warn('Drag-fill: alcuni errori', data.errors);
+                // Optional: alert utente con conteggio errori
+                if ((data.errors || []).length > 0) {
+                    alert('Aggiornati ' + data.processed + '/' + righe.length + '. Verifica console per dettagli.');
+                }
+            }
+        })
+        .catch(err => {
+            console.error('Drag-fill AJAX error:', err);
+            alert('Errore rete. Ricarica pagina.');
+        });
+    });
+
+    // Attiva handle su DOM ready + osserva future tabelle (paginazione, refresh)
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', attachHandles);
+    } else {
+        attachHandles();
+    }
+    // Re-attach periodicamente per gestire eventuali ri-render
+    setInterval(attachHandles, 3000);
+})();
+</script>
+
 <script>
 // ===== Bulk Edit Handsontable (drag-down Excel-like) =====
 let _hotInstance = null;
