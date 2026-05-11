@@ -1,6 +1,6 @@
 <?php
 /**
- * Verifica revisioni PRDDoc per commessa.
+ * Verifica revisioni PRDDoc per commessa — schema discovery + dump.
  * Usage: php check_onda_revisioni.php 0067339-26
  */
 
@@ -15,26 +15,40 @@ $onda = DB::connection('onda');
 
 echo "\n=== Commessa: {$commessa} — revisioni Onda ===\n\n";
 
-// 1) PRDDocTeste: quanti documenti produzione esistono?
-echo "--- 1. PRDDocTeste (testate produzione) ---\n";
+// 0) Schema PRDDocTeste
+echo "--- 0. Colonne PRDDocTeste ---\n";
+try {
+    $cols = $onda->select("
+        SELECT COLUMN_NAME, DATA_TYPE
+        FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_NAME = 'PRDDocTeste'
+        ORDER BY ORDINAL_POSITION
+    ");
+    foreach ($cols as $c) {
+        echo "  " . $c->COLUMN_NAME . " (" . $c->DATA_TYPE . ")\n";
+    }
+} catch (\Exception $e) {
+    echo "  ERRORE: " . $e->getMessage() . "\n";
+}
+
+// 1) PRDDocTeste — dump tutto record per commessa
+echo "\n--- 1. PRDDocTeste record commessa {$commessa} ---\n";
 try {
     $teste = $onda->select("
-        SELECT IdDoc, DataDocumento, DataRegistrazione, CodCommessa, TipoDocumento
-        FROM PRDDocTeste
-        WHERE CodCommessa = ?
-        ORDER BY DataDocumento DESC, IdDoc DESC
+        SELECT * FROM PRDDocTeste WHERE CodCommessa = ?
     ", [$commessa]);
 
     if (empty($teste)) {
-        echo "  Nessun PRDDocTeste.\n";
+        echo "  Nessun record.\n";
     } else {
-        foreach ($teste as $t) {
-            $data = $t->DataDocumento ? date('d/m/Y H:i', strtotime($t->DataDocumento)) : '-';
-            $reg = $t->DataRegistrazione ? date('d/m/Y H:i', strtotime($t->DataRegistrazione)) : '-';
-            echo sprintf(
-                "  IdDoc=%-8s Data=%-16s Reg=%-16s TipoDoc=%s\n",
-                $t->IdDoc, $data, $reg, $t->TipoDocumento ?? '-'
-            );
+        foreach ($teste as $i => $t) {
+            echo "  RECORD #" . ($i + 1) . ":\n";
+            foreach ((array) $t as $col => $val) {
+                if ($val !== null && $val !== '') {
+                    echo "    {$col} = " . (is_scalar($val) ? $val : json_encode($val)) . "\n";
+                }
+            }
+            echo "\n";
         }
         echo "  Totale: " . count($teste) . "\n";
     }
@@ -42,11 +56,11 @@ try {
     echo "  ERRORE: " . $e->getMessage() . "\n";
 }
 
-// 2) PRDDocFasi per OGNI IdDoc trovato
-echo "\n--- 2. PRDDocFasi PER OGNI IdDoc (vedi diff revisioni) ---\n";
+// 2) Per ogni IdDoc, mostra PRDDocFasi
 if (!empty($teste)) {
+    echo "\n--- 2. PRDDocFasi per ogni IdDoc ---\n";
     foreach ($teste as $t) {
-        echo "\n  >> IdDoc={$t->IdDoc} (Data " . ($t->DataDocumento ? date('d/m/Y', strtotime($t->DataDocumento)) : '-') . "):\n";
+        echo "\n  >> IdDoc={$t->IdDoc}:\n";
         try {
             $fasi = $onda->select("
                 SELECT CodFase, CodMacchina, QtaDaLavorare, CodUnMis
@@ -58,7 +72,7 @@ if (!empty($teste)) {
                 echo "       Nessuna fase.\n";
             } else {
                 foreach ($fasi as $f) {
-                    echo sprintf("       %-30s Qta=%-10s %s\n",
+                    echo sprintf("       %-32s Qta=%-10s %s\n",
                         $f->CodFase, $f->QtaDaLavorare, $f->CodUnMis ?? '');
                 }
             }
@@ -66,39 +80,6 @@ if (!empty($teste)) {
             echo "       ERRORE: " . $e->getMessage() . "\n";
         }
     }
-}
-
-// 3) Quale doc MES sync userebbe (TipoDocumento=2 + DataRegistrazione >= filtro)
-echo "\n--- 3. Doc che OndaSyncService VEDE (TipoDocumento=2) ---\n";
-try {
-    $sync = $onda->select("
-        SELECT
-            t.IdDoc AS AttIdDoc,
-            t.DataRegistrazione,
-            t.TipoDocumento,
-            p.IdDoc AS PrdIdDoc,
-            p.DataDocumento AS PrdData
-        FROM ATTDocTeste t
-        INNER JOIN PRDDocTeste p ON t.CodCommessa = p.CodCommessa
-        WHERE t.CodCommessa = ?
-          AND t.TipoDocumento = '2'
-        ORDER BY p.DataDocumento DESC
-    ", [$commessa]);
-
-    if (empty($sync)) {
-        echo "  Nessun match (TipoDocumento=2 non trovato).\n";
-    } else {
-        foreach ($sync as $s) {
-            $reg = $s->DataRegistrazione ? date('d/m/Y H:i', strtotime($s->DataRegistrazione)) : '-';
-            $prd = $s->PrdData ? date('d/m/Y H:i', strtotime($s->PrdData)) : '-';
-            echo sprintf(
-                "  ATT=%s RegATT=%s | PRD=%s DataPRD=%s\n",
-                $s->AttIdDoc, $reg, $s->PrdIdDoc, $prd
-            );
-        }
-    }
-} catch (\Exception $e) {
-    echo "  ERRORE: " . $e->getMessage() . "\n";
 }
 
 echo "\n";
