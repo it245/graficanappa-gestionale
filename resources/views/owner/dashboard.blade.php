@@ -93,6 +93,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
         Aggiungi Riga
     </button>
+    <button type="button" class="mes-sidebar-item" data-bs-toggle="modal" data-bs-target="#modalBulkEdit" onclick="initBulkEdit()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+        Modifica multipla
+    </button>
     <button type="button" class="mes-sidebar-item" data-bs-toggle="modal" data-bs-target="#modalNotaTv">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>
         Nota TV
@@ -124,10 +128,12 @@
 
 @section('vendor-css')
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@14/dist/handsontable.full.min.css">
 @endsection
 
 @section('vendor-scripts')
 <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/handsontable@14/dist/handsontable.full.min.js"></script>
 @endsection
 
 @section('content')
@@ -804,6 +810,61 @@ tr.percorso-completo td { background-color: #f8d7da !important; color: #000 !imp
                     </div>
                 </div>
             </form>
+        </div>
+    </div>
+
+    {{-- Modal Modifica Multipla (Handsontable Excel-like drag-down) --}}
+    <div class="modal fade" id="modalBulkEdit" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl" style="max-width:95vw;">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">Modifica multipla (drag-down Excel-like)</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-2 mb-3 align-items-end">
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold mb-1">Campo da modificare</label>
+                            <select id="bulkCampo" class="form-select" onchange="aggiornaBulkPreview()">
+                                <option value="note">Note</option>
+                                <option value="qta_prod">Qta prodotta</option>
+                                <option value="priorita">Priorita</option>
+                                <option value="esterno">Esterno (1/0)</option>
+                                <option value="stato">Stato (0-5)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold mb-1">Filtra per reparto</label>
+                            <select id="bulkFiltroReparto" class="form-select" onchange="aggiornaBulkPreview()">
+                                <option value="">— tutti —</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label fw-bold mb-1">Filtra stato</label>
+                            <select id="bulkFiltroStato" class="form-select" onchange="aggiornaBulkPreview()">
+                                <option value="">— tutti —</option>
+                                <option value="0">0 (caricato)</option>
+                                <option value="1">1 (pronto)</option>
+                                <option value="2">2 (avviato)</option>
+                                <option value="3">3 (terminato)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <small class="text-muted d-block mb-1">
+                                Trascina handle (angolo basso-destra cella) verso il basso = copia valore Excel-style. Max 100 righe.
+                            </small>
+                            <span id="bulkCounter" class="badge bg-secondary">0 righe</span>
+                        </div>
+                    </div>
+                    <div id="hotTableContainer" style="height:60vh; overflow:auto;"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                    <button type="button" class="btn btn-primary" onclick="salvaBulk()">
+                        Salva modifiche
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -2615,6 +2676,135 @@ document.addEventListener('DOMContentLoaded', function() {
     window.addEventListener('scroll', visRaf, {passive:true});
     window.addEventListener('resize', visRaf, {passive:true});
 })();
+</script>
+
+<script>
+// ===== Bulk Edit Handsontable (drag-down Excel-like) =====
+let _hotInstance = null;
+let _bulkRigheBase = [];
+
+function csrfTokenBulk() {
+    const m = document.querySelector('meta[name="csrf-token"]');
+    return m ? m.getAttribute('content') : '';
+}
+
+function initBulkEdit() {
+    // Estrae righe dalla tabella owner principale (DOM scrape: id fase nel data-attr).
+    // Pattern: ogni <tr> con data-fase-id contiene info commessa/fase/note/etc.
+    const righe = [];
+    document.querySelectorAll('tr[data-fase-id]').forEach(tr => {
+        const faseId = parseInt(tr.getAttribute('data-fase-id'), 10);
+        if (!faseId) return;
+        righe.push({
+            fase_id: faseId,
+            commessa: tr.getAttribute('data-commessa') || '',
+            fase: tr.getAttribute('data-fase') || '',
+            reparto: tr.getAttribute('data-reparto') || '',
+            stato: tr.getAttribute('data-stato') || '',
+            valore: '',
+        });
+    });
+    _bulkRigheBase = righe;
+
+    // Popola filtro reparto
+    const reparti = [...new Set(righe.map(r => r.reparto).filter(Boolean))].sort();
+    const selRep = document.getElementById('bulkFiltroReparto');
+    selRep.innerHTML = '<option value="">— tutti —</option>' +
+        reparti.map(r => `<option>${r}</option>`).join('');
+
+    aggiornaBulkPreview();
+}
+
+function aggiornaBulkPreview() {
+    const filtroRep = document.getElementById('bulkFiltroReparto').value;
+    const filtroStato = document.getElementById('bulkFiltroStato').value;
+
+    const righe = _bulkRigheBase.filter(r => {
+        if (filtroRep && r.reparto !== filtroRep) return false;
+        if (filtroStato !== '' && String(r.stato) !== filtroStato) return false;
+        return true;
+    }).map(r => ({...r, valore: ''}));
+
+    document.getElementById('bulkCounter').textContent = righe.length + ' righe';
+
+    if (_hotInstance) {
+        _hotInstance.destroy();
+        _hotInstance = null;
+    }
+
+    const container = document.getElementById('hotTableContainer');
+    container.innerHTML = '';
+
+    _hotInstance = new Handsontable(container, {
+        data: righe,
+        columns: [
+            {data: 'fase_id', title: 'ID', readOnly: true, width: 60},
+            {data: 'commessa', title: 'Commessa', readOnly: true, width: 110},
+            {data: 'fase', title: 'Fase', readOnly: true, width: 140},
+            {data: 'reparto', title: 'Reparto', readOnly: true, width: 130},
+            {data: 'stato', title: 'Stato attuale', readOnly: true, width: 100},
+            {data: 'valore', title: 'NUOVO VALORE (drag-down)', width: 250},
+        ],
+        rowHeaders: true,
+        colHeaders: true,
+        fillHandle: {direction: 'vertical', autoInsertRow: false},
+        autoColumnSize: false,
+        manualColumnResize: true,
+        height: '58vh',
+        stretchH: 'last',
+        licenseKey: 'non-commercial-and-evaluation',
+    });
+}
+
+function salvaBulk() {
+    if (!_hotInstance) return;
+    const data = _hotInstance.getData();
+    const campo = document.getElementById('bulkCampo').value;
+
+    // Costruisce array {fase_id, campo, valore} solo per righe con valore non vuoto
+    const righe = [];
+    data.forEach(r => {
+        const faseId = r[0];
+        const valore = r[5];
+        if (!faseId) return;
+        if (valore === null || valore === undefined || String(valore).trim() === '') return;
+        righe.push({fase_id: faseId, campo: campo, valore: String(valore)});
+    });
+
+    if (righe.length === 0) {
+        alert('Nessuna riga con valore da salvare');
+        return;
+    }
+    if (righe.length > 100) {
+        alert('Massimo 100 righe per chiamata');
+        return;
+    }
+
+    fetch('{{ route("owner.aggiornaBulk") }}', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': csrfTokenBulk(),
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+        },
+        body: JSON.stringify({righe: righe}),
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            alert('OK: ' + data.processed + ' righe aggiornate');
+            bootstrap.Modal.getInstance(document.getElementById('modalBulkEdit')).hide();
+            setTimeout(() => window.location.reload(), 500);
+        } else {
+            const errMsg = (data.errors || []).map(e => 'fase ' + e.fase_id + ': ' + e.reason).join('\n');
+            alert('Aggiornati ' + (data.processed || 0) + '/' + righe.length + '. Errori:\n' + errMsg);
+        }
+    })
+    .catch(err => {
+        console.error('Bulk save error:', err);
+        alert('Errore di rete');
+    });
+}
 </script>
 
 {{-- MODALE RIEMPIMENTO MACCHINE --}}

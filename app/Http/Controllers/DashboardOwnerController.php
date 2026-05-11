@@ -535,6 +535,66 @@ public function calcolaOreEPriorita($fase)
         return response()->json(['success' => true]);
     }
 
+    /**
+     * Bulk update da Handsontable (drag-down Excel-like).
+     * Riceve array {fase_id, campo, valore} e applica tramite CommessaService.
+     * Max 100 righe per chiamata (DOS protection).
+     */
+    public function aggiornaBulk(\Illuminate\Http\Request $request)
+    {
+        if ($deny = $this->denyIfReadonly()) return $deny;
+
+        $righe = $request->input('righe', []);
+        if (!is_array($righe) || empty($righe)) {
+            return response()->json(['success' => false, 'messaggio' => 'Nessuna riga da aggiornare'], 422);
+        }
+        if (count($righe) > 100) {
+            return response()->json(['success' => false, 'messaggio' => 'Massimo 100 righe per chiamata'], 422);
+        }
+
+        $whitelist = OwnerAggiornaCampoRequest::CAMPI_FASE;
+        $processed = 0;
+        $errors = [];
+
+        foreach ($righe as $i => $riga) {
+            $faseId = (int) ($riga['fase_id'] ?? 0);
+            $campo = (string) ($riga['campo'] ?? '');
+            $valore = $riga['valore'] ?? null;
+
+            if (!$faseId || !in_array($campo, $whitelist, true)) {
+                $errors[] = ['index' => $i, 'fase_id' => $faseId, 'reason' => 'campo invalido o fase_id mancante'];
+                continue;
+            }
+
+            $fase = OrdineFase::with(['ordine', 'faseCatalogo'])->find($faseId);
+            if (!$fase) {
+                $errors[] = ['index' => $i, 'fase_id' => $faseId, 'reason' => 'fase non trovata'];
+                continue;
+            }
+
+            $result = $this->commesse->aggiornaCampo(
+                $fase,
+                $campo,
+                is_string($valore) ? $valore : (is_null($valore) ? null : (string) $valore),
+                OwnerAggiornaCampoRequest::CAMPI_FASE,
+                OwnerAggiornaCampoRequest::CAMPI_ORDINE,
+            );
+
+            if (!($result['success'] ?? false)) {
+                $errors[] = ['index' => $i, 'fase_id' => $faseId, 'reason' => $result['messaggio'] ?? 'errore service'];
+                continue;
+            }
+
+            $processed++;
+        }
+
+        return response()->json([
+            'success' => count($errors) === 0,
+            'processed' => $processed,
+            'errors' => $errors,
+        ]);
+    }
+
     public function aggiungiRiga(OwnerAggiungiRigaRequest $request)
     {
         if ($deny = $this->denyIfReadonly()) return $deny;
