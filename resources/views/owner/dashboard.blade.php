@@ -2746,8 +2746,13 @@ td[contenteditable]:focus .drag-handle { display: block !important; }
         highlighted = [];
     }
 
-    document.addEventListener('mousemove', (e) => {
-        if (!dragState) return;
+    let _moveScheduled = false;
+    let _lastMoveEvent = null;
+
+    function processMouseMove() {
+        _moveScheduled = false;
+        if (!dragState || !_lastMoveEvent) return;
+        const e = _lastMoveEvent;
         const td = e.target.closest('td');
         if (!td) return;
         const tr = td.closest('tr');
@@ -2772,6 +2777,14 @@ td[contenteditable]:focus .drag-handle { display: block !important; }
                 highlighted.push(cell);
             }
         }
+    }
+
+    document.addEventListener('mousemove', (e) => {
+        if (!dragState) return;
+        _lastMoveEvent = e;
+        if (_moveScheduled) return;
+        _moveScheduled = true;
+        requestAnimationFrame(processMouseMove);
     });
 
     document.addEventListener('mouseup', () => {
@@ -2833,14 +2846,27 @@ td[contenteditable]:focus .drag-handle { display: block !important; }
         });
     });
 
-    // Attiva handle su DOM ready + osserva future tabelle (paginazione, refresh)
+    // Attach handle on DOM ready
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', attachHandles);
     } else {
         attachHandles();
     }
-    // Re-attach periodicamente per gestire eventuali ri-render
-    setInterval(attachHandles, 3000);
+
+    // MutationObserver: re-attach solo quando tabella cambia (no polling)
+    const tableContainer = document.querySelector('table tbody') || document.body;
+    if (window.MutationObserver) {
+        let pending = false;
+        const obs = new MutationObserver(() => {
+            if (pending) return;
+            pending = true;
+            requestAnimationFrame(() => {
+                attachHandles();
+                pending = false;
+            });
+        });
+        obs.observe(tableContainer, {childList: true, subtree: false});
+    }
 })();
 </script>
 
