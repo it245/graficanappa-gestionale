@@ -97,7 +97,7 @@ final class CommessaSyncService
             $prima = $righe->first();
             $commessa = trim($prima->CodCommessa ?? '');
             $codArt = trim($prima->CodArt ?? '');
-            $descrizione = preg_replace('/\s+/', ' ', trim($prima->OC_Descrizione ?? ''));
+            $descrizione = preg_replace('/\s+/', ' ', trim($prima->AttDescrizione ?? $prima->OC_Descrizione ?? ''));
 
             if (!$commessa) continue;
 
@@ -106,7 +106,8 @@ final class CommessaSyncService
                 ->where('descrizione', $descrizione)
                 ->first();
 
-            if (!$ordine && $descrizione === '') {
+            if (!$ordine) {
+                // Fallback: match solo commessa+cod_art (descrizione potrebbe essere cambiata in Onda)
                 $ordine = Ordine::where('commessa', $commessa)
                     ->where('cod_art', $codArt)
                     ->first();
@@ -142,6 +143,10 @@ final class CommessaSyncService
                 $clienteOnda = $datiOrdine['cliente_nome'];
                 if ($ordine->cliente_nome && $ordine->cliente_nome !== $clienteOnda && !empty($ordine->cliente_nome)) {
                     unset($datiOrdine['cliente_nome']);
+                }
+                // Aggiorna descrizione da Onda se diversa (cliente cambia OC in ATTDocRighe)
+                if ($descrizione && $ordine->descrizione !== $descrizione) {
+                    $ordine->descrizione = $descrizione;
                 }
                 $ordine->update($datiOrdine);
                 $ordiniAggiornati++;

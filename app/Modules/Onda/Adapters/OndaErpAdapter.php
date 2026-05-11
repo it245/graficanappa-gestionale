@@ -39,6 +39,7 @@ final class OndaErpAdapter implements OndaErpInterface
                 p.IdDoc AS PrdIdDoc,
                 p.CodArt,
                 p.OC_Descrizione,
+                attDesc.AttDescrizione,
                 COALESCE(NULLIF(p.NCPRagioneSociale, ''), a.RagioneSociale) AS ClienteNome,
                 p.QtaDaProdurre,
                 p.DataPresConsegna,
@@ -73,6 +74,13 @@ final class OndaErpAdapter implements OndaErpInterface
                 WHERE r.IdDoc = t.IdDoc
                   AND (r.CodArt = f.CodFase OR r.CodArt = SUBSTRING(f.CodFase, 4, LEN(f.CodFase)))
             ) rigaAtt
+            OUTER APPLY (
+                SELECT TOP 1 r.Descrizione AS AttDescrizione
+                FROM ATTDocRighe r
+                WHERE r.IdDoc = t.IdDoc
+                  AND r.TipoRiga = 1
+                ORDER BY r.NrRiga
+            ) attDesc
             OUTER APPLY (
                 SELECT TOP 1 r.CodArt, r.Descrizione, r.Qta, r.CodUnMis
                 FROM PRDDocRighe r WHERE r.IdDoc = p.IdDoc
@@ -104,6 +112,7 @@ final class OndaErpAdapter implements OndaErpInterface
                 p.IdDoc AS PrdIdDoc,
                 p.CodArt,
                 p.OC_Descrizione,
+                attDesc.AttDescrizione,
                 COALESCE(NULLIF(p.NCPRagioneSociale, ''), a.RagioneSociale) AS ClienteNome,
                 p.QtaDaProdurre,
                 p.DataPresConsegna,
@@ -138,6 +147,13 @@ final class OndaErpAdapter implements OndaErpInterface
                 WHERE r.IdDoc = t.IdDoc
                   AND (r.CodArt = f.CodFase OR r.CodArt = SUBSTRING(f.CodFase, 4, LEN(f.CodFase)))
             ) rigaAtt
+            OUTER APPLY (
+                SELECT TOP 1 r.Descrizione AS AttDescrizione
+                FROM ATTDocRighe r
+                WHERE r.IdDoc = t.IdDoc
+                  AND r.TipoRiga = 1
+                ORDER BY r.NrRiga
+            ) attDesc
             OUTER APPLY (
                 SELECT TOP 1 r.CodArt, r.Descrizione, r.Qta, r.CodUnMis
                 FROM PRDDocRighe r WHERE r.IdDoc = p.IdDoc

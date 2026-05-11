@@ -307,6 +307,16 @@ final class CommessaService
                 return ['success' => true, 'reload' => true];
             }
 
+            // Propaga descrizione a TUTTI gli ordini della stessa commessa
+            // (header dettaglio + altre fasi mostrano la stessa desc unificata)
+            if ($campo === 'descrizione') {
+                Ordine::where('commessa', $fase->ordine->commessa)
+                    ->where('id', '!=', $fase->ordine->id)
+                    ->update(['descrizione' => $valore]);
+
+                return ['success' => true, 'reload' => true];
+            }
+
             return ['success' => true];
         }
 

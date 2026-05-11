@@ -525,7 +525,7 @@ public function calcolaOreEPriorita($fase)
             return response()->json($result, 422);
         }
 
-        // Reload trigger (data_prevista_consegna su tutti gli ordini)
+        // Reload trigger (data_prevista_consegna / descrizione su tutti gli ordini)
         if (! empty($result['reload'])) {
             app()->terminating(fn () => ExcelSyncService::exportToExcel());
             return response()->json(['success' => true, 'reload' => true]);

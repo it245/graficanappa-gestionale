@@ -463,7 +463,7 @@ final class OrdineSyncService
             $prima = $righe->first();
             $commessa = trim($prima->CodCommessa ?? '');
             $codArt = trim($prima->CodArt ?? '');
-            $descrizione = preg_replace('/\s+/', ' ', trim($prima->OC_Descrizione ?? ''));
+            $descrizione = preg_replace('/\s+/', ' ', trim($prima->AttDescrizione ?? $prima->OC_Descrizione ?? ''));
 
             if (!$commessa) continue;
 
@@ -474,7 +474,8 @@ final class OrdineSyncService
                 ->where('descrizione', $descrizione)
                 ->first();
 
-            if (!$ordine && $descrizione === '') {
+            if (!$ordine) {
+                // Fallback: match solo commessa+cod_art (descrizione potrebbe essere cambiata in Onda)
                 $ordine = Ordine::where('commessa', $commessa)
                     ->where('cod_art', $codArt)
                     ->first();
