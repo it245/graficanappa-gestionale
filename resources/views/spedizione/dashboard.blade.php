@@ -180,10 +180,16 @@
 
     /* Hamburger */
     .hamburger-btn {
-        background: none; border: none; cursor: pointer; padding: 4px;
+        background: none; border: none; cursor: pointer; padding: 12px;
         display: flex; flex-direction: column; gap: 5px; transition: transform 0.15s ease;
+        min-width: 44px; min-height: 44px; align-items: center; justify-content: center;
+        touch-action: manipulation; -webkit-tap-highlight-color: rgba(0,0,0,0.1);
+        position: relative; z-index: 100;
     }
-    .hamburger-btn:hover { transform: scale(1.1); }
+    /* iOS Safari 18 (iPhone 16): hover su tap blocca click. Solo device mouse. */
+    @media (hover: hover) {
+        .hamburger-btn:hover { transform: scale(1.1); }
+    }
     .hamburger-btn span {
         display: block; width: 28px; height: 3px; background: #333; border-radius: 2px;
     }
@@ -1207,7 +1213,23 @@ function closeSidebar() {
     document.getElementById('sidebarMenu').classList.remove('open');
     document.getElementById('sidebarOverlay').classList.remove('open');
 }
-document.getElementById('hamburgerBtn').addEventListener('click', openSidebar);
+// iOS Safari 18 (iPhone 16): solo 'click' talvolta non scatta. Aggiungo
+// 'touchend' con preventDefault + flag anti doppio-fire (ghost click).
+(function() {
+    var hb = document.getElementById('hamburgerBtn');
+    if (!hb) return;
+    var fired = false;
+    hb.addEventListener('touchend', function(e) {
+        fired = true;
+        e.preventDefault();
+        openSidebar();
+        setTimeout(function() { fired = false; }, 350);
+    }, { passive: false });
+    hb.addEventListener('click', function() {
+        if (fired) return;
+        openSidebar();
+    });
+})();
 document.getElementById('sidebarOverlay').addEventListener('click', closeSidebar);
 document.getElementById('sidebarClose').addEventListener('click', closeSidebar);
 document.querySelectorAll('.sidebar-menu a.sidebar-item').forEach(function(el) {
