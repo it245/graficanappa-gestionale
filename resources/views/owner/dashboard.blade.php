@@ -2684,17 +2684,19 @@ td[contenteditable] { position: relative; }
 td.drag-active .drag-handle { display: block !important; }
 .drag-handle {
     position: absolute;
-    bottom: -3px;
-    right: -3px;
-    width: 12px;
-    height: 12px;
+    bottom: -4px;
+    right: -4px;
+    width: 14px;
+    height: 14px;
     background: #0d6efd;
     border: 2px solid #fff;
-    cursor: crosshair;
+    cursor: nesw-resize;
     display: none;
-    z-index: 5;
-    box-shadow: 0 0 3px rgba(0,0,0,0.4);
+    z-index: 10;
+    box-shadow: 0 0 4px rgba(0,0,0,0.5);
+    border-radius: 2px;
 }
+.drag-handle:hover { background: #0a58ca; transform: scale(1.15); }
 .drag-fill-target {
     background: rgba(13, 110, 253, 0.18) !important;
     outline: 1px dashed #0d6efd;
@@ -2739,14 +2741,21 @@ td.drag-active .drag-handle { display: block !important; }
                 e.preventDefault();
                 e.stopPropagation();
                 const colIdx = Array.from(td.parentNode.children).indexOf(td);
+                const srcTr = td.closest('tr');
+                const tbody = srcTr.parentNode;
+                // Cache allTrs UNA VOLTA al mousedown (evita ricomputazione 60fps)
+                const allTrs = Array.from(tbody.children).filter(n => n.tagName === 'TR');
                 dragState = {
                     sourceCell: td,
                     value: td.innerText.trim(),
                     campo: extractCampoFromCell(td),
                     columnIndex: colIdx,
+                    allTrs: allTrs,
+                    startIdx: allTrs.indexOf(srcTr),
+                    lastEndIdx: -1, // cache per evitare clearHighlight ridondante
                 };
                 document.body.style.userSelect = 'none';
-                document.body.style.cursor = 'crosshair';
+                document.body.style.cursor = 'nesw-resize';
             });
             td.appendChild(h);
 
@@ -2780,17 +2789,24 @@ td.drag-active .drag-handle { display: block !important; }
         if (!td) return;
         const tr = td.closest('tr');
         if (!tr) return;
-        const colIdx = Array.from(tr.children).indexOf(td);
-        if (colIdx !== dragState.columnIndex) return;
+
+        const allTrs = dragState.allTrs;
+        const startIdx = dragState.startIdx;
+        const endIdx = allTrs.indexOf(tr);
+
+        // SKIP se stessa riga di prima -> evita repaint inutili (causa lag)
+        if (endIdx === dragState.lastEndIdx) return;
+        dragState.lastEndIdx = endIdx;
+
+        // Verifica colonna (controllo light, no allocation)
+        const colIdx = dragState.columnIndex;
+        if (tr.children[colIdx] !== td) return;
+        if (endIdx < 0 || startIdx === endIdx) {
+            clearHighlight();
+            return;
+        }
 
         clearHighlight();
-
-        const srcTr = dragState.sourceCell.closest('tr');
-        const tbody = srcTr.parentNode;
-        const allTrs = Array.from(tbody.children).filter(n => n.tagName === 'TR');
-        const startIdx = allTrs.indexOf(srcTr);
-        const endIdx = allTrs.indexOf(tr);
-        if (startIdx < 0 || endIdx < 0 || startIdx === endIdx) return;
 
         const [from, to] = startIdx < endIdx ? [startIdx + 1, endIdx] : [endIdx, startIdx - 1];
         for (let i = from; i <= to; i++) {
