@@ -1,42 +1,132 @@
 <?php
-// Mostra le fasi a stato 2 che non appaiono nella dashboard owner
+/**
+ * DRY-RUN: lista fasi fantasma (in PRDDocFasi ma NON in ATTDocRighe).
+ * Mostra quali commesse verrebbero modificate dal sync intelligente.
+ *
+ * Usage:
+ *   php check_fasi_fantasma.php            # tutte commesse MES attive
+ *   php check_fasi_fantasma.php 0067339-26 # singola commessa
+ */
+
 require __DIR__ . '/vendor/autoload.php';
 $app = require_once __DIR__ . '/bootstrap/app.php';
-$app->make('Illuminate\Contracts\Console\Kernel')->bootstrap();
+$app->make(\Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
-// Fasi problematiche trovate dallo script verifica
-$commesse = [
-    // JOH Caldo
-    '0066516-26', '0066517-26', '0066521-26', '0066523-26',
-    '0066529-26', '0066530-26', '0066533-26', '0066535-26',
-    '0066666-26', '0066739-26',
-    // Plastificatrice
-    '0066802-26', '0066819-26', '0066818-26', '0066822-26', '0066845-26', '0066856-26',
-    // Fustella Cilindrica
-    '0066507-26', '0066657-26', '0066667-26', '0066692-26',
-    // Canon V900
-    '0066755-26', '0066892-26',
-    // BOBST
-    '0066797-26',
-];
+use Illuminate\Support\Facades\DB;
 
-echo "=== FASI A STATO 2 CHE NON APPAIONO IN DASHBOARD ===\n\n";
+$onlyCommessa = $argv[1] ?? null;
+$onda = DB::connection('onda');
+$mes = DB::connection();
 
-foreach (array_unique($commesse) as $comm) {
-    $fasi = DB::table('ordine_fasi as f')
-        ->join('ordini as o', 'f.ordine_id', '=', 'o.id')
-        ->join('fasi_catalogo as fc', 'f.fase_catalogo_id', '=', 'fc.id')
-        ->join('reparti as r', 'fc.reparto_id', '=', 'r.id')
-        ->where('o.commessa', $comm)
-        ->where('f.stato', 2)
-        ->select('f.id', 'f.fase', 'f.stato', 'f.data_inizio', 'f.deleted_at',
-                 'o.commessa', 'o.cliente_nome', 'r.nome as reparto')
-        ->get();
+echo "\n=== DRY-RUN: fasi fantasma (PRD only, NON in ATT) ===\n\n";
 
-    if ($fasi->isEmpty()) continue;
+if ($onlyCommessa) {
+    $commesse = [$onlyCommessa];
+} else {
+    $commesse = $mes->table('ordini')
+        ->join('ordine_fasi', 'ordini.id', '=', 'ordine_fasi.ordine_id')
+        ->whereIn('ordine_fasi.stato', ['0', '1'])
+        ->whereNull('ordine_fasi.deleted_at')
+        ->distinct()
+        ->pluck('ordini.commessa')
+        ->filter()
+        ->values()
+        ->all();
+}
 
-    foreach ($fasi as $f) {
-        $del = $f->deleted_at ? " *** SOFT DELETED: {$f->deleted_at} ***" : "";
-        echo "  {$f->commessa} | {$f->fase} | {$f->reparto} | stato:{$f->stato} | inizio:{$f->data_inizio} | id:{$f->id}{$del}\n";
+echo "Commesse da analizzare: " . count($commesse) . "\n\n";
+
+$totaleFantasme = 0;
+$commesseAffette = [];
+
+foreach ($commesse as $commessa) {
+    try {
+        $prd = $onda->select("
+            SELECT f.CodFase, f.QtaDaLavorare
+            FROM PRDDocTeste p
+            INNER JOIN PRDDocFasi f ON p.IdDoc = f.IdDoc
+            WHERE p.CodCommessa = ?
+        ", [$commessa]);
+    } catch (\Exception $e) {
+        echo "  ERR PRD {$commessa}: " . $e->getMessage() . "\n";
+        continue;
+    }
+
+    try {
+        $att = $onda->select("
+            SELECT CodArt, Descrizione, TipoRiga
+            FROM ATTDocRighe
+            WHERE CodCommessa = ?
+        ", [$commessa]);
+    } catch (\Exception $e) {
+        echo "  ERR ATT {$commessa}: " . $e->getMessage() . "\n";
+        continue;
+    }
+
+    if (empty($prd)) continue;
+
+    $attFasi = [];
+    foreach ($att as $r) {
+        if ($r->TipoRiga == 2 && !empty($r->CodArt)) {
+            $attFasi[] = strtoupper($r->CodArt);
+        }
+    }
+    $attDescConcat = strtoupper(implode(' ', array_map(fn ($r) => $r->Descrizione ?? '', $att)));
+
+    $fantasme = [];
+    foreach ($prd as $f) {
+        $codFase = $f->CodFase ?? '';
+        if ($codFase === '') continue;
+        $norm = preg_replace('/^EXT/', '', strtoupper($codFase));
+        $found = false;
+
+        foreach ($attFasi as $a) {
+            if ($a === '') continue;
+            if (stripos($a, $norm) !== false || stripos($norm, $a) !== false) {
+                $found = true;
+                break;
+            }
+        }
+        if (!$found) {
+            $key = substr($norm, 0, 4);
+            if ($key !== '' && stripos($attDescConcat, $key) !== false) {
+                $found = true;
+            }
+        }
+
+        if (!$found) {
+            $fantasme[] = sprintf("%s (Qta=%s)", $codFase, $f->QtaDaLavorare);
+        }
+    }
+
+    if (!empty($fantasme)) {
+        $totaleFantasme += count($fantasme);
+        $commesseAffette[] = $commessa;
+        echo sprintf("Commessa %s — fasi fantasma:\n", $commessa);
+        foreach ($fantasme as $f) echo "  - {$f}\n";
+
+        $mesFasi = $mes->table('ordini')
+            ->join('ordine_fasi', 'ordini.id', '=', 'ordine_fasi.ordine_id')
+            ->where('ordini.commessa', $commessa)
+            ->whereNull('ordine_fasi.deleted_at')
+            ->pluck('ordine_fasi.fase')
+            ->map(fn ($f) => strtoupper($f))
+            ->all();
+        $attiveMes = [];
+        foreach ($fantasme as $fLabel) {
+            $name = explode(' ', $fLabel)[0];
+            if (in_array(strtoupper($name), $mesFasi, true)) {
+                $attiveMes[] = $name;
+            }
+        }
+        if (!empty($attiveMes)) {
+            echo "  ⚠ ATTIVE NEL MES (da soft-delete): " . implode(', ', $attiveMes) . "\n";
+        }
+        echo "\n";
     }
 }
+
+echo "=== RIEPILOGO ===\n";
+echo "Commesse analizzate: " . count($commesse) . "\n";
+echo "Commesse con fasi fantasma: " . count($commesseAffette) . "\n";
+echo "Fasi fantasma totali: {$totaleFantasme}\n\n";
