@@ -536,6 +536,35 @@ public function calcolaOreEPriorita($fase)
     }
 
     /**
+     * Lista fasi attive per modal Handsontable (drag-down Excel-like).
+     * Ritorna JSON con fasi stato 0/1/2 (caricate/pronte/avviate).
+     */
+    public function fasiBulkList(\Illuminate\Http\Request $request)
+    {
+        if ($deny = $this->denyIfReadonly()) return $deny;
+
+        $fasi = OrdineFase::with(['ordine:id,commessa,cliente_nome,descrizione', 'faseCatalogo:id,nome,reparto_id', 'faseCatalogo.reparto:id,nome'])
+            ->whereIn('stato', ['0', '1', '2'])
+            ->whereHas('ordine')
+            ->orderBy('id', 'desc')
+            ->limit(500)
+            ->get()
+            ->map(fn ($f) => [
+                'fase_id' => $f->id,
+                'commessa' => $f->ordine->commessa ?? '-',
+                'fase' => $f->fase,
+                'reparto' => $f->faseCatalogo?->reparto?->nome ?? '-',
+                'stato' => $f->stato,
+                'cliente' => $f->ordine->cliente_nome ?? '-',
+                'note' => $f->note,
+                'qta_prod' => $f->qta_prod,
+                'priorita' => $f->priorita,
+            ]);
+
+        return response()->json(['fasi' => $fasi]);
+    }
+
+    /**
      * Bulk update da Handsontable (drag-down Excel-like).
      * Riceve array {fase_id, campo, valore} e applica tramite CommessaService.
      * Max 100 righe per chiamata (DOS protection).

@@ -61,6 +61,7 @@ Route::middleware(['owner'])->group(function() {
     Route::get('/owner/dashboard', [DashboardOwnerController::class, 'index'])->name('owner.dashboard');
 Route::post('/owner/aggiorna-campo', [DashboardOwnerController::class, 'aggiornaCampo'])->name('owner.aggiornaCampo');
 Route::post('/owner/aggiorna-bulk', [DashboardOwnerController::class, 'aggiornaBulk'])->name('owner.aggiornaBulk');
+Route::get('/owner/fasi-bulk-list', [DashboardOwnerController::class, 'fasiBulkList'])->name('owner.fasiBulkList');
 Route::post('/owner/import', [DashboardOwnerController::class, 'importOrdini'])->name('owner.importOrdini');
 Route::post('/owner/sync-onda', [DashboardOwnerController::class, 'syncOnda'])->name('owner.syncOnda');
 Route::post('/owner/aggiungi-riga', [DashboardOwnerController::class, 'aggiungiRiga'])->name('owner.aggiungiRiga');

@@ -2689,30 +2689,26 @@ function csrfTokenBulk() {
 }
 
 function initBulkEdit() {
-    // Estrae righe dalla tabella owner principale (DOM scrape: id fase nel data-attr).
-    // Pattern: ogni <tr> con data-fase-id contiene info commessa/fase/note/etc.
-    const righe = [];
-    document.querySelectorAll('tr[data-fase-id]').forEach(tr => {
-        const faseId = parseInt(tr.getAttribute('data-fase-id'), 10);
-        if (!faseId) return;
-        righe.push({
-            fase_id: faseId,
-            commessa: tr.getAttribute('data-commessa') || '',
-            fase: tr.getAttribute('data-fase') || '',
-            reparto: tr.getAttribute('data-reparto') || '',
-            stato: tr.getAttribute('data-stato') || '',
-            valore: '',
-        });
+    // Fetch lista fasi da backend (stato 0/1/2, max 500)
+    fetch('{{ route("owner.fasiBulkList") }}?op_token={{ request("op_token") }}', {
+        headers: {'Accept': 'application/json'},
+    })
+    .then(r => r.json())
+    .then(data => {
+        _bulkRigheBase = (data.fasi || []).map(f => ({...f, valore: ''}));
+
+        // Popola filtro reparto
+        const reparti = [...new Set(_bulkRigheBase.map(r => r.reparto).filter(Boolean))].sort();
+        const selRep = document.getElementById('bulkFiltroReparto');
+        selRep.innerHTML = '<option value="">— tutti —</option>' +
+            reparti.map(r => `<option>${r}</option>`).join('');
+
+        aggiornaBulkPreview();
+    })
+    .catch(err => {
+        console.error('Bulk fetch error:', err);
+        document.getElementById('hotTableContainer').innerHTML = '<div class="alert alert-danger">Errore caricamento fasi</div>';
     });
-    _bulkRigheBase = righe;
-
-    // Popola filtro reparto
-    const reparti = [...new Set(righe.map(r => r.reparto).filter(Boolean))].sort();
-    const selRep = document.getElementById('bulkFiltroReparto');
-    selRep.innerHTML = '<option value="">— tutti —</option>' +
-        reparti.map(r => `<option>${r}</option>`).join('');
-
-    aggiornaBulkPreview();
 }
 
 function aggiornaBulkPreview() {
