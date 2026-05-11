@@ -15,6 +15,9 @@ class ExcelSync extends Command
         // Sync puo essere lungo per via chiamate Prinect: disabilita timeout PHP
         set_time_limit(0);
         ini_set('max_execution_time', '0');
+        // Export xlsx via ZipStream alloca chunk 16MB. Con dataset ~6000 ordini
+        // + fasi il default 512M si esaurisce. Bump a 1G per il singolo run.
+        ini_set('memory_limit', '1G');
 
         $this->info('Excel sync in corso...');
 
