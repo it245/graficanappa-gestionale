@@ -73,24 +73,51 @@ foreach ($commesse as $commessa) {
     }
     $attDescConcat = strtoupper(implode(' ', array_map(fn ($r) => $r->Descrizione ?? '', $att)));
 
+    // SOLO fasi "rimovibili" (commerciali che cliente puo cancellare da OC)
+    // Le altre (STAMPAXL/FIN/PI/FUST macchina) sono fasi produzione, SEMPRE valide.
+    $rimovibili = [
+        'PLALUX'    => ['plast', 'lux'],
+        'PLAOPA'    => ['plast', 'opac'],
+        'PLASOFT'   => ['plast', 'soft'],
+        'UVSPOT'    => ['uv', 'vernic', 'spot'],
+        'FOIL'      => ['foil', 'lamin'],
+        'STAMPALAMINAORO' => ['oro', 'lamin'],
+        'STAMPACALDO'     => ['caldo', 'oro'],
+        'PUNTOMETALLICO'  => ['metallic', 'punto'],
+        'BROSSFILOREFE'   => ['brossur', 'filo refe'],
+        'BROSSFRESATA'    => ['brossur', 'fresat'],
+        'ARROT4ANGOLI'    => ['arroton', 'angoli'],
+    ];
+
     $fantasme = [];
     foreach ($prd as $f) {
         $codFase = $f->CodFase ?? '';
         if ($codFase === '') continue;
         $norm = preg_replace('/^EXT/', '', strtoupper($codFase));
-        $found = false;
 
-        foreach ($attFasi as $a) {
-            if ($a === '') continue;
-            if (stripos($a, $norm) !== false || stripos($norm, $a) !== false) {
-                $found = true;
+        // Filtra SOLO macro-fasi rimovibili (skip macchina FIN/PI/STAMPAXL/FUST*)
+        $macroMatch = null;
+        $keywords = [];
+        foreach ($rimovibili as $macro => $kws) {
+            if (stripos($norm, $macro) !== false) {
+                $macroMatch = $macro;
+                $keywords = $kws;
                 break;
             }
         }
+        if ($macroMatch === null) continue; // fase non rimovibile, skip check
+
+        // Verifica match in ATT (CodArt o Descrizione)
+        $found = false;
+        foreach ($attFasi as $a) {
+            if (stripos($a, $macroMatch) !== false) { $found = true; break; }
+        }
         if (!$found) {
-            $key = substr($norm, 0, 4);
-            if ($key !== '' && stripos($attDescConcat, $key) !== false) {
-                $found = true;
+            foreach ($keywords as $kw) {
+                if (stripos($attDescConcat, $kw) !== false) {
+                    $found = true;
+                    break;
+                }
             }
         }
 
