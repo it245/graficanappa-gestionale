@@ -50,6 +50,15 @@ return [
             'fasi' => ['PLAOPA1LATO','PLALUX1LATO','PLASOFTTOUCH1','PLAPOLIESARG1LATO',
                         'PLAOPABV','PLASOFTBV','PLALUXBV'],
         ],
+        // FIN PRIMA di PIEGA: dipendenza topologica (FIN seq 46 < PI seq 50).
+        // Ordine macchine determina ordine processing in simula(). Avere FIN
+        // prima fa si' che PIEGA, nello stesso pass, veda gia' FIN schedulato
+        // -> disponibile_da delle PI aggiornato -> meno gap residui.
+        'FIN' => [
+            'nome' => 'Finestratrice',
+            'turni' => 'standard',
+            'fasi' => ['FIN01','FIN03','FIN04','FINESTRATURA.MANUALE'],
+        ],
         'PIEGA' => [
             'nome' => 'Piegaincolla',
             'turni' => 'standard_sab', // 6-22 lun-ven + sab 6-13
@@ -60,11 +69,6 @@ return [
                 'PI03' => ['PI03'],
             ],
             'cambio_config_ore' => 1.0,
-        ],
-        'FIN' => [
-            'nome' => 'Finestratrice',
-            'turni' => 'standard',
-            'fasi' => ['FIN01','FIN03','FIN04','FINESTRATURA.MANUALE'],
         ],
         'INDIGO' => [
             'nome' => 'HP Indigo + MGI',
