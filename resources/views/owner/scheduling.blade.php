@@ -244,7 +244,15 @@
     .bar-scaduta { background:linear-gradient(135deg,#dc3545,#e35d6a); }
     .bar-critica { background:linear-gradient(135deg,#e67e22,#f0a04b); }
     .bar-normale { background:linear-gradient(135deg,#0d6efd,#5a9cff); }
-    .bar-avviata { background:linear-gradient(135deg,#198754,#3cc07e); }
+    .bar-avviata {
+        background:linear-gradient(135deg,#198754,#3cc07e);
+        animation: barAvviataPulse 1.6s ease-in-out infinite;
+        box-shadow: 0 0 0 0 rgba(60,192,126,0.7);
+    }
+    @keyframes barAvviataPulse {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(60,192,126,0.7); filter:brightness(1); }
+        50%      { box-shadow: 0 0 0 6px rgba(60,192,126,0); filter:brightness(1.18); }
+    }
     .bar-pronta { background:linear-gradient(135deg,#0dcaf0,#56d8f0); }
 
     /* Day dividers */
