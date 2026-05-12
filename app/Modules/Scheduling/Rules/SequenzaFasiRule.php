@@ -59,13 +59,24 @@ final class SequenzaFasiRule
         if ($ordine === null) {
             return true;
         }
+        $commessa = $ordine->commessa ?? null;
+        if (! $commessa) {
+            return true;
+        }
 
         $seq = self::ordineFase((string) $fase->fase);
         if ($seq === PHP_INT_MAX) {
             return true;
         }
 
-        foreach ($ordine->fasi ?? [] as $altra) {
+        // Una commessa puo' avere piu' ordini (multi-articolo): controllo
+        // tutte le fasi della commessa, non solo quelle dello stesso ordine_id.
+        $tutteFasiCommessa = OrdineFase::with('ordine')
+            ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
+            ->whereNull('deleted_at')
+            ->get();
+
+        foreach ($tutteFasiCommessa as $altra) {
             if ($altra->id === $fase->id) {
                 continue;
             }

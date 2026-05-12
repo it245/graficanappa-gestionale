@@ -23,13 +23,25 @@ final class PropagazioneService
         if ($ordine === null) {
             return;
         }
+        $commessa = $ordine->commessa ?? null;
+        if (! $commessa) {
+            return;
+        }
 
-        foreach ($ordine->fasi ?? [] as $altra) {
+        // Una commessa puo' avere PIU' ordini (multi-articolo). La
+        // propagazione deve coprire TUTTE le fasi della commessa, non
+        // solo quelle dello stesso ordine_id (bug pre-fix: fasi su ordini
+        // distinti della stessa commessa restavano disponibile=false).
+        $altreFasi = OrdineFase::with('ordine')
+            ->whereHas('ordine', fn($q) => $q->where('commessa', $commessa))
+            ->whereNull('deleted_at')
+            ->get();
+
+        foreach ($altreFasi as $altra) {
             if ($altra->id === $faseTerminata->id) {
                 continue;
             }
 
-            // Solo fasi non ancora avviate o pronte.
             $stato = (int) $altra->stato;
             if ($stato >= 2) {
                 continue;
@@ -39,7 +51,6 @@ final class PropagazioneService
                 continue;
             }
 
-            // Marca PRONTA + disponibile per lo scheduler.
             $altra->fill([
                 'stato'           => 1,
                 'disponibile'     => true,
