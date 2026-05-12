@@ -939,6 +939,20 @@ function schedulaDaDB(data) {
             macchine[nome].fasi.push({ ...f, start_h: startH, end_h: endH, ore_effettive: oreEff, lane: 0 });
             return;
         }
+        // Fasi in_corso (stato 2) senza sched dal DB: posizionale OGGI su reparto
+        // base (data_inizio_reale o NOW). Visivamente devono comunque apparire
+        // sul gantt (pulse).
+        if (Number(f.stato) === 2 && (!f.sched_macchina || !f.sched_inizio)) {
+            // Trova macchina per nome reparto (fallback)
+            const nome = f.reparto || 'In corso';
+            if (!macchine[nome]) macchine[nome] = { nome, reparto_id: f.reparto_id || 0, fasi: [], turni: '6-22' };
+            const oreEff = getBestOre(f) || 1;
+            const inizio = f.data_inizio_reale ? new Date(f.data_inizio_reale) : new Date(NOW);
+            const startH = Math.max(0, (inizio - NOW) / 3600000);
+            const endH = startH + oreEff;
+            macchine[nome].fasi.push({ ...f, start_h: startH, end_h: endH, ore_effettive: oreEff, lane: 0 });
+            return;
+        }
         if (!f.sched_macchina || !f.sched_inizio || !f.sched_fine) return;
         const mid = f.sched_macchina;
         const nome = NOMI_MAC[mid] || f.reparto || mid;
