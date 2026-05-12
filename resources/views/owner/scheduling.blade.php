@@ -246,12 +246,20 @@
     .bar-normale { background:linear-gradient(135deg,#0d6efd,#5a9cff); }
     .bar-avviata {
         background:linear-gradient(135deg,#198754,#3cc07e);
-        animation: barAvviataPulse 1.6s ease-in-out infinite;
-        box-shadow: 0 0 0 0 rgba(60,192,126,0.7);
+        animation: barAvviataPulse 0.8s ease-in-out infinite;
+        outline: 2px solid #5dd39e;
+        outline-offset: 1px;
+        z-index: 5;
     }
     @keyframes barAvviataPulse {
-        0%, 100% { box-shadow: 0 0 0 0 rgba(60,192,126,0.7); filter:brightness(1); }
-        50%      { box-shadow: 0 0 0 6px rgba(60,192,126,0); filter:brightness(1.18); }
+        0%, 100% {
+            box-shadow: 0 0 0 0 rgba(60,255,150,0.9), 0 0 12px 2px rgba(60,255,150,0.6);
+            filter: brightness(1) saturate(1);
+        }
+        50% {
+            box-shadow: 0 0 0 10px rgba(60,255,150,0), 0 0 24px 6px rgba(60,255,150,0.9);
+            filter: brightness(1.5) saturate(1.4);
+        }
     }
     .bar-pronta { background:linear-gradient(135deg,#0dcaf0,#56d8f0); }
 
