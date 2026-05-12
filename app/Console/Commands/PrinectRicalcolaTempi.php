@@ -88,7 +88,13 @@ class PrinectRicalcolaTempi extends Command
 
             if ($vecchio === $nuovo) continue;
 
-            $variazioni[] = sprintf('%s %s: %.2fh → %.2fh', $commessa, $fase->fase, $vecchio / 3600, $nuovo / 3600);
+            $fmt = function (int $s): string {
+                $h = intdiv($s, 3600);
+                $m = intdiv($s % 3600, 60);
+                $sec = $s % 60;
+                return sprintf('%dh %02dm %02ds', $h, $m, $sec);
+            };
+            $variazioni[] = sprintf('%s %s: %s → %s (Δ %+ds)', $commessa, $fase->fase, $fmt($vecchio), $fmt($nuovo), $nuovo - $vecchio);
 
             if (! $dry) {
                 $fase->tempo_avviamento_sec = $secAvv;
