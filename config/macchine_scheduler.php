@@ -26,10 +26,15 @@ return [
             ],
             'cambio_config_ore' => 1.0,
         ],
-        'STEL' => [
-            'nome' => 'STEL G33/P25',
+        'STEL_G33' => [
+            'nome' => 'STEL G33.44 (cilindrica)',
             'turni' => 'standard',
-            'fasi' => ['FUSTSTELG33.44','FUSTSTELP25.35'],
+            'fasi' => ['FUSTSTELG33.44'],
+        ],
+        'STEL_P25' => [
+            'nome' => 'STEL P25.35 (cilindrica)',
+            'turni' => 'standard',
+            'fasi' => ['FUSTSTELP25.35'],
         ],
         'JOH' => [
             'nome' => 'JOH Stampa a Caldo',
