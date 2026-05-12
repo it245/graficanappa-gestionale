@@ -446,9 +446,23 @@ class PrinectSyncService
                 $scarto += $a['wasteCycles'] ?? 0;
             }
 
-            // Aggregazione tempi avviamento/esecuzione delegata al modulo
-            // (supporta sia array raw API sia Eloquent — vedi aggregaAttivita).
-            $tempi = $this->accountingService->aggregaAttivita($att);
+            // Tempi: prima fonte aggregato Heidelberg via workstep.actualTimes
+            // (corretti). Fallback a somma activity raw (sottostima ma meglio
+            // di niente quando actualTimes manca).
+            $workstepName = null;
+            $jobIdFase = null;
+            foreach ($att as $a) {
+                $workstepName ??= $a['workstep']['name'] ?? null;
+                $jobIdFase ??= $a['workstep']['job']['id'] ?? null;
+                if ($workstepName && $jobIdFase) break;
+            }
+            $tempi = null;
+            if ($workstepName && $jobIdFase) {
+                $tempi = $this->accountingService->getTempiByWorkstepName((string) $jobIdFase, $workstepName);
+            }
+            if ($tempi === null) {
+                $tempi = $this->accountingService->aggregaAttivita($att);
+            }
 
             $sorted = collect($att)->filter(fn($a) => isset($a['startTime']))->sortBy('startTime');
             $dataInizio = $sorted->isNotEmpty()
@@ -472,10 +486,19 @@ class PrinectSyncService
         $att = collect($att);
         if ($att->isEmpty()) return;
 
-        // Aggregazione tempi avviamento/esecuzione delegata al modulo
-        // PrinectAccountingService (stessa formula bit-for-bit del legacy:
-        // activity_name === 'Avviamento' => avviamento, altrimenti esecuzione).
-        $tempi = $this->accountingService->aggregaAttivita($att);
+        // Tempi: prima fonte aggregato Heidelberg via workstep.actualTimes
+        // (eloquent: prinect_attivita.workstep_name + prinect_job_id).
+        // Fallback a somma activity raw (sottostima storica ma stabile).
+        $firstAtt = $att->first();
+        $workstepName = $firstAtt->workstep_name ?? null;
+        $jobIdFase    = $firstAtt->prinect_job_id ?? null;
+        $tempi = null;
+        if ($workstepName && $jobIdFase) {
+            $tempi = $this->accountingService->getTempiByWorkstepName((string) $jobIdFase, (string) $workstepName);
+        }
+        if ($tempi === null) {
+            $tempi = $this->accountingService->aggregaAttivita($att);
+        }
 
         $primaAtt = $att->filter(fn($a) => $a->start_time)->sortBy('start_time')->first();
 

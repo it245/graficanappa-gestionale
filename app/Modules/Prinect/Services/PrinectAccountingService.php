@@ -23,16 +23,117 @@ use Illuminate\Support\Facades\Log;
  */
 final class PrinectAccountingService
 {
+    /**
+     * Cache risposta getWorksteps per ridurre chiamate ripetute sullo
+     * stesso jobId quando piu fasi appartengono allo stesso job Prinect.
+     *
+     * @var array<string, array<string,mixed>|null>
+     */
+    private array $worksetCache = [];
+
     public function __construct(
         private readonly PrinectApiInterface $api,
     ) {
     }
 
     /**
-     * Tempi di un workstep aggregando le activity API.
+     * Tempi aggregati Heidelberg lookup per nome workstep (es. "FB 001 3/-").
+     * Usato dal sync legacy (PrinectSyncService) dove sono disponibili gli
+     * activity raw ma non il workstepId, solo il workstep_name.
+     */
+    public function getTempiByWorkstepName(string $jobId, string $workstepName): ?TempiStampa
+    {
+        $worksteps = $this->fetchWorksetsCached($jobId);
+        if (!is_array($worksteps) || empty($worksteps['worksteps'])) {
+            return null;
+        }
+        foreach ($worksteps['worksteps'] as $w) {
+            if (($w['name'] ?? null) !== $workstepName) {
+                continue;
+            }
+            return $this->actualTimesToTempi($w['actualTimes'] ?? []);
+        }
+        return null;
+    }
+
+    private function fetchWorksetsCached(string $jobId): ?array
+    {
+        if (array_key_exists($jobId, $this->worksetCache)) {
+            return $this->worksetCache[$jobId];
+        }
+        try {
+            $this->worksetCache[$jobId] = $this->api->getWorksteps($jobId);
+        } catch (\Throwable $e) {
+            Log::warning('Prinect sync: getWorksteps errore', [
+                'jobId' => $jobId,
+                'error' => $e->getMessage(),
+            ]);
+            $this->worksetCache[$jobId] = null;
+        }
+        return $this->worksetCache[$jobId];
+    }
+
+    /**
+     * @param  array<int,array<string,mixed>>  $actualTimes
+     */
+    private function actualTimesToTempi(array $actualTimes): ?TempiStampa
+    {
+        if ($actualTimes === []) {
+            return null;
+        }
+        $secAvv  = 0;
+        $secProd = 0;
+        foreach ($actualTimes as $t) {
+            $name     = $t['timeTypeName'] ?? '';
+            $duration = (int) ($t['duration'] ?? 0);
+            if ($duration <= 0) {
+                continue;
+            }
+            $nameLc = mb_strtolower($name);
+            if (str_contains($nameLc, 'avviamento')) {
+                $secAvv += $duration;
+            } elseif (str_contains($nameLc, 'esecuzione') || str_contains($nameLc, 'produzione')) {
+                $secProd += $duration;
+            }
+        }
+        if ($secAvv === 0 && $secProd === 0) {
+            return null;
+        }
+        return new TempiStampa($secAvv, $secProd);
+    }
+
+    /**
+     * Tempi di un workstep.
+     *
+     * Strategia:
+     *  1) Prima fonte (CORRETTA): legge `actualTimes` dal workstep stesso —
+     *     contiene i tempi macchina aggregati ufficiali di Heidelberg
+     *     (es. "Tempo di avviamento" 544s + "Tempo di esecuzione" 4220s).
+     *  2) Fallback: aggrega le activity raw (somma start/end). Le activity
+     *     sono pero' eventi puntuali (durata 9-21 secondi totali per job
+     *     da 1h) e quindi sottostimano fortemente i tempi reali.
+     *     Mantenute come ultima risorsa quando actualTimes manca.
      */
     public function getTempi(WorkstepId $ws): TempiStampa
     {
+        // 1) Prova actualTimes dal workstep (fonte aggregata Heidelberg).
+        try {
+            $worksteps = $this->api->getWorksteps($ws->jobId);
+        } catch (\Throwable $e) {
+            Log::warning('Prinect sync: getWorksteps errore', [
+                'jobId' => $ws->jobId,
+                'wsId'  => $ws->workstepId,
+                'error' => $e->getMessage(),
+            ]);
+            $worksteps = null;
+        }
+
+        $tempi = $this->estraiActualTimes($worksteps, $ws->workstepId);
+        if ($tempi !== null) {
+            return $tempi;
+        }
+
+        // 2) Fallback su activity raw (sottostima).
         try {
             $data = $this->api->getWorkstepActivities($ws->jobId, $ws->workstepId);
         } catch (\Throwable $e) {
@@ -49,6 +150,56 @@ final class PrinectAccountingService
         }
 
         return $this->aggregaAttivita($data['activities'] ?? []);
+    }
+
+    /**
+     * Estrae avviamento + esecuzione da workstep.actualTimes.
+     * Ritorna null se workstep non trovato o actualTimes vuoto.
+     *
+     * @param  array<string,mixed>|null  $worksteps  Risposta API getWorksteps
+     */
+    private function estraiActualTimes(?array $worksteps, string $workstepId): ?TempiStampa
+    {
+        if (!is_array($worksteps) || empty($worksteps['worksteps'])) {
+            return null;
+        }
+
+        foreach ($worksteps['worksteps'] as $w) {
+            if (($w['id'] ?? null) !== $workstepId) {
+                continue;
+            }
+
+            $actualTimes = $w['actualTimes'] ?? [];
+            if (!is_array($actualTimes) || $actualTimes === []) {
+                return null;
+            }
+
+            $secAvv  = 0;
+            $secProd = 0;
+            foreach ($actualTimes as $t) {
+                $name     = $t['timeTypeName'] ?? '';
+                $duration = (int) ($t['duration'] ?? 0);
+                if ($duration <= 0) {
+                    continue;
+                }
+                // Heidelberg italiano: "Tempo di avviamento" / "Tempo di esecuzione".
+                // Match case-insensitive su keyword per tolleranza varianti locale.
+                $nameLc = mb_strtolower($name);
+                if (str_contains($nameLc, 'avviamento')) {
+                    $secAvv += $duration;
+                } elseif (str_contains($nameLc, 'esecuzione') || str_contains($nameLc, 'produzione')) {
+                    $secProd += $duration;
+                }
+            }
+
+            if ($secAvv === 0 && $secProd === 0) {
+                return null;
+            }
+
+            return new TempiStampa($secAvv, $secProd);
+        }
+
+        return null;
     }
 
     /**
