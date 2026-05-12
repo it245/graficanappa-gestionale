@@ -489,18 +489,20 @@ class SchedulerService
                         $idCand = $idsCoda[$j];
                         $candFase = $fasi[$idCand];
                         $dispDa = $candFase['disponibile_da'] ?? $this->now;
-                        if ($dispDa > $fineCur) continue;
+                        // Accettiamo dispDa anche dentro il gap (non solo <= fineCur)
+                        if ($dispDa >= $inizioNext) continue;
                         $configDiff = false;
                         if ($hasConfig) {
                             $configCand = $this->getConfigFase($mid, $mc, $candFase);
                             if ($configCand !== $configGap) {
-                                // Config diversa: serve gap >= 2h per assorbire cambio + setup
                                 if ($gapH < 2.0) continue;
                                 $configDiff = true;
                             }
                         }
                         $setup = $configDiff ? ($this->setupPieno + ($mc['cambio_config_ore'] ?? 1.0)) : $this->setupRidotto;
-                        $inizioTry = $this->avanzaTempo($fineCur->copy(), $setup, $turni);
+                        // Parti da max(fineCur, dispDa)
+                        $partenza = $dispDa > $fineCur ? $dispDa->copy() : $fineCur->copy();
+                        $inizioTry = $this->avanzaTempo($partenza, $setup, $turni);
                         $fineTry = $this->avanzaTempo($inizioTry, $candFase['ore'], $turni);
                         if ($fineTry > $inizioNext) continue;
 
