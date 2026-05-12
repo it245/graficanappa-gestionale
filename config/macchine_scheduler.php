@@ -11,8 +11,8 @@
 return [
     'macchine' => [
         'XL106' => [
-            'nome' => 'Heidelberg XL 106 (16h)',
-            'turni' => 'standard_sab', // 6-22 lun-ven + sab 6-13
+            'nome' => 'Heidelberg XL 106 (24h + sab 6-13)',
+            'turni' => 'h24_sab', // 3 turni lun-ven h24 + sabato 6-13
             'fasi' => ['STAMPAXL106','STAMPAXL106.1','STAMPAXL106.2','STAMPAXL106.3',
                         'STAMPAXL106.4','STAMPAXL106.5','STAMPAXL106.6','STAMPAXL106.7','STAMPA'],
         ],
@@ -26,15 +26,17 @@ return [
             ],
             'cambio_config_ore' => 1.0,
         ],
-        'STEL_G33' => [
-            'nome' => 'STEL G33.44 (cilindrica)',
-            'turni' => 'lite', // 8-17 lun-ven (macchina nuova)
-            'fasi' => ['FUSTSTELG33.44'],
-        ],
-        'STEL_P25' => [
-            'nome' => 'STEL P25.35 (cilindrica)',
-            'turni' => 'lite', // 8-17 lun-ven (macchina nuova)
-            'fasi' => ['FUSTSTELP25.35'],
+        'STEL' => [
+            'nome' => 'STEL Cilindrica (G33/P25)',
+            'turni' => 'lite', // 8-17 lun-ven (macchine nuove, 1 operatore)
+            'fasi' => ['FUSTSTELG33.44','FUSTSTELP25.35'],
+            // 2 macchine fisiche ma 1 solo operatore -> trattate come singola
+            // risorsa con 2 config, cambio = 1h setup (come BOBST/PIEGA).
+            'config' => [
+                'G33' => ['FUSTSTELG33.44'],
+                'P25' => ['FUSTSTELP25.35'],
+            ],
+            'cambio_config_ore' => 1.0,
         ],
         'JOH' => [
             'nome' => 'JOH Stampa a Caldo',

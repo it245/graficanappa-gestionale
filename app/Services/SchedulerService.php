@@ -481,15 +481,17 @@ class SchedulerService
             $isSab = $dow === 6;
             $isDom = $dow === 7;
 
-            // Domenica: sempre off. Sabato: off tranne standard_sab o h24
-            if ($isDom || ($isSab && !in_array($turniTipo, ['h24','standard_sab']))) {
+            // Domenica: sempre off. Sabato: off tranne standard_sab, h24, h24_sab
+            if ($isDom || ($isSab && !in_array($turniTipo, ['h24','h24_sab','standard_sab']))) {
                 $t = $t->next(Carbon::MONDAY)->startOfDay();
-                if ($turniTipo !== 'h24') $t->hour = 6;
+                if (! in_array($turniTipo, ['h24','h24_sab'])) $t->hour = 6;
                 continue;
             }
 
             if ($turniTipo === 'h24') {
                 [$inizio, $fine] = [0, 24];
+            } elseif ($turniTipo === 'h24_sab') { // h24 lun-ven + sab 6-13
+                [$inizio, $fine] = $isSab ? [6, 13] : [0, 24];
             } elseif ($turniTipo === 'lite') { // lite 8-17 lun-ven (macchine nuove)
                 [$inizio, $fine] = [8, 17];
             } elseif ($isSab) { // standard_sab sabato: 6-13

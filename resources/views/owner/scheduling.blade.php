@@ -856,15 +856,14 @@ function schedulaPerMacchina(data) {
 function schedulaDaDB(data) {
     const NOMI_MAC = {
         'XL106': 'Stampa offset', 'BOBST': 'Fustella piana',
-        'STEL_G33': 'Fust. Cilindrica G33', 'STEL_P25': 'Fust. Cilindrica P25',
-        'STEL': 'Fustella cilindrica', // retrocompat
+        'STEL': 'Fustella cilindrica',
         'JOH': 'Stampa a caldo', 'PLAST': 'Plastificazione', 'PIEGA': 'Piegaincolla',
         'FIN': 'Finestratura', 'INDIGO': 'Digitale', 'TAGLIO': 'Tagliacarte',
         'LEGAT': 'Legatoria', 'ZUND': 'Finitura digitale', 'SPED': 'Spedizione',
     };
     const TURNI_MAC = {
-        'XL106': '6-22', 'BOBST': '6-22',
-        'STEL_G33': '8-17', 'STEL_P25': '8-17', 'STEL': '6-22',
+        'XL106': 'h24, sab 6-13', 'BOBST': '6-22',
+        'STEL': '8-17',
         'JOH': '6-22, sab 6-13',
         'PLAST': '6-22', 'PIEGA': '6-22', 'FIN': '6-22', 'INDIGO': '6-22',
         'TAGLIO': '6-22', 'LEGAT': '6-22', 'ZUND': '6-22', 'SPED': '-',
@@ -1170,6 +1169,9 @@ function filterScheduledMacchine(macchine) {
         const now = new Date();
         const fine2h = new Date(now.getTime() + 2*3600*1000);
         const fine48h = new Date(now.getTime() + 48*3600*1000);
+        // Inizio di oggi (00:00) per filtro "Oggi/Domani"
+        const oggiStart = new Date(now);
+        oggiStart.setHours(0, 0, 0, 0);
         result = result.map(m => ({
             ...m,
             fasi: m.fasi.filter(f => {
@@ -1177,11 +1179,18 @@ function filterScheduledMacchine(macchine) {
                 if (quickFilter === 'inlav') return f.stato == 2;
                 if (quickFilter === 'oggi') {
                     if (!f.sched_inizio) return false;
-                    return new Date(f.sched_inizio) <= fine48h;
+                    const si = new Date(f.sched_inizio);
+                    const sf = f.sched_fine ? new Date(f.sched_fine) : si;
+                    // Mostra fasi attive nel range [oggi 00:00 .. ora+48h]:
+                    // inizia entro 48h E non e' gia' terminata prima di oggi
+                    return si <= fine48h && sf >= oggiStart;
                 }
                 if (quickFilter === '2h') {
                     if (!f.sched_inizio) return false;
-                    return new Date(f.sched_inizio) <= fine2h;
+                    const si = new Date(f.sched_inizio);
+                    const sf = f.sched_fine ? new Date(f.sched_fine) : si;
+                    // Fase attiva nelle prossime 2h: inizia <= ora+2h E finisce >= ora
+                    return si <= fine2h && sf >= now;
                 }
                 return true;
             })
