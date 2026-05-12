@@ -1237,7 +1237,7 @@ function schedulaPerCommessa(data) {
 
 function getBarClass(fase) {
     if (Number(fase.stato) === 2) return 'bar-avviata';
-    if (Number(fase.stato) === 1) return 'bar-pronta';
+    // stato 1 (Pronto) NON override colore consegna: solo avviata distingue visivamente
     if (fase.giorni_consegna !== null && fase.giorni_consegna < 0) return 'bar-scaduta';
     if (fase.giorni_consegna !== null && fase.giorni_consegna <= 3) return 'bar-critica';
     return 'bar-normale';
