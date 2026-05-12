@@ -1194,17 +1194,16 @@ function getFullSchedule() {
 function filterScheduledMacchine(macchine) {
     let result = macchine.map(m => ({...m, fasi: [...m.fasi]}));
     if (filtroReparti.size > 0) {
+        const filtroLower = new Set([...filtroReparti].map(r => r.toLowerCase()));
         result = result.filter(m => {
-            if (filtroReparti.has(m.nome)) return true;
-            // Bobst raggruppa fasi di reparti diversi (fustella piana, cilindrica, ecc.)
+            if (filtroLower.has(m.nome.toLowerCase())) return true;
             return m.fasi.some(f => filtroReparti.has(f.reparto));
         }).map(m => {
-            // Se la macchina è visibile grazie alle fasi interne, filtra solo quelle fasi
-            if (!filtroReparti.has(m.nome)) {
+            if (!filtroLower.has(m.nome.toLowerCase())) {
                 return {...m, fasi: m.fasi.filter(f => filtroReparti.has(f.reparto))};
             }
             return m;
-        }).filter(m => m.fasi.length > 0);
+        }).filter(m => m.fasi.length > 0 || filtroLower.has(m.nome.toLowerCase()));
     }
     if (searchQuery) {
         const q = searchQuery.toLowerCase();
