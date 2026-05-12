@@ -986,10 +986,23 @@ function schedulaClientSide(data) {
     const macchine = {};
     const BOBST_KEY = 'Fustella / Rilievo (Bobst)';
     const SPED_KEY = 'Spedizione';
+    // Override macchine: rispetta sched_macchina assegnato dallo scheduler PHP
+    // (evita che STEL/Fustella cilindrica finisca in BOBST per via di isBobst).
+    const SCHED_NOMI = {
+        'XL106': 'Stampa offset', 'BOBST': BOBST_KEY,
+        'STEL': 'Fustella cilindrica', 'JOH': 'Stampa a caldo',
+        'PLAST': 'Plastificazione', 'PIEGA': 'Piegaincolla',
+        'FIN': 'Finestratura', 'INDIGO': 'Digitale',
+        'TAGLIO': 'Tagliacarte', 'LEGAT': 'Legatoria',
+    };
 
-    // Raggruppa fasi per macchina
     data.forEach(f => {
-        const key = isBobst(f) ? BOBST_KEY : f.reparto;
+        let key;
+        if (f.sched_macchina && SCHED_NOMI[f.sched_macchina]) {
+            key = SCHED_NOMI[f.sched_macchina];
+        } else {
+            key = isBobst(f) ? BOBST_KEY : f.reparto;
+        }
         if (!macchine[key]) macchine[key] = { nome: key, reparto_id: f.reparto_id, fasi: [] };
         macchine[key].fasi.push({...f, ore_effettive: getBestOre(f)});
     });
