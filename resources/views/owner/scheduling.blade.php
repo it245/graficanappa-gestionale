@@ -855,13 +855,17 @@ function schedulaPerMacchina(data) {
 // ===================== SCHEDULER DA DB (Mossa 37 pre-calcolato) =====================
 function schedulaDaDB(data) {
     const NOMI_MAC = {
-        'XL106': 'Stampa offset', 'BOBST': 'Fustella piana', 'STEL': 'Fustella cilindrica',
+        'XL106': 'Stampa offset', 'BOBST': 'Fustella piana',
+        'STEL_G33': 'Fust. Cilindrica G33', 'STEL_P25': 'Fust. Cilindrica P25',
+        'STEL': 'Fustella cilindrica', // retrocompat
         'JOH': 'Stampa a caldo', 'PLAST': 'Plastificazione', 'PIEGA': 'Piegaincolla',
         'FIN': 'Finestratura', 'INDIGO': 'Digitale', 'TAGLIO': 'Tagliacarte',
         'LEGAT': 'Legatoria', 'ZUND': 'Finitura digitale', 'SPED': 'Spedizione',
     };
     const TURNI_MAC = {
-        'XL106': '6-22', 'BOBST': '6-22', 'STEL': '6-22', 'JOH': '6-22, sab 6-13',
+        'XL106': '6-22', 'BOBST': '6-22',
+        'STEL_G33': '8-17', 'STEL_P25': '8-17', 'STEL': '6-22',
+        'JOH': '6-22, sab 6-13',
         'PLAST': '6-22', 'PIEGA': '6-22', 'FIN': '6-22', 'INDIGO': '6-22',
         'TAGLIO': '6-22', 'LEGAT': '6-22', 'ZUND': '6-22', 'SPED': '-',
     };

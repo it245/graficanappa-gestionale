@@ -28,12 +28,12 @@ return [
         ],
         'STEL_G33' => [
             'nome' => 'STEL G33.44 (cilindrica)',
-            'turni' => 'standard',
+            'turni' => 'lite', // 8-17 lun-ven (macchina nuova)
             'fasi' => ['FUSTSTELG33.44'],
         ],
         'STEL_P25' => [
             'nome' => 'STEL P25.35 (cilindrica)',
-            'turni' => 'standard',
+            'turni' => 'lite', // 8-17 lun-ven (macchina nuova)
             'fasi' => ['FUSTSTELP25.35'],
         ],
         'JOH' => [

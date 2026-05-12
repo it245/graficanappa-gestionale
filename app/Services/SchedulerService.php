@@ -490,6 +490,8 @@ class SchedulerService
 
             if ($turniTipo === 'h24') {
                 [$inizio, $fine] = [0, 24];
+            } elseif ($turniTipo === 'lite') { // lite 8-17 lun-ven (macchine nuove)
+                [$inizio, $fine] = [8, 17];
             } elseif ($isSab) { // standard_sab sabato: 6-13
                 [$inizio, $fine] = [6, 13];
             } else { // standard o standard_sab lun-ven: 6-22
