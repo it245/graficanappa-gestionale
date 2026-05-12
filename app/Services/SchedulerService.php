@@ -440,6 +440,43 @@ class SchedulerService
                 $idsCoda = array_map(fn($f) => $f['id'], $schedule[$mid]);
                 usort($idsCoda, fn($a, $b) => $fasi[$a]['sched']['inizio'] <=> $fasi[$b]['sched']['inizio']);
 
+                // Gap PRE-coda: tra adesso e la prima fase schedulata
+                if (!empty($idsCoda)) {
+                    $idFirst = $idsCoda[0];
+                    $inizioFirst = $fasi[$idFirst]['sched']['inizio'];
+                    $gapH0 = ($inizioFirst->timestamp - $this->now->timestamp) / 3600;
+                    if ($gapH0 >= 1.0) {
+                        $configFirst = $hasConfig ? $this->getConfigFase($mid, $mc, $fasi[$idFirst]) : null;
+                        for ($j = 1; $j < count($idsCoda); $j++) {
+                            $idCand = $idsCoda[$j];
+                            $candFase = $fasi[$idCand];
+                            $dispDa = $candFase['disponibile_da'] ?? $this->now;
+                            if ($dispDa > $this->now) continue;
+                            if ($hasConfig) {
+                                $configCand = $this->getConfigFase($mid, $mc, $candFase);
+                                // Pre-coda: accetta stessa config della prima fase (evita penalty)
+                                if ($configCand !== $configFirst) continue;
+                            }
+                            $setup = $this->setupPieno;
+                            $partenza = $dispDa > $this->now ? $dispDa->copy() : $this->now->copy();
+                            $inizioTry = $this->avanzaTempo($partenza, $setup, $turni);
+                            $fineTry = $this->avanzaTempo($inizioTry, $candFase['ore'], $turni);
+                            if ($fineTry > $inizioFirst) continue;
+
+                            $fasi[$idCand]['sched']['inizio'] = $inizioTry;
+                            $fasi[$idCand]['sched']['fine'] = $fineTry;
+                            $fasi[$idCand]['sched']['setup_h'] = $setup;
+                            $fasi[$idCand]['sched']['setup_tipo'] = 'GAP-FILL-PRE';
+                            foreach ($schedule[$mid] as $k => $sf) {
+                                if ($sf['id'] === $idCand) { $schedule[$mid][$k] = $fasi[$idCand]; break; }
+                            }
+                            $changed = true;
+                            break;
+                        }
+                        if ($changed) continue;
+                    }
+                }
+
                 for ($i = 0; $i < count($idsCoda) - 1; $i++) {
                     $idCur = $idsCoda[$i];
                     $idNext = $idsCoda[$i + 1];
