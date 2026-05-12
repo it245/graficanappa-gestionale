@@ -388,14 +388,27 @@ class PrinectSyncService
 
             $buoni = 0;
             $scarto = 0;
-            $secAvv = 0;
-            $secProd = 0;
-
             foreach ($att as $a) {
                 $buoni += $a['goodCycles'] ?? 0;
                 $scarto += $a['wasteCycles'] ?? 0;
+            }
 
-                if (isset($a['startTime'], $a['endTime'])) {
+            // Tempi: prima fonte = workstep.actualTimes Heidelberg (aggregato
+            // ufficiale). Fallback: somma delta startTime/endTime activity raw
+            // (sottostima ma stabile). Le activity Prinect sono eventi puntuali
+            // (es. 9s+12s totali per job da 1h19m), NON blocchi tempo continuo.
+            $workstepName = null;
+            $jobIdFase = null;
+            foreach ($att as $a) {
+                $workstepName ??= $a['workstep']['name'] ?? null;
+                $jobIdFase ??= $a['workstep']['job']['id'] ?? null;
+                if ($workstepName && $jobIdFase) break;
+            }
+            [$secAvv, $secProd] = $this->tempiDaActualTimes((string) ($jobIdFase ?? ''), (string) ($workstepName ?? ''));
+            if ($secAvv === 0 && $secProd === 0) {
+                // Fallback activity raw
+                foreach ($att as $a) {
+                    if (!isset($a['startTime'], $a['endTime'])) continue;
                     $diff = Carbon::parse($a['startTime'])->diffInSeconds(Carbon::parse($a['endTime']));
                     if (($a['name'] ?? '') === 'Avviamento') {
                         $secAvv += $diff;
@@ -420,6 +433,51 @@ class PrinectSyncService
     }
 
     /**
+     * Lookup tempi aggregati Heidelberg via workstep.actualTimes.
+     * Ritorna [secAvviamento, secEsecuzione]. Zero se lookup fallisce
+     * o actualTimes mancante (caller gestisce fallback).
+     *
+     * Cache per-jobId via $this->worksetCache per ridurre chiamate API.
+     */
+    protected function tempiDaActualTimes(string $jobId, string $workstepName): array
+    {
+        if ($jobId === '' || $workstepName === '') {
+            return [0, 0];
+        }
+        if (!isset($this->worksetCache[$jobId])) {
+            try {
+                $this->worksetCache[$jobId] = $this->prinect->getJobWorksteps($jobId);
+            } catch (\Throwable $e) {
+                $this->worksetCache[$jobId] = null;
+            }
+        }
+        $worksteps = $this->worksetCache[$jobId];
+        if (!is_array($worksteps) || empty($worksteps['worksteps'])) {
+            return [0, 0];
+        }
+        foreach ($worksteps['worksteps'] as $w) {
+            if (($w['name'] ?? null) !== $workstepName) continue;
+            $secAvv = 0;
+            $secProd = 0;
+            foreach (($w['actualTimes'] ?? []) as $t) {
+                $name = mb_strtolower($t['timeTypeName'] ?? '');
+                $dur  = (int) ($t['duration'] ?? 0);
+                if ($dur <= 0) continue;
+                if (str_contains($name, 'avviamento')) {
+                    $secAvv += $dur;
+                } elseif (str_contains($name, 'esecuzione') || str_contains($name, 'produzione')) {
+                    $secProd += $dur;
+                }
+            }
+            return [$secAvv, $secProd];
+        }
+        return [0, 0];
+    }
+
+    /** @var array<string, array<string,mixed>|null> */
+    protected array $worksetCache = [];
+
+    /**
      * Helper: calcola dati da attività Prinect e aggiorna una fase.
      */
     protected function aggiornaFaseConAttivita($fase, $att, array $operatoriMatched): void
@@ -427,15 +485,21 @@ class PrinectSyncService
         $att = collect($att);
         if ($att->isEmpty()) return;
 
-        $secAvviamento = 0;
-        $secProduzione = 0;
-        foreach ($att as $a) {
-            if (!$a->start_time || !$a->end_time) continue;
-            $diff = $a->start_time->diffInSeconds($a->end_time);
-            if ($a->activity_name === 'Avviamento') {
-                $secAvviamento += $diff;
-            } else {
-                $secProduzione += $diff;
+        // Tempi: prima prova workstep.actualTimes Heidelberg (Eloquent: workstep_name + prinect_job_id)
+        $firstAtt = $att->first();
+        $workstepName = $firstAtt->workstep_name ?? null;
+        $jobIdFase    = $firstAtt->prinect_job_id ?? null;
+        [$secAvviamento, $secProduzione] = $this->tempiDaActualTimes((string) ($jobIdFase ?? ''), (string) ($workstepName ?? ''));
+        if ($secAvviamento === 0 && $secProduzione === 0) {
+            // Fallback activity raw (sottostima)
+            foreach ($att as $a) {
+                if (!$a->start_time || !$a->end_time) continue;
+                $diff = $a->start_time->diffInSeconds($a->end_time);
+                if ($a->activity_name === 'Avviamento') {
+                    $secAvviamento += $diff;
+                } else {
+                    $secProduzione += $diff;
+                }
             }
         }
 

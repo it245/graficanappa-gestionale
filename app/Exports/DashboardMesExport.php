@@ -228,16 +228,23 @@ class DashboardMesSheet implements FromCollection, WithHeadings, WithMapping, Wi
                 $copieh = $info['copieh'] ?: 1;
                 return round($info['avviamento'] + ($qtaCarta / $copieh), 1);
             })(),
-            // Ore Lavorate (Prinect o pivot operatore)
+            // Ore Lavorate (Prinect o pivot operatore) — formato "Xh YYm"
             (function() use ($fase) {
-                $secPrinect = ($fase->tempo_avviamento_sec ?? 0) + ($fase->tempo_esecuzione_sec ?? 0);
-                if ($secPrinect > 0) return round($secPrinect / 3600, 2);
-                $totSecPausa = $fase->operatori->sum(fn($op) => $op->pivot->secondi_pausa ?? 0);
+                $formatHm = function (int $sec): string {
+                    if ($sec <= 0) return '';
+                    $h = intdiv($sec, 3600);
+                    $m = intdiv($sec % 3600, 60);
+                    if ($h === 0) return $m . 'm';
+                    return $h . 'h ' . str_pad((string) $m, 2, '0', STR_PAD_LEFT) . 'm';
+                };
+                $secPrinect = (int) (($fase->tempo_avviamento_sec ?? 0) + ($fase->tempo_esecuzione_sec ?? 0));
+                if ($secPrinect > 0) return $formatHm($secPrinect);
+                $totSecPausa = (int) $fase->operatori->sum(fn($op) => $op->pivot->secondi_pausa ?? 0);
                 $di = $fase->operatori->whereNotNull('pivot.data_inizio')->sortBy('pivot.data_inizio')->first()?->pivot->data_inizio;
                 $df = $fase->operatori->whereNotNull('pivot.data_fine')->sortByDesc('pivot.data_fine')->first()?->pivot->data_fine;
                 if ($di && $df) {
-                    $sec = max(abs(Carbon::parse($df)->getTimestamp() - Carbon::parse($di)->getTimestamp()) - $totSecPausa, 0);
-                    return $sec > 0 ? round($sec / 3600, 2) : '';
+                    $sec = (int) max(abs(Carbon::parse($df)->getTimestamp() - Carbon::parse($di)->getTimestamp()) - $totSecPausa, 0);
+                    return $formatHm($sec);
                 }
                 return '';
             })(),
