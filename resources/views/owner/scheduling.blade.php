@@ -1213,15 +1213,22 @@ function schedulaPerCommessa(data) {
 
     // Filtra per reparto e ricerca
     const filtered = filterData(DATA);
+    // ID delle fasi che passano il filtro (filterData applica reparto, search, quickFilter)
+    const filteredFaseIds = new Set(filtered.map(f => f.id));
     const filteredCommesse = new Set(filtered.map(f => f.commessa));
 
     const result = Object.values(commesse).filter(c => filteredCommesse.has(c.commessa));
     result.forEach(c => {
+        // Mostra SOLO le fasi che passano il filtro (no espansione a tutte le fasi commessa).
+        // Cosi' "Prossime 2h" mostra solo fasi prossime 2h, non l'intera commessa.
+        c.fasi = c.fasi.filter(f => filteredFaseIds.has(f.id));
         c.fasi.sort((a, b) => a.start_h - b.start_h);
-        c.ore_totali = Math.max(...c.fasi.map(f => f.end_h), 0);
-        c.priorita_min = Math.min(...c.fasi.map(f => f.priorita));
+        c.ore_totali = c.fasi.length > 0 ? Math.max(...c.fasi.map(f => f.end_h), 0) : 0;
+        c.priorita_min = c.fasi.length > 0 ? Math.min(...c.fasi.map(f => f.priorita)) : 999;
     });
-    return result.sort((a, b) => a.priorita_min - b.priorita_min);
+    return result
+        .filter(c => c.fasi.length > 0)
+        .sort((a, b) => a.priorita_min - b.priorita_min);
 }
 
 // ===================== HELPERS =====================
