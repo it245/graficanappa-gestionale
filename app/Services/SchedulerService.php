@@ -451,7 +451,9 @@ class SchedulerService
                             $idCand = $idsCoda[$j];
                             $candFase = $fasi[$idCand];
                             $dispDa = $candFase['disponibile_da'] ?? $this->now;
-                            if ($dispDa > $this->now) continue;
+                            // Per pre-coda accettiamo anche dispDa nel futuro purche'
+                            // entri PRIMA dell'inizioFirst (verificato sotto con fineTry).
+                            if ($dispDa >= $inizioFirst) continue;
                             if ($hasConfig) {
                                 $configCand = $this->getConfigFase($mid, $mc, $candFase);
                                 // Pre-coda: accetta stessa config della prima fase (evita penalty)
