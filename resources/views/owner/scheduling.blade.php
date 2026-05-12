@@ -1164,14 +1164,16 @@ function filterScheduledMacchine(macchine) {
             )
         })).filter(m => m.fasi.length > 0);
     }
-    // Quick filter applicato anche su Per Macchina
+    // Quick filter applicato anche su Per Macchina.
+    // IMPORTANTE: usiamo start_h (coda simulata client-side) non sched_inizio raw,
+    // perche' sched_inizio nel DB e' stato scritto dal pianificatore PHP e puo'
+    // non riflettere il riallineamento JS (cambi turno, propagazioni, ecc).
     if (quickFilter && quickFilter !== 'all') {
         const now = new Date();
-        const fine2h = new Date(now.getTime() + 2*3600*1000);
+        const fine2hMs = now.getTime() + 2*3600*1000;
         const fineDomani = new Date(now);
         fineDomani.setDate(fineDomani.getDate() + 1);
-        fineDomani.setHours(23, 59, 59, 999); // domani 23:59
-        // Inizio di oggi (00:00) per filtro "Oggi/Domani"
+        fineDomani.setHours(23, 59, 59, 999);
         const oggiStart = new Date(now);
         oggiStart.setHours(0, 0, 0, 0);
         result = result.map(m => ({
@@ -1179,18 +1181,10 @@ function filterScheduledMacchine(macchine) {
             fasi: m.fasi.filter(f => {
                 if (quickFilter === 'critiche') return f.giorni_consegna !== null && f.giorni_consegna <= -3;
                 if (quickFilter === 'inlav') return f.stato == 2;
-                if (quickFilter === 'oggi') {
-                    if (!f.sched_inizio) return false;
-                    const si = new Date(f.sched_inizio);
-                    // "Oggi/Domani": la fase INIZIA tra oggi 00:00 e domani 23:59
-                    return si >= oggiStart && si <= fineDomani;
-                }
-                if (quickFilter === '2h') {
-                    if (!f.sched_inizio) return false;
-                    const si = new Date(f.sched_inizio);
-                    // "Prossime 2h": la fase INIZIA tra ora e ora+2h (no fasi lunghe gia' in corso)
-                    return si >= now && si <= fine2h;
-                }
+                if (!isFinite(f.start_h)) return false;
+                const siMs = NOW.getTime() + f.start_h * 3600000;
+                if (quickFilter === 'oggi') return siMs >= oggiStart.getTime() && siMs <= fineDomani.getTime();
+                if (quickFilter === '2h')   return siMs >= now.getTime() && siMs <= fine2hMs;
                 return true;
             })
         })).filter(m => m.fasi.length > 0);
@@ -1274,25 +1268,29 @@ function filterData(data) {
     }
     if (quickFilter !== 'all') {
         const now = new Date();
-        const fine2h = new Date(now.getTime() + 2*3600*1000);
+        const fine2hMs = now.getTime() + 2*3600*1000;
         const fineDomani = new Date(now);
         fineDomani.setDate(fineDomani.getDate() + 1);
         fineDomani.setHours(23, 59, 59, 999);
         const oggiStart = new Date(now);
         oggiStart.setHours(0, 0, 0, 0);
+        // Mappa id -> start_h reale (coda simulata): sched_inizio raw nel DB
+        // puo' essere stale rispetto al riallineamento JS, quindi usiamo getFullSchedule.
+        let startHById = null;
+        if (quickFilter === '2h' || quickFilter === 'oggi') {
+            startHById = new Map();
+            getFullSchedule().forEach(m => m.fasi.forEach(f => {
+                if (isFinite(f.start_h)) startHById.set(f.id, f.start_h);
+            }));
+        }
         result = result.filter(f => {
             if (quickFilter === 'critiche') return f.giorni_consegna !== null && f.giorni_consegna <= -3;
             if (quickFilter === 'inlav') return f.stato == 2;
-            if (quickFilter === 'oggi') {
-                if (!f.sched_inizio) return false;
-                const si = new Date(f.sched_inizio);
-                return si >= oggiStart && si <= fineDomani;
-            }
-            if (quickFilter === '2h') {
-                if (!f.sched_inizio) return false;
-                const si = new Date(f.sched_inizio);
-                return si >= now && si <= fine2h;
-            }
+            const sh = startHById ? startHById.get(f.id) : null;
+            if (sh === null || sh === undefined) return false;
+            const siMs = NOW.getTime() + sh * 3600000;
+            if (quickFilter === 'oggi') return siMs >= oggiStart.getTime() && siMs <= fineDomani.getTime();
+            if (quickFilter === '2h')   return siMs >= now.getTime() && siMs <= fine2hMs;
             return true;
         });
     }
@@ -1963,8 +1961,9 @@ document.getElementById('searchGlobal').addEventListener('input', function() {
 // ===================== SIDE PANEL =====================
 
 function openSidePanel(commessaId) {
-    // Raccogli tutte le fasi di questa commessa dallo scheduling completo
-    const macchine = getFullSchedule();
+    // Raccogli fasi di questa commessa: se filtro/ricerca attivi, mostra solo
+    // le fasi che passano il filtro corrente (coerenza con gantt e tabella).
+    const macchine = filterScheduledMacchine(getFullSchedule());
     const allFasi = [];
     macchine.forEach(m => m.fasi.forEach(f => { if (f.commessa === commessaId) allFasi.push(f); }));
 
