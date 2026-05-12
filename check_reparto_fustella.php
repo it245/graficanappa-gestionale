@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\DB;
 
 echo "\n=== Fasi attive con reparto 'fustella cilindrica' raggruppate per fase + sched_macchina ===\n";
 $rows = DB::table('ordine_fasi')
-    ->join('fasi_catalogo', 'fasi_catalogo.fase', '=', 'ordine_fasi.fase')
+    ->join('fasi_catalogo', 'fasi_catalogo.id', '=', 'ordine_fasi.fase_catalogo_id')
     ->join('reparti', 'reparti.id', '=', 'fasi_catalogo.reparto_id')
     ->whereRaw('LOWER(reparti.nome) = ?', ['fustella cilindrica'])
     ->whereNull('ordine_fasi.deleted_at')
@@ -26,12 +26,12 @@ if ($rows->isEmpty()) {
     }
 }
 
-echo "\n=== Tutte le fasi nel catalogo con reparto 'fustella cilindrica' ===\n";
+echo "\n=== Catalogo: fasi con reparto 'fustella cilindrica' ===\n";
 $cat = DB::table('fasi_catalogo')
     ->join('reparti', 'reparti.id', '=', 'fasi_catalogo.reparto_id')
     ->whereRaw('LOWER(reparti.nome) = ?', ['fustella cilindrica'])
-    ->select('fasi_catalogo.fase')
+    ->select('fasi_catalogo.nome')
     ->get();
 foreach ($cat as $c) {
-    echo "  {$c->fase}\n";
+    echo "  {$c->nome}\n";
 }
