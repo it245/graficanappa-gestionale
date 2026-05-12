@@ -451,14 +451,10 @@ class SchedulerService
                             $idCand = $idsCoda[$j];
                             $candFase = $fasi[$idCand];
                             $dispDa = $candFase['disponibile_da'] ?? $this->now;
-                            // Per pre-coda accettiamo anche dispDa nel futuro purche'
-                            // entri PRIMA dell'inizioFirst (verificato sotto con fineTry).
                             if ($dispDa >= $inizioFirst) continue;
-                            if ($hasConfig) {
-                                $configCand = $this->getConfigFase($mid, $mc, $candFase);
-                                // Pre-coda: accetta stessa config della prima fase (evita penalty)
-                                if ($configCand !== $configFirst) continue;
-                            }
+                            // Pre-coda: vincolo config rilassato. Se config diversa,
+                            // accettiamo (setup pieno gia' contato include il cambio).
+                            // Se gap pre-coda > 1h, vale la pena anche con config diversa.
                             $setup = $this->setupPieno;
                             $partenza = $dispDa > $this->now ? $dispDa->copy() : $this->now->copy();
                             $inizioTry = $this->avanzaTempo($partenza, $setup, $turni);
