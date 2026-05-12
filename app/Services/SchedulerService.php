@@ -64,6 +64,11 @@ class SchedulerService
         // 3. Simulazione
         $schedule = $this->simula($fasi);
 
+        // 3.4 Gap-fill: comprimi coda macchine spostando fasi schedulate
+        // lontano dentro gap precedenti quando dispDa lo permette e la
+        // config e' compatibile (no cambio config penalty extra).
+        $this->gapFillPass($fasi, $schedule);
+
         // 3.5 Calcola date BRT/spedizione: fine = max(fine predecessori nella commessa)
         $this->calcolaDateSpedizione($fasi, $schedule);
 
@@ -412,6 +417,68 @@ class SchedulerService
         }
 
         return $schedule;
+    }
+
+    /**
+     * Gap-fill pass: dopo la simulazione forward-greedy, comprime la coda
+     * di ogni macchina spostando fasi schedulate lontano dentro gap precedenti.
+     * Vincoli: stessa config (BOBST/PIEGA/STEL), disponibile_da prima del gap,
+     * durata+setup ridotto entra nel gap.
+     */
+    protected function gapFillPass(array &$fasi, array &$schedule): void
+    {
+        foreach ($this->macchine as $mid => $mc) {
+            if (empty($schedule[$mid])) continue;
+            $turni = $mc['turni'];
+            $hasConfig = isset($mc['config']);
+
+            $changed = true;
+            $maxIter = 100;
+            while ($changed && $maxIter-- > 0) {
+                $changed = false;
+
+                $idsCoda = array_map(fn($f) => $f['id'], $schedule[$mid]);
+                usort($idsCoda, fn($a, $b) => $fasi[$a]['sched']['inizio'] <=> $fasi[$b]['sched']['inizio']);
+
+                for ($i = 0; $i < count($idsCoda) - 1; $i++) {
+                    $idCur = $idsCoda[$i];
+                    $idNext = $idsCoda[$i + 1];
+                    $fineCur = $fasi[$idCur]['sched']['fine'];
+                    $inizioNext = $fasi[$idNext]['sched']['inizio'];
+                    $gapH = ($inizioNext->timestamp - $fineCur->timestamp) / 3600;
+                    if ($gapH < 1.0) continue;
+
+                    $configGap = $hasConfig ? $this->getConfigFase($mid, $mc, $fasi[$idCur]) : null;
+
+                    for ($j = $i + 2; $j < count($idsCoda); $j++) {
+                        $idCand = $idsCoda[$j];
+                        $candFase = $fasi[$idCand];
+                        $dispDa = $candFase['disponibile_da'] ?? $this->now;
+                        if ($dispDa > $fineCur) continue;
+                        if ($hasConfig) {
+                            $configCand = $this->getConfigFase($mid, $mc, $candFase);
+                            if ($configCand !== $configGap) continue;
+                        }
+                        $setup = $this->setupRidotto;
+                        $inizioTry = $this->avanzaTempo($fineCur->copy(), $setup, $turni);
+                        $fineTry = $this->avanzaTempo($inizioTry, $candFase['ore'], $turni);
+                        if ($fineTry > $inizioNext) continue;
+
+                        $fasi[$idCand]['sched']['inizio'] = $inizioTry;
+                        $fasi[$idCand]['sched']['fine'] = $fineTry;
+                        $fasi[$idCand]['sched']['setup_h'] = $setup;
+                        $fasi[$idCand]['sched']['setup_tipo'] = 'GAP-FILL';
+
+                        foreach ($schedule[$mid] as $k => $sf) {
+                            if ($sf['id'] === $idCand) { $schedule[$mid][$k] = $fasi[$idCand]; break; }
+                        }
+                        $changed = true;
+                        break;
+                    }
+                    if ($changed) break;
+                }
+            }
+        }
     }
 
     /**
