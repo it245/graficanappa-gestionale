@@ -133,13 +133,19 @@ class DashboardMesSheet implements FromCollection, WithHeadings, WithMapping, Wi
             DescrizioneParser::parseFustella($ordine->descrizione ?? '', $ordine->cliente_nome ?? '', $ordine->note_prestampa ?? '') ?? '',
             // Esterno (calcolato da note "Inviato a:")
             preg_match('/Inviato a:\s*(.+)/i', $fase->note ?? '', $mEst) ? trim($mEst[1]) : '',
-            // Ore Previste (calcolato da config fasi_ore)
+            // Ore Previste (calcolato da config fasi_ore) — formato "Xh YYm"
             (function() use ($fase, $ordine) {
                 $info = config('fasi_ore')[$fase->fase] ?? null;
                 if (!$info) return '';
                 $qtaCarta = $ordine->qta_carta ?? 0;
                 $copieh = $info['copieh'] ?: 1;
-                return round($info['avviamento'] + ($qtaCarta / $copieh), 1);
+                $oreDec = $info['avviamento'] + ($qtaCarta / $copieh);
+                $sec = (int) round($oreDec * 3600);
+                if ($sec <= 0) return '';
+                $h = intdiv($sec, 3600);
+                $m = intdiv($sec % 3600, 60);
+                if ($h === 0) return $m . 'm';
+                return $h . 'h ' . str_pad((string) $m, 2, '0', STR_PAD_LEFT) . 'm';
             })(),
             // Ore Lavorate (Prinect o pivot operatore) — formato "Xh Ym"
             (function() use ($fase) {
