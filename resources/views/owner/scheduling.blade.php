@@ -787,6 +787,35 @@ function advanceCursor(startH, ore, reparto) {
 
 // ===================== RIMUOVI DOMENICA DALLA TIMELINE =====================
 
+// Inversa di calToDisplay: dato un displayH (ore visualizzate sull'asse, no domeniche),
+// ritorna il timestamp ms reale corrispondente. Usato dai click su area vuota gantt.
+function displayHToDateMs(displayH) {
+    if (displayH <= 0) return NOW.getTime();
+    let remaining = displayH;
+    let curMs = NOW.getTime();
+    let safety = 0;
+    while (remaining > 0 && safety++ < 5000) {
+        const cur = new Date(curMs);
+        if (cur.getDay() === 0) {
+            const lun = new Date(cur);
+            lun.setHours(24,0,0,0);
+            curMs = lun.getTime();
+            continue;
+        }
+        const midnight = new Date(cur);
+        midnight.setHours(24,0,0,0);
+        const hToMidnight = (midnight.getTime() - curMs) / 3600000;
+        if (remaining <= hToMidnight) {
+            curMs += remaining * 3600000;
+            remaining = 0;
+        } else {
+            curMs = midnight.getTime();
+            remaining -= hToMidnight;
+        }
+    }
+    return curMs;
+}
+
 function calToDisplay(calH) {
     if (calH <= 0) return 0;
     const startMs = NOW.getTime();
@@ -1620,8 +1649,18 @@ function renderGanttMacchina() {
         const rowH = Math.max(50, lanes * laneH + 8);
 
         row.style.minHeight = rowH + 'px';
-        const timeline = el('div', 'gantt-timeline', { width:totalWidth+'px', minHeight:rowH+'px' });
+        const timeline = el('div', 'gantt-timeline', { width:totalWidth+'px', minHeight:rowH+'px', cursor:'pointer' });
         renderDayLines(timeline, maxCalOre, macchina.nome);
+
+        // Click su area vuota -> apre panel fasi candidate per quel buco
+        timeline.addEventListener('click', (e) => {
+            if (e.target.classList.contains('gantt-bar') || e.target.closest('.gantt-bar')) return;
+            const rect = timeline.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const displayH = x / pxPerHour;
+            const dateMs = displayHToDateMs(displayH);
+            openSidePanelGap(macchina.nome, dateMs);
+        });
 
         // Macchina lavora sabato? leggiamo dal label turni (es "6-22, sab 6-13")
         const lavoraSab = (macchina.turni || '').toLowerCase().includes('sab');
@@ -2061,6 +2100,108 @@ function openSidePanel(commessaId) {
     `).join('');
 
     // Apri
+    document.getElementById('sidePanel').classList.add('open');
+    document.getElementById('sideOverlay').classList.add('open');
+}
+
+// Side panel modalita' "gap": click su area vuota di una macchina nel gantt.
+// Mostra fasi candidate = stato 0/1, macchina/reparto compat, predecessori
+// (stessa commessa, seq inferiore) terminati o pianificati a finire entro la
+// data cliccata. Utile per capire "cosa potrei mettere qui".
+function openSidePanelGap(macchinaNome, dateMs) {
+    const macchine = getFullSchedule();
+    const macc = macchine.find(m => m.nome === macchinaNome);
+    if (!macc) return;
+
+    const clickDate = new Date(dateMs);
+    const clickH = (dateMs - NOW.getTime()) / 3600000;
+
+    // Mappa id -> fase con start_h/end_h da tutta la schedulazione
+    const schedById = new Map();
+    macchine.forEach(m => m.fasi.forEach(f => schedById.set(f.id, f)));
+
+    // Fasi di questa macchina, attive, schedulate DOPO il click (potenziali da spostare nel gap)
+    const fasiMacc = macc.fasi.filter(f => Number(f.stato) <= 1 && f.start_h > clickH);
+
+    const candidates = [];
+    fasiMacc.forEach(f => {
+        const seq = faseOrdine(f.fase);
+        const allFasiCommessa = DATA.filter(x => x.commessa === f.commessa);
+        let maxEndPred = -Infinity;
+        let predOk = true;
+        for (const p of allFasiCommessa) {
+            if (p.id === f.id) continue;
+            const pSeq = faseOrdine(p.fase);
+            if (pSeq >= seq) continue;
+            // Predecessore: se stato >= 3 e' terminato, OK qualsiasi data
+            if (Number(p.stato) >= 3) continue;
+            // Non terminato: serve sched_fine entro clickH
+            const pSched = schedById.get(p.id);
+            if (!pSched || !isFinite(pSched.end_h)) { predOk = false; break; }
+            if (pSched.end_h > clickH) { predOk = false; break; }
+            if (pSched.end_h > maxEndPred) maxEndPred = pSched.end_h;
+        }
+        if (predOk) candidates.push({...f, maxEndPred});
+    });
+
+    candidates.sort((a,b) => {
+        // Prima per giorni_consegna ascendente (urgenza), poi per priorita
+        const ga = a.giorni_consegna ?? 999;
+        const gb = b.giorni_consegna ?? 999;
+        if (ga !== gb) return ga - gb;
+        return (a.priorita || 999) - (b.priorita || 999);
+    });
+
+    document.getElementById('spCommessa').textContent = 'Gap: ' + macchinaNome;
+    document.getElementById('spCliente').textContent = clickDate.toLocaleDateString('it-IT', {weekday:'long', day:'2-digit', month:'2-digit', year:'numeric'}) + ' ' + clickDate.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
+    document.getElementById('spProdotto').textContent = `${candidates.length} fasi candidate (predecessori finiscono entro questa data)`;
+
+    document.getElementById('spInfoGrid').innerHTML = `
+        <div class="sp-info-card">
+            <div class="sp-info-label">Macchina</div>
+            <div class="sp-info-val" style="color:#5a9cff">${macchinaNome}</div>
+        </div>
+        <div class="sp-info-card">
+            <div class="sp-info-label">Data click</div>
+            <div class="sp-info-val" style="color:#c8c8e0;font-size:13px">${clickDate.toLocaleDateString('it-IT')}</div>
+        </div>
+        <div class="sp-info-card">
+            <div class="sp-info-label">Candidate</div>
+            <div class="sp-info-val" style="color:${candidates.length>0?'#3cc07e':'#8c8caa'}">${candidates.length}</div>
+        </div>
+        <div class="sp-info-card">
+            <div class="sp-info-label">Fasi macchina dopo</div>
+            <div class="sp-info-val" style="color:#c8c8e0">${fasiMacc.length}</div>
+        </div>
+    `;
+
+    const statoNomi = ['Caricato','Pronto','Avviato','Terminato','Consegnato'];
+    document.getElementById('spFasiList').innerHTML = candidates.length === 0
+      ? '<div style="color:#8c8caa;padding:24px;text-align:center;font-size:14px">Nessuna fase candidata: tutti i predecessori delle fasi future di questa macchina finiscono oltre la data cliccata.</div>'
+      : candidates.map(f => `
+        <div class="sp-fase-card" style="cursor:pointer" data-commessa="${f.commessa}">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+                <div>
+                    <div class="sp-fase-name">${f.commessa} &middot; ${f.fase}</div>
+                    <div class="sp-fase-reparto">${(f.cliente||'').substring(0,30)} &middot; ${(f.descrizione||'').substring(0,40)}</div>
+                </div>
+                <span class="sp-stato-badge sp-stato-${f.stato}">${statoNomi[Number(f.stato)] || '?'}</span>
+            </div>
+            <div class="sp-fase-row">
+                <span class="sp-fase-detail">Consegna: <strong>${formatDate(f.consegna)}</strong></span>
+                <span class="sp-fase-detail" style="color:${f.giorni_consegna<0?'#ff6b7a':'#c8c8e0'}">Gg: <strong>${f.giorni_consegna ?? '-'}</strong></span>
+            </div>
+            <div class="sp-fase-row">
+                <span class="sp-fase-detail">Ore: <strong>${(f.ore_effettive || f.ore || 0).toFixed(1)}h</strong></span>
+                <span class="sp-fase-detail">Schedulata: <strong>${oreToDateStr(f.start_h)}</strong></span>
+            </div>
+        </div>
+    `).join('');
+
+    document.getElementById('spFasiList').querySelectorAll('[data-commessa]').forEach(card => {
+        card.addEventListener('click', () => openSidePanel(card.dataset.commessa));
+    });
+
     document.getElementById('sidePanel').classList.add('open');
     document.getElementById('sideOverlay').classList.add('open');
 }
