@@ -1229,13 +1229,21 @@
             var container = document.getElementById('cpMsgs');
             container.scrollTop = container.scrollHeight;
 
-            fetch('/chat/invia', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken(), 'Accept': 'application/json' },
-                body: JSON.stringify({ messaggio: testo, canale: cpCanale })
-            }).then(function(r) { return r.json(); })
-              .then(function(data) { if (data.ok) cpUltimoId = Math.max(cpUltimoId, data.id || cpUltimoId); })
-              .catch(function(e) { console.error('Chat errore:', e); });
+            // Refresh CSRF token PRIMA del POST (evita 419 Sessione scaduta)
+            fetch('/csrf-refresh').then(function(r) { return r.json(); }).then(function(d) {
+                if (d && d.token) {
+                    var meta = document.querySelector('meta[name="csrf-token"]');
+                    if (meta) meta.setAttribute('content', d.token);
+                }
+            }).catch(function() {}).finally(function() {
+                fetch('/chat/invia', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken(), 'Accept': 'application/json' },
+                    body: JSON.stringify({ messaggio: testo, canale: cpCanale })
+                }).then(function(r) { return r.json(); })
+                  .then(function(data) { if (data && data.ok) cpUltimoId = Math.max(cpUltimoId, data.id || cpUltimoId); })
+                  .catch(function(e) { console.error('Chat errore:', e); });
+            });
         };
 
         function cpPoll() {
