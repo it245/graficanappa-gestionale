@@ -1168,7 +1168,9 @@ function filterScheduledMacchine(macchine) {
     if (quickFilter && quickFilter !== 'all') {
         const now = new Date();
         const fine2h = new Date(now.getTime() + 2*3600*1000);
-        const fine48h = new Date(now.getTime() + 48*3600*1000);
+        const fineDomani = new Date(now);
+        fineDomani.setDate(fineDomani.getDate() + 1);
+        fineDomani.setHours(23, 59, 59, 999); // domani 23:59
         // Inizio di oggi (00:00) per filtro "Oggi/Domani"
         const oggiStart = new Date(now);
         oggiStart.setHours(0, 0, 0, 0);
@@ -1180,17 +1182,14 @@ function filterScheduledMacchine(macchine) {
                 if (quickFilter === 'oggi') {
                     if (!f.sched_inizio) return false;
                     const si = new Date(f.sched_inizio);
-                    const sf = f.sched_fine ? new Date(f.sched_fine) : si;
-                    // Mostra fasi attive nel range [oggi 00:00 .. ora+48h]:
-                    // inizia entro 48h E non e' gia' terminata prima di oggi
-                    return si <= fine48h && sf >= oggiStart;
+                    // "Oggi/Domani": la fase INIZIA tra oggi 00:00 e domani 23:59
+                    return si >= oggiStart && si <= fineDomani;
                 }
                 if (quickFilter === '2h') {
                     if (!f.sched_inizio) return false;
                     const si = new Date(f.sched_inizio);
-                    const sf = f.sched_fine ? new Date(f.sched_fine) : si;
-                    // Fase attiva nelle prossime 2h: inizia <= ora+2h E finisce >= ora
-                    return si <= fine2h && sf >= now;
+                    // "Prossime 2h": la fase INIZIA tra ora e ora+2h (no fasi lunghe gia' in corso)
+                    return si >= now && si <= fine2h;
                 }
                 return true;
             })
@@ -1268,20 +1267,24 @@ function filterData(data) {
     }
     if (quickFilter !== 'all') {
         const now = new Date();
-        const inizio24h = new Date(now.getTime() + 2*3600*1000);
-        const fine48h = new Date(now.getTime() + 48*3600*1000);
+        const fine2h = new Date(now.getTime() + 2*3600*1000);
+        const fineDomani = new Date(now);
+        fineDomani.setDate(fineDomani.getDate() + 1);
+        fineDomani.setHours(23, 59, 59, 999);
+        const oggiStart = new Date(now);
+        oggiStart.setHours(0, 0, 0, 0);
         result = result.filter(f => {
             if (quickFilter === 'critiche') return f.giorni_consegna !== null && f.giorni_consegna <= -3;
             if (quickFilter === 'inlav') return f.stato == 2;
             if (quickFilter === 'oggi') {
                 if (!f.sched_inizio) return false;
                 const si = new Date(f.sched_inizio);
-                return si <= fine48h;
+                return si >= oggiStart && si <= fineDomani;
             }
             if (quickFilter === '2h') {
                 if (!f.sched_inizio) return false;
                 const si = new Date(f.sched_inizio);
-                return si <= inizio24h;
+                return si >= now && si <= fine2h;
             }
             return true;
         });
