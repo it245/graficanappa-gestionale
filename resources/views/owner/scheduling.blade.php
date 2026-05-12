@@ -1236,8 +1236,8 @@ function schedulaPerCommessa(data) {
 // ===================== HELPERS =====================
 
 function getBarClass(fase) {
-    if (fase.stato === 2) return 'bar-avviata';
-    if (fase.stato === 1) return 'bar-pronta';
+    if (Number(fase.stato) === 2) return 'bar-avviata';
+    if (Number(fase.stato) === 1) return 'bar-pronta';
     if (fase.giorni_consegna !== null && fase.giorni_consegna < 0) return 'bar-scaduta';
     if (fase.giorni_consegna !== null && fase.giorni_consegna <= 3) return 'bar-critica';
     return 'bar-normale';
