@@ -485,8 +485,14 @@ class SchedulerService
 
                     $configGap = $hasConfig ? $this->getConfigFase($mid, $mc, $fasi[$idCur]) : null;
 
-                    // FASE 1: riempi cascata same-config (multi-fase) per ridurre frammentazione
+                    // FASE 1: cascata same-config. 2 livelli setup:
+                    //  - same-fustella (cod_carta XL106 / cod_art PIEGA-FIN / fs altri):
+                    //    setup ridotto 10min (vero batch)
+                    //  - fustella diversa: setup pieno 25min (no cambio config)
                     $cursor = $fineCur->copy();
+                    $prevFs = $fasi[$idCur]['fs'] ?? null;
+                    $prevCodCarta = $fasi[$idCur]['cod_carta'] ?? null;
+                    $prevCodArt = $fasi[$idCur]['cod_art'] ?? null;
                     $filled = false;
                     for ($j = $i + 2; $j < count($idsCoda); $j++) {
                         $idCand = $idsCoda[$j];
@@ -497,20 +503,32 @@ class SchedulerService
                             $configCand = $this->getConfigFase($mid, $mc, $candFase);
                             if ($configCand !== $configGap) continue;
                         }
+
+                        // Determina affinity per setup
+                        $sameAffinity = match ($mid) {
+                            'XL106' => ($candFase['cod_carta'] ?? null) === $prevCodCarta && $prevCodCarta,
+                            'PIEGA', 'FIN' => ($candFase['cod_art'] ?? null) === $prevCodArt && $prevCodArt,
+                            default => ($candFase['fs'] ?? null) === $prevFs && $prevFs,
+                        };
+                        $setup = $sameAffinity ? $this->setupRidotto : $this->setupPieno;
+
                         $partenza = $dispDa > $cursor ? $dispDa->copy() : $cursor->copy();
-                        $inizioTry = $this->avanzaTempo($partenza, $this->setupRidotto, $turni);
+                        $inizioTry = $this->avanzaTempo($partenza, $setup, $turni);
                         $fineTry = $this->avanzaTempo($inizioTry, $candFase['ore'], $turni);
                         if ($fineTry > $inizioNext) continue;
 
                         $fasi[$idCand]['sched']['inizio'] = $inizioTry;
                         $fasi[$idCand]['sched']['fine'] = $fineTry;
-                        $fasi[$idCand]['sched']['setup_h'] = $this->setupRidotto;
-                        $fasi[$idCand]['sched']['setup_tipo'] = 'GAP-FILL';
+                        $fasi[$idCand]['sched']['setup_h'] = $setup;
+                        $fasi[$idCand]['sched']['setup_tipo'] = $sameAffinity ? 'GAP-FILL' : 'GAP-FILL-FS';
 
                         foreach ($schedule[$mid] as $k => $sf) {
                             if ($sf['id'] === $idCand) { $schedule[$mid][$k] = $fasi[$idCand]; break; }
                         }
                         $cursor = $fineTry->copy();
+                        $prevFs = $candFase['fs'] ?? $prevFs;
+                        $prevCodCarta = $candFase['cod_carta'] ?? $prevCodCarta;
+                        $prevCodArt = $candFase['cod_art'] ?? $prevCodArt;
                         $filled = true;
                     }
                     if ($filled) { $changed = true; break; }
