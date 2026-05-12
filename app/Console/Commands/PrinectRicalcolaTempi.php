@@ -20,6 +20,7 @@ class PrinectRicalcolaTempi extends Command
     public function handle(PrinectAccountingService $acct): int
     {
         ini_set('memory_limit', '1G');
+        set_time_limit(0);
 
         $dal = $this->option('dal');
         $commessaFiltro = $this->option('commessa');
@@ -42,11 +43,18 @@ class PrinectRicalcolaTempi extends Command
         $fasi = $q->select('ordine_fasi.*')->get();
         $this->info('Fasi candidate: ' . $fasi->count());
 
+        $bar = $this->output->createProgressBar($fasi->count());
+        $bar->setFormat('verbose');
+        $bar->start();
+
         $aggiornate = 0;
         $skip = 0;
         $errori = 0;
+        $variazioni = [];
 
         foreach ($fasi as $fase) {
+            $bar->advance();
+
             $commessa = $fase->ordine->commessa ?? '';
             $jobId    = $this->commessaToJobId($commessa);
             if (! $jobId) {
@@ -54,7 +62,6 @@ class PrinectRicalcolaTempi extends Command
                 continue;
             }
 
-            // Trova workstep_name dalle prinect_attivita salvate per questa fase
             $att = DB::table('prinect_attivita')
                 ->where('commessa_gestionale', $commessa)
                 ->whereNotNull('workstep_name')
@@ -69,7 +76,6 @@ class PrinectRicalcolaTempi extends Command
                 $tempi = $acct->getTempiByWorkstepName($jobId, $att->workstep_name);
             } catch (\Throwable $e) {
                 $errori++;
-                $this->error("ERR {$commessa}: " . $e->getMessage());
                 continue;
             }
 
@@ -81,19 +87,9 @@ class PrinectRicalcolaTempi extends Command
             $vecchio = (int) ($fase->tempo_avviamento_sec ?? 0) + (int) ($fase->tempo_esecuzione_sec ?? 0);
             $nuovo   = $tempi->avviamentoSec + $tempi->esecuzioneSec;
 
-            if ($vecchio === $nuovo) {
-                continue;
-            }
+            if ($vecchio === $nuovo) continue;
 
-            $this->line(sprintf(
-                '  %s fase=%s: %ds → %ds (%.2fh → %.2fh)',
-                $commessa,
-                $fase->fase,
-                $vecchio,
-                $nuovo,
-                $vecchio / 3600,
-                $nuovo / 3600
-            ));
+            $variazioni[] = sprintf('%s %s: %.2fh → %.2fh', $commessa, $fase->fase, $vecchio / 3600, $nuovo / 3600);
 
             if (! $dry) {
                 $fase->tempo_avviamento_sec = $tempi->avviamentoSec;
@@ -104,8 +100,22 @@ class PrinectRicalcolaTempi extends Command
             $aggiornate++;
         }
 
+        $bar->finish();
+        $this->newLine(2);
+
+        $maxShow = 20;
+        if (count($variazioni) > 0) {
+            $this->info('Variazioni (prime ' . min($maxShow, count($variazioni)) . '):');
+            foreach (array_slice($variazioni, 0, $maxShow) as $v) {
+                $this->line('  ' . $v);
+            }
+            if (count($variazioni) > $maxShow) {
+                $this->line('  ... +' . (count($variazioni) - $maxShow) . ' altre');
+            }
+        }
+
         $this->info("Aggiornate: {$aggiornate}");
-        $this->info("Skip (no jobId/activity/tempi nulli): {$skip}");
+        $this->info("Skip: {$skip}");
         $this->info("Errori: {$errori}");
 
         if ($dry) {
