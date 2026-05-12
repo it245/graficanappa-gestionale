@@ -98,6 +98,7 @@ class OndaSyncService
                 FROM ATTDocRighe r
                 WHERE r.IdDoc = t.IdDoc
                   AND r.TipoRiga = 1
+                  AND r.CodArt = p.CodArt
                 ORDER BY r.NrRiga
             ) attDesc
             OUTER APPLY (
@@ -1051,6 +1052,7 @@ class OndaSyncService
                 FROM ATTDocRighe r
                 WHERE r.IdDoc = t.IdDoc
                   AND r.TipoRiga = 1
+                  AND r.CodArt = p.CodArt
                 ORDER BY r.NrRiga
             ) attDesc
             OUTER APPLY (
