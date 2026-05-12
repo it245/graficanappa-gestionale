@@ -915,6 +915,14 @@ function schedulaDaDB(data) {
     };
 
     const macchine = {};
+    // Pre-popola tutte le macchine note: appaiono sempre nel gantt anche se
+    // nessuna fase e' schedulata in questo periodo (utile per riconoscere
+    // macchine sottoutilizzate / nuove).
+    Object.keys(NOMI_MAC).forEach(mid => {
+        if (mid === 'SPED') return; // spedizione collassabile gestita altrove
+        const nome = NOMI_MAC[mid];
+        macchine[nome] = { nome, reparto_id: 0, fasi: [], turni: TURNI_MAC[mid] || '6-22' };
+    });
     data.forEach(f => {
         // Fasi esterne: usa sched_inizio (= disponibile_da) se presente, altrimenti oggi
         if (f.esterno) {
