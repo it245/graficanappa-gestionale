@@ -886,14 +886,14 @@ function getBestOre(fase) {
 }
 
 function schedulaPerMacchina(data) {
-    // Se TUTTE le fasi hanno sched_inizio/sched_fine dal PHP scheduler, usa quelli
-    // Altrimenti fallback client-side (evita scartare fasi non schedulate)
+    // Se ALMENO UNA fase non esterna ha sched, usa schedulaDaDB (rispetta DB).
+    // Le fasi senza sched vengono saltate silenziosamente.
+    // Fallback client-side solo se DB completamente vuoto di scheduling.
     const nonEsterne = data.filter(f => !f.esterno);
-    const hasSchedulerData = nonEsterne.length > 0 && nonEsterne.every(f => f.sched_inizio && f.sched_fine && f.sched_macchina);
-    if (hasSchedulerData) {
+    const hasAnySchedulerData = nonEsterne.some(f => f.sched_inizio && f.sched_fine && f.sched_macchina);
+    if (hasAnySchedulerData) {
         return schedulaDaDB(data);
     }
-    // Fallback: calcolo client-side
     return schedulaClientSide(data);
 }
 
