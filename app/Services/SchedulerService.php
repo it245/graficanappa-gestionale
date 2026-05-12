@@ -485,39 +485,65 @@ class SchedulerService
 
                     $configGap = $hasConfig ? $this->getConfigFase($mid, $mc, $fasi[$idCur]) : null;
 
+                    // FASE 1: riempi cascata same-config (multi-fase) per ridurre frammentazione
+                    $cursor = $fineCur->copy();
+                    $filled = false;
                     for ($j = $i + 2; $j < count($idsCoda); $j++) {
                         $idCand = $idsCoda[$j];
                         $candFase = $fasi[$idCand];
                         $dispDa = $candFase['disponibile_da'] ?? $this->now;
-                        // Accettiamo dispDa anche dentro il gap (non solo <= fineCur)
                         if ($dispDa >= $inizioNext) continue;
-                        $configDiff = false;
                         if ($hasConfig) {
                             $configCand = $this->getConfigFase($mid, $mc, $candFase);
-                            if ($configCand !== $configGap) {
-                                if ($gapH < 2.0) continue;
-                                $configDiff = true;
-                            }
+                            if ($configCand !== $configGap) continue;
                         }
-                        $setup = $configDiff ? ($this->setupPieno + ($mc['cambio_config_ore'] ?? 1.0)) : $this->setupRidotto;
-                        // Parti da max(fineCur, dispDa)
-                        $partenza = $dispDa > $fineCur ? $dispDa->copy() : $fineCur->copy();
-                        $inizioTry = $this->avanzaTempo($partenza, $setup, $turni);
+                        $partenza = $dispDa > $cursor ? $dispDa->copy() : $cursor->copy();
+                        $inizioTry = $this->avanzaTempo($partenza, $this->setupRidotto, $turni);
                         $fineTry = $this->avanzaTempo($inizioTry, $candFase['ore'], $turni);
                         if ($fineTry > $inizioNext) continue;
 
                         $fasi[$idCand]['sched']['inizio'] = $inizioTry;
                         $fasi[$idCand]['sched']['fine'] = $fineTry;
-                        $fasi[$idCand]['sched']['setup_h'] = $setup;
+                        $fasi[$idCand]['sched']['setup_h'] = $this->setupRidotto;
                         $fasi[$idCand]['sched']['setup_tipo'] = 'GAP-FILL';
 
                         foreach ($schedule[$mid] as $k => $sf) {
                             if ($sf['id'] === $idCand) { $schedule[$mid][$k] = $fasi[$idCand]; break; }
                         }
-                        $changed = true;
-                        break;
+                        $cursor = $fineTry->copy();
+                        $filled = true;
                     }
-                    if ($changed) break;
+                    if ($filled) { $changed = true; break; }
+
+                    // FASE 2: cross-config solo se gap >= 4h (assorbe penalty senza frammentare troppo)
+                    if ($hasConfig && $gapH >= 4.0) {
+                        for ($j = $i + 2; $j < count($idsCoda); $j++) {
+                            $idCand = $idsCoda[$j];
+                            $candFase = $fasi[$idCand];
+                            $dispDa = $candFase['disponibile_da'] ?? $this->now;
+                            if ($dispDa >= $inizioNext) continue;
+                            $configCand = $this->getConfigFase($mid, $mc, $candFase);
+                            if ($configCand === $configGap) continue;
+
+                            $setup = $this->setupPieno + ($mc['cambio_config_ore'] ?? 1.0);
+                            $partenza = $dispDa > $fineCur ? $dispDa->copy() : $fineCur->copy();
+                            $inizioTry = $this->avanzaTempo($partenza, $setup, $turni);
+                            $fineTry = $this->avanzaTempo($inizioTry, $candFase['ore'], $turni);
+                            if ($fineTry > $inizioNext) continue;
+
+                            $fasi[$idCand]['sched']['inizio'] = $inizioTry;
+                            $fasi[$idCand]['sched']['fine'] = $fineTry;
+                            $fasi[$idCand]['sched']['setup_h'] = $setup;
+                            $fasi[$idCand]['sched']['setup_tipo'] = 'GAP-FILL-XCFG';
+
+                            foreach ($schedule[$mid] as $k => $sf) {
+                                if ($sf['id'] === $idCand) { $schedule[$mid][$k] = $fasi[$idCand]; break; }
+                            }
+                            $changed = true;
+                            break;
+                        }
+                        if ($changed) break;
+                    }
                 }
             }
         }
