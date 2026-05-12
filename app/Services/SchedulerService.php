@@ -331,23 +331,37 @@ class SchedulerService
                         $batchIds[$f['id']] = true;
                     }
                 }
-                // Ordina batch:
-                // - XL106: prima per cod_carta (stessa lastra consecutiva → setup lastra 0),
-                //   poi per urgenza. Formato è già costante dentro il batch (batch key)
-                // - PIEGA/FIN: per cod_art (articoli uguali consecutivi)
-                // - Altre: solo per urgenza
+                // Ordina batch.
+                // FIX gap: prima per `disponibile_da` (no buchi se una fase potrebbe
+                // partire prima ed e' pronta). Poi affinity (cod_carta/cod_art) per
+                // azzerare setup. Infine gg (urgenza) come tie-breaker.
+                // Prima del fix: cod_art sort principale -> fasi con dispDa vicina
+                // ma cod_art alfabetico maggiore finivano dopo, lasciando gap macchina.
+                $cmpDisp = function ($a, $b) {
+                    $da = $a['disponibile_da'] ?? null;
+                    $db = $b['disponibile_da'] ?? null;
+                    if (!$da && !$db) return 0;
+                    if (!$da) return 1;
+                    if (!$db) return -1;
+                    return $da <=> $db;
+                };
                 if ($mid === 'XL106') {
-                    usort($batch, function ($a, $b) {
+                    usort($batch, function ($a, $b) use ($cmpDisp) {
+                        $d = $cmpDisp($a, $b); if ($d !== 0) return $d;
                         $codCmp = ($a['cod_carta'] ?? '') <=> ($b['cod_carta'] ?? '');
                         return $codCmp !== 0 ? $codCmp : $a['gg'] <=> $b['gg'];
                     });
                 } elseif (in_array($mid, ['PIEGA', 'FIN'])) {
-                    usort($batch, function ($a, $b) {
+                    usort($batch, function ($a, $b) use ($cmpDisp) {
+                        $d = $cmpDisp($a, $b); if ($d !== 0) return $d;
                         $artCmp = ($a['cod_art'] ?? '') <=> ($b['cod_art'] ?? '');
                         return $artCmp !== 0 ? $artCmp : $a['gg'] <=> $b['gg'];
                     });
                 } else {
-                    usort($batch, fn($a, $b) => $a['gg'] <=> $b['gg']);
+                    usort($batch, function ($a, $b) use ($cmpDisp) {
+                        $d = $cmpDisp($a, $b); if ($d !== 0) return $d;
+                        return $a['gg'] <=> $b['gg'];
+                    });
                 }
 
                 // Schedula il batch
