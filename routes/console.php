@@ -26,6 +26,9 @@ Schedule::command('onda:sync')->hourly()->withoutOverlapping();
 // commesse con cod_art generico (es. "Astucci") e PRD multipli Onda.
 Schedule::command('onda:sync-fix-multi-modello')->hourly()->withoutOverlapping();
 
+// Polling sensori Y Digital ogni minuto (rate limit /latest/ = 1/min)
+Schedule::command('ydigital:poll')->everyMinute()->weekdays()->between('6:00', '22:00')->withoutOverlapping();
+
 // Sync bidirezionale Excel ↔ DB ogni 2 minuti (h24)
 Schedule::command('excel:sync')->everyTwoMinutes()->withoutOverlapping();
 
