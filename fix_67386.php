@@ -11,7 +11,11 @@ $ordine = Ordine::where('commessa', '0067386-26')->first();
 if (!$ordine) { echo "Ordine non trovato\n"; exit; }
 
 $fase = OrdineFase::where('ordine_id', $ordine->id)
-    ->where('fase', 'like', 'STAMPAXL%')
+    ->where(function($q){
+        $q->where('fase', 'like', 'STAMPAXL%')
+          ->orWhere('fase', 'like', 'STAMPA XL%')
+          ->orWhere('fase', 'STAMPA');
+    })
     ->where('stato', 2)
     ->first();
 if (!$fase) { echo "Fase STAMPAXL stato 2 non trovata\n"; exit; }
