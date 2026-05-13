@@ -60,11 +60,7 @@ foreach ($gruppi as $gruppoNome => $faseList) {
             ->count();
 
         $ondaPrd = DB::connection('onda')->select(
-            "SELECT p.IdDoc, p.CodArt, f.CodFase, f.QtaDaLavorare,
-                    (SELECT TOP 1 r.Descrizione FROM ATTDocRighe r
-                     INNER JOIN ATTDocTeste t ON t.IdDoc = r.IdDoc
-                     WHERE t.CodCommessa = p.CodCommessa AND r.TipoRiga = 1 AND r.CodArt = p.CodArt
-                     ORDER BY r.NrRiga) AS descrizione
+            "SELECT p.IdDoc, p.CodArt, f.CodFase, f.QtaDaLavorare
              FROM PRDDocTeste p
              INNER JOIN PRDDocFasi f ON p.IdDoc = f.IdDoc
              WHERE p.CodCommessa = ?
@@ -72,6 +68,29 @@ foreach ($gruppi as $gruppoNome => $faseList) {
              ORDER BY p.IdDoc",
             [$comm]
         );
+
+        // Pre-fetch descrizioni distinte Tipo=1 ordinate per NrRiga (1 per modello/PRD)
+        $codArtOrdine = $ondaPrd[0]->CodArt ?? '';
+        $descRows = DB::connection('onda')->select(
+            "SELECT r.Descrizione
+             FROM ATTDocRighe r
+             INNER JOIN ATTDocTeste t ON t.IdDoc = r.IdDoc
+             WHERE t.CodCommessa = ? AND r.TipoRiga = 1 AND r.CodArt = ?
+             ORDER BY r.NrRiga",
+            [$comm, $codArtOrdine]
+        );
+        $descrizioniOrdinate = array_column((array)$descRows, 'Descrizione');
+        // Assegna descrizione N-esima a PRD N-esimo (entrambi ordinati)
+        // Gestisci se diverse PRD per stesso modello (es. PI01+PI03 stesso PRD):
+        // raggruppa PRD per IdDoc, assegna stessa descrizione a tutte le fasi dello stesso PRD.
+        $idDocOrdered = array_values(array_unique(array_map(fn($x) => $x->IdDoc, $ondaPrd)));
+        $idDocToDesc = [];
+        foreach ($idDocOrdered as $i => $idDoc) {
+            $idDocToDesc[$idDoc] = $descrizioniOrdinate[$i] ?? null;
+        }
+        foreach ($ondaPrd as $p) {
+            $p->descrizione = $idDocToDesc[$p->IdDoc] ?? null;
+        }
 
         $ondaCount = count($ondaPrd);
         if ($ondaCount <= $mesCount) continue;
