@@ -1197,6 +1197,8 @@
             var isMio = msg.operatore_id === cpOperatoreId || msg.mio || msg.autore_id === cpOperatoreId;
             div.className = 'cp-msg ' + (isMio ? 'mio' : 'altro') + (msg.eliminato ? ' eliminato' : '');
             if (msg.id) div.dataset.msgId = msg.id;
+            div.dataset.lettureCount = (msg.letture_count || 0);
+            div.dataset.destinatariCount = (msg.destinatari_count || 0);
             var html = '';
             if (!isMio && !msg.eliminato) html += '<div class="cp-utente">' + cpEsc(msg.utente || msg.operatore_nome || '') + '</div>';
             if (msg.eliminato) {
@@ -1395,10 +1397,24 @@
                   .then(function(data) {
                       if (data && data.ok) {
                           cpUltimoId = Math.max(cpUltimoId, data.id || cpUltimoId);
-                          // Assegna l'id reale al div locale ottimistico per evitare duplicati nel polling
                           if (tempEl && data.id) {
-                              tempEl.dataset.msgId = data.id;
-                              delete tempEl.dataset.tempPending;
+                              // Rimuovi tempEl e ricrea con id + marker ⋮/✓ subito visibili
+                              var container = document.getElementById('cpMsgs');
+                              tempEl.remove();
+                              cpAppend({
+                                  id: data.id,
+                                  messaggio: testo,
+                                  utente: cpOperatoreNome,
+                                  timestamp: data.timestamp || new Date().toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit'}),
+                                  mio: true,
+                                  autore_id: cpOperatoreId,
+                                  eta_min: 0,
+                                  eliminato: false,
+                                  letture_count: 0,
+                                  destinatari_count: 0,
+                                  letture: []
+                              }, container);
+                              container.scrollTop = container.scrollHeight;
                           }
                       }
                   })
@@ -1417,8 +1433,11 @@
                     msgs.forEach(function(m) {
                         var existing = container.querySelector('.cp-msg[data-msg-id="' + m.id + '"]');
                         if (existing) {
-                            // Aggiorna se status eliminato cambiato
-                            if (m.eliminato && !existing.classList.contains('eliminato')) {
+                            // Update se cambiato: eliminato OR letture_count
+                            var oldLC = parseInt(existing.dataset.lettureCount || '0');
+                            var changed = (m.eliminato && !existing.classList.contains('eliminato'))
+                                       || ((m.letture_count || 0) !== oldLC);
+                            if (changed) {
                                 existing.remove();
                                 cpAppend(m, container);
                             }
