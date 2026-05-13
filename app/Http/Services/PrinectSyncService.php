@@ -961,8 +961,36 @@ class PrinectSyncService
             $giornoAttivita = $ultimoTempo->toDateString();
             $oggi = Carbon::today()->toDateString();
 
-            // Termina solo se: > 4 ore fa E giorno diverso da oggi
+            $abbandonata = false;
+
+            // Regola standard: > 4 ore fa E giorno diverso da oggi
             if ($orePassate >= 4 && $giornoAttivita !== $oggi) {
+                $abbandonata = true;
+            }
+
+            // Fix avviamento mattutino: se ultima attività della fase è
+            // LA PRIMA attività di oggi sulla macchina (accensione/riscaldamento),
+            // la fase è di ieri ed e' abbandonata anche se "stesso giorno".
+            if (!$abbandonata && $giornoAttivita === $oggi) {
+                $primaAttOggi = PrinectAttivita::where('device_id', $ultimaAttivita->device_id)
+                    ->whereDate('start_time', $oggi)
+                    ->orderBy('start_time')
+                    ->first();
+                if ($primaAttOggi && $primaAttOggi->id === $ultimaAttivita->id) {
+                    $abbandonata = true;
+                }
+            }
+
+            if ($abbandonata) {
+                // Aggiorna fogli_buoni e fogli_scarto sommando PrinectAttivita commessa
+                $aggr = PrinectAttivita::where('commessa_gestionale', $commessa)
+                    ->selectRaw('SUM(good_cycles) as buoni, SUM(waste_cycles) as scarto')
+                    ->first();
+                if ($aggr) {
+                    $fase->fogli_buoni  = (int) ($aggr->buoni ?? 0);
+                    $fase->fogli_scarto = (int) ($aggr->scarto ?? 0);
+                    $fase->qta_prod     = (int) ($aggr->buoni ?? 0);
+                }
                 $fase->stato = 3;
                 $fase->data_fine = $ultimoTempo->format('Y-m-d H:i:s');
                 $fase->save();
