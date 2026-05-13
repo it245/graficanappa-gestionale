@@ -1126,7 +1126,7 @@
         <div class="chat-popup-input" style="position:relative;">
             <div id="cpMentionDropdown" style="display:none; position:absolute; bottom:100%; left:12px; right:60px; max-height:200px; overflow-y:auto; background:var(--bg-card,#fff); border:1px solid var(--border-color,#e2e8f0); border-radius:8px; box-shadow:0 -4px 12px rgba(0,0,0,0.15); z-index:10;"></div>
             <input type="file" id="cpFileInput" style="display:none;" onchange="cpFileSelezionato(this)">
-            <button onclick="document.getElementById('cpFileInput').click()" title="Allega file" style="background:transparent;color:var(--text-secondary,#888);padding:6px;">
+            <button id="cpAttachBtn" onclick="cpMostraMenuAllegato(event)" title="Allega" style="background:transparent;color:var(--text-secondary,#888);padding:6px;">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
             </button>
             <input type="text" id="cpInput" placeholder="Scrivi... (@nome per menzionare)" autocomplete="off" onkeydown="if(event.key==='Enter' && !cpMentionVisible())cpInvia()" oninput="cpCheckMention(this)">
@@ -1380,6 +1380,50 @@
         }
 
         // ============ ALLEGATI ============
+        // Menu graffetta: Documento / Foto / Scatta foto / Altro
+        window.cpMostraMenuAllegato = function(e) {
+            e.stopPropagation();
+            var existing = document.getElementById('cpAllegMenu'); if (existing) { existing.remove(); return; }
+            var btn = document.getElementById('cpAttachBtn');
+            var rect = btn.getBoundingClientRect();
+            var menu = document.createElement('div');
+            menu.id = 'cpAllegMenu';
+            menu.style.cssText = 'position:fixed;background:var(--surface,#fff);border:1px solid var(--border,#ddd);border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,0.2);padding:6px 0;z-index:999999;min-width:200px;';
+            menu.style.bottom = (window.innerHeight - rect.top + 8) + 'px';
+            menu.style.left = Math.max(8, rect.left - 50) + 'px';
+            var opts = [
+                {ic:'📄', label:'Documento', accept:'application/pdf,.doc,.docx,.xls,.xlsx,.txt', cap:''},
+                {ic:'🖼️', label:'Foto / Galleria', accept:'image/*', cap:''},
+                {ic:'📷', label:'Scatta foto', accept:'image/*', cap:'environment'},
+                {ic:'📎', label:'Altro', accept:'*/*', cap:''},
+            ];
+            menu.innerHTML = opts.map(function(o, i) {
+                return '<div class="cp-alleg-opt" data-i="' + i + '" style="padding:10px 16px;cursor:pointer;font-size:14px;display:flex;gap:10px;align-items:center;">'
+                     + '<span style="font-size:18px;">' + o.ic + '</span>'
+                     + '<span>' + o.label + '</span></div>';
+            }).join('');
+            document.body.appendChild(menu);
+            menu.querySelectorAll('.cp-alleg-opt').forEach(function(el) {
+                el.addEventListener('mouseenter', function() { el.style.background = 'rgba(0,0,0,0.05)'; });
+                el.addEventListener('mouseleave', function() { el.style.background = 'transparent'; });
+                el.addEventListener('click', function() {
+                    var o = opts[parseInt(el.dataset.i)];
+                    var input = document.getElementById('cpFileInput');
+                    input.setAttribute('accept', o.accept);
+                    if (o.cap) input.setAttribute('capture', o.cap);
+                    else input.removeAttribute('capture');
+                    menu.remove();
+                    input.click();
+                });
+            });
+            setTimeout(function() {
+                document.addEventListener('click', function chiudi() {
+                    var m = document.getElementById('cpAllegMenu'); if (m) m.remove();
+                    document.removeEventListener('click', chiudi);
+                }, { once: true });
+            }, 50);
+        };
+
         window.cpFileSelezionato = function(input) {
             var file = input.files && input.files[0];
             if (!file) return;
