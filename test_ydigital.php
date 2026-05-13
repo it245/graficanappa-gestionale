@@ -1,5 +1,5 @@
 <?php
-$apiKey = 'ysens_p8wQanOTBDFwo2wyf72t2LRROIrkzzRp0_Kem25U5lg';
+$apiKey = 'ysens_CZNSz2QKD-Q0U-BAK_q9UQ6RDmJWY2DzZnNfAZGPdjk';
 
 $ch = curl_init('https://ysens.it/api/v1/sensors/');
 curl_setopt_array($ch, [
