@@ -1622,10 +1622,19 @@
                     if (!container) return;
                     if (!pins || pins.length === 0) { container.innerHTML = ''; container.style.display = 'none'; return; }
                     container.style.display = 'block';
-                    container.innerHTML = pins.map(function(p) {
+                    container.innerHTML = pins.slice(0, 3).map(function(p) {
                         var msg = (p.messaggio || '').substring(0, 60);
-                        return '<div style="padding:6px 10px;background:#fef3c7;border-left:3px solid #f59e0b;font-size:12px;">📌 ' + cpEsc(msg) + '</div>';
+                        return '<div style="padding:6px 10px;background:#fef3c7;border-left:3px solid #f59e0b;font-size:12px;display:flex;justify-content:space-between;align-items:center;gap:8px;">'
+                             + '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📌 ' + cpEsc(msg) + '</span>'
+                             + '<span class="cp-pin-remove" data-msgid="' + p.id + '" style="cursor:pointer;color:#dc3545;font-weight:700;padding:0 6px;flex-shrink:0;" title="Rimuovi pin">×</span>'
+                             + '</div>';
                     }).join('');
+                    container.querySelectorAll('.cp-pin-remove').forEach(function(x) {
+                        x.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            cpPinRequest(x.dataset.msgid, -1);
+                        });
+                    });
                 }).catch(function() {});
         }
 

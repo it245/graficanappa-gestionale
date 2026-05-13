@@ -208,6 +208,17 @@ class ChatController extends Controller
             return response()->json(['ok' => true, 'pinned' => true, 'scade_at' => $scadeAtUpd?->format('d/m H:i')]);
         }
 
+        // Limite 3 pin attivi per canale: se gia' 3, rifiuta (utente deve rimuoverne uno)
+        $pinAttiviCount = \DB::table('chat_message_pins')
+            ->where('canale', $msg->canale)
+            ->where(function ($q) {
+                $q->whereNull('scade_at')->orWhere('scade_at', '>', now());
+            })
+            ->count();
+        if ($pinAttiviCount >= 3) {
+            return response()->json(['ok' => false, 'errore' => 'Massimo 3 pin per canale. Rimuovine uno prima.'], 422);
+        }
+
         $scadeAt = $durataMin > 0 ? now()->addMinutes($durataMin) : null;
 
         // Rimuovi eventuali pin scaduti dello stesso canale
