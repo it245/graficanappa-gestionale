@@ -9,10 +9,16 @@ class ChatMessage extends Model
 {
     use SoftDeletes;
 
-    protected $fillable = ['operatore_id', 'messaggio', 'canale', 'hidden_for', 'audio_path', 'audio_durata_sec'];
+    protected $fillable = [
+        'operatore_id', 'messaggio', 'canale', 'hidden_for',
+        'audio_path', 'audio_durata_sec',
+        'attachment_path', 'attachment_name', 'attachment_size', 'attachment_mime',
+        'is_pinned',
+    ];
 
     protected $casts = [
         'hidden_for' => 'array',
+        'is_pinned' => 'boolean',
     ];
 
     public function operatore()

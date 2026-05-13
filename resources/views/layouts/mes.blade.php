@@ -1125,6 +1125,10 @@
         </div>
         <div class="chat-popup-input" style="position:relative;">
             <div id="cpMentionDropdown" style="display:none; position:absolute; bottom:100%; left:12px; right:60px; max-height:200px; overflow-y:auto; background:var(--bg-card,#fff); border:1px solid var(--border-color,#e2e8f0); border-radius:8px; box-shadow:0 -4px 12px rgba(0,0,0,0.15); z-index:10;"></div>
+            <input type="file" id="cpFileInput" style="display:none;" onchange="cpFileSelezionato(this)">
+            <button onclick="document.getElementById('cpFileInput').click()" title="Allega file" style="background:transparent;color:var(--text-secondary,#888);padding:6px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+            </button>
             <input type="text" id="cpInput" placeholder="Scrivi... (@nome per menzionare)" autocomplete="off" onkeydown="if(event.key==='Enter' && !cpMentionVisible())cpInvia()" oninput="cpCheckMention(this)">
             <button onclick="cpInvia()">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
@@ -1201,6 +1205,7 @@
             div.dataset.destinatariCount = (msg.destinatari_count || 0);
             var html = '';
             if (!isMio && !msg.eliminato) html += '<div class="cp-utente">' + cpEsc(msg.utente || msg.operatore_nome || '') + '</div>';
+            if (msg.is_pinned) html += '<div style="font-size:10px;color:#f59e0b;margin-bottom:2px;">📌 Importante</div>';
             if (msg.eliminato) {
                 html += '<div style="font-style:italic;color:var(--text-secondary,#888);">🚫 Questo messaggio è stato eliminato</div>';
             } else if (msg.audio_url) {
@@ -1209,6 +1214,25 @@
                      + '<audio controls preload="metadata" style="height:32px;max-width:200px;" src="' + cpEsc(msg.audio_url) + '"></audio>'
                      + (durata ? '<span style="font-size:11px;color:#888;">' + durata + '</span>' : '')
                      + '</div>';
+            } else if (msg.attachment_url) {
+                var mime = (msg.attachment_mime || '').toLowerCase();
+                var isImg = mime.indexOf('image/') === 0;
+                if (isImg) {
+                    html += '<a href="' + cpEsc(msg.attachment_url) + '" target="_blank">'
+                         + '<img src="' + cpEsc(msg.attachment_url) + '" style="max-width:200px;max-height:200px;border-radius:8px;display:block;" alt="' + cpEsc(msg.attachment_name || '') + '">'
+                         + '</a>';
+                } else {
+                    var sizeKb = msg.attachment_size ? Math.round(msg.attachment_size / 1024) + ' KB' : '';
+                    html += '<a href="' + cpEsc(msg.attachment_url) + '" target="_blank" download="' + cpEsc(msg.attachment_name || 'file') + '" style="display:flex;align-items:center;gap:8px;padding:8px;background:rgba(0,0,0,0.05);border-radius:8px;text-decoration:none;color:inherit;">'
+                         + '<span style="font-size:24px;">📎</span>'
+                         + '<span style="display:flex;flex-direction:column;"><span style="font-weight:600;font-size:12px;">' + cpEsc(msg.attachment_name || 'file') + '</span>'
+                         + '<span style="font-size:10px;color:#888;">' + sizeKb + '</span></span>'
+                         + '</a>';
+                }
+                if (msg.messaggio && msg.messaggio !== '[Allegato]') {
+                    var caption = cpEsc(msg.messaggio).replace(/@([A-Za-zÀ-ÿ\s]+?)(?=\s|$)/g, '<span style="color:var(--accent,#2563eb);font-weight:600;">@$1</span>');
+                    html += '<div style="margin-top:4px;">' + caption + '</div>';
+                }
             } else {
                 var msgText = cpEsc(msg.messaggio);
                 msgText = msgText.replace(/@([A-Za-zÀ-ÿ\s]+?)(?=\s|$)/g, '<span style="color:var(--accent,#2563eb);font-weight:600;">@$1</span>');
@@ -1327,6 +1351,7 @@
             menu.style.top = top + 'px';
             menu.style.left = left + 'px';
             var html = '<div class="cp-del-opt" data-action="info" style="padding:8px 14px;cursor:pointer;font-size:13px;">ⓘ Info / Letto da</div>';
+            html += '<div class="cp-del-opt" data-action="pin" style="padding:8px 14px;cursor:pointer;font-size:13px;border-top:1px solid #eee;">📌 Fissa / Rimuovi pin</div>';
             html += '<div class="cp-del-opt" data-action="del-me" style="padding:8px 14px;cursor:pointer;font-size:13px;border-top:1px solid #eee;">Elimina per me</div>';
             if (canAll) html += '<div class="cp-del-opt" data-action="del-all" style="padding:8px 14px;cursor:pointer;font-size:13px;color:#dc3545;">Elimina per tutti</div>';
             menu.innerHTML = html;
@@ -1335,9 +1360,9 @@
                 opt.addEventListener('click', function() {
                     var action = opt.dataset.action;
                     if (action === 'info') {
-                        // Trova msg dal DOM
-                        var msgEl = document.querySelector('.cp-msg[data-msg-id="' + msgId + '"]');
                         cpInfoMessaggio(msgId);
+                    } else if (action === 'pin') {
+                        cpTogglePin(msgId);
                     } else if (action === 'del-me') {
                         cpEliminaMessaggio(msgId, 'me');
                     } else if (action === 'del-all') {
@@ -1352,6 +1377,88 @@
                     document.removeEventListener('click', chiudi);
                 }, { once: true });
             }, 50);
+        }
+
+        // ============ ALLEGATI ============
+        window.cpFileSelezionato = function(input) {
+            var file = input.files && input.files[0];
+            if (!file) return;
+            if (file.size > 10 * 1024 * 1024) {
+                alert('File troppo grande (max 10MB)');
+                input.value = '';
+                return;
+            }
+            // Determina canale da mention nel testo del campo input
+            var testo = document.getElementById('cpInput').value.trim();
+            var canaleInvio = cpCanale;
+            var testoLower = testo.toLowerCase();
+            cpCanali.forEach(function(c) {
+                if (c.toLowerCase() === 'tutti') return;
+                if (testoLower.indexOf('@' + c.toLowerCase()) !== -1) canaleInvio = c;
+            });
+
+            var form = new FormData();
+            form.append('file', file);
+            form.append('canale', canaleInvio);
+            if (testo) form.append('messaggio', testo);
+
+            fetch('/csrf-refresh').then(function(r){return r.json();}).then(function(d){
+                if (d && d.token) document.querySelector('meta[name="csrf-token"]').setAttribute('content', d.token);
+            }).catch(function(){}).finally(function() {
+                fetch('/chat/allega', {
+                    method: 'POST',
+                    headers: { 'X-CSRF-TOKEN': csrfToken(), 'Accept': 'application/json' },
+                    body: form
+                }).then(function(r) { return r.json(); })
+                  .then(function(data) {
+                      if (data && data.ok && data.id) {
+                          cpUltimoId = Math.max(cpUltimoId, data.id);
+                          document.getElementById('cpInput').value = '';
+                          if (canaleInvio === cpCanale) {
+                              var container = document.getElementById('cpMsgs');
+                              cpAppend({
+                                  id: data.id,
+                                  messaggio: data.messaggio,
+                                  attachment_url: data.attachment_url,
+                                  attachment_name: data.attachment_name,
+                                  attachment_mime: data.attachment_mime,
+                                  utente: cpOperatoreNome,
+                                  timestamp: data.timestamp,
+                                  mio: true,
+                                  autore_id: cpOperatoreId,
+                                  eta_min: 0,
+                                  letture_count: 0,
+                                  destinatari_count: 0,
+                                  letture: []
+                              }, container);
+                              container.scrollTop = container.scrollHeight;
+                          } else if (window.MES && MES.toast) {
+                              MES.toast('Allegato inviato a @' + canaleInvio, 'success', 2500);
+                          }
+                      } else if (window.MES && MES.toast) {
+                          MES.toast(data && data.errore || 'Errore allegato', 'error');
+                      }
+                  }).catch(function() {
+                      if (window.MES && MES.toast) MES.toast('Errore upload', 'error');
+                  });
+            });
+            input.value = '';
+        };
+
+        // ============ PIN MESSAGGIO ============
+        function cpTogglePin(msgId) {
+            fetch('/csrf-refresh').then(function(r){return r.json();}).then(function(d){
+                if (d && d.token) document.querySelector('meta[name="csrf-token"]').setAttribute('content', d.token);
+            }).catch(function(){}).finally(function() {
+                fetch('/chat/messaggi/' + msgId + '/pin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken(), 'Accept': 'application/json' }
+                }).then(function(r) { return r.json(); }).then(function(data) {
+                    if (data && data.ok && window.MES && MES.toast) {
+                        MES.toast(data.is_pinned ? '📌 Messaggio fissato' : 'Pin rimosso', 'success', 2000);
+                    }
+                });
+            });
         }
 
         // ============ AUDIO VOCALE ============

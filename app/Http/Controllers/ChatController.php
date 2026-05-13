@@ -125,6 +125,72 @@ class ChatController extends Controller
         ]);
     }
 
+    /**
+     * Upload allegato (immagine/PDF/doc generico). Max 10MB.
+     * Body multipart: canale, file, messaggio (opzionale caption)
+     */
+    public function allega(Request $request)
+    {
+        $request->validate([
+            'canale' => 'required|string|max:50',
+            'file' => 'required|file|max:10240', // 10MB
+            'messaggio' => 'nullable|string|max:500',
+        ]);
+
+        if (!$this->operatoreVedeCanale($request, $request->canale)) {
+            return response()->json(['ok' => false, 'errore' => 'Canale non autorizzato'], 403);
+        }
+
+        $operatoreId = $this->getOperatoreId($request);
+        $file = $request->file('file');
+        $nome = 'chat_' . $operatoreId . '_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+        $path = $file->storeAs('chat-allegati', $nome, 'public');
+
+        $chatMessage = ChatMessage::create([
+            'operatore_id'     => $operatoreId,
+            'messaggio'        => $request->input('messaggio') ?: '[Allegato]',
+            'canale'           => $request->canale,
+            'attachment_path'  => $path,
+            'attachment_name'  => $file->getClientOriginalName(),
+            'attachment_size'  => $file->getSize(),
+            'attachment_mime'  => $file->getMimeType(),
+        ]);
+        $chatMessage->load('operatore');
+
+        try { broadcast(new \App\Events\NuovoMessaggioChat($chatMessage)); } catch (\Throwable $e) {}
+
+        return response()->json([
+            'ok' => true,
+            'id' => $chatMessage->id,
+            'attachment_url' => asset('storage/' . $path),
+            'attachment_name' => $chatMessage->attachment_name,
+            'attachment_mime' => $chatMessage->attachment_mime,
+            'messaggio' => $chatMessage->messaggio,
+            'utente' => $chatMessage->operatore->nome ?? 'Utente',
+            'timestamp' => $chatMessage->created_at->format('H:i'),
+        ]);
+    }
+
+    /**
+     * Toggle pin messaggio (importante). Solo autore o owner/admin.
+     */
+    public function togglePin(Request $request, int $id)
+    {
+        $msg = ChatMessage::find($id);
+        if (!$msg) return response()->json(['ok' => false], 404);
+
+        $opId = $this->getOperatoreId($request);
+        $ruolo = $request->attributes->get('operatore_ruolo') ?? session('operatore_ruolo') ?? '';
+        $isOwnerAdmin = in_array($ruolo, ['owner', 'admin']);
+        if (!$isOwnerAdmin && $msg->operatore_id !== $opId) {
+            return response()->json(['ok' => false, 'errore' => 'Non autorizzato'], 403);
+        }
+
+        $msg->is_pinned = !$msg->is_pinned;
+        $msg->save();
+        return response()->json(['ok' => true, 'is_pinned' => $msg->is_pinned]);
+    }
+
     public function invia(Request $request)
     {
         $request->validate([
@@ -267,11 +333,17 @@ class ChatController extends Controller
                     ? $this->destinatariCanale($canale, $m->operatore_id)
                     : 0;
                 $audioUrl = $m->audio_path ? asset('storage/' . $m->audio_path) : null;
+                $attUrl = $m->attachment_path ? asset('storage/' . $m->attachment_path) : null;
                 return [
                     'id' => $m->id,
                     'messaggio' => $m->messaggio,
                     'audio_url' => $audioUrl,
                     'audio_durata_sec' => $m->audio_durata_sec,
+                    'attachment_url' => $attUrl,
+                    'attachment_name' => $m->attachment_name,
+                    'attachment_mime' => $m->attachment_mime,
+                    'attachment_size' => $m->attachment_size,
+                    'is_pinned' => (bool) $m->is_pinned,
                     'utente' => $m->operatore->nome ?? 'Utente',
                     'timestamp' => $m->created_at->format('H:i'),
                     'mio' => $m->operatore_id === $operatoreId,
