@@ -49,13 +49,21 @@ foreach ($fasi as $fase) {
     }
 
     if (!$abbandonata && $giornoAttivita === $oggi) {
+        // Prima e ultima attività di oggi sulla macchina
         $primaAttOggi = PrinectAttivita::where('device_id', $ultimaAttivita->device_id)
             ->whereDate('start_time', $oggi)
             ->orderBy('start_time')
             ->first();
-        if ($primaAttOggi && $primaAttOggi->id === $ultimaAttivita->id) {
+        $ultimaAttOggi = PrinectAttivita::where('device_id', $ultimaAttivita->device_id)
+            ->whereDate('start_time', $oggi)
+            ->orderByDesc('start_time')
+            ->first();
+        // Caso: oggi macchina ha iniziato con questa commessa MA dopo e' passata ad altre
+        if ($primaAttOggi && $ultimaAttOggi
+            && $primaAttOggi->commessa_gestionale === $commessa
+            && $ultimaAttOggi->commessa_gestionale !== $commessa) {
             $abbandonata = true;
-            $motivo = "primo avviamento mattutino oggi";
+            $motivo = "primo avviamento mattutino (poi operatore passato ad altre commesse)";
         }
     }
 

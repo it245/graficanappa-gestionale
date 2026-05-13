@@ -968,15 +968,21 @@ class PrinectSyncService
                 $abbandonata = true;
             }
 
-            // Fix avviamento mattutino: se ultima attività della fase è
-            // LA PRIMA attività di oggi sulla macchina (accensione/riscaldamento),
-            // la fase è di ieri ed e' abbandonata anche se "stesso giorno".
+            // Fix avviamento mattutino: oggi la macchina ha iniziato con questa
+            // commessa (riscaldamento/avviamento di ieri) MA dopo è passata
+            // ad altre commesse -> fase abbandonata anche se "stesso giorno".
             if (!$abbandonata && $giornoAttivita === $oggi) {
                 $primaAttOggi = PrinectAttivita::where('device_id', $ultimaAttivita->device_id)
                     ->whereDate('start_time', $oggi)
                     ->orderBy('start_time')
                     ->first();
-                if ($primaAttOggi && $primaAttOggi->id === $ultimaAttivita->id) {
+                $ultimaAttOggi = PrinectAttivita::where('device_id', $ultimaAttivita->device_id)
+                    ->whereDate('start_time', $oggi)
+                    ->orderByDesc('start_time')
+                    ->first();
+                if ($primaAttOggi && $ultimaAttOggi
+                    && $primaAttOggi->commessa_gestionale === $commessa
+                    && $ultimaAttOggi->commessa_gestionale !== $commessa) {
                     $abbandonata = true;
                 }
             }
