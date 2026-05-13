@@ -373,7 +373,17 @@
                         ->where('id', '!=', $fase->ordine->id ?? 0)
                         ->select('id', 'cod_art', 'descrizione', 'qta_richiesta')
                         ->get();
-                    $qtaCommessaTotale = (int) $qtaOrdine + (int) $altriArticoli->sum('qta_richiesta');
+                    // Opuscoli/Riviste: copertina+interno = 1 prodotto fisico, prendi MAX
+                    $codArt = $fase->ordine->cod_art ?? '';
+                    $isOpuscolo = stripos($codArt, 'Opuscoli') !== false
+                        || stripos($codArt, 'Rivist') !== false
+                        || stripos($codArt, 'Libret') !== false
+                        || stripos($codArt, 'Catalog') !== false;
+                    if ($isOpuscolo) {
+                        $qtaCommessaTotale = (int) max($qtaOrdine, (int) $altriArticoli->max('qta_richiesta'));
+                    } else {
+                        $qtaCommessaTotale = (int) $qtaOrdine + (int) $altriArticoli->sum('qta_richiesta');
+                    }
                     // Suggerimento basato su qta TOTALE commessa (non singolo articolo)
                     $suggerimento = $qtaDDT >= $qtaCommessaTotale ? 'totale' : 'parziale';
                 @endphp
