@@ -1220,18 +1220,19 @@
             input.value = '';
             input.focus();
 
-            // Parse mention @Canale: se presente e' un canale conosciuto, invia LI'
-            // invece del canale corrente. @Tutti = comportamento default (broadcast).
+            // Parse mention @Canale: match longest contro lista canali noti
+            // (gestisce nomi con spazi tipo "Stampa a Caldo").
             var canaleInvio = cpCanale;
-            var mentions = testo.match(/@([A-Za-zÀ-ÿ\s]+?)(?=\s|$)/g);
-            if (mentions) {
-                for (var i = 0; i < mentions.length; i++) {
-                    var mention = mentions[i].substring(1).trim().toLowerCase();
-                    if (mention === 'tutti') continue;
-                    var match = cpCanali.find(function(c) { return c.toLowerCase() === mention; });
-                    if (match) { canaleInvio = match; break; }
+            var testoLower = testo.toLowerCase();
+            var bestMatch = null;
+            cpCanali.forEach(function(c) {
+                if (c.toLowerCase() === 'tutti') return;
+                var needle = '@' + c.toLowerCase();
+                if (testoLower.indexOf(needle) !== -1) {
+                    if (!bestMatch || c.length > bestMatch.length) bestMatch = c;
                 }
-            }
+            });
+            if (bestMatch) canaleInvio = bestMatch;
 
             // Append locale solo se il canale di invio coincide con la vista corrente.
             // Altrimenti il messaggio appare nel canale reale al prossimo poll/cambio tab.
