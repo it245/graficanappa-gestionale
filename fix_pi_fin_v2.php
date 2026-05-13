@@ -14,12 +14,14 @@ $dryRun = in_array('--dry-run', $argv);
 echo "\n=== Fix v2: ordini distinti per PRD (DRY-RUN=" . ($dryRun ? 'SI' : 'NO') . ") ===\n\n";
 
 // STEP 1: Rollback fasi create da v1 (descrizione_fase popolato)
-$daCancellare = OrdineFase::whereNotNull('descrizione_fase')->whereNull('deleted_at')->count();
-echo "STEP 1: Rollback fasi v1 con descrizione_fase: $daCancellare\n";
-if (!$dryRun && $daCancellare > 0) {
-    OrdineFase::whereNotNull('descrizione_fase')->forceDelete();
+$idDaCancellare = OrdineFase::whereNotNull('descrizione_fase')->whereNull('deleted_at')->pluck('id')->toArray();
+echo "STEP 1: Rollback fasi v1 con descrizione_fase: " . count($idDaCancellare) . "\n";
+if (!$dryRun && !empty($idDaCancellare)) {
+    OrdineFase::whereIn('id', $idDaCancellare)->forceDelete();
     echo "  Cancellate.\n";
 }
+// Esclude in mesCount le fasi v1 (in modo che dry-run simuli rollback)
+$idV1Set = array_flip($idDaCancellare);
 
 $gruppi = [
     'PI'  => ['PI01','PI02','PI03'],
@@ -49,6 +51,9 @@ foreach ($gruppi as $gruppoNome => $faseList) {
             ->where('ordini.commessa', $comm)
             ->whereIn('ordine_fasi.fase', $faseList)
             ->whereNull('ordine_fasi.deleted_at')
+            ->when(!empty($idV1Set), function ($q) use ($idV1Set) {
+                $q->whereNotIn('ordine_fasi.id', array_keys($idV1Set));
+            })
             ->count();
 
         $ondaPrd = DB::connection('onda')->select(
@@ -87,6 +92,9 @@ foreach ($gruppi as $gruppoNome => $faseList) {
             ->whereIn('ordine_fasi.fase', $faseList)
             ->whereIn('ordine_fasi.stato', ['0','1','2'])
             ->whereNull('ordine_fasi.deleted_at')
+            ->when(!empty($idV1Set), function ($q) use ($idV1Set) {
+                $q->whereNotIn('ordine_fasi.id', array_keys($idV1Set));
+            })
             ->select('ordine_fasi.*')
             ->first();
 
