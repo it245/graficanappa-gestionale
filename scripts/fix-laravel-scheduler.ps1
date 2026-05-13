@@ -27,11 +27,13 @@ cd /d C:\progetti\graficanappa-gestionale
 
 $action = New-ScheduledTaskAction -Execute $batchPath -WorkingDirectory 'C:\progetti\graficanappa-gestionale'
 
+# Trigger ogni 2 min (era 1 min ma excel:sync dura ~1m5s -> sovrapposizioni saltate)
 $trigger = New-ScheduledTaskTrigger -Once -At (Get-Date)
-$trigger.Repetition = $(New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Minutes 1) -RepetitionDuration ([TimeSpan]::FromDays(3650))).Repetition
+$trigger.Repetition = $(New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Minutes 2) -RepetitionDuration ([TimeSpan]::FromDays(3650))).Repetition
 
+# Timeout 5 min (era 2 min, troppo stretto per excel:sync 1m5s + altri comandi)
 $settings = New-ScheduledTaskSettingsSet `
-    -ExecutionTimeLimit (New-TimeSpan -Minutes 2) `
+    -ExecutionTimeLimit (New-TimeSpan -Minutes 5) `
     -MultipleInstances IgnoreNew `
     -StartWhenAvailable `
     -AllowStartIfOnBatteries `
