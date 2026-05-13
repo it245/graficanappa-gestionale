@@ -3,32 +3,18 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
+// use Illuminate\Database\Eloquent\SoftDeletes; // commentato per software house
 
 class ChatMessage extends Model
 {
-    use SoftDeletes;
+    // use SoftDeletes; // commentato per software house
 
-    protected $fillable = ['operatore_id', 'messaggio', 'canale', 'hidden_for', 'audio_path', 'audio_durata_sec'];
-
-    protected $casts = [
-        'hidden_for' => 'array',
-    ];
+    protected $fillable = ['operatore_id', 'messaggio', 'canale'];
 
     public function operatore()
     {
         return $this->belongsTo(Operatore::class);
     }
 
-    public function letture()
-    {
-        return $this->hasMany(ChatMessageLettura::class, 'chat_message_id');
-    }
-
-    public function isHiddenFor(?int $operatoreId): bool
-    {
-        if (!$operatoreId) return false;
-        $hidden = $this->hidden_for ?? [];
-        return in_array($operatoreId, $hidden);
-    }
+    // Letture / hidden_for / isHiddenFor() — commentati per software house
 }

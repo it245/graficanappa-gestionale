@@ -236,9 +236,10 @@ Route::middleware('operatore.auth')->prefix('chat')->group(function () {
     Route::get('/', [ChatController::class, 'index'])->name('chat.index');
     Route::post('/invia', [ChatController::class, 'invia'])->name('chat.invia');
     Route::get('/messaggi', [ChatController::class, 'messaggi'])->name('chat.messaggi');
-    Route::post('/messaggi/{id}/elimina', [ChatController::class, 'elimina'])->name('chat.elimina');
-    Route::post('/messaggi/{id}/visualizza', [ChatController::class, 'visualizza'])->name('chat.visualizza');
-    Route::post('/audio', [ChatController::class, 'inviaAudio'])->name('chat.audio');
+    // Chat features avanzate (cancella/letture/audio) — commentate per software house, da riattivare a release
+    // Route::post('/messaggi/{id}/elimina', [ChatController::class, 'elimina'])->name('chat.elimina');
+    // Route::post('/messaggi/{id}/visualizza', [ChatController::class, 'visualizza'])->name('chat.visualizza');
+    // Route::post('/audio', [ChatController::class, 'inviaAudio'])->name('chat.audio');
 });
 
 // Magazzino Carta — accessibile da spedizione (Emanuele), owner e admin

@@ -83,47 +83,7 @@ class ChatController extends Controller
         return view('chat.index', compact('messaggi', 'canale', 'canali', 'operatoreId'));
     }
 
-    /**
-     * Invia messaggio audio (vocale).
-     * Body multipart: canale, audio (file), durata (sec)
-     */
-    public function inviaAudio(Request $request)
-    {
-        $request->validate([
-            'canale' => 'required|string|max:50',
-            'audio' => 'required|file|mimes:webm,mp3,ogg,wav,m4a|max:5120', // 5MB
-            'durata' => 'nullable|integer|min:1|max:300',
-        ]);
-
-        if (!$this->operatoreVedeCanale($request, $request->canale)) {
-            return response()->json(['ok' => false, 'errore' => 'Canale non autorizzato'], 403);
-        }
-
-        $operatoreId = $this->getOperatoreId($request);
-        $file = $request->file('audio');
-        $nome = 'chat_' . $operatoreId . '_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-        $path = $file->storeAs('chat-audio', $nome, 'public');
-
-        $chatMessage = ChatMessage::create([
-            'operatore_id'    => $operatoreId,
-            'messaggio'       => '[Vocale]',
-            'canale'          => $request->canale,
-            'audio_path'      => $path,
-            'audio_durata_sec' => $request->input('durata'),
-        ]);
-        $chatMessage->load('operatore');
-
-        try { broadcast(new \App\Events\NuovoMessaggioChat($chatMessage)); } catch (\Throwable $e) {}
-
-        return response()->json([
-            'ok' => true,
-            'id' => $chatMessage->id,
-            'audio_url' => asset('storage/' . $path),
-            'durata' => $chatMessage->audio_durata_sec,
-            'utente' => $chatMessage->operatore->nome ?? 'Utente',
-            'timestamp' => $chatMessage->created_at->format('H:i'),
-        ]);
-    }
+    // inviaAudio() — commentato per software house, richiede HTTPS
 
     public function invia(Request $request)
     {
@@ -162,82 +122,14 @@ class ChatController extends Controller
         ]);
     }
 
-    /**
-     * Elimina messaggio.
-     * Scope 'me': nasconde solo per l'utente corrente (hidden_for array).
-     * Scope 'all': soft delete totale. Permesso solo se autore (entro 5 min) o owner/admin.
+    /*
+     * Chat features avanzate (cancella/letture/audio) — commentate per software house.
+     * Da riattivare assieme alle relative route quando le feature saranno presentate.
      */
-    public function elimina(Request $request, int $id)
-    {
-        $scope = $request->input('scope', 'me');
-        $msg = ChatMessage::find($id);
-        if (!$msg) return response()->json(['ok' => false, 'errore' => 'Messaggio non trovato'], 404);
-
-        $opId = $this->getOperatoreId($request);
-        $ruolo = $request->attributes->get('operatore_ruolo') ?? session('operatore_ruolo') ?? '';
-        $isOwnerAdmin = in_array($ruolo, ['owner', 'admin']);
-
-        if ($scope === 'all') {
-            $isAutore = $msg->operatore_id === $opId;
-            $entroFinestra = $msg->created_at && $msg->created_at->diffInMinutes(now()) <= 5;
-            if (!$isOwnerAdmin && !($isAutore && $entroFinestra)) {
-                return response()->json(['ok' => false, 'errore' => 'Non autorizzato'], 403);
-            }
-            $msg->delete(); // soft delete
-            return response()->json(['ok' => true, 'scope' => 'all']);
-        }
-
-        // scope 'me'
-        if (!$opId) return response()->json(['ok' => false, 'errore' => 'Sessione richiesta'], 401);
-        $hidden = $msg->hidden_for ?? [];
-        if (!in_array($opId, $hidden)) {
-            $hidden[] = $opId;
-            $msg->hidden_for = $hidden;
-            $msg->save();
-        }
-        return response()->json(['ok' => true, 'scope' => 'me']);
-    }
-
-    /**
-     * Registra visualizzazione (idempotente). Solo operatori loggati.
-     */
-    public function visualizza(Request $request, int $id)
-    {
-        $opId = $this->getOperatoreId($request);
-        if (!$opId) return response()->json(['ok' => false], 401);
-
-        $msg = ChatMessage::find($id);
-        if (!$msg) return response()->json(['ok' => false], 404);
-        if ($msg->operatore_id === $opId) return response()->json(['ok' => true, 'skip' => 'self']);
-
-        \App\Models\ChatMessageLettura::firstOrCreate(
-            ['chat_message_id' => $id, 'operatore_id' => $opId],
-            ['letto_at' => now()]
-        );
-        return response()->json(['ok' => true]);
-    }
-
-    /**
-     * Numero di operatori destinatari di un canale (escluso autore).
-     * Usato per "✓✓ blu" quando tutti hanno letto.
-     */
-    private function destinatariCanale(string $canale, int $escludiOpId): int
-    {
-        $query = \App\Models\Operatore::where('attivo', true)
-            ->where('id', '!=', $escludiOpId);
-
-        if ($canale === 'Tutti' || $canale === 'Urgenze') {
-            return $query->count();
-        }
-
-        $map = $this->canaliRepartiMap();
-        $repartiTarget = $map[$canale] ?? [];
-        if (empty($repartiTarget)) return 0;
-
-        return $query->whereHas('reparti', function ($q) use ($repartiTarget) {
-            $q->whereIn(\DB::raw('LOWER(nome)'), array_map('strtolower', $repartiTarget));
-        })->count();
-    }
+    // public function elimina(Request $request, int $id) { ... }
+    // public function visualizza(Request $request, int $id) { ... }
+    // public function inviaAudio(Request $request) { ... }
+    // private function destinatariCanale(string $canale, int $escludiOpId): int { ... }
 
     public function messaggi(Request $request)
     {
@@ -249,41 +141,19 @@ class ChatController extends Controller
             return response()->json([]);
         }
 
-        $messaggi = ChatMessage::with(['operatore', 'letture.operatore'])
-            ->withTrashed()
+        $messaggi = ChatMessage::with('operatore')
             ->where('canale', $canale)
             ->where('id', '>', $after)
             ->orderBy('created_at')
             ->limit(50)
             ->get()
-            ->filter(fn($m) => !$m->isHiddenFor($operatoreId))
-            ->map(function ($m) use ($operatoreId, $canale) {
-                $letture = $m->letture->map(fn($l) => [
-                    'operatore_id' => $l->operatore_id,
-                    'nome' => $l->operatore->nome ?? 'Utente',
-                    'letto_at' => $l->letto_at->format('d/m H:i'),
-                ])->values();
-                $destinatari = $m->operatore_id === $operatoreId
-                    ? $this->destinatariCanale($canale, $m->operatore_id)
-                    : 0;
-                $audioUrl = $m->audio_path ? asset('storage/' . $m->audio_path) : null;
-                return [
-                    'id' => $m->id,
-                    'messaggio' => $m->messaggio,
-                    'audio_url' => $audioUrl,
-                    'audio_durata_sec' => $m->audio_durata_sec,
-                    'utente' => $m->operatore->nome ?? 'Utente',
-                    'timestamp' => $m->created_at->format('H:i'),
-                    'mio' => $m->operatore_id === $operatoreId,
-                    'autore_id' => $m->operatore_id,
-                    'eta_min' => (int) $m->created_at->diffInMinutes(now()),
-                    'eliminato' => $m->trashed(),
-                    'letture_count' => $letture->count(),
-                    'letture' => $letture,
-                    'destinatari_count' => $destinatari,
-                ];
-            })
-            ->values();
+            ->map(fn($m) => [
+                'id' => $m->id,
+                'messaggio' => $m->messaggio,
+                'utente' => $m->operatore->nome ?? 'Utente',
+                'timestamp' => $m->created_at->format('H:i'),
+                'mio' => $m->operatore_id === $operatoreId,
+            ]);
 
         return response()->json($messaggi);
     }

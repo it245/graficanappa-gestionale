@@ -1151,7 +1151,7 @@
                 updateBadge();
                 cpLoadCanali();
                 cpLoadMessaggi();
-                if (!cpPollTimer) cpPollTimer = setInterval(cpPoll, 2000);
+                if (!cpPollTimer) cpPollTimer = setInterval(cpPoll, 10000);
                 setTimeout(function() { document.getElementById('cpInput').focus(); }, 100);
             }
         };
@@ -1194,61 +1194,16 @@
         function cpAppend(msg, container) {
             if (!container) container = document.getElementById('cpMsgs');
             var div = document.createElement('div');
-            var isMio = msg.operatore_id === cpOperatoreId || msg.mio || msg.autore_id === cpOperatoreId;
-            div.className = 'cp-msg ' + (isMio ? 'mio' : 'altro') + (msg.eliminato ? ' eliminato' : '');
-            if (msg.id) div.dataset.msgId = msg.id;
-            div.dataset.lettureCount = (msg.letture_count || 0);
-            div.dataset.destinatariCount = (msg.destinatari_count || 0);
+            var isMio = msg.operatore_id === cpOperatoreId || msg.mio;
+            div.className = 'cp-msg ' + (isMio ? 'mio' : 'altro');
             var html = '';
-            if (!isMio && !msg.eliminato) html += '<div class="cp-utente">' + cpEsc(msg.utente || msg.operatore_nome || '') + '</div>';
-            if (msg.eliminato) {
-                html += '<div style="font-style:italic;color:var(--text-secondary,#888);">🚫 Questo messaggio è stato eliminato</div>';
-            } else if (msg.audio_url) {
-                var durata = msg.audio_durata_sec ? msg.audio_durata_sec + 's' : '';
-                html += '<div style="display:flex;align-items:center;gap:6px;">'
-                     + '<audio controls preload="metadata" style="height:32px;max-width:200px;" src="' + cpEsc(msg.audio_url) + '"></audio>'
-                     + (durata ? '<span style="font-size:11px;color:#888;">' + durata + '</span>' : '')
-                     + '</div>';
-            } else {
-                var msgText = cpEsc(msg.messaggio);
-                msgText = msgText.replace(/@([A-Za-zÀ-ÿ\s]+?)(?=\s|$)/g, '<span style="color:var(--accent,#2563eb);font-weight:600;">@$1</span>');
-                html += '<div>' + msgText + '</div>';
-            }
-            html += '<div class="cp-ora">' + cpEsc(msg.timestamp || '');
-            // Letture: ✓ grigio (inviato), ✓✓ grigio (qualcuno ha letto), ✓✓ blu (tutti letto)
-            if (isMio && !msg.eliminato && msg.id) {
-                var lc = typeof msg.letture_count === 'number' ? msg.letture_count : 0;
-                var dc = typeof msg.destinatari_count === 'number' ? msg.destinatari_count : 0;
-                var checkSymbol, checkColor;
-                if (lc === 0) { checkSymbol = '✓'; checkColor = '#9ca3af'; }
-                else if (dc > 0 && lc >= dc) { checkSymbol = '✓✓'; checkColor = '#2563eb'; }
-                else { checkSymbol = '✓✓'; checkColor = '#9ca3af'; }
-                var titolo = lc + (dc > 0 ? '/' + dc : '') + ' letture';
-                html += ' <span class="cp-letture" data-msgid="' + msg.id + '"'
-                     + ' style="margin-left:6px;color:' + checkColor + ';font-size:11px;cursor:pointer;font-weight:600;"'
-                     + ' title="' + titolo + '">' + checkSymbol + '</span>';
-            }
-            if (msg.id && !msg.eliminato) {
-                var canDeleteAll = isMio && (typeof msg.eta_min !== 'number' || msg.eta_min <= 5);
-                html += ' <span class="cp-del-trigger" data-msgid="' + msg.id + '"'
-                     + ' data-canall="' + (canDeleteAll ? '1' : '0') + '"'
-                     + ' style="margin-left:8px;cursor:pointer;opacity:0.6;font-size:11px;">⋮</span>';
-            }
-            html += '</div>';
+            if (!isMio) html += '<div class="cp-utente">' + cpEsc(msg.utente || msg.operatore_nome || '') + '</div>';
+            var msgText = cpEsc(msg.messaggio);
+            msgText = msgText.replace(/@([A-Za-zÀ-ÿ\s]+?)(?=\s|$)/g, '<span style="color:var(--accent,#2563eb);font-weight:600;">@$1</span>');
+            html += '<div>' + msgText + '</div>';
+            html += '<div class="cp-ora">' + cpEsc(msg.timestamp || '') + '</div>';
             div.innerHTML = html;
             container.appendChild(div);
-            var trigger = div.querySelector('.cp-del-trigger');
-            if (trigger) trigger.addEventListener('click', cpMostraMenuElimina);
-            var letture = div.querySelector('.cp-letture');
-            if (letture) letture.addEventListener('click', function(e) {
-                e.stopPropagation();
-                cpMostraDettaglioLetture(msg);
-            });
-            cpAttachLongPress(div, msg);
-            // Marca come letto se non e' mio + ha id (registra visualizzazione)
-            if (!isMio && msg.id && !msg.eliminato) {
-                cpSegnaLetto(msg.id);
-            }
         }
 
         // Beep per nuovi messaggi (AudioContext, no file)
@@ -1512,107 +1467,40 @@
             input.value = '';
             input.focus();
 
-            // Parse mention @Canale: match longest contro lista canali noti
-            // (gestisce nomi con spazi tipo "Stampa a Caldo").
-            var canaleInvio = cpCanale;
-            var testoLower = testo.toLowerCase();
-            var bestMatch = null;
-            cpCanali.forEach(function(c) {
-                if (c.toLowerCase() === 'tutti') return;
-                var needle = '@' + c.toLowerCase();
-                if (testoLower.indexOf(needle) !== -1) {
-                    if (!bestMatch || c.length > bestMatch.length) bestMatch = c;
-                }
+            cpAppend({
+                messaggio: testo,
+                utente: cpOperatoreNome,
+                timestamp: new Date().toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit'}),
+                mio: true
             });
-            if (bestMatch) canaleInvio = bestMatch;
+            var container = document.getElementById('cpMsgs');
+            container.scrollTop = container.scrollHeight;
 
-            // Append locale ottimistico. Marca temp_id per matching post-server.
-            var tempEl = null;
-            if (canaleInvio === cpCanale) {
-                var container = document.getElementById('cpMsgs');
-                cpAppend({
-                    messaggio: testo,
-                    utente: cpOperatoreNome,
-                    timestamp: new Date().toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit'}),
-                    mio: true,
-                    autore_id: cpOperatoreId
-                }, container);
-                tempEl = container.lastElementChild;
-                if (tempEl) tempEl.dataset.tempPending = '1';
-                container.scrollTop = container.scrollHeight;
-            } else if (window.MES && typeof MES.toast === 'function') {
-                MES.toast('Inviato a @' + canaleInvio, 'success', 2500);
-            }
-
-            // Refresh CSRF token PRIMA del POST (evita 419 Sessione scaduta)
-            fetch('/csrf-refresh').then(function(r) { return r.json(); }).then(function(d) {
-                if (d && d.token) {
-                    var meta = document.querySelector('meta[name="csrf-token"]');
-                    if (meta) meta.setAttribute('content', d.token);
-                }
-            }).catch(function() {}).finally(function() {
-                fetch('/chat/invia', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken(), 'Accept': 'application/json' },
-                    body: JSON.stringify({ messaggio: testo, canale: canaleInvio })
-                }).then(function(r) { return r.json(); })
-                  .then(function(data) {
-                      if (data && data.ok) {
-                          cpUltimoId = Math.max(cpUltimoId, data.id || cpUltimoId);
-                          if (tempEl && data.id) {
-                              // Rimuovi tempEl e ricrea con id + marker ⋮/✓ subito visibili
-                              var container = document.getElementById('cpMsgs');
-                              tempEl.remove();
-                              cpAppend({
-                                  id: data.id,
-                                  messaggio: testo,
-                                  utente: cpOperatoreNome,
-                                  timestamp: data.timestamp || new Date().toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit'}),
-                                  mio: true,
-                                  autore_id: cpOperatoreId,
-                                  eta_min: 0,
-                                  eliminato: false,
-                                  letture_count: 0,
-                                  destinatari_count: 0,
-                                  letture: []
-                              }, container);
-                              container.scrollTop = container.scrollHeight;
-                          }
-                      }
-                  })
-                  .catch(function(e) { console.error('Chat errore:', e); });
-            });
+            fetch('/chat/invia', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken(), 'Accept': 'application/json' },
+                body: JSON.stringify({ messaggio: testo, canale: cpCanale })
+            }).then(function(r) { return r.json(); })
+              .then(function(data) { if (data.ok) cpUltimoId = Math.max(cpUltimoId, data.id || cpUltimoId); })
+              .catch(function(e) { console.error('Chat errore:', e); });
         };
 
         function cpPoll() {
-            // Refresh totale: ricarica ultimi 50 messaggi, aggiunge i nuovi,
-            // aggiorna i tombstone (eliminato), niente duplicati.
-            fetch('/chat/messaggi?canale=' + cpCanale + '&after=0')
+            fetch('/chat/messaggi?canale=' + cpCanale + '&after=' + cpUltimoId)
                 .then(function(r) { return r.json(); })
                 .then(function(msgs) {
                     var container = document.getElementById('cpMsgs');
                     var vuota = container.querySelector('div[style*="text-align:center"]');
                     msgs.forEach(function(m) {
-                        var existing = container.querySelector('.cp-msg[data-msg-id="' + m.id + '"]');
-                        if (existing) {
-                            // Update se cambiato: eliminato OR letture_count
-                            var oldLC = parseInt(existing.dataset.lettureCount || '0');
-                            var changed = (m.eliminato && !existing.classList.contains('eliminato'))
-                                       || ((m.letture_count || 0) !== oldLC);
-                            if (changed) {
-                                existing.remove();
+                        if (m.id > cpUltimoId) {
+                            if (!m.mio && m.operatore_id !== cpOperatoreId) {
+                                if (vuota) { vuota.remove(); vuota = null; }
                                 cpAppend(m, container);
-                            }
-                        } else {
-                            if (vuota) { vuota.remove(); vuota = null; }
-                            cpAppend(m, container);
-                            container.scrollTop = container.scrollHeight;
-                            if (!m.mio && m.autore_id !== cpOperatoreId) {
-                                cpBeep();
+                                container.scrollTop = container.scrollHeight;
                                 if (!cpOpen) { cpUnread++; updateBadge(); }
                             }
+                            cpUltimoId = m.id;
                         }
-                        if (m.id > cpUltimoId) cpUltimoId = m.id;
                     });
                 })
                 .catch(function() {});

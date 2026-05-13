@@ -225,3 +225,99 @@ Success Criteria (End-2028):
 
 Status: APPROVED FOR DEVELOPMENT
 Generated: 29 April 2026
+
+---
+
+## 8. ADDENDUM (12 MAGGIO 2026) — API INTERNA MES + MCP SERVER
+
+Richiesta capo Antonio: esporre MES come API e MCP **per uso interno**.
+- Query natural language via Claude Desktop / Cursor (capo + dev)
+- Eventuali integrazioni custom in azienda
+- Base per futura esposizione partner (Dedalo / SaaS multi-tenant) quando sarà il momento
+
+**Scope ATTUALE = solo interno**. No partner exposure, no Sanctum complesso, no Swagger pubblico, no webhook esterni.
+
+### 8.1 Fasi implementazione (scope interno)
+
+| Fase | Durata | Deliverable | Budget |
+|---|---|---|---|
+| A1. API REST v1 read-only (uso interno) | 1-2 settimane | 8-10 endpoint core (commesse, fasi, macchine, reports). Auth: IP whitelist o token semplice .env | EUR 2-3K dev |
+| A2. MCP server Python (FastMCP) | 1 settimana | 6 tool MCP (query/lista/genera/stato/report/cerca). Stdio locale per Claude Desktop | EUR 2K dev |
+| A3. API write minimale (opzionale) | 3-5 giorni | PATCH stato fasi, POST etichette | EUR 1K dev |
+
+Totale interno: **2-3 settimane**, ~EUR 4-5K dev.
+
+### 8.1bis Estensioni future (NON in scope ora)
+
+Quando il capo deciderà esposizione esterna:
+- Sanctum tokens + scope per tenant
+- Rate limit + Swagger pubblico
+- Webhook outbound HMAC firmati
+- CORS whitelist partner
+- API v2 GraphQL
+- SaaS multi-tenant via API
+
+### 8.2 Tech stack (scope interno)
+
+- **API REST**: Laravel 12 + API Resources, prefisso `/api/v1/`
+- **Auth interna**: token statico in `.env` (`MES_API_TOKEN`) o IP whitelist Apache/middleware
+- **MCP server**: Python 3.13 + FastMCP SDK Anthropic, wrappa API REST sotto
+- **Deploy MCP**: locale via stdio (Claude Desktop su Mac capo e PC dev)
+- **Docs**: README markdown interno (no Swagger pubblico)
+
+### 8.3 Endpoint API v1 catalogo
+
+GET /api/v1/commesse                 lista filtrata
+GET /api/v1/commesse/{commessa}      dettaglio + fasi
+GET /api/v1/ordini-fasi              query stato/reparto/operatore
+GET /api/v1/ordini-fasi/{id}         dettaglio fase
+GET /api/v1/macchine                 lista macchine + status
+GET /api/v1/macchine/{id}/stato      Prinect/Fiery live
+GET /api/v1/reports/giornaliero      KPI direzione
+GET /api/v1/reports/ore              ore lavorate per periodo
+GET /api/v1/clienti                  anagrafica
+GET /api/v1/articoli                 magazzino
+POST /api/v1/etichette               genera DataMatrix
+PATCH /api/v1/ordini-fasi/{id}/stato cambio stato
+POST /api/v1/webhook/subscribe       abbonamento eventi
+GET /api/v1/health                   liveness
+
+### 8.4 Tool MCP
+
+| Tool | Function |
+|---|---|
+| query_commessa(id) | Dettagli commessa + fasi + scheduling |
+| lista_fasi_attive(reparto?) | Fasi stato avviato/pronto |
+| genera_preventivo(carta, qta, fasi) | Quote engine |
+| stato_macchine() | XL106 / Fiery / Indigo live |
+| report_giornaliero(data) | KPI fasi terminate + ore + scarti |
+| cerca_cliente(nome) | Anagrafica + storico ordini |
+
+### 8.5 Use case
+
+- **Capo Antonio**: chat Claude Desktop → "quante commesse in ritardo oggi?" → MCP risponde
+- **Dedalo (partner)**: HTTP integration MES nel loro gestionale → query commesse cliente in real-time
+- **Cron AI**: scheduler Mossa 37 chiama API per propagazione fasi cross-instance multi-tenant
+- **Mobile app**: app cliente B2B vede stato proprio ordine via API
+
+### 8.6 Sicurezza API
+
+- Token Sanctum con scope (read, write, admin)
+- Rate limit per token
+- Audit log automatico per ogni chiamata
+- Webhook firmati HMAC-SHA256
+- CORS whitelist per partner
+
+### 8.7 Roadmap integrazione
+
+| Q | Milestone |
+|---|---|
+| Q2 2026 | API REST v1 read-only + Sanctum + Swagger |
+| Q3 2026 | MCP server Python + tool base |
+| Q3 2026 | API write endpoints + webhook |
+| Q4 2026 | Partner integration Dedalo (pilot) |
+| Q1 2027 | API v2 + GraphQL (opzionale) |
+| Q2 2027 | SaaS multi-tenant via API |
+
+Status: PROPOSTA — attesa approvazione capo
+Generato: 12 maggio 2026
