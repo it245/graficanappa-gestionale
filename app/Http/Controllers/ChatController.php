@@ -175,6 +175,28 @@ class ChatController extends Controller
         return response()->json(['ok' => true]);
     }
 
+    /**
+     * Numero di operatori destinatari di un canale (escluso autore).
+     * Usato per "✓✓ blu" quando tutti hanno letto.
+     */
+    private function destinatariCanale(string $canale, int $escludiOpId): int
+    {
+        $query = \App\Models\Operatore::where('attivo', true)
+            ->where('id', '!=', $escludiOpId);
+
+        if ($canale === 'Tutti' || $canale === 'Urgenze') {
+            return $query->count();
+        }
+
+        $map = $this->canaliRepartiMap();
+        $repartiTarget = $map[$canale] ?? [];
+        if (empty($repartiTarget)) return 0;
+
+        return $query->whereHas('reparti', function ($q) use ($repartiTarget) {
+            $q->whereIn(\DB::raw('LOWER(nome)'), array_map('strtolower', $repartiTarget));
+        })->count();
+    }
+
     public function messaggi(Request $request)
     {
         $canale = $request->query('canale', 'generale');
@@ -193,12 +215,15 @@ class ChatController extends Controller
             ->limit(50)
             ->get()
             ->filter(fn($m) => !$m->isHiddenFor($operatoreId))
-            ->map(function ($m) use ($operatoreId) {
+            ->map(function ($m) use ($operatoreId, $canale) {
                 $letture = $m->letture->map(fn($l) => [
                     'operatore_id' => $l->operatore_id,
                     'nome' => $l->operatore->nome ?? 'Utente',
                     'letto_at' => $l->letto_at->format('d/m H:i'),
                 ])->values();
+                $destinatari = $m->operatore_id === $operatoreId
+                    ? $this->destinatariCanale($canale, $m->operatore_id)
+                    : 0;
                 return [
                     'id' => $m->id,
                     'messaggio' => $m->messaggio,
@@ -210,6 +235,7 @@ class ChatController extends Controller
                     'eliminato' => $m->trashed(),
                     'letture_count' => $letture->count(),
                     'letture' => $letture,
+                    'destinatari_count' => $destinatari,
                 ];
             })
             ->values();

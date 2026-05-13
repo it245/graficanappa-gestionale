@@ -1207,14 +1207,18 @@
                 html += '<div>' + msgText + '</div>';
             }
             html += '<div class="cp-ora">' + cpEsc(msg.timestamp || '');
-            // Check letture (✓ inviato, ✓✓ letto) solo per messaggi miei non eliminati
+            // Letture: ✓ grigio (inviato), ✓✓ grigio (qualcuno ha letto), ✓✓ blu (tutti letto)
             if (isMio && !msg.eliminato && msg.id) {
-                var letturePopup = typeof msg.letture_count === 'number' ? msg.letture_count : 0;
-                var checkColor = letturePopup > 0 ? '#2563eb' : '#9ca3af';
-                var checkSymbol = letturePopup > 0 ? '✓✓' : '✓';
+                var lc = typeof msg.letture_count === 'number' ? msg.letture_count : 0;
+                var dc = typeof msg.destinatari_count === 'number' ? msg.destinatari_count : 0;
+                var checkSymbol, checkColor;
+                if (lc === 0) { checkSymbol = '✓'; checkColor = '#9ca3af'; }
+                else if (dc > 0 && lc >= dc) { checkSymbol = '✓✓'; checkColor = '#2563eb'; }
+                else { checkSymbol = '✓✓'; checkColor = '#9ca3af'; }
+                var titolo = lc + (dc > 0 ? '/' + dc : '') + ' letture';
                 html += ' <span class="cp-letture" data-msgid="' + msg.id + '"'
                      + ' style="margin-left:6px;color:' + checkColor + ';font-size:11px;cursor:pointer;font-weight:600;"'
-                     + ' title="' + letturePopup + ' letture">' + checkSymbol + '</span>';
+                     + ' title="' + titolo + '">' + checkSymbol + '</span>';
             }
             if (msg.id && !msg.eliminato) {
                 var canDeleteAll = isMio && (typeof msg.eta_min !== 'number' || msg.eta_min <= 5);
