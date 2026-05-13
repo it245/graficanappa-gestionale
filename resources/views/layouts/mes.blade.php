@@ -1251,6 +1251,25 @@
             }
         }
 
+        // Beep per nuovi messaggi (AudioContext, no file)
+        var cpAudioCtx = null;
+        function cpBeep() {
+            try {
+                if (!cpAudioCtx) cpAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                var ctx = cpAudioCtx;
+                var osc = ctx.createOscillator();
+                var gain = ctx.createGain();
+                osc.connect(gain); gain.connect(ctx.destination);
+                osc.type = 'sine';
+                osc.frequency.value = 880;
+                gain.gain.setValueAtTime(0, ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.15, ctx.currentTime + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+                osc.start(ctx.currentTime);
+                osc.stop(ctx.currentTime + 0.3);
+            } catch (e) {}
+        }
+
         function cpSegnaLetto(msgId) {
             if (!window._cpLetti) window._cpLetti = {};
             if (window._cpLetti[msgId]) return;
@@ -1588,8 +1607,9 @@
                             if (vuota) { vuota.remove(); vuota = null; }
                             cpAppend(m, container);
                             container.scrollTop = container.scrollHeight;
-                            if (!cpOpen && !m.mio && m.autore_id !== cpOperatoreId) {
-                                cpUnread++; updateBadge();
+                            if (!m.mio && m.autore_id !== cpOperatoreId) {
+                                cpBeep();
+                                if (!cpOpen) { cpUnread++; updateBadge(); }
                             }
                         }
                         if (m.id > cpUltimoId) cpUltimoId = m.id;
