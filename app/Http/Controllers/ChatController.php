@@ -187,14 +187,27 @@ class ChatController extends Controller
             return response()->json(['ok' => false, 'errore' => 'Non autorizzato'], 403);
         }
 
+        $durataMin = (int) $request->input('durata_min', 1440);
+
+        // Esplicito unpin: durata_min == -1 oppure pin gia' esistente con durata != -1
         $existing = \DB::table('chat_message_pins')->where('chat_message_id', $id)->first();
-        if ($existing) {
-            // gia' pinnato -> rimuove (unpin)
-            \DB::table('chat_message_pins')->where('chat_message_id', $id)->delete();
+        if ($durataMin === -1) {
+            if ($existing) {
+                \DB::table('chat_message_pins')->where('chat_message_id', $id)->delete();
+            }
             return response()->json(['ok' => true, 'pinned' => false]);
         }
+        if ($existing) {
+            // gia' pinnato e nuova durata richiesta -> aggiorna scadenza (no unpin implicito)
+            $scadeAtUpd = $durataMin > 0 ? now()->addMinutes($durataMin) : null;
+            \DB::table('chat_message_pins')->where('chat_message_id', $id)->update([
+                'scade_at' => $scadeAtUpd,
+                'pinned_by' => $opId,
+                'updated_at' => now(),
+            ]);
+            return response()->json(['ok' => true, 'pinned' => true, 'scade_at' => $scadeAtUpd?->format('d/m H:i')]);
+        }
 
-        $durataMin = (int) $request->input('durata_min', 1440); // default 24h
         $scadeAt = $durataMin > 0 ? now()->addMinutes($durataMin) : null;
 
         // Rimuovi eventuali pin scaduti dello stesso canale
