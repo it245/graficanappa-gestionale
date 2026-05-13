@@ -22,6 +22,10 @@ Artisan::command('priorita:ricalcola', function () {
 // Sync automatico Onda ogni ora (h24)
 Schedule::command('onda:sync')->hourly()->withoutOverlapping();
 
+// Fix multi-modello: subito dopo onda:sync, crea ordini PI/FIN distinti per
+// commesse con cod_art generico (es. "Astucci") e PRD multipli Onda.
+Schedule::command('onda:sync-fix-multi-modello')->hourly()->withoutOverlapping();
+
 // Sync bidirezionale Excel ↔ DB ogni 2 minuti (h24)
 Schedule::command('excel:sync')->everyTwoMinutes()->withoutOverlapping();
 
