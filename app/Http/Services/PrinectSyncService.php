@@ -937,7 +937,7 @@ class PrinectSyncService
     protected function terminaFasiAbbandonate(): void
     {
         $fasiAvviate = OrdineFase::with('ordine')
-            ->where('fogli_buoni', '>=', 0)
+            ->where('fogli_buoni', '>', 0)
             ->where('stato', 2)
             ->where(function ($q) {
                 $q->where('fase', 'LIKE', 'STAMPAXL106%')
@@ -968,18 +968,21 @@ class PrinectSyncService
                 $abbandonata = true;
             }
 
-            // Fix avviamento mattutino + macchina passata ad altra commessa.
-            // Se la macchina ORA sta lavorando altra commessa e l'ultima att
-            // di questa fase è >= 30 min fa, la fase è di fatto abbandonata.
+            // Fix avviamento mattutino: oggi la macchina ha iniziato con questa
+            // commessa (riscaldamento/avviamento di ieri) MA dopo è passata
+            // ad altre commesse -> fase abbandonata anche se "stesso giorno".
             if (!$abbandonata && $giornoAttivita === $oggi) {
+                $primaAttOggi = PrinectAttivita::where('device_id', $ultimaAttivita->device_id)
+                    ->whereDate('start_time', $oggi)
+                    ->orderBy('start_time')
+                    ->first();
                 $ultimaAttOggi = PrinectAttivita::where('device_id', $ultimaAttivita->device_id)
                     ->whereDate('start_time', $oggi)
                     ->orderByDesc('start_time')
                     ->first();
-                $minutiPassati = $ultimoTempo->diffInMinutes(now());
-                if ($ultimaAttOggi
-                    && $ultimaAttOggi->commessa_gestionale !== $commessa
-                    && $minutiPassati >= 30) {
+                if ($primaAttOggi && $ultimaAttOggi
+                    && $primaAttOggi->commessa_gestionale === $commessa
+                    && $ultimaAttOggi->commessa_gestionale !== $commessa) {
                     $abbandonata = true;
                 }
             }
