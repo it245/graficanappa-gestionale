@@ -7,16 +7,19 @@ use App\Models\OrdineFase;
 use App\Models\Ordine;
 use App\Services\FaseStatoService;
 
-$ordine = Ordine::where('commessa', '0067386-26')->first();
-if (!$ordine) { echo "Ordine non trovato\n"; exit; }
+$ordini = Ordine::where('commessa', '0067386-26')->get();
+if ($ordini->isEmpty()) { echo "Ordini non trovati\n"; exit; }
+echo "Ordini commessa 67386: " . $ordini->count() . "\n";
 
-$tutte = OrdineFase::where('ordine_id', $ordine->id)->get(['id','fase','stato','qta_prod']);
-echo "Fasi commessa 67386:\n";
+$ordineIds = $ordini->pluck('id')->toArray();
+
+$tutte = OrdineFase::whereIn('ordine_id', $ordineIds)->get(['id','ordine_id','fase','stato','qta_prod']);
+echo "Fasi totali: " . $tutte->count() . "\n";
 foreach ($tutte as $t) {
-    echo "  id={$t->id} fase=[{$t->fase}] stato={$t->stato} qta={$t->qta_prod}\n";
+    echo "  id={$t->id} ordine={$t->ordine_id} fase=[{$t->fase}] stato={$t->stato} qta={$t->qta_prod}\n";
 }
 
-$fase = OrdineFase::where('ordine_id', $ordine->id)
+$fase = OrdineFase::whereIn('ordine_id', $ordineIds)
     ->where('fase', 'like', '%STAMPA%')
     ->where('stato', 2)
     ->first();
