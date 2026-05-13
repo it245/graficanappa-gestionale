@@ -1233,12 +1233,18 @@
                 }
             }
 
-            cpAppend({
-                messaggio: testo,
-                utente: cpOperatoreNome,
-                timestamp: new Date().toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit'}),
-                mio: true
-            });
+            // Append locale solo se il canale di invio coincide con la vista corrente.
+            // Altrimenti il messaggio appare nel canale reale al prossimo poll/cambio tab.
+            if (canaleInvio === cpCanale) {
+                cpAppend({
+                    messaggio: testo,
+                    utente: cpOperatoreNome,
+                    timestamp: new Date().toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit'}),
+                    mio: true
+                });
+            } else if (window.MES && typeof MES.toast === 'function') {
+                MES.toast('Inviato a @' + canaleInvio, 'success', 2500);
+            }
             var container = document.getElementById('cpMsgs');
             container.scrollTop = container.scrollHeight;
 
