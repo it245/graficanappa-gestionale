@@ -17,6 +17,7 @@ class OrdineFase extends Model
     protected $fillable = [
         'ordine_id',
         'fase',
+        'descrizione_fase',
         'operatore_id',
         'stato',
         'data_inizio',
