@@ -20,6 +20,11 @@ class ChatMessage extends Model
         return $this->belongsTo(Operatore::class);
     }
 
+    public function letture()
+    {
+        return $this->hasMany(ChatMessageLettura::class, 'chat_message_id');
+    }
+
     public function isHiddenFor(?int $operatoreId): bool
     {
         if (!$operatoreId) return false;

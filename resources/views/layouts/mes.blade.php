@@ -1207,6 +1207,15 @@
                 html += '<div>' + msgText + '</div>';
             }
             html += '<div class="cp-ora">' + cpEsc(msg.timestamp || '');
+            // Check letture (✓ inviato, ✓✓ letto) solo per messaggi miei non eliminati
+            if (isMio && !msg.eliminato && msg.id) {
+                var letturePopup = typeof msg.letture_count === 'number' ? msg.letture_count : 0;
+                var checkColor = letturePopup > 0 ? '#2563eb' : '#9ca3af';
+                var checkSymbol = letturePopup > 0 ? '✓✓' : '✓';
+                html += ' <span class="cp-letture" data-msgid="' + msg.id + '"'
+                     + ' style="margin-left:6px;color:' + checkColor + ';font-size:11px;cursor:pointer;font-weight:600;"'
+                     + ' title="' + letturePopup + ' letture">' + checkSymbol + '</span>';
+            }
             if (msg.id && !msg.eliminato) {
                 var canDeleteAll = isMio && (typeof msg.eta_min !== 'number' || msg.eta_min <= 5);
                 html += ' <span class="cp-del-trigger" data-msgid="' + msg.id + '"'
@@ -1218,6 +1227,52 @@
             container.appendChild(div);
             var trigger = div.querySelector('.cp-del-trigger');
             if (trigger) trigger.addEventListener('click', cpMostraMenuElimina);
+            var letture = div.querySelector('.cp-letture');
+            if (letture) letture.addEventListener('click', function(e) {
+                e.stopPropagation();
+                cpMostraDettaglioLetture(msg);
+            });
+            // Marca come letto se non e' mio + ha id (registra visualizzazione)
+            if (!isMio && msg.id && !msg.eliminato) {
+                cpSegnaLetto(msg.id);
+            }
+        }
+
+        function cpSegnaLetto(msgId) {
+            if (!window._cpLetti) window._cpLetti = {};
+            if (window._cpLetti[msgId]) return;
+            window._cpLetti[msgId] = true;
+            fetch('/chat/messaggi/' + msgId + '/visualizza', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken(), 'Accept': 'application/json' }
+            }).catch(function() { delete window._cpLetti[msgId]; });
+        }
+
+        function cpMostraDettaglioLetture(msg) {
+            var existing = document.getElementById('cpLettureModal'); if (existing) existing.remove();
+            var letture = msg.letture || [];
+            var modal = document.createElement('div');
+            modal.id = 'cpLettureModal';
+            modal.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.4);z-index:999999;display:flex;align-items:center;justify-content:center;';
+            var html = '<div style="background:var(--surface,#fff);border-radius:12px;padding:18px;min-width:260px;max-width:340px;box-shadow:0 8px 32px rgba(0,0,0,0.2);">';
+            html += '<div style="font-weight:700;margin-bottom:12px;font-size:15px;">Letto da (' + letture.length + ')</div>';
+            if (letture.length === 0) {
+                html += '<div style="color:#888;font-size:13px;padding:8px 0;">Nessuna lettura ancora</div>';
+            } else {
+                html += '<div style="max-height:300px;overflow-y:auto;">';
+                letture.forEach(function(l) {
+                    html += '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #eee;font-size:13px;">';
+                    html += '<span>' + cpEsc(l.nome) + '</span>';
+                    html += '<span style="color:#888;">' + cpEsc(l.letto_at) + '</span>';
+                    html += '</div>';
+                });
+                html += '</div>';
+            }
+            html += '<button style="margin-top:14px;padding:8px 16px;background:var(--accent,#2563eb);color:#fff;border:none;border-radius:6px;cursor:pointer;width:100%;font-weight:600;" onclick="document.getElementById(\'cpLettureModal\').remove()">Chiudi</button>';
+            html += '</div>';
+            modal.innerHTML = html;
+            modal.addEventListener('click', function(e) { if (e.target === modal) modal.remove(); });
+            document.body.appendChild(modal);
         }
 
         function cpMostraMenuElimina(e) {

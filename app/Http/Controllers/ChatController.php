@@ -156,6 +156,25 @@ class ChatController extends Controller
         return response()->json(['ok' => true, 'scope' => 'me']);
     }
 
+    /**
+     * Registra visualizzazione (idempotente). Solo operatori loggati.
+     */
+    public function visualizza(Request $request, int $id)
+    {
+        $opId = $this->getOperatoreId($request);
+        if (!$opId) return response()->json(['ok' => false], 401);
+
+        $msg = ChatMessage::find($id);
+        if (!$msg) return response()->json(['ok' => false], 404);
+        if ($msg->operatore_id === $opId) return response()->json(['ok' => true, 'skip' => 'self']);
+
+        \App\Models\ChatMessageLettura::firstOrCreate(
+            ['chat_message_id' => $id, 'operatore_id' => $opId],
+            ['letto_at' => now()]
+        );
+        return response()->json(['ok' => true]);
+    }
+
     public function messaggi(Request $request)
     {
         $canale = $request->query('canale', 'generale');
@@ -166,24 +185,33 @@ class ChatController extends Controller
             return response()->json([]);
         }
 
-        $messaggi = ChatMessage::with('operatore')
-            ->withTrashed() // include soft-deleted per mostrare tombstone "Messaggio eliminato"
+        $messaggi = ChatMessage::with(['operatore', 'letture.operatore'])
+            ->withTrashed()
             ->where('canale', $canale)
             ->where('id', '>', $after)
             ->orderBy('created_at')
             ->limit(50)
             ->get()
             ->filter(fn($m) => !$m->isHiddenFor($operatoreId))
-            ->map(fn($m) => [
-                'id' => $m->id,
-                'messaggio' => $m->messaggio,
-                'utente' => $m->operatore->nome ?? 'Utente',
-                'timestamp' => $m->created_at->format('H:i'),
-                'mio' => $m->operatore_id === $operatoreId,
-                'autore_id' => $m->operatore_id,
-                'eta_min' => (int) $m->created_at->diffInMinutes(now()),
-                'eliminato' => $m->trashed(),
-            ])
+            ->map(function ($m) use ($operatoreId) {
+                $letture = $m->letture->map(fn($l) => [
+                    'operatore_id' => $l->operatore_id,
+                    'nome' => $l->operatore->nome ?? 'Utente',
+                    'letto_at' => $l->letto_at->format('d/m H:i'),
+                ])->values();
+                return [
+                    'id' => $m->id,
+                    'messaggio' => $m->messaggio,
+                    'utente' => $m->operatore->nome ?? 'Utente',
+                    'timestamp' => $m->created_at->format('H:i'),
+                    'mio' => $m->operatore_id === $operatoreId,
+                    'autore_id' => $m->operatore_id,
+                    'eta_min' => (int) $m->created_at->diffInMinutes(now()),
+                    'eliminato' => $m->trashed(),
+                    'letture_count' => $letture->count(),
+                    'letture' => $letture,
+                ];
+            })
             ->values();
 
         return response()->json($messaggi);
