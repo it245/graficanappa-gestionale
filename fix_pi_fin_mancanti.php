@@ -41,10 +41,13 @@ foreach ($gruppi as $gruppoNome => $faseList) {
 
     $faseListPlaceholders = "'" . implode("','", $faseList) . "'";
 
+    // Solo commesse con almeno una fase ATTIVA (0=Caricato, 1=Pronto, 2=Avviato)
+    // Esclude commesse gia' consegnate (stato 4) o tutte terminate (stato 3)
     $commesseMes = DB::table('ordine_fasi')
         ->join('ordini', 'ordini.id', '=', 'ordine_fasi.ordine_id')
         ->whereIn('ordine_fasi.fase', $faseList)
         ->whereNull('ordine_fasi.deleted_at')
+        ->whereIn('ordine_fasi.stato', ['0','1','2'])
         ->select('ordini.commessa')
         ->distinct()
         ->pluck('commessa')
@@ -52,6 +55,7 @@ foreach ($gruppi as $gruppoNome => $faseList) {
 
     $totCreate = 0;
     foreach ($commesseMes as $comm) {
+        // Count totale fasi (incluse terminate) per evitare di ricrearne sopra a quelle gia' esistenti
         $mesCount = DB::table('ordine_fasi')
             ->join('ordini', 'ordini.id', '=', 'ordine_fasi.ordine_id')
             ->where('ordini.commessa', $comm)
@@ -98,9 +102,11 @@ foreach ($gruppi as $gruppoNome => $faseList) {
         $manc = $ondaCount - $mesCount;
         echo "$comm: MES=$mesCount Onda=$ondaCount → creare $manc\n";
 
+        // Template = una fase ATTIVA (no terminate/consegnate)
         $fasePivot = OrdineFase::join('ordini', 'ordini.id', '=', 'ordine_fasi.ordine_id')
             ->where('ordini.commessa', $comm)
             ->whereIn('ordine_fasi.fase', $faseList)
+            ->whereIn('ordine_fasi.stato', ['0','1','2'])
             ->whereNull('ordine_fasi.deleted_at')
             ->select('ordine_fasi.*')
             ->first();
