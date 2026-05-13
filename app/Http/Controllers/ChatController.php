@@ -83,6 +83,48 @@ class ChatController extends Controller
         return view('chat.index', compact('messaggi', 'canale', 'canali', 'operatoreId'));
     }
 
+    /**
+     * Invia messaggio audio (vocale).
+     * Body multipart: canale, audio (file), durata (sec)
+     */
+    public function inviaAudio(Request $request)
+    {
+        $request->validate([
+            'canale' => 'required|string|max:50',
+            'audio' => 'required|file|mimes:webm,mp3,ogg,wav,m4a|max:5120', // 5MB
+            'durata' => 'nullable|integer|min:1|max:300',
+        ]);
+
+        if (!$this->operatoreVedeCanale($request, $request->canale)) {
+            return response()->json(['ok' => false, 'errore' => 'Canale non autorizzato'], 403);
+        }
+
+        $operatoreId = $this->getOperatoreId($request);
+        $file = $request->file('audio');
+        $nome = 'chat_' . $operatoreId . '_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+        $path = $file->storeAs('chat-audio', $nome, 'public');
+
+        $chatMessage = ChatMessage::create([
+            'operatore_id'    => $operatoreId,
+            'messaggio'       => '[Vocale]',
+            'canale'          => $request->canale,
+            'audio_path'      => $path,
+            'audio_durata_sec' => $request->input('durata'),
+        ]);
+        $chatMessage->load('operatore');
+
+        try { broadcast(new \App\Events\NuovoMessaggioChat($chatMessage)); } catch (\Throwable $e) {}
+
+        return response()->json([
+            'ok' => true,
+            'id' => $chatMessage->id,
+            'audio_url' => asset('storage/' . $path),
+            'durata' => $chatMessage->audio_durata_sec,
+            'utente' => $chatMessage->operatore->nome ?? 'Utente',
+            'timestamp' => $chatMessage->created_at->format('H:i'),
+        ]);
+    }
+
     public function invia(Request $request)
     {
         $request->validate([
@@ -224,9 +266,12 @@ class ChatController extends Controller
                 $destinatari = $m->operatore_id === $operatoreId
                     ? $this->destinatariCanale($canale, $m->operatore_id)
                     : 0;
+                $audioUrl = $m->audio_path ? asset('storage/' . $m->audio_path) : null;
                 return [
                     'id' => $m->id,
                     'messaggio' => $m->messaggio,
+                    'audio_url' => $audioUrl,
+                    'audio_durata_sec' => $m->audio_durata_sec,
                     'utente' => $m->operatore->nome ?? 'Utente',
                     'timestamp' => $m->created_at->format('H:i'),
                     'mio' => $m->operatore_id === $operatoreId,

@@ -1238,6 +1238,7 @@
                 e.stopPropagation();
                 cpMostraDettaglioLetture(msg);
             });
+            cpAttachLongPress(div, msg);
             // Marca come letto se non e' mio + ha id (registra visualizzazione)
             if (!isMio && msg.id && !msg.eliminato) {
                 cpSegnaLetto(msg.id);
@@ -1300,13 +1301,23 @@
             if (left + 170 > window.innerWidth) left = window.innerWidth - 178;
             menu.style.top = top + 'px';
             menu.style.left = left + 'px';
-            var html = '<div class="cp-del-opt" data-scope="me" style="padding:8px 14px;cursor:pointer;font-size:13px;">Elimina per me</div>';
-            if (canAll) html += '<div class="cp-del-opt" data-scope="all" style="padding:8px 14px;cursor:pointer;font-size:13px;color:#dc3545;">Elimina per tutti</div>';
+            var html = '<div class="cp-del-opt" data-action="info" style="padding:8px 14px;cursor:pointer;font-size:13px;">ⓘ Info / Letto da</div>';
+            html += '<div class="cp-del-opt" data-action="del-me" style="padding:8px 14px;cursor:pointer;font-size:13px;border-top:1px solid #eee;">Elimina per me</div>';
+            if (canAll) html += '<div class="cp-del-opt" data-action="del-all" style="padding:8px 14px;cursor:pointer;font-size:13px;color:#dc3545;">Elimina per tutti</div>';
             menu.innerHTML = html;
             document.body.appendChild(menu);
             menu.querySelectorAll('.cp-del-opt').forEach(function(opt) {
                 opt.addEventListener('click', function() {
-                    cpEliminaMessaggio(msgId, opt.dataset.scope);
+                    var action = opt.dataset.action;
+                    if (action === 'info') {
+                        // Trova msg dal DOM
+                        var msgEl = document.querySelector('.cp-msg[data-msg-id="' + msgId + '"]');
+                        cpInfoMessaggio(msgId);
+                    } else if (action === 'del-me') {
+                        cpEliminaMessaggio(msgId, 'me');
+                    } else if (action === 'del-all') {
+                        cpEliminaMessaggio(msgId, 'all');
+                    }
                     menu.remove();
                 });
             });
@@ -1316,6 +1327,48 @@
                     document.removeEventListener('click', chiudi);
                 }, { once: true });
             }, 50);
+        }
+
+        function cpInfoMessaggio(msgId) {
+            // Recupera dati messaggio dal poll piu' recente (refresha canale)
+            fetch('/chat/messaggi?canale=' + cpCanale + '&after=0')
+                .then(function(r) { return r.json(); })
+                .then(function(msgs) {
+                    var m = msgs.find(function(x) { return x.id == msgId; });
+                    if (m) cpMostraDettaglioLetture(m);
+                }).catch(function() {});
+        }
+
+        // Long-press handler su messaggio (touch + mouse). Apre menu come click su ⋮.
+        function cpAttachLongPress(div, msg) {
+            if (!msg.id || msg.eliminato) return;
+            var timer = null;
+            var fired = false;
+            var trigger = div.querySelector('.cp-del-trigger');
+            var openMenu = function(e) {
+                if (!trigger) return;
+                fired = true;
+                // Simula click sul trigger ⋮
+                var ev = new MouseEvent('click', { bubbles: true, cancelable: true });
+                trigger.dispatchEvent(ev);
+            };
+            var start = function(e) {
+                fired = false;
+                timer = setTimeout(function() { openMenu(e); }, 500);
+            };
+            var cancel = function() {
+                if (timer) { clearTimeout(timer); timer = null; }
+            };
+            div.addEventListener('mousedown', start);
+            div.addEventListener('mouseup', cancel);
+            div.addEventListener('mouseleave', cancel);
+            div.addEventListener('touchstart', start, { passive: true });
+            div.addEventListener('touchend', cancel);
+            div.addEventListener('touchmove', cancel);
+            div.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+                openMenu(e);
+            });
         }
 
         function cpEliminaMessaggio(id, scope) {

@@ -9,7 +9,7 @@ class ChatMessage extends Model
 {
     use SoftDeletes;
 
-    protected $fillable = ['operatore_id', 'messaggio', 'canale', 'hidden_for'];
+    protected $fillable = ['operatore_id', 'messaggio', 'canale', 'hidden_for', 'audio_path', 'audio_durata_sec'];
 
     protected $casts = [
         'hidden_for' => 'array',
