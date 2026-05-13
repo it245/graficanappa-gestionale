@@ -172,7 +172,8 @@ class ChatController extends Controller
     }
 
     /**
-     * Toggle pin messaggio (importante). Solo autore o owner/admin.
+     * Fissa/rimuovi pin con durata. Body: durata_min (1h=60, 8h=480, 24h=1440, 7gg=10080, 0=illimitato).
+     * Solo autore o owner/admin.
      */
     public function togglePin(Request $request, int $id)
     {
@@ -186,9 +187,55 @@ class ChatController extends Controller
             return response()->json(['ok' => false, 'errore' => 'Non autorizzato'], 403);
         }
 
-        $msg->is_pinned = !$msg->is_pinned;
-        $msg->save();
-        return response()->json(['ok' => true, 'is_pinned' => $msg->is_pinned]);
+        $existing = \DB::table('chat_message_pins')->where('chat_message_id', $id)->first();
+        if ($existing) {
+            // gia' pinnato -> rimuove (unpin)
+            \DB::table('chat_message_pins')->where('chat_message_id', $id)->delete();
+            return response()->json(['ok' => true, 'pinned' => false]);
+        }
+
+        $durataMin = (int) $request->input('durata_min', 1440); // default 24h
+        $scadeAt = $durataMin > 0 ? now()->addMinutes($durataMin) : null;
+
+        // Rimuovi eventuali pin scaduti dello stesso canale
+        \DB::table('chat_message_pins')
+            ->where('canale', $msg->canale)
+            ->whereNotNull('scade_at')
+            ->where('scade_at', '<', now())
+            ->delete();
+
+        \DB::table('chat_message_pins')->insert([
+            'chat_message_id' => $id,
+            'canale' => $msg->canale,
+            'pinned_by' => $opId,
+            'scade_at' => $scadeAt,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return response()->json(['ok' => true, 'pinned' => true, 'scade_at' => $scadeAt?->format('d/m H:i')]);
+    }
+
+    /**
+     * Ritorna pin attivi (non scaduti) per canale.
+     */
+    public function getPinAttivi(Request $request)
+    {
+        $canale = $request->query('canale', 'Tutti');
+        if (!$this->operatoreVedeCanale($request, $canale)) return response()->json([]);
+
+        $pins = \DB::table('chat_message_pins')
+            ->join('chat_messages', 'chat_messages.id', '=', 'chat_message_pins.chat_message_id')
+            ->where('chat_message_pins.canale', $canale)
+            ->where(function ($q) {
+                $q->whereNull('chat_message_pins.scade_at')
+                  ->orWhere('chat_message_pins.scade_at', '>', now());
+            })
+            ->select('chat_messages.id', 'chat_messages.messaggio', 'chat_messages.operatore_id', 'chat_message_pins.scade_at')
+            ->orderBy('chat_message_pins.created_at', 'desc')
+            ->get();
+
+        return response()->json($pins);
     }
 
     public function invia(Request $request)

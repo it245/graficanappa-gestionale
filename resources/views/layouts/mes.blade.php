@@ -1120,6 +1120,7 @@
             <button class="chat-popup-close" onclick="toggleChatPopup()">&times;</button>
         </div>
         <div class="chat-popup-canali" id="cpCanali"></div>
+        <div id="cpPinBanner" style="display:none;"></div>
         <div class="chat-popup-msgs" id="cpMsgs">
             <div style="text-align:center; color:var(--text-secondary); padding:20px; font-size:13px;">Caricamento...</div>
         </div>
@@ -1155,6 +1156,7 @@
                 updateBadge();
                 cpLoadCanali();
                 cpLoadMessaggi();
+                if (typeof cpAggiornaBannerPin === 'function') cpAggiornaBannerPin();
                 if (!cpPollTimer) cpPollTimer = setInterval(cpPoll, 2000);
                 setTimeout(function() { document.getElementById('cpInput').focus(); }, 100);
             }
@@ -1173,6 +1175,7 @@
             cpUltimoId = 0;
             cpLoadCanali();
             cpLoadMessaggi();
+            if (typeof cpAggiornaBannerPin === 'function') cpAggiornaBannerPin();
         };
 
         function cpLoadMessaggi() {
@@ -1491,18 +1494,74 @@
 
         // ============ PIN MESSAGGIO ============
         function cpTogglePin(msgId) {
+            // Modal scelta durata
+            var existing = document.getElementById('cpPinModal'); if (existing) existing.remove();
+            var modal = document.createElement('div');
+            modal.id = 'cpPinModal';
+            modal.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.4);z-index:999999;display:flex;align-items:center;justify-content:center;';
+            modal.innerHTML = ''
+                + '<div style="background:var(--surface,#fff);border-radius:12px;padding:18px;min-width:280px;max-width:340px;box-shadow:0 8px 32px rgba(0,0,0,0.2);">'
+                + '<div style="font-weight:700;margin-bottom:14px;font-size:15px;">📌 Fissa messaggio per:</div>'
+                + '<div class="cp-pin-opt" data-min="60"    style="padding:10px;cursor:pointer;border-radius:6px;font-size:14px;">1 ora</div>'
+                + '<div class="cp-pin-opt" data-min="480"   style="padding:10px;cursor:pointer;border-radius:6px;font-size:14px;">8 ore</div>'
+                + '<div class="cp-pin-opt" data-min="1440"  style="padding:10px;cursor:pointer;border-radius:6px;font-size:14px;">24 ore</div>'
+                + '<div class="cp-pin-opt" data-min="10080" style="padding:10px;cursor:pointer;border-radius:6px;font-size:14px;">7 giorni</div>'
+                + '<div class="cp-pin-opt" data-min="0"     style="padding:10px;cursor:pointer;border-radius:6px;font-size:14px;">Illimitato</div>'
+                + '<div style="display:flex;gap:8px;margin-top:12px;">'
+                + '<button onclick="document.getElementById(\'cpPinModal\').remove()" style="flex:1;padding:8px;background:#e5e7eb;border:none;border-radius:6px;cursor:pointer;">Annulla</button>'
+                + '<button class="cp-pin-unpin" style="flex:1;padding:8px;background:#dc3545;color:#fff;border:none;border-radius:6px;cursor:pointer;">Rimuovi pin</button>'
+                + '</div>'
+                + '</div>';
+            modal.addEventListener('click', function(e) { if (e.target === modal) modal.remove(); });
+            document.body.appendChild(modal);
+            modal.querySelectorAll('.cp-pin-opt').forEach(function(el) {
+                el.addEventListener('mouseenter', function() { el.style.background = 'rgba(245,158,11,0.1)'; });
+                el.addEventListener('mouseleave', function() { el.style.background = 'transparent'; });
+                el.addEventListener('click', function() {
+                    cpPinRequest(msgId, parseInt(el.dataset.min));
+                    modal.remove();
+                });
+            });
+            modal.querySelector('.cp-pin-unpin').addEventListener('click', function() {
+                cpPinRequest(msgId, -1);
+                modal.remove();
+            });
+        }
+
+        function cpPinRequest(msgId, durataMin) {
             fetch('/csrf-refresh').then(function(r){return r.json();}).then(function(d){
                 if (d && d.token) document.querySelector('meta[name="csrf-token"]').setAttribute('content', d.token);
             }).catch(function(){}).finally(function() {
                 fetch('/chat/messaggi/' + msgId + '/pin', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken(), 'Accept': 'application/json' }
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken(), 'Accept': 'application/json' },
+                    body: JSON.stringify({ durata_min: durataMin })
                 }).then(function(r) { return r.json(); }).then(function(data) {
-                    if (data && data.ok && window.MES && MES.toast) {
-                        MES.toast(data.is_pinned ? '📌 Messaggio fissato' : 'Pin rimosso', 'success', 2000);
+                    if (data && data.ok) {
+                        if (window.MES && MES.toast) {
+                            MES.toast(data.pinned ? ('📌 Fissato ' + (data.scade_at ? 'fino a ' + data.scade_at : 'illimitato')) : 'Pin rimosso', 'success', 2500);
+                        }
+                        cpAggiornaBannerPin();
+                    } else if (window.MES && MES.toast) {
+                        MES.toast(data && data.errore || 'Errore pin', 'error');
                     }
                 });
             });
+        }
+
+        function cpAggiornaBannerPin() {
+            fetch('/chat/pin?canale=' + encodeURIComponent(cpCanale))
+                .then(function(r) { return r.json(); })
+                .then(function(pins) {
+                    var container = document.getElementById('cpPinBanner');
+                    if (!container) return;
+                    if (!pins || pins.length === 0) { container.innerHTML = ''; container.style.display = 'none'; return; }
+                    container.style.display = 'block';
+                    container.innerHTML = pins.map(function(p) {
+                        var msg = (p.messaggio || '').substring(0, 60);
+                        return '<div style="padding:6px 10px;background:#fef3c7;border-left:3px solid #f59e0b;font-size:12px;">📌 ' + cpEsc(msg) + '</div>';
+                    }).join('');
+                }).catch(function() {});
         }
 
         // ============ AUDIO VOCALE ============
