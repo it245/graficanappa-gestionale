@@ -217,6 +217,76 @@ class ChatController extends Controller
     }
 
     /**
+     * Toggle stellina personale (preferito utente).
+     */
+    public function toggleStar(Request $request, int $id)
+    {
+        $opId = $this->getOperatoreId($request);
+        if (!$opId) return response()->json(['ok' => false], 401);
+
+        $msg = ChatMessage::find($id);
+        if (!$msg) return response()->json(['ok' => false], 404);
+
+        $existing = \DB::table('chat_message_stars')
+            ->where('chat_message_id', $id)
+            ->where('operatore_id', $opId)
+            ->first();
+
+        if ($existing) {
+            \DB::table('chat_message_stars')
+                ->where('chat_message_id', $id)
+                ->where('operatore_id', $opId)
+                ->delete();
+            return response()->json(['ok' => true, 'starred' => false]);
+        }
+
+        \DB::table('chat_message_stars')->insert([
+            'chat_message_id' => $id,
+            'operatore_id' => $opId,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        return response()->json(['ok' => true, 'starred' => true]);
+    }
+
+    /**
+     * Lista messaggi stellati dall'utente corrente.
+     */
+    public function getStarred(Request $request)
+    {
+        $opId = $this->getOperatoreId($request);
+        if (!$opId) return response()->json([]);
+
+        $rows = \DB::table('chat_message_stars')
+            ->join('chat_messages', 'chat_messages.id', '=', 'chat_message_stars.chat_message_id')
+            ->leftJoin('operatori', 'operatori.id', '=', 'chat_messages.operatore_id')
+            ->where('chat_message_stars.operatore_id', $opId)
+            ->orderBy('chat_message_stars.created_at', 'desc')
+            ->select(
+                'chat_messages.id',
+                'chat_messages.messaggio',
+                'chat_messages.canale',
+                'chat_messages.created_at',
+                'chat_messages.attachment_path',
+                'chat_messages.attachment_mime',
+                'operatori.nome as utente'
+            )
+            ->get()
+            ->map(function ($r) {
+                return [
+                    'id' => $r->id,
+                    'messaggio' => $r->messaggio,
+                    'canale' => $r->canale,
+                    'utente' => $r->utente ?? 'Utente',
+                    'timestamp' => \Carbon\Carbon::parse($r->created_at)->format('d/m H:i'),
+                    'attachment_url' => $r->attachment_path ? asset('storage/' . $r->attachment_path) : null,
+                    'attachment_mime' => $r->attachment_mime,
+                ];
+            });
+        return response()->json($rows);
+    }
+
+    /**
      * Ritorna pin attivi (non scaduti) per canale.
      */
     public function getPinAttivi(Request $request)
@@ -368,9 +438,18 @@ class ChatController extends Controller
             ->where('id', '>', $after)
             ->orderBy('created_at')
             ->limit(50)
-            ->get()
+            ->get();
+
+        // Set di ID stellati dall'utente corrente in un colpo
+        $starredIds = $operatoreId ? \DB::table('chat_message_stars')
+            ->where('operatore_id', $operatoreId)
+            ->whereIn('chat_message_id', $messaggi->pluck('id'))
+            ->pluck('chat_message_id')
+            ->toArray() : [];
+
+        $messaggi = $messaggi
             ->filter(fn($m) => !$m->isHiddenFor($operatoreId))
-            ->map(function ($m) use ($operatoreId, $canale) {
+            ->map(function ($m) use ($operatoreId, $canale, $starredIds) {
                 $letture = $m->letture->map(fn($l) => [
                     'operatore_id' => $l->operatore_id,
                     'nome' => $l->operatore->nome ?? 'Utente',
@@ -400,6 +479,7 @@ class ChatController extends Controller
                     'letture_count' => $letture->count(),
                     'letture' => $letture,
                     'destinatari_count' => $destinatari,
+                    'is_starred' => in_array($m->id, $starredIds),
                 ];
             })
             ->values();

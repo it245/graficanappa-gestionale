@@ -1117,7 +1117,10 @@
     <div class="chat-popup" id="chatPopup">
         <div class="chat-popup-header">
             <h6>Chat MES</h6>
-            <button class="chat-popup-close" onclick="toggleChatPopup()">&times;</button>
+            <div style="display:flex;gap:6px;align-items:center;">
+                <button onclick="cpMostraImportanti()" title="Importanti" style="background:transparent;border:none;color:#f59e0b;font-size:18px;cursor:pointer;padding:4px;">⭐</button>
+                <button class="chat-popup-close" onclick="toggleChatPopup()">&times;</button>
+            </div>
         </div>
         <div class="chat-popup-canali" id="cpCanali"></div>
         <div id="cpPinBanner" style="display:none;"></div>
@@ -1242,6 +1245,7 @@
                 html += '<div>' + msgText + '</div>';
             }
             html += '<div class="cp-ora">' + cpEsc(msg.timestamp || '');
+            if (msg.is_starred) html += ' <span class="cp-star-mark" style="margin-left:4px;color:#f59e0b;">⭐</span>';
             // Letture: ✓ grigio (inviato), ✓✓ grigio (qualcuno ha letto), ✓✓ blu (tutti letto)
             if (isMio && !msg.eliminato && msg.id) {
                 var lc = typeof msg.letture_count === 'number' ? msg.letture_count : 0;
@@ -1354,7 +1358,8 @@
             menu.style.top = top + 'px';
             menu.style.left = left + 'px';
             var html = '<div class="cp-del-opt" data-action="info" style="padding:8px 14px;cursor:pointer;font-size:13px;">ⓘ Info / Letto da</div>';
-            html += '<div class="cp-del-opt" data-action="pin" style="padding:8px 14px;cursor:pointer;font-size:13px;border-top:1px solid #eee;">📌 Fissa / Rimuovi pin</div>';
+            html += '<div class="cp-del-opt" data-action="star" style="padding:8px 14px;cursor:pointer;font-size:13px;border-top:1px solid #eee;">⭐ Importante (personale)</div>';
+            html += '<div class="cp-del-opt" data-action="pin" style="padding:8px 14px;cursor:pointer;font-size:13px;border-top:1px solid #eee;">📌 Fissa in alto canale</div>';
             html += '<div class="cp-del-opt" data-action="del-me" style="padding:8px 14px;cursor:pointer;font-size:13px;border-top:1px solid #eee;">Elimina per me</div>';
             if (canAll) html += '<div class="cp-del-opt" data-action="del-all" style="padding:8px 14px;cursor:pointer;font-size:13px;color:#dc3545;">Elimina per tutti</div>';
             menu.innerHTML = html;
@@ -1364,6 +1369,8 @@
                     var action = opt.dataset.action;
                     if (action === 'info') {
                         cpInfoMessaggio(msgId);
+                    } else if (action === 'star') {
+                        cpToggleStar(msgId);
                     } else if (action === 'pin') {
                         cpTogglePin(msgId);
                     } else if (action === 'del-me') {
@@ -1490,6 +1497,64 @@
                   });
             });
             input.value = '';
+        };
+
+        // ============ STELLINA IMPORTANTE (personale) ============
+        function cpToggleStar(msgId) {
+            fetch('/csrf-refresh').then(function(r){return r.json();}).then(function(d){
+                if (d && d.token) document.querySelector('meta[name="csrf-token"]').setAttribute('content', d.token);
+            }).catch(function(){}).finally(function() {
+                fetch('/chat/messaggi/' + msgId + '/star', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken(), 'Accept': 'application/json' }
+                }).then(function(r) { return r.json(); }).then(function(data) {
+                    if (data && data.ok) {
+                        // Aggiorna stella sul DOM
+                        var el = document.querySelector('.cp-msg[data-msg-id="' + msgId + '"]');
+                        if (el) {
+                            var existingStar = el.querySelector('.cp-star-mark');
+                            if (data.starred && !existingStar) {
+                                var s = document.createElement('span');
+                                s.className = 'cp-star-mark';
+                                s.style.cssText = 'margin-left:4px;color:#f59e0b;';
+                                s.textContent = '⭐';
+                                el.querySelector('.cp-ora').appendChild(s);
+                            } else if (!data.starred && existingStar) {
+                                existingStar.remove();
+                            }
+                        }
+                        if (window.MES && MES.toast) MES.toast(data.starred ? '⭐ Aggiunto a importanti' : 'Rimosso da importanti', 'success', 2000);
+                    }
+                });
+            });
+        }
+
+        window.cpMostraImportanti = function() {
+            fetch('/chat/starred').then(function(r) { return r.json(); }).then(function(rows) {
+                var existing = document.getElementById('cpStarModal'); if (existing) existing.remove();
+                var modal = document.createElement('div');
+                modal.id = 'cpStarModal';
+                modal.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.4);z-index:999999;display:flex;align-items:center;justify-content:center;';
+                var html = '<div style="background:var(--surface,#fff);border-radius:12px;padding:18px;min-width:320px;max-width:480px;max-height:80vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.2);">';
+                html += '<div style="font-weight:700;margin-bottom:14px;font-size:15px;">⭐ Messaggi importanti</div>';
+                if (!rows || rows.length === 0) {
+                    html += '<div style="color:#888;padding:12px 0;font-size:13px;">Nessun messaggio importante. Aggiungi una stella ai messaggi che vuoi conservare.</div>';
+                } else {
+                    rows.forEach(function(r) {
+                        html += '<div style="padding:10px;border-bottom:1px solid #eee;font-size:13px;">'
+                             + '<div style="display:flex;justify-content:space-between;font-size:11px;color:#888;margin-bottom:4px;">'
+                             + '<span>@' + cpEsc(r.canale) + ' · ' + cpEsc(r.utente) + '</span><span>' + cpEsc(r.timestamp) + '</span></div>'
+                             + '<div>' + cpEsc(r.messaggio) + '</div>'
+                             + (r.attachment_url ? '<a href="' + cpEsc(r.attachment_url) + '" target="_blank" style="font-size:11px;color:#2563eb;">📎 Allegato</a>' : '')
+                             + '</div>';
+                    });
+                }
+                html += '<button style="margin-top:12px;width:100%;padding:8px;background:var(--accent,#2563eb);color:#fff;border:none;border-radius:6px;cursor:pointer;" onclick="document.getElementById(\'cpStarModal\').remove()">Chiudi</button>';
+                html += '</div>';
+                modal.innerHTML = html;
+                modal.addEventListener('click', function(e) { if (e.target === modal) modal.remove(); });
+                document.body.appendChild(modal);
+            });
         };
 
         // ============ PIN MESSAGGIO ============

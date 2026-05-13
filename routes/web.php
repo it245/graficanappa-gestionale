@@ -242,6 +242,8 @@ Route::middleware('operatore.auth')->prefix('chat')->group(function () {
     Route::post('/allega', [ChatController::class, 'allega'])->name('chat.allega');
     Route::post('/messaggi/{id}/pin', [ChatController::class, 'togglePin'])->name('chat.pin');
     Route::get('/pin', [ChatController::class, 'getPinAttivi'])->name('chat.pin.get');
+    Route::post('/messaggi/{id}/star', [ChatController::class, 'toggleStar'])->name('chat.star');
+    Route::get('/starred', [ChatController::class, 'getStarred'])->name('chat.starred');
 });
 
 // Magazzino Carta — accessibile da spedizione (Emanuele), owner e admin
