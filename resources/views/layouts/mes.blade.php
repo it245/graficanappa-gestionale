@@ -1194,17 +1194,77 @@
         function cpAppend(msg, container) {
             if (!container) container = document.getElementById('cpMsgs');
             var div = document.createElement('div');
-            var isMio = msg.operatore_id === cpOperatoreId || msg.mio;
+            var isMio = msg.operatore_id === cpOperatoreId || msg.mio || msg.autore_id === cpOperatoreId;
             div.className = 'cp-msg ' + (isMio ? 'mio' : 'altro');
+            if (msg.id) div.dataset.msgId = msg.id;
             var html = '';
             if (!isMio) html += '<div class="cp-utente">' + cpEsc(msg.utente || msg.operatore_nome || '') + '</div>';
-            // Evidenzia menzioni @nome in blu
             var msgText = cpEsc(msg.messaggio);
             msgText = msgText.replace(/@([A-Za-zÀ-ÿ\s]+?)(?=\s|$)/g, '<span style="color:var(--accent,#2563eb);font-weight:600;">@$1</span>');
             html += '<div>' + msgText + '</div>';
-            html += '<div class="cp-ora">' + cpEsc(msg.timestamp || '') + '</div>';
+            html += '<div class="cp-ora">' + cpEsc(msg.timestamp || '');
+            // Menu elimina (3 punti)
+            if (msg.id) {
+                var canDeleteAll = isMio && (typeof msg.eta_min !== 'number' || msg.eta_min <= 5);
+                html += ' <span class="cp-del-trigger" data-msgid="' + msg.id + '"'
+                     + ' data-canall="' + (canDeleteAll ? '1' : '0') + '"'
+                     + ' style="margin-left:8px;cursor:pointer;opacity:0.6;font-size:11px;">⋮</span>';
+            }
+            html += '</div>';
             div.innerHTML = html;
             container.appendChild(div);
+            // Handler menu elimina
+            var trigger = div.querySelector('.cp-del-trigger');
+            if (trigger) trigger.addEventListener('click', cpMostraMenuElimina);
+        }
+
+        function cpMostraMenuElimina(e) {
+            e.stopPropagation();
+            var trigger = e.currentTarget;
+            var msgId = trigger.dataset.msgid;
+            var canAll = trigger.dataset.canall === '1';
+            var existing = document.getElementById('cpDelMenu'); if (existing) existing.remove();
+            var menu = document.createElement('div');
+            menu.id = 'cpDelMenu';
+            menu.style.cssText = 'position:absolute;background:var(--surface,#fff);border:1px solid var(--border,#ddd);border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);padding:4px 0;z-index:99999;min-width:160px;';
+            var rect = trigger.getBoundingClientRect();
+            menu.style.top = (rect.bottom + 4) + 'px';
+            menu.style.left = (rect.left - 100) + 'px';
+            var html = '<div class="cp-del-opt" data-scope="me" style="padding:8px 14px;cursor:pointer;font-size:13px;">Elimina per me</div>';
+            if (canAll) html += '<div class="cp-del-opt" data-scope="all" style="padding:8px 14px;cursor:pointer;font-size:13px;color:#dc3545;">Elimina per tutti</div>';
+            menu.innerHTML = html;
+            document.body.appendChild(menu);
+            menu.querySelectorAll('.cp-del-opt').forEach(function(opt) {
+                opt.addEventListener('click', function() {
+                    cpEliminaMessaggio(msgId, opt.dataset.scope);
+                    menu.remove();
+                });
+            });
+            setTimeout(function() {
+                document.addEventListener('click', function chiudi() {
+                    var m = document.getElementById('cpDelMenu'); if (m) m.remove();
+                    document.removeEventListener('click', chiudi);
+                }, { once: true });
+            }, 50);
+        }
+
+        function cpEliminaMessaggio(id, scope) {
+            fetch('/csrf-refresh').then(function(r){return r.json();}).then(function(d){
+                if (d && d.token) document.querySelector('meta[name="csrf-token"]').setAttribute('content', d.token);
+            }).catch(function(){}).finally(function() {
+                fetch('/chat/messaggi/' + id + '/elimina', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken(), 'Accept': 'application/json' },
+                    body: JSON.stringify({ scope: scope })
+                }).then(function(r) { return r.json(); }).then(function(data) {
+                    if (data && data.ok) {
+                        var el = document.querySelector('.cp-msg[data-msg-id="' + id + '"]');
+                        if (el) el.remove();
+                    } else if (window.MES && MES.toast) {
+                        MES.toast(data && data.errore || 'Errore eliminazione', 'error');
+                    }
+                }).catch(function() {});
+            });
         }
 
         function cpEsc(t) {

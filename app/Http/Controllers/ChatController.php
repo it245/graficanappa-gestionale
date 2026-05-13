@@ -120,6 +120,42 @@ class ChatController extends Controller
         ]);
     }
 
+    /**
+     * Elimina messaggio.
+     * Scope 'me': nasconde solo per l'utente corrente (hidden_for array).
+     * Scope 'all': soft delete totale. Permesso solo se autore (entro 5 min) o owner/admin.
+     */
+    public function elimina(Request $request, int $id)
+    {
+        $scope = $request->input('scope', 'me');
+        $msg = ChatMessage::find($id);
+        if (!$msg) return response()->json(['ok' => false, 'errore' => 'Messaggio non trovato'], 404);
+
+        $opId = $this->getOperatoreId($request);
+        $ruolo = $request->attributes->get('operatore_ruolo') ?? session('operatore_ruolo') ?? '';
+        $isOwnerAdmin = in_array($ruolo, ['owner', 'admin']);
+
+        if ($scope === 'all') {
+            $isAutore = $msg->operatore_id === $opId;
+            $entroFinestra = $msg->created_at && $msg->created_at->diffInMinutes(now()) <= 5;
+            if (!$isOwnerAdmin && !($isAutore && $entroFinestra)) {
+                return response()->json(['ok' => false, 'errore' => 'Non autorizzato'], 403);
+            }
+            $msg->delete(); // soft delete
+            return response()->json(['ok' => true, 'scope' => 'all']);
+        }
+
+        // scope 'me'
+        if (!$opId) return response()->json(['ok' => false, 'errore' => 'Sessione richiesta'], 401);
+        $hidden = $msg->hidden_for ?? [];
+        if (!in_array($opId, $hidden)) {
+            $hidden[] = $opId;
+            $msg->hidden_for = $hidden;
+            $msg->save();
+        }
+        return response()->json(['ok' => true, 'scope' => 'me']);
+    }
+
     public function messaggi(Request $request)
     {
         $canale = $request->query('canale', 'generale');
@@ -136,13 +172,17 @@ class ChatController extends Controller
             ->orderBy('created_at')
             ->limit(50)
             ->get()
+            ->filter(fn($m) => !$m->isHiddenFor($operatoreId))
             ->map(fn($m) => [
                 'id' => $m->id,
                 'messaggio' => $m->messaggio,
                 'utente' => $m->operatore->nome ?? 'Utente',
                 'timestamp' => $m->created_at->format('H:i'),
                 'mio' => $m->operatore_id === $operatoreId,
-            ]);
+                'autore_id' => $m->operatore_id,
+                'eta_min' => (int) $m->created_at->diffInMinutes(now()),
+            ])
+            ->values();
 
         return response()->json($messaggi);
     }
