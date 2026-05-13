@@ -1220,6 +1220,19 @@
             input.value = '';
             input.focus();
 
+            // Parse mention @Canale: se presente e' un canale conosciuto, invia LI'
+            // invece del canale corrente. @Tutti = comportamento default (broadcast).
+            var canaleInvio = cpCanale;
+            var mentions = testo.match(/@([A-Za-zÀ-ÿ\s]+?)(?=\s|$)/g);
+            if (mentions) {
+                for (var i = 0; i < mentions.length; i++) {
+                    var mention = mentions[i].substring(1).trim().toLowerCase();
+                    if (mention === 'tutti') continue;
+                    var match = cpCanali.find(function(c) { return c.toLowerCase() === mention; });
+                    if (match) { canaleInvio = match; break; }
+                }
+            }
+
             cpAppend({
                 messaggio: testo,
                 utente: cpOperatoreNome,
@@ -1239,7 +1252,7 @@
                 fetch('/chat/invia', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken(), 'Accept': 'application/json' },
-                    body: JSON.stringify({ messaggio: testo, canale: cpCanale })
+                    body: JSON.stringify({ messaggio: testo, canale: canaleInvio })
                 }).then(function(r) { return r.json(); })
                   .then(function(data) { if (data && data.ok) cpUltimoId = Math.max(cpUltimoId, data.id || cpUltimoId); })
                   .catch(function(e) { console.error('Chat errore:', e); });
