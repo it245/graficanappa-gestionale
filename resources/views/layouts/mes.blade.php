@@ -1151,7 +1151,7 @@
                 updateBadge();
                 cpLoadCanali();
                 cpLoadMessaggi();
-                if (!cpPollTimer) cpPollTimer = setInterval(cpPoll, 10000);
+                if (!cpPollTimer) cpPollTimer = setInterval(cpPoll, 2000);
                 setTimeout(function() { document.getElementById('cpInput').focus(); }, 100);
             }
         };
@@ -1195,16 +1195,19 @@
             if (!container) container = document.getElementById('cpMsgs');
             var div = document.createElement('div');
             var isMio = msg.operatore_id === cpOperatoreId || msg.mio || msg.autore_id === cpOperatoreId;
-            div.className = 'cp-msg ' + (isMio ? 'mio' : 'altro');
+            div.className = 'cp-msg ' + (isMio ? 'mio' : 'altro') + (msg.eliminato ? ' eliminato' : '');
             if (msg.id) div.dataset.msgId = msg.id;
             var html = '';
-            if (!isMio) html += '<div class="cp-utente">' + cpEsc(msg.utente || msg.operatore_nome || '') + '</div>';
-            var msgText = cpEsc(msg.messaggio);
-            msgText = msgText.replace(/@([A-Za-zÀ-ÿ\s]+?)(?=\s|$)/g, '<span style="color:var(--accent,#2563eb);font-weight:600;">@$1</span>');
-            html += '<div>' + msgText + '</div>';
+            if (!isMio && !msg.eliminato) html += '<div class="cp-utente">' + cpEsc(msg.utente || msg.operatore_nome || '') + '</div>';
+            if (msg.eliminato) {
+                html += '<div style="font-style:italic;color:var(--text-secondary,#888);">🚫 Questo messaggio è stato eliminato</div>';
+            } else {
+                var msgText = cpEsc(msg.messaggio);
+                msgText = msgText.replace(/@([A-Za-zÀ-ÿ\s]+?)(?=\s|$)/g, '<span style="color:var(--accent,#2563eb);font-weight:600;">@$1</span>');
+                html += '<div>' + msgText + '</div>';
+            }
             html += '<div class="cp-ora">' + cpEsc(msg.timestamp || '');
-            // Menu elimina (3 punti)
-            if (msg.id) {
+            if (msg.id && !msg.eliminato) {
                 var canDeleteAll = isMio && (typeof msg.eta_min !== 'number' || msg.eta_min <= 5);
                 html += ' <span class="cp-del-trigger" data-msgid="' + msg.id + '"'
                      + ' data-canall="' + (canDeleteAll ? '1' : '0') + '"'
@@ -1213,7 +1216,6 @@
             html += '</div>';
             div.innerHTML = html;
             container.appendChild(div);
-            // Handler menu elimina
             var trigger = div.querySelector('.cp-del-trigger');
             if (trigger) trigger.addEventListener('click', cpMostraMenuElimina);
         }
@@ -1327,21 +1329,30 @@
         };
 
         function cpPoll() {
-            fetch('/chat/messaggi?canale=' + cpCanale + '&after=' + cpUltimoId)
+            // Refresh totale: ricarica ultimi 50 messaggi, aggiunge i nuovi,
+            // aggiorna i tombstone (eliminato), niente duplicati.
+            fetch('/chat/messaggi?canale=' + cpCanale + '&after=0')
                 .then(function(r) { return r.json(); })
                 .then(function(msgs) {
                     var container = document.getElementById('cpMsgs');
                     var vuota = container.querySelector('div[style*="text-align:center"]');
                     msgs.forEach(function(m) {
-                        if (m.id > cpUltimoId) {
-                            if (!m.mio && m.operatore_id !== cpOperatoreId) {
-                                if (vuota) { vuota.remove(); vuota = null; }
+                        var existing = container.querySelector('.cp-msg[data-msg-id="' + m.id + '"]');
+                        if (existing) {
+                            // Aggiorna se status eliminato cambiato
+                            if (m.eliminato && !existing.classList.contains('eliminato')) {
+                                existing.remove();
                                 cpAppend(m, container);
-                                container.scrollTop = container.scrollHeight;
-                                if (!cpOpen) { cpUnread++; updateBadge(); }
                             }
-                            cpUltimoId = m.id;
+                        } else {
+                            if (vuota) { vuota.remove(); vuota = null; }
+                            cpAppend(m, container);
+                            container.scrollTop = container.scrollHeight;
+                            if (!cpOpen && !m.mio && m.autore_id !== cpOperatoreId) {
+                                cpUnread++; updateBadge();
+                            }
                         }
+                        if (m.id > cpUltimoId) cpUltimoId = m.id;
                     });
                 })
                 .catch(function() {});

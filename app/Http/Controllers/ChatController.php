@@ -167,6 +167,7 @@ class ChatController extends Controller
         }
 
         $messaggi = ChatMessage::with('operatore')
+            ->withTrashed() // include soft-deleted per mostrare tombstone "Messaggio eliminato"
             ->where('canale', $canale)
             ->where('id', '>', $after)
             ->orderBy('created_at')
@@ -181,6 +182,7 @@ class ChatController extends Controller
                 'mio' => $m->operatore_id === $operatoreId,
                 'autore_id' => $m->operatore_id,
                 'eta_min' => (int) $m->created_at->diffInMinutes(now()),
+                'eliminato' => $m->trashed(),
             ])
             ->values();
 
