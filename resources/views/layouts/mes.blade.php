@@ -1126,6 +1126,9 @@
         <div class="chat-popup-input" style="position:relative;">
             <div id="cpMentionDropdown" style="display:none; position:absolute; bottom:100%; left:12px; right:60px; max-height:200px; overflow-y:auto; background:var(--bg-card,#fff); border:1px solid var(--border-color,#e2e8f0); border-radius:8px; box-shadow:0 -4px 12px rgba(0,0,0,0.15); z-index:10;"></div>
             <input type="text" id="cpInput" placeholder="Scrivi... (@nome per menzionare)" autocomplete="off" onkeydown="if(event.key==='Enter' && !cpMentionVisible())cpInvia()" oninput="cpCheckMention(this)">
+            <button id="cpMicBtn" onclick="cpToggleRecord()" title="Vocale" style="background:transparent;color:var(--accent,#2563eb);">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+            </button>
             <button onclick="cpInvia()">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
             </button>
@@ -1203,6 +1206,12 @@
             if (!isMio && !msg.eliminato) html += '<div class="cp-utente">' + cpEsc(msg.utente || msg.operatore_nome || '') + '</div>';
             if (msg.eliminato) {
                 html += '<div style="font-style:italic;color:var(--text-secondary,#888);">🚫 Questo messaggio è stato eliminato</div>';
+            } else if (msg.audio_url) {
+                var durata = msg.audio_durata_sec ? msg.audio_durata_sec + 's' : '';
+                html += '<div style="display:flex;align-items:center;gap:6px;">'
+                     + '<audio controls preload="metadata" style="height:32px;max-width:200px;" src="' + cpEsc(msg.audio_url) + '"></audio>'
+                     + (durata ? '<span style="font-size:11px;color:#888;">' + durata + '</span>' : '')
+                     + '</div>';
             } else {
                 var msgText = cpEsc(msg.messaggio);
                 msgText = msgText.replace(/@([A-Za-zÀ-ÿ\s]+?)(?=\s|$)/g, '<span style="color:var(--accent,#2563eb);font-weight:600;">@$1</span>');
@@ -1327,6 +1336,90 @@
                     document.removeEventListener('click', chiudi);
                 }, { once: true });
             }, 50);
+        }
+
+        // ============ AUDIO VOCALE ============
+        var cpRecorder = null;
+        var cpRecorderChunks = [];
+        var cpRecordingStart = 0;
+
+        window.cpToggleRecord = function() {
+            var btn = document.getElementById('cpMicBtn');
+            if (cpRecorder && cpRecorder.state === 'recording') {
+                cpRecorder.stop();
+                btn.style.color = 'var(--accent,#2563eb)';
+                btn.title = 'Vocale';
+                return;
+            }
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                alert('Microfono non supportato in questo browser');
+                return;
+            }
+            navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream) {
+                cpRecorderChunks = [];
+                var mime = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : '';
+                cpRecorder = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+                cpRecorder.ondataavailable = function(e) { if (e.data.size > 0) cpRecorderChunks.push(e.data); };
+                cpRecorder.onstop = function() {
+                    stream.getTracks().forEach(function(t) { t.stop(); });
+                    var durata = Math.max(1, Math.round((Date.now() - cpRecordingStart) / 1000));
+                    var blob = new Blob(cpRecorderChunks, { type: 'audio/webm' });
+                    cpInviaAudio(blob, durata);
+                };
+                cpRecorder.start();
+                cpRecordingStart = Date.now();
+                btn.style.color = '#dc3545';
+                btn.title = 'Stop registrazione';
+                if (window.MES && MES.toast) MES.toast('Registrazione... tocca di nuovo per inviare', 'info', 1500);
+            }).catch(function() {
+                alert('Permesso microfono negato');
+            });
+        };
+
+        function cpInviaAudio(blob, durata) {
+            // Determina canale da mention nel placeholder testo? Default cpCanale.
+            // Per vocali usiamo cpCanale corrente.
+            var canaleInvio = cpCanale;
+            var form = new FormData();
+            form.append('audio', blob, 'vocale.webm');
+            form.append('canale', canaleInvio);
+            form.append('durata', durata);
+
+            fetch('/csrf-refresh').then(function(r){return r.json();}).then(function(d){
+                if (d && d.token) document.querySelector('meta[name="csrf-token"]').setAttribute('content', d.token);
+            }).catch(function(){}).finally(function() {
+                fetch('/chat/audio', {
+                    method: 'POST',
+                    headers: { 'X-CSRF-TOKEN': csrfToken(), 'Accept': 'application/json' },
+                    body: form
+                }).then(function(r) { return r.json(); })
+                  .then(function(data) {
+                      if (data && data.ok && data.id) {
+                          cpUltimoId = Math.max(cpUltimoId, data.id);
+                          var container = document.getElementById('cpMsgs');
+                          cpAppend({
+                              id: data.id,
+                              messaggio: '[Vocale]',
+                              audio_url: data.audio_url,
+                              audio_durata_sec: data.durata,
+                              utente: cpOperatoreNome,
+                              timestamp: data.timestamp,
+                              mio: true,
+                              autore_id: cpOperatoreId,
+                              eta_min: 0,
+                              eliminato: false,
+                              letture_count: 0,
+                              destinatari_count: 0,
+                              letture: []
+                          }, container);
+                          container.scrollTop = container.scrollHeight;
+                      } else if (window.MES && MES.toast) {
+                          MES.toast('Errore invio vocale', 'error');
+                      }
+                  }).catch(function() {
+                      if (window.MES && MES.toast) MES.toast('Errore invio vocale', 'error');
+                  });
+            });
         }
 
         function cpInfoMessaggio(msgId) {

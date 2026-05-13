@@ -238,6 +238,7 @@ Route::middleware('operatore.auth')->prefix('chat')->group(function () {
     Route::get('/messaggi', [ChatController::class, 'messaggi'])->name('chat.messaggi');
     Route::post('/messaggi/{id}/elimina', [ChatController::class, 'elimina'])->name('chat.elimina');
     Route::post('/messaggi/{id}/visualizza', [ChatController::class, 'visualizza'])->name('chat.visualizza');
+    Route::post('/audio', [ChatController::class, 'inviaAudio'])->name('chat.audio');
 });
 
 // Magazzino Carta — accessibile da spedizione (Emanuele), owner e admin
