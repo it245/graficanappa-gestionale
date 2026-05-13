@@ -39,7 +39,10 @@ class YdigitalPoll extends Command
         foreach ($sensori as $s) {
             $url = "https://ysens.it/api/v1/sensors/{$s->device_id}/{$s->sensor_name}/latest/";
             try {
-                $resp = Http::withHeaders(['X-API-Key' => $apiKey])->timeout(10)->get($url);
+                $resp = Http::withoutVerifying()
+                    ->withHeaders(['X-API-Key' => $apiKey])
+                    ->timeout(10)
+                    ->get($url);
                 if (!$resp->successful()) {
                     $this->warn("[{$s->device_id}/{$s->sensor_name}] HTTP " . $resp->status());
                     continue;
