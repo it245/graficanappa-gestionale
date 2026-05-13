@@ -1296,20 +1296,23 @@
             });
             if (bestMatch) canaleInvio = bestMatch;
 
-            // Append locale solo se il canale di invio coincide con la vista corrente.
-            // Altrimenti il messaggio appare nel canale reale al prossimo poll/cambio tab.
+            // Append locale ottimistico. Marca temp_id per matching post-server.
+            var tempEl = null;
             if (canaleInvio === cpCanale) {
+                var container = document.getElementById('cpMsgs');
                 cpAppend({
                     messaggio: testo,
                     utente: cpOperatoreNome,
                     timestamp: new Date().toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit'}),
-                    mio: true
-                });
+                    mio: true,
+                    autore_id: cpOperatoreId
+                }, container);
+                tempEl = container.lastElementChild;
+                if (tempEl) tempEl.dataset.tempPending = '1';
+                container.scrollTop = container.scrollHeight;
             } else if (window.MES && typeof MES.toast === 'function') {
                 MES.toast('Inviato a @' + canaleInvio, 'success', 2500);
             }
-            var container = document.getElementById('cpMsgs');
-            container.scrollTop = container.scrollHeight;
 
             // Refresh CSRF token PRIMA del POST (evita 419 Sessione scaduta)
             fetch('/csrf-refresh').then(function(r) { return r.json(); }).then(function(d) {
@@ -1323,7 +1326,16 @@
                     headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken(), 'Accept': 'application/json' },
                     body: JSON.stringify({ messaggio: testo, canale: canaleInvio })
                 }).then(function(r) { return r.json(); })
-                  .then(function(data) { if (data && data.ok) cpUltimoId = Math.max(cpUltimoId, data.id || cpUltimoId); })
+                  .then(function(data) {
+                      if (data && data.ok) {
+                          cpUltimoId = Math.max(cpUltimoId, data.id || cpUltimoId);
+                          // Assegna l'id reale al div locale ottimistico per evitare duplicati nel polling
+                          if (tempEl && data.id) {
+                              tempEl.dataset.msgId = data.id;
+                              delete tempEl.dataset.tempPending;
+                          }
+                      }
+                  })
                   .catch(function(e) { console.error('Chat errore:', e); });
             });
         };
