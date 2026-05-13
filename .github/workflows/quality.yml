@@ -2,7 +2,7 @@ name: Quality Check
 
 on:
   push:
-    branches: [def2.0, master]
+    branches: [master]
   pull_request:
     branches: [master]
 
