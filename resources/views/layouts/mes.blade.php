@@ -1228,10 +1228,17 @@
             var existing = document.getElementById('cpDelMenu'); if (existing) existing.remove();
             var menu = document.createElement('div');
             menu.id = 'cpDelMenu';
-            menu.style.cssText = 'position:absolute;background:var(--surface,#fff);border:1px solid var(--border,#ddd);border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);padding:4px 0;z-index:99999;min-width:160px;';
+            menu.style.cssText = 'position:fixed;background:var(--surface,#fff);border:1px solid var(--border,#ddd);border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);padding:4px 0;z-index:999999;min-width:160px;';
             var rect = trigger.getBoundingClientRect();
-            menu.style.top = (rect.bottom + 4) + 'px';
-            menu.style.left = (rect.left - 100) + 'px';
+            // Posiziona menu SOPRA il trigger (~90px altezza menu)
+            var menuH = 90;
+            var top = rect.top - menuH - 4;
+            if (top < 8) top = rect.bottom + 4; // se non c'e' spazio sopra, va sotto
+            var left = rect.left - 130;
+            if (left < 8) left = 8;
+            if (left + 170 > window.innerWidth) left = window.innerWidth - 178;
+            menu.style.top = top + 'px';
+            menu.style.left = left + 'px';
             var html = '<div class="cp-del-opt" data-scope="me" style="padding:8px 14px;cursor:pointer;font-size:13px;">Elimina per me</div>';
             if (canAll) html += '<div class="cp-del-opt" data-scope="all" style="padding:8px 14px;cursor:pointer;font-size:13px;color:#dc3545;">Elimina per tutti</div>';
             menu.innerHTML = html;
