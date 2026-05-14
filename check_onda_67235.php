@@ -5,32 +5,17 @@ $app->make(\Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
 use Illuminate\Support\Facades\DB;
 
-$comm = '67235';
-
-$prd = DB::connection('onda')->select(
-    "SELECT p.IdDoc, p.CodArt, p.CodCommessa, f.CodFase, f.QtaDaLavorare
-     FROM PRDDocTeste p
-     LEFT JOIN PRDDocFasi f ON p.IdDoc = f.IdDoc
-     WHERE p.CodCommessa = ?
-     ORDER BY p.IdDoc, f.CodFase",
-    [$comm]
-);
-
-echo "\n=== PRD Onda commessa $comm ===\n";
-echo "Totale righe: " . count($prd) . "\n";
-foreach ($prd as $r) {
-    echo " IdDoc={$r->IdDoc} CodArt={$r->CodArt} CodFase=" . ($r->CodFase ?? '-') . " QtaDaLavorare=" . ($r->QtaDaLavorare ?? '-') . "\n";
+echo "\n=== Sample PRDDocTeste (top 5) ===\n";
+$sample = DB::connection('onda')->select("SELECT TOP 5 * FROM PRDDocTeste");
+foreach ($sample as $r) {
+    print_r((array)$r);
 }
 
-echo "\n=== Descrizioni ATTDocRighe ===\n";
-$desc = DB::connection('onda')->select(
-    "SELECT r.IdDoc, r.NrRiga, r.TipoRiga, r.CodArt, r.Descrizione
-     FROM ATTDocRighe r
-     INNER JOIN ATTDocTeste t ON t.IdDoc = r.IdDoc
-     WHERE t.CodCommessa = ?
-     ORDER BY r.NrRiga",
-    [$comm]
+echo "\n=== Cerca commessa 67235 con LIKE ===\n";
+$found = DB::connection('onda')->select(
+    "SELECT TOP 30 IdDoc, CodArt, CodCommessa FROM PRDDocTeste WHERE CAST(CodCommessa AS VARCHAR) LIKE '%67235%'"
 );
-foreach ($desc as $r) {
-    echo " IdDoc={$r->IdDoc} TipoRiga={$r->TipoRiga} CodArt={$r->CodArt}: " . substr($r->Descrizione ?? '', 0, 100) . "\n";
+echo "Trovate: " . count($found) . "\n";
+foreach ($found as $r) {
+    echo " IdDoc={$r->IdDoc} CodCommessa=[{$r->CodCommessa}] CodArt={$r->CodArt}\n";
 }
