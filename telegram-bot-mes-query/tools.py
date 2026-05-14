@@ -548,7 +548,7 @@ TOOLS_SCHEMA = [
     },
     {
         "name": "get_presenti_summary",
-        "description": "Riepilogo PRE-AGGREGATO presenti oggi: totale, ritardatari >08:15, ore lavorate per persona. USA per 'presenti', 'in ritardo entrata', 'ore lavorate'.",
+        "description": "Riepilogo PRE-AGGREGATO presenti oggi: totale, ritardatari (rispetto al turno previsto: T=08:15, 1=06:15, 2=14:15, 3=22:15), ore lavorate per persona. JOIN con tabella turni. USA per 'presenti', 'in ritardo entrata', 'ore lavorate'.",
         "input_schema": {"type": "object", "properties": {}},
     },
     {
@@ -868,37 +868,55 @@ def get_reparti_summary() -> dict:
 
 
 def get_presenti_summary() -> dict:
-    """Summary presenti oggi: ore lavorate + flag ritardo (>08:15)."""
+    """Summary presenti oggi: ore lavorate + ritardo rispetto al TURNO previsto.
+    Turni: T=06-22 atteso 08:00, 1=06-14 atteso 06:00, 2=14-22 atteso 14:00,
+    3=22-06 atteso 22:00. Tolleranza 15 min."""
     oggi = datetime.now().strftime('%Y-%m-%d')
     sql = """
         SELECT
             CONCAT(na.cognome, ' ', na.nome) AS cognome_nome,
             TIME(MIN(t.data_ora)) AS entrata,
             CAST(TIMESTAMPDIFF(MINUTE, MIN(t.data_ora), NOW()) / 60.0 AS DECIMAL(5,2)) AS ore_lavorate_finora,
-            IF(TIME(MIN(t.data_ora)) > '08:15:00', 1, 0) AS in_ritardo
+            tr.turno AS turno
         FROM nettime_timbrature t
         JOIN nettime_anagrafica na ON na.matricola = t.matricola
+        LEFT JOIN turni tr ON tr.cognome_nome = CONCAT(na.cognome, ' ', na.nome) AND tr.data = %s
         WHERE DATE(t.data_ora) = %s AND t.verso = 'E'
-        GROUP BY t.matricola, na.cognome, na.nome
+        GROUP BY t.matricola, na.cognome, na.nome, tr.turno
         ORDER BY MIN(t.data_ora) ASC
     """
     try:
-        rows = _query(sql, (oggi,))
+        rows = _query(sql, (oggi, oggi))
     except Exception:
         rows = []
-    persone = [
-        {
+
+    # Orari attesi per turno (con tolleranza 15min)
+    soglie = {
+        'T': '08:15:00',
+        '1': '06:15:00',
+        '2': '14:15:00',
+        '3': '22:15:00',
+    }
+
+    persone = []
+    for r in rows:
+        entrata_str = str(r['entrata']) if r['entrata'] else ''
+        turno = r.get('turno') or 'T'  # default T se turno non assegnato
+        soglia = soglie.get(turno, '08:15:00')
+        in_ritardo = bool(entrata_str and entrata_str > soglia)
+        persone.append({
             'cognome_nome': r['cognome_nome'],
-            'entrata': str(r['entrata']) if r['entrata'] else '',
+            'entrata': entrata_str,
+            'turno': turno,
+            'soglia_ritardo': soglia[:5],
             'ore_lavorate_finora': float(r['ore_lavorate_finora']) if r['ore_lavorate_finora'] else 0.0,
-            'in_ritardo': bool(r['in_ritardo']),
-        }
-        for r in rows
-    ]
+            'in_ritardo': in_ritardo,
+        })
+
     return {
         'oggi': oggi,
         'totale_presenti': len(persone),
-        'totale_in_ritardo_8_15': sum(1 for p in persone if p['in_ritardo']),
+        'totale_in_ritardo': sum(1 for p in persone if p['in_ritardo']),
         'persone': persone,
     }
 
