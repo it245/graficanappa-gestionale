@@ -26,8 +26,9 @@ class SyncFixMultiModello extends Command
         $dry = (bool) $this->option('dry-run');
 
         $gruppi = [
-            'PI'  => ['PI01','PI02','PI03'],
-            'FIN' => ['FIN01','FIN03','FIN04','FINESTRATURA.MANUALE'],
+            'PI'    => ['PI01','PI02','PI03'],
+            'FIN'   => ['FIN01','FIN03','FIN04','FINESTRATURA.MANUALE'],
+            'SFUST' => ['SFUST','SFUST.IML.FUSTELLATO'],
         ];
 
         $totOrdini = 0;
