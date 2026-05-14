@@ -58,12 +58,18 @@ def get_commessa_info(commessa: str) -> dict:
         tuple(ordine_ids),
     )
 
+    def _stato_int(s):
+        try:
+            return int(s)
+        except (TypeError, ValueError):
+            return -1
+
     return {
         'commessa': commessa_padded,
         'ordini': ordini,
         'fasi': fasi,
         'n_fasi': len(fasi),
-        'n_fasi_terminate': sum(1 for f in fasi if f['stato'] >= 3),
+        'n_fasi_terminate': sum(1 for f in fasi if _stato_int(f.get('stato')) >= 3),
     }
 
 
