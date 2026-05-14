@@ -500,6 +500,50 @@ TOOLS_SCHEMA = [
         },
     },
     {
+        "name": "get_lav_esterne",
+        "description": "Fasi esterne (esterno=1). Opzionale filtro stato (1=pronta da inviare, 5=inviato, 3=ricevuto).",
+        "input_schema": {
+            "type": "object",
+            "properties": {"stato": {"type": "string"}},
+        },
+    },
+    {
+        "name": "invia_a_esterno",
+        "description": "MODIFICA: marca fase come inviata a fornitore esterno (stato=5, note='Inviato a: X'). USA dopo conferma.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "fase_id": {"type": "integer"},
+                "fornitore": {"type": "string"},
+            },
+            "required": ["fase_id", "fornitore"],
+        },
+    },
+    {
+        "name": "ricevuta_da_esterno",
+        "description": "MODIFICA: marca fase rientrata dal fornitore (stato=3, data_fine). USA dopo conferma.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"fase_id": {"type": "integer"}},
+            "required": ["fase_id"],
+        },
+    },
+    {
+        "name": "get_presenti_oggi",
+        "description": "Operatori attualmente presenti in azienda oggi (entrata senza uscita).",
+        "input_schema": {"type": "object", "properties": {}},
+    },
+    {
+        "name": "sync_onda",
+        "description": "AZIONE: lancia sync Onda (importa nuove commesse). USA dopo conferma utente.",
+        "input_schema": {"type": "object", "properties": {}},
+    },
+    {
+        "name": "sync_prinect",
+        "description": "AZIONE: lancia sync Prinect (aggiorna fasi stampa offset). USA dopo conferma utente.",
+        "input_schema": {"type": "object", "properties": {}},
+    },
+    {
         "name": "marca_terminata_manualmente",
         "description": "Imposta flag terminata_manualmente (protegge da riapertura auto). USA SOLO dopo conferma utente.",
         "input_schema": {
@@ -535,6 +579,100 @@ def get_fasi_terminate_oggi(reparto: str | None = None) -> list[dict]:
         params = (oggi, f"%{reparto}%")
     sql += " ORDER BY of.data_fine DESC LIMIT 100"
     return _query(sql, params)
+
+
+def get_lav_esterne(stato: str | None = None) -> list[dict]:
+    """Fasi esterne (esterno=1): inviate o da inviare a fornitori esterni."""
+    sql = """
+        SELECT of.id, of.fase, of.stato, of.note, of.data_inizio, of.data_fine,
+               o.commessa, o.cliente_nome, o.descrizione, o.data_prevista_consegna
+        FROM ordine_fasi of
+        JOIN ordini o ON o.id = of.ordine_id
+        WHERE of.esterno = 1 AND of.deleted_at IS NULL
+    """
+    params: tuple = ()
+    if stato is not None:
+        sql += " AND of.stato = %s"
+        params = (str(stato),)
+    sql += " ORDER BY o.data_prevista_consegna ASC LIMIT 50"
+    return _query(sql, params)
+
+
+def invia_a_esterno(fase_id: int, fornitore: str) -> dict:
+    """Marca fase come inviata a fornitore esterno: note + stato=5 (EXT inviato)."""
+    nota = f"Inviato a: {fornitore}"
+    n = _execute(
+        "UPDATE ordine_fasi SET stato = '5', esterno = 1, note = %s, data_inizio = NOW(), updated_at = NOW() WHERE id = %s AND deleted_at IS NULL",
+        (nota, int(fase_id))
+    )
+    if n == 0:
+        return {'errore': f'Fase id={fase_id} non trovata'}
+    return {'ok': True, 'fase_id': fase_id, 'fornitore': fornitore}
+
+
+def ricevuta_da_esterno(fase_id: int) -> dict:
+    """Marca fase ricevuta dal fornitore: stato=3 terminato, data_fine=NOW."""
+    n = _execute(
+        "UPDATE ordine_fasi SET stato = '3', data_fine = NOW(), updated_at = NOW() WHERE id = %s AND deleted_at IS NULL",
+        (int(fase_id),)
+    )
+    if n == 0:
+        return {'errore': f'Fase id={fase_id} non trovata'}
+    return {'ok': True, 'fase_id': fase_id}
+
+
+def get_presenti_oggi() -> dict:
+    """Operatori presenti in azienda oggi (tabella presenze, uscita NULL)."""
+    oggi = datetime.now().strftime('%Y-%m-%d')
+    sql_pres = """
+        SELECT cognome_nome, MIN(timestamp) AS entrata, MAX(timestamp) AS ultima
+        FROM presenze
+        WHERE DATE(timestamp) = %s AND tipo = 'I'
+        GROUP BY cognome_nome
+        HAVING NOT EXISTS (
+            SELECT 1 FROM presenze p2
+            WHERE p2.cognome_nome = presenze.cognome_nome
+              AND DATE(p2.timestamp) = %s
+              AND p2.tipo = 'O'
+              AND p2.timestamp > MAX(presenze.timestamp)
+        )
+        ORDER BY cognome_nome
+    """
+    try:
+        presenti = _query(sql_pres, (oggi, oggi))
+    except Exception:
+        presenti = []
+    return {'data': oggi, 'totale': len(presenti), 'presenti': presenti}
+
+
+def sync_onda() -> dict:
+    """Lancia sync Onda (artisan onda:sync). Async, ritorna subito."""
+    import subprocess
+    laravel_path = os.environ.get('LARAVEL_PATH', r'C:\progetti\gestionale-v2')
+    try:
+        proc = subprocess.Popen(
+            ['php', 'artisan', 'onda:sync'],
+            cwd=laravel_path,
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+        )
+        return {'ok': True, 'msg': f'Sync Onda avviato (PID {proc.pid})'}
+    except Exception as e:
+        return {'errore': str(e)}
+
+
+def sync_prinect() -> dict:
+    """Lancia sync Prinect (artisan prinect:sync). Async."""
+    import subprocess
+    laravel_path = os.environ.get('LARAVEL_PATH', r'C:\progetti\gestionale-v2')
+    try:
+        proc = subprocess.Popen(
+            ['php', 'artisan', 'prinect:sync'],
+            cwd=laravel_path,
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+        )
+        return {'ok': True, 'msg': f'Sync Prinect avviato (PID {proc.pid})'}
+    except Exception as e:
+        return {'errore': str(e)}
 
 
 def get_fasi_pronte(reparto: str | None = None) -> list[dict]:
@@ -577,6 +715,12 @@ def dispatch_tool(name: str, args: dict) -> Any:
         'aggiorna_nota_fase': aggiorna_nota_fase,
         'aggiorna_priorita_manuale': aggiorna_priorita_manuale,
         'marca_terminata_manualmente': marca_terminata_manualmente,
+        'get_lav_esterne': get_lav_esterne,
+        'invia_a_esterno': invia_a_esterno,
+        'ricevuta_da_esterno': ricevuta_da_esterno,
+        'get_presenti_oggi': get_presenti_oggi,
+        'sync_onda': sync_onda,
+        'sync_prinect': sync_prinect,
     }.get(name)
     if not fn:
         return {'errore': f'Tool sconosciuto: {name}'}
