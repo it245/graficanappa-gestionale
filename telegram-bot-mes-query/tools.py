@@ -229,10 +229,33 @@ def get_fase_dettaglio(fase_id: int) -> dict:
     return rows[0]
 
 
+def _norm_fase_query(s: str) -> str:
+    import re
+    return re.sub(r'[^A-Z0-9]', '', s.upper())
+
+
+def suggerisci_fasi_simili(query: str, limit: int = 5) -> list[str]:
+    """Suggerisce nomi fase MES simili (ignora punti/spazi/case)."""
+    q = _norm_fase_query(query)
+    if len(q) < 3:
+        return []
+    rows = _query("SELECT DISTINCT fase FROM ordine_fasi WHERE deleted_at IS NULL")
+    out = []; seen = set()
+    for r in rows:
+        f = r.get('fase') or ''
+        n = _norm_fase_query(f)
+        if not n or f in seen:
+            continue
+        if q in n or n in q:
+            out.append(f); seen.add(f)
+        if len(out) >= limit: break
+    return out
+
+
 def cerca_fasi(commessa: str | None = None, fase: str | None = None,
                stato: str | None = None, reparto: str | None = None,
-               limit: int = 30) -> list[dict]:
-    """Cerca fasi con filtri opzionali."""
+               limit: int = 30) -> dict:
+    """Cerca fasi con filtri opzionali. Se 0 match su fase suggerisce alternative."""
     where = ["orf.deleted_at IS NULL"]
     params = []
     if commessa:
@@ -244,8 +267,9 @@ def cerca_fasi(commessa: str | None = None, fase: str | None = None,
             where.append("o.commessa LIKE %s")
             params.append(f"%{commessa}%")
     if fase:
-        where.append("orf.fase LIKE %s")
-        params.append(f"%{fase}%")
+        # Match LIKE su nome originale; if no results, suggerimenti via norm
+        where.append("REPLACE(REPLACE(UPPER(orf.fase), '.', ''), ' ', '') LIKE %s")
+        params.append(f"%{_norm_fase_query(fase)}%")
     if stato is not None and stato != '':
         where.append("orf.stato = %s")
         params.append(str(stato))
@@ -265,7 +289,11 @@ def cerca_fasi(commessa: str | None = None, fase: str | None = None,
         ORDER BY orf.id DESC
         LIMIT {int(limit)}
     """
-    return _query(sql, tuple(params))
+    risultati = _query(sql, tuple(params))
+    out = {'risultati': risultati, 'count': len(risultati)}
+    if not risultati and fase:
+        out['suggerimenti_fase'] = suggerisci_fasi_simili(fase)
+    return out
 
 
 # === WRITE FUNCTIONS ===
