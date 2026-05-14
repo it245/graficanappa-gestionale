@@ -1,7 +1,7 @@
 """
 Tool functions per interrogare DB MES.
 Ogni funzione = tool esposto a Claude API per tool use.
-Tutte sono READ-ONLY (no UPDATE/INSERT/DELETE).
+Read + Write (audit su tabella sensori_letture per traccia).
 """
 import os
 import mysql.connector
@@ -18,6 +18,20 @@ def _conn():
         password=os.environ['DB_PASS'],
         connection_timeout=10,
     )
+
+
+def _execute(sql: str, params: tuple = ()) -> int:
+    """UPDATE/INSERT/DELETE, ritorna rows affected."""
+    conn = _conn()
+    try:
+        cur = conn.cursor()
+        cur.execute(sql, params)
+        conn.commit()
+        n = cur.rowcount
+        cur.close()
+        return n
+    finally:
+        conn.close()
 
 
 def _query(sql: str, params: tuple = ()) -> list[dict]:
@@ -198,6 +212,119 @@ def get_stato_consegna(commessa: str) -> dict:
     }
 
 
+def get_fase_dettaglio(fase_id: int) -> dict:
+    """Dettaglio singola fase: stati, qta, ordine, operatori."""
+    sql = """
+        SELECT of.*, o.commessa, o.cliente_nome, o.descrizione, r.nome AS reparto
+        FROM ordine_fasi of
+        JOIN ordini o ON o.id = of.ordine_id
+        LEFT JOIN fasi_catalogo fc ON fc.fase = of.fase
+        LEFT JOIN reparti r ON r.id = fc.reparto_id
+        WHERE of.id = %s AND of.deleted_at IS NULL
+    """
+    rows = _query(sql, (fase_id,))
+    if not rows:
+        return {'errore': f'Fase id={fase_id} non trovata'}
+    return rows[0]
+
+
+def cerca_fasi(commessa: str | None = None, fase: str | None = None,
+               stato: str | None = None, reparto: str | None = None,
+               limit: int = 30) -> list[dict]:
+    """Cerca fasi con filtri opzionali."""
+    where = ["of.deleted_at IS NULL"]
+    params = []
+    if commessa:
+        if commessa.isdigit() and 4 <= len(commessa) <= 7:
+            commessa_padded = commessa.zfill(7) + '-26'
+            where.append("o.commessa = %s")
+            params.append(commessa_padded)
+        else:
+            where.append("o.commessa LIKE %s")
+            params.append(f"%{commessa}%")
+    if fase:
+        where.append("of.fase LIKE %s")
+        params.append(f"%{fase}%")
+    if stato is not None and stato != '':
+        where.append("of.stato = %s")
+        params.append(str(stato))
+    if reparto:
+        where.append("LOWER(r.nome) LIKE LOWER(%s)")
+        params.append(f"%{reparto}%")
+
+    sql = f"""
+        SELECT of.id, of.fase, of.stato, of.qta_prod, of.data_inizio, of.data_fine,
+               o.commessa, o.cliente_nome, o.descrizione,
+               r.nome AS reparto
+        FROM ordine_fasi of
+        JOIN ordini o ON o.id = of.ordine_id
+        LEFT JOIN fasi_catalogo fc ON fc.fase = of.fase
+        LEFT JOIN reparti r ON r.id = fc.reparto_id
+        WHERE {' AND '.join(where)}
+        ORDER BY of.id DESC
+        LIMIT {int(limit)}
+    """
+    return _query(sql, tuple(params))
+
+
+# === WRITE FUNCTIONS ===
+def aggiorna_stato_fase(fase_id: int, nuovo_stato: int) -> dict:
+    """Modifica stato fase (0=caricato, 1=pronto, 2=avviato, 3=terminato, 4=consegnato)."""
+    if not (0 <= int(nuovo_stato) <= 4):
+        return {'errore': 'Stato deve essere tra 0 e 4'}
+    n = _execute(
+        "UPDATE ordine_fasi SET stato = %s, updated_at = NOW() WHERE id = %s AND deleted_at IS NULL",
+        (str(nuovo_stato), int(fase_id))
+    )
+    if n == 0:
+        return {'errore': f'Fase id={fase_id} non trovata o stato gia uguale'}
+    return {'ok': True, 'fase_id': fase_id, 'nuovo_stato': nuovo_stato}
+
+
+def aggiorna_qta_prod(fase_id: int, qta: int) -> dict:
+    """Aggiorna qta_prod fase."""
+    n = _execute(
+        "UPDATE ordine_fasi SET qta_prod = %s, updated_at = NOW() WHERE id = %s AND deleted_at IS NULL",
+        (int(qta), int(fase_id))
+    )
+    if n == 0:
+        return {'errore': f'Fase id={fase_id} non trovata'}
+    return {'ok': True, 'fase_id': fase_id, 'qta_prod': qta}
+
+
+def aggiorna_nota_fase(fase_id: int, nota: str) -> dict:
+    """Aggiorna campo note di una fase."""
+    n = _execute(
+        "UPDATE ordine_fasi SET note = %s, updated_at = NOW() WHERE id = %s AND deleted_at IS NULL",
+        (nota, int(fase_id))
+    )
+    if n == 0:
+        return {'errore': f'Fase id={fase_id} non trovata'}
+    return {'ok': True, 'fase_id': fase_id, 'note': nota}
+
+
+def aggiorna_priorita_manuale(fase_id: int, priorita: float) -> dict:
+    """Imposta priorita_manuale (flag) + valore priorita."""
+    n = _execute(
+        "UPDATE ordine_fasi SET priorita = %s, priorita_manuale = 1, updated_at = NOW() WHERE id = %s AND deleted_at IS NULL",
+        (float(priorita), int(fase_id))
+    )
+    if n == 0:
+        return {'errore': f'Fase id={fase_id} non trovata'}
+    return {'ok': True, 'fase_id': fase_id, 'priorita': priorita, 'manuale': True}
+
+
+def marca_terminata_manualmente(fase_id: int, valore: bool = True) -> dict:
+    """Imposta flag terminata_manualmente (protegge fase da riapertura auto sync)."""
+    n = _execute(
+        "UPDATE ordine_fasi SET terminata_manualmente = %s, updated_at = NOW() WHERE id = %s AND deleted_at IS NULL",
+        (1 if valore else 0, int(fase_id))
+    )
+    if n == 0:
+        return {'errore': f'Fase id={fase_id} non trovata'}
+    return {'ok': True, 'fase_id': fase_id, 'terminata_manualmente': bool(valore)}
+
+
 def get_operatore_fasi_oggi(nome: str) -> list[dict]:
     """Fasi a cui un operatore ha lavorato oggi (via pivot ordine_fase_operatore)."""
     oggi = datetime.now().strftime('%Y-%m-%d')
@@ -285,7 +412,149 @@ TOOLS_SCHEMA = [
             "required": ["nome"],
         },
     },
+    {
+        "name": "get_fasi_terminate_oggi",
+        "description": "Fasi terminate (stato=3) oggi. Opzionale filtro reparto.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"reparto": {"type": "string"}},
+        },
+    },
+    {
+        "name": "get_fasi_pronte",
+        "description": "Fasi pronte stato=1 (mai avviate), ordinate per priorita.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"reparto": {"type": "string"}},
+        },
+    },
+    {
+        "name": "get_fase_dettaglio",
+        "description": "Dettaglio completo di una fase per id (stato, qta, ordine, reparto).",
+        "input_schema": {
+            "type": "object",
+            "properties": {"fase_id": {"type": "integer"}},
+            "required": ["fase_id"],
+        },
+    },
+    {
+        "name": "cerca_fasi",
+        "description": "Cerca fasi con filtri opzionali (commessa, fase, stato, reparto). Ritorna fino a 30 risultati.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "commessa": {"type": "string"},
+                "fase": {"type": "string", "description": "Es. PI01, FIN01, STAMPAXL106"},
+                "stato": {"type": "string", "description": "0,1,2,3,4"},
+                "reparto": {"type": "string"},
+                "limit": {"type": "integer", "default": 30},
+            },
+        },
+    },
+    {
+        "name": "aggiorna_stato_fase",
+        "description": "MODIFICA stato di una fase (0=caricato, 1=pronto, 2=avviato, 3=terminato, 4=consegnato). USA SOLO dopo conferma esplicita utente.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "fase_id": {"type": "integer"},
+                "nuovo_stato": {"type": "integer"},
+            },
+            "required": ["fase_id", "nuovo_stato"],
+        },
+    },
+    {
+        "name": "aggiorna_qta_prod",
+        "description": "MODIFICA qta_prod (quantita prodotta) fase. USA SOLO dopo conferma utente.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "fase_id": {"type": "integer"},
+                "qta": {"type": "integer"},
+            },
+            "required": ["fase_id", "qta"],
+        },
+    },
+    {
+        "name": "aggiorna_nota_fase",
+        "description": "MODIFICA note di una fase. USA SOLO dopo conferma utente.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "fase_id": {"type": "integer"},
+                "nota": {"type": "string"},
+            },
+            "required": ["fase_id", "nota"],
+        },
+    },
+    {
+        "name": "aggiorna_priorita_manuale",
+        "description": "MODIFICA priorita fase + setta flag manuale. USA SOLO dopo conferma utente.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "fase_id": {"type": "integer"},
+                "priorita": {"type": "number"},
+            },
+            "required": ["fase_id", "priorita"],
+        },
+    },
+    {
+        "name": "marca_terminata_manualmente",
+        "description": "Imposta flag terminata_manualmente (protegge da riapertura auto). USA SOLO dopo conferma utente.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "fase_id": {"type": "integer"},
+                "valore": {"type": "boolean", "default": True},
+            },
+            "required": ["fase_id"],
+        },
+    },
 ]
+
+
+def get_fasi_terminate_oggi(reparto: str | None = None) -> list[dict]:
+    """Fasi terminate (stato=3) oggi. Opzionale filtro reparto."""
+    oggi = datetime.now().strftime('%Y-%m-%d')
+    sql = """
+        SELECT of.id, of.fase, of.qta_prod, of.data_fine,
+               o.commessa, o.cliente_nome,
+               r.nome AS reparto
+        FROM ordine_fasi of
+        JOIN ordini o ON o.id = of.ordine_id
+        LEFT JOIN fasi_catalogo fc ON fc.fase = of.fase
+        LEFT JOIN reparti r ON r.id = fc.reparto_id
+        WHERE of.stato = '3'
+          AND DATE(of.data_fine) = %s
+          AND of.deleted_at IS NULL
+    """
+    params: tuple = (oggi,)
+    if reparto:
+        sql += " AND LOWER(r.nome) LIKE LOWER(%s)"
+        params = (oggi, f"%{reparto}%")
+    sql += " ORDER BY of.data_fine DESC LIMIT 100"
+    return _query(sql, params)
+
+
+def get_fasi_pronte(reparto: str | None = None) -> list[dict]:
+    """Fasi stato=1 (pronte ma non avviate). Da fare prossime."""
+    sql = """
+        SELECT of.id, of.fase, of.priorita, of.qta_fase,
+               o.commessa, o.cliente_nome, o.descrizione, o.data_prevista_consegna,
+               r.nome AS reparto
+        FROM ordine_fasi of
+        JOIN ordini o ON o.id = of.ordine_id
+        LEFT JOIN fasi_catalogo fc ON fc.fase = of.fase
+        LEFT JOIN reparti r ON r.id = fc.reparto_id
+        WHERE of.stato = '1' AND of.deleted_at IS NULL
+    """
+    params: tuple = ()
+    if reparto:
+        sql += " AND LOWER(r.nome) LIKE LOWER(%s)"
+        params = (f"%{reparto}%",)
+    sql += " ORDER BY of.priorita ASC LIMIT 50"
+    return _query(sql, params)
 
 
 def dispatch_tool(name: str, args: dict) -> Any:
@@ -294,11 +563,20 @@ def dispatch_tool(name: str, args: dict) -> Any:
     fn = {
         'get_commessa_info': get_commessa_info,
         'get_fasi_attive': get_fasi_attive,
+        'get_fasi_terminate_oggi': get_fasi_terminate_oggi,
+        'get_fasi_pronte': get_fasi_pronte,
         'get_macchine_ferme': get_macchine_ferme,
         'get_riepilogo_giornaliero': get_riepilogo_giornaliero,
         'get_top_commesse_offset': get_top_commesse_offset,
         'get_stato_consegna': get_stato_consegna,
         'get_operatore_fasi_oggi': get_operatore_fasi_oggi,
+        'get_fase_dettaglio': get_fase_dettaglio,
+        'cerca_fasi': cerca_fasi,
+        'aggiorna_stato_fase': aggiorna_stato_fase,
+        'aggiorna_qta_prod': aggiorna_qta_prod,
+        'aggiorna_nota_fase': aggiorna_nota_fase,
+        'aggiorna_priorita_manuale': aggiorna_priorita_manuale,
+        'marca_terminata_manualmente': marca_terminata_manualmente,
     }.get(name)
     if not fn:
         return {'errore': f'Tool sconosciuto: {name}'}
