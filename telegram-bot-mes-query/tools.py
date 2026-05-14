@@ -231,6 +231,7 @@ TOOLS_SCHEMA = [
 
 def dispatch_tool(name: str, args: dict) -> Any:
     """Dispatch tool call → funzione Python."""
+    import traceback
     fn = {
         'get_commessa_info': get_commessa_info,
         'get_fasi_attive': get_fasi_attive,
@@ -244,4 +245,6 @@ def dispatch_tool(name: str, args: dict) -> Any:
     try:
         return fn(**args)
     except Exception as e:
-        return {'errore': str(e)}
+        tb = traceback.format_exc()
+        print(f"[TOOL ERROR] {name}({args}): {e}\n{tb}", flush=True)
+        return {'errore': f'{type(e).__name__}: {e}'}
