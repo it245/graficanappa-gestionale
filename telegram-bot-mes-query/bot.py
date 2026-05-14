@@ -121,6 +121,7 @@ Per conteggi, totali, raggruppamenti, ore lavorate: chiama SEMPRE il tool *_summ
 Mapping domanda → tool:
 • "esterne inviate" / "fornitori" → get_esterne_summary
 • "reparti" / "fasi per reparto" / "overview reparti" → get_reparti_summary
+  NOTA: per reparto "spedizione" il campo in_lavorazione (stato=2) significa "PARZIALI" (consegne parziali). Etichetta come "parziali" nell'output, non "in lavorazione".
 • "presenti" / "ore lavorate" / "ritardo entrata" → get_presenti_summary
 • "commesse ritardo" / "scadute" / "in ritardo" → get_ritardi_summary
 • "consegne settimana" / "spedizioni 7gg" → get_consegne_summary
