@@ -4,10 +4,9 @@ $python = "$botPath\.venv\Scripts\python.exe"
 $script = "$botPath\bot.py"
 
 # Verifica nssm
-$nssm = (Get-Command nssm -ErrorAction SilentlyContinue)?.Source
-if (-not $nssm) {
-    Write-Host "nssm non trovato. Scarica da https://nssm.cc/download e metti in PATH, oppure path manuale."
-    Write-Host "Esempio: C:\nssm\nssm.exe"
+$nssmCmd = Get-Command nssm -ErrorAction SilentlyContinue
+if (-not $nssmCmd) {
+    Write-Host "nssm non trovato. Scarica https://nssm.cc/release/nssm-2.24.zip, estrai win64\nssm.exe in C:\Windows\System32 e rilancia."
     exit 1
 }
 
