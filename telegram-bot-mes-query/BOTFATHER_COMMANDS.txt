@@ -1,0 +1,13 @@
+commessa - Dettaglio commessa (numero)
+fasi - Fasi in lavorazione
+pronte - Fasi pronte (stato=1)
+terminate - Fasi terminate oggi
+esterne - Lavorazioni esterne
+reparti - Overview reparti
+presenti - Operatori in azienda oggi
+alert - Macchine ferme >30min
+oggi - Riepilogo giornaliero
+top - Top commesse offset 7gg
+sync_onda - Sincronizza Onda
+sync_prinect - Sincronizza Prinect
+aiuto - Lista comandi

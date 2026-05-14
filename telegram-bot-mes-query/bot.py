@@ -82,14 +82,24 @@ async def cmd_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
         await reject(update)
         return
     await update.message.reply_text(
-        "👋 Bot MES Grafica Nappa pronto.\n\n"
-        "Comandi:\n"
+        "👋 *Bot MES Grafica Nappa*\n\n"
+        "*Read rapido:*\n"
         "/commessa <num> — dettaglio commessa\n"
-        "/alert — macchine ferme >30min\n"
+        "/fasi [reparto] — in lavorazione (stato=2)\n"
+        "/pronte [reparto] — fasi pronte (stato=1)\n"
+        "/terminate — terminate oggi\n"
+        "/esterne — lav. esterne\n"
+        "/reparti — overview reparti\n"
+        "/presenti — chi è in azienda\n"
+        "/alert — macchine ferme\n"
         "/oggi — riepilogo giornaliero\n"
-        "/top — top commesse offset 7gg\n"
-        "/aiuto — questo messaggio\n\n"
-        "Oppure scrivi liberamente: \"come va 67386?\", \"chi sta stampando?\""
+        "/top — top commesse offset 7gg\n\n"
+        "*Sync:*\n"
+        "/sync_onda /sync_prinect\n\n"
+        "*Linguaggio libero:*\n"
+        "\"come va 67386?\", \"termina fase 21138\", "
+        "\"chi sta stampando?\", \"nota TV: consegna urgente 15h\"",
+        parse_mode=ParseMode.MARKDOWN
     )
 
 
@@ -149,6 +159,96 @@ async def cmd_oggi(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
         f"📦 Consegnate: {r['consegnate']}\n"
     )
     await update.message.reply_text(text, parse_mode=ParseMode.MARKDOWN)
+
+
+async def cmd_fasi(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
+    """Fasi in lavorazione (stato=2). Opzionale reparto."""
+    if not is_authorized(update.effective_user.id):
+        await reject(update); return
+    reparto = ' '.join(ctx.args) if ctx.args else None
+    fasi = tools.get_fasi_attive(reparto)
+    if not fasi:
+        await update.message.reply_text("Nessuna fase in lavorazione.")
+        return
+    text = f"🟢 {len(fasi)} fasi attive" + (f" ({reparto})" if reparto else '') + ":\n\n"
+    for r in fasi[:20]:
+        text += f"• {r['commessa']} {r['fase']} — qta {r['qta_prod'] or 0}\n  {r['cliente_nome'][:30]}\n"
+    await update.message.reply_text(text[:4000])
+
+
+async def cmd_pronte(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
+    """Fasi pronte (stato=1)."""
+    if not is_authorized(update.effective_user.id):
+        await reject(update); return
+    reparto = ' '.join(ctx.args) if ctx.args else None
+    fasi = tools.get_fasi_pronte(reparto)
+    if not fasi:
+        await update.message.reply_text("Nessuna fase pronta.")
+        return
+    text = f"🟡 {len(fasi)} fasi pronte" + (f" ({reparto})" if reparto else '') + ":\n\n"
+    for r in fasi[:20]:
+        text += f"• {r['commessa']} {r['fase']} priorita={r['priorita']}\n"
+    await update.message.reply_text(text[:4000])
+
+
+async def cmd_terminate(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
+    """Fasi terminate oggi."""
+    if not is_authorized(update.effective_user.id):
+        await reject(update); return
+    fasi = tools.get_fasi_terminate_oggi()
+    text = f"✅ {len(fasi)} fasi terminate oggi:\n\n"
+    for r in fasi[:25]:
+        text += f"• {r['commessa']} {r['fase']} qta={r['qta_prod'] or 0}\n"
+    await update.message.reply_text(text[:4000] or "Nessuna fase terminata oggi.")
+
+
+async def cmd_presenti(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
+    if not is_authorized(update.effective_user.id):
+        await reject(update); return
+    r = tools.get_presenti_oggi()
+    text = f"👥 Presenti oggi: {r['totale']}\n\n"
+    for p in r['presenti']:
+        text += f"• {p['cognome_nome']} (entrata {str(p['entrata'])[11:16]})\n"
+    await update.message.reply_text(text[:4000])
+
+
+async def cmd_esterne(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
+    if not is_authorized(update.effective_user.id):
+        await reject(update); return
+    fasi = tools.get_lav_esterne()
+    text = f"🚚 {len(fasi)} lav. esterne:\n\n"
+    for r in fasi[:25]:
+        text += f"• {r['commessa']} {r['fase']} stato={r['stato']} ({r['cliente_nome'][:25]})\n"
+    await update.message.reply_text(text[:4000] or "Nessuna lav. esterna.")
+
+
+async def cmd_reparti(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
+    if not is_authorized(update.effective_user.id):
+        await reject(update); return
+    rows = tools.get_reparti_overview()
+    by_rep = {}
+    for r in rows:
+        by_rep.setdefault(r['reparto'] or '?', {})[r['stato']] = r['n']
+    text = "📊 *Reparti overview*\n\n"
+    for rep, stati in by_rep.items():
+        text += f"*{rep}*: "
+        text += ' '.join(f"{s}={n}" for s, n in sorted(stati.items()))
+        text += '\n'
+    await update.message.reply_text(text[:4000], parse_mode=ParseMode.MARKDOWN)
+
+
+async def cmd_sync_onda(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
+    if not is_authorized(update.effective_user.id):
+        await reject(update); return
+    r = tools.sync_onda()
+    await update.message.reply_text("✓ " + r.get('msg', 'OK') if 'ok' in r else "❌ " + r.get('errore', ''))
+
+
+async def cmd_sync_prinect(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
+    if not is_authorized(update.effective_user.id):
+        await reject(update); return
+    r = tools.sync_prinect()
+    await update.message.reply_text("✓ " + r.get('msg', 'OK') if 'ok' in r else "❌ " + r.get('errore', ''))
 
 
 async def cmd_top(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
@@ -234,6 +334,14 @@ def main() -> None:
     app.add_handler(CommandHandler("alert", cmd_alert))
     app.add_handler(CommandHandler("oggi", cmd_oggi))
     app.add_handler(CommandHandler("top", cmd_top))
+    app.add_handler(CommandHandler("fasi", cmd_fasi))
+    app.add_handler(CommandHandler("pronte", cmd_pronte))
+    app.add_handler(CommandHandler("terminate", cmd_terminate))
+    app.add_handler(CommandHandler("presenti", cmd_presenti))
+    app.add_handler(CommandHandler("esterne", cmd_esterne))
+    app.add_handler(CommandHandler("reparti", cmd_reparti))
+    app.add_handler(CommandHandler("sync_onda", cmd_sync_onda))
+    app.add_handler(CommandHandler("sync_prinect", cmd_sync_prinect))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     app.add_error_handler(on_error)
 
