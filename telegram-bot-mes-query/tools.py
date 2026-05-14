@@ -786,7 +786,7 @@ def get_lav_esterne(stato: str | None = None) -> list[dict]:
     if stato is not None:
         sql += " AND orf.stato = %s"
         params = (str(stato),)
-    sql += " ORDER BY o.data_prevista_consegna ASC LIMIT 50"
+    sql += " ORDER BY o.data_prevista_consegna ASC LIMIT 300"
     return _query(sql, params)
 
 
