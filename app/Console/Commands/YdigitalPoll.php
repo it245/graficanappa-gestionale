@@ -10,9 +10,10 @@ use App\Models\OrdineFase;
 use Carbon\Carbon;
 
 /**
- * Polling Y Digital API ogni minuto.
- * Per ogni sensore attivo: chiama /latest/, calcola delta vs ultima lettura,
- * incrementa qta_prod sulla fase stato 2 attiva della macchina associata.
+ * Polling Y Digital API.
+ * Per ogni sensore attivo: chiama /data/?start=ultimo_ts&end=now, somma delta
+ * gestendo reset (value < prev → delta = value), incrementa qta_prod fase stato 2
+ * della macchina associata.
  */
 class YdigitalPoll extends Command
 {
@@ -37,35 +38,58 @@ class YdigitalPoll extends Command
         $debug = $this->option('debug');
 
         foreach ($sensori as $s) {
-            $url = "https://ysens.it/api/v1/sensors/{$s->device_id}/{$s->sensor_name}/latest/";
+            // Range: dall'ultimo timestamp persistito (o ultimi 10 min se mai letto) a ora.
+            $startCarbon = $s->ultimo_ts
+                ? Carbon::parse($s->ultimo_ts)->copy()->addMillisecond()
+                : Carbon::now()->subMinutes(10);
+            $endCarbon = Carbon::now();
+
+            $start = $startCarbon->utc()->format('Y-m-d\TH:i:s\Z');
+            $end = $endCarbon->utc()->format('Y-m-d\TH:i:s\Z');
+
+            $url = "https://ysens.it/api/v1/sensors/{$s->device_id}/{$s->sensor_name}/data/?start={$start}&end={$end}";
+
             try {
                 $resp = Http::withoutVerifying()
                     ->withHeaders(['X-API-Key' => $apiKey])
-                    ->timeout(10)
+                    ->timeout(15)
                     ->get($url);
                 if (!$resp->successful()) {
                     $this->warn("[{$s->device_id}/{$s->sensor_name}] HTTP " . $resp->status());
                     continue;
                 }
-                $data = $resp->json('data');
-                if (!$data) continue;
-
-                $value = $data['value_1'] ?? null;
-                $ts = $data['timestamp'] ?? null;
-                if ($value === null || !$ts) continue;
-
-                $tsCarbon = Carbon::parse($ts);
-                // Stesso timestamp ultimo → nessun nuovo dato
-                if ($s->ultimo_ts && Carbon::parse($s->ultimo_ts)->equalTo($tsCarbon)) {
-                    if ($debug) $this->info("[{$s->device_id}/{$s->sensor_name}] no change");
+                $points = $resp->json('data') ?? [];
+                if (empty($points)) {
+                    if ($debug) $this->info("[{$s->device_id}/{$s->sensor_name}] no new points (start={$start})");
                     continue;
                 }
 
-                $delta = $s->ultimo_value !== null ? max(0, $value - $s->ultimo_value) : 0;
+                $prevValue = (int) ($s->ultimo_value ?? 0);
+                $deltaTotale = 0;
+                $ultimoTs = null;
+                $ultimoValue = $prevValue;
 
-                // Trova fase attiva su questa macchina
+                foreach ($points as $p) {
+                    $v = $p['value_1'] ?? null;
+                    $t = $p['timestamp'] ?? null;
+                    if ($v === null || !$t) continue;
+                    $v = (int) $v;
+
+                    // Reset counter: value scende sotto prev → nuovo burst, delta = value
+                    if ($v < $prevValue) {
+                        $deltaTotale += $v;
+                    } else {
+                        $deltaTotale += ($v - $prevValue);
+                    }
+                    $prevValue = $v;
+                    $ultimoTs = $t;
+                    $ultimoValue = $v;
+                }
+
+                if (!$ultimoTs) continue;
+
                 $faseAttivaId = null;
-                if ($s->macchina && $delta > 0) {
+                if ($s->macchina && $deltaTotale > 0) {
                     $fase = OrdineFase::where('sched_macchina', $s->macchina)
                         ->where('stato', '2')
                         ->whereNull('deleted_at')
@@ -73,31 +97,29 @@ class YdigitalPoll extends Command
                         ->first();
                     if ($fase) {
                         $faseAttivaId = $fase->id;
-                        $fase->increment('qta_prod', (int) $delta);
-                        if ($debug) $this->info("Fase {$fase->id} ({$fase->fase}) +{$delta} (totale: " . ($fase->qta_prod + (int)$delta) . ")");
+                        $fase->increment('qta_prod', $deltaTotale);
+                        if ($debug) $this->info("Fase {$fase->id} ({$fase->fase}) +{$deltaTotale}");
                     }
                 }
 
-                // Aggiorna sensore
                 DB::table('sensori_ydigital')->where('id', $s->id)->update([
-                    'ultimo_value' => $value,
-                    'ultimo_ts' => $tsCarbon,
-                    'ultimo_delta' => $delta,
+                    'ultimo_value' => $ultimoValue,
+                    'ultimo_ts' => Carbon::parse($ultimoTs),
+                    'ultimo_delta' => $deltaTotale,
                     'updated_at' => now(),
                 ]);
 
-                // Audit lettura
                 DB::table('sensori_letture')->insert([
                     'sensore_id' => $s->id,
-                    'value' => $value,
-                    'delta' => $delta,
-                    'letto_at' => $tsCarbon,
+                    'value' => $ultimoValue,
+                    'delta' => $deltaTotale,
+                    'letto_at' => Carbon::parse($ultimoTs),
                     'ordine_fase_id' => $faseAttivaId,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
 
-                $this->info("[{$s->device_id}/{$s->sensor_name}] value={$value} delta=+{$delta}" . ($faseAttivaId ? " → fase $faseAttivaId" : ''));
+                $this->info("[{$s->device_id}/{$s->sensor_name}] punti=" . count($points) . " delta=+{$deltaTotale}" . ($faseAttivaId ? " → fase $faseAttivaId" : ''));
             } catch (\Throwable $e) {
                 Log::error("YdigitalPoll error {$s->device_id}/{$s->sensor_name}: " . $e->getMessage());
                 $this->error("[{$s->device_id}/{$s->sensor_name}] " . $e->getMessage());
