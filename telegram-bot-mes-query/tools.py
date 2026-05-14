@@ -755,27 +755,43 @@ def ricevuta_da_esterno(fase_id: int) -> dict:
 
 
 def get_presenti_oggi() -> dict:
-    """Operatori presenti in azienda oggi (tabella presenze, uscita NULL)."""
+    """Operatori presenti in azienda oggi (nettime_timbrature: ultima E senza U successiva)."""
     oggi = datetime.now().strftime('%Y-%m-%d')
-    sql_pres = """
-        SELECT cognome_nome, MIN(timestamp) AS entrata, MAX(timestamp) AS ultima
-        FROM presenze
-        WHERE DATE(timestamp) = %s AND tipo = 'I'
-        GROUP BY cognome_nome
-        HAVING NOT EXISTS (
-            SELECT 1 FROM presenze p2
-            WHERE p2.cognome_nome = presenze.cognome_nome
-              AND DATE(p2.timestamp) = %s
-              AND p2.tipo = 'O'
-              AND p2.timestamp > MAX(presenze.timestamp)
-        )
-        ORDER BY cognome_nome
+    sql = """
+        SELECT matricola, MIN(data_ora) AS entrata, MAX(data_ora) AS ultima
+        FROM nettime_timbrature t1
+        WHERE DATE(data_ora) = %s
+          AND verso = 'E'
+          AND NOT EXISTS (
+              SELECT 1 FROM nettime_timbrature t2
+              WHERE t2.matricola = t1.matricola
+                AND DATE(t2.data_ora) = %s
+                AND t2.verso = 'U'
+                AND t2.data_ora > t1.data_ora
+          )
+        GROUP BY matricola
     """
     try:
-        presenti = _query(sql_pres, (oggi, oggi))
+        rows = _query(sql, (oggi, oggi))
     except Exception:
-        presenti = []
-    return {'data': oggi, 'totale': len(presenti), 'presenti': presenti}
+        rows = []
+    # Risolvi matricola → nome
+    if rows:
+        mats = tuple(r['matricola'] for r in rows)
+        placeholders = ','.join(['%s'] * len(mats))
+        try:
+            anag = _query(
+                f"SELECT matricola, cognome_nome FROM anagrafica_dipendenti WHERE matricola IN ({placeholders})",
+                mats
+            )
+            mat_to_name = {a['matricola']: a['cognome_nome'] for a in anag}
+            for r in rows:
+                r['cognome_nome'] = mat_to_name.get(r['matricola'], r['matricola'])
+        except Exception:
+            for r in rows:
+                r['cognome_nome'] = r['matricola']
+    rows.sort(key=lambda x: x.get('cognome_nome', ''))
+    return {'data': oggi, 'totale': len(rows), 'presenti': rows}
 
 
 def sync_onda() -> dict:
@@ -1003,21 +1019,36 @@ def get_reparti_overview() -> list[dict]:
 
 
 def get_alert_ritardi() -> list[dict]:
-    """Operatori in ritardo oggi (entrata dopo orario turno). Semplice query."""
+    """Operatori in ritardo oggi (prima E dopo 08:15)."""
     oggi = datetime.now().strftime('%Y-%m-%d')
     sql = """
-        SELECT cognome_nome, MIN(timestamp) AS entrata
-        FROM presenze
-        WHERE DATE(timestamp) = %s AND tipo = 'I'
-        GROUP BY cognome_nome
-        HAVING TIME(MIN(timestamp)) > '08:15:00'
+        SELECT matricola, MIN(data_ora) AS entrata
+        FROM nettime_timbrature
+        WHERE DATE(data_ora) = %s AND verso = 'E'
+        GROUP BY matricola
+        HAVING TIME(MIN(data_ora)) > '08:15:00'
         ORDER BY entrata DESC
         LIMIT 30
     """
     try:
-        return _query(sql, (oggi,))
+        rows = _query(sql, (oggi,))
     except Exception:
         return []
+    if rows:
+        mats = tuple(r['matricola'] for r in rows)
+        placeholders = ','.join(['%s'] * len(mats))
+        try:
+            anag = _query(
+                f"SELECT matricola, cognome_nome FROM anagrafica_dipendenti WHERE matricola IN ({placeholders})",
+                mats
+            )
+            mat_to_name = {a['matricola']: a['cognome_nome'] for a in anag}
+            for r in rows:
+                r['cognome_nome'] = mat_to_name.get(r['matricola'], r['matricola'])
+        except Exception:
+            for r in rows:
+                r['cognome_nome'] = r['matricola']
+    return rows
 
 
 def get_audit_log(commessa: str | None = None, limit: int = 30) -> list[dict]:
