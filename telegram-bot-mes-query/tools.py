@@ -781,7 +781,7 @@ def get_presenti_oggi() -> dict:
         placeholders = ','.join(['%s'] * len(mats))
         try:
             anag = _query(
-                f"SELECT matricola, cognome_nome FROM anagrafica_dipendenti WHERE matricola IN ({placeholders})",
+                f"SELECT matricola, CONCAT(cognome, " ", nome) AS cognome_nome FROM nettime_anagrafica WHERE matricola IN ({placeholders})",
                 mats
             )
             mat_to_name = {a['matricola']: a['cognome_nome'] for a in anag}
@@ -1039,7 +1039,7 @@ def get_alert_ritardi() -> list[dict]:
         placeholders = ','.join(['%s'] * len(mats))
         try:
             anag = _query(
-                f"SELECT matricola, cognome_nome FROM anagrafica_dipendenti WHERE matricola IN ({placeholders})",
+                f"SELECT matricola, CONCAT(cognome, " ", nome) AS cognome_nome FROM nettime_anagrafica WHERE matricola IN ({placeholders})",
                 mats
             )
             mat_to_name = {a['matricola']: a['cognome_nome'] for a in anag}
