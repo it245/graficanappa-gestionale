@@ -877,7 +877,10 @@ def get_presenti_summary() -> dict:
     sql_presenti = """
         SELECT
             t.matricola,
+            na.cognome,
+            na.nome,
             CONCAT(na.cognome, ' ', na.nome) AS cognome_nome,
+            CONCAT(na.nome, ' ', na.cognome) AS nome_cognome,
             TIME(MIN(t.data_ora)) AS entrata,
             CAST(TIMESTAMPDIFF(MINUTE, MIN(t.data_ora), NOW()) / 60.0 AS DECIMAL(5,2)) AS ore_lavorate_finora
         FROM nettime_timbrature t
@@ -891,13 +894,31 @@ def get_presenti_summary() -> dict:
     except Exception as e:
         return {'oggi': oggi, 'totale_presenti': 0, 'totale_in_ritardo': 0, 'persone': [], 'errore': str(e)}
 
-    # Step 2: lookup turni separato (mapping cognome_nome → turno)
+    # Step 2: lookup turni — chiave normalizzata (UPPER + senza spazi extra)
+    # Match flessibile: cognome+nome OR nome+cognome (turni puo' avere ordine diverso)
     turni_map: dict = {}
     try:
         turni_rows = _query("SELECT cognome_nome, turno FROM turni WHERE data = %s", (oggi,))
-        turni_map = {r['cognome_nome']: r['turno'] for r in turni_rows}
+        for tr in turni_rows:
+            key = (tr['cognome_nome'] or '').strip().upper()
+            turni_map[key] = tr['turno']
+            # Index anche per parole ordinate (es. "MARRONE VINCENZO" == "VINCENZO MARRONE")
+            sorted_key = ' '.join(sorted(key.split()))
+            turni_map.setdefault(sorted_key, tr['turno'])
     except Exception:
         pass
+
+    def _trova_turno(row) -> str | None:
+        for fmt in (row.get('cognome_nome'), row.get('nome_cognome')):
+            if not fmt:
+                continue
+            k = fmt.strip().upper()
+            if k in turni_map:
+                return turni_map[k]
+            sk = ' '.join(sorted(k.split()))
+            if sk in turni_map:
+                return turni_map[sk]
+        return None
 
     # Soglie in minuti dall'inizio giornata (06:15→375, 08:15→495, 14:15→855, 22:15→1335)
     soglie_min = {'T': 8*60+15, '1': 6*60+15, '2': 14*60+15, '3': 22*60+15}
@@ -925,7 +946,7 @@ def get_presenti_summary() -> dict:
         entrata_min = _to_minutes(r['entrata'])
         hh, mm = divmod(entrata_min, 60)
         entrata_str = f"{hh:02d}:{mm:02d}"
-        turno = turni_map.get(r['cognome_nome']) or 'T'
+        turno = _trova_turno(r) or 'T'
         soglia_min = soglie_min.get(turno, 495)
         in_ritardo = entrata_min > soglia_min
         persone.append({
