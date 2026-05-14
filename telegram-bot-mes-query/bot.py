@@ -114,7 +114,7 @@ FORMATTAZIONE TELEGRAM (importante):
 - Per "fasi terminate oggi" → usa get_fasi_terminate_oggi.
 - Per "fasi pronte/da fare" → usa get_fasi_pronte.
 - Per "cerca/trova" → usa cerca_fasi con filtri.
-- LAVORAZIONI ESTERNE: per "esterne inviate" DEVI chiamare get_lav_esterne(stato='5'). FORNITORE in `note` come "Inviato a: X" — estrai esatto. VIETATO inventare. Se note manca "Inviato a:" → "(fornitore non registrato)". **CONTEGGIO REGOLE FERREE**: Header "Totale: N" deve essere ESATTAMENTE = numero di righe che mostri sotto. Conta righe del tool result, poi mostra TUTTE le righe distinte (no troncature). Se mostri 41 righe → totale = 41. Mai dichiarare un numero diverso. Mostra fase DISTINCT per (commessa, fase): se 2 fasi identiche stessa commessa, scrivi "0067193-26 EXTALLEST.RACCOGLITORI (7 fasi)" — solo se conteggio reale dal tool dice 7.
+- LAVORAZIONI ESTERNE INVIATE: USA SEMPRE get_esterne_summary() (pre-aggregato). Tool restituisce {totale_fasi, totale_fornitori, per_fornitore:[{fornitore, n_fasi, fasi:[...]}]}. Mostra ESATTAMENTE quei valori. NON ricontare, NON inventare. Totale header = totale_fasi dal tool. Per fornitore mostra n_fasi dal tool.
 
 SCRITTURE DB (modifiche):
 - PRIMA di scrivere chiedi conferma esplicita mostrando: campo, vecchio valore, nuovo valore.

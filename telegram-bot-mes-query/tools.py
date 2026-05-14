@@ -537,6 +537,11 @@ TOOLS_SCHEMA = [
         },
     },
     {
+        "name": "get_esterne_summary",
+        "description": "Riepilogo lavorazioni esterne INVIATE (stato=5) pre-aggregato per fornitore. USA QUESTO per 'esterne inviate', 'esterne per fornitore', conteggi. Restituisce totale_fasi e per_fornitore con n_fasi esatti.",
+        "input_schema": {"type": "object", "properties": {}},
+    },
+    {
         "name": "invia_a_esterno",
         "description": "MODIFICA: marca fase come inviata a fornitore esterno (stato=5, note='Inviato a: X'). USA dopo conferma.",
         "input_schema": {
@@ -771,6 +776,38 @@ def get_fasi_terminate_oggi(reparto: str | None = None) -> list[dict]:
         params = (oggi, f"%{reparto}%")
     sql += " ORDER BY orf.data_fine DESC LIMIT 100"
     return _query(sql, params)
+
+
+def get_esterne_summary() -> dict:
+    """Riepilogo lavorazioni esterne stato=5 (inviate) PRE-AGGREGATO per fornitore.
+    Conta fasi reali dal DB. LLM deve mostrare valori così come sono, no count."""
+    rows = _query("""
+        SELECT orf.fase, orf.note, o.commessa, o.cliente_nome, o.descrizione
+        FROM ordine_fasi orf
+        JOIN ordini o ON o.id = orf.ordine_id
+        WHERE orf.stato = '5' AND orf.deleted_at IS NULL
+        ORDER BY o.commessa
+    """)
+    import re
+    by_fornitore: dict[str, list] = {}
+    for r in rows:
+        note = r.get('note') or ''
+        m = re.search(r'Inviato a:\s*(.+?)(?:$|\n)', note)
+        forn = (m.group(1).strip() if m else '(non registrato)')
+        by_fornitore.setdefault(forn, []).append({
+            'commessa': r['commessa'],
+            'fase': r['fase'],
+            'cliente': r.get('cliente_nome'),
+            'descrizione': (r.get('descrizione') or '')[:80],
+        })
+    return {
+        'totale_fasi': len(rows),
+        'totale_fornitori': len(by_fornitore),
+        'per_fornitore': [
+            {'fornitore': f, 'n_fasi': len(lista), 'fasi': lista}
+            for f, lista in sorted(by_fornitore.items(), key=lambda x: -len(x[1]))
+        ],
+    }
 
 
 def get_lav_esterne(stato: str | None = None) -> list[dict]:
@@ -1255,6 +1292,7 @@ def dispatch_tool(name: str, args: dict) -> Any:
         'aggiorna_priorita_manuale': aggiorna_priorita_manuale,
         'marca_terminata_manualmente': marca_terminata_manualmente,
         'get_lav_esterne': get_lav_esterne,
+        'get_esterne_summary': get_esterne_summary,
         'invia_a_esterno': invia_a_esterno,
         'ricevuta_da_esterno': ricevuta_da_esterno,
         'get_presenti_oggi': get_presenti_oggi,
