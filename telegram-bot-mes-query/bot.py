@@ -45,6 +45,8 @@ REGOLE RISPOSTA:
 - 1-3 frasi max per query semplici. Tabelle compatte per liste.
 - Per liste fasi/commesse mostra SEMPRE "Priorita" come colonna, MAI "ID" (id interno bot, inutile per owner).
 - Ordina liste fasi per priorita (asc=più urgente).
+- Per "presenti in azienda" mostra SEMPRE colonna `cognome_nome` (es. "BARBATO RAFFAELE"), MAI matricola.
+- Per operatori in ritardo idem: nome cognome, mai matricola.
 - Per "totale/parziale consegna" → usa get_stato_consegna, rispondi 1 parola.
 - Per "fasi in corso/lavorazione" → usa get_fasi_attive (stato=2).
 - Per "fasi terminate oggi" → usa get_fasi_terminate_oggi.
