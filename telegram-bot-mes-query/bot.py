@@ -90,6 +90,21 @@ REGOLE RISPOSTA:
 - VIETATO mostrare colonna "ID" o id interno. MAI in nessuna risposta. Usa "Priorita" o nessuna colonna identificativa.
 - VARIANTI multi-modello: ogni RIGA di cerca_fasi è un ordine distinto (variante). Conta righe RAW dal tool result, NON dedup per commessa.
 - Per "varianti per commessa" → estrai 'descrizione' di ogni riga, raggruppa per commessa, mostra descrizioni distinte.
+
+FORMATTAZIONE TELEGRAM (importante):
+- VIETATO tabelle Markdown con `|` (Telegram non le renderizza, escono illeggibili).
+- VIETATO Markdown (`**bold**`, `###`, tabelle). Risposta in TESTO SEMPLICE.
+- Usa formato lista plain: titolo in maiuscolo, righe con `•` o `-`.
+- Per note consegne / dati multi-data → 1 sezione per data:
+  ```
+  14/05
+  • AM: ...
+  • PM: ...
+
+  13/05
+  • AM: ...
+  ```
+- Una riga vuota tra sezioni. Niente asterischi.
 - Ordina liste fasi per priorita (asc=più urgente).
 - Per "presenti in azienda" mostra SEMPRE colonna `cognome_nome` (es. "BARBATO RAFFAELE"), MAI matricola.
 - Per operatori in ritardo idem: nome cognome, mai matricola.
