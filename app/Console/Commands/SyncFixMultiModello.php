@@ -26,8 +26,9 @@ class SyncFixMultiModello extends Command
         $dry = (bool) $this->option('dry-run');
 
         $gruppi = [
-            'PI'  => ['PI01','PI02','PI03'],
-            'FIN' => ['FIN01','FIN03','FIN04','FINESTRATURA.MANUALE'],
+            'PI'    => ['PI01','PI02','PI03'],
+            'FIN'   => ['FIN01','FIN03','FIN04','FINESTRATURA.MANUALE'],
+            'SFUST' => ['SFUST','SFUST.IML.FUSTELLATO'],
         ];
 
         $totOrdini = 0;
@@ -102,11 +103,6 @@ class SyncFixMultiModello extends Command
                     if (!$dry) {
                         $nuovoOrdine = $ordineTemplate->replicate();
                         $nuovoOrdine->descrizione = $descPrd;
-                        // Reset cliché: nuovo ordine deve fare match dalla sua descrizione
-                        // (non ereditare cliché del template = errato per multi-modello).
-                        $nuovoOrdine->cliche_numero = null;
-                        $nuovoOrdine->cliche_match_type = null;
-                        $nuovoOrdine->cliche_matched_at = null;
                         $nuovoOrdine->save();
                         $totOrdini++;
 
