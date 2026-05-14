@@ -1131,14 +1131,19 @@ public function calcolaOreEPriorita($fase)
         if (strlen($q) < 3) return response()->json([]);
 
         // Costruisci codice commessa se l'utente ha scritto solo il numero
+        $exactMatch = false;
         $commessa = $q;
         if (preg_match('/^\d{4,7}$/', $q)) {
-            $commessa = str_pad($q, 7, '0', STR_PAD_LEFT) . '-26';
+            $padded = str_pad($q, 7, '0', STR_PAD_LEFT);
+            $exactMatch = true;
+            $fasi = OrdineFase::with(['ordine', 'faseCatalogo.reparto', 'operatori' => fn($q) => $q->select('operatori.id', 'nome')])
+                ->whereHas('ordine', fn($qb) => $qb->where('commessa', 'LIKE', "{$padded}-%"))
+                ->get();
+        } else {
+            $fasi = OrdineFase::with(['ordine', 'faseCatalogo.reparto', 'operatori' => fn($q) => $q->select('operatori.id', 'nome')])
+                ->whereHas('ordine', fn($qb) => $qb->where('commessa', 'LIKE', "%{$commessa}%"))
+                ->get();
         }
-
-        $fasi = OrdineFase::with(['ordine', 'faseCatalogo.reparto', 'operatori' => fn($q) => $q->select('operatori.id', 'nome')])
-            ->whereHas('ordine', fn($qb) => $qb->where('commessa', 'LIKE', "%{$commessa}%"))
-            ->get();
 
         if ($fasi->isEmpty()) return response()->json([]);
 
