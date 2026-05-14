@@ -542,6 +542,26 @@ TOOLS_SCHEMA = [
         "input_schema": {"type": "object", "properties": {}},
     },
     {
+        "name": "get_reparti_summary",
+        "description": "Riepilogo PRE-AGGREGATO fasi per reparto: totali, pronte, in_lavorazione, terminate_oggi, in_ritardo. USA per 'reparti', 'fasi per reparto'.",
+        "input_schema": {"type": "object", "properties": {}},
+    },
+    {
+        "name": "get_presenti_summary",
+        "description": "Riepilogo PRE-AGGREGATO presenti oggi: totale, ritardatari >08:15, ore lavorate per persona. USA per 'presenti', 'in ritardo entrata', 'ore lavorate'.",
+        "input_schema": {"type": "object", "properties": {}},
+    },
+    {
+        "name": "get_ritardi_summary",
+        "description": "Riepilogo PRE-AGGREGATO commesse in ritardo. Severità: critico_>14gg/alto_8_14gg/medio_4_7gg/basso_1_3gg. USA per 'commesse in ritardo', 'scadute'.",
+        "input_schema": {"type": "object", "properties": {}},
+    },
+    {
+        "name": "get_consegne_summary",
+        "description": "Riepilogo PRE-AGGREGATO consegne ultimi 7gg per giorno+vettore. USA per 'consegne settimana', 'spedizioni recenti'.",
+        "input_schema": {"type": "object", "properties": {}},
+    },
+    {
         "name": "invia_a_esterno",
         "description": "MODIFICA: marca fase come inviata a fornitore esterno (stato=5, note='Inviato a: X'). USA dopo conferma.",
         "input_schema": {
@@ -807,6 +827,192 @@ def get_esterne_summary() -> dict:
             {'fornitore': f, 'n_fasi': len(lista), 'fasi': lista}
             for f, lista in sorted(by_fornitore.items(), key=lambda x: -len(x[1]))
         ],
+    }
+
+
+def get_reparti_summary() -> dict:
+    """Summary aggregato per reparto: totali, pronte, in_lav, terminate_oggi, in_ritardo."""
+    oggi = datetime.now().strftime('%Y-%m-%d')
+    sql = f"""
+        SELECT
+            COALESCE(r.nome, 'Non assegnato') AS reparto,
+            COUNT(*) AS totali,
+            SUM(CASE WHEN orf.stato IN ('0','1','2') THEN 1 ELSE 0 END) AS attive,
+            SUM(CASE WHEN orf.stato = '1' THEN 1 ELSE 0 END) AS pronte,
+            SUM(CASE WHEN orf.stato = '2' THEN 1 ELSE 0 END) AS in_lavorazione,
+            SUM(CASE WHEN orf.stato = '3' AND DATE(orf.data_fine) = '{oggi}' THEN 1 ELSE 0 END) AS terminate_oggi,
+            SUM(CASE WHEN orf.stato IN ('0','1','2') AND o.data_prevista_consegna < '{oggi}' THEN 1 ELSE 0 END) AS in_ritardo
+        FROM ordine_fasi orf
+        JOIN ordini o ON o.id = orf.ordine_id
+        LEFT JOIN fasi_catalogo fc ON fc.id = orf.fase_catalogo_id
+        LEFT JOIN reparti r ON r.id = fc.reparto_id
+        WHERE orf.deleted_at IS NULL AND orf.stato IN ('0','1','2','3')
+        GROUP BY r.id, r.nome
+        ORDER BY r.nome
+    """
+    rows = _query(sql)
+    return {
+        'totale_fasi_attive': sum((r['attive'] or 0) for r in rows),
+        'per_reparto': [
+            {
+                'reparto': r['reparto'],
+                'totali': r['totali'],
+                'pronte': r['pronte'] or 0,
+                'in_lavorazione': r['in_lavorazione'] or 0,
+                'terminate_oggi': r['terminate_oggi'] or 0,
+                'in_ritardo': r['in_ritardo'] or 0,
+            }
+            for r in rows
+        ],
+    }
+
+
+def get_presenti_summary() -> dict:
+    """Summary presenti oggi: ore lavorate + flag ritardo (>08:15)."""
+    oggi = datetime.now().strftime('%Y-%m-%d')
+    sql = """
+        SELECT
+            CONCAT(na.cognome, ' ', na.nome) AS cognome_nome,
+            TIME(MIN(t.data_ora)) AS entrata,
+            CAST(TIMESTAMPDIFF(MINUTE, MIN(t.data_ora), NOW()) / 60.0 AS DECIMAL(5,2)) AS ore_lavorate_finora,
+            IF(TIME(MIN(t.data_ora)) > '08:15:00', 1, 0) AS in_ritardo
+        FROM nettime_timbrature t
+        JOIN nettime_anagrafica na ON na.matricola = t.matricola
+        WHERE DATE(t.data_ora) = %s AND t.verso = 'E'
+        GROUP BY t.matricola, na.cognome, na.nome
+        ORDER BY MIN(t.data_ora) ASC
+    """
+    try:
+        rows = _query(sql, (oggi,))
+    except Exception:
+        rows = []
+    persone = [
+        {
+            'cognome_nome': r['cognome_nome'],
+            'entrata': str(r['entrata']) if r['entrata'] else '',
+            'ore_lavorate_finora': float(r['ore_lavorate_finora']) if r['ore_lavorate_finora'] else 0.0,
+            'in_ritardo': bool(r['in_ritardo']),
+        }
+        for r in rows
+    ]
+    return {
+        'oggi': oggi,
+        'totale_presenti': len(persone),
+        'totale_in_ritardo_8_15': sum(1 for p in persone if p['in_ritardo']),
+        'persone': persone,
+    }
+
+
+def get_ritardi_summary() -> dict:
+    """Summary commesse in ritardo: per severità + lista dettagliata (max 50)."""
+    sql = """
+        SELECT
+            o.commessa, o.cliente_nome, o.descrizione, o.data_prevista_consegna,
+            DATEDIFF(CURDATE(), o.data_prevista_consegna) AS giorni_ritardo,
+            CASE
+                WHEN DATEDIFF(CURDATE(), o.data_prevista_consegna) > 14 THEN 'critico_>14gg'
+                WHEN DATEDIFF(CURDATE(), o.data_prevista_consegna) >= 8 THEN 'alto_8_14gg'
+                WHEN DATEDIFF(CURDATE(), o.data_prevista_consegna) >= 4 THEN 'medio_4_7gg'
+                ELSE 'basso_1_3gg'
+            END AS severita,
+            GROUP_CONCAT(DISTINCT orf.fase SEPARATOR ', ') AS fasi_pending,
+            COUNT(DISTINCT orf.id) AS n_fasi_pending
+        FROM ordini o
+        JOIN ordine_fasi orf ON orf.ordine_id = o.id
+        WHERE o.data_prevista_consegna < CURDATE()
+          AND orf.deleted_at IS NULL
+          AND CAST(orf.stato AS UNSIGNED) < 3
+        GROUP BY o.id, o.commessa, o.cliente_nome, o.descrizione,
+                 o.data_prevista_consegna, giorni_ritardo, severita
+        ORDER BY giorni_ritardo DESC
+        LIMIT 50
+    """
+    try:
+        rows = _query(sql)
+    except Exception:
+        rows = []
+    per_severita = {'critico_>14gg': 0, 'alto_8_14gg': 0, 'medio_4_7gg': 0, 'basso_1_3gg': 0}
+    totale_fasi = 0
+    commesse = []
+    for r in rows:
+        sev = r['severita']
+        if sev in per_severita:
+            per_severita[sev] += 1
+        totale_fasi += r['n_fasi_pending']
+        fasi_list = [f.strip() for f in (r['fasi_pending'] or '').split(',') if f.strip()]
+        commesse.append({
+            'commessa': r['commessa'],
+            'cliente': r['cliente_nome'],
+            'giorni_ritardo': r['giorni_ritardo'],
+            'severita': r['severita'],
+            'n_fasi_pending': r['n_fasi_pending'],
+            'fasi_pending': fasi_list,
+        })
+    return {
+        'totale_commesse_ritardo': len(commesse),
+        'totale_fasi_ritardo': totale_fasi,
+        'per_severita': per_severita,
+        'commesse': commesse,
+    }
+
+
+def get_consegne_summary() -> dict:
+    """Summary consegne ultimi 7gg: per giorno + per vettore + lista."""
+    from datetime import timedelta
+    fine = datetime.now()
+    inizio = fine - timedelta(days=7)
+    sql = """
+        SELECT o.commessa, o.cliente_nome, o.numero_ddt_vendita AS ddt,
+               o.vettore_ddt AS vettore,
+               DATE(orf.data_fine) AS data
+        FROM ordine_fasi orf
+        JOIN ordini o ON o.id = orf.ordine_id
+        WHERE orf.fase LIKE 'BRT%%'
+          AND orf.stato = '4'
+          AND orf.deleted_at IS NULL
+          AND orf.data_fine >= %s
+        ORDER BY orf.data_fine DESC
+    """
+    try:
+        rows = _query(sql, (inizio.strftime('%Y-%m-%d'),))
+    except Exception:
+        rows = []
+    per_giorno_dict: dict = {}
+    per_vettore_dict: dict = {}
+    clienti_set = set()
+    for r in rows:
+        data = str(r['data']) if r['data'] else ''
+        vettore = (r['vettore'] or 'Sconosciuto').strip()
+        clienti_set.add(r['cliente_nome'] or '')
+        per_giorno_dict.setdefault(data, {'n': 0, 'commesse': set()})
+        per_giorno_dict[data]['n'] += 1
+        per_giorno_dict[data]['commesse'].add(r['commessa'])
+        per_vettore_dict[vettore] = per_vettore_dict.get(vettore, 0) + 1
+    per_giorno = [
+        {'data': d, 'n': info['n'], 'commesse_count': len(info['commesse'])}
+        for d, info in sorted(per_giorno_dict.items(), reverse=True)
+    ]
+    per_vettore = [
+        {'vettore': v, 'n_ddt': n}
+        for v, n in sorted(per_vettore_dict.items(), key=lambda x: -x[1])
+    ]
+    consegne = [
+        {
+            'data': str(r['data']) if r['data'] else '',
+            'commessa': r['commessa'] or '',
+            'cliente': r['cliente_nome'] or '',
+            'ddt': r['ddt'] or '',
+            'vettore': (r['vettore'] or 'Sconosciuto').strip(),
+        }
+        for r in rows
+    ]
+    return {
+        'periodo': f"{inizio.strftime('%Y-%m-%d')} → {fine.strftime('%Y-%m-%d')}",
+        'totale_consegne': len(rows),
+        'totale_clienti_unici': len(clienti_set),
+        'per_giorno': per_giorno,
+        'per_vettore': per_vettore,
+        'consegne': consegne,
     }
 
 
@@ -1293,6 +1499,10 @@ def dispatch_tool(name: str, args: dict) -> Any:
         'marca_terminata_manualmente': marca_terminata_manualmente,
         'get_lav_esterne': get_lav_esterne,
         'get_esterne_summary': get_esterne_summary,
+        'get_reparti_summary': get_reparti_summary,
+        'get_presenti_summary': get_presenti_summary,
+        'get_ritardi_summary': get_ritardi_summary,
+        'get_consegne_summary': get_consegne_summary,
         'invia_a_esterno': invia_a_esterno,
         'ricevuta_da_esterno': ricevuta_da_esterno,
         'get_presenti_oggi': get_presenti_oggi,
