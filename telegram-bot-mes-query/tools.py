@@ -156,6 +156,48 @@ def get_top_commesse_offset(giorni: int = 7) -> list[dict]:
     return _query(sql, (giorni,))
 
 
+def get_stato_consegna(commessa: str) -> dict:
+    """Stato consegna commessa basato SOLO su fasi BRT1 (reparto spedizione).
+    Regola: tutte BRT1 stato=4 → TOTALE. Almeno una <4 → PARZIALE. Nessuna BRT1 → NON_SPEDITA.
+    """
+    if commessa.isdigit() and 4 <= len(commessa) <= 7:
+        commessa_padded = commessa.zfill(7) + '-26'
+    else:
+        commessa_padded = commessa
+
+    sql = """
+        SELECT of.id, of.fase, of.stato, of.qta_consegnata, of.data_fine
+        FROM ordine_fasi of
+        JOIN ordini o ON o.id = of.ordine_id
+        WHERE o.commessa = %s
+          AND of.fase LIKE 'BRT%%'
+          AND of.deleted_at IS NULL
+    """
+    fasi = _query(sql, (commessa_padded,))
+    if not fasi:
+        return {'commessa': commessa_padded, 'esito': 'NON_SPEDITA', 'n_fasi_brt': 0}
+
+    stati = []
+    for f in fasi:
+        try:
+            stati.append(int(f['stato']))
+        except (TypeError, ValueError):
+            stati.append(-1)
+
+    all4 = all(s == 4 for s in stati)
+    if all4:
+        esito = 'TOTALE'
+    else:
+        esito = 'PARZIALE'
+
+    return {
+        'commessa': commessa_padded,
+        'esito': esito,
+        'n_fasi_brt': len(fasi),
+        'stati_brt': stati,
+    }
+
+
 def get_operatore_fasi_oggi(nome: str) -> list[dict]:
     """Fasi a cui un operatore ha lavorato oggi (via pivot ordine_fase_operatore)."""
     oggi = datetime.now().strftime('%Y-%m-%d')
@@ -222,6 +264,17 @@ TOOLS_SCHEMA = [
         },
     },
     {
+        "name": "get_stato_consegna",
+        "description": "Stato consegna commessa (TOTALE/PARZIALE/NON_SPEDITA) basato SULLE FASI BRT1. Tutte BRT1 stato=4 → TOTALE. Almeno una <4 → PARZIALE. USA QUESTO per domande 'consegnata totale o parziale?'.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "commessa": {"type": "string", "description": "Numero commessa"}
+            },
+            "required": ["commessa"],
+        },
+    },
+    {
         "name": "get_operatore_fasi_oggi",
         "description": "Fasi a cui un operatore ha lavorato oggi.",
         "input_schema": {
@@ -244,6 +297,7 @@ def dispatch_tool(name: str, args: dict) -> Any:
         'get_macchine_ferme': get_macchine_ferme,
         'get_riepilogo_giornaliero': get_riepilogo_giornaliero,
         'get_top_commesse_offset': get_top_commesse_offset,
+        'get_stato_consegna': get_stato_consegna,
         'get_operatore_fasi_oggi': get_operatore_fasi_oggi,
     }.get(name)
     if not fn:
