@@ -872,43 +872,44 @@ def get_presenti_summary() -> dict:
     Turni: T=06-22 atteso 08:00, 1=06-14 atteso 06:00, 2=14-22 atteso 14:00,
     3=22-06 atteso 22:00. Tolleranza 15 min."""
     oggi = datetime.now().strftime('%Y-%m-%d')
-    sql = """
+
+    # Step 1: tutte le persone con entrata oggi (no JOIN turni)
+    sql_presenti = """
         SELECT
+            t.matricola,
             CONCAT(na.cognome, ' ', na.nome) AS cognome_nome,
             TIME(MIN(t.data_ora)) AS entrata,
-            CAST(TIMESTAMPDIFF(MINUTE, MIN(t.data_ora), NOW()) / 60.0 AS DECIMAL(5,2)) AS ore_lavorate_finora,
-            tr.turno AS turno
+            CAST(TIMESTAMPDIFF(MINUTE, MIN(t.data_ora), NOW()) / 60.0 AS DECIMAL(5,2)) AS ore_lavorate_finora
         FROM nettime_timbrature t
         JOIN nettime_anagrafica na ON na.matricola = t.matricola
-        LEFT JOIN turni tr ON tr.cognome_nome = CONCAT(na.cognome, ' ', na.nome) AND tr.data = %s
         WHERE DATE(t.data_ora) = %s AND t.verso = 'E'
-        GROUP BY t.matricola, na.cognome, na.nome, tr.turno
+        GROUP BY t.matricola, na.cognome, na.nome
         ORDER BY MIN(t.data_ora) ASC
     """
     try:
-        rows = _query(sql, (oggi, oggi))
+        rows = _query(sql_presenti, (oggi,))
+    except Exception as e:
+        return {'oggi': oggi, 'totale_presenti': 0, 'totale_in_ritardo': 0, 'persone': [], 'errore': str(e)}
+
+    # Step 2: lookup turni separato (mapping cognome_nome → turno)
+    turni_map: dict = {}
+    try:
+        turni_rows = _query("SELECT cognome_nome, turno FROM turni WHERE data = %s", (oggi,))
+        turni_map = {r['cognome_nome']: r['turno'] for r in turni_rows}
     except Exception:
-        rows = []
+        pass
 
-    # Orari attesi per turno (con tolleranza 15min)
-    soglie = {
-        'T': '08:15:00',
-        '1': '06:15:00',
-        '2': '14:15:00',
-        '3': '22:15:00',
-    }
-
+    soglie = {'T': '08:15:00', '1': '06:15:00', '2': '14:15:00', '3': '22:15:00'}
     persone = []
     for r in rows:
         entrata_str = str(r['entrata']) if r['entrata'] else ''
-        turno = r.get('turno') or 'T'  # default T se turno non assegnato
+        turno = turni_map.get(r['cognome_nome']) or 'T'
         soglia = soglie.get(turno, '08:15:00')
         in_ritardo = bool(entrata_str and entrata_str > soglia)
         persone.append({
             'cognome_nome': r['cognome_nome'],
             'entrata': entrata_str,
             'turno': turno,
-            'soglia_ritardo': soglia[:5],
             'ore_lavorate_finora': float(r['ore_lavorate_finora']) if r['ore_lavorate_finora'] else 0.0,
             'in_ritardo': in_ritardo,
         })
