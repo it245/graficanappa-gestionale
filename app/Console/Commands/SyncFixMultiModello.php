@@ -102,6 +102,11 @@ class SyncFixMultiModello extends Command
                     if (!$dry) {
                         $nuovoOrdine = $ordineTemplate->replicate();
                         $nuovoOrdine->descrizione = $descPrd;
+                        // Reset cliché: nuovo ordine deve fare match dalla sua descrizione
+                        // (non ereditare cliché del template = errato per multi-modello).
+                        $nuovoOrdine->cliche_numero = null;
+                        $nuovoOrdine->cliche_match_type = null;
+                        $nuovoOrdine->cliche_matched_at = null;
                         $nuovoOrdine->save();
                         $totOrdini++;
 
