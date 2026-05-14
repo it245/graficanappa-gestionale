@@ -95,7 +95,7 @@ def get_fasi_attive(reparto: str | None = None) -> list[dict]:
                r.nome AS reparto
         FROM ordine_fasi orf
         JOIN ordini o ON o.id = orf.ordine_id
-        LEFT JOIN fasi_catalogo fc ON fc.fase = orf.fase
+        LEFT JOIN fasi_catalogo fc ON fc.id = orf.fase_catalogo_id
         LEFT JOIN reparti r ON r.id = fc.reparto_id
         WHERE orf.stato = 2
     """
@@ -218,7 +218,7 @@ def get_fase_dettaglio(fase_id: int) -> dict:
         SELECT orf.*, o.commessa, o.cliente_nome, o.descrizione, r.nome AS reparto
         FROM ordine_fasi orf
         JOIN ordini o ON o.id = orf.ordine_id
-        LEFT JOIN fasi_catalogo fc ON fc.fase = orf.fase
+        LEFT JOIN fasi_catalogo fc ON fc.id = orf.fase_catalogo_id
         LEFT JOIN reparti r ON r.id = fc.reparto_id
         WHERE orf.id = %s AND orf.deleted_at IS NULL
     """
@@ -258,7 +258,7 @@ def cerca_fasi(commessa: str | None = None, fase: str | None = None,
                r.nome AS reparto
         FROM ordine_fasi orf
         JOIN ordini o ON o.id = orf.ordine_id
-        LEFT JOIN fasi_catalogo fc ON fc.fase = orf.fase
+        LEFT JOIN fasi_catalogo fc ON fc.id = orf.fase_catalogo_id
         LEFT JOIN reparti r ON r.id = fc.reparto_id
         WHERE {' AND '.join(where)}
         ORDER BY orf.id DESC
@@ -699,7 +699,7 @@ def get_fasi_terminate_oggi(reparto: str | None = None) -> list[dict]:
                r.nome AS reparto
         FROM ordine_fasi orf
         JOIN ordini o ON o.id = orf.ordine_id
-        LEFT JOIN fasi_catalogo fc ON fc.fase = orf.fase
+        LEFT JOIN fasi_catalogo fc ON fc.id = orf.fase_catalogo_id
         LEFT JOIN reparti r ON r.id = fc.reparto_id
         WHERE orf.stato = '3'
           AND DATE(orf.data_fine) = %s
@@ -871,7 +871,7 @@ def aggiorna_bulk_fasi(campo: str, valore: str, commessa: str | None = None,
         params.append(str(stato_da))
     sql = (f"UPDATE ordine_fasi orf "
            f"JOIN ordini o ON o.id = orf.ordine_id "
-           f"LEFT JOIN fasi_catalogo fc ON fc.fase = orf.fase "
+           f"LEFT JOIN fasi_catalogo fc ON fc.id = orf.fase_catalogo_id "
            f"LEFT JOIN reparti r ON r.id = fc.reparto_id "
            f"SET orf.{campo} = %s, orf.updated_at = NOW() "
            f"WHERE {' AND '.join(where)}")
@@ -992,7 +992,7 @@ def get_reparti_overview() -> list[dict]:
     sql = """
         SELECT r.nome AS reparto, orf.stato, COUNT(*) AS n
         FROM ordine_fasi orf
-        LEFT JOIN fasi_catalogo fc ON fc.fase = orf.fase
+        LEFT JOIN fasi_catalogo fc ON fc.id = orf.fase_catalogo_id
         LEFT JOIN reparti r ON r.id = fc.reparto_id
         WHERE orf.deleted_at IS NULL AND orf.stato IN ('0','1','2','3')
         GROUP BY r.nome, orf.stato
@@ -1050,7 +1050,7 @@ def get_fasi_pronte(reparto: str | None = None) -> list[dict]:
                r.nome AS reparto
         FROM ordine_fasi orf
         JOIN ordini o ON o.id = orf.ordine_id
-        LEFT JOIN fasi_catalogo fc ON fc.fase = orf.fase
+        LEFT JOIN fasi_catalogo fc ON fc.id = orf.fase_catalogo_id
         LEFT JOIN reparti r ON r.id = fc.reparto_id
         WHERE orf.stato = '1' AND orf.deleted_at IS NULL
     """
