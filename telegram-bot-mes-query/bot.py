@@ -5,7 +5,7 @@ Comandi fissi + LLM Claude per query naturali.
 import json
 import logging
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from anthropic import Anthropic
 from dotenv import load_dotenv
@@ -37,6 +37,36 @@ logging.basicConfig(
 logger = logging.getLogger('mes-bot')
 
 anthropic_client = Anthropic(api_key=ANTHROPIC_API_KEY)
+
+# Conversation memory per user_id: {uid: {'messages': [...], 'updated': datetime}}
+# TTL 30 min, max 12 turni (24 msg) per evitare overflow context.
+CONV_HISTORY: dict[int, dict] = {}
+CONV_TTL_MIN = 30
+CONV_MAX_MSGS = 24
+
+
+def get_history(uid: int) -> list:
+    entry = CONV_HISTORY.get(uid)
+    if not entry:
+        return []
+    if datetime.now() - entry['updated'] > timedelta(minutes=CONV_TTL_MIN):
+        CONV_HISTORY.pop(uid, None)
+        return []
+    return entry['messages']
+
+
+def save_history(uid: int, messages: list) -> None:
+    """Salva history. Trim preservando coppie tool_use/tool_result.
+    Taglia solo a confini user-message per non rompere sequenze tool."""
+    if len(messages) > CONV_MAX_MSGS:
+        # Trova primo user msg "pulito" (string content, no tool_result) >= cutoff
+        cutoff = len(messages) - CONV_MAX_MSGS
+        for i in range(cutoff, len(messages)):
+            m = messages[i]
+            if m['role'] == 'user' and isinstance(m['content'], str):
+                messages = messages[i:]
+                break
+    CONV_HISTORY[uid] = {'messages': messages, 'updated': datetime.now()}
 
 SYSTEM_PROMPT = """Assistente MES Grafica Nappa (tipografia). Accesso completo: read + write.
 
@@ -322,8 +352,16 @@ async def handle_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None
     user_msg = update.message.text
     logger.info(f"[{uid}] {user_msg}")
 
-    # Inizia tool-use loop
-    messages = [{"role": "user", "content": user_msg}]
+    # Reset history se comandi espliciti
+    low = user_msg.strip().lower()
+    if low in ('reset', 'nuova chat', 'clear', '/reset'):
+        CONV_HISTORY.pop(uid, None)
+        await update.message.reply_text("🔄 Memoria conversazione resettata.")
+        return
+
+    # Carica history precedente + append nuovo messaggio user
+    messages = list(get_history(uid))
+    messages.append({"role": "user", "content": user_msg})
     max_iterations = 5
 
     for _ in range(max_iterations):
@@ -354,9 +392,12 @@ async def handle_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None
         # Risposta finale
         text_blocks = [b.text for b in resp.content if b.type == "text"]
         final = "\n".join(text_blocks).strip() or "(nessuna risposta)"
+        messages.append({"role": "assistant", "content": resp.content})
+        save_history(uid, messages)
         await update.message.reply_text(final[:4000])
         return
 
+    save_history(uid, messages)
     await update.message.reply_text("⚠️ Loop tool troppo lungo, query abortita.")
 
 
