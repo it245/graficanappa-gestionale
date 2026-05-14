@@ -55,6 +55,20 @@ def get_history(uid: int) -> list:
     return entry['messages']
 
 
+def compact_history(messages: list, final_text: str) -> list:
+    """Riduce history: scarta tool_use/tool_result, tieni solo string user msg
+    + string assistant final per ogni turno. Drasticamente meno token."""
+    compact = []
+    for m in messages:
+        if m['role'] == 'user' and isinstance(m['content'], str):
+            compact.append({'role': 'user', 'content': m['content']})
+        # Assistant turn intermedi e tool_results scartati.
+    # Ultimo turno: aggiungi final text assistant
+    if compact and compact[-1]['role'] == 'user':
+        compact.append({'role': 'assistant', 'content': final_text})
+    return compact
+
+
 def save_history(uid: int, messages: list) -> None:
     """Salva history. Trim preservando coppie tool_use/tool_result.
     Taglia solo a confini user-message per non rompere sequenze tool."""
@@ -392,8 +406,10 @@ async def handle_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None
         # Risposta finale
         text_blocks = [b.text for b in resp.content if b.type == "text"]
         final = "\n".join(text_blocks).strip() or "(nessuna risposta)"
-        messages.append({"role": "assistant", "content": resp.content})
-        save_history(uid, messages)
+        # Strip tool_use/tool_result da history per ridurre token (rate limit Haiku 10K/min).
+        # Mantieni solo coppie user-text → assistant-text del turno appena chiuso.
+        clean = compact_history(messages, final)
+        save_history(uid, clean)
         await update.message.reply_text(final[:4000])
         return
 
