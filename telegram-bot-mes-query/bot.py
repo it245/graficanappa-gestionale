@@ -411,7 +411,7 @@ async def handle_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None
     for _ in range(max_iterations):
         resp = anthropic_client.messages.create(
             model=ANTHROPIC_MODEL,
-            max_tokens=2048,
+            max_tokens=4096,
             system=SYSTEM_PROMPT,
             tools=tools.TOOLS_SCHEMA,
             messages=messages,
