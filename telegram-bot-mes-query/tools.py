@@ -666,6 +666,15 @@ TOOLS_SCHEMA = [
         },
     },
     {
+        "name": "get_note_consegne",
+        "description": "Legge note consegne (note_spedizione) ultimi N giorni. Default 7.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"giorni": {"type": "integer", "default": 7}},
+            "required": [],
+        },
+    },
+    {
         "name": "salva_nota_spedizione",
         "description": "MODIFICA: salva nota giornaliera spedizione (data oggi).",
         "input_schema": {
@@ -1023,6 +1032,17 @@ def clear_cliche(ordine_id: int) -> dict:
     return {'ok': True, 'ordine_id': ordine_id}
 
 
+def get_note_consegne(giorni: int = 7) -> list[dict]:
+    """Legge note consegne (tabella note_spedizione) ultimi N giorni."""
+    sql = """
+        SELECT data, contenuto, updated_at
+        FROM note_spedizione
+        WHERE data >= DATE_SUB(CURDATE(), INTERVAL %s DAY)
+        ORDER BY data DESC
+    """
+    return _query(sql, (int(giorni),))
+
+
 def salva_nota_spedizione(testo: str) -> dict:
     """Salva nota giornaliera spedizione (data oggi, campo contenuto)."""
     oggi = datetime.now().strftime('%Y-%m-%d')
@@ -1236,6 +1256,7 @@ def dispatch_tool(name: str, args: dict) -> Any:
         'termina_fase': termina_fase,
         'set_cliche': set_cliche,
         'clear_cliche': clear_cliche,
+        'get_note_consegne': get_note_consegne,
         'salva_nota_spedizione': salva_nota_spedizione,
         'salva_nota_tv': salva_nota_tv,
         'get_reparti_overview': get_reparti_overview,
