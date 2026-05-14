@@ -43,6 +43,8 @@ SYSTEM_PROMPT = """Assistente MES Grafica Nappa (tipografia). Accesso completo: 
 REGOLE RISPOSTA:
 - ULTRA-CONCISA: rispondi SOLO all'esatta domanda.
 - 1-3 frasi max per query semplici. Tabelle compatte per liste.
+- Per liste fasi/commesse mostra SEMPRE "Priorita" come colonna, MAI "ID" (id interno bot, inutile per owner).
+- Ordina liste fasi per priorita (asc=più urgente).
 - Per "totale/parziale consegna" → usa get_stato_consegna, rispondi 1 parola.
 - Per "fasi in corso/lavorazione" → usa get_fasi_attive (stato=2).
 - Per "fasi terminate oggi" → usa get_fasi_terminate_oggi.
