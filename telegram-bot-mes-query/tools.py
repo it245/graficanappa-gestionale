@@ -667,10 +667,13 @@ TOOLS_SCHEMA = [
     },
     {
         "name": "get_note_consegne",
-        "description": "Legge note consegne (note_spedizione) ultimi N giorni. Default 7.",
+        "description": "Legge note consegne (note_spedizione). Default: solo oggi. Specifica data='YYYY-MM-DD' per altro giorno, o giorni=N per range.",
         "input_schema": {
             "type": "object",
-            "properties": {"giorni": {"type": "integer", "default": 7}},
+            "properties": {
+                "data": {"type": "string", "description": "data YYYY-MM-DD, opzionale"},
+                "giorni": {"type": "integer", "default": 1},
+            },
             "required": [],
         },
     },
@@ -1032,15 +1035,24 @@ def clear_cliche(ordine_id: int) -> dict:
     return {'ok': True, 'ordine_id': ordine_id}
 
 
-def get_note_consegne(giorni: int = 7) -> list[dict]:
-    """Legge note consegne (tabella note_spedizione) ultimi N giorni."""
-    sql = """
-        SELECT data, contenuto, updated_at
-        FROM note_spedizione
-        WHERE data >= DATE_SUB(CURDATE(), INTERVAL %s DAY)
-        ORDER BY data DESC
-    """
-    return _query(sql, (int(giorni),))
+def get_note_consegne(data: str = None, giorni: int = 1) -> list[dict]:
+    """Legge note consegne. Default: solo oggi. Se data fornita: solo quel giorno.
+    Se giorni>1: range ultimi N giorni."""
+    if data:
+        return _query(
+            "SELECT data, contenuto FROM note_spedizione WHERE data = %s",
+            (data,)
+        )
+    if giorni <= 1:
+        return _query(
+            "SELECT data, contenuto FROM note_spedizione WHERE data = CURDATE()",
+            ()
+        )
+    return _query(
+        "SELECT data, contenuto FROM note_spedizione "
+        "WHERE data >= DATE_SUB(CURDATE(), INTERVAL %s DAY) ORDER BY data DESC",
+        (int(giorni),)
+    )
 
 
 def salva_nota_spedizione(testo: str) -> dict:
