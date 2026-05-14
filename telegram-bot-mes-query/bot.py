@@ -69,6 +69,24 @@ def compact_history(messages: list, final_text: str) -> list:
     return compact
 
 
+async def send_long(update: Update, text: str, chunk: int = 3900) -> None:
+    """Invia messaggi >4096 char splittando su newline."""
+    if len(text) <= chunk:
+        await update.message.reply_text(text)
+        return
+    buf = []
+    cur_len = 0
+    for line in text.split('\n'):
+        if cur_len + len(line) + 1 > chunk and buf:
+            await update.message.reply_text('\n'.join(buf))
+            buf = []
+            cur_len = 0
+        buf.append(line)
+        cur_len += len(line) + 1
+    if buf:
+        await update.message.reply_text('\n'.join(buf))
+
+
 def save_history(uid: int, messages: list) -> None:
     """Salva history. Trim preservando coppie tool_use/tool_result.
     Taglia solo a confini user-message per non rompere sequenze tool."""
@@ -411,7 +429,7 @@ async def handle_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None
     for _ in range(max_iterations):
         resp = anthropic_client.messages.create(
             model=ANTHROPIC_MODEL,
-            max_tokens=4096,
+            max_tokens=8192,
             system=SYSTEM_PROMPT,
             tools=tools.TOOLS_SCHEMA,
             messages=messages,
@@ -437,10 +455,10 @@ async def handle_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None
         text_blocks = [b.text for b in resp.content if b.type == "text"]
         final = "\n".join(text_blocks).strip() or "(nessuna risposta)"
         # Strip tool_use/tool_result da history per ridurre token (rate limit Haiku 10K/min).
-        # Mantieni solo coppie user-text → assistant-text del turno appena chiuso.
         clean = compact_history(messages, final)
         save_history(uid, clean)
-        await update.message.reply_text(final[:4000])
+        # Telegram limit 4096 char/msg → split su confini riga
+        await send_long(update, final)
         return
 
     save_history(uid, messages)
