@@ -13,12 +13,25 @@ $rows = DB::table('ordine_fasi as orf')
     ->join('ordini as o', 'o.id', '=', 'orf.ordine_id')
     ->where('orf.stato', '5')
     ->whereNull('orf.deleted_at')
-    ->select('o.commessa', 'orf.fase', 'o.descrizione', 'o.cliente_nome')
+    ->select('o.commessa', 'orf.fase', 'orf.note', 'orf.ddt_fornitore_id', 'o.descrizione', 'o.cliente_nome')
     ->orderBy('o.commessa')
     ->get();
 
 echo "Totale fasi a stato 5 (EXT inviato): " . count($rows) . "\n\n";
 
+$byFornitore = [];
 foreach ($rows as $r) {
-    echo "{$r->commessa} | {$r->fase} | " . substr($r->descrizione ?? '', 0, 70) . " | " . substr($r->cliente_nome ?? '', 0, 30) . "\n";
+    $fornitore = '(sconosciuto)';
+    if ($r->note && preg_match('/Inviato a:\s*(.+?)(?:$|\n)/i', $r->note, $m)) {
+        $fornitore = trim($m[1]);
+    }
+    $byFornitore[$fornitore][] = $r;
+}
+
+foreach ($byFornitore as $f => $list) {
+    echo "=== $f (" . count($list) . " fasi) ===\n";
+    foreach ($list as $r) {
+        echo "  {$r->commessa} | {$r->fase} | " . substr($r->descrizione ?? '', 0, 60) . "\n";
+    }
+    echo "\n";
 }
