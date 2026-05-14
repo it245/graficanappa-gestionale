@@ -97,12 +97,12 @@ def get_fasi_attive(reparto: str | None = None) -> list[dict]:
         JOIN ordini o ON o.id = orf.ordine_id
         LEFT JOIN fasi_catalogo fc ON fc.id = orf.fase_catalogo_id
         LEFT JOIN reparti r ON r.id = fc.reparto_id
-        WHERE orf.stato = 2
+        WHERE orf.stato = '2' AND orf.deleted_at IS NULL
     """
     params: tuple = ()
     if reparto:
-        sql += " AND LOWER(r.nome) = LOWER(%s)"
-        params = (reparto,)
+        sql += " AND LOWER(r.nome) LIKE LOWER(%s)"
+        params = (f"%{reparto}%",)
     sql += " ORDER BY orf.data_inizio DESC LIMIT 50"
     return _query(sql, params)
 
@@ -115,8 +115,9 @@ def get_macchine_ferme(soglia_minuti: int = 30) -> list[dict]:
                 WHERE pa.commessa_gestionale = o.commessa) AS ultima_att
         FROM ordine_fasi orf
         JOIN ordini o ON o.id = orf.ordine_id
-        WHERE orf.stato = 2
+        WHERE orf.stato = '2'
           AND (orf.fase LIKE 'STAMPAXL%%' OR orf.fase = 'STAMPA' OR orf.fase LIKE 'STAMPA XL%%')
+          AND orf.deleted_at IS NULL
     """
     rows = _query(sql)
     ora = datetime.now()
@@ -136,14 +137,14 @@ def get_riepilogo_giornaliero() -> dict:
     """Riepilogo oggi: fasi terminate, ore lavorate, fasi in lavorazione."""
     oggi = datetime.now().strftime('%Y-%m-%d')
     fasi_term = _query(
-        "SELECT COUNT(*) AS n FROM ordine_fasi WHERE stato >= 3 AND DATE(data_fine) = %s",
+        "SELECT COUNT(*) AS n FROM ordine_fasi WHERE CAST(stato AS UNSIGNED) >= 3 AND DATE(data_fine) = %s AND deleted_at IS NULL",
         (oggi,),
     )
     fasi_attive = _query(
-        "SELECT COUNT(*) AS n FROM ordine_fasi WHERE stato = 2",
+        "SELECT COUNT(*) AS n FROM ordine_fasi WHERE stato = '2' AND deleted_at IS NULL",
     )
     consegnate = _query(
-        "SELECT COUNT(*) AS n FROM ordine_fasi WHERE stato = 4 AND DATE(data_fine) = %s",
+        "SELECT COUNT(*) AS n FROM ordine_fasi WHERE stato = '4' AND DATE(data_fine) = %s AND deleted_at IS NULL",
         (oggi,),
     )
     return {
@@ -269,9 +270,9 @@ def cerca_fasi(commessa: str | None = None, fase: str | None = None,
 
 # === WRITE FUNCTIONS ===
 def aggiorna_stato_fase(fase_id: int, nuovo_stato: int) -> dict:
-    """Modifica stato fase (0=caricato, 1=pronto, 2=avviato, 3=terminato, 4=consegnato)."""
-    if not (0 <= int(nuovo_stato) <= 4):
-        return {'errore': 'Stato deve essere tra 0 e 4'}
+    """Modifica stato fase (0=caricato, 1=pronto, 2=avviato, 3=terminato, 4=consegnato, 5=EXT inviato)."""
+    if not (0 <= int(nuovo_stato) <= 5):
+        return {'errore': 'Stato deve essere tra 0 e 5'}
     n = _execute(
         "UPDATE ordine_fasi SET stato = %s, updated_at = NOW() WHERE id = %s AND deleted_at IS NULL",
         (str(nuovo_stato), int(fase_id))
@@ -805,7 +806,7 @@ def sync_prinect() -> dict:
     laravel_path = os.environ.get('LARAVEL_PATH', r'C:\progetti\gestionale-v2')
     try:
         result = subprocess.run(
-            ['php', 'artisan', 'prinect:sync'],
+            ['php', 'artisan', 'prinect:sync-attivita'],
             cwd=laravel_path, capture_output=True, text=True, timeout=180
         )
         out = (result.stdout or '').strip()
@@ -830,7 +831,7 @@ def aggiungi_riga_commessa(commessa: str, fase: str, qta_fase: int,
     ord = _query("SELECT id FROM ordini WHERE commessa = %s LIMIT 1", (commessa_padded,))
     if not ord:
         return {'errore': f'Commessa {commessa_padded} non trovata'}
-    fc = _query("SELECT id, reparto_id FROM fasi_catalogo WHERE fase = %s LIMIT 1", (fase,))
+    fc = _query("SELECT id, reparto_id FROM fasi_catalogo WHERE nome = %s LIMIT 1", (fase,))
     fcat_id = fc[0]['id'] if fc else None
     reparto_id = fc[0]['reparto_id'] if fc else None
     n = _execute(
@@ -960,12 +961,12 @@ def clear_cliche(ordine_id: int) -> dict:
 
 
 def salva_nota_spedizione(testo: str) -> dict:
-    """Salva nota giornaliera spedizione (data oggi, campo contenuto_pm)."""
+    """Salva nota giornaliera spedizione (data oggi, campo contenuto)."""
     oggi = datetime.now().strftime('%Y-%m-%d')
     n = _execute(
-        "INSERT INTO note_spedizione (data, contenuto_pm, created_at, updated_at) "
+        "INSERT INTO note_spedizione (data, contenuto, created_at, updated_at) "
         "VALUES (%s, %s, NOW(), NOW()) "
-        "ON DUPLICATE KEY UPDATE contenuto_pm = %s, updated_at = NOW()",
+        "ON DUPLICATE KEY UPDATE contenuto = %s, updated_at = NOW()",
         (oggi, testo, testo)
     )
     return {'ok': True, 'data': oggi, 'nota': testo}
@@ -1020,19 +1021,22 @@ def get_alert_ritardi() -> list[dict]:
 
 
 def get_audit_log(commessa: str | None = None, limit: int = 30) -> list[dict]:
-    """Audit log ultime modifiche. Opzionale per commessa."""
+    """Audit log ultime modifiche. Opzionale per commessa (via model_id Ordine)."""
     if commessa:
         if commessa.isdigit() and 4 <= len(commessa) <= 7:
             commessa = commessa.zfill(7) + '-26'
-        sql = """
-            SELECT al.*, o.commessa
-            FROM audit_logs al
-            LEFT JOIN ordini o ON o.id = al.ordine_id
-            WHERE o.commessa = %s
-            ORDER BY al.created_at DESC LIMIT %s
+        ord_rows = _query("SELECT id FROM ordini WHERE commessa = %s", (commessa,))
+        if not ord_rows:
+            return []
+        ids = [str(r['id']) for r in ord_rows]
+        placeholders = ','.join(['%s'] * len(ids))
+        sql = f"""
+            SELECT * FROM audit_logs
+            WHERE model = 'Ordine' AND model_id IN ({placeholders})
+            ORDER BY created_at DESC LIMIT %s
         """
         try:
-            return _query(sql, (commessa, int(limit)))
+            return _query(sql, tuple(ids) + (int(limit),))
         except Exception:
             return []
     sql = "SELECT * FROM audit_logs ORDER BY created_at DESC LIMIT %s"
