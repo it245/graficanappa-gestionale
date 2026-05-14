@@ -5,15 +5,32 @@ $app->make(\Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
 use Illuminate\Support\Facades\DB;
 
-$rows = DB::connection('onda')->select("
-    SELECT TOP 50 PRDDocumento, PRDArtigo, PRDDescricao, PRDQtt, PRDQttDdt, PRDDataDdt
-    FROM PRDDocTeste
-    WHERE PRDDocumento LIKE '%67235%'
-    ORDER BY PRDDocumento
-");
+$comm = '67235';
 
-echo "PRD Onda per 67235:\n";
-foreach ($rows as $r) {
-    echo " {$r->PRDDocumento} | {$r->PRDArtigo} | qta={$r->PRDQtt} ddt={$r->PRDQttDdt} | " . substr($r->PRDDescricao ?? '', 0, 80) . "\n";
+$prd = DB::connection('onda')->select(
+    "SELECT p.IdDoc, p.CodArt, p.CodCommessa, f.CodFase, f.QtaDaLavorare
+     FROM PRDDocTeste p
+     LEFT JOIN PRDDocFasi f ON p.IdDoc = f.IdDoc
+     WHERE p.CodCommessa = ?
+     ORDER BY p.IdDoc, f.CodFase",
+    [$comm]
+);
+
+echo "\n=== PRD Onda commessa $comm ===\n";
+echo "Totale righe: " . count($prd) . "\n";
+foreach ($prd as $r) {
+    echo " IdDoc={$r->IdDoc} CodArt={$r->CodArt} CodFase=" . ($r->CodFase ?? '-') . " QtaDaLavorare=" . ($r->QtaDaLavorare ?? '-') . "\n";
 }
-echo "\nTotale: " . count($rows) . " PRD\n";
+
+echo "\n=== Descrizioni ATTDocRighe ===\n";
+$desc = DB::connection('onda')->select(
+    "SELECT r.IdDoc, r.NrRiga, r.TipoRiga, r.CodArt, r.Descrizione
+     FROM ATTDocRighe r
+     INNER JOIN ATTDocTeste t ON t.IdDoc = r.IdDoc
+     WHERE t.CodCommessa = ?
+     ORDER BY r.NrRiga",
+    [$comm]
+);
+foreach ($desc as $r) {
+    echo " IdDoc={$r->IdDoc} TipoRiga={$r->TipoRiga} CodArt={$r->CodArt}: " . substr($r->Descrizione ?? '', 0, 100) . "\n";
+}
