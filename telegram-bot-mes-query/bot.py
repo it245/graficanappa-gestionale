@@ -241,6 +241,48 @@ async def cmd_reparti(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text(text[:4000], parse_mode=ParseMode.MARKDOWN)
 
 
+async def cmd_ritardo(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
+    if not is_authorized(update.effective_user.id):
+        await reject(update); return
+    rows = tools.get_fasi_in_ritardo()
+    if not rows:
+        await update.message.reply_text("✅ Nessuna commessa in ritardo.")
+        return
+    text = f"⚠️ {len(rows)} commesse in ritardo:\n\n"
+    for r in rows[:20]:
+        text += f"• {r['commessa']} — {r['cliente_nome'][:25]} (+{r['giorni_ritardo']}gg)\n"
+    await update.message.reply_text(text[:4000])
+
+
+async def cmd_consegne_sett(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
+    if not is_authorized(update.effective_user.id):
+        await reject(update); return
+    rows = tools.get_consegne_settimana()
+    text = f"📦 {len(rows)} consegne ultimi 7gg:\n\n"
+    for r in rows[:25]:
+        d = str(r['data_fine'])[:10]
+        text += f"• {d} {r['commessa']} — {(r['cliente_nome'] or '')[:25]}\n"
+    await update.message.reply_text(text[:4000] or "Nessuna consegna 7gg.")
+
+
+async def cmd_tracking(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
+    if not is_authorized(update.effective_user.id):
+        await reject(update); return
+    if not ctx.args:
+        await update.message.reply_text("Uso: /tracking <numero_ddt>")
+        return
+    r = tools.tracking_brt(ctx.args[0])
+    if 'errore' in r:
+        await update.message.reply_text("❌ " + r['errore']); return
+    res = r.get('risultati', [])
+    if not res:
+        await update.message.reply_text(f"Nessun match per DDT {ctx.args[0]}"); return
+    text = ""
+    for x in res:
+        text += f"📦 {x['commessa']} — {x['cliente_nome']}\nDDT: {x['numero_ddt_vendita']} | Vettore: {x['vettore_ddt']}\nStato BRT: {x['stato']} ({x['fase']})\n\n"
+    await update.message.reply_text(text[:4000])
+
+
 async def cmd_sync_onda(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
     if not is_authorized(update.effective_user.id):
         await reject(update); return
@@ -326,11 +368,58 @@ async def on_error(update: object, ctx: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 # === Main ===
+async def job_nuove_commesse(ctx: ContextTypes.DEFAULT_TYPE) -> None:
+    """Polling ogni 5min: rileva nuove commesse importate da Onda e notifica."""
+    import os.path
+    state_file = os.path.join(os.path.dirname(__file__), 'last_check_ordini.txt')
+    try:
+        last = open(state_file).read().strip() if os.path.exists(state_file) else None
+    except Exception:
+        last = None
+    import mysql.connector
+    try:
+        conn = mysql.connector.connect(
+            host=os.environ['DB_HOST'],
+            port=int(os.environ.get('DB_PORT', 3306)),
+            database=os.environ['DB_NAME'],
+            user=os.environ['DB_USER'],
+            password=os.environ['DB_PASS'],
+        )
+        cur = conn.cursor(dictionary=True)
+        if last:
+            cur.execute("SELECT commessa, cliente_nome, descrizione, qta_richiesta, created_at FROM ordini WHERE created_at > %s ORDER BY created_at", (last,))
+        else:
+            cur.execute("SELECT MAX(created_at) AS m FROM ordini")
+            last = str(cur.fetchone()['m'])
+            with open(state_file, 'w') as fp:
+                fp.write(last)
+            cur.close(); conn.close()
+            return
+        nuove = cur.fetchall()
+        cur.close(); conn.close()
+        if not nuove:
+            return
+        for n in nuove:
+            text = f"🆕 *Nuova commessa Onda*\n{n['commessa']} — {n['cliente_nome']}\n{(n['descrizione'] or '')[:120]}\nQta: {n['qta_richiesta']}"
+            for uid in ALLOWED_USER_IDS:
+                try:
+                    await ctx.bot.send_message(chat_id=uid, text=text, parse_mode=ParseMode.MARKDOWN)
+                except Exception as e:
+                    logger.error(f"Push fallita uid={uid}: {e}")
+        last_new = str(nuove[-1]['created_at'])
+        with open(state_file, 'w') as fp:
+            fp.write(last_new)
+    except Exception as e:
+        logger.error(f"job_nuove_commesse: {e}")
+
+
 def main() -> None:
     if not ALLOWED_USER_IDS:
         logger.warning("ALLOWED_USER_IDS vuoto — bot rifiutera tutti i messaggi.")
 
     app = Application.builder().token(TELEGRAM_TOKEN).build()
+    # Job notifiche proattive ogni 5min
+    app.job_queue.run_repeating(job_nuove_commesse, interval=300, first=60)
     app.add_handler(CommandHandler("start", cmd_start))
     app.add_handler(CommandHandler("aiuto", cmd_aiuto))
     app.add_handler(CommandHandler("help", cmd_aiuto))
@@ -346,6 +435,9 @@ def main() -> None:
     app.add_handler(CommandHandler("reparti", cmd_reparti))
     app.add_handler(CommandHandler("sync_onda", cmd_sync_onda))
     app.add_handler(CommandHandler("sync_prinect", cmd_sync_prinect))
+    app.add_handler(CommandHandler("ritardo", cmd_ritardo))
+    app.add_handler(CommandHandler("consegne_sett", cmd_consegne_sett))
+    app.add_handler(CommandHandler("tracking", cmd_tracking))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     app.add_error_handler(on_error)
 

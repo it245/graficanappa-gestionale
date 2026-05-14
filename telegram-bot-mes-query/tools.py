@@ -677,6 +677,25 @@ TOOLS_SCHEMA = [
         },
     },
     {
+        "name": "get_fasi_in_ritardo",
+        "description": "Commesse con data_prevista_consegna scaduta non ancora consegnate. Mostra giorni ritardo.",
+        "input_schema": {"type": "object", "properties": {}},
+    },
+    {
+        "name": "get_consegne_settimana",
+        "description": "Consegne BRT completate (stato=4) ultimi 7 giorni.",
+        "input_schema": {"type": "object", "properties": {}},
+    },
+    {
+        "name": "tracking_brt",
+        "description": "Cerca DDT/segnacollo BRT per numero. Ritorna stato ultima fase BRT della commessa.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"numero_ddt": {"type": "string"}},
+            "required": ["numero_ddt"],
+        },
+    },
+    {
         "name": "marca_terminata_manualmente",
         "description": "Imposta flag terminata_manualmente (protegge da riapertura auto). USA SOLO dopo conferma utente.",
         "input_schema": {
@@ -1077,6 +1096,64 @@ def get_audit_log(commessa: str | None = None, limit: int = 30) -> list[dict]:
         return []
 
 
+def get_fasi_in_ritardo() -> list[dict]:
+    """Commesse con data_prevista_consegna < oggi non ancora consegnate (BRT1 stato<4)."""
+    oggi = datetime.now().strftime('%Y-%m-%d')
+    sql = """
+        SELECT o.commessa, o.cliente_nome, o.descrizione, o.qta_richiesta,
+               o.data_prevista_consegna,
+               DATEDIFF(%s, o.data_prevista_consegna) AS giorni_ritardo
+        FROM ordini o
+        JOIN ordine_fasi orf ON orf.ordine_id = o.id
+        WHERE o.data_prevista_consegna < %s
+          AND orf.fase LIKE 'BRT%%'
+          AND orf.deleted_at IS NULL
+          AND CAST(orf.stato AS UNSIGNED) < 4
+        GROUP BY o.commessa, o.cliente_nome, o.descrizione, o.qta_richiesta, o.data_prevista_consegna
+        ORDER BY o.data_prevista_consegna ASC
+        LIMIT 50
+    """
+    try:
+        return _query(sql, (oggi, oggi))
+    except Exception:
+        return []
+
+
+def get_consegne_settimana() -> list[dict]:
+    """Consegne BRT terminate (stato 4) ultimi 7 giorni."""
+    sql = """
+        SELECT o.commessa, o.cliente_nome, o.numero_ddt_vendita, o.vettore_ddt,
+               orf.data_fine, orf.fase
+        FROM ordine_fasi orf
+        JOIN ordini o ON o.id = orf.ordine_id
+        WHERE orf.fase LIKE 'BRT%%'
+          AND orf.stato = '4'
+          AND orf.deleted_at IS NULL
+          AND orf.data_fine >= NOW() - INTERVAL 7 DAY
+        ORDER BY orf.data_fine DESC
+        LIMIT 100
+    """
+    return _query(sql)
+
+
+def tracking_brt(numero_ddt: str) -> dict:
+    """Cerca DDT spedizione per numero ddt o segnacollo BRT."""
+    sql = """
+        SELECT o.commessa, o.cliente_nome, o.numero_ddt_vendita, o.vettore_ddt,
+               o.qta_ddt_vendita, orf.fase, orf.stato, orf.data_fine, orf.segnacollo_brt
+        FROM ordini o
+        JOIN ordine_fasi orf ON orf.ordine_id = o.id
+        WHERE (o.numero_ddt_vendita = %s OR orf.segnacollo_brt LIKE %s)
+          AND orf.fase LIKE 'BRT%%'
+          AND orf.deleted_at IS NULL
+        ORDER BY orf.data_fine DESC LIMIT 5
+    """
+    try:
+        return {'risultati': _query(sql, (numero_ddt, f"%{numero_ddt}%"))}
+    except Exception as e:
+        return {'errore': str(e)}
+
+
 def get_fasi_pronte(reparto: str | None = None) -> list[dict]:
     """Fasi stato=1 (pronte ma non avviate). Da fare prossime."""
     sql = """
@@ -1136,6 +1213,9 @@ def dispatch_tool(name: str, args: dict) -> Any:
         'get_reparti_overview': get_reparti_overview,
         'get_alert_ritardi': get_alert_ritardi,
         'get_audit_log': get_audit_log,
+        'get_fasi_in_ritardo': get_fasi_in_ritardo,
+        'get_consegne_settimana': get_consegne_settimana,
+        'tracking_brt': tracking_brt,
     }.get(name)
     if not fn:
         return {'errore': f'Tool sconosciuto: {name}'}

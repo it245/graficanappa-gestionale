@@ -19,6 +19,9 @@ COMMANDS = [
     {"command": "top", "description": "Top commesse offset 7gg"},
     {"command": "sync_onda", "description": "Sincronizza Onda ERP"},
     {"command": "sync_prinect", "description": "Sincronizza Prinect"},
+    {"command": "ritardo", "description": "Commesse in ritardo (data scaduta)"},
+    {"command": "consegne_sett", "description": "Consegne ultimi 7 giorni"},
+    {"command": "tracking", "description": "Tracking BRT per numero DDT"},
     {"command": "aiuto", "description": "Lista comandi"},
 ]
 
