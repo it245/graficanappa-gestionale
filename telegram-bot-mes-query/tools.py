@@ -899,13 +899,35 @@ def get_presenti_summary() -> dict:
     except Exception:
         pass
 
-    soglie = {'T': '08:15:00', '1': '06:15:00', '2': '14:15:00', '3': '22:15:00'}
+    # Soglie in minuti dall'inizio giornata (06:15→375, 08:15→495, 14:15→855, 22:15→1335)
+    soglie_min = {'T': 8*60+15, '1': 6*60+15, '2': 14*60+15, '3': 22*60+15}
+
+    def _to_minutes(entrata) -> int:
+        """timedelta o time → minuti dall'inizio giorno."""
+        if entrata is None:
+            return 0
+        # mysql-connector TIME → datetime.timedelta
+        if hasattr(entrata, 'total_seconds'):
+            return int(entrata.total_seconds() // 60)
+        # datetime.time
+        if hasattr(entrata, 'hour'):
+            return entrata.hour * 60 + entrata.minute
+        # str fallback "HH:MM:SS"
+        s = str(entrata)
+        try:
+            parts = s.split(':')
+            return int(parts[0]) * 60 + int(parts[1])
+        except Exception:
+            return 0
+
     persone = []
     for r in rows:
-        entrata_str = str(r['entrata']) if r['entrata'] else ''
+        entrata_min = _to_minutes(r['entrata'])
+        hh, mm = divmod(entrata_min, 60)
+        entrata_str = f"{hh:02d}:{mm:02d}"
         turno = turni_map.get(r['cognome_nome']) or 'T'
-        soglia = soglie.get(turno, '08:15:00')
-        in_ritardo = bool(entrata_str and entrata_str > soglia)
+        soglia_min = soglie_min.get(turno, 495)
+        in_ritardo = entrata_min > soglia_min
         persone.append({
             'cognome_nome': r['cognome_nome'],
             'entrata': entrata_str,
