@@ -778,31 +778,44 @@ def get_presenti_oggi() -> dict:
 
 
 def sync_onda() -> dict:
-    """Lancia sync Onda (artisan onda:sync). Async, ritorna subito."""
+    """Lancia sync Onda (artisan onda:sync). Aspetta fine + ritorna esito."""
     import subprocess
     laravel_path = os.environ.get('LARAVEL_PATH', r'C:\progetti\gestionale-v2')
     try:
-        proc = subprocess.Popen(
+        result = subprocess.run(
             ['php', 'artisan', 'onda:sync'],
-            cwd=laravel_path,
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+            cwd=laravel_path, capture_output=True, text=True, timeout=300
         )
-        return {'ok': True, 'msg': f'Sync Onda avviato (PID {proc.pid})'}
+        out = (result.stdout or '').strip()
+        err = (result.stderr or '').strip()
+        # Filtra MIB noise
+        clean_out = '\n'.join(l for l in out.splitlines() if 'Cannot find module' not in l and 'MIB search' not in l)
+        if result.returncode == 0:
+            return {'ok': True, 'output': clean_out[-800:] or 'Completato senza output'}
+        return {'errore': f'Exit {result.returncode}: {err[-500:] or clean_out[-500:]}'}
+    except subprocess.TimeoutExpired:
+        return {'errore': 'Timeout 5min su sync Onda'}
     except Exception as e:
         return {'errore': str(e)}
 
 
 def sync_prinect() -> dict:
-    """Lancia sync Prinect (artisan prinect:sync). Async."""
+    """Lancia sync Prinect (artisan prinect:sync). Aspetta fine + ritorna esito."""
     import subprocess
     laravel_path = os.environ.get('LARAVEL_PATH', r'C:\progetti\gestionale-v2')
     try:
-        proc = subprocess.Popen(
+        result = subprocess.run(
             ['php', 'artisan', 'prinect:sync'],
-            cwd=laravel_path,
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+            cwd=laravel_path, capture_output=True, text=True, timeout=180
         )
-        return {'ok': True, 'msg': f'Sync Prinect avviato (PID {proc.pid})'}
+        out = (result.stdout or '').strip()
+        err = (result.stderr or '').strip()
+        clean_out = '\n'.join(l for l in out.splitlines() if 'Cannot find module' not in l and 'MIB search' not in l)
+        if result.returncode == 0:
+            return {'ok': True, 'output': clean_out[-800:] or 'Completato senza output'}
+        return {'errore': f'Exit {result.returncode}: {err[-500:] or clean_out[-500:]}'}
+    except subprocess.TimeoutExpired:
+        return {'errore': 'Timeout 3min su sync Prinect'}
     except Exception as e:
         return {'errore': str(e)}
 
