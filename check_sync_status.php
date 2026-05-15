@@ -45,15 +45,31 @@ try {
     echo "    ERRORE: " . $e->getMessage() . "\n";
 }
 
-// 3. Fiery jobs
+// 3. Fiery (auto-detect tabelle esistenti)
 echo "\n[3] Fiery Sync (every 1 min)\n";
-try {
-    $ultimo = DB::table('fiery_jobs')->max('updated_at');
-    $count1h = DB::table('fiery_jobs')->where('updated_at', '>=', now()->subHour())->count();
-    echo "    Ultimo updated_at: " . fmt($ultimo) . "\n";
-    echo "    Record updated_at >1h: $count1h\n";
-} catch (\Exception $e) {
-    echo "    Tabella fiery_jobs assente o errore: " . $e->getMessage() . "\n";
+$tablesFiery = ['fiery_accounting', 'fiery_jobs', 'fiery_lavori'];
+foreach ($tablesFiery as $tbl) {
+    try {
+        if (!DB::getSchemaBuilder()->hasTable($tbl)) continue;
+        $ultimo = DB::table($tbl)->max('updated_at');
+        $count = DB::table($tbl)->where('updated_at', '>=', now()->subHour())->count();
+        echo "    [$tbl] ultimo: " . fmt($ultimo) . " | record 1h: $count\n";
+    } catch (\Exception $e) {
+        echo "    [$tbl] errore: " . $e->getMessage() . "\n";
+    }
+}
+
+// 3b. Fiery Contatori (snapshot 16:55 Mon-Fri)
+echo "\n[3b] Fiery Contatori\n";
+foreach (['fiery_contatori', 'fiery_contatori_snapshot', 'fiery_snapshot_contatori'] as $tbl) {
+    try {
+        if (!DB::getSchemaBuilder()->hasTable($tbl)) continue;
+        $ultimo = DB::table($tbl)->max('created_at');
+        $count = DB::table($tbl)->count();
+        echo "    [$tbl] ultimo created_at: " . fmt($ultimo) . " | totali: $count\n";
+    } catch (\Exception $e) {
+        echo "    [$tbl] errore: " . $e->getMessage() . "\n";
+    }
 }
 
 // 4. Onda sync - check ordini recenti
@@ -80,17 +96,21 @@ if (file_exists($excelPath)) {
     echo "    File MANCA: $excelPath\n";
 }
 
-// 6. NetTime
-echo "\n[6] NetTime Sync\n";
-try {
-    if (DB::getSchemaBuilder()->hasTable('presenze')) {
-        $ultimo = DB::table('presenze')->max('updated_at');
-        echo "    Ultimo presenze updated_at: " . fmt($ultimo) . "\n";
-    } else {
-        echo "    Tabella presenze assente\n";
+// 6. NetTime / Presenze (auto-detect)
+echo "\n[6] NetTime / Presenze Sync\n";
+foreach (['presenze', 'timbrature', 'nettime_timbrature', 'presenza'] as $tbl) {
+    try {
+        if (!DB::getSchemaBuilder()->hasTable($tbl)) continue;
+        $col = 'updated_at';
+        if (!DB::getSchemaBuilder()->hasColumn($tbl, 'updated_at')) {
+            $col = DB::getSchemaBuilder()->hasColumn($tbl, 'created_at') ? 'created_at' : 'data';
+        }
+        $ultimo = DB::table($tbl)->max($col);
+        $count = DB::table($tbl)->count();
+        echo "    [$tbl] ultimo $col: " . fmt($ultimo) . " | totali: $count\n";
+    } catch (\Exception $e) {
+        echo "    [$tbl] errore: " . $e->getMessage() . "\n";
     }
-} catch (\Exception $e) {
-    echo "    ERRORE: " . $e->getMessage() . "\n";
 }
 
 // 7. Queue worker (Prinect ink job)
