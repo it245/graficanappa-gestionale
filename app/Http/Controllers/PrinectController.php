@@ -149,14 +149,21 @@ class PrinectController extends Controller
             $perOperatore[$nome]->n_attivita++;
         }
 
-        // Top commesse ultimi 7gg
+        // Top commesse ultimi 7gg — F/R aware: per commesse fronte+retro
+        // somma buoni per workstep, poi MAX globale (no doppio conteggio fogli fisici)
         $topCommesse = $attivita7gg->whereNotNull('commessa_gestionale')
             ->groupBy('commessa_gestionale')
             ->map(function ($gruppo) {
+                $perWs = $gruppo->groupBy('workstep_name')->map(fn($g, $name) => [
+                    'name' => $name,
+                    'amountProduced' => $g->sum('good_cycles'),
+                    'wasteProduced' => $g->sum('waste_cycles'),
+                ])->values();
+                $buoniFR = \App\Http\Services\PrinectSyncService::calcolaBuoniFronteRetroStatic($perWs);
                 return (object) [
                     'commessa' => $gruppo->first()->commessa_gestionale,
                     'job_name' => $gruppo->first()->prinect_job_name,
-                    'buoni' => $gruppo->sum('good_cycles'),
+                    'buoni' => $buoniFR !== null ? $buoniFR : $gruppo->sum('good_cycles'),
                     'scarto' => $gruppo->sum('waste_cycles'),
                     'n_attivita' => $gruppo->count(),
                 ];
