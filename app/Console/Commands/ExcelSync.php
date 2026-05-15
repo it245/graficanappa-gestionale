@@ -12,25 +12,17 @@ class ExcelSync extends Command
 
     public function handle()
     {
-        // Sync puo essere lungo per via chiamate Prinect: disabilita timeout PHP
-        set_time_limit(0);
-        ini_set('max_execution_time', '0');
-        // Export xlsx via ZipStream alloca chunk 16MB. Con dataset ~6000 ordini
-        // + fasi il default 512M si esaurisce. Bump a 1G per il singolo run.
-        ini_set('memory_limit', '1G');
-
-        $this->info('Excel sync in corso...');
+        // Sync può essere lungo (~3-5 min per 9000+ righe). Disabilita timeout PHP
+        // SIA via set_time_limit (per cli con safe_mode off) SIA via ini_set.
+        @set_time_limit(0);
+        @ini_set('max_execution_time', '0');
+        @ini_set('memory_limit', '1G');
 
         try {
-            // 1. Importa eventuali modifiche dal file Excel
+            @set_time_limit(0);
             ExcelSyncService::syncIfModified();
-            $this->info('Import completato.');
-
-            // 2. Esporta dati aggiornati nel file Excel
+            @set_time_limit(0);
             ExcelSyncService::exportToExcel();
-            $this->info('Export completato.');
-
-            $this->info('Excel sync terminato.');
         } catch (\Exception $e) {
             $this->error('Errore: ' . $e->getMessage());
             return 1;
