@@ -386,12 +386,22 @@ class PrinectSyncService
             $att = $attivitaPerFase[$fase->id] ?? [];
             if (empty($att)) continue;
 
-            $buoni = 0;
+            // F/R-aware: raggruppa activity per workstep_name, poi MAX globale.
+            // Senza questo, 0/N + N/0 (fronte+retro stesso foglio) verrebbero sommati.
+            $perWs = [];
             $scarto = 0;
             foreach ($att as $a) {
-                $buoni += $a['goodCycles'] ?? 0;
+                $wsName = $a['workstep']['name'] ?? '';
+                if (!isset($perWs[$wsName])) {
+                    $perWs[$wsName] = ['name' => $wsName, 'amountProduced' => 0, 'wasteProduced' => 0];
+                }
+                $perWs[$wsName]['amountProduced'] += $a['goodCycles'] ?? 0;
+                $perWs[$wsName]['wasteProduced'] += $a['wasteCycles'] ?? 0;
                 $scarto += $a['wasteCycles'] ?? 0;
             }
+            $wsFake = collect(array_values($perWs));
+            $buoniFR = $this->calcolaBuoniFronteRetro($wsFake);
+            $buoni = $buoniFR !== null ? $buoniFR : (int) $wsFake->sum('amountProduced');
 
             // Tempi: prima fonte = workstep.actualTimes Heidelberg (aggregato
             // ufficiale). Fallback: somma delta startTime/endTime activity raw
