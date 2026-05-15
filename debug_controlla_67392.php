@@ -42,17 +42,23 @@ echo "MAX amountProduced: " . $ws->max(fn($w) => $w['amountProduced'] ?? 0) . "\
 echo "SUM amountProduced: " . $ws->sum(fn($w) => $w['amountProduced'] ?? 0) . "\n";
 echo "SUM wasteProduced: " . $ws->sum(fn($w) => $w['wasteProduced'] ?? 0) . "\n";
 
-echo "\n=== DB attuale 67392 STAMPA ===\n";
-$rows = DB::table('ordine_fasi as orf')
-    ->join('ordini as o', 'o.id', '=', 'orf.ordine_id')
-    ->where('o.commessa', 'LIKE', '67392%')
-    ->where(function($q) {
-        $q->where('orf.fase', 'LIKE', 'STAMPA%');
-    })
-    ->select('orf.id', 'o.commessa', 'orf.fase', 'orf.stato', 'orf.qta_prod', 'orf.fogli_buoni', 'orf.fogli_scarto', 'orf.updated_at')
-    ->get();
-foreach ($rows as $r) {
-    echo "  id={$r->id} commessa={$r->commessa} fase={$r->fase} stato={$r->stato} qta_prod={$r->qta_prod} fogli_buoni={$r->fogli_buoni} fogli_scarto={$r->fogli_scarto} upd={$r->updated_at}\n";
+echo "\n=== DB ordini con 67392 ===\n";
+$ordini = DB::table('ordini')->where('commessa', 'LIKE', '%67392%')->select('id', 'commessa', 'descrizione')->get();
+foreach ($ordini as $o) {
+    echo "  ordine_id={$o->id} commessa='{$o->commessa}' desc=" . substr($o->descrizione ?? '', 0, 60) . "\n";
+}
+
+echo "\n=== DB ordine_fasi STAMPA per ordini 67392 ===\n";
+$ids = $ordini->pluck('id')->toArray();
+if ($ids) {
+    $rows = DB::table('ordine_fasi as orf')
+        ->whereIn('orf.ordine_id', $ids)
+        ->where('orf.fase', 'LIKE', 'STAMPA%')
+        ->select('orf.id', 'orf.ordine_id', 'orf.fase', 'orf.stato', 'orf.qta_prod', 'orf.fogli_buoni', 'orf.fogli_scarto', 'orf.updated_at')
+        ->get();
+    foreach ($rows as $r) {
+        echo "  fase_id={$r->id} ord_id={$r->ordine_id} fase={$r->fase} stato={$r->stato} qta_prod={$r->qta_prod} fogli_buoni={$r->fogli_buoni} fogli_scarto={$r->fogli_scarto} upd={$r->updated_at}\n";
+    }
 }
 
 echo "\n=== Opcache CLI ===\n";
