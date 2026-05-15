@@ -162,7 +162,12 @@ class ClicheMatchService
         $set = array_flip($tokens);
         $best = null; $bestScore = 0;
         foreach ($index['list'] as $c) {
-            if ($c['ntok'] < 2) continue;
+            // Salta cliché 1-token con parola corta (rischio falsi positivi).
+            // Single-word ammesso solo se token lungo >= 5 char (es. LAUREA, MARZAPANE).
+            if ($c['ntok'] < 2) {
+                if ($c['ntok'] === 1 && mb_strlen($c['tokens'][0]) < 5) continue;
+                if ($c['ntok'] < 1) continue;
+            }
             $ok = true;
             foreach ($c['tokens'] as $t) {
                 if (!isset($set[$t])) { $ok = false; break; }
