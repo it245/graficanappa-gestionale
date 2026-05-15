@@ -20,7 +20,6 @@ use App\Services\ClicheMatchService;
 $duplicate = DB::table('ordini')
     ->select('commessa', 'cliche_numero', DB::raw('COUNT(*) as n'))
     ->whereNotNull('cliche_numero')
-    ->whereNull('deleted_at')
     ->groupBy('commessa', 'cliche_numero')
     ->having('n', '>', 1)
     ->get();
@@ -31,8 +30,7 @@ $resetCount = 0;
 foreach ($duplicate as $d) {
     $ids = Ordine::where('commessa', $d->commessa)
         ->where('cliche_numero', $d->cliche_numero)
-        ->whereNull('deleted_at')
-        ->pluck('id', 'descrizione');
+            ->pluck('id', 'descrizione');
 
     echo "Commessa {$d->commessa} cliché {$d->cliche_numero}: " . count($ids) . " ordini\n";
     foreach ($ids as $desc => $id) {
@@ -42,8 +40,7 @@ foreach ($duplicate as $d) {
     // Reset cliché su tutti (saranno re-matchati dopo)
     Ordine::where('commessa', $d->commessa)
         ->where('cliche_numero', $d->cliche_numero)
-        ->whereNull('deleted_at')
-        ->where(fn($q) => $q->whereNull('cliche_match_type')->orWhere('cliche_match_type', 'auto'))
+            ->where(fn($q) => $q->whereNull('cliche_match_type')->orWhere('cliche_match_type', 'auto'))
         ->update([
             'cliche_numero' => null,
             'cliche_match_type' => null,
