@@ -38,19 +38,22 @@ echo "Excel modified: " . date('Y-m-d H:i:s', filemtime($path)) . "\n\n";
 
 error_reporting(E_ALL & ~E_DEPRECATED);
 $spreadsheet = IOFactory::load($path);
-$sheet = $spreadsheet->getActiveSheet();
-$rows = $sheet->toArray(null, false, false, true);
 
 $excelById = [];
-$first = true;
-foreach ($rows as $r) {
-    if ($first) { $first = false; continue; }
-    $id = $r['A'] ?? null;
-    if (!$id || !is_numeric($id)) continue;
-    $excelById[(int)$id] = [
-        'fase'    => $r['S'] ?? '',
-        'qta'     => $r['V'] ?? null,
-    ];
+foreach ($spreadsheet->getSheetNames() as $sheetName) {
+    $sheet = $spreadsheet->getSheetByName($sheetName);
+    $rows = $sheet->toArray(null, false, false, true);
+    $first = true;
+    foreach ($rows as $r) {
+        if ($first) { $first = false; continue; }
+        $id = $r['A'] ?? null;
+        if (!$id || !is_numeric($id)) continue;
+        $excelById[(int)$id] = [
+            'fase'    => $r['S'] ?? '',
+            'qta'     => $r['V'] ?? null,
+            'sheet'   => $sheetName,
+        ];
+    }
 }
 
 echo "Righe Excel: " . count($excelById) . "\n\n";
