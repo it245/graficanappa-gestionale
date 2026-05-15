@@ -36,12 +36,22 @@ Write-Output "mysqldump: $mysqldump"
 
 # Credenziali dal .env
 $envPath = "C:\progetti\graficanappa-gestionale\.env"
-$envContent = Get-Content $envPath
-$dbHost = ($envContent | Where-Object { $_ -match "^DB_HOST=" }) -replace "^DB_HOST=", ""
-$dbPort = ($envContent | Where-Object { $_ -match "^DB_PORT=" }) -replace "^DB_PORT=", ""
-$dbName = ($envContent | Where-Object { $_ -match "^DB_DATABASE=" }) -replace "^DB_DATABASE=", ""
-$dbUser = ($envContent | Where-Object { $_ -match "^DB_USERNAME=" }) -replace "^DB_USERNAME=", ""
-$dbPass = ($envContent | Where-Object { $_ -match "^DB_PASSWORD=" }) -replace "^DB_PASSWORD=", ""
+$dbHost = ""; $dbPort = ""; $dbName = ""; $dbUser = ""; $dbPass = ""
+foreach ($line in Get-Content $envPath) {
+    $line = $line.Trim()
+    if ($line -eq "" -or $line.StartsWith("#")) { continue }
+    if ($line -match "^DB_HOST=(.+)$")     { $dbHost = $Matches[1].Trim() }
+    if ($line -match "^DB_PORT=(.+)$")     { $dbPort = $Matches[1].Trim() }
+    if ($line -match "^DB_DATABASE=(.+)$") { $dbName = $Matches[1].Trim() }
+    if ($line -match "^DB_USERNAME=(.+)$") { $dbUser = $Matches[1].Trim() }
+    if ($line -match "^DB_PASSWORD=(.+)$") { $dbPass = $Matches[1].Trim() }
+}
+# Strip eventuali quotes
+$dbHost = $dbHost.Trim('"').Trim("'")
+$dbPort = $dbPort.Trim('"').Trim("'")
+$dbName = $dbName.Trim('"').Trim("'")
+$dbUser = $dbUser.Trim('"').Trim("'")
+$dbPass = $dbPass.Trim('"').Trim("'")
 
 Write-Output "Backup DB: $dbName su ${dbHost}:${dbPort}"
 Write-Output "Output: $backupFile"
