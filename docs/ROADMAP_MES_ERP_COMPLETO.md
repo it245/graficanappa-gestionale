@@ -228,6 +228,53 @@ Generated: 29 April 2026
 
 ---
 
+## ADDENDUM 10 — Repositioning Strategico: MES = Estensione, NON Sostituto (15/05/2026)
+
+### Decisione
+Il MES Grafica Nappa NON sostituirà Onda ERP. Sarà estensione/BI/operations
+layer sopra ERP esistente. Posizionamento commerciale: anti-commodity.
+
+### Razionale
+- Competere come ERP completo = guerra al ribasso vs Zucchetti/Team System
+  (€20-50/mese commodity)
+- Posizionamento vincente: MES specializzato tipografia + BI operativo +
+  scheduling produzione + analytics che ERP generalisti NON fanno
+- Vendita SaaS futura: "MES tipografico universale" sopra qualunque ERP
+  (Onda, Zucchetti, SAP), connector layer dedicato
+
+### Implicazioni progetto
+1. **Logica contabile/fiscale** → NON duplicare. Leggi da Onda via SOAP/SQL
+2. **Produzione/operations** → owned dal MES (Onda non le ha)
+3. **Dashboard finanziari** → presentare dati Onda in UI MES, no riscrittura
+
+### Nuove dashboard MES da implementare (legge Onda)
+- **Cashflow forecast** — fatture emesse + scadenze + pagamenti previsti
+- **Recupero crediti** — clienti morosi, top 10 con importo + giorni scaduti
+- **Margine commessa** — costi materiale MES + ore MES vs fatturato Onda
+- **Top clienti YTD** — fatturato + commesse + scarto medio
+- **Carta critica** — magazzino sotto soglia + impatto commesse attive
+- **Scarto produzione** — top macchine + trend settimanale
+- **Vincoli consegna** — commesse a rischio penale per ritardo
+
+### Architettura
+- Modulo `app/Modules/BI/` (nuovo)
+- Service `OndaFinanceService` (estensione `OndaErpAdapter`)
+- View Blade nel layout MES standard
+- Cache Redis 15min su query Onda (heavy SQL Server)
+
+### Effort stimato
+- Service Onda finance read: 1 giorno
+- 7 dashboard BI: 1 settimana
+- Layout + componenti: 2 giorni
+- Test + tuning: 2 giorni
+- **Totale: ~2 settimane**
+
+### Priorità
+Media. Da pianificare DOPO completamento moduli rimanenti (Presenze,
+Reportistica, AuditLog) e UI Overhaul Phase 1-2.
+
+---
+
 ## ADDENDUM 9 — CLI MES via Printing Press (15/05/2026)
 
 ### Idea
