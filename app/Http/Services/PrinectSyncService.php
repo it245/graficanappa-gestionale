@@ -7,70 +7,18 @@ use App\Models\Ordine;
 use App\Models\OrdineFase;
 use App\Models\Operatore;
 use App\Models\Reparto;
-use App\Modules\Prinect\Contracts\PrinectApiInterface;
-use App\Modules\Prinect\Services\PrinectAccountingService;
-use App\Modules\Prinect\Services\PrinectAutoTerminaService;
-use App\Modules\Prinect\Services\PrinectInkService;
-use App\Modules\Prinect\Services\PrinectJobsService;
 use Carbon\Carbon;
 use App\Services\FaseStatoService;
 
-/**
- * Coordinatore DB-bound della sincronizzazione Prinect XL106.
- *
- * Storia: monolite con tutta la logica di import attività + auto-termina
- * fasi + ripristino + accounting tempi. Nel branch def2.0 i pezzi puri
- * (senza Eloquent) sono stati estratti in `App\Modules\Prinect\Services\*`
- * (Strangler Fig). Questo Service mantiene la firma pubblica invariata
- * (chiamata da cron `prinect:sync`, controllers, ImportExcelTutto) e
- * delega ai moduli per:
- *
- *  - {@see PrinectJobsService}        — fetch worksteps stampa + verifica
- *                                        "stampa confermata" (fix 66811);
- *  - {@see PrinectAccountingService}  — aggregazione tempi avviamento/esecuzione;
- *  - {@see PrinectAutoTerminaService} — predicati puri auto-termina/
- *                                        ripristina/abbandono;
- *  - {@see PrinectInkService}         — cache lookup consumo inchiostri.
- *
- * IMPORTANTE: la logica di terminazione fasi è preservata bit-for-bit
- * rispetto al codice pre-refactor (vedi memoria fix 66811).
- */
 class PrinectSyncService
 {
-    protected PrinectApiInterface $prinect;
-    protected PrinectJobsService $jobsService;
-    protected PrinectInkService $inkService;
-    protected PrinectAccountingService $accountingService;
-    protected PrinectAutoTerminaService $autoTerminaService;
+    protected PrinectService $prinect;
 
-    /**
-     * Strangler Fig: dipendiamo dal Contract `PrinectApiInterface` (modulo
-     * Prinect) anziché dal wrapper concreto `PrinectService`. Stesso comportamento
-     * runtime — l'I/O HTTP è in `PrinectHttpAdapter`, registrato come implementazione
-     * dell'interface in `ModulesServiceProvider` — ma test possono mockare il
-     * contract senza una Heidelberg fisica.
-     */
-    public function __construct(
-        PrinectApiInterface $prinect,
-        PrinectJobsService $jobsService,
-        PrinectInkService $inkService,
-        PrinectAccountingService $accountingService,
-        PrinectAutoTerminaService $autoTerminaService,
-    ) {
-        $this->prinect            = $prinect;
-        $this->jobsService        = $jobsService;
-        $this->inkService         = $inkService;
-        $this->accountingService  = $accountingService;
-        $this->autoTerminaService = $autoTerminaService;
+    public function __construct(PrinectService $prinect)
+    {
+        $this->prinect = $prinect;
     }
 
-    /**
-     * Sincronizza le attività Prinect XL106 degli ultimi 30 giorni.
-     * Importa nuove attività, aggiorna fogli/tempi sulle fasi di stampa offset,
-     * gestisce auto-terminazione e ripristino fasi.
-     *
-     * @return int Numero di attività importate.
-     */
     public function sincronizzaAttivita(): int
     {
         $deviceId = env('PRINECT_DEVICE_XL106_ID', '4001');
@@ -440,15 +388,15 @@ class PrinectSyncService
 
             $buoni = 0;
             $scarto = 0;
-
             foreach ($att as $a) {
                 $buoni += $a['goodCycles'] ?? 0;
                 $scarto += $a['wasteCycles'] ?? 0;
             }
 
-            // Tempi: prima fonte aggregato Heidelberg via workstep.actualTimes
-            // (corretti). Fallback a somma activity raw (sottostima ma meglio
-            // di niente quando actualTimes manca).
+            // Tempi: prima fonte = workstep.actualTimes Heidelberg (aggregato
+            // ufficiale). Fallback: somma delta startTime/endTime activity raw
+            // (sottostima ma stabile). Le activity Prinect sono eventi puntuali
+            // (es. 9s+12s totali per job da 1h19m), NON blocchi tempo continuo.
             $workstepName = null;
             $jobIdFase = null;
             foreach ($att as $a) {
@@ -456,12 +404,18 @@ class PrinectSyncService
                 $jobIdFase ??= $a['workstep']['job']['id'] ?? null;
                 if ($workstepName && $jobIdFase) break;
             }
-            $tempi = null;
-            if ($workstepName && $jobIdFase) {
-                $tempi = $this->accountingService->getTempiByWorkstepName((string) $jobIdFase, $workstepName);
-            }
-            if ($tempi === null) {
-                $tempi = $this->accountingService->aggregaAttivita($att);
+            [$secAvv, $secProd] = $this->tempiDaActualTimes((string) ($jobIdFase ?? ''), (string) ($workstepName ?? ''));
+            if ($secAvv === 0 && $secProd === 0) {
+                // Fallback activity raw
+                foreach ($att as $a) {
+                    if (!isset($a['startTime'], $a['endTime'])) continue;
+                    $diff = Carbon::parse($a['startTime'])->diffInSeconds(Carbon::parse($a['endTime']));
+                    if (($a['name'] ?? '') === 'Avviamento') {
+                        $secAvv += $diff;
+                    } else {
+                        $secProd += $diff;
+                    }
+                }
             }
 
             $sorted = collect($att)->filter(fn($a) => isset($a['startTime']))->sortBy('startTime');
@@ -472,11 +426,56 @@ class PrinectSyncService
             $this->aggiornaFasi(collect([$fase]), [
                 'fogli_buoni' => $buoni,
                 'fogli_scarto' => $scarto,
-                'tempo_avviamento_sec' => $tempi->avviamentoSec,
-                'tempo_esecuzione_sec' => $tempi->esecuzioneSec,
+                'tempo_avviamento_sec' => $secAvv,
+                'tempo_esecuzione_sec' => $secProd,
             ], $dataInizio, $operatoriMatched, $terminata, $dataFine);
         }
     }
+
+    /**
+     * Lookup tempi aggregati Heidelberg via workstep.actualTimes.
+     * Ritorna [secAvviamento, secEsecuzione]. Zero se lookup fallisce
+     * o actualTimes mancante (caller gestisce fallback).
+     *
+     * Cache per-jobId via $this->worksetCache per ridurre chiamate API.
+     */
+    protected function tempiDaActualTimes(string $jobId, string $workstepName): array
+    {
+        if ($jobId === '' || $workstepName === '') {
+            return [0, 0];
+        }
+        if (!isset($this->worksetCache[$jobId])) {
+            try {
+                $this->worksetCache[$jobId] = $this->prinect->getJobWorksteps($jobId);
+            } catch (\Throwable $e) {
+                $this->worksetCache[$jobId] = null;
+            }
+        }
+        $worksteps = $this->worksetCache[$jobId];
+        if (!is_array($worksteps) || empty($worksteps['worksteps'])) {
+            return [0, 0];
+        }
+        foreach ($worksteps['worksteps'] as $w) {
+            if (($w['name'] ?? null) !== $workstepName) continue;
+            $secAvv = 0;
+            $secProd = 0;
+            foreach (($w['actualTimes'] ?? []) as $t) {
+                $name = mb_strtolower($t['timeTypeName'] ?? '');
+                $dur  = (int) ($t['duration'] ?? 0);
+                if ($dur <= 0) continue;
+                if (str_contains($name, 'avviamento')) {
+                    $secAvv += $dur;
+                } elseif (str_contains($name, 'esecuzione') || str_contains($name, 'produzione')) {
+                    $secProd += $dur;
+                }
+            }
+            return [$secAvv, $secProd];
+        }
+        return [0, 0];
+    }
+
+    /** @var array<string, array<string,mixed>|null> */
+    protected array $worksetCache = [];
 
     /**
      * Helper: calcola dati da attività Prinect e aggiorna una fase.
@@ -486,18 +485,22 @@ class PrinectSyncService
         $att = collect($att);
         if ($att->isEmpty()) return;
 
-        // Tempi: prima fonte aggregato Heidelberg via workstep.actualTimes
-        // (eloquent: prinect_attivita.workstep_name + prinect_job_id).
-        // Fallback a somma activity raw (sottostima storica ma stabile).
+        // Tempi: prima prova workstep.actualTimes Heidelberg (Eloquent: workstep_name + prinect_job_id)
         $firstAtt = $att->first();
         $workstepName = $firstAtt->workstep_name ?? null;
         $jobIdFase    = $firstAtt->prinect_job_id ?? null;
-        $tempi = null;
-        if ($workstepName && $jobIdFase) {
-            $tempi = $this->accountingService->getTempiByWorkstepName((string) $jobIdFase, (string) $workstepName);
-        }
-        if ($tempi === null) {
-            $tempi = $this->accountingService->aggregaAttivita($att);
+        [$secAvviamento, $secProduzione] = $this->tempiDaActualTimes((string) ($jobIdFase ?? ''), (string) ($workstepName ?? ''));
+        if ($secAvviamento === 0 && $secProduzione === 0) {
+            // Fallback activity raw (sottostima)
+            foreach ($att as $a) {
+                if (!$a->start_time || !$a->end_time) continue;
+                $diff = $a->start_time->diffInSeconds($a->end_time);
+                if ($a->activity_name === 'Avviamento') {
+                    $secAvviamento += $diff;
+                } else {
+                    $secProduzione += $diff;
+                }
+            }
         }
 
         $primaAtt = $att->filter(fn($a) => $a->start_time)->sortBy('start_time')->first();
@@ -505,8 +508,8 @@ class PrinectSyncService
         $this->aggiornaFasi(collect([$fase]), [
             'fogli_buoni' => $att->sum('good_cycles'),
             'fogli_scarto' => $att->sum('waste_cycles'),
-            'tempo_avviamento_sec' => $tempi->avviamentoSec,
-            'tempo_esecuzione_sec' => $tempi->esecuzioneSec,
+            'tempo_avviamento_sec' => $secAvviamento,
+            'tempo_esecuzione_sec' => $secProduzione,
         ], $primaAtt?->start_time, $operatoriMatched);
     }
 
@@ -523,32 +526,6 @@ class PrinectSyncService
                   ->orWhere('fase', 'LIKE', 'STAMPA XL%');
             })
             ->get();
-    }
-
-    /**
-     * Rileva stampa fronte/retro: workstep con pattern "0/N" + "N/0" indica
-     * doppio passaggio dello stesso foglio fisico (fronte poi retro).
-     * In F/R i fogli vanno contati come MAX, non SUM.
-     */
-    protected function detectFronteRetro($worksteps): bool
-    {
-        $patterns = [];
-        foreach ($worksteps as $ws) {
-            $name = $ws['name'] ?? '';
-            if (preg_match('#\b(\d+)\s*/\s*(\d+)\b#', $name, $m)) {
-                $patterns[] = [$m[1], $m[2]];
-            }
-        }
-        if (count($patterns) < 2) return false;
-        // Cerca coppia (0,N) + (N,0)
-        foreach ($patterns as $p) {
-            if ($p[0] !== '0' || $p[1] === '0') continue;
-            foreach ($patterns as $q) {
-                if ($q[1] !== '0' || $q[0] === '0') continue;
-                if ($p[1] === $q[0]) return true;
-            }
-        }
-        return false;
     }
 
     /**
@@ -718,30 +695,46 @@ class PrinectSyncService
             if (!$jobId || !is_numeric($jobId)) continue;
 
             try {
-                // Worksteps di stampa convenzionale (delegato al modulo Prinect)
-                $worksteps = $this->jobsService->getWorkstepsStampa($jobId);
+                $wsData = $this->prinect->getJobWorksteps($jobId);
+                $worksteps = collect($wsData['worksteps'] ?? [])
+                    ->filter(fn($ws) => in_array('ConventionalPrinting', $ws['types'] ?? []));
 
                 if ($worksteps->isEmpty()) continue;
 
-                // Protezione: verifica che la stampa sia effettivamente avvenuta.
-                // Usa la "stampa confermata" del modulo (gestisce fix 66811:
-                // workstep COMPLETED senza actualStartDate ma con activities reali).
-                $stampaConfermata = $worksteps->contains(
-                    fn($ws) => $this->jobsService->stampaConfermata($jobId, $ws)
-                );
+                // Protezione: verifica che la stampa sia effettivamente avvenuta
+                // Usa workstep activities (endpoint più affidabile) come prova certa
+                $wsConStart = $worksteps->filter(fn($ws) => !empty($ws['actualStartDate']));
+                $totaleBuoniCheck = $worksteps->sum(fn($ws) => $ws['amountProduced'] ?? 0);
+                $allCompletedCheck = $worksteps->every(fn($ws) => ($ws['status'] ?? '') === 'COMPLETED');
+
+                // Se nessun actualStartDate, verifica tramite workstep activities API
+                $stampaConfermata = $wsConStart->isNotEmpty();
+                if (!$stampaConfermata && $allCompletedCheck && $totaleBuoniCheck > 0) {
+                    // Chiedi a Prinect: il workstep ha attività reali?
+                    foreach ($worksteps as $ws) {
+                        try {
+                            $wsAct = $this->prinect->getWorkstepActivities($jobId, $ws['id']);
+                            $attivitaWs = collect($wsAct['activities'] ?? []);
+                            // Se almeno un'attività ha goodCycles > 0 o è di tipo "Tempo di esecuzione"
+                            $haStampato = $attivitaWs->contains(function ($a) {
+                                return ($a['goodCycles'] ?? 0) > 0
+                                    || str_contains($a['timeTypeName'] ?? '', 'esecuzione');
+                            });
+                            if ($haStampato) {
+                                $stampaConfermata = true;
+                                break;
+                            }
+                        } catch (\Exception $e) {
+                            // API non disponibile, non confermare
+                        }
+                    }
+                }
 
                 if (!$stampaConfermata) continue;
 
-                // F/R detection: workstep "0/N" + "N/0" = stampa fronte/retro (stesso foglio passa 2 volte).
-                // In quel caso usa MAX (non SUM) per non contare doppio i fogli fisici.
-                $isFronteRetro = $this->detectFronteRetro($worksteps);
-                if ($isFronteRetro) {
-                    $totaleBuoniWs = $worksteps->max(fn($ws) => $ws['amountProduced'] ?? 0);
-                    $totaleScartaWs = $worksteps->max(fn($ws) => $ws['wasteProduced'] ?? 0);
-                } else {
-                    $totaleBuoniWs = $worksteps->sum(fn($ws) => $ws['amountProduced'] ?? 0);
-                    $totaleScartaWs = $worksteps->sum(fn($ws) => $ws['wasteProduced'] ?? 0);
-                }
+                // Aggiorna fogli_buoni/scarto dal totale workstep (più affidabile delle singole attività)
+                $totaleBuoniWs = $worksteps->sum(fn($ws) => $ws['amountProduced'] ?? 0);
+                $totaleScartaWs = $worksteps->sum(fn($ws) => $ws['wasteProduced'] ?? 0);
 
                 // Aggiorna fogli per-workstep se match 1:1, altrimenti totale su tutte
                 $wsValues = $worksteps->values();
@@ -778,15 +771,18 @@ class PrinectSyncService
                 }
 
                 // === REGOLE TERMINAZIONE AUTOMATICA ===
-                // Protezione A: attività recente (<60 min) → NON terminare.
-                // Soglia gestita dal modulo PrinectAutoTerminaService.
+                // Protezione A: attività recente (<1h) → NON terminare
                 $ultimaAttivita = PrinectAttivita::where('commessa_gestionale', $commessa)
                     ->orderByDesc('start_time')
                     ->value('start_time');
-                $ultimaCarbon = $ultimaAttivita ? Carbon::parse($ultimaAttivita) : null;
-                if ($this->autoTerminaService->attivitaRecente($ultimaCarbon)) continue;
+                $attivitaRecente = $ultimaAttivita && Carbon::parse($ultimaAttivita)->diffInMinutes(now()) < 60;
+                if ($attivitaRecente) continue;
 
                 if ($totaleBuoniWs <= 0) continue;
+
+                $allCompleted = $worksteps->every(fn($ws) => ($ws['status'] ?? '') === 'COMPLETED');
+                $anyWaiting = $worksteps->contains(fn($ws) => ($ws['status'] ?? '') === 'WAITING');
+                $totaleFogliWs = $totaleBuoniWs + $totaleScartaWs;
 
                 // === TERMINAZIONE PER SINGOLO WORKSTEP ===
                 // Se N fasi STAMPAXL = N workstep, termina individualmente ogni fase
@@ -820,14 +816,25 @@ class PrinectSyncService
                 }
 
                 // === TERMINAZIONE GLOBALE (commesse con 1 fase STAMPAXL) ===
-                // Predicato puro delegato a PrinectAutoTerminaService::deveTerminare:
-                // copre regola 1 (allCompleted) + regole 2/6 (fogli >= qta_carta).
-                $qtaCarta = (int) ($fasi->first()->ordine->qta_carta ?? 0);
+                $deveTerminare = false;
+                $qtaCarta = $fasi->first()->ordine->qta_carta ?? 0;
 
-                if (!$this->autoTerminaService->deveTerminare($worksteps, $qtaCarta)) continue;
+                // Regola 1: TUTTI workstep COMPLETED
+                if ($allCompleted) $deveTerminare = true;
 
-                $lastEndCarbon = $this->autoTerminaService->ultimaDataFine($worksteps);
-                $lastEnd = $lastEndCarbon ? $lastEndCarbon->toIso8601String() : null;
+                // Regole 2 e 6: fogli >= qta_carta (solo se no WAITING e con actualEndDate)
+                $wsTerminati = $worksteps->filter(fn($ws) => !empty($ws['actualStartDate']) && !empty($ws['actualEndDate']));
+                if (!$anyWaiting && $wsTerminati->isNotEmpty()) {
+                    if (!$deveTerminare && $qtaCarta > 0 && $totaleBuoniWs >= $qtaCarta) $deveTerminare = true;
+                    if (!$deveTerminare && $qtaCarta > 0 && $totaleFogliWs >= $qtaCarta) $deveTerminare = true;
+                }
+
+                if (!$deveTerminare) continue;
+
+                $lastEnd = $worksteps->map(fn($ws) => $ws['actualEndDate'] ?? null)
+                    ->filter()
+                    ->sort()
+                    ->last();
 
                 foreach ($fasi as $fase) {
                     if ($fase->stato < 3) {
@@ -881,8 +888,10 @@ class PrinectSyncService
 
             // Check 2: controlla per-workstep quale fase ripristinare
             try {
-                // Worksteps di stampa convenzionale (delegato al modulo Prinect)
-                $worksteps = $this->jobsService->getWorkstepsStampa($jobId);
+                $wsData = $this->prinect->getJobWorksteps($jobId);
+                $worksteps = collect($wsData['worksteps'] ?? [])
+                    ->filter(fn($ws) => in_array('ConventionalPrinting', $ws['types'] ?? []))
+                    ->values();
 
                 if ($worksteps->isEmpty()) continue;
 
@@ -903,8 +912,8 @@ class PrinectSyncService
                     }
                 } else {
                     // Numero diverso: ripristina solo se TUTTI i workstep non sono COMPLETED
-                    // (delegato al modulo PrinectAutoTerminaService: stessa semantica)
-                    if ($this->autoTerminaService->deveRipristinare($worksteps)) {
+                    $allNotCompleted = $worksteps->every(fn($ws) => ($ws['status'] ?? '') !== 'COMPLETED');
+                    if ($allNotCompleted) {
                         foreach ($fasiValues as $fase) {
                             if ($fase->terminata_manualmente) continue;
                             $fase->stato = 2;
@@ -948,10 +957,46 @@ class PrinectSyncService
             if (!$ultimaAttivita || !$ultimaAttivita->start_time) continue;
 
             $ultimoTempo = Carbon::parse($ultimaAttivita->end_time ?? $ultimaAttivita->start_time);
+            $orePassate = $ultimoTempo->diffInHours(now());
+            $giornoAttivita = $ultimoTempo->toDateString();
+            $oggi = Carbon::today()->toDateString();
 
-            // Predicato "abbandonata" delegato al modulo PrinectAutoTerminaService:
-            // > SOGLIA_ABBANDONO_ORE (4h) fa E giorno diverso da oggi.
-            if ($this->autoTerminaService->eAbbandonata($ultimoTempo)) {
+            $abbandonata = false;
+
+            // Regola standard: > 4 ore fa E giorno diverso da oggi
+            if ($orePassate >= 4 && $giornoAttivita !== $oggi) {
+                $abbandonata = true;
+            }
+
+            // Fix avviamento mattutino: oggi la macchina ha iniziato con questa
+            // commessa (riscaldamento/avviamento di ieri) MA dopo è passata
+            // ad altre commesse -> fase abbandonata anche se "stesso giorno".
+            if (!$abbandonata && $giornoAttivita === $oggi) {
+                $primaAttOggi = PrinectAttivita::where('device_id', $ultimaAttivita->device_id)
+                    ->whereDate('start_time', $oggi)
+                    ->orderBy('start_time')
+                    ->first();
+                $ultimaAttOggi = PrinectAttivita::where('device_id', $ultimaAttivita->device_id)
+                    ->whereDate('start_time', $oggi)
+                    ->orderByDesc('start_time')
+                    ->first();
+                if ($primaAttOggi && $ultimaAttOggi
+                    && $primaAttOggi->commessa_gestionale === $commessa
+                    && $ultimaAttOggi->commessa_gestionale !== $commessa) {
+                    $abbandonata = true;
+                }
+            }
+
+            if ($abbandonata) {
+                // Aggiorna fogli_buoni e fogli_scarto sommando PrinectAttivita commessa
+                $aggr = PrinectAttivita::where('commessa_gestionale', $commessa)
+                    ->selectRaw('SUM(good_cycles) as buoni, SUM(waste_cycles) as scarto')
+                    ->first();
+                if ($aggr) {
+                    $fase->fogli_buoni  = (int) ($aggr->buoni ?? 0);
+                    $fase->fogli_scarto = (int) ($aggr->scarto ?? 0);
+                    $fase->qta_prod     = (int) ($aggr->buoni ?? 0);
+                }
                 $fase->stato = 3;
                 $fase->data_fine = $ultimoTempo->format('Y-m-d H:i:s');
                 $fase->save();
@@ -1023,7 +1068,7 @@ class PrinectSyncService
      * Estrae la parte numerica dal job ID Prinect.
      * Es. "66698 int" → "66698", "66410" → "66410", "abc" → null
      */
-    public static function estraiJobIdNumerico(int|string|null $jobId): ?string
+    public static function estraiJobIdNumerico($jobId): ?string
     {
         if (!$jobId) return null;
         if (is_numeric($jobId)) return (string) $jobId;
