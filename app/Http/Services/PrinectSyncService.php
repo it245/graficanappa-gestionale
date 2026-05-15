@@ -505,9 +505,25 @@ class PrinectSyncService
 
         $primaAtt = $att->filter(fn($a) => $a->start_time)->sortBy('start_time')->first();
 
+        // F/R: se attività hanno workstep "0/N" + "N/0" (fronte+retro stesso foglio),
+        // somma per workstep e poi MAX (no doppio conteggio fogli fisici).
+        $perWs = $att->groupBy('workstep_name');
+        $wsFake = $perWs->map(fn($g, $name) => [
+            'name' => $name,
+            'amountProduced' => $g->sum('good_cycles'),
+            'wasteProduced' => $g->sum('waste_cycles'),
+        ])->values();
+        if ($this->detectFronteRetro($wsFake)) {
+            $buoni  = (int) $wsFake->max(fn($w) => $w['amountProduced']);
+            $scarto = (int) $wsFake->max(fn($w) => $w['wasteProduced']);
+        } else {
+            $buoni  = (int) $att->sum('good_cycles');
+            $scarto = (int) $att->sum('waste_cycles');
+        }
+
         $this->aggiornaFasi(collect([$fase]), [
-            'fogli_buoni' => $att->sum('good_cycles'),
-            'fogli_scarto' => $att->sum('waste_cycles'),
+            'fogli_buoni' => $buoni,
+            'fogli_scarto' => $scarto,
             'tempo_avviamento_sec' => $secAvviamento,
             'tempo_esecuzione_sec' => $secProduzione,
         ], $primaAtt?->start_time, $operatoriMatched);
@@ -526,32 +542,6 @@ class PrinectSyncService
                   ->orWhere('fase', 'LIKE', 'STAMPA XL%');
             })
             ->get();
-    }
-
-    /**
-     * Rileva stampa fronte/retro: workstep con pattern "0/N" + "N/0" indica
-     * doppio passaggio dello stesso foglio fisico (fronte poi retro).
-     * In F/R i fogli vanno contati come MAX, non SUM.
-     */
-    protected function detectFronteRetro($worksteps): bool
-    {
-        $patterns = [];
-        foreach ($worksteps as $ws) {
-            $name = $ws['name'] ?? '';
-            if (preg_match('#\b(\d+)\s*/\s*(\d+)\b#', $name, $m)) {
-                $patterns[] = [$m[1], $m[2]];
-            }
-        }
-        if (count($patterns) < 2) return false;
-        // Cerca coppia (0,N) + (N,0)
-        foreach ($patterns as $p) {
-            if ($p[0] !== '0' || $p[1] === '0') continue;
-            foreach ($patterns as $q) {
-                if ($q[1] !== '0' || $q[0] === '0') continue;
-                if ($p[1] === $q[0]) return true;
-            }
-        }
-        return false;
     }
 
     /**
@@ -758,16 +748,9 @@ class PrinectSyncService
 
                 if (!$stampaConfermata) continue;
 
-                // F/R detection: workstep "0/N" + "N/0" = stampa fronte/retro (stesso foglio passa 2 volte).
-                // In quel caso usa MAX (non SUM) per non contare doppio i fogli fisici.
-                $isFronteRetro = $this->detectFronteRetro($worksteps);
-                if ($isFronteRetro) {
-                    $totaleBuoniWs = $worksteps->max(fn($ws) => $ws['amountProduced'] ?? 0);
-                    $totaleScartaWs = $worksteps->max(fn($ws) => $ws['wasteProduced'] ?? 0);
-                } else {
-                    $totaleBuoniWs = $worksteps->sum(fn($ws) => $ws['amountProduced'] ?? 0);
-                    $totaleScartaWs = $worksteps->sum(fn($ws) => $ws['wasteProduced'] ?? 0);
-                }
+                // Aggiorna fogli_buoni/scarto dal totale workstep (più affidabile delle singole attività)
+                $totaleBuoniWs = $worksteps->sum(fn($ws) => $ws['amountProduced'] ?? 0);
+                $totaleScartaWs = $worksteps->sum(fn($ws) => $ws['wasteProduced'] ?? 0);
 
                 // Aggiorna fogli per-workstep se match 1:1, altrimenti totale su tutte
                 $wsValues = $worksteps->values();
