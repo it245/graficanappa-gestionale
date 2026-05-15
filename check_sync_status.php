@@ -59,9 +59,9 @@ foreach ($tablesFiery as $tbl) {
     }
 }
 
-// 3b. Fiery Contatori (snapshot 16:55 Mon-Fri)
-echo "\n[3b] Fiery Contatori\n";
-foreach (['fiery_contatori', 'fiery_contatori_snapshot', 'fiery_snapshot_contatori'] as $tbl) {
+// 3b. Fiery Contatori (snapshot 16:50 Mon-Fri)
+echo "\n[3b] Contatori Canon iPR V900 (snapshot 16:50 Mon-Fri)\n";
+foreach (['contatori_stampante', 'fiery_contatori', 'fiery_contatori_snapshot'] as $tbl) {
     try {
         if (!DB::getSchemaBuilder()->hasTable($tbl)) continue;
         $ultimo = DB::table($tbl)->max('created_at');

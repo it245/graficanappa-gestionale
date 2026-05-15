@@ -46,8 +46,8 @@ Schedule::command('prinect:sync')->everyTwoMinutes()->withoutOverlapping()->runI
 // Controllo consegne BRT in ritardo — DISABILITATO
 // Schedule::command('brt:check-ritardi')->dailyAt('09:00');
 
-// Snapshot contatori Canon iPR V900 via SNMP (ore 16:55 lun-ven, prima spegnimento 17:00)
-Schedule::command('fiery:snapshot-contatori')->weekdays()->dailyAt('16:55');
+// Snapshot contatori Canon iPR V900 via SNMP (ore 16:50 lun-ven, 10 min margin prima spegnimento 17:00)
+Schedule::command('fiery:snapshot-contatori')->weekdays()->dailyAt('16:50')->runInBackground();
 
 // Report mensile contatori V900 — ultimo giorno del mese alle 17:00 (dopo snapshot 16:55)
 // Destinatari da .env: REPORT_CONTATORI_TO="it@graficanappa.com"
