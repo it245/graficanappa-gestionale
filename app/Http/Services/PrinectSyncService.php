@@ -545,7 +545,20 @@ class PrinectSyncService
      * Per libri multi-segnatura tutti worksteps producono ~stesso valore,
      * MAX rappresenta le copie completate del prodotto finale.
      */
+    /**
+     * Alias statico per uso da controller/dashboard (no injection PrinectService).
+     */
+    public static function calcolaBuoniFronteRetroStatic($worksteps): ?int
+    {
+        return self::calcolaFR($worksteps);
+    }
+
     protected function calcolaBuoniFronteRetro($worksteps): ?int
+    {
+        return self::calcolaFR($worksteps);
+    }
+
+    protected static function calcolaFR($worksteps): ?int
     {
         $haFR = false;
         $lati = [];
@@ -967,15 +980,25 @@ class PrinectSyncService
             $jobId = ltrim(explode('-', $commessa)[0] ?? '', '0');
             if (!$jobId || !is_numeric($jobId)) continue;
 
-            // Check 1: attività recente — ma deve essere per la fase specifica
-            // Se nessuna attività recente, non ripristinare
+            // Check 1: attività recente CON PRODUZIONE — non basta avviamento solo
+            // Riapre fase solo se ci sono nuovi good_cycles > 0 dopo data_fine.
+            // Avviamento puro (good_cycles=0) = richiamo lavoro, NON ristampa.
             $ultimaAttivita = PrinectAttivita::where('commessa_gestionale', $commessa)
                 ->orderByDesc('start_time')
                 ->first();
             $attivitaRecente = $ultimaAttivita && $ultimaAttivita->start_time
                 && Carbon::parse($ultimaAttivita->end_time ?? $ultimaAttivita->start_time)->diffInMinutes(now()) < 60;
 
-            if (!$attivitaRecente) continue; // nessuna attività recente → non ripristinare
+            if (!$attivitaRecente) continue;
+
+            // Check produzione: somma good_cycles activity dopo data_fine MIN fasi
+            $dataFineMin = $fasi->min('data_fine');
+            if ($dataFineMin) {
+                $buoniDopoChiusura = PrinectAttivita::where('commessa_gestionale', $commessa)
+                    ->where('start_time', '>', $dataFineMin)
+                    ->sum('good_cycles');
+                if ((int) $buoniDopoChiusura <= 0) continue; // solo avviamento → non riaprire
+            }
 
             // Check 2: controlla per-workstep quale fase ripristinare
             try {
