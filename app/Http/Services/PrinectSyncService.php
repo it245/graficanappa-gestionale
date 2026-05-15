@@ -530,6 +530,30 @@ class PrinectSyncService
     }
 
     /**
+     * Rileva stampa fronte/retro: workstep "0/N" + "N/0" = doppio passaggio
+     * dello stesso foglio. In F/R i fogli vanno contati come MAX, non SUM.
+     */
+    protected function detectFronteRetro($worksteps): bool
+    {
+        $patterns = [];
+        foreach ($worksteps as $ws) {
+            $name = is_array($ws) ? ($ws['name'] ?? '') : ($ws->name ?? '');
+            if (preg_match('#\b(\d+)\s*/\s*(\d+)\b#', $name, $m)) {
+                $patterns[] = [$m[1], $m[2]];
+            }
+        }
+        if (count($patterns) < 2) return false;
+        foreach ($patterns as $p) {
+            if ($p[0] !== '0' || $p[1] === '0') continue;
+            foreach ($patterns as $q) {
+                if ($q[1] !== '0' || $q[0] === '0') continue;
+                if ($p[1] === $q[0]) return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Trova le fasi di stampa offset per una commessa (STAMPAXL106* o STAMPA).
      */
     protected function troveFasiStampa(string $commessa)
