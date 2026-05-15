@@ -505,9 +505,25 @@ class PrinectSyncService
 
         $primaAtt = $att->filter(fn($a) => $a->start_time)->sortBy('start_time')->first();
 
+        // F/R: se attività hanno workstep "0/N" + "N/0" (fronte+retro stesso foglio),
+        // somma per workstep e poi MAX (no doppio conteggio fogli fisici).
+        $perWs = $att->groupBy('workstep_name');
+        $wsFake = $perWs->map(fn($g, $name) => [
+            'name' => $name,
+            'amountProduced' => $g->sum('good_cycles'),
+            'wasteProduced' => $g->sum('waste_cycles'),
+        ])->values();
+        if ($this->detectFronteRetro($wsFake)) {
+            $buoni  = (int) $wsFake->max(fn($w) => $w['amountProduced']);
+            $scarto = (int) $wsFake->max(fn($w) => $w['wasteProduced']);
+        } else {
+            $buoni  = (int) $att->sum('good_cycles');
+            $scarto = (int) $att->sum('waste_cycles');
+        }
+
         $this->aggiornaFasi(collect([$fase]), [
-            'fogli_buoni' => $att->sum('good_cycles'),
-            'fogli_scarto' => $att->sum('waste_cycles'),
+            'fogli_buoni' => $buoni,
+            'fogli_scarto' => $scarto,
             'tempo_avviamento_sec' => $secAvviamento,
             'tempo_esecuzione_sec' => $secProduzione,
         ], $primaAtt?->start_time, $operatoriMatched);
