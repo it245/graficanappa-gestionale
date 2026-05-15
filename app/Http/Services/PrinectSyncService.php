@@ -515,11 +515,10 @@ class PrinectSyncService
         ])->values();
         if ($this->detectFronteRetro($wsFake)) {
             $buoni  = (int) $wsFake->max(fn($w) => $w['amountProduced']);
-            $scarto = (int) $wsFake->max(fn($w) => $w['wasteProduced']);
         } else {
             $buoni  = (int) $att->sum('good_cycles');
-            $scarto = (int) $att->sum('waste_cycles');
         }
+        $scarto = (int) $att->sum('waste_cycles');
 
         $this->aggiornaFasi(collect([$fase]), [
             'fogli_buoni' => $buoni,
@@ -773,15 +772,15 @@ class PrinectSyncService
                 if (!$stampaConfermata) continue;
 
                 // F/R: coppia workstep "0/N" + "N/0" = doppio passaggio stesso foglio
-                // → MAX invece di SUM per non contare doppio
+                // → MAX per fogli buoni (1 foglio fisico anche se passa 2 volte).
+                // Scarto resta SUM: fogli scartati al fronte ≠ fogli scartati al retro.
                 $isFronteRetro = $this->detectFronteRetro($worksteps);
                 if ($isFronteRetro) {
                     $totaleBuoniWs  = (int) $worksteps->max(fn($ws) => $ws['amountProduced'] ?? 0);
-                    $totaleScartaWs = (int) $worksteps->max(fn($ws) => $ws['wasteProduced'] ?? 0);
                 } else {
                     $totaleBuoniWs  = (int) $worksteps->sum(fn($ws) => $ws['amountProduced'] ?? 0);
-                    $totaleScartaWs = (int) $worksteps->sum(fn($ws) => $ws['wasteProduced'] ?? 0);
                 }
+                $totaleScartaWs = (int) $worksteps->sum(fn($ws) => $ws['wasteProduced'] ?? 0);
 
                 // Aggiorna fogli per-workstep se match 1:1, altrimenti totale su tutte
                 $wsValues = $worksteps->values();
@@ -805,14 +804,14 @@ class PrinectSyncService
                     }
                 } elseif ($totaleBuoniWs > 0) {
                     // Singola fase o numero diverso: totale su tutte.
-                    // Per F/R sovrascrivere SEMPRE (anche se più basso) per correggere
-                    // valori precedentemente errati da somma.
+                    // Per F/R sovrascrivere SEMPRE buoni (anche se più basso) per correggere
+                    // valori precedentemente errati da somma. Scarto invariato (SUM cumulativo).
                     foreach ($fasi as $fase) {
                         $shouldUpdate = $isFronteRetro || $totaleBuoniWs > ($fase->fogli_buoni ?? 0);
                         if ($shouldUpdate) {
                             $fase->fogli_buoni = $totaleBuoniWs;
                             $fase->qta_prod = $totaleBuoniWs;
-                            if ($isFronteRetro || $totaleScartaWs > ($fase->fogli_scarto ?? 0)) {
+                            if ($totaleScartaWs > ($fase->fogli_scarto ?? 0)) {
                                 $fase->fogli_scarto = $totaleScartaWs;
                             }
                             $fase->save();
