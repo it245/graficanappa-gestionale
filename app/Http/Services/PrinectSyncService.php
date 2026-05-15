@@ -513,10 +513,11 @@ class PrinectSyncService
             'amountProduced' => $g->sum('good_cycles'),
             'wasteProduced' => $g->sum('waste_cycles'),
         ])->values();
-        if ($this->detectFronteRetro($wsFake)) {
-            $buoni  = (int) $wsFake->max(fn($w) => $w['amountProduced']);
+        $buoniFR = $this->calcolaBuoniFronteRetro($wsFake);
+        if ($buoniFR !== null) {
+            $buoni = $buoniFR;
         } else {
-            $buoni  = (int) $att->sum('good_cycles');
+            $buoni = (int) $att->sum('good_cycles');
         }
         $scarto = (int) $att->sum('waste_cycles');
 
@@ -526,6 +527,45 @@ class PrinectSyncService
             'tempo_avviamento_sec' => $secAvviamento,
             'tempo_esecuzione_sec' => $secProduzione,
         ], $primaAtt?->start_time, $operatoriMatched);
+    }
+
+    /**
+     * Calcola fogli buoni F/R-aware: per ogni foglio fisico (prefisso "FB NNN"),
+     * MAX tra workstep 0/N e N/0 (passaggi fronte+retro dello stesso foglio).
+     * Poi SUM tra fogli fisici distinti (libri multi-segnatura).
+     * Esempio commessa con 4 segnature FB 001-004: somma 4 valori MAX.
+     */
+    protected function calcolaBuoniFronteRetro($worksteps): ?int
+    {
+        $perFoglio = [];
+        $haFR = false;
+        foreach ($worksteps as $ws) {
+            $name = is_array($ws) ? ($ws['name'] ?? '') : ($ws->name ?? '');
+            $amount = (int) (is_array($ws) ? ($ws['amountProduced'] ?? 0) : ($ws->amountProduced ?? 0));
+            // Estrai prefisso foglio (es. "FB 001" da "FB 001  0/4")
+            if (preg_match('/^(.+?)\s+(\d+)\s*\/\s*(\d+)\s*$/', trim($name), $m)) {
+                $foglio = trim($m[1]);
+                $perFoglio[$foglio][] = ['lato' => "{$m[2]}/{$m[3]}", 'amount' => $amount];
+            }
+        }
+        // Detect F/R: almeno 1 foglio con 0/N + N/0
+        foreach ($perFoglio as $list) {
+            $lati = array_column($list, 'lato');
+            foreach ($lati as $l) {
+                $parts = explode('/', $l);
+                if ($parts[0] === '0' && $parts[1] !== '0') {
+                    $cerca = "{$parts[1]}/0";
+                    if (in_array($cerca, $lati)) { $haFR = true; break 2; }
+                }
+            }
+        }
+        if (!$haFR) return null;
+        // SUM(MAX per foglio)
+        $totale = 0;
+        foreach ($perFoglio as $list) {
+            $totale += max(array_column($list, 'amount'));
+        }
+        return $totale;
     }
 
     /**
@@ -771,14 +811,15 @@ class PrinectSyncService
 
                 if (!$stampaConfermata) continue;
 
-                // F/R: coppia workstep "0/N" + "N/0" = doppio passaggio stesso foglio
-                // → MAX per fogli buoni (1 foglio fisico anche se passa 2 volte).
-                // Scarto resta SUM: fogli scartati al fronte ≠ fogli scartati al retro.
-                $isFronteRetro = $this->detectFronteRetro($worksteps);
+                // F/R: per ogni foglio fisico (prefisso "FB NNN") MAX(0/N, N/0).
+                // Poi SUM tra fogli fisici distinti (libri multi-segnatura).
+                // Scarto resta SUM: scarti fronte ≠ scarti retro = eventi separati.
+                $buoniFR = $this->calcolaBuoniFronteRetro($worksteps);
+                $isFronteRetro = ($buoniFR !== null);
                 if ($isFronteRetro) {
-                    $totaleBuoniWs  = (int) $worksteps->max(fn($ws) => $ws['amountProduced'] ?? 0);
+                    $totaleBuoniWs = $buoniFR;
                 } else {
-                    $totaleBuoniWs  = (int) $worksteps->sum(fn($ws) => $ws['amountProduced'] ?? 0);
+                    $totaleBuoniWs = (int) $worksteps->sum(fn($ws) => $ws['amountProduced'] ?? 0);
                 }
                 $totaleScartaWs = (int) $worksteps->sum(fn($ws) => $ws['wasteProduced'] ?? 0);
 
