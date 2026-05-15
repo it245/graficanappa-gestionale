@@ -19,24 +19,29 @@ Artisan::command('priorita:ricalcola', function () {
     $this->info('Ricalcolo completato.');
 })->describe('Ricalcola tutte le priorità degli ordini');
 
+// IMPORTANTE Windows: ->runInBackground() per evitare seriale.
+// Senza runInBackground, schedule:run aspetta che 1 evento termini prima del successivo.
+// Su Windows proc_open non funziona bene, quindi default = seriale.
+// runInBackground forza spawn async via "start /B" Windows.
+
 // Sync automatico Onda ogni ora (h24)
-Schedule::command('onda:sync')->hourly();
+Schedule::command('onda:sync')->hourly()->runInBackground();
 
 // Fix multi-modello: subito dopo onda:sync, crea ordini PI/FIN distinti per
 // commesse con cod_art generico (es. "Astucci") e PRD multipli Onda.
-Schedule::command('onda:sync-fix-multi-modello')->hourly()->withoutOverlapping();
+Schedule::command('onda:sync-fix-multi-modello')->hourly()->withoutOverlapping()->runInBackground();
 
 // Sync bidirezionale Excel ↔ DB ogni 2 minuti (h24)
-Schedule::command('excel:sync')->everyTwoMinutes()->withoutOverlapping();
+Schedule::command('excel:sync')->everyTwoMinutes()->withoutOverlapping()->runInBackground();
 
 // Sync automatico Fiery ogni minuto (h24)
-Schedule::command('fiery:sync')->everyMinute()->withoutOverlapping();
+Schedule::command('fiery:sync')->everyMinute()->withoutOverlapping()->runInBackground();
 
 // Sync attivita Prinect XL106 ogni 5 minuti (storico 7gg)
-Schedule::command('prinect:sync-attivita')->everyFiveMinutes()->withoutOverlapping();
+Schedule::command('prinect:sync-attivita')->everyFiveMinutes()->withoutOverlapping()->runInBackground();
 
 // Sync principale Prinect — chiusura fasi stampa offset a stato 3 ogni 2 minuti
-Schedule::command('prinect:sync')->everyTwoMinutes()->withoutOverlapping();
+Schedule::command('prinect:sync')->everyTwoMinutes()->withoutOverlapping()->runInBackground();
 
 // Controllo consegne BRT in ritardo — DISABILITATO
 // Schedule::command('brt:check-ritardi')->dailyAt('09:00');
@@ -57,15 +62,15 @@ Schedule::command("fiery:export-contatori --mese-corrente --email={$reportTo}")
 // Schedule::command('nettime:export-remote --sync')->everyFiveMinutes()->weekdays()->between('5:00', '23:00')->withoutOverlapping();
 
 // Sync presenze NetTime ogni minuto (lun-ven 5:00-23:00) - legge il file BKP esportato
-Schedule::command('presenze:sync')->everyMinute()->weekdays()->between('5:00', '23:00')->withoutOverlapping();
+Schedule::command('presenze:sync')->everyMinute()->weekdays()->between('5:00', '23:00')->withoutOverlapping()->runInBackground();
 
-Schedule::command('presenze:export-excel')->everyFifteenMinutes()->weekdays()->between('5:00', '23:00')->withoutOverlapping();
+Schedule::command('presenze:export-excel')->everyFifteenMinutes()->weekdays()->between('5:00', '23:00')->withoutOverlapping()->runInBackground();
 
 // Pulizia audit log: mantieni ultimi 90 giorni
-Schedule::command('audit:pulisci')->dailyAt('03:00');
+Schedule::command('audit:pulisci')->dailyAt('03:00')->runInBackground();
 
 // Match automatico cliché ogni 10 minuti (dopo sync Onda)
-Schedule::command('cliche:match')->everyTenMinutes()->withoutOverlapping();
+Schedule::command('cliche:match')->everyTenMinutes()->withoutOverlapping()->runInBackground();
 
 // Scheduler Mossa 37 — DISABILITATO (in attesa approvazione capo)
 // Schedule::command('scheduler:run')->everyFifteenMinutes()->weekdays()->between('6:00', '22:00')->withoutOverlapping();
