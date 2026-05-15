@@ -225,3 +225,53 @@ Success Criteria (End-2028):
 
 Status: APPROVED FOR DEVELOPMENT
 Generated: 29 April 2026
+
+---
+
+## ADDENDUM 9 — CLI MES via Printing Press (15/05/2026)
+
+### Idea
+Generare una Command Line Interface dedicata al MES (`mes-cli`) tramite
+[Printing Press](https://printingpress.dev). Permette ad agenti AI
+(Claude Code, Codex, Cursor) di interrogare il MES con un comando
+terminale invece di chiamate HTTP/MCP.
+
+### Vantaggi
+- **35× meno token** rispetto a un server MCP (no schema upfront)
+- Output preformattato e filtrato (no JSON gonfio)
+- Latenza sub-100ms (chiamata locale, no roundtrip HTTP)
+- Comandi componibili in shell pipeline
+
+### Esempi comandi target
+```
+mes-cli fasi --stato 1 --reparto stampa
+mes-cli commessa 67375
+mes-cli ritardi --severita critico
+mes-cli esterne --fornitore legokart
+mes-cli presenti --oggi
+```
+
+### Architettura proposta
+- CLI in Go (binario standalone, no dipendenze runtime)
+- Si connette a MySQL .60 in lettura (read-only credentials)
+- Schema generato da OpenAPI MES o reverse engineering routes Laravel
+- Installazione: copia binario in `/usr/local/bin/` sul .60
+
+### Setup richiesto
+- Go 1.21+ + npm sul PC dev
+- Printing Press CLI installato
+- Genera da: pagina admin MES + routes Laravel (ispezione network)
+- Test su 5-10 endpoint priority
+
+### Decisione/Status
+**Differito**. Marginale rispetto a script PHP esistenti (`check_xxx.php`).
+Riprendere quando:
+- Claude Code lavora frequentemente su .60 e serve interrogazione rapida
+- Si vuole esporre MES ad altri agent AI senza creare API REST
+- API REST v1 implementata (task #41) — allora CLI può consumarla
+  direttamente come fonte
+
+### Effort stimato
+- Setup Printing Press + generazione CLI base: 2-4 ore
+- Tuning + comandi custom: 1 giorno
+- Deploy + test su .60: 2 ore
