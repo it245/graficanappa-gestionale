@@ -1,8 +1,7 @@
 <?php
 /**
- * Ricalcola fogli_buoni/qta_prod per tutte le fasi STAMPA stato>=3 (terminate)
- * applicando logica F/R retroattiva.
- * Solo commesse degli ultimi 60 giorni per limitare carico API Prinect.
+ * Ricalcola fogli_buoni/qta_prod per tutte le fasi STAMPA stato>=2
+ * applicando logica F/R retroattiva. Tutte le commesse, no filtro data.
  */
 require __DIR__.'/vendor/autoload.php';
 $app = require __DIR__.'/bootstrap/app.php';
@@ -27,7 +26,6 @@ $commesse = DB::table('ordine_fasi as orf')
     })
     ->whereIn('orf.stato', ['2','3','4'])
     ->where('orf.qta_prod', '>', 0)
-    ->where('o.created_at', '>=', now()->subDays(60))
     ->select('o.commessa')
     ->distinct()
     ->pluck('commessa');
@@ -36,7 +34,12 @@ echo "Commesse da analizzare: " . count($commesse) . "\n\n";
 
 $fixCount = 0;
 $skipCount = 0;
+$processed = 0;
 foreach ($commesse as $commessa) {
+    $processed++;
+    if ($processed % 50 === 0) {
+        echo "[$processed/" . count($commesse) . "] fixate finora: $fixCount\n";
+    }
     $jobId = ltrim(explode('-', $commessa)[0] ?? '', '0');
     if (!$jobId || !is_numeric($jobId)) continue;
 
