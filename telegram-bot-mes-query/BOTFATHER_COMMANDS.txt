@@ -8,6 +8,9 @@ presenti - Operatori in azienda oggi
 alert - Macchine ferme >30min
 oggi - Riepilogo giornaliero
 top - Top commesse offset 7gg
+ritardi - Commesse in ritardo per severità
+note - Note consegne (oggi o data)
+varianti - Varianti multi-modello commessa
 sync_onda - Sincronizza Onda
 sync_prinect - Sincronizza Prinect
 aiuto - Lista comandi

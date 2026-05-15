@@ -334,15 +334,53 @@ async def cmd_reparti(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 async def cmd_ritardo(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
+    """Top commesse in ritardo (summary pre-aggregato con severità)."""
     if not is_authorized(update.effective_user.id):
         await reject(update); return
-    rows = tools.get_fasi_in_ritardo()
-    if not rows:
+    r = tools.get_ritardi_summary()
+    if r['totale_commesse_ritardo'] == 0:
         await update.message.reply_text("✅ Nessuna commessa in ritardo.")
         return
-    text = f"⚠️ {len(rows)} commesse in ritardo:\n\n"
-    for r in rows[:20]:
-        text += f"• {r['commessa']} — {r['cliente_nome'][:25]} (+{r['giorni_ritardo']}gg)\n"
+    sev = r['per_severita']
+    text = f"⚠️ {r['totale_commesse_ritardo']} commesse / {r['totale_fasi_ritardo']} fasi in ritardo\n"
+    text += f"Critico (>14gg): {sev['critico_>14gg']} | Alto (8-14): {sev['alto_8_14gg']} | Medio (4-7): {sev['medio_4_7gg']} | Basso (1-3): {sev['basso_1_3gg']}\n\n"
+    text += "Top urgenti:\n"
+    for c in r.get('commesse_top20', r.get('commesse', []))[:15]:
+        text += f"• {c['commessa']} — {(c['cliente'] or '')[:25]} (+{c['giorni_ritardo']}gg) {c['n_fasi_pending']}f\n"
+    await update.message.reply_text(text[:4000])
+
+
+async def cmd_note(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
+    """Note consegne giornaliere. /note (oggi) o /note YYYY-MM-DD."""
+    if not is_authorized(update.effective_user.id):
+        await reject(update); return
+    data = ctx.args[0] if ctx.args else None
+    rows = tools.get_note_consegne(data=data)
+    if not rows:
+        await update.message.reply_text(f"📝 Nessuna nota{' per ' + data if data else ' oggi'}.")
+        return
+    text = ""
+    for r in rows:
+        text += f"📝 {r['data']}\n{r['contenuto']}\n\n"
+    await update.message.reply_text(text[:4000])
+
+
+async def cmd_varianti(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
+    """Elenca varianti multi-modello per commessa. /varianti 67375"""
+    if not is_authorized(update.effective_user.id):
+        await reject(update); return
+    if not ctx.args:
+        await update.message.reply_text("Uso: /varianti 67375")
+        return
+    result = tools.get_commessa_info(ctx.args[0])
+    if 'errore' in result:
+        await update.message.reply_text(result['errore'])
+        return
+    ordini = result.get('ordini', [])
+    text = f"📦 {result['commessa']} — {len(ordini)} variant{'e' if len(ordini)==1 else 'i'}\n\n"
+    for o in ordini:
+        desc = (o.get('descrizione') or '')[:100]
+        text += f"• {desc}\n"
     await update.message.reply_text(text[:4000])
 
 
@@ -541,6 +579,9 @@ def main() -> None:
     app.add_handler(CommandHandler("sync_onda", cmd_sync_onda))
     app.add_handler(CommandHandler("sync_prinect", cmd_sync_prinect))
     app.add_handler(CommandHandler("ritardo", cmd_ritardo))
+    app.add_handler(CommandHandler("ritardi", cmd_ritardo))
+    app.add_handler(CommandHandler("note", cmd_note))
+    app.add_handler(CommandHandler("varianti", cmd_varianti))
     app.add_handler(CommandHandler("consegne_sett", cmd_consegne_sett))
     app.add_handler(CommandHandler("tracking", cmd_tracking))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
