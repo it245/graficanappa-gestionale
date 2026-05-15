@@ -26,12 +26,15 @@ $fasi = DB::table('ordine_fasi as orf')
 
 echo "Fasi STAMPA in DB ultimi 60gg: " . count($fasi) . "\n\n";
 
-// 2. Leggi Excel
-$path = storage_path('app/excel_sync/dashboard_mes.xlsx');
+// 2. Leggi Excel (usa env path)
+$dir = env('EXCEL_SYNC_PATH') ?: storage_path('app/excel_sync');
+$path = rtrim($dir, '/\\') . DIRECTORY_SEPARATOR . 'dashboard_mes.xlsx';
 if (!file_exists($path)) {
     echo "Excel non trovato: $path\n";
     exit;
 }
+echo "Excel path: $path\n";
+echo "Excel modified: " . date('Y-m-d H:i:s', filemtime($path)) . "\n\n";
 
 error_reporting(E_ALL & ~E_DEPRECATED);
 $spreadsheet = IOFactory::load($path);
