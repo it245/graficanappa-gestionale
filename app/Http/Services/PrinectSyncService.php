@@ -772,9 +772,16 @@ class PrinectSyncService
 
                 if (!$stampaConfermata) continue;
 
-                // Aggiorna fogli_buoni/scarto dal totale workstep (più affidabile delle singole attività)
-                $totaleBuoniWs = $worksteps->sum(fn($ws) => $ws['amountProduced'] ?? 0);
-                $totaleScartaWs = $worksteps->sum(fn($ws) => $ws['wasteProduced'] ?? 0);
+                // F/R: coppia workstep "0/N" + "N/0" = doppio passaggio stesso foglio
+                // → MAX invece di SUM per non contare doppio
+                $isFronteRetro = $this->detectFronteRetro($worksteps);
+                if ($isFronteRetro) {
+                    $totaleBuoniWs  = (int) $worksteps->max(fn($ws) => $ws['amountProduced'] ?? 0);
+                    $totaleScartaWs = (int) $worksteps->max(fn($ws) => $ws['wasteProduced'] ?? 0);
+                } else {
+                    $totaleBuoniWs  = (int) $worksteps->sum(fn($ws) => $ws['amountProduced'] ?? 0);
+                    $totaleScartaWs = (int) $worksteps->sum(fn($ws) => $ws['wasteProduced'] ?? 0);
+                }
 
                 // Aggiorna fogli per-workstep se match 1:1, altrimenti totale su tutte
                 $wsValues = $worksteps->values();
@@ -797,12 +804,15 @@ class PrinectSyncService
                         }
                     }
                 } elseif ($totaleBuoniWs > 0) {
-                    // Singola fase o numero diverso: totale su tutte
+                    // Singola fase o numero diverso: totale su tutte.
+                    // Per F/R sovrascrivere SEMPRE (anche se più basso) per correggere
+                    // valori precedentemente errati da somma.
                     foreach ($fasi as $fase) {
-                        if ($totaleBuoniWs > ($fase->fogli_buoni ?? 0)) {
+                        $shouldUpdate = $isFronteRetro || $totaleBuoniWs > ($fase->fogli_buoni ?? 0);
+                        if ($shouldUpdate) {
                             $fase->fogli_buoni = $totaleBuoniWs;
                             $fase->qta_prod = $totaleBuoniWs;
-                            if ($totaleScartaWs > ($fase->fogli_scarto ?? 0)) {
+                            if ($isFronteRetro || $totaleScartaWs > ($fase->fogli_scarto ?? 0)) {
                                 $fase->fogli_scarto = $totaleScartaWs;
                             }
                             $fase->save();
