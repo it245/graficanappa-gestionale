@@ -14,8 +14,8 @@ use App\Http\Services\PrinectSyncService;
 
 $prinect = app(PrinectService::class);
 $svc = app(PrinectSyncService::class);
-$ref = new ReflectionMethod($svc, 'detectFronteRetro');
-$ref->setAccessible(true);
+$refCalc = new ReflectionMethod($svc, 'calcolaBuoniFronteRetro');
+$refCalc->setAccessible(true);
 
 // Commesse con STAMPA XL ultimi 60 giorni
 $commesse = DB::table('ordine_fasi as orf')
@@ -51,10 +51,10 @@ foreach ($commesse as $commessa) {
         ->filter(fn($w) => in_array('ConventionalPrinting', $w['types'] ?? []));
 
     if ($ws->count() < 2) continue;
-    if (!$ref->invoke($svc, $ws)) continue;
+    $buoni = $refCalc->invoke($svc, $ws);
+    if ($buoni === null) continue;  // No F/R rilevato
 
-    // F/R rilevato → calcola corretto
-    $buoni = (int) $ws->max(fn($w) => $w['amountProduced'] ?? 0);
+    // Scarto sempre SUM (eventi separati fronte+retro)
     $scarto = (int) $ws->sum(fn($w) => $w['wasteProduced'] ?? 0);
 
     $r = DB::table('ordine_fasi as orf')
