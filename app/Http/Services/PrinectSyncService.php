@@ -530,42 +530,33 @@ class PrinectSyncService
     }
 
     /**
-     * Calcola fogli buoni F/R-aware: per ogni foglio fisico (prefisso "FB NNN"),
-     * MAX tra workstep 0/N e N/0 (passaggi fronte+retro dello stesso foglio).
-     * Poi SUM tra fogli fisici distinti (libri multi-segnatura).
-     * Esempio commessa con 4 segnature FB 001-004: somma 4 valori MAX.
+     * Calcola fogli buoni F/R-aware: MAX globale di tutti i worksteps stampa.
+     * Convenzione Onda/MES: qta_prod = unità complete (es. 680 libri).
+     * Per libri multi-segnatura tutti worksteps producono ~stesso valore,
+     * MAX rappresenta le copie completate del prodotto finale.
      */
     protected function calcolaBuoniFronteRetro($worksteps): ?int
     {
-        $perFoglio = [];
         $haFR = false;
+        $lati = [];
+        $maxAmount = 0;
         foreach ($worksteps as $ws) {
             $name = is_array($ws) ? ($ws['name'] ?? '') : ($ws->name ?? '');
             $amount = (int) (is_array($ws) ? ($ws['amountProduced'] ?? 0) : ($ws->amountProduced ?? 0));
-            // Estrai prefisso foglio (es. "FB 001" da "FB 001  0/4")
-            if (preg_match('/^(.+?)\s+(\d+)\s*\/\s*(\d+)\s*$/', trim($name), $m)) {
-                $foglio = trim($m[1]);
-                $perFoglio[$foglio][] = ['lato' => "{$m[2]}/{$m[3]}", 'amount' => $amount];
+            if (preg_match('#\b(\d+)\s*/\s*(\d+)\b#', $name, $m)) {
+                $lati[] = [$m[1], $m[2]];
+            }
+            if ($amount > $maxAmount) $maxAmount = $amount;
+        }
+        // Detect F/R: presenza coppia (0,N) + (N,0)
+        foreach ($lati as $p) {
+            if ($p[0] !== '0' || $p[1] === '0') continue;
+            foreach ($lati as $q) {
+                if ($q[1] !== '0' || $q[0] === '0') continue;
+                if ($p[1] === $q[0]) { $haFR = true; break 2; }
             }
         }
-        // Detect F/R: almeno 1 foglio con 0/N + N/0
-        foreach ($perFoglio as $list) {
-            $lati = array_column($list, 'lato');
-            foreach ($lati as $l) {
-                $parts = explode('/', $l);
-                if ($parts[0] === '0' && $parts[1] !== '0') {
-                    $cerca = "{$parts[1]}/0";
-                    if (in_array($cerca, $lati)) { $haFR = true; break 2; }
-                }
-            }
-        }
-        if (!$haFR) return null;
-        // SUM(MAX per foglio)
-        $totale = 0;
-        foreach ($perFoglio as $list) {
-            $totale += max(array_column($list, 'amount'));
-        }
-        return $totale;
+        return $haFR ? $maxAmount : null;
     }
 
     /**
