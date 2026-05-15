@@ -1681,6 +1681,35 @@ che possiamo importare nel MES. In particolare:
     <li class="todo">Decisione capo: deploy su master o restare branch separato</li>
 </ul>
 
+<h3>🔄 Repositioning Strategico (15/05/2026)</h3>
+
+<div class="ai-box">
+    <p><strong>MES = ESTENSIONE Onda, NON sostituto</strong></p>
+    <p style="font-size:13px;">Decisione 15/05/2026: il MES non sostituirà Onda ERP. Diventa <strong>estensione/BI/operations layer</strong> sopra l'ERP esistente.</p>
+    <p style="font-size:13px;"><strong>Razionale</strong>: competere come ERP completo = guerra al ribasso vs Zucchetti/Team System (€20-50/mese commodity). Posizionamento vincente = MES specializzato tipografia + BI operativo + scheduling produzione + analytics.</p>
+    <p style="font-size:13px;"><strong>Vendita SaaS futura</strong>: "MES tipografico universale" sopra qualunque ERP (Onda, Zucchetti, SAP). Connector layer dedicato per ogni ERP.</p>
+</div>
+
+<h4>Implicazioni progetto</h4>
+<ul class="checklist">
+    <li class="todo"><strong>Logica contabile/fiscale</strong>: NON duplicare, leggere da Onda via SOAP/SQL Server</li>
+    <li class="todo"><strong>Produzione/operations</strong>: owned dal MES (Onda non le ha)</li>
+    <li class="todo"><strong>Dashboard finanziari</strong>: presentare dati Onda in UI MES, no riscrittura logica</li>
+</ul>
+
+<h4>📊 Nuove Dashboard BI da implementare (leggono Onda)</h4>
+<ul class="checklist">
+    <li class="todo"><strong>Cashflow forecast</strong> — fatture emesse + scadenze + pagamenti previsti 30/60/90gg</li>
+    <li class="todo"><strong>Recupero crediti</strong> — clienti morosi, top 10 con importo + giorni scaduti</li>
+    <li class="todo"><strong>Margine commessa</strong> — costi materiale MES + ore MES vs fatturato Onda</li>
+    <li class="todo"><strong>Top clienti YTD</strong> — fatturato + commesse + scarto medio</li>
+    <li class="todo"><strong>Carta critica</strong> — magazzino sotto soglia + impatto commesse attive</li>
+    <li class="todo"><strong>Scarto produzione</strong> — top macchine + trend settimanale</li>
+    <li class="todo"><strong>Vincoli consegna</strong> — commesse a rischio penale per ritardo</li>
+</ul>
+
+<p style="font-size:13px;"><strong>Architettura</strong>: nuovo modulo <code>app/Modules/BI/</code> + <code>OndaFinanceService</code> + cache Redis 15min. Effort stimato: <strong>~2 settimane</strong>. Priorità media (dopo Presenze/Reportistica/AuditLog + UI Overhaul).</p>
+
 <h4>Manutenzione &amp; Fix correnti</h4>
 
 <p style="font-size:13px;"><strong>Sicurezza / Privacy</strong>:</p>
@@ -1726,7 +1755,7 @@ che possiamo importare nel MES. In particolare:
 <div class="footer">
     <p>Sistema Gestionale MES &mdash; Grafica Nappa srl &mdash; Aversa (CE)</p>
     <p>Sviluppo: Giovanni Pietropaolo (Tirocinante) con supporto Claude Code (Anthropic AI)</p>
-    <p style="margin-top:8px; font-size:11px; color:#aaa;">Piano evolutivo AI-Assisted &middot; Feb 2026 &ndash; 2032+ &middot; 22 versioni &middot; ERP+MES+AI integrato &middot; Aggiornamento: 29/04/2026</p>
+    <p style="margin-top:8px; font-size:11px; color:#aaa;">Piano evolutivo AI-Assisted &middot; Feb 2026 &ndash; 2032+ &middot; 22 versioni &middot; MES estensione ERP &middot; Aggiornamento: 15/05/2026</p>
 </div>
 
 </body>
