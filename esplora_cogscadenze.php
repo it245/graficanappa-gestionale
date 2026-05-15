@@ -39,13 +39,45 @@ $counts = DB::connection('onda')->select("
 ");
 print_r((array)$counts[0]);
 
-echo "\n=== Prossime 5 scadenze 30gg ===\n";
+echo "\n=== Prossime 10 scadenze 30gg APERTE (non pareggiate, non disabilitate) ===\n";
 $next = DB::connection('onda')->select("
-    SELECT TOP 5 DataScadenza, Importo, CodTipDoc, NumDoc, IdAnag
-    FROM COGScadenze
-    WHERE DataScadenza BETWEEN GETDATE() AND DATEADD(DAY, 30, GETDATE())
-    ORDER BY DataScadenza ASC
+    SELECT TOP 10
+        s.DataScadenza, s.ImportoDare, s.ImportoAvere,
+        s.TipoAnagrafica, s.NumeroDocumento, s.Annotazioni,
+        a.RagioneSociale
+    FROM COGScadenze s
+    LEFT JOIN STDAnagrafiche a ON a.IdAnagrafica = s.IdAnagrafica
+    WHERE s.DataScadenza BETWEEN GETDATE() AND DATEADD(DAY, 30, GETDATE())
+      AND s.Disabilitata = 0
+      AND (s.Pareggiata = 0 OR s.Pareggiata IS NULL)
+    ORDER BY s.DataScadenza ASC
 ");
 foreach ($next as $r) {
-    echo "  {$r->DataScadenza} | €{$r->Importo} | {$r->CodTipDoc} {$r->NumDoc} | anag {$r->IdAnag}\n";
+    $tipo = $r->TipoAnagrafica == 1 ? 'CLIENTE (incasso)' : ($r->TipoAnagrafica == 2 ? 'FORNITORE (pago)' : '?');
+    $imp = $r->TipoAnagrafica == 1 ? $r->ImportoDare : $r->ImportoAvere;
+    echo "  {$r->DataScadenza} | €" . number_format($imp ?: 0, 2, ',', '.') . " | $tipo | " . ($r->RagioneSociale ?: '(?)') . " | doc {$r->NumeroDocumento}\n";
 }
+
+echo "\n=== Saldo previsto 30/60/90 gg ===\n";
+$saldi = DB::connection('onda')->select("
+    SELECT
+        SUM(CASE WHEN DataScadenza BETWEEN GETDATE() AND DATEADD(DAY, 30, GETDATE())
+                  AND TipoAnagrafica = 1 THEN ImportoDare ELSE 0 END) AS incassi_30,
+        SUM(CASE WHEN DataScadenza BETWEEN GETDATE() AND DATEADD(DAY, 30, GETDATE())
+                  AND TipoAnagrafica = 2 THEN ImportoAvere ELSE 0 END) AS pagamenti_30,
+        SUM(CASE WHEN DataScadenza BETWEEN GETDATE() AND DATEADD(DAY, 60, GETDATE())
+                  AND TipoAnagrafica = 1 THEN ImportoDare ELSE 0 END) AS incassi_60,
+        SUM(CASE WHEN DataScadenza BETWEEN GETDATE() AND DATEADD(DAY, 60, GETDATE())
+                  AND TipoAnagrafica = 2 THEN ImportoAvere ELSE 0 END) AS pagamenti_60,
+        SUM(CASE WHEN DataScadenza BETWEEN GETDATE() AND DATEADD(DAY, 90, GETDATE())
+                  AND TipoAnagrafica = 1 THEN ImportoDare ELSE 0 END) AS incassi_90,
+        SUM(CASE WHEN DataScadenza BETWEEN GETDATE() AND DATEADD(DAY, 90, GETDATE())
+                  AND TipoAnagrafica = 2 THEN ImportoAvere ELSE 0 END) AS pagamenti_90
+    FROM COGScadenze
+    WHERE Disabilitata = 0 AND (Pareggiata = 0 OR Pareggiata IS NULL)
+");
+$s = $saldi[0];
+$fmt = fn($n) => '€' . number_format($n ?: 0, 2, ',', '.');
+echo "  30 giorni: incassi {$fmt($s->incassi_30)} | pagamenti {$fmt($s->pagamenti_30)} | netto {$fmt($s->incassi_30 - $s->pagamenti_30)}\n";
+echo "  60 giorni: incassi {$fmt($s->incassi_60)} | pagamenti {$fmt($s->pagamenti_60)} | netto {$fmt($s->incassi_60 - $s->pagamenti_60)}\n";
+echo "  90 giorni: incassi {$fmt($s->incassi_90)} | pagamenti {$fmt($s->pagamenti_90)} | netto {$fmt($s->incassi_90 - $s->pagamenti_90)}\n";
