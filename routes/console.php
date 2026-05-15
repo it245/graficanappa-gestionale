@@ -51,9 +51,10 @@ Schedule::command("fiery:export-contatori --mese-corrente --email={$reportTo}")
     ->lastDayOfMonth('17:00')
     ->withoutOverlapping();
 
-// Force export NetTime su PC .34 via WinRM ogni 5 min + sync presenze
-// (no più dipendenza da Marco che fa export manuale)
-Schedule::command('nettime:export-remote --sync')->everyFiveMinutes()->weekdays()->between('5:00', '23:00')->withoutOverlapping();
+// Force export NetTime su PC .34 via WinRM — DISABILITATO
+// presenze:sync legge file BKP via share .253 sufficiente, no più dipendenza da export remoto.
+// Riabilitare solo se aggiunte credenziali NETTIME_PC_USER/PASS/EXPORT_CMD in .env.
+// Schedule::command('nettime:export-remote --sync')->everyFiveMinutes()->weekdays()->between('5:00', '23:00')->withoutOverlapping();
 
 // Sync presenze NetTime ogni minuto (lun-ven 5:00-23:00) - legge il file BKP esportato
 Schedule::command('presenze:sync')->everyMinute()->weekdays()->between('5:00', '23:00')->withoutOverlapping();
