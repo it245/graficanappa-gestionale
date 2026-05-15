@@ -529,6 +529,32 @@ class PrinectSyncService
     }
 
     /**
+     * Rileva stampa fronte/retro: workstep con pattern "0/N" + "N/0" indica
+     * doppio passaggio dello stesso foglio fisico (fronte poi retro).
+     * In F/R i fogli vanno contati come MAX, non SUM.
+     */
+    protected function detectFronteRetro($worksteps): bool
+    {
+        $patterns = [];
+        foreach ($worksteps as $ws) {
+            $name = $ws['name'] ?? '';
+            if (preg_match('#\b(\d+)\s*/\s*(\d+)\b#', $name, $m)) {
+                $patterns[] = [$m[1], $m[2]];
+            }
+        }
+        if (count($patterns) < 2) return false;
+        // Cerca coppia (0,N) + (N,0)
+        foreach ($patterns as $p) {
+            if ($p[0] !== '0' || $p[1] === '0') continue;
+            foreach ($patterns as $q) {
+                if ($q[1] !== '0' || $q[0] === '0') continue;
+                if ($p[1] === $q[0]) return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Aggiorna le fasi con fogli, tempi, stato, data_inizio e operatori.
      * Stato 2 = Avviato (come da dashboard operatore)
      * Stato 3 = Terminato (quando l'operatore avvia un'altra commessa)
@@ -732,9 +758,16 @@ class PrinectSyncService
 
                 if (!$stampaConfermata) continue;
 
-                // Aggiorna fogli_buoni/scarto dal totale workstep (più affidabile delle singole attività)
-                $totaleBuoniWs = $worksteps->sum(fn($ws) => $ws['amountProduced'] ?? 0);
-                $totaleScartaWs = $worksteps->sum(fn($ws) => $ws['wasteProduced'] ?? 0);
+                // F/R detection: workstep "0/N" + "N/0" = stampa fronte/retro (stesso foglio passa 2 volte).
+                // In quel caso usa MAX (non SUM) per non contare doppio i fogli fisici.
+                $isFronteRetro = $this->detectFronteRetro($worksteps);
+                if ($isFronteRetro) {
+                    $totaleBuoniWs = $worksteps->max(fn($ws) => $ws['amountProduced'] ?? 0);
+                    $totaleScartaWs = $worksteps->max(fn($ws) => $ws['wasteProduced'] ?? 0);
+                } else {
+                    $totaleBuoniWs = $worksteps->sum(fn($ws) => $ws['amountProduced'] ?? 0);
+                    $totaleScartaWs = $worksteps->sum(fn($ws) => $ws['wasteProduced'] ?? 0);
+                }
 
                 // Aggiorna fogli per-workstep se match 1:1, altrimenti totale su tutte
                 $wsValues = $worksteps->values();
