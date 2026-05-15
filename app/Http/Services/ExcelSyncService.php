@@ -322,11 +322,8 @@ class ExcelSyncService
             }
 
             // V - Qta Prod
-            // SKIP per fasi STAMPA offset: qta_prod gestita da PrinectSyncService
-            // (logica F/R fronte/retro). Excel non sa di F/R, sovrascriverebbe con SUM doppia.
-            $isStampaOffset = preg_match('/^(STAMPAXL106|STAMPA XL|STAMPA$)/i', $fase->fase ?? '');
             $excelQtaProd = self::parseNumeric($row['V'] ?? null);
-            if (!$isStampaOffset && self::isNumericChanged($row['V'] ?? null, $fase->qta_prod)) {
+            if (self::isNumericChanged($row['V'] ?? null, $fase->qta_prod)) {
                 $fase->qta_prod = $excelQtaProd;
                 $changed = true;
             }
