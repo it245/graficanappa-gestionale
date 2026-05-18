@@ -125,6 +125,8 @@ class PopolaRifOrdiniAstucci extends Command
     private static function normalizza(string $desc): string
     {
         $desc = mb_strtoupper($desc);
+        // Rimuovi parentesi (DDT Onda aggiunge "(20*250)", "(8*250)" che rompono match con Excel)
+        $desc = preg_replace('/\([^)]*\)/', '', $desc);
         // Stopwords: parole-contenitore e brand che variano tra Excel/Onda
         $stopwords = [
             'ASTUCCIO', 'ASTUCCI', 'AST.', 'AST',

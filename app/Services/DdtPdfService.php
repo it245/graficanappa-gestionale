@@ -258,6 +258,8 @@ class DdtPdfService
     private static function normalizza(string $desc): string
     {
         $desc = mb_strtoupper($desc);
+        // Rimuovi parentesi (DDT Onda aggiunge "(20*250)", "(8*250)" che rompono match)
+        $desc = preg_replace('/\([^)]*\)/', '', $desc);
 
         // Stoplist categorie generiche (nel DDT Onda compaiono come "VASSOI", in Excel come "ASTUCCI" ecc.)
         // Rimuovi parole-contenitore per matchare solo il "soggetto" della descrizione
