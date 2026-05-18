@@ -269,6 +269,9 @@ class DdtPdfService
             'BOX', 'PACK', 'SCATOLA', 'CONFEZIONE',
             'FORMATO', 'SLEEVE', 'KIT', 'SET',
             'CARTONATO', 'COFANETTO',
+            'MAXTRIS',   // Brand (Excel scrive "MAXTRIS XYZ", Onda solo "XYZ")
+            'DA',        // "DA 1KG" Excel vs "1 KG" Onda
+            'IL', 'LA', 'GLI', 'LE', 'DI', 'DEL', 'DELLA',
         ];
         // Alias: CADEAU ↔ CADEAUX (singolare/plurale francese)
         $desc = preg_replace('/\bCADEAUX?\b/', 'CADEAU', $desc);
