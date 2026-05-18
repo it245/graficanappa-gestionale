@@ -28,7 +28,7 @@ class EtichettaController extends Controller
 
         // Clienti con etichetta semplificata (solo Pz x cassa, Lotto, Data)
         $clientiSemplici = [
-            'comprof', 'horecapp', 'promocart', 'bpack communication',
+            'comprof', 'horecapp', 'promocart', 'bpack communication', 'bpack sas',
             'ariagrafica', 'studio w', 'studioesse', 'studio esse',
             'mundo', 'booster', 'openmind', 'russart', 'grafiche mercurio',
             'medspa', 'full pack', 'iltex', 'fashion color', 'advertage',
