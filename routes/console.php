@@ -24,12 +24,12 @@ Artisan::command('priorita:ricalcola', function () {
 // Su Windows proc_open non funziona bene, quindi default = seriale.
 // runInBackground forza spawn async via "start /B" Windows.
 
-// Sync automatico Onda ogni ora (h24). Foreground OK: hourly, no rischio sovrapposizione.
-Schedule::command('onda:sync')->hourly();
+// Sync automatico Onda ogni ora (h24). Schedulato a :05 invece di :00 perché
+// Task Scheduler Windows salta tick :00 (osservato 09:00, 10:00).
+Schedule::command('onda:sync')->hourlyAt(5);
 
-// Fix multi-modello: subito dopo onda:sync, crea ordini PI/FIN distinti per
-// commesse con cod_art generico (es. "Astucci") e PRD multipli Onda.
-Schedule::command('onda:sync-fix-multi-modello')->hourly()->withoutOverlapping();
+// Fix multi-modello: subito dopo onda:sync, schedulato a :08 (3 min dopo onda).
+Schedule::command('onda:sync-fix-multi-modello')->hourlyAt(8)->withoutOverlapping();
 
 // Sync bidirezionale Excel ↔ DB ogni 5 minuti (h24)
 // Era 2 min ma sync impiega 2-3 min → mutex/sovrapposizione. 5 min = margine sicuro.
