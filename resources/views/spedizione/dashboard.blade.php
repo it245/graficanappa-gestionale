@@ -882,14 +882,16 @@
             </div>
             <div class="modal-body" style="overflow-x:auto; padding:20px 24px;">
                 @if($spedizioniBRT->count() > 0)
-                <div class="mb-3">
-                    <button class="btn btn-outline-danger fw-bold" style="font-size:15px; padding:8px 18px;" id="btnCaricaTuttiBRT" onclick="caricaTuttiTrackingBRT()">
+                <div class="mb-3 d-flex align-items-center gap-3 flex-wrap">
+                    <input type="text" id="brtSearch" class="form-control" placeholder="Cerca DDT, commessa, cliente, destinatario..." style="max-width:420px; font-size:15px;" oninput="filtraTabellaBRT()">
+                    <span id="brtSearchCount" class="text-muted" style="font-size:13px;"></span>
+                    <button class="btn btn-outline-danger fw-bold ms-auto" style="font-size:15px; padding:8px 18px;" id="btnCaricaTuttiBRT" onclick="caricaTuttiTrackingBRT()">
                         <span class="spinner-border spinner-border-sm d-none" id="spinnerTuttiBRT" role="status"></span>
                         Carica tutti i tracking
                     </button>
-                    <span id="brtProgressLabel" class="ms-2 text-muted" style="font-size:14px;"></span>
+                    <span id="brtProgressLabel" class="text-muted" style="font-size:14px;"></span>
                 </div>
-                <table class="table table-bordered" style="white-space:nowrap; font-size:15px;">
+                <table class="table table-bordered" id="tabellaBRT" style="white-space:nowrap; font-size:15px;">
                     <thead style="background:#d4380d; color:#fff;">
                         <tr>
                             <th style="padding:12px 14px;">DDT</th>
@@ -1219,6 +1221,21 @@ var brtDDTList = [
         { ddt: '{{ $numDDT }}', hash: '{{ md5($numDDT) }}' },
     @endforeach
 ];
+
+function filtraTabellaBRT() {
+    const q = (document.getElementById('brtSearch')?.value || '').trim().toLowerCase();
+    const rows = document.querySelectorAll('#tabellaBRT tbody tr');
+    let visible = 0;
+    rows.forEach(tr => {
+        if (!q) { tr.style.display = ''; visible++; return; }
+        const text = tr.innerText.toLowerCase();
+        const match = text.includes(q);
+        tr.style.display = match ? '' : 'none';
+        if (match) visible++;
+    });
+    const counter = document.getElementById('brtSearchCount');
+    if (counter) counter.textContent = q ? `${visible} risultati` : '';
+}
 
 function caricaTuttiTrackingBRT() {
     var btnAll = document.getElementById('btnCaricaTuttiBRT');
