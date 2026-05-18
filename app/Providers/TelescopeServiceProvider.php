@@ -1,6 +1,5 @@
 namespace App\Providers;
 
-  use App\Models\User;
   use Illuminate\Support\Facades\Gate;
   use Laravel\Telescope\IncomingEntry;
   use Laravel\Telescope\Telescope;
@@ -10,11 +9,8 @@ namespace App\Providers;
   {
       public function register(): void
       {
-          // Telescope::night();
-
           $this->hideSensitiveRequestDetails();
 
-          // Loggati tutti i request in production per debug MES (no filter)
           Telescope::filter(function (IncomingEntry $entry) {
               return true;
           });
@@ -37,16 +33,13 @@ namespace App\Providers;
       }
 
       /**
-       * Gate Telescope: solo admin Giovanni accede.
-       * NB: tablet operatori NON loggati come User → nessun accesso.
+       * Gate Telescope: MES usa auth custom session-based.
+       * Accesso solo admin (session operatore_ruolo=admin).
        */
       protected function gate(): void
       {
           Gate::define('viewTelescope', function ($user = null) {
-              if (! $user) return false;
-              return in_array($user->email ?? '', [
-                  'it@graficanappa.com',
-              ]);
+              return session('operatore_ruolo') === 'admin';
           });
       }
   }
