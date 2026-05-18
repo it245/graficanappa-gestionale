@@ -127,15 +127,20 @@ class PopolaRifOrdiniAstucci extends Command
         $desc = mb_strtoupper($desc);
         // Rimuovi parentesi (DDT Onda aggiunge "(20*250)", "(8*250)" che rompono match con Excel)
         $desc = preg_replace('/\([^)]*\)/', '', $desc);
-        // Stopwords: parole-contenitore e brand che variano tra Excel/Onda
+        // Strip accenti/apostrofi (TIRAMISÙ/CAFFÈ vs TIRAMISU'/CAFFE')
+        $acc = ['À','Á','Â','Ã','Ä','È','É','Ê','Ë','Ì','Í','Î','Ï','Ò','Ó','Ô','Õ','Ö','Ù','Ú','Û','Ü','Ç','Ñ'];
+        $pur = ['A','A','A','A','A','E','E','E','E','I','I','I','I','O','O','O','O','O','U','U','U','U','C','N'];
+        $desc = str_replace($acc, $pur, $desc);
+        $desc = str_replace(["'", "’", '`', '´'], '', $desc);
         $stopwords = [
             'ASTUCCIO', 'ASTUCCI', 'AST.', 'AST',
             'VASSOIO', 'VASSOI', 'VASS.', 'VASS',
             'BOX', 'PACK', 'SCATOLA', 'CONFEZIONE',
             'FORMATO', 'SLEEVE', 'KIT', 'SET',
             'CARTONATO', 'COFANETTO',
-            'MAXTRIS',   // Brand (Excel scrive "MAXTRIS XYZ", Onda solo "XYZ")
-            'DA',        // "DA 1KG" in Excel vs "1 KG" in Onda
+            'MAXTRIS', 'DA',
+            'AL', 'ALLA', 'ALLO', 'AGLI', 'ALLE',
+            'NUANCE',
             'IL', 'LA', 'GLI', 'LE', 'DI', 'DEL', 'DELLA',
         ];
         $desc = preg_replace('/\bCADEAUX?\b/', 'CADEAU', $desc);

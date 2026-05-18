@@ -260,17 +260,23 @@ class DdtPdfService
         $desc = mb_strtoupper($desc);
         // Rimuovi parentesi (DDT Onda aggiunge "(20*250)", "(8*250)" che rompono match)
         $desc = preg_replace('/\([^)]*\)/', '', $desc);
+        // Strip accenti e apostrofi (TIRAMISÙ/TIRAMISU'/CAFFÈ/CAFFE' → TIRAMISU/CAFFE)
+        $accenti = ['À', 'Á', 'Â', 'Ã', 'Ä', 'È', 'É', 'Ê', 'Ë', 'Ì', 'Í', 'Î', 'Ï', 'Ò', 'Ó', 'Ô', 'Õ', 'Ö', 'Ù', 'Ú', 'Û', 'Ü', 'Ç', 'Ñ'];
+        $puri    = ['A', 'A', 'A', 'A', 'A', 'E', 'E', 'E', 'E', 'I', 'I', 'I', 'I', 'O', 'O', 'O', 'O', 'O', 'U', 'U', 'U', 'U', 'C', 'N'];
+        $desc = str_replace($accenti, $puri, $desc);
+        $desc = str_replace(["'", "’", '`', '´'], '', $desc);
 
-        // Stoplist categorie generiche (nel DDT Onda compaiono come "VASSOI", in Excel come "ASTUCCI" ecc.)
-        // Rimuovi parole-contenitore per matchare solo il "soggetto" della descrizione
+        // Stoplist categorie generiche e parole varianti tra DDT Onda vs Excel
         $stopwords = [
             'ASTUCCIO', 'ASTUCCI', 'AST.', 'AST',
             'VASSOIO', 'VASSOI', 'VASS.', 'VASS',
             'BOX', 'PACK', 'SCATOLA', 'CONFEZIONE',
             'FORMATO', 'SLEEVE', 'KIT', 'SET',
             'CARTONATO', 'COFANETTO',
-            'MAXTRIS',   // Brand (Excel scrive "MAXTRIS XYZ", Onda solo "XYZ")
+            'MAXTRIS',   // Brand
             'DA',        // "DA 1KG" Excel vs "1 KG" Onda
+            'AL', 'ALLA', 'ALLO', 'AGLI', 'ALLE',  // articoli preposti
+            'NUANCE',    // "NOISETTES NUANCE CARTA" DDT vs "NOISETTES CARTA" Excel
             'IL', 'LA', 'GLI', 'LE', 'DI', 'DEL', 'DELLA',
         ];
         // Alias: CADEAU ↔ CADEAUX (singolare/plurale francese)
