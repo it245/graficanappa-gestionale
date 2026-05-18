@@ -71,10 +71,32 @@ class MagazzinoController extends Controller
 
         $articoli = $query->orderBy('codice')->paginate(25);
 
+        $ubicazioni = \App\Models\MagazzinoUbicazione::where('attiva', true)
+            ->orderBy('zona')
+            ->orderBy('codice')
+            ->get();
+
         return view('magazzino.articoli', [
             'operatore' => $operatore,
             'articoli' => $articoli,
+            'ubicazioni' => $ubicazioni,
         ]);
+    }
+
+    /**
+     * Aggiorna ubicazione preferita di un articolo (AJAX da tabella).
+     */
+    public function aggiornaUbicazione(Request $request, int $id)
+    {
+        $request->validate([
+            'ubicazione_preferita_id' => 'nullable|integer|exists:magazzino_ubicazioni,id',
+        ]);
+
+        $art = MagazzinoArticolo::findOrFail($id);
+        $art->ubicazione_preferita_id = $request->input('ubicazione_preferita_id') ?: null;
+        $art->save();
+
+        return response()->json(['ok' => true]);
     }
 
     /**
@@ -85,11 +107,12 @@ class MagazzinoController extends Controller
         $request->validate([
             'codice' => 'required|string|max:255',
             'descrizione' => 'required|string|max:255',
+            'ubicazione_preferita_id' => 'nullable|integer|exists:magazzino_ubicazioni,id',
         ]);
 
         MagazzinoArticolo::updateOrCreate(
             ['codice' => $request->input('codice')],
-            $request->only(['codice', 'descrizione', 'categoria', 'formato', 'grammatura', 'spessore', 'um', 'soglia_minima', 'fornitore', 'certificazioni'])
+            $request->only(['codice', 'descrizione', 'categoria', 'formato', 'grammatura', 'spessore', 'um', 'soglia_minima', 'fornitore', 'certificazioni', 'ubicazione_preferita_id'])
         );
 
         // Anagrafica modificata: invalida cache lookup (formati/grammature/marche).

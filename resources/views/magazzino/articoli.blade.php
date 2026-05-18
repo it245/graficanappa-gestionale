@@ -77,9 +77,18 @@
                             <input type="text" name="fornitore" class="form-control form-control-sm">
                         </div>
                     </div>
-                    <div class="mb-3">
+                    <div class="mb-2">
                         <label class="form-label small">Certificazioni</label>
                         <input type="text" name="certificazioni" class="form-control form-control-sm" placeholder="FSC, alimentare">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small">Ubicazione preferita <span class="text-muted">(dove va stoccato)</span></label>
+                        <select name="ubicazione_preferita_id" class="form-select form-select-sm">
+                            <option value="">— Nessuna (auto-suggerimento da simili) —</option>
+                            @foreach(($ubicazioni ?? []) as $u)
+                                <option value="{{ $u->id }}">{{ $u->labelCompleta() }}</option>
+                            @endforeach
+                        </select>
                     </div>
                     <button type="submit" class="btn btn-success btn-sm w-100">Salva articolo</button>
                 </form>
@@ -102,7 +111,7 @@
                 <div class="table-responsive">
                     <table class="table table-sm table-hover mb-0">
                         <thead><tr>
-                            <th>Codice</th><th>Descrizione</th><th>Tipo</th><th>Formato</th><th>g</th><th>UM</th><th>Soglia</th><th>Fornitore</th>
+                            <th>Codice</th><th>Descrizione</th><th>Tipo</th><th>Formato</th><th>g</th><th>UM</th><th>Soglia</th><th>Fornitore</th><th>Ubicazione</th>
                         </tr></thead>
                         <tbody>
                         @foreach($articoli as $art)
@@ -115,6 +124,15 @@
                                 <td>{{ $art->um }}</td>
                                 <td class="mag-num">{{ $art->soglia_minima > 0 ? number_format($art->soglia_minima, 0, ',', '.') : '-' }}</td>
                                 <td>{{ $art->fornitore ?? '-' }}</td>
+                                <td>
+                                    <select class="form-select form-select-sm" style="font-size:11px; min-width:140px;"
+                                            onchange="aggiornaUbicazione({{ $art->id }}, this.value)">
+                                        <option value="">— auto —</option>
+                                        @foreach(($ubicazioni ?? []) as $u)
+                                            <option value="{{ $u->id }}" @selected($art->ubicazione_preferita_id == $u->id)>{{ $u->labelCompleta() }}</option>
+                                        @endforeach
+                                    </select>
+                                </td>
                             </tr>
                         @endforeach
                         </tbody>
@@ -140,6 +158,22 @@ function autoUM(categoria) {
         umSelect.add(opt);
     }
     umSelect.value = um;
+}
+
+function aggiornaUbicazione(articoloId, ubicazioneId) {
+    const token = '{{ request("op_token") }}';
+    const csrf = '{{ csrf_token() }}';
+    const url = '{{ url("/magazzino/articoli") }}/' + articoloId + '/ubicazione' + (token ? '?op_token=' + token : '');
+    fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
+        body: JSON.stringify({ ubicazione_preferita_id: ubicazioneId || null })
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (!d.ok) alert('Errore: ' + (d.message || 'salvataggio fallito'));
+    })
+    .catch(() => alert('Errore di rete'));
 }
 </script>
 @endsection

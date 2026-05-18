@@ -251,6 +251,7 @@ Route::middleware(['magazzino.auth'])->prefix('magazzino')->group(function () {
     Route::get('/', [MagazzinoController::class, 'dashboard'])->name('magazzino.dashboard');
     Route::get('/articoli', [MagazzinoController::class, 'articoli'])->name('magazzino.articoli');
     Route::post('/articoli', [MagazzinoController::class, 'storeArticolo'])->name('magazzino.articoli.store');
+    Route::post('/articoli/{id}/ubicazione', [MagazzinoController::class, 'aggiornaUbicazione'])->name('magazzino.articoli.ubicazione');
     Route::get('/giacenze', [MagazzinoController::class, 'giacenze'])->name('magazzino.giacenze');
     Route::get('/movimenti', [MagazzinoController::class, 'movimenti'])->name('magazzino.movimenti');
 
