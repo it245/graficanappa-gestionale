@@ -94,10 +94,10 @@ class PopolaRifOrdiniAstucci extends Command
             $commCorta = ltrim(explode('-', $o->commessa)[0] ?? '', '0') ?: '0';
             $descNorm = self::normalizza($o->descrizione ?? '');
 
+            // SOLO match esatto articolo (commessa+descrizione normalizzata).
+            // Niente fallback per commessa: evita di applicare RIF sbagliato
+            // a articoli diversi della stessa commessa.
             $rif = $mapDettaglio[$commCorta . '|' . $descNorm] ?? null;
-            if (!$rif) {
-                $rif = $mapCommessa[$commCorta] ?? null;
-            }
 
             if (!$rif) { $miss++; continue; }
 
