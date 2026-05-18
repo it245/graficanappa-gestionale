@@ -200,6 +200,8 @@ Route::get('/proto/owner', [DashboardOwnerController::class, 'prototipo'])->name
 
 // Etichette — lista commesse (accesso libero)
 Route::get('/etichette', [EtichettaController::class, 'lista'])->name('etichette.lista');
+// Stampa singola etichetta (accesso libero, coerente con la lista)
+Route::get('/etichetta/{ordine}', [EtichettaController::class, 'show'])->name('etichetta.show');
 
 // CSRF token refresh (mantiene sessione viva)
 Route::get('/csrf-refresh', fn() => response()->json(['token' => csrf_token()]));
