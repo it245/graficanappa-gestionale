@@ -94,10 +94,20 @@ class PopolaRifOrdiniAstucci extends Command
             $commCorta = ltrim(explode('-', $o->commessa)[0] ?? '', '0') ?: '0';
             $descNorm = self::normalizza($o->descrizione ?? '');
 
-            // SOLO match esatto articolo (commessa+descrizione normalizzata).
-            // Niente fallback per commessa: evita di applicare RIF sbagliato
-            // a articoli diversi della stessa commessa.
+            // Match articolo: esatto, poi parziale (substring) entro stessa commessa.
             $rif = $mapDettaglio[$commCorta . '|' . $descNorm] ?? null;
+            if (!$rif) {
+                $prefix = $commCorta . '|';
+                foreach ($mapDettaglio as $key => $r) {
+                    if (!str_starts_with($key, $prefix)) continue;
+                    $excelNorm = substr($key, strlen($prefix));
+                    if ($excelNorm === '') continue;
+                    if (str_contains($descNorm, $excelNorm) || str_contains($excelNorm, $descNorm)) {
+                        $rif = $r;
+                        break;
+                    }
+                }
+            }
 
             if (!$rif) { $miss++; continue; }
 

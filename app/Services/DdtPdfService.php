@@ -309,10 +309,22 @@ class DdtPdfService
             $commCorta = self::commessaCorta($codCommessa);
             $descNorm = self::normalizza($riga->Descrizione ?? '');
 
-            // Solo match esatto articolo (commessa+desc normalizzata).
-            // Niente fallback per commessa: ogni articolo deve avere il proprio RIF
-            // in ORDINE ASTUCCI.xlsx, altrimenti campo vuoto in DDT.
+            // Match articolo: prima esatto, poi parziale (DDT contiene Excel come substring).
+            // Es. DDT "1KGNOISETTESCARTAZUCCHERO" matcha Excel "1KGNOISETTESCARTA".
+            // Solo entro stessa commessa: niente fallback su commessa.
             $rifOrd = $dettaglio[$commCorta . '|' . $descNorm] ?? '';
+            if (!$rifOrd) {
+                $prefix = $commCorta . '|';
+                foreach ($dettaglio as $key => $rif) {
+                    if (!str_starts_with($key, $prefix)) continue;
+                    $excelNorm = substr($key, strlen($prefix));
+                    if ($excelNorm === '') continue;
+                    if (str_contains($descNorm, $excelNorm) || str_contains($excelNorm, $descNorm)) {
+                        $rifOrd = $rif;
+                        break;
+                    }
+                }
+            }
 
             $risultato[] = [
                 'descrizione' => $riga->Descrizione ?? '',
