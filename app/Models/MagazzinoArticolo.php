@@ -13,6 +13,7 @@ class MagazzinoArticolo extends Model
     protected $fillable = [
         'codice', 'descrizione', 'categoria', 'formato', 'grammatura',
         'spessore', 'um', 'soglia_minima', 'fornitore', 'certificazioni', 'attivo',
+        'ubicazione_preferita_id',
     ];
 
     protected $casts = [
