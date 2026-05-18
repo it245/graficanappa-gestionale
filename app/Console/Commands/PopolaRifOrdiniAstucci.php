@@ -20,7 +20,7 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
  */
 class PopolaRifOrdiniAstucci extends Command
 {
-    protected $signature = 'ordini:popola-rif {--dry-run : Mostra modifiche senza salvare}';
+    protected $signature = 'ordini:popola-rif {--dry-run : Mostra modifiche senza salvare} {--force : Ricalcola anche ordini con ordine_cliente già popolato (utile per correggere match imprecisi)}';
     protected $description = 'Popola ordine_cliente sugli ordini MES leggendo ORDINE ASTUCCI.xlsx';
 
     public function handle(): int
@@ -68,12 +68,23 @@ class PopolaRifOrdiniAstucci extends Command
 
         $this->info("Righe lette: $righeLette | RIF unici detail: " . count($mapDettaglio) . " | per commessa: " . count($mapCommessa));
 
-        // Itera ordini senza ordine_cliente popolato
-        $ordini = Ordine::query()
-            ->where(function ($q) {
+        $force = $this->option('force');
+
+        $query = Ordine::query();
+        if (!$force) {
+            $query->where(function ($q) {
                 $q->whereNull('ordine_cliente')->orWhere('ordine_cliente', '');
-            })
-            ->get(['id', 'commessa', 'descrizione', 'cliente_nome']);
+            });
+        } else {
+            // Force: include anche ordini con ordine_cliente=P0xxxx (RIF Maxtris) per correggerli.
+            // Non toccare quelli con ordine_cliente "umani" (es. "ord. cliente 21-330", "23-36")
+            $query->where(function ($q) {
+                $q->whereNull('ordine_cliente')
+                  ->orWhere('ordine_cliente', '')
+                  ->orWhere('ordine_cliente', 'REGEXP', '^P[0-9]+$');
+            });
+        }
+        $ordini = $query->get(['id', 'commessa', 'descrizione', 'cliente_nome', 'ordine_cliente']);
 
         $aggiornati = 0;
         $miss = 0;
@@ -114,12 +125,16 @@ class PopolaRifOrdiniAstucci extends Command
     private static function normalizza(string $desc): string
     {
         $desc = mb_strtoupper($desc);
+        // Stopwords: parole-contenitore e brand che variano tra Excel/Onda
         $stopwords = [
             'ASTUCCIO', 'ASTUCCI', 'AST.', 'AST',
             'VASSOIO', 'VASSOI', 'VASS.', 'VASS',
             'BOX', 'PACK', 'SCATOLA', 'CONFEZIONE',
             'FORMATO', 'SLEEVE', 'KIT', 'SET',
             'CARTONATO', 'COFANETTO',
+            'MAXTRIS',   // Brand (Excel scrive "MAXTRIS XYZ", Onda solo "XYZ")
+            'DA',        // "DA 1KG" in Excel vs "1 KG" in Onda
+            'IL', 'LA', 'GLI', 'LE', 'DI', 'DEL', 'DELLA',
         ];
         $desc = preg_replace('/\bCADEAUX?\b/', 'CADEAU', $desc);
         foreach ($stopwords as $w) {
