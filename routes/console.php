@@ -31,8 +31,9 @@ Schedule::command('onda:sync')->hourly()->runInBackground();
 // commesse con cod_art generico (es. "Astucci") e PRD multipli Onda.
 Schedule::command('onda:sync-fix-multi-modello')->hourly()->withoutOverlapping()->runInBackground();
 
-// Sync bidirezionale Excel ↔ DB ogni 2 minuti (h24)
-Schedule::command('excel:sync')->everyTwoMinutes()->withoutOverlapping()->runInBackground();
+// Sync bidirezionale Excel ↔ DB ogni 5 minuti (h24)
+// Era 2 min ma sync impiega 2-3 min → mutex/sovrapposizione. 5 min = margine sicuro.
+Schedule::command('excel:sync')->everyFiveMinutes()->withoutOverlapping()->runInBackground();
 
 // Sync automatico Fiery ogni minuto (h24)
 Schedule::command('fiery:sync')->everyMinute()->withoutOverlapping()->runInBackground();
