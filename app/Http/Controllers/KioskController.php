@@ -300,6 +300,9 @@ class KioskController extends Controller
                 ->selectRaw("SUM(TIMESTAMPDIFF(SECOND, GREATEST(pausa_operatores.data_ora, ?), pausa_operatores.fine)) as sec", [$inizioTurno])
                 ->value('sec');
 
+            if (in_array($ru['nome'], ['BOBST', 'Legatoria'])) {
+                \Log::error("[KIOSK] {$ru['nome']} A=" . ($secAperte ?? 0) . " B=" . ($secChiuseRecenti ?? 0) . " C=" . ($secChiuseVecchie ?? 0) . " D=" . ($secPauseOggi ?? 0));
+            }
             $secOggi = max((max($secAperte ?? 0, 0) + max($secChiuseRecenti ?? 0, 0) + max($secChiuseVecchie ?? 0, 0)) - max($secPauseOggi ?? 0, 0), 0);
 
             $oreUsate = round(max($secOggi ?? 0, 0) / 3600, 1);
