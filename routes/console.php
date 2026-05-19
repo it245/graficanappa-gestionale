@@ -66,6 +66,9 @@ Schedule::command('cliche:match')->everyTenMinutes()->withoutOverlapping();
 // Schedulato a :12 dopo onda:sync (:05) e fix-multi-modello (:08).
 Schedule::command('ordini:popola-rif --force')->hourlyAt(12)->withoutOverlapping();
 
+// Popola inchiostro Prinect su ordine_fasi (per lista Analisi Costi veloce)
+Schedule::command('prinect:sync-inchiostro --giorni=30')->hourlyAt(20)->withoutOverlapping();
+
 // Scheduler Mossa 37 — DISABILITATO (in attesa approvazione capo)
 // Schedule::command('scheduler:run')->everyFifteenMinutes()->weekdays()->between('6:00', '22:00')->withoutOverlapping();
 
