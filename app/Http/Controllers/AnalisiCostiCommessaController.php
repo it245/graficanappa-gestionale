@@ -203,12 +203,15 @@ class AnalisiCostiCommessaController extends Controller
             }
         }
 
-        // Inchiostro da Prinect API on-the-fly (cache 1h)
-        // Per ora supporto solo offset XL106 — Prinect Workflow Heidelberg.
+        // Inchiostro da Prinect API on-the-fly (cache 1h solo se >0)
         if ($inchiostroCalc === 0 && $faseStampa) {
             $jobId = ltrim(explode('-', $commessa)[0] ?? '', '0');
             if ($jobId && is_numeric($jobId)) {
-                $inchiostroCalc = Cache::remember("prinect_ink_{$commessa}", 3600, function () use ($jobId) {
+                $cacheKey = "prinect_ink_{$commessa}";
+                $cached = Cache::get($cacheKey);
+                if ($cached !== null && $cached > 0) {
+                    $inchiostroCalc = $cached;
+                } else {
                     try {
                         $prinect = app(PrinectService::class);
                         $worksteps = $prinect->getJobWorksteps((int) $jobId)['worksteps'] ?? [];
@@ -218,20 +221,27 @@ class AnalisiCostiCommessaController extends Controller
                             $produced = (int) ($ws['produced'] ?? 0);
                             if ($produced <= 0) continue;
                             $ink = $prinect->getWorkstepInkConsumption((int) $jobId, $ws['id']);
-                            // Endpoint ritorna consumo per colore in kg/1000 fogli
-                            // Totale g = SUM(kg/1000) * 1000 * fogli_prodotti
+                            Log::info("Prinect ink {$commessa} ws={$ws['id']}", ['response_keys' => array_keys($ink ?? []), 'produced' => $produced]);
+                            // Cerca consumo in possibili chiavi
                             $totKg1000 = 0.0;
-                            foreach (($ink['inkConsumption'] ?? $ink['inks'] ?? []) as $i) {
-                                $totKg1000 += (float) ($i['kgPer1000Sheets'] ?? $i['consumption'] ?? 0);
+                            $items = $ink['inkConsumption'] ?? $ink['inks'] ?? $ink['colors'] ?? $ink['items'] ?? [];
+                            if (is_array($items)) {
+                                foreach ($items as $i) {
+                                    if (!is_array($i)) continue;
+                                    $val = $i['kgPer1000Sheets'] ?? $i['kg_per_1000_sheets'] ?? $i['consumption'] ?? $i['amount'] ?? $i['kg'] ?? 0;
+                                    $totKg1000 += (float) $val;
+                                }
                             }
-                            $totalG += ($totKg1000 * $produced); // (kg/1000)*sheets = kg → *1000 = g; equivalente
+                            $totalG += $totKg1000 * $produced; // kg/1000 * sheets = kg → equivalente a g
                         }
-                        return round($totalG, 2);
+                        $inchiostroCalc = round($totalG, 2);
+                        if ($inchiostroCalc > 0) {
+                            Cache::put($cacheKey, $inchiostroCalc, 3600);
+                        }
                     } catch (\Throwable $e) {
                         Log::warning("Inchiostro Prinect fallito {$jobId}: ".$e->getMessage());
-                        return 0.0;
                     }
-                });
+                }
             }
         }
 
