@@ -15,12 +15,27 @@ class TelegramBotService
     private const API_BASE = 'https://api.telegram.org/bot';
     private const FILE_BASE = 'https://api.telegram.org/file/bot';
 
-    /** Whitelist chat_id autorizzati (da .env TELEGRAM_ALLOWED_CHATS="123,456") */
+    /**
+     * Whitelist chat_id autorizzati (da .env TELEGRAM_ALLOWED_CHATS="123,456").
+     * Fail-closed: se la whitelist è vuota o assente nessuna chat è autorizzata.
+     * Eccezione: TELEGRAM_ALLOW_ALL=true bypassa solo per debug/setup locale.
+     */
     public static function chatAutorizzato(int $chatId): bool
     {
         $allowed = array_filter(array_map('trim', explode(',', env('TELEGRAM_ALLOWED_CHATS', ''))));
-        if (empty($allowed)) return true; // nessun filtro = tutti OK (da configurare in prod)
-        return in_array((string) $chatId, $allowed, true);
+        if (empty($allowed)) {
+            if (filter_var(env('TELEGRAM_ALLOW_ALL', false), FILTER_VALIDATE_BOOL)) {
+                Log::warning('Telegram chat autorizzata via TELEGRAM_ALLOW_ALL bypass', ['chat_id' => $chatId]);
+                return true;
+            }
+            Log::warning('Telegram chat rifiutata: TELEGRAM_ALLOWED_CHATS vuoto (fail-closed)', ['chat_id' => $chatId]);
+            return false;
+        }
+        $ok = in_array((string) $chatId, $allowed, true);
+        if (!$ok) {
+            Log::warning('Telegram chat non in whitelist', ['chat_id' => $chatId]);
+        }
+        return $ok;
     }
 
     /** Invia messaggio testuale */
