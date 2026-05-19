@@ -601,6 +601,15 @@ class DashboardSpedizioneController extends Controller
             $ddtLavorazioni = \App\Services\OndaSyncService::sincronizzaDDTFornitureLavorazioni();
             $venditaR = app(\App\Modules\Spedizione\Services\DdtSyncService::class)->syncFromOnda(7);
             $ddtVendita = ($venditaR['inseriti'] ?? 0) + ($venditaR['aggiornati'] ?? 0);
+
+            // Popola RIF cliente da ORDINE ASTUCCI.xlsx subito dopo sync
+            // (utile per stampa PDF DDT immediata da spedizione).
+            try {
+                \Artisan::call('ordini:popola-rif');
+            } catch (\Throwable $e) {
+                \Log::warning('Popola RIF post-sync fallito: ' . $e->getMessage());
+            }
+
             $msg = "Sync Onda: {$risultato['ordini_creati']} creati, "
                  . "{$risultato['ordini_aggiornati']} aggiornati, {$risultato['fasi_create']} fasi.";
             $totDDT = $ddtFornitore + $ddtLavorazioni;
