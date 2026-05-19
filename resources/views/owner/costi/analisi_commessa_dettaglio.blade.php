@@ -41,32 +41,69 @@
             </div>
         </div>
 
-        {{-- Produzione --}}
+        {{-- Produzione (editable) --}}
         <div class="col-lg-6">
             <div class="card">
-                <div class="card-header bg-light"><strong>Produzione</strong></div>
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <strong>Produzione</strong>
+                    @if($override)
+                    <span class="badge bg-warning text-dark" title="Valori override manuale">override</span>
+                    @endif
+                </div>
+                <form method="POST" action="{{ route('owner.costi.analisi.updateOverride', $commessa) }}">
+                    @csrf
+                    <table class="table table-sm mb-0">
+                        <tbody>
+                            <tr>
+                                <td>Fogli utilizzati ({{ $faseStampaNome }})</td>
+                                <td style="width:140px;"><input type="number" min="0" step="1" name="fogli_utilizzati" value="{{ $fogliUtilizzati ?: '' }}" class="form-control form-control-sm text-end font-monospace" placeholder="auto"></td>
+                            </tr>
+                            <tr>
+                                <td>Tiri (cm foil)</td>
+                                <td><input type="number" min="0" step="0.01" name="tiri_cm_foil" value="{{ $tiriTotali ?: '' }}" class="form-control form-control-sm text-end font-monospace" placeholder="auto"></td>
+                            </tr>
+                            <tr>
+                                <td>Inchiostro (g)</td>
+                                <td><input type="number" min="0" step="0.01" name="inchiostro_g" value="{{ $inchiostroTotale ?: '' }}" class="form-control form-control-sm text-end font-monospace" placeholder="auto"></td>
+                            </tr>
+                            <tr>
+                                <td>Scarti totali (fogli)</td>
+                                <td><input type="number" min="0" step="1" name="scarti_fogli" value="{{ $scartiTotali ?: '' }}" class="form-control form-control-sm text-end font-monospace" placeholder="auto"></td>
+                            </tr>
+                            <tr>
+                                <td colspan="2" class="text-end p-2">
+                                    <button class="btn btn-sm btn-primary">Salva override</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </form>
+            </div>
+        </div>
+
+        {{-- Lavorazioni esterne --}}
+        @if($lavorazioniEsterne->isNotEmpty())
+        <div class="col-12">
+            <div class="card border-warning">
+                <div class="card-header bg-warning bg-opacity-25"><strong>⚠️ Lavorazioni esterne</strong> <small class="text-muted ms-2">(costi extra da quantificare)</small></div>
                 <table class="table table-sm mb-0">
+                    <thead><tr><th>Fase</th><th>Reparto</th><th>Fornitore esterno</th><th>Qta</th><th>Data inizio</th><th>Data fine</th></tr></thead>
                     <tbody>
+                    @foreach($lavorazioniEsterne as $le)
                         <tr>
-                            <td>Fogli utilizzati ({{ $faseStampaNome }})</td>
-                            <td class="text-end font-monospace"><strong>{{ number_format($fogliUtilizzati, 0, ',', '.') }}</strong></td>
+                            <td><strong>{{ $le->fase }}</strong></td>
+                            <td class="small">{{ $le->reparto }}</td>
+                            <td>{{ $le->fornitore }}</td>
+                            <td class="font-monospace">{{ number_format($le->qta_prod, 0, ',', '.') }}</td>
+                            <td class="small">{{ $le->data_inizio ? \Carbon\Carbon::parse($le->data_inizio)->format('d/m/Y') : '-' }}</td>
+                            <td class="small">{{ $le->data_fine ? \Carbon\Carbon::parse($le->data_fine)->format('d/m/Y') : '-' }}</td>
                         </tr>
-                        <tr>
-                            <td>Tiri (cm foil) — stampa a caldo</td>
-                            <td class="text-end font-monospace">{{ $tiriTotali > 0 ? number_format($tiriTotali, 2, ',', '.') : '—' }}</td>
-                        </tr>
-                        <tr>
-                            <td>Inchiostro (g) — Prinect</td>
-                            <td class="text-end font-monospace">{{ $inchiostroTotale > 0 ? number_format($inchiostroTotale, 2, ',', '.') : '—' }}</td>
-                        </tr>
-                        <tr>
-                            <td>Scarti totali (fogli)</td>
-                            <td class="text-end font-monospace text-danger">{{ number_format($scartiTotali, 0, ',', '.') }}</td>
-                        </tr>
+                    @endforeach
                     </tbody>
                 </table>
             </div>
         </div>
+        @endif
 
         {{-- Altri Costi --}}
         <div class="col-12">

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\CommessaAltroCosto;
+use App\Models\CommessaDatiCosti;
 use App\Models\Ordine;
 use App\Models\OrdineFase;
 use Carbon\Carbon;
@@ -154,43 +155,66 @@ class AnalisiCostiCommessaController extends Controller
             'sec'       => $sec,
         ])->values()->sortByDesc('sec')->values();
 
-        // 2. Fogli utilizzati: SOLO prima fase stampa offset/digitale (una volta sola)
+        // 2. Fogli utilizzati: SOLO prima fase stampa offset/digitale.
+        // Priorità fogli_buoni, fallback qta_prod (Indigo digitale non popola fogli_buoni).
         $faseStampa = null;
+        $fogliCalc = 0;
         foreach ($ordini as $ordine) {
             foreach ($ordine->fasi as $fase) {
                 $repartoSlug = strtolower($fase->faseCatalogo->reparto->nome ?? '');
-                if (str_contains($repartoSlug, 'stampa offset') || str_contains($repartoSlug, 'digitale')) {
-                    if (!$faseStampa || ($fase->fogli_buoni ?? 0) > ($faseStampa->fogli_buoni ?? 0)) {
-                        $faseStampa = $fase;
-                    }
+                if (!str_contains($repartoSlug, 'stampa offset') && !str_contains($repartoSlug, 'digitale')) continue;
+                $val = (int) ($fase->fogli_buoni ?? 0);
+                if ($val === 0) $val = (int) ($fase->qta_prod ?? 0);
+                if ($val > $fogliCalc) {
+                    $fogliCalc = $val;
+                    $faseStampa = $fase;
                 }
             }
         }
-        $fogliUtilizzati = $faseStampa ? (int) ($faseStampa->fogli_buoni ?? 0) : 0;
 
-        // 3. Tiri (SUM tutte le fasi stampa a caldo) - da AP Excel sync futuro
-        $tiriTotali = 0;
-        // 4. Inchiostro (SUM tutte fasi stampa offset) - da AO Excel sync futuro
-        $inchiostroTotale = 0;
+        // 3-5. Aggregati calcolati (override se presente in commessa_dati_costi)
+        $tiriCalc = 0;
+        $inchiostroCalc = 0;
+        $scartiCalc = 0;
         foreach ($ordini as $ordine) {
             foreach ($ordine->fasi as $fase) {
-                $tiriTotali += (float) ($fase->tiro_cm_foil ?? 0);
-                $inchiostroTotale += (float) ($fase->inchiostro_g ?? 0);
+                $tiriCalc += (float) ($fase->tiro_cm_foil ?? 0);
+                $inchiostroCalc += (float) ($fase->inchiostro_g ?? 0);
+                $scartiCalc += (int) ($fase->scarti ?? 0);
             }
         }
 
-        // 5. Scarti (operatore dichiarati, NO fogli_scarto Prinect)
-        $scartiTotali = 0;
-        foreach ($ordini as $ordine) {
-            foreach ($ordine->fasi as $fase) {
-                $scartiTotali += (int) ($fase->scarti ?? 0);
-            }
-        }
+        // Override manuale (se presente in DB sostituisce calcolato)
+        $override = CommessaDatiCosti::where('commessa', $commessa)->first();
+        $fogliUtilizzati  = $override && $override->fogli_utilizzati !== null ? (int) $override->fogli_utilizzati : $fogliCalc;
+        $tiriTotali       = $override && $override->tiri_cm_foil !== null   ? (float) $override->tiri_cm_foil   : $tiriCalc;
+        $inchiostroTotale = $override && $override->inchiostro_g !== null   ? (float) $override->inchiostro_g   : $inchiostroCalc;
+        $scartiTotali     = $override && $override->scarti_fogli !== null   ? (int) $override->scarti_fogli     : $scartiCalc;
 
         // 6. Altri costi
         $altriCosti = CommessaAltroCosto::where('commessa', $commessa)
             ->orderByDesc('data')->orderByDesc('id')->get();
         $totaleAltriCosti = (float) $altriCosti->sum('importo');
+
+        // Lavorazioni esterne (flag esterno OR note "Inviato a:")
+        $lavorazioniEsterne = collect();
+        foreach ($ordini as $ordine) {
+            foreach ($ordine->fasi as $fase) {
+                $esternoFlag = (bool) ($fase->esterno ?? false);
+                $matchInviato = preg_match('/Inviato\s+a:\s*(.+)/i', $fase->note ?? '', $m);
+                if (!$esternoFlag && !$matchInviato) continue;
+
+                $lavorazioniEsterne->push((object) [
+                    'fase'        => $fase->fase,
+                    'reparto'     => $fase->faseCatalogo->reparto->nome ?? '-',
+                    'descrizione' => $ordine->descrizione,
+                    'fornitore'   => $matchInviato ? trim($m[1]) : '(non specificato)',
+                    'data_inizio' => $fase->data_inizio,
+                    'data_fine'   => $fase->data_fine,
+                    'qta_prod'    => $fase->qta_prod ?? 0,
+                ]);
+            }
+        }
 
         // Lista fasi editable (tutte le fasi della commessa, ordinate per data_inizio)
         $fasiEditable = collect();
@@ -217,7 +241,9 @@ class AnalisiCostiCommessaController extends Controller
         $primoOrdine = $ordini->first();
 
         return view('owner.costi.analisi_commessa_dettaglio', [
-            'fasiEditable'     => $fasiEditable,
+            'fasiEditable'      => $fasiEditable,
+            'lavorazioniEsterne'=> $lavorazioniEsterne,
+            'override'          => $override,
             'commessa'         => $commessa,
             'cliente'          => $primoOrdine->cliente_nome ?? '-',
             'descrizione'      => $primoOrdine->descrizione ?? '-',
@@ -255,6 +281,29 @@ class AnalisiCostiCommessaController extends Controller
 
         return redirect()->route('owner.costi.analisi.show', $commessa)
             ->with('success', 'Costo aggiunto.');
+    }
+
+    /**
+     * Aggiorna override produzione per commessa (fogli, tiri, inchiostro, scarti).
+     */
+    public function updateOverride(Request $request, string $commessa)
+    {
+        $data = $request->validate([
+            'fogli_utilizzati' => 'nullable|integer|min:0',
+            'tiri_cm_foil'     => 'nullable|numeric|min:0',
+            'inchiostro_g'     => 'nullable|numeric|min:0',
+            'scarti_fogli'     => 'nullable|integer|min:0',
+        ]);
+
+        CommessaDatiCosti::updateOrCreate(
+            ['commessa' => $commessa],
+            array_merge($data, [
+                'autore' => session('admin_nome') ?? session('operatore_nome') ?? 'admin',
+            ])
+        );
+
+        return redirect()->route('owner.costi.analisi.show', $commessa)
+            ->with('success', 'Dati produzione aggiornati.');
     }
 
     /**
