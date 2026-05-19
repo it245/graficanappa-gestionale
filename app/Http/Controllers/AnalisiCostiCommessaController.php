@@ -402,6 +402,13 @@ class AnalisiCostiCommessaController extends Controller
             ->with('success', "Fase {$fase->fase} aggiornata.");
     }
 
+    public function deleteOverride(string $commessa)
+    {
+        CommessaDatiCosti::where('commessa', $commessa)->delete();
+        return redirect()->route('owner.costi.analisi.show', $commessa)
+            ->with('success', 'Override rimosso. Valori ora calcolati automaticamente.');
+    }
+
     public function deleteAltroCosto(int $id)
     {
         $costo = CommessaAltroCosto::findOrFail($id);

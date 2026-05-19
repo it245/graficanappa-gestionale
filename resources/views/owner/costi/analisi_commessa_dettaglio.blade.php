@@ -59,7 +59,14 @@
                 <div class="card-header bg-light d-flex justify-content-between align-items-center">
                     <strong>Produzione</strong>
                     @if($override)
-                    <span class="badge bg-warning text-dark" title="Valori override manuale">override</span>
+                    <div>
+                        <span class="badge bg-warning text-dark" title="Valori override manuale">override</span>
+                        <form method="POST" action="{{ route('owner.costi.analisi.deleteOverride', $commessa) }}" class="d-inline ms-2" onsubmit="return confirm('Rimuovere override e tornare a calcolo automatico?')">
+                            @csrf
+                            @method('DELETE')
+                            <button class="btn btn-sm btn-outline-danger py-0">× rimuovi override</button>
+                        </form>
+                    </div>
                     @endif
                 </div>
                 <form method="POST" action="{{ route('owner.costi.analisi.updateOverride', $commessa) }}">
