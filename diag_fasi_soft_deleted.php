@@ -18,15 +18,16 @@ foreach ($rows as $r) {
     echo "  id={$r->id} | {$r->fase} | stato={$r->stato} | deleted_at={$del}\n";
 }
 
-// Cerca anche fasi STAMPAINDIGO copertina commessa 67343
-echo "\n=== Cerca fase STAMPA su commessa 67343 (libro interno) ===\n";
+// Cerca TUTTE fasi 67343 incluse soft-deleted
+echo "\n=== TUTTE fasi 67343 (incluse soft-deleted) ===\n";
 $f = DB::table('ordine_fasi as f')
     ->join('ordini as o', 'o.id', 'f.ordine_id')
     ->where('o.commessa', '0067343-26')
-    ->where('o.cod_art', 'Libri')
-    ->select('f.id', 'f.fase', 'f.stato', 'f.deleted_at')
+    ->select('f.id', 'f.fase', 'f.stato', 'f.deleted_at', 'o.cod_art', 'o.descrizione')
+    ->orderBy('f.id')
     ->get();
 foreach ($f as $r) {
-    echo "  id={$r->id} | {$r->fase} | stato={$r->stato} | deleted_at=" . ($r->deleted_at ?? 'NULL') . "\n";
+    $del = $r->deleted_at ? '🗑️ DEL ' . $r->deleted_at : '✓ ATTIVA';
+    echo "  id={$r->id} | art={$r->cod_art} | {$r->fase} | stato={$r->stato} | {$del}\n";
 }
-if ($f->isEmpty()) echo "  (nessuna fase per libro interno 67343)\n";
+if ($f->isEmpty()) echo "  (nessuna fase 67343)\n";
