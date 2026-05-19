@@ -512,6 +512,11 @@ final class OrdineSyncService
                 if ($ordine->cliente_nome && $ordine->cliente_nome !== $clienteOnda && !empty($ordine->cliente_nome)) {
                     unset($datiOrdine['cliente_nome']);
                 }
+                // Preserva ordine_cliente popolato (RIF Maxtris P0xxx) se Onda è vuoto.
+                // Maxtris non scrive su Onda.ncpordinecliente, il RIF arriva da Excel ORDINE ASTUCCI.
+                if (empty($datiOrdine['ordine_cliente']) && !empty($ordine->ordine_cliente)) {
+                    unset($datiOrdine['ordine_cliente']);
+                }
                 // Aggiorna descrizione da Onda se diversa (corregge import iniziale errato)
                 if ($descrizione && $ordine->descrizione !== $descrizione) {
                     $ordine->descrizione = $descrizione;
