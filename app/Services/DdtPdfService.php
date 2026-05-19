@@ -258,6 +258,30 @@ class DdtPdfService
     private static function normalizza(string $desc): string
     {
         $desc = mb_strtoupper($desc);
+        $desc = preg_replace('/\([^)]*\)/', '', $desc);
+        $accenti = ['À', 'Á', 'Â', 'Ã', 'Ä', 'È', 'É', 'Ê', 'Ë', 'Ì', 'Í', 'Î', 'Ï', 'Ò', 'Ó', 'Ô', 'Õ', 'Ö', 'Ù', 'Ú', 'Û', 'Ü', 'Ç', 'Ñ'];
+        $puri    = ['A', 'A', 'A', 'A', 'A', 'E', 'E', 'E', 'E', 'I', 'I', 'I', 'I', 'O', 'O', 'O', 'O', 'O', 'U', 'U', 'U', 'U', 'C', 'N'];
+        $desc = str_replace($accenti, $puri, $desc);
+        $desc = str_replace(["'", "’", '`', '´'], '', $desc);
+
+        $stopwords = [
+            'ASTUCCIO', 'ASTUCCI', 'AST.', 'AST',
+            'VASSOIO', 'VASSOI', 'VASS.', 'VASS',
+            'BOX', 'PACK', 'SCATOLA', 'CONFEZIONE',
+            'FORMATO', 'SLEEVE', 'KIT', 'SET',
+            'CARTONATO', 'COFANETTO',
+            'MAXTRIS',
+            'DA',
+            'AL', 'ALLA', 'ALLO', 'AGLI', 'ALLE',
+            'NUANCE',
+            'IL', 'LA', 'GLI', 'LE', 'DI', 'DEL', 'DELLA',
+        ];
+        $desc = preg_replace('/\bCADEAUX?\b/', 'CADEAU', $desc);
+
+        foreach ($stopwords as $w) {
+            $desc = preg_replace('/\b' . preg_quote($w, '/') . '\b/u', '', $desc);
+        }
+
         return preg_replace('/[^A-Z0-9]/', '', $desc);
     }
 
@@ -267,11 +291,29 @@ class DdtPdfService
         return ltrim($parts[0], '0') ?: '0';
     }
 
+    private static ?array $dbRifCache = null;
+
+    private static function lookupRifDaDB(string $codCommessa, string $descNorm): ?string
+    {
+        if (self::$dbRifCache === null) {
+            self::$dbRifCache = [];
+            $ordini = \DB::table('ordini')
+                ->whereNotNull('ordine_cliente')
+                ->where('ordine_cliente', 'LIKE', 'P0%')
+                ->select('commessa', 'descrizione', 'ordine_cliente')
+                ->get();
+            foreach ($ordini as $o) {
+                $key = $o->commessa . '|' . self::normalizza($o->descrizione ?? '');
+                self::$dbRifCache[$key] = $o->ordine_cliente;
+            }
+        }
+        return self::$dbRifCache[$codCommessa . '|' . $descNorm] ?? null;
+    }
+
     private static function preparaRighe(array $righe, array $rifMap): array
     {
         $risultato = [];
         $dettaglio = $rifMap['dettaglio'] ?? [];
-        $perCommessa = $rifMap['commessa'] ?? [];
 
         foreach ($righe as $riga) {
             if ($riga->TipoRiga != 1) continue;
@@ -282,7 +324,19 @@ class DdtPdfService
 
             $rifOrd = $dettaglio[$commCorta . '|' . $descNorm] ?? '';
             if (!$rifOrd) {
-                $rifOrd = $perCommessa[$commCorta] ?? '';
+                $prefix = $commCorta . '|';
+                foreach ($dettaglio as $key => $rif) {
+                    if (!str_starts_with($key, $prefix)) continue;
+                    $excelNorm = substr($key, strlen($prefix));
+                    if ($excelNorm === '') continue;
+                    if (str_contains($descNorm, $excelNorm) || str_contains($excelNorm, $descNorm)) {
+                        $rifOrd = $rif;
+                        break;
+                    }
+                }
+            }
+            if (!$rifOrd && $codCommessa) {
+                $rifOrd = self::lookupRifDaDB($codCommessa, $descNorm) ?? '';
             }
 
             $risultato[] = [
