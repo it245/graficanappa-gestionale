@@ -573,7 +573,9 @@ def main() -> None:
 
     app = Application.builder().token(TELEGRAM_TOKEN).build()
     # Job notifiche proattive ogni 5min
-    app.job_queue.run_repeating(job_nuove_commesse, interval=300, first=60)
+    # Notifiche "Nuova commessa Onda" disabilitate (troppe, rumore).
+    # Per riabilitare scommenta la riga sotto.
+    # app.job_queue.run_repeating(job_nuove_commesse, interval=300, first=60)
     app.add_handler(CommandHandler("start", cmd_start))
     app.add_handler(CommandHandler("aiuto", cmd_aiuto))
     app.add_handler(CommandHandler("help", cmd_aiuto))
