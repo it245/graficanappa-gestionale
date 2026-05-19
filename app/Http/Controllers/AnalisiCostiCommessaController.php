@@ -204,10 +204,8 @@ class AnalisiCostiCommessaController extends Controller
         }
 
         // Inchiostro da Prinect API on-the-fly (cache 1h solo se >0)
-        Log::error("[DBG] Inchiostro commessa={$commessa} inchiostroCalc={$inchiostroCalc} type=" . gettype($inchiostroCalc) . " faseStampa=" . ($faseStampa ? 'OK' : 'NULL'));
         if ($inchiostroCalc == 0 && $faseStampa) {
             $jobId = ltrim(explode('-', $commessa)[0] ?? '', '0');
-            Log::error("[DBG] Inchiostro jobId={$jobId}");
             if ($jobId && is_numeric($jobId)) {
                 $cacheKey = "prinect_ink_{$commessa}";
                 $cached = Cache::get($cacheKey);
@@ -218,7 +216,6 @@ class AnalisiCostiCommessaController extends Controller
                         $prinect = app(PrinectService::class);
                         $jobData = $prinect->getJobWorksteps((int) $jobId);
                         $worksteps = $jobData['worksteps'] ?? [];
-                        Log::error("[DBG] Prinect jobWorksteps {$jobId} count=" . count($worksteps) . " job_keys=" . json_encode(array_keys($jobData ?? [])));
                         $totalG = 0.0;
                         foreach ($worksteps as $ws) {
                             $types = $ws['types'] ?? [];
@@ -226,18 +223,13 @@ class AnalisiCostiCommessaController extends Controller
                             $produced = (int) ($ws['amountProduced'] ?? 0);
                             if ($produced <= 0) continue;
                             $ink = $prinect->getWorkstepInkConsumption((int) $jobId, $ws['id']);
-                            Log::error("[DBG] Prinect INK {$commessa} ws={$ws['id']} produced={$produced} full=" . json_encode($ink));
-                            // Cerca consumo in possibili chiavi
+                            // Prinect API: inkConsumptions[].estimatedConsumption = kg per 1000 fogli
                             $totKg1000 = 0.0;
-                            $items = $ink['inkConsumption'] ?? $ink['inks'] ?? $ink['colors'] ?? $ink['items'] ?? [];
-                            if (is_array($items)) {
-                                foreach ($items as $i) {
-                                    if (!is_array($i)) continue;
-                                    $val = $i['kgPer1000Sheets'] ?? $i['kg_per_1000_sheets'] ?? $i['consumption'] ?? $i['amount'] ?? $i['kg'] ?? 0;
-                                    $totKg1000 += (float) $val;
-                                }
+                            foreach (($ink['inkConsumptions'] ?? []) as $i) {
+                                $totKg1000 += (float) ($i['estimatedConsumption'] ?? 0);
                             }
-                            $totalG += $totKg1000 * $produced; // kg/1000 * sheets = kg → equivalente a g
+                            // Grammi totali = (kg/1000fogli) × fogli_prodotti
+                            $totalG += $totKg1000 * $produced;
                         }
                         $inchiostroCalc = round($totalG, 2);
                         if ($inchiostroCalc > 0) {
