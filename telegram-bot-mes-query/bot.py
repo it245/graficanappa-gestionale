@@ -5,7 +5,10 @@ Comandi fissi + LLM Claude per query naturali.
 import json
 import logging
 import os
+import time
 from datetime import datetime, timedelta
+from logging.handlers import TimedRotatingFileHandler
+from pathlib import Path
 
 from anthropic import Anthropic
 from dotenv import load_dotenv
@@ -36,6 +39,34 @@ logging.basicConfig(
     level=logging.INFO,
 )
 logger = logging.getLogger('mes-bot')
+
+# === Audit log GDPR art. 30 + Statuto Lavoratori art. 4 ===
+# JSONL append-only, 1 riga per query/comando. Rotation giornaliera, 90gg retention.
+# File: logs/audit_telegram_query.jsonl
+AUDIT_LOG_DIR = Path(os.environ.get('AUDIT_LOG_DIR', 'logs'))
+AUDIT_LOG_DIR.mkdir(parents=True, exist_ok=True)
+AUDIT_LOG_FILE = AUDIT_LOG_DIR / 'audit_telegram_query.jsonl'
+
+_audit_handler = TimedRotatingFileHandler(
+    AUDIT_LOG_FILE, when='midnight', backupCount=90, encoding='utf-8'
+)
+_audit_handler.setFormatter(logging.Formatter('%(message)s'))
+audit_logger = logging.getLogger('mes-bot-audit')
+audit_logger.setLevel(logging.INFO)
+audit_logger.addHandler(_audit_handler)
+audit_logger.propagate = False  # non duplicare su root logger
+
+
+def audit_query(uid: int, username: str | None, event: str, **fields) -> None:
+    """Scrive 1 record JSONL audit. event = 'query' | 'reject' | 'error' | 'command'."""
+    record = {
+        'ts': datetime.now().isoformat(timespec='seconds'),
+        'event': event,
+        'user_id': uid,
+        'username': username,
+        **fields,
+    }
+    audit_logger.info(json.dumps(record, ensure_ascii=False, default=str))
 
 anthropic_client = Anthropic(api_key=ANTHROPIC_API_KEY)
 
@@ -446,7 +477,9 @@ async def cmd_top(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
 # === LLM handler (messaggi liberi) ===
 async def handle_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
     uid = update.effective_user.id
+    username = update.effective_user.username
     if not is_authorized(uid):
+        audit_query(uid, username, 'reject', reason='not_authorized', query=update.message.text[:200])
         await reject(update)
         return
 
@@ -457,6 +490,7 @@ async def handle_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None
     low = user_msg.strip().lower()
     if low in ('reset', 'nuova chat', 'clear', '/reset'):
         CONV_HISTORY.pop(uid, None)
+        audit_query(uid, username, 'command', cmd='reset')
         await update.message.reply_text("🔄 Memoria conversazione resettata.")
         return
 
@@ -468,6 +502,12 @@ async def handle_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None
     # PII Pseudonimizer per-request: maschera cliente_nome/operatore_* nei tool_result
     # prima di inviarli a Claude. Restore dei token reali nel testo finale.
     pseudo = Pseudonymizer()
+    tools_used: list[str] = []
+    model_used = ANTHROPIC_MODEL
+    fallback_used = False
+    total_input_tokens = 0
+    total_output_tokens = 0
+    t_start = time.monotonic()
 
     for _ in range(max_iterations):
         # Retry su 529 Overloaded con modello fallback (Sonnet se Haiku scarico)
@@ -483,6 +523,8 @@ async def handle_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None
             if '529' in str(e) or 'overloaded' in str(e).lower():
                 logger.warning(f"Anthropic 529 su {ANTHROPIC_MODEL}, retry con sonnet")
                 fallback_model = 'claude-sonnet-4-5-20250929' if 'haiku' in ANTHROPIC_MODEL else 'claude-haiku-4-5-20251001'
+                model_used = fallback_model
+                fallback_used = True
                 resp = anthropic_client.messages.create(
                     model=fallback_model,
                     max_tokens=8192,
@@ -491,7 +533,16 @@ async def handle_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None
                     messages=messages,
                 )
             else:
+                audit_query(uid, username, 'error',
+                            query=user_msg[:500], error=str(e)[:300],
+                            model=model_used, tools_used=tools_used,
+                            duration_ms=int((time.monotonic() - t_start) * 1000))
                 raise
+
+        # Track token usage cumulativo (per turno tool_use può iterare più volte)
+        if hasattr(resp, 'usage') and resp.usage:
+            total_input_tokens += getattr(resp.usage, 'input_tokens', 0) or 0
+            total_output_tokens += getattr(resp.usage, 'output_tokens', 0) or 0
 
         if resp.stop_reason == "tool_use":
             tool_uses = [b for b in resp.content if b.type == "tool_use"]
@@ -500,6 +551,7 @@ async def handle_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None
             tool_results = []
             for tu in tool_uses:
                 logger.info(f"Tool: {tu.name} {tu.input}")
+                tools_used.append(tu.name)
                 result = tools.dispatch_tool(tu.name, tu.input)
                 # PII masking: nomi clienti/operatori → token prima del LLM
                 masked = pseudo.mask(result)
@@ -521,11 +573,26 @@ async def handle_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None
         # Strip tool_use/tool_result da history per ridurre token (rate limit Haiku 10K/min).
         clean = compact_history(messages, final)
         save_history(uid, clean)
+        # GDPR art. 30 audit: 1 record per query completata
+        audit_query(uid, username, 'query',
+                    query=user_msg[:500],
+                    response_len=len(final),
+                    tools_used=tools_used,
+                    pii_stats=pseudo.stats(),
+                    model=model_used,
+                    fallback_used=fallback_used,
+                    input_tokens=total_input_tokens,
+                    output_tokens=total_output_tokens,
+                    duration_ms=int((time.monotonic() - t_start) * 1000))
         # Telegram limit 4096 char/msg → split su confini riga
         await send_long(update, final)
         return
 
     save_history(uid, messages)
+    audit_query(uid, username, 'error',
+                query=user_msg[:500], error='max_iterations',
+                tools_used=tools_used, model=model_used,
+                duration_ms=int((time.monotonic() - t_start) * 1000))
     await update.message.reply_text("⚠️ Loop tool troppo lungo, query abortita.")
 
 
