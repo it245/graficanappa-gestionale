@@ -204,8 +204,10 @@ class AnalisiCostiCommessaController extends Controller
         }
 
         // Inchiostro da Prinect API on-the-fly (cache 1h solo se >0)
+        Log::error("[DBG] Inchiostro commessa={$commessa} inchiostroCalc={$inchiostroCalc} faseStampa=" . ($faseStampa ? 'OK' : 'NULL'));
         if ($inchiostroCalc === 0 && $faseStampa) {
             $jobId = ltrim(explode('-', $commessa)[0] ?? '', '0');
+            Log::error("[DBG] Inchiostro jobId={$jobId}");
             if ($jobId && is_numeric($jobId)) {
                 $cacheKey = "prinect_ink_{$commessa}";
                 $cached = Cache::get($cacheKey);
@@ -221,7 +223,7 @@ class AnalisiCostiCommessaController extends Controller
                             $produced = (int) ($ws['produced'] ?? 0);
                             if ($produced <= 0) continue;
                             $ink = $prinect->getWorkstepInkConsumption((int) $jobId, $ws['id']);
-                            Log::info("Prinect ink {$commessa} ws={$ws['id']}", ['response_keys' => array_keys($ink ?? []), 'produced' => $produced]);
+                            Log::error("[DBG] Prinect ink {$commessa} ws={$ws['id']} keys=" . json_encode(array_keys($ink ?? [])) . " produced={$produced} ink=" . json_encode($ink));
                             // Cerca consumo in possibili chiavi
                             $totKg1000 = 0.0;
                             $items = $ink['inkConsumption'] ?? $ink['inks'] ?? $ink['colors'] ?? $ink['items'] ?? [];
