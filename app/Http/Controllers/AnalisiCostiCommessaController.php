@@ -21,6 +21,8 @@ class AnalisiCostiCommessaController extends Controller
 
         $commesseTerminate = DB::table('ordini as o')
             ->join('ordine_fasi as orf', 'orf.ordine_id', '=', 'o.id')
+            ->leftJoin('fasi_catalogo as fc', 'fc.id', '=', 'orf.fase_catalogo_id')
+            ->leftJoin('reparti as r', 'r.id', '=', 'fc.reparto_id')
             ->select(
                 'o.commessa',
                 DB::raw('MAX(o.cliente_nome) as cliente_nome'),
@@ -28,8 +30,15 @@ class AnalisiCostiCommessaController extends Controller
                 DB::raw('MAX(o.data_prevista_consegna) as data_prevista_consegna')
             )
             ->groupBy('o.commessa')
-            // Tutte le fasi devono essere >=3 (terminate o consegnate). Nessuna fase a 0/1/2.
-            ->havingRaw("SUM(CASE WHEN orf.stato NOT REGEXP '^[0-9]+\$' OR CAST(orf.stato AS UNSIGNED) < 3 THEN 1 ELSE 0 END) = 0")
+            // Tutte le fasi di PRODUZIONE (≠ spedizione) devono essere >=3.
+            // Spedizione può essere a stato >=2 (consegna parziale in corso).
+            ->havingRaw("
+                SUM(CASE
+                    WHEN LOWER(COALESCE(r.nome, '')) = 'spedizione'
+                         THEN CASE WHEN orf.stato NOT REGEXP '^[0-9]+\$' OR CAST(orf.stato AS UNSIGNED) < 2 THEN 1 ELSE 0 END
+                    ELSE CASE WHEN orf.stato NOT REGEXP '^[0-9]+\$' OR CAST(orf.stato AS UNSIGNED) < 3 THEN 1 ELSE 0 END
+                END) = 0
+            ")
             ->havingRaw('COUNT(orf.id) > 0');
 
         if ($search !== '') {
