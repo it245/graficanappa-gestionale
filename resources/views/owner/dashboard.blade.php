@@ -5,6 +5,7 @@
 @section('topbar-title', 'Dashboard Produzione')
 
 @section('sidebar-items')
+{{-- ============== PRODUZIONE ============== --}}
 <div class="mes-sidebar-section">
     <div class="mes-sidebar-section-label">Produzione</div>
     <a href="{{ route('owner.dashboard') }}?op_token={{ request('op_token') }}" class="mes-sidebar-item active">
@@ -37,6 +38,7 @@
     </a>
 </div>
 
+{{-- ============== ANALISI ============== --}}
 <div class="mes-sidebar-section">
     <div class="mes-sidebar-section-label">Analisi</div>
     <a href="{{ route('owner.reportOre') }}?op_token={{ request('op_token') }}" class="mes-sidebar-item">
@@ -53,20 +55,21 @@
         @if($fasiCompletateOggi > 0)<span class="badge bg-success ms-auto" style="font-size:10px">{{ $fasiCompletateOggi }}</span>@endif
     </a>
     <button type="button" class="mes-sidebar-item" data-bs-toggle="modal" data-bs-target="#modalStorico">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><polyline points="7 14 12 9 16 13 21 8"/></svg>
         Storico Consegne
     </button>
 </div>
 
+{{-- ============== SPEDIZIONI ============== --}}
 <div class="mes-sidebar-section">
-    <div class="mes-sidebar-section-label">Strumenti</div>
+    <div class="mes-sidebar-section-label">Spedizioni</div>
     <button type="button" class="mes-sidebar-item" data-bs-toggle="modal" data-bs-target="#modalSpedizioniOggi">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
         Consegnati Oggi
         @if($commesseSpediteOggi > 0)<span class="badge bg-info ms-auto" style="font-size:10px">{{ $commesseSpediteOggi }}</span>@endif
     </button>
     <button type="button" class="mes-sidebar-item" data-bs-toggle="modal" data-bs-target="#modalBRT">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5"/><path d="M21 3l-9 9"/><path d="M8 3H3v5"/><path d="M3 3l9 9"/><path d="M16 21h5v-5"/><path d="M21 21l-9-9"/><path d="M8 21H3v-5"/><path d="M3 21l9-9"/></svg>
         BRT Tracking
         @if($spedizioniBRT->count() > 0)<span class="badge bg-warning text-dark ms-auto" style="font-size:10px">{{ $spedizioniBRT->count() }}</span>@endif
     </button>
@@ -75,6 +78,20 @@
         Note Consegne
         <span class="badge bg-danger ms-auto" style="font-size:10px; display:none" id="noteConsegneBadge">!</span>
     </button>
+</div>
+
+{{-- ============== MAGAZZINO ============== --}}
+<div class="mes-sidebar-section">
+    <div class="mes-sidebar-section-label">Magazzino</div>
+    <a href="{{ route('magazzino.dashboard') }}?op_token={{ request('op_token') }}" class="mes-sidebar-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+        Magazzino Carta
+    </a>
+</div>
+
+{{-- ============== PERSONALE ============== --}}
+<div class="mes-sidebar-section">
+    <div class="mes-sidebar-section-label">Personale</div>
     <button type="button" class="mes-sidebar-item" data-bs-toggle="modal" data-bs-target="#modalPresenti">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         Presenti
@@ -84,7 +101,12 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
         Storico Presenze
     </a>
-    @if(!($isReadonly ?? false))
+</div>
+
+{{-- ============== AZIONI (non readonly) ============== --}}
+@if(!($isReadonly ?? false))
+<div class="mes-sidebar-section">
+    <div class="mes-sidebar-section-label">Azioni</div>
     <form method="POST" action="{{ route('owner.syncOnda') }}" style="margin:0;" id="formSyncOnda" onsubmit="var b=this.querySelector('button');b.disabled=true;b.querySelector('.lbl').textContent='Sincronizzazione...';b.querySelector('svg').style.animation='mes-sidebar-spin 1s linear infinite';">
         @csrf
         <button type="submit" class="mes-sidebar-item" style="width:100%; background:none; border:none; text-align:left;">
@@ -101,6 +123,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
         Modifica multipla
     </button>
+</div>
+{{-- ============== TV ============== --}}
+<div class="mes-sidebar-section">
+    <div class="mes-sidebar-section-label">TV</div>
     <button type="button" class="mes-sidebar-item" data-bs-toggle="modal" data-bs-target="#modalNotaTv">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>
         Nota TV
@@ -109,8 +135,13 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
         TV Kiosk
     </a>
-    @endif
-    @if($isReadonly ?? false)
+</div>
+@endif
+
+{{-- ============== FILTRI (readonly Marco) ============== --}}
+@if($isReadonly ?? false)
+<div class="mes-sidebar-section">
+    <div class="mes-sidebar-section-label">Filtri</div>
     <button type="button" class="mes-sidebar-item" onclick="filtraRiferimentiMarco()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
         Rif. Marco
@@ -119,15 +150,8 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         Mostra tutte
     </button>
-    @endif
 </div>
-<div class="mes-sidebar-section">
-    <div class="mes-sidebar-section-label">Magazzino</div>
-    <a href="{{ route('magazzino.dashboard') }}?op_token={{ request('op_token') }}" class="mes-sidebar-item">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
-        Magazzino Carta
-    </a>
-</div>
+@endif
 @endsection
 
 @section('vendor-css')

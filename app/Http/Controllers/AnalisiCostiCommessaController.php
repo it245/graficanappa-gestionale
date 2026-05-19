@@ -21,8 +21,13 @@ class AnalisiCostiCommessaController extends Controller
 
         $commesseTerminate = DB::table('ordini as o')
             ->leftJoin('ordine_fasi as orf', 'orf.ordine_id', '=', 'o.id')
-            ->select('o.commessa', 'o.cliente_nome', 'o.descrizione', 'o.data_prevista_consegna')
-            ->groupBy('o.commessa', 'o.cliente_nome', 'o.descrizione', 'o.data_prevista_consegna')
+            ->select(
+                'o.commessa',
+                DB::raw('MAX(o.cliente_nome) as cliente_nome'),
+                DB::raw("GROUP_CONCAT(DISTINCT o.descrizione SEPARATOR ' · ') as descrizione"),
+                DB::raw('MAX(o.data_prevista_consegna) as data_prevista_consegna')
+            )
+            ->groupBy('o.commessa')
             ->havingRaw('SUM(CASE WHEN COALESCE(orf.stato, 0) < 3 THEN 1 ELSE 0 END) = 0')
             ->havingRaw('SUM(CASE WHEN orf.stato >= 3 THEN 1 ELSE 0 END) > 0');
 
@@ -35,7 +40,7 @@ class AnalisiCostiCommessaController extends Controller
         }
 
         $righe = $commesseTerminate
-            ->orderByDesc('o.data_prevista_consegna')
+            ->orderByDesc('data_prevista_consegna')
             ->paginate(50)
             ->appends(['q' => $search]);
 
