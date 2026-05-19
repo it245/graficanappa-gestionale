@@ -204,8 +204,8 @@ class AnalisiCostiCommessaController extends Controller
         }
 
         // Inchiostro da Prinect API on-the-fly (cache 1h solo se >0)
-        Log::error("[DBG] Inchiostro commessa={$commessa} inchiostroCalc={$inchiostroCalc} faseStampa=" . ($faseStampa ? 'OK' : 'NULL'));
-        if ($inchiostroCalc === 0 && $faseStampa) {
+        Log::error("[DBG] Inchiostro commessa={$commessa} inchiostroCalc={$inchiostroCalc} type=" . gettype($inchiostroCalc) . " faseStampa=" . ($faseStampa ? 'OK' : 'NULL'));
+        if ($inchiostroCalc == 0 && $faseStampa) {
             $jobId = ltrim(explode('-', $commessa)[0] ?? '', '0');
             Log::error("[DBG] Inchiostro jobId={$jobId}");
             if ($jobId && is_numeric($jobId)) {
