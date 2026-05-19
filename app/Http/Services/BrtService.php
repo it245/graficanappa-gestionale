@@ -47,9 +47,10 @@ class BrtService
                 'message' => 'Errore API BRT: ' . $response->status(),
             ];
         } catch (\Exception $e) {
+            Log::warning('BRT API errore connessione', ['error' => $e->getMessage()]);
             return [
                 'error' => true,
-                'message' => 'Errore connessione BRT: ' . $e->getMessage(),
+                'message' => 'Errore connessione BRT, riprova tra qualche minuto',
             ];
         }
     }
