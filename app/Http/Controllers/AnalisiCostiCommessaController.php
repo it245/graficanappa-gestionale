@@ -2,13 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Services\PrinectService;
 use App\Models\CommessaAltroCosto;
 use App\Models\CommessaDatiCosti;
 use App\Models\Ordine;
 use App\Models\OrdineFase;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class AnalisiCostiCommessaController extends Controller
 {
@@ -181,6 +184,38 @@ class AnalisiCostiCommessaController extends Controller
                 $tiriCalc += (float) ($fase->tiro_cm_foil ?? 0);
                 $inchiostroCalc += (float) ($fase->inchiostro_g ?? 0);
                 $scartiCalc += (int) ($fase->scarti ?? 0);
+            }
+        }
+
+        // Inchiostro da Prinect API on-the-fly (cache 1h)
+        // Per ora supporto solo offset XL106 — Prinect Workflow Heidelberg.
+        if ($inchiostroCalc === 0 && $faseStampa) {
+            $jobId = ltrim(explode('-', $commessa)[0] ?? '', '0');
+            if ($jobId && is_numeric($jobId)) {
+                $inchiostroCalc = Cache::remember("prinect_ink_{$commessa}", 3600, function () use ($jobId) {
+                    try {
+                        $prinect = app(PrinectService::class);
+                        $worksteps = $prinect->getJobWorksteps((int) $jobId)['worksteps'] ?? [];
+                        $totalG = 0.0;
+                        foreach ($worksteps as $ws) {
+                            if (!in_array('ConventionalPrinting', $ws['types'] ?? [])) continue;
+                            $produced = (int) ($ws['produced'] ?? 0);
+                            if ($produced <= 0) continue;
+                            $ink = $prinect->getWorkstepInkConsumption((int) $jobId, $ws['id']);
+                            // Endpoint ritorna consumo per colore in kg/1000 fogli
+                            // Totale g = SUM(kg/1000) * 1000 * fogli_prodotti
+                            $totKg1000 = 0.0;
+                            foreach (($ink['inkConsumption'] ?? $ink['inks'] ?? []) as $i) {
+                                $totKg1000 += (float) ($i['kgPer1000Sheets'] ?? $i['consumption'] ?? 0);
+                            }
+                            $totalG += ($totKg1000 * $produced); // (kg/1000)*sheets = kg → *1000 = g; equivalente
+                        }
+                        return round($totalG, 2);
+                    } catch (\Throwable $e) {
+                        Log::warning("Inchiostro Prinect fallito {$jobId}: ".$e->getMessage());
+                        return 0.0;
+                    }
+                });
             }
         }
 
