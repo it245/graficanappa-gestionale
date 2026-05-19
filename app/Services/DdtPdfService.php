@@ -296,6 +296,32 @@ class DdtPdfService
         return ltrim($parts[0], '0') ?: '0';
     }
 
+    /**
+     * Cache per-request mapping ordini DB normalizzati (evita query per ogni riga DDT).
+     */
+    private static ?array $dbRifCache = null;
+
+    /**
+     * Lookup RIF in DB ordini.ordine_cliente (fallback quando Excel non ha più riga).
+     * Match per commessa esatta + descrizione normalizzata.
+     */
+    private static function lookupRifDaDB(string $codCommessa, string $descNorm): ?string
+    {
+        if (self::$dbRifCache === null) {
+            self::$dbRifCache = [];
+            $ordini = \DB::table('ordini')
+                ->whereNotNull('ordine_cliente')
+                ->where('ordine_cliente', 'LIKE', 'P0%')
+                ->select('commessa', 'descrizione', 'ordine_cliente')
+                ->get();
+            foreach ($ordini as $o) {
+                $key = $o->commessa . '|' . self::normalizza($o->descrizione ?? '');
+                self::$dbRifCache[$key] = $o->ordine_cliente;
+            }
+        }
+        return self::$dbRifCache[$codCommessa . '|' . $descNorm] ?? null;
+    }
+
     private static function preparaRighe(array $righe, array $rifMap): array
     {
         $risultato = [];
@@ -309,9 +335,9 @@ class DdtPdfService
             $commCorta = self::commessaCorta($codCommessa);
             $descNorm = self::normalizza($riga->Descrizione ?? '');
 
-            // Match articolo: prima esatto, poi parziale (DDT contiene Excel come substring).
-            // Es. DDT "1KGNOISETTESCARTAZUCCHERO" matcha Excel "1KGNOISETTESCARTA".
-            // Solo entro stessa commessa: niente fallback su commessa.
+            // Match articolo: prima esatto Excel, poi parziale Excel, poi fallback DB.
+            // Maxtris rimuove righe Excel quando commessa chiusa → fallback DB ordini.ordine_cliente
+            // mantiene RIF storico già popolato dal command popola-rif.
             $rifOrd = $dettaglio[$commCorta . '|' . $descNorm] ?? '';
             if (!$rifOrd) {
                 $prefix = $commCorta . '|';
@@ -324,6 +350,10 @@ class DdtPdfService
                         break;
                     }
                 }
+            }
+            // Fallback DB: ordini.ordine_cliente già popolato (commessa+desc normalizzata)
+            if (!$rifOrd && $codCommessa) {
+                $rifOrd = self::lookupRifDaDB($codCommessa, $descNorm) ?? '';
             }
 
             $risultato[] = [
