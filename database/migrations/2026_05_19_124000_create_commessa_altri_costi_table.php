@@ -16,7 +16,7 @@ return new class extends Migration
                 'prove_colore', 'materiale_ausiliario', 'altro',
             ])->default('altro');
             $table->string('descrizione', 500)->nullable();
-            $table->decimal('importo', 10, 2);
+            $table->decimal('importo', 10, 2)->nullable();
             $table->date('data');
             $table->string('autore', 100)->nullable();
             $table->timestamps();

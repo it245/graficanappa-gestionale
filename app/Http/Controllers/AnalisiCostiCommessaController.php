@@ -46,7 +46,45 @@ class AnalisiCostiCommessaController extends Controller
             ->paginate(50)
             ->appends(['q' => $search]);
 
-        return view('owner.costi.analisi_commesse_lista', compact('righe', 'search'));
+        // Aggregati riepilogo per le commesse della pagina corrente
+        $commesseList = collect($righe->items())->pluck('commessa')->all();
+        $aggregates = [];
+        $fogli = [];
+        $altri = [];
+
+        if (!empty($commesseList)) {
+            $aggregates = DB::table('ordini as o')
+                ->join('ordine_fasi as orf', 'orf.ordine_id', '=', 'o.id')
+                ->whereIn('o.commessa', $commesseList)
+                ->whereNotNull('orf.data_inizio')
+                ->select(
+                    'o.commessa',
+                    DB::raw('SUM(COALESCE(orf.tempo_avviamento_sec,0) + COALESCE(orf.tempo_esecuzione_sec,0)) as ore_sec'),
+                    DB::raw('SUM(COALESCE(orf.fogli_scarto,0) + COALESCE(orf.scarti,0)) as scarti_tot')
+                )
+                ->groupBy('o.commessa')
+                ->get()
+                ->keyBy('commessa');
+
+            $fogli = DB::table('ordini as o')
+                ->join('ordine_fasi as orf', 'orf.ordine_id', '=', 'o.id')
+                ->leftJoin('fasi_catalogo as fc', 'fc.id', '=', 'orf.fase_catalogo_id')
+                ->leftJoin('reparti as r', 'r.id', '=', 'fc.reparto_id')
+                ->whereIn('o.commessa', $commesseList)
+                ->whereIn(DB::raw('LOWER(r.nome)'), ['stampa offset', 'digitale'])
+                ->select('o.commessa', DB::raw('MAX(orf.fogli_buoni) as fogli'))
+                ->groupBy('o.commessa')
+                ->get()
+                ->keyBy('commessa');
+
+            $altri = \App\Models\CommessaAltroCosto::whereIn('commessa', $commesseList)
+                ->select('commessa', DB::raw('SUM(importo) as tot'))
+                ->groupBy('commessa')
+                ->get()
+                ->keyBy('commessa');
+        }
+
+        return view('owner.costi.analisi_commesse_lista', compact('righe', 'search', 'aggregates', 'fogli', 'altri'));
     }
 
     /**
@@ -74,8 +112,10 @@ class AnalisiCostiCommessaController extends Controller
                 if ($sec === 0) {
                     $sec = (int) $fase->operatori->sum(function ($op) {
                         if (!$op->pivot->data_inizio || !$op->pivot->data_fine) return 0;
-                        $pausa = $op->pivot->secondi_pausa ?? 0;
-                        return max(Carbon::parse($op->pivot->data_fine)->diffInSeconds(Carbon::parse($op->pivot->data_inizio)) - $pausa, 0);
+                        $pausa = (int) ($op->pivot->secondi_pausa ?? 0);
+                        $diff = Carbon::parse($op->pivot->data_fine)->getTimestamp()
+                              - Carbon::parse($op->pivot->data_inizio)->getTimestamp();
+                        return max($diff - $pausa, 0);
                     });
                 }
                 $oreReparto[$repartoNome] += $sec;
@@ -151,7 +191,7 @@ class AnalisiCostiCommessaController extends Controller
         $data = $request->validate([
             'categoria'   => 'required|in:' . implode(',', array_keys(CommessaAltroCosto::CATEGORIE)),
             'descrizione' => 'nullable|string|max:500',
-            'importo'     => 'required|numeric|min:0',
+            'importo'     => 'nullable|numeric|min:0',
             'data'        => 'required|date',
         ]);
 
@@ -159,7 +199,7 @@ class AnalisiCostiCommessaController extends Controller
             'commessa'    => $commessa,
             'categoria'   => $data['categoria'],
             'descrizione' => $data['descrizione'] ?? null,
-            'importo'     => $data['importo'],
+            'importo'     => $data['importo'] ?? 0,
             'data'        => $data['data'],
             'autore'      => session('admin_nome') ?? session('operatore_nome') ?? 'admin',
         ]);

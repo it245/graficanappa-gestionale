@@ -93,8 +93,8 @@
                                 <input type="text" name="descrizione" class="form-control form-control-sm" placeholder="(opzionale)" maxlength="500">
                             </div>
                             <div class="col-md-2">
-                                <label class="form-label small mb-0">Importo (€) *</label>
-                                <input type="number" step="0.01" min="0" name="importo" class="form-control form-control-sm" required>
+                                <label class="form-label small mb-0">Importo (€)</label>
+                                <input type="number" step="0.01" min="0" name="importo" class="form-control form-control-sm" placeholder="(opzionale)">
                             </div>
                             <div class="col-md-2">
                                 <label class="form-label small mb-0">Data *</label>
