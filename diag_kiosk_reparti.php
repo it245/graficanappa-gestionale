@@ -10,7 +10,9 @@ use Carbon\Carbon;
 $oggi = Carbon::today()->format('Y-m-d');
 $ieri = Carbon::yesterday()->format('Y-m-d');
 
-$reparti = ['fustella piana', 'fustella cilindrica', 'legatoria', 'piegaincolla', 'stampa offset'];
+$reparti = ['fustella piana', 'fustella cilindrica', 'stampa offset'];
+$inizioTurnoOra = ['fustella piana' => 6, 'fustella cilindrica' => 8, 'stampa offset' => 6];
+$oreDispMap = ['fustella piana' => 16, 'fustella cilindrica' => 8, 'stampa offset' => 16];
 
 foreach ($reparti as $nome) {
     $repartoIds = Reparto::whereIn('nome', [$nome])->pluck('id');
