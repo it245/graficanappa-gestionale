@@ -28,7 +28,7 @@ class AnalisiCostiCommessaController extends Controller
                 DB::raw('MAX(o.data_prevista_consegna) as data_prevista_consegna')
             )
             ->groupBy('o.commessa')
-            ->havingRaw('SUM(CASE WHEN orf.stato < 3 THEN 1 ELSE 0 END) = 0')
+            ->havingRaw("SUM(CASE WHEN orf.stato NOT REGEXP '^[0-9]+\$' OR CAST(orf.stato AS UNSIGNED) < 3 THEN 1 ELSE 0 END) = 0")
             ->havingRaw('COUNT(orf.id) > 0');
 
         if ($search !== '') {
