@@ -9,9 +9,17 @@ $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
 use Illuminate\Support\Facades\DB;
 
-$patterns = ['ATTPreventiv%', 'ATTArtiCicli%', 'ATTRapport%', 'ATTConsuntiv%', 'STDArticoli', 'STDListini%', 'ATTCommesse%', '%Costo%', '%Cost'];
+$patterns = [
+    'STDArticoli', 'STDArticoliDati%', 'STDArti%',
+    '%Prezzo%', '%Prz%',
+    '%Cicl%', '%Rapport%', '%Consunt%', '%Preventiv%', '%Offerta%',
+    '%Commess%', '%Fase%', '%Ciclo%', '%Lavoraz%',
+    'ATTDoc%', 'ATT%Cost%',
+    'NVP%',
+];
 
-echo "=== TABELLE ONDA candidato costi/preventivi ===\n";
+echo "=== TABELLE ONDA candidato costi/preventivi/cicli ===\n";
+$seen = [];
 foreach ($patterns as $p) {
     $tabs = DB::connection('onda')->select(
         "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME LIKE ? ORDER BY TABLE_NAME",
@@ -19,19 +27,35 @@ foreach ($patterns as $p) {
     );
     foreach ($tabs as $t) {
         $name = $t->TABLE_NAME;
+        if (isset($seen[$name])) continue;
+        $seen[$name] = true;
+
         try {
             $count = DB::connection('onda')->selectOne("SELECT COUNT(*) AS c FROM [$name]")->c;
         } catch (\Throwable $e) {
             $count = 'N/A';
         }
-        echo "\n→ {$name} (righe: {$count})\n";
+        if ($count === 0 || $count === '0') continue; // skip tabelle vuote
 
+        // Solo se contiene colonna costo/prezzo/preventivo/cic/tempo/ore/euro
         $cols = DB::connection('onda')->select(
-            "SELECT TOP 15 COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = ? ORDER BY ORDINAL_POSITION",
+            "SELECT COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = ? ORDER BY ORDINAL_POSITION",
             [$name]
         );
+        $relevante = false;
         foreach ($cols as $c) {
-            echo "    {$c->COLUMN_NAME} ({$c->DATA_TYPE})\n";
+            if (preg_match('/cost|prezz|prz|preventiv|offerta|consunt|cicl|tempo|ore|euro|valor|import/i', $c->COLUMN_NAME)) {
+                $relevante = true;
+                break;
+            }
+        }
+        if (!$relevante) continue;
+
+        echo "\n→ {$name} (righe: {$count})\n";
+        foreach ($cols as $c) {
+            if (preg_match('/cost|prezz|prz|preventiv|offerta|consunt|cicl|tempo|ore|euro|valor|import|cod|qta/i', $c->COLUMN_NAME)) {
+                echo "    {$c->COLUMN_NAME} ({$c->DATA_TYPE})\n";
+            }
         }
     }
 }
