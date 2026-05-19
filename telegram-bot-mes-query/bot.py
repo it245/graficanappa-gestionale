@@ -470,13 +470,28 @@ async def handle_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None
     pseudo = Pseudonymizer()
 
     for _ in range(max_iterations):
-        resp = anthropic_client.messages.create(
-            model=ANTHROPIC_MODEL,
-            max_tokens=8192,
-            system=SYSTEM_PROMPT,
-            tools=tools.TOOLS_SCHEMA,
-            messages=messages,
-        )
+        # Retry su 529 Overloaded con modello fallback (Sonnet se Haiku scarico)
+        try:
+            resp = anthropic_client.messages.create(
+                model=ANTHROPIC_MODEL,
+                max_tokens=8192,
+                system=SYSTEM_PROMPT,
+                tools=tools.TOOLS_SCHEMA,
+                messages=messages,
+            )
+        except Exception as e:
+            if '529' in str(e) or 'overloaded' in str(e).lower():
+                logger.warning(f"Anthropic 529 su {ANTHROPIC_MODEL}, retry con sonnet")
+                fallback_model = 'claude-sonnet-4-5-20250929' if 'haiku' in ANTHROPIC_MODEL else 'claude-haiku-4-5-20251001'
+                resp = anthropic_client.messages.create(
+                    model=fallback_model,
+                    max_tokens=8192,
+                    system=SYSTEM_PROMPT,
+                    tools=tools.TOOLS_SCHEMA,
+                    messages=messages,
+                )
+            else:
+                raise
 
         if resp.stop_reason == "tool_use":
             tool_uses = [b for b in resp.content if b.type == "tool_use"]
