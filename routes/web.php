@@ -154,6 +154,12 @@ Route::middleware(['admin'])->prefix('admin')->group(function() {
     Route::get('/costi/report', [CostiMarginiController::class, 'reportCosti'])->name('admin.costi.report');
     Route::get('/costi/report/excel', [CostiMarginiController::class, 'reportCostiExcel'])->name('admin.costi.reportExcel');
 
+    // Analisi Costi a Campione per Commessa
+    Route::get('/costi/analisi', [\App\Http\Controllers\AnalisiCostiCommessaController::class, 'index'])->name('admin.costi.analisi.index');
+    Route::get('/costi/analisi/{commessa}', [\App\Http\Controllers\AnalisiCostiCommessaController::class, 'show'])->name('admin.costi.analisi.show');
+    Route::post('/costi/analisi/{commessa}/altri', [\App\Http\Controllers\AnalisiCostiCommessaController::class, 'storeAltroCosto'])->name('admin.costi.analisi.storeAltro');
+    Route::delete('/costi/analisi/altri/{id}', [\App\Http\Controllers\AnalisiCostiCommessaController::class, 'deleteAltroCosto'])->name('admin.costi.analisi.deleteAltro');
+
     // Audit Log
     Route::get('/audit-log', [DashboardAdminController::class, 'auditLog'])->name('admin.auditLog');
 });
