@@ -36,6 +36,18 @@
                         @empty
                         <tr><td colspan="2" class="text-muted small">Nessuna fase con ore registrate.</td></tr>
                         @endforelse
+                        @if($spedizioneStato)
+                        <tr>
+                            <td>spedizione</td>
+                            <td class="text-end">
+                                @if($spedizioneStato === 'totale')
+                                    <span class="badge bg-success">Totale</span>
+                                @else
+                                    <span class="badge bg-warning text-dark">Parziale</span>
+                                @endif
+                            </td>
+                        </tr>
+                        @endif
                     </tbody>
                 </table>
             </div>

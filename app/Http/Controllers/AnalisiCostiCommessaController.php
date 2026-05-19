@@ -132,13 +132,29 @@ class AnalisiCostiCommessaController extends Controller
         }
 
         // 1. Ore lavorate per reparto (h:m, no €)
+        // Escludi fasi esterne (lavorate fuori) e spedizione (mostrata a parte come stato)
         $oreReparto = [];
+        $spedizioneStato = null; // 'parziale' | 'totale' | null
         foreach ($ordini as $ordine) {
             foreach ($ordine->fasi as $fase) {
                 $repartoNome = $fase->faseCatalogo->reparto->nome ?? 'Sconosciuto';
-                if (!isset($oreReparto[$repartoNome])) {
-                    $oreReparto[$repartoNome] = 0;
+                $repartoLower = strtolower($repartoNome);
+
+                $esternoFlag = (bool) ($fase->esterno ?? false);
+                $matchInviato = preg_match('/Inviato\s+a:/i', $fase->note ?? '');
+                if ($esternoFlag || $matchInviato) continue; // escludi esterne
+
+                if ($repartoLower === 'spedizione') {
+                    $statoInt = is_numeric($fase->stato) ? (int) $fase->stato : 0;
+                    if ($statoInt >= 3) {
+                        $spedizioneStato = 'totale';
+                    } elseif ($statoInt >= 2 && $spedizioneStato !== 'totale') {
+                        $spedizioneStato = 'parziale';
+                    }
+                    continue; // no ore in tabella
                 }
+
+                if (!isset($oreReparto[$repartoNome])) $oreReparto[$repartoNome] = 0;
                 $sec = (int) (($fase->tempo_avviamento_sec ?? 0) + ($fase->tempo_esecuzione_sec ?? 0));
                 if ($sec === 0) {
                     $sec = (int) $fase->operatori->sum(function ($op) {
@@ -279,6 +295,7 @@ class AnalisiCostiCommessaController extends Controller
             'fasiEditable'      => $fasiEditable,
             'lavorazioniEsterne'=> $lavorazioniEsterne,
             'override'          => $override,
+            'spedizioneStato'   => $spedizioneStato,
             'commessa'         => $commessa,
             'cliente'          => $primoOrdine->cliente_nome ?? '-',
             'descrizione'      => $primoOrdine->descrizione ?? '-',
