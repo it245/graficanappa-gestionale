@@ -51,6 +51,7 @@ class AnalisiCostiCommessaController extends Controller
         $aggregates = [];
         $fogli = [];
         $altri = [];
+        $oreReparti = [];
 
         if (!empty($commesseList)) {
             $aggregates = DB::table('ordini as o')
@@ -60,11 +61,29 @@ class AnalisiCostiCommessaController extends Controller
                 ->select(
                     'o.commessa',
                     DB::raw('SUM(COALESCE(orf.tempo_avviamento_sec,0) + COALESCE(orf.tempo_esecuzione_sec,0)) as ore_sec'),
-                    DB::raw('SUM(COALESCE(orf.fogli_scarto,0) + COALESCE(orf.scarti,0)) as scarti_tot')
+                    DB::raw('SUM(COALESCE(orf.scarti,0)) as scarti_tot'),
+                    DB::raw('SUM(COALESCE(orf.tiro_cm_foil,0)) as tiri_tot'),
+                    DB::raw('SUM(COALESCE(orf.inchiostro_g,0)) as inchiostro_tot')
                 )
                 ->groupBy('o.commessa')
                 ->get()
                 ->keyBy('commessa');
+
+            // Ore per reparto (per tooltip/breakdown in lista)
+            $oreReparti = DB::table('ordini as o')
+                ->join('ordine_fasi as orf', 'orf.ordine_id', '=', 'o.id')
+                ->leftJoin('fasi_catalogo as fc', 'fc.id', '=', 'orf.fase_catalogo_id')
+                ->leftJoin('reparti as r', 'r.id', '=', 'fc.reparto_id')
+                ->whereIn('o.commessa', $commesseList)
+                ->whereNotNull('orf.data_inizio')
+                ->select(
+                    'o.commessa',
+                    DB::raw('COALESCE(r.nome, "?") as reparto'),
+                    DB::raw('SUM(COALESCE(orf.tempo_avviamento_sec,0) + COALESCE(orf.tempo_esecuzione_sec,0)) as sec')
+                )
+                ->groupBy('o.commessa', 'r.nome')
+                ->get()
+                ->groupBy('commessa');
 
             $fogli = DB::table('ordini as o')
                 ->join('ordine_fasi as orf', 'orf.ordine_id', '=', 'o.id')
@@ -84,7 +103,7 @@ class AnalisiCostiCommessaController extends Controller
                 ->keyBy('commessa');
         }
 
-        return view('owner.costi.analisi_commesse_lista', compact('righe', 'search', 'aggregates', 'fogli', 'altri'));
+        return view('owner.costi.analisi_commesse_lista', compact('righe', 'search', 'aggregates', 'fogli', 'altri', 'oreReparti'));
     }
 
     /**
@@ -152,11 +171,11 @@ class AnalisiCostiCommessaController extends Controller
             }
         }
 
-        // 5. Scarti (SUM tutte fasi)
+        // 5. Scarti (operatore dichiarati, NO fogli_scarto Prinect)
         $scartiTotali = 0;
         foreach ($ordini as $ordine) {
             foreach ($ordine->fasi as $fase) {
-                $scartiTotali += (int) ($fase->fogli_scarto ?? 0) + (int) ($fase->scarti ?? 0);
+                $scartiTotali += (int) ($fase->scarti ?? 0);
             }
         }
 
@@ -165,10 +184,32 @@ class AnalisiCostiCommessaController extends Controller
             ->orderByDesc('data')->orderByDesc('id')->get();
         $totaleAltriCosti = (float) $altriCosti->sum('importo');
 
+        // Lista fasi editable (tutte le fasi della commessa, ordinate per data_inizio)
+        $fasiEditable = collect();
+        foreach ($ordini as $ordine) {
+            foreach ($ordine->fasi as $fase) {
+                $fasiEditable->push((object) [
+                    'id'            => $fase->id,
+                    'fase'          => $fase->fase,
+                    'reparto'       => $fase->faseCatalogo->reparto->nome ?? '-',
+                    'descrizione'   => $ordine->descrizione,
+                    'stato'         => $fase->stato,
+                    'data_inizio'   => $fase->data_inizio,
+                    'fogli_buoni'   => $fase->fogli_buoni,
+                    'fogli_scarto'  => $fase->fogli_scarto,
+                    'scarti'        => $fase->scarti,
+                    'tiro_cm_foil'  => $fase->tiro_cm_foil ?? null,
+                    'inchiostro_g'  => $fase->inchiostro_g ?? null,
+                ]);
+            }
+        }
+        $fasiEditable = $fasiEditable->sortBy('data_inizio')->values();
+
         // Info commessa
         $primoOrdine = $ordini->first();
 
         return view('owner.costi.analisi_commessa_dettaglio', [
+            'fasiEditable'     => $fasiEditable,
             'commessa'         => $commessa,
             'cliente'          => $primoOrdine->cliente_nome ?? '-',
             'descrizione'      => $primoOrdine->descrizione ?? '-',
@@ -206,6 +247,34 @@ class AnalisiCostiCommessaController extends Controller
 
         return redirect()->route('owner.costi.analisi.show', $commessa)
             ->with('success', 'Costo aggiunto.');
+    }
+
+    /**
+     * Aggiorna campi modificabili di una fase (tiro, inchiostro, scarti, fogli).
+     */
+    public function updateFase(Request $request, int $faseId)
+    {
+        $data = $request->validate([
+            'tiro_cm_foil' => 'nullable|numeric|min:0',
+            'inchiostro_g' => 'nullable|numeric|min:0',
+            'fogli_scarto' => 'nullable|integer|min:0',
+            'scarti'       => 'nullable|integer|min:0',
+            'fogli_buoni'  => 'nullable|integer|min:0',
+        ]);
+
+        $fase = OrdineFase::findOrFail($faseId);
+        $ordine = $fase->ordine;
+        if (!$ordine) abort(404);
+
+        foreach (['tiro_cm_foil', 'inchiostro_g', 'fogli_scarto', 'scarti', 'fogli_buoni'] as $f) {
+            if (array_key_exists($f, $data)) {
+                $fase->{$f} = $data[$f] === '' ? null : $data[$f];
+            }
+        }
+        $fase->save();
+
+        return redirect()->route('owner.costi.analisi.show', $ordine->commessa)
+            ->with('success', "Fase {$fase->fase} aggiornata.");
     }
 
     public function deleteAltroCosto(int $id)

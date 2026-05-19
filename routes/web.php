@@ -98,6 +98,7 @@ Route::get('/owner/costi/analisi', [\App\Http\Controllers\AnalisiCostiCommessaCo
 Route::get('/owner/costi/analisi/{commessa}', [\App\Http\Controllers\AnalisiCostiCommessaController::class, 'show'])->name('owner.costi.analisi.show');
 Route::post('/owner/costi/analisi/{commessa}/altri', [\App\Http\Controllers\AnalisiCostiCommessaController::class, 'storeAltroCosto'])->name('owner.costi.analisi.storeAltro');
 Route::delete('/owner/costi/analisi/altri/{id}', [\App\Http\Controllers\AnalisiCostiCommessaController::class, 'deleteAltroCosto'])->name('owner.costi.analisi.deleteAltro');
+Route::post('/owner/costi/analisi/fase/{faseId}', [\App\Http\Controllers\AnalisiCostiCommessaController::class, 'updateFase'])->whereNumber('faseId')->name('owner.costi.analisi.updateFase');
 Route::post('/owner/note-spedizione', [DashboardSpedizioneController::class, 'salvaNotaGiornaliera'])->name('owner.salvaNotaSpedizione');
 Route::get('/owner/note-spedizione-check', [DashboardSpedizioneController::class, 'noteUltimoAggiornamento'])->name('owner.noteSpedizioneCheck');
 Route::get('/owner/audit-log', [DashboardOwnerController::class, 'auditLog'])->name('owner.auditLog');

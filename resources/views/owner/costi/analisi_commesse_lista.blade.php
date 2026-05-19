@@ -35,14 +35,16 @@ $fmtHm = function ($sec) {
                 <thead class="table-dark">
                     <tr>
                         <th style="width:110px;">Commessa</th>
-                        <th style="width:160px;">Cliente</th>
+                        <th style="width:150px;">Cliente</th>
                         <th>Descrizione</th>
-                        <th style="width:100px;">Consegna</th>
-                        <th style="width:80px;text-align:right;">Ore Tot.</th>
+                        <th style="width:95px;">Consegna</th>
+                        <th style="width:75px;text-align:right;" title="Totale ore lavorate (hover per breakdown reparto)">Ore</th>
                         <th style="width:80px;text-align:right;">Fogli</th>
+                        <th style="width:80px;text-align:right;">Tiri</th>
+                        <th style="width:90px;text-align:right;">Inchiostro</th>
                         <th style="width:70px;text-align:right;">Scarti</th>
-                        <th style="width:90px;text-align:right;">Altri €</th>
-                        <th style="width:80px;text-align:right;">Azione</th>
+                        <th style="width:85px;text-align:right;">Altri €</th>
+                        <th style="width:80px;text-align:right;"></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -51,22 +53,26 @@ $fmtHm = function ($sec) {
                         $agg = $aggregates[$r->commessa] ?? null;
                         $fg  = $fogli[$r->commessa] ?? null;
                         $ac  = $altri[$r->commessa] ?? null;
+                        $orepr = $oreReparti[$r->commessa] ?? collect();
+                        $tooltipOre = $orepr->map(fn($x) => $x->reparto.': '.$fmtHm($x->sec))->implode("\n");
                     @endphp
                     <tr>
                         <td><strong>{{ $r->commessa }}</strong></td>
-                        <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ $r->cliente_nome ?? '' }}">{{ $r->cliente_nome ?? '-' }}</td>
-                        <td style="max-width:350px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ $r->descrizione ?? '' }}">{{ $r->descrizione ?? '-' }}</td>
+                        <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ $r->cliente_nome ?? '' }}">{{ $r->cliente_nome ?? '-' }}</td>
+                        <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ $r->descrizione ?? '' }}">{{ $r->descrizione ?? '-' }}</td>
                         <td>{{ $r->data_prevista_consegna ? \Carbon\Carbon::parse($r->data_prevista_consegna)->format('d/m/Y') : '-' }}</td>
-                        <td class="text-end font-monospace">{{ $agg ? $fmtHm($agg->ore_sec) : '—' }}</td>
+                        <td class="text-end font-monospace" title="{{ $tooltipOre }}">{{ $agg ? $fmtHm($agg->ore_sec) : '—' }}</td>
                         <td class="text-end font-monospace">{{ $fg && $fg->fogli ? number_format($fg->fogli, 0, ',', '.') : '—' }}</td>
+                        <td class="text-end font-monospace">{{ $agg && $agg->tiri_tot > 0 ? number_format($agg->tiri_tot, 2, ',', '.') : '—' }}</td>
+                        <td class="text-end font-monospace">{{ $agg && $agg->inchiostro_tot > 0 ? number_format($agg->inchiostro_tot, 2, ',', '.') : '—' }}</td>
                         <td class="text-end font-monospace text-danger">{{ $agg && $agg->scarti_tot > 0 ? number_format($agg->scarti_tot, 0, ',', '.') : '—' }}</td>
                         <td class="text-end font-monospace">{{ $ac && $ac->tot > 0 ? '€ '.number_format($ac->tot, 2, ',', '.') : '—' }}</td>
                         <td class="text-end">
-                            <a href="{{ route('owner.costi.analisi.show', $r->commessa) }}?op_token={{ request('op_token') }}" class="btn btn-sm btn-primary">Dettaglio</a>
+                            <a href="{{ route('owner.costi.analisi.show', $r->commessa) }}?op_token={{ request('op_token') }}" class="btn btn-sm btn-primary">Apri</a>
                         </td>
                     </tr>
                     @empty
-                    <tr><td colspan="9" class="text-center text-muted py-4">Nessuna commessa terminata trovata.</td></tr>
+                    <tr><td colspan="11" class="text-center text-muted py-4">Nessuna commessa terminata trovata.</td></tr>
                     @endforelse
                 </tbody>
             </table>

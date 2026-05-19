@@ -68,6 +68,50 @@
             </div>
         </div>
 
+        {{-- Fasi - dati modificabili --}}
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-light"><strong>Fasi — dati modificabili</strong>
+                    <small class="text-muted ms-2">Tiro · Inchiostro · Scarti operatore · Fogli buoni</small>
+                </div>
+                <div class="table-responsive">
+                <table class="table table-sm mb-0" style="font-size:12px;">
+                    <thead>
+                        <tr>
+                            <th style="width:130px;">Fase</th>
+                            <th style="width:120px;">Reparto</th>
+                            <th>Descrizione</th>
+                            <th style="width:100px;text-align:right;">Fogli buoni</th>
+                            <th style="width:100px;text-align:right;">Tiro (cm foil)</th>
+                            <th style="width:100px;text-align:right;">Inchiostro (g)</th>
+                            <th style="width:90px;text-align:right;">Scarti op.</th>
+                            <th style="width:80px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @forelse($fasiEditable as $f)
+                        <form method="POST" action="{{ route('owner.costi.analisi.updateFase', $f->id) }}">
+                            @csrf
+                            <tr>
+                                <td><strong>{{ $f->fase }}</strong></td>
+                                <td class="small">{{ $f->reparto }}</td>
+                                <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ $f->descrizione }}">{{ $f->descrizione ?? '-' }}</td>
+                                <td><input type="number" min="0" step="1" name="fogli_buoni" value="{{ $f->fogli_buoni }}" class="form-control form-control-sm text-end font-monospace"></td>
+                                <td><input type="number" min="0" step="0.01" name="tiro_cm_foil" value="{{ $f->tiro_cm_foil }}" class="form-control form-control-sm text-end font-monospace"></td>
+                                <td><input type="number" min="0" step="0.01" name="inchiostro_g" value="{{ $f->inchiostro_g }}" class="form-control form-control-sm text-end font-monospace"></td>
+                                <td><input type="number" min="0" step="1" name="scarti" value="{{ $f->scarti }}" class="form-control form-control-sm text-end font-monospace"></td>
+                                <td><button class="btn btn-sm btn-primary w-100">Salva</button></td>
+                            </tr>
+                        </form>
+                    @empty
+                        <tr><td colspan="8" class="text-center text-muted small py-3">Nessuna fase registrata.</td></tr>
+                    @endforelse
+                    </tbody>
+                </table>
+                </div>
+            </div>
+        </div>
+
         {{-- Altri Costi --}}
         <div class="col-12">
             <div class="card">
