@@ -39,7 +39,7 @@ class AnalisiCostiCommessaController extends Controller
             ->paginate(50)
             ->appends(['q' => $search]);
 
-        return view('admin.costi.analisi_commesse_lista', compact('righe', 'search'));
+        return view('owner.costi.analisi_commesse_lista', compact('righe', 'search'));
     }
 
     /**
@@ -121,7 +121,7 @@ class AnalisiCostiCommessaController extends Controller
         // Info commessa
         $primoOrdine = $ordini->first();
 
-        return view('admin.costi.analisi_commessa_dettaglio', [
+        return view('owner.costi.analisi_commessa_dettaglio', [
             'commessa'         => $commessa,
             'cliente'          => $primoOrdine->cliente_nome ?? '-',
             'descrizione'      => $primoOrdine->descrizione ?? '-',
@@ -157,7 +157,7 @@ class AnalisiCostiCommessaController extends Controller
             'autore'      => session('admin_nome') ?? session('operatore_nome') ?? 'admin',
         ]);
 
-        return redirect()->route('admin.costi.analisi.show', $commessa)
+        return redirect()->route('owner.costi.analisi.show', $commessa)
             ->with('success', 'Costo aggiunto.');
     }
 
@@ -166,7 +166,7 @@ class AnalisiCostiCommessaController extends Controller
         $costo = CommessaAltroCosto::findOrFail($id);
         $commessa = $costo->commessa;
         $costo->delete();
-        return redirect()->route('admin.costi.analisi.show', $commessa)
+        return redirect()->route('owner.costi.analisi.show', $commessa)
             ->with('success', 'Costo eliminato.');
     }
 

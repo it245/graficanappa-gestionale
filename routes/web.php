@@ -92,6 +92,12 @@ Route::post('/owner/tracking-ddt', [DashboardSpedizioneController::class, 'track
 Route::get('/owner/presenti', [PresenzeController::class, 'presenti'])->name('owner.presenti');
 Route::get('/owner/presenze', [PresenzeController::class, 'index'])->name('owner.presenze');
 Route::get('/owner/note-spedizione', [DashboardSpedizioneController::class, 'noteGiornaliere'])->name('owner.noteSpedizione');
+
+// Analisi Costi a Campione per Commessa (owner)
+Route::get('/owner/costi/analisi', [\App\Http\Controllers\AnalisiCostiCommessaController::class, 'index'])->name('owner.costi.analisi.index');
+Route::get('/owner/costi/analisi/{commessa}', [\App\Http\Controllers\AnalisiCostiCommessaController::class, 'show'])->name('owner.costi.analisi.show');
+Route::post('/owner/costi/analisi/{commessa}/altri', [\App\Http\Controllers\AnalisiCostiCommessaController::class, 'storeAltroCosto'])->name('owner.costi.analisi.storeAltro');
+Route::delete('/owner/costi/analisi/altri/{id}', [\App\Http\Controllers\AnalisiCostiCommessaController::class, 'deleteAltroCosto'])->name('owner.costi.analisi.deleteAltro');
 Route::post('/owner/note-spedizione', [DashboardSpedizioneController::class, 'salvaNotaGiornaliera'])->name('owner.salvaNotaSpedizione');
 Route::get('/owner/note-spedizione-check', [DashboardSpedizioneController::class, 'noteUltimoAggiornamento'])->name('owner.noteSpedizioneCheck');
 Route::get('/owner/audit-log', [DashboardOwnerController::class, 'auditLog'])->name('owner.auditLog');
@@ -153,12 +159,6 @@ Route::middleware(['admin'])->prefix('admin')->group(function() {
     Route::delete('/costi/tariffe/{id}', [CostiMarginiController::class, 'eliminaTariffa'])->name('admin.costi.eliminaTariffa');
     Route::get('/costi/report', [CostiMarginiController::class, 'reportCosti'])->name('admin.costi.report');
     Route::get('/costi/report/excel', [CostiMarginiController::class, 'reportCostiExcel'])->name('admin.costi.reportExcel');
-
-    // Analisi Costi a Campione per Commessa
-    Route::get('/costi/analisi', [\App\Http\Controllers\AnalisiCostiCommessaController::class, 'index'])->name('admin.costi.analisi.index');
-    Route::get('/costi/analisi/{commessa}', [\App\Http\Controllers\AnalisiCostiCommessaController::class, 'show'])->name('admin.costi.analisi.show');
-    Route::post('/costi/analisi/{commessa}/altri', [\App\Http\Controllers\AnalisiCostiCommessaController::class, 'storeAltroCosto'])->name('admin.costi.analisi.storeAltro');
-    Route::delete('/costi/analisi/altri/{id}', [\App\Http\Controllers\AnalisiCostiCommessaController::class, 'deleteAltroCosto'])->name('admin.costi.analisi.deleteAltro');
 
     // Audit Log
     Route::get('/audit-log', [DashboardAdminController::class, 'auditLog'])->name('admin.auditLog');

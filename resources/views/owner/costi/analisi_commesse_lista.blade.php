@@ -7,12 +7,12 @@
         <div class="text-muted small">Solo commesse con tutte le fasi a stato 3 o 4</div>
     </div>
 
-    <form method="GET" class="mb-3" action="{{ route('admin.costi.analisi.index') }}">
+    <form method="GET" class="mb-3" action="{{ route('owner.costi.analisi.index') }}">
         <div class="input-group" style="max-width:500px;">
             <input type="text" name="q" value="{{ $search }}" class="form-control" placeholder="Cerca commessa, cliente, descrizione…">
             <button class="btn btn-primary" type="submit">Cerca</button>
             @if($search)
-            <a href="{{ route('admin.costi.analisi.index') }}" class="btn btn-outline-secondary">Reset</a>
+            <a href="{{ route('owner.costi.analisi.index') }}" class="btn btn-outline-secondary">Reset</a>
             @endif
         </div>
     </form>
@@ -37,7 +37,7 @@
                         <td style="max-width:400px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ $r->descrizione ?? '-' }}</td>
                         <td>{{ $r->data_prevista_consegna ? \Carbon\Carbon::parse($r->data_prevista_consegna)->format('d/m/Y') : '-' }}</td>
                         <td class="text-end">
-                            <a href="{{ route('admin.costi.analisi.show', $r->commessa) }}" class="btn btn-sm btn-primary">Dettaglio</a>
+                            <a href="{{ route('owner.costi.analisi.show', $r->commessa) }}" class="btn btn-sm btn-primary">Dettaglio</a>
                         </td>
                     </tr>
                     @empty

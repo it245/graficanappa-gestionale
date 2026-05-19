@@ -13,7 +13,7 @@
                 @endif
             </div>
         </div>
-        <a href="{{ route('admin.costi.analisi.index') }}" class="btn btn-sm btn-outline-secondary">← Lista</a>
+        <a href="{{ route('owner.costi.analisi.index') }}" class="btn btn-sm btn-outline-secondary">← Lista</a>
     </div>
 
     @if(session('success'))
@@ -77,7 +77,7 @@
                 </div>
 
                 <div id="formAltroCosto" class="collapse">
-                    <form method="POST" action="{{ route('admin.costi.analisi.storeAltro', $commessa) }}" class="p-3 border-bottom bg-light">
+                    <form method="POST" action="{{ route('owner.costi.analisi.storeAltro', $commessa) }}" class="p-3 border-bottom bg-light">
                         @csrf
                         <div class="row g-2">
                             <div class="col-md-3">
@@ -127,7 +127,7 @@
                             <td class="small text-muted">{{ $c->autore }}</td>
                             <td class="text-end font-monospace">€ {{ number_format($c->importo, 2, ',', '.') }}</td>
                             <td class="text-end">
-                                <form method="POST" action="{{ route('admin.costi.analisi.deleteAltro', $c->id) }}" onsubmit="return confirm('Eliminare questo costo?')" class="d-inline">
+                                <form method="POST" action="{{ route('owner.costi.analisi.deleteAltro', $c->id) }}" onsubmit="return confirm('Eliminare questo costo?')" class="d-inline">
                                     @csrf
                                     @method('DELETE')
                                     <button class="btn btn-sm btn-outline-danger py-0">×</button>
