@@ -62,6 +62,10 @@ Schedule::command('audit:pulisci')->dailyAt('03:00');
 // Match automatico cliché ogni 10 minuti (dopo sync Onda)
 Schedule::command('cliche:match')->everyTenMinutes()->withoutOverlapping();
 
+// Popola RIF ordine cliente da ORDINE ASTUCCI.xlsx (sincronizzato da rclone ogni 5min).
+// Schedulato a :12 dopo onda:sync (:05) e fix-multi-modello (:08).
+Schedule::command('ordini:popola-rif --force')->hourlyAt(12)->withoutOverlapping();
+
 // Scheduler Mossa 37 — DISABILITATO (in attesa approvazione capo)
 // Schedule::command('scheduler:run')->everyFifteenMinutes()->weekdays()->between('6:00', '22:00')->withoutOverlapping();
 
