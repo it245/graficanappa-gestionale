@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use App\Events\PhaseCompleted;
@@ -30,6 +31,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Pagination Bootstrap 5 (default Tailwind ha SVG enormi senza CSS Tailwind)
+        Paginator::useBootstrapFive();
+
         // Mossa 37: propaga disponibilità quando una fase viene completata
         Event::listen(PhaseCompleted::class, PropagateAvailability::class);
 
