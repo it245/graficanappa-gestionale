@@ -74,7 +74,8 @@ foreach ($config as $c) {
         ->whereIn('fasi_catalogo.reparto_id', $repartoIds)
         ->whereNull('ordine_fasi.deleted_at')
         ->where('pausa_operatores.data_ora', '>=', $inizioTurno)
-        ->selectRaw("SUM(TIMESTAMPDIFF(SECOND, GREATEST(pausa_operatores.data_ora, ?), COALESCE(pausa_operatores.fine, NOW()))) as sec", [$inizioTurno])
+        ->whereNotNull('pausa_operatores.fine')
+        ->selectRaw("SUM(TIMESTAMPDIFF(SECOND, GREATEST(pausa_operatores.data_ora, ?), pausa_operatores.fine)) as sec", [$inizioTurno])
         ->value('sec');
 
     $secOggi = max((max($secAperte, 0) + max($secChiuseRecenti, 0) + max($secChiuseVecchie, 0)) - max($secPauseOggi, 0), 0);
