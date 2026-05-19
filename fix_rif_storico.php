@@ -34,7 +34,6 @@ $map = [
     ],
     '67291' => [
         '%CATALOGO%WEDDING%'    => 'P01391',
-        '%CATALOGO%CIOCCOLATO%' => 'P01391',
         '%PATISSERIE%REGAL%'    => 'P01338',
     ],
 ];
