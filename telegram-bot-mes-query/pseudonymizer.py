@@ -20,10 +20,14 @@ from typing import Any
 class Pseudonymizer:
     """Mappa identificatori reali → token. Per-request, non persistente."""
 
-    # Campi JSON che contengono PII
+    # Campi JSON che contengono PII (Personally Identifiable Information)
     PII_FIELDS = {
+        # Clienti
         'cliente_nome': 'CLIENTE',
         'cliente': 'CLIENTE',
+        'ragione_sociale': 'CLIENTE',
+
+        # Operatori / dipendenti
         'operatore_prinect': 'OPERATORE',
         'operatore_nome': 'OPERATORE',
         'operatore': 'OPERATORE',
@@ -31,6 +35,27 @@ class Pseudonymizer:
         'cognome_nome': 'DIPENDENTE',
         'dipendente': 'DIPENDENTE',
         'responsabile': 'OPERATORE',
+        'operatore_prestampa': 'OPERATORE',
+
+        # Vettori / fornitori
+        'vettore_ddt': 'VETTORE',
+        'vettore_nome': 'VETTORE',
+        'fornitore': 'FORNITORE',
+
+        # Contatti / identificativi
+        'email': 'EMAIL',
+        'telefono': 'TELEFONO',
+        'partita_iva': 'PIVA',
+        'p_iva': 'PIVA',
+        'piva': 'PIVA',
+        'codice_fiscale': 'CF',
+        'cf': 'CF',
+
+        # Indirizzi (DDT destinatario)
+        'destinatario': 'DESTINATARIO',
+        'dest_nome': 'DESTINATARIO',
+        'indirizzo': 'INDIRIZZO',
+        'citta': 'CITTA',
     }
 
     def __init__(self):
