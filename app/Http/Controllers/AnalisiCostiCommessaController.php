@@ -216,11 +216,15 @@ class AnalisiCostiCommessaController extends Controller
                 } else {
                     try {
                         $prinect = app(PrinectService::class);
-                        $worksteps = $prinect->getJobWorksteps((int) $jobId)['worksteps'] ?? [];
+                        $jobData = $prinect->getJobWorksteps((int) $jobId);
+                        $worksteps = $jobData['worksteps'] ?? [];
+                        Log::error("[DBG] Prinect jobWorksteps {$jobId} count=" . count($worksteps) . " job_keys=" . json_encode(array_keys($jobData ?? [])));
                         $totalG = 0.0;
                         foreach ($worksteps as $ws) {
-                            if (!in_array('ConventionalPrinting', $ws['types'] ?? [])) continue;
+                            $types = $ws['types'] ?? [];
                             $produced = (int) ($ws['produced'] ?? 0);
+                            Log::error("[DBG] Prinect ws={$ws['id']} types=" . json_encode($types) . " produced={$produced}");
+                            if (!in_array('ConventionalPrinting', $types)) continue;
                             if ($produced <= 0) continue;
                             $ink = $prinect->getWorkstepInkConsumption((int) $jobId, $ws['id']);
                             Log::error("[DBG] Prinect ink {$commessa} ws={$ws['id']} keys=" . json_encode(array_keys($ink ?? [])) . " produced={$produced} ink=" . json_encode($ink));
