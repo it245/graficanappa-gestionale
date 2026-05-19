@@ -20,6 +20,7 @@ from telegram.ext import (
 )
 
 import tools
+from pseudonymizer import Pseudonymizer
 
 # === Config ===
 load_dotenv()
@@ -464,6 +465,10 @@ async def handle_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None
     messages.append({"role": "user", "content": user_msg})
     max_iterations = 5
 
+    # PII Pseudonimizer per-request: maschera cliente_nome/operatore_* nei tool_result
+    # prima di inviarli a Claude. Restore dei token reali nel testo finale.
+    pseudo = Pseudonymizer()
+
     for _ in range(max_iterations):
         resp = anthropic_client.messages.create(
             model=ANTHROPIC_MODEL,
@@ -481,10 +486,12 @@ async def handle_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None
             for tu in tool_uses:
                 logger.info(f"Tool: {tu.name} {tu.input}")
                 result = tools.dispatch_tool(tu.name, tu.input)
+                # PII masking: nomi clienti/operatori → token prima del LLM
+                masked = pseudo.mask(result)
                 tool_results.append({
                     "type": "tool_result",
                     "tool_use_id": tu.id,
-                    "content": json.dumps(result, default=str, ensure_ascii=False),
+                    "content": json.dumps(masked, default=str, ensure_ascii=False),
                 })
             messages.append({"role": "user", "content": tool_results})
             continue
@@ -492,6 +499,10 @@ async def handle_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None
         # Risposta finale
         text_blocks = [b.text for b in resp.content if b.type == "text"]
         final = "\n".join(text_blocks).strip() or "(nessuna risposta)"
+        # Restore: token → valori reali per l'utente Telegram
+        final = pseudo.restore(final)
+        if pseudo.stats()['totale_token']:
+            logger.info(f"PII masked: {pseudo.stats()}")
         # Strip tool_use/tool_result da history per ridurre token (rate limit Haiku 10K/min).
         clean = compact_history(messages, final)
         save_history(uid, clean)
