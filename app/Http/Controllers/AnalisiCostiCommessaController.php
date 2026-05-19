@@ -223,12 +223,10 @@ class AnalisiCostiCommessaController extends Controller
                         foreach ($worksteps as $ws) {
                             $types = $ws['types'] ?? [];
                             if (!in_array('ConventionalPrinting', $types)) continue;
-                            // Log struttura completa per CP per identificare campo corretto
-                            Log::error("[DBG] Prinect CP ws={$ws['id']} keys=" . json_encode(array_keys($ws)) . " full=" . json_encode($ws));
-                            $produced = (int) ($ws['produced'] ?? $ws['goodAmount'] ?? $ws['goodCount'] ?? $ws['quantity'] ?? $ws['printedSheets'] ?? 0);
+                            $produced = (int) ($ws['amountProduced'] ?? 0);
                             if ($produced <= 0) continue;
                             $ink = $prinect->getWorkstepInkConsumption((int) $jobId, $ws['id']);
-                            Log::error("[DBG] Prinect ink {$commessa} ws={$ws['id']} keys=" . json_encode(array_keys($ink ?? [])) . " produced={$produced} ink=" . json_encode($ink));
+                            Log::error("[DBG] Prinect INK {$commessa} ws={$ws['id']} produced={$produced} full=" . json_encode($ink));
                             // Cerca consumo in possibili chiavi
                             $totKg1000 = 0.0;
                             $items = $ink['inkConsumption'] ?? $ink['inks'] ?? $ink['colors'] ?? $ink['items'] ?? [];
