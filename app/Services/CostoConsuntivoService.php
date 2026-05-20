@@ -271,11 +271,18 @@ class CostoConsuntivoService
             ];
         }
 
-        // Avviamento standard (default 4/0 per offset; semplice per altre macchine)
+        // Avviamento: auto-detect configurazione dal contesto
+        $configurazione = $this->scegliConfigurazioneAvviamento($slug, $info);
         $avv = DB::table('costi_avviamento')
             ->where('macchina_id', $macchina->id)
-            ->orderBy('id')
+            ->where('configurazione', $configurazione)
             ->first();
+        if (!$avv) {
+            $avv = DB::table('costi_avviamento')
+                ->where('macchina_id', $macchina->id)
+                ->orderBy('id')
+                ->first();
+        }
         if ($avv) {
             $voci[] = [
                 'categoria'   => $macchina->tipo,
@@ -399,14 +406,70 @@ class CostoConsuntivoService
         return $voci;
     }
 
+    /**
+     * Auto-detect configurazione avviamento dalla note delle fasi ([COL: 4C + DRIP OFF]).
+     */
+    private function scegliConfigurazioneAvviamento(string $slug, array $info): string
+    {
+        if ($slug !== 'xl106') {
+            return match ($slug) {
+                'bobst_novacut'   => 'Fustella complessa (multi-posa)',
+                'visionfold110'   => 'Crash-lock (fondo auto)',
+                'brausse105'      => 'Caldo area media (100-500cm²)',
+                default           => '',
+            };
+        }
+
+        // XL106: parsing [COL: ...] note
+        $notes = '';
+        foreach ($info['fasi'] ?? [] as $f) $notes .= ' ' . ($f->note ?? '');
+        $notes = mb_strtoupper($notes);
+
+        $haDrip = preg_match('/DRIP\s*OFF/i', $notes);
+        $haUv   = preg_match('/\bUV\b/i', $notes);
+        $haPant = preg_match('/PANTONE|\d\s*COLORI\s*\+\s*ORO/i', $notes);
+
+        // Numero colori
+        $colori = 4; // default
+        if (preg_match('/(\d)\s*[CcF]/', $notes, $m)) $colori = (int) $m[1];
+        if (preg_match('/(\d)\s*COLORI/i', $notes, $m)) $colori = (int) $m[1];
+
+        if ($haDrip) {
+            return $colori >= 5 ? '5/0 + UV spot drip-off' : '4/0 + UV spot drip-off';
+        }
+        if ($haUv) {
+            return $colori >= 5 ? '5/0 + vernice UV' : '4/0 + vernice piena UV';
+        }
+        return match (true) {
+            $colori >= 5 || $haPant => '5/0 (quadri + Pantone)',
+            $colori === 4           => '4/0 (quadricromia)',
+            $colori === 2           => '2/0 (2 colori)',
+            $colori === 1           => '1/0 (1 colore)',
+            default                 => '4/0 (quadricromia)',
+        };
+    }
+
     private function scegliVariante(string $slug, array $info, $ordini): string
     {
-        // Default per macchina (l'utente può override scegliendo variante diversa)
+        if ($slug === 'xl106') {
+            $notes = '';
+            foreach ($info['fasi'] ?? [] as $f) $notes .= ' ' . ($f->note ?? '');
+            $notes = mb_strtoupper($notes);
+            if (preg_match('/DRIP\s*OFF/i', $notes)) return 'drip-off';
+            if (preg_match('/\bUV\b/i', $notes))    return '+UV';
+            if (preg_match('/PANTONE|\d\s*COLORI\s*\+/i', $notes)) return '5/0';
+            return '4/0';
+        }
+        if ($slug === 'visionfold110') {
+            $notes = '';
+            foreach ($info['fasi'] ?? [] as $f) $notes .= ' ' . ($f->note ?? '');
+            if (preg_match('/CRASH/i', $notes))    return 'crash-lock';
+            if (preg_match('/4\s*PUNTI|6\s*PUNTI/i', $notes)) return '4-6 punti';
+            return 'crash-lock'; // default più frequente per astucci
+        }
         return match ($slug) {
-            'xl106'         => '4/0',
             'konica14000'   => 'CMYK',
             'bobst_novacut' => 'standard',
-            'visionfold110' => 'lineare',
             'brausse105'    => 'caldo',
             default         => 'standard',
         };
