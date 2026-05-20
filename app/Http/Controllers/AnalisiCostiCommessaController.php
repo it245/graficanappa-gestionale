@@ -23,6 +23,11 @@ class AnalisiCostiCommessaController extends Controller
     public function index(Request $request)
     {
         $search = trim($request->get('q', ''));
+        $sort = $request->get('sort', 'data_prevista_consegna');
+        $dir = strtolower($request->get('dir', 'desc')) === 'asc' ? 'asc' : 'desc';
+        $allowedSort = ['commessa', 'cliente_nome', 'descrizione', 'data_prevista_consegna',
+                        'ore_sec', 'fogli_max', 'tiri_tot', 'inchiostro_tot', 'scarti_tot', 'altri_tot'];
+        if (!in_array($sort, $allowedSort)) $sort = 'data_prevista_consegna';
 
         $commesseTerminate = DB::table('ordini as o')
             ->join('ordine_fasi as orf', 'orf.ordine_id', '=', 'o.id')
@@ -33,7 +38,13 @@ class AnalisiCostiCommessaController extends Controller
                 'o.commessa',
                 DB::raw('MAX(o.cliente_nome) as cliente_nome'),
                 DB::raw("GROUP_CONCAT(DISTINCT o.descrizione SEPARATOR ' · ') as descrizione"),
-                DB::raw('MAX(o.data_prevista_consegna) as data_prevista_consegna')
+                DB::raw('MAX(o.data_prevista_consegna) as data_prevista_consegna'),
+                DB::raw('SUM(CASE WHEN orf.data_inizio IS NOT NULL THEN COALESCE(orf.tempo_avviamento_sec,0) + COALESCE(orf.tempo_esecuzione_sec,0) ELSE 0 END) as ore_sec'),
+                DB::raw('MAX(CASE WHEN LOWER(COALESCE(r.nome,\'\')) IN (\'stampa offset\',\'digitale\') THEN orf.fogli_buoni ELSE 0 END) as fogli_max'),
+                DB::raw('SUM(COALESCE(orf.tiro_cm_foil,0)) as tiri_tot'),
+                DB::raw('SUM(COALESCE(orf.inchiostro_g,0)) as inchiostro_tot'),
+                DB::raw('SUM(COALESCE(orf.scarti,0)) as scarti_tot'),
+                DB::raw('(SELECT COALESCE(SUM(importo),0) FROM commessa_altri_costi WHERE commessa = o.commessa) as altri_tot')
             )
             ->groupBy('o.commessa')
             // Tutte le fasi di PRODUZIONE (≠ spedizione) devono essere >=3.
@@ -56,9 +67,9 @@ class AnalisiCostiCommessaController extends Controller
         }
 
         $righe = $commesseTerminate
-            ->orderByDesc('data_prevista_consegna')
+            ->orderByRaw("{$sort} {$dir}")
             ->paginate(50)
-            ->appends(['q' => $search]);
+            ->appends(['q' => $search, 'sort' => $sort, 'dir' => $dir]);
 
         // Aggregati riepilogo per le commesse della pagina corrente
         $commesseList = collect($righe->items())->pluck('commessa')->all();
@@ -120,7 +131,7 @@ class AnalisiCostiCommessaController extends Controller
                 ->keyBy('commessa');
         }
 
-        return view('owner.costi.analisi_commesse_lista', compact('righe', 'search', 'aggregates', 'fogli', 'altri', 'oreReparti'));
+        return view('owner.costi.analisi_commesse_lista', compact('righe', 'search', 'aggregates', 'fogli', 'altri', 'oreReparti', 'sort', 'dir'));
     }
 
     /**

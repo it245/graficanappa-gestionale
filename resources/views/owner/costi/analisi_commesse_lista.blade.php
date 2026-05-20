@@ -32,18 +32,28 @@ $fmtHm = function ($sec) {
     <div class="gn-card">
         <div style="overflow-x:auto;">
         <table class="gn-table" id="tblCommesse">
+            @php
+                $sortLink = function ($col, $label, $align = 'left') use ($sort, $dir, $search) {
+                    $newDir = ($sort === $col && $dir === 'asc') ? 'desc' : 'asc';
+                    $icon = $sort === $col ? ($dir === 'asc' ? '▲' : '▼') : '⇅';
+                    $color = $sort === $col ? 'color:var(--gn-primary);' : 'color:#9ca3af;';
+                    $url = url()->current() . '?' . http_build_query(['q' => $search, 'sort' => $col, 'dir' => $newDir, 'op_token' => request('op_token')]);
+                    $cls = $align === 'right' ? 'num' : '';
+                    return '<th class="'.$cls.'"><a href="'.$url.'" style="color:inherit;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">'.$label.' <span style="'.$color.'font-size:10px;">'.$icon.'</span></a></th>';
+                };
+            @endphp
             <thead>
                 <tr>
-                    <th class="gn-sortable" data-col="0" data-type="str">Commessa <span class="gn-sort-ic">⇅</span></th>
-                    <th class="gn-sortable" data-col="1" data-type="str">Cliente <span class="gn-sort-ic">⇅</span></th>
-                    <th class="gn-sortable" data-col="2" data-type="str">Descrizione <span class="gn-sort-ic">⇅</span></th>
-                    <th class="gn-sortable" data-col="3" data-type="date">Consegna <span class="gn-sort-ic">⇅</span></th>
-                    <th class="gn-sortable num" data-col="4" data-type="dur">Ore tot <span class="gn-sort-ic">⇅</span></th>
-                    <th class="gn-sortable num" data-col="5" data-type="num">Fogli <span class="gn-sort-ic">⇅</span></th>
-                    <th class="gn-sortable num" data-col="6" data-type="num">Tiri <span class="gn-sort-ic">⇅</span></th>
-                    <th class="gn-sortable num" data-col="7" data-type="num">Inchiostro (g) <span class="gn-sort-ic">⇅</span></th>
-                    <th class="gn-sortable num" data-col="8" data-type="num">Scarti <span class="gn-sort-ic">⇅</span></th>
-                    <th class="gn-sortable num" data-col="9" data-type="num">Altri € <span class="gn-sort-ic">⇅</span></th>
+                    {!! $sortLink('commessa', 'Commessa') !!}
+                    {!! $sortLink('cliente_nome', 'Cliente') !!}
+                    {!! $sortLink('descrizione', 'Descrizione') !!}
+                    {!! $sortLink('data_prevista_consegna', 'Consegna') !!}
+                    {!! $sortLink('ore_sec', 'Ore tot', 'right') !!}
+                    {!! $sortLink('fogli_max', 'Fogli', 'right') !!}
+                    {!! $sortLink('tiri_tot', 'Tiri', 'right') !!}
+                    {!! $sortLink('inchiostro_tot', 'Inchiostro (g)', 'right') !!}
+                    {!! $sortLink('scarti_tot', 'Scarti', 'right') !!}
+                    {!! $sortLink('altri_tot', 'Altri €', 'right') !!}
                     <th>Azione</th>
                 </tr>
             </thead>
@@ -84,61 +94,4 @@ $fmtHm = function ($sec) {
     </div>
 </div>
 
-<style>
-.gn-sortable { cursor: pointer; user-select: none; }
-.gn-sortable:hover { background: #e5e7eb; }
-.gn-sort-ic { font-size: 10px; color: #9ca3af; margin-left: 4px; }
-.gn-sortable.sort-asc .gn-sort-ic::before { content: "▲"; color: var(--gn-primary); }
-.gn-sortable.sort-desc .gn-sort-ic::before { content: "▼"; color: var(--gn-primary); }
-.gn-sortable.sort-asc .gn-sort-ic, .gn-sortable.sort-desc .gn-sort-ic { font-size: 9px; }
-.gn-sortable.sort-asc .gn-sort-ic, .gn-sortable.sort-desc .gn-sort-ic { color: var(--gn-primary); }
-.gn-sortable.sort-asc .gn-sort-ic { content: ""; }
-</style>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const tbl = document.getElementById('tblCommesse');
-    if (!tbl) return;
-    const tbody = tbl.querySelector('tbody');
-    const headers = tbl.querySelectorAll('th.gn-sortable');
-
-    const parseValue = function(text, type) {
-        text = (text || '').trim();
-        if (text === '—' || text === '-' || text === '') return type === 'num' || type === 'dur' ? -Infinity : '';
-        if (type === 'num') return parseFloat(text.replace(/[^\d.,-]/g, '').replace(/\./g, '').replace(',', '.')) || 0;
-        if (type === 'dur') {
-            // formati "Xh Ym" / "Ym" → minuti
-            let h = 0, m = 0;
-            const mh = text.match(/(\d+)h/); if (mh) h = parseInt(mh[1]);
-            const mm = text.match(/(\d+)m/); if (mm) m = parseInt(mm[1]);
-            return h * 60 + m;
-        }
-        if (type === 'date') {
-            const p = text.split('/'); if (p.length === 3) return p[2]+p[1].padStart(2,'0')+p[0].padStart(2,'0');
-            return text;
-        }
-        return text.toLowerCase();
-    };
-
-    headers.forEach(function(th) {
-        th.addEventListener('click', function() {
-            const col = parseInt(th.dataset.col);
-            const type = th.dataset.type;
-            let dir = 'asc';
-            if (th.classList.contains('sort-asc')) dir = 'desc';
-            headers.forEach(h => h.classList.remove('sort-asc', 'sort-desc'));
-            th.classList.add('sort-' + dir);
-
-            const rows = Array.from(tbody.querySelectorAll('tr')).filter(r => r.children.length > 1);
-            rows.sort(function(a, b) {
-                const va = parseValue(a.children[col]?.textContent, type);
-                const vb = parseValue(b.children[col]?.textContent, type);
-                if (va < vb) return dir === 'asc' ? -1 : 1;
-                if (va > vb) return dir === 'asc' ? 1 : -1;
-                return 0;
-            });
-            rows.forEach(r => tbody.appendChild(r));
-        });
-    });
-});
-</script>
 @endsection
