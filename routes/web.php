@@ -115,8 +115,6 @@ Route::delete('/owner/costi/categorie/{id}', [\App\Http\Controllers\CategorieAlt
 // #2 Trend mensile + #1 Confronto multi-analisi
 Route::get('/owner/costi/trend', [\App\Http\Controllers\AnalisiCostiCommessaController::class, 'trendMensile'])->name('owner.costi.trend');
 Route::post('/owner/costi/trend/precalcola', [\App\Http\Controllers\AnalisiCostiCommessaController::class, 'precalcolaTotali'])->name('owner.costi.trend.precalcola');
-// #4 Anomaly detection
-Route::get('/owner/costi/anomalie', [\App\Http\Controllers\AnalisiCostiCommessaController::class, 'anomalie'])->name('owner.costi.anomalie');
 Route::get('/owner/analisi-custom/confronta/select', [\App\Http\Controllers\AnalisiCustomController::class, 'confrontaSelect'])->name('owner.analisi.custom.confrontaSelect');
 Route::get('/owner/analisi-custom/confronta', [\App\Http\Controllers\AnalisiCustomController::class, 'confronta'])->name('owner.analisi.custom.confronta');
 
