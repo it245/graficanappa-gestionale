@@ -97,9 +97,24 @@ class AnalisiCustomController extends Controller
         }
         arsort($categorieTot);
 
-        // #10 Voci custom ad-hoc analisi
+        // #10 Voci custom ad-hoc analisi (fisso o percentuale del totale base commesse)
+        $totaleBaseCommesse = $totaleGenerale; // base prima delle voci custom
         $vociCustom = $analisi->opzioni_view['voci_custom'] ?? [];
-        $totaleVociCustom = array_sum(array_column($vociCustom, 'importo'));
+        $totaleVociCustom = 0;
+        foreach ($vociCustom as &$v) {
+            $tipo = $v['tipo'] ?? 'fisso';
+            if ($tipo === 'percentuale') {
+                $v['importo'] = round($totaleBaseCommesse * ($v['valore'] / 100), 2);
+                $v['tipo'] = 'percentuale';
+            } else {
+                // Retro-compat: vecchie voci con campo 'importo' diretto, oppure 'valore' con tipo fisso
+                $v['importo'] = isset($v['valore']) ? (float) $v['valore'] : (float) ($v['importo'] ?? 0);
+                $v['tipo'] = 'fisso';
+            }
+            $totaleVociCustom += $v['importo'];
+        }
+        unset($v);
+
         $totaleGenerale += $totaleVociCustom;
         if ($totaleVociCustom != 0) {
             $categorieTot['voci_custom'] = ($categorieTot['voci_custom'] ?? 0) + $totaleVociCustom;
@@ -212,12 +227,14 @@ class AnalisiCustomController extends Controller
 
     /**
      * #10 Aggiungi voce manuale ad-hoc all'analisi (non a una commessa specifica).
+     * Tipo: 'fisso' (€) o 'percentuale' (% del totale commesse base).
      */
     public function aggiungiVoceCustom(Request $request, int $id)
     {
         $data = $request->validate([
             'descrizione' => 'required|string|max:200',
-            'importo'     => 'required|numeric',
+            'tipo'        => 'required|in:fisso,percentuale',
+            'valore'      => 'required|numeric',
         ]);
         $analisi = AnalisiCustom::findOrFail($id);
         $opt = is_array($analisi->opzioni_view) ? $analisi->opzioni_view : [];
@@ -225,7 +242,8 @@ class AnalisiCustomController extends Controller
         $opt['voci_custom'][] = [
             'id'          => uniqid(),
             'descrizione' => $data['descrizione'],
-            'importo'     => (float) $data['importo'],
+            'tipo'        => $data['tipo'],
+            'valore'      => (float) $data['valore'],
             'autore'      => session('admin_nome') ?? session('operatore_nome') ?? 'owner',
             'data'        => now()->format('Y-m-d H:i'),
         ];

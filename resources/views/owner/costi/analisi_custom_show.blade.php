@@ -123,23 +123,52 @@
             <span style="font-size:12px;color:var(--gn-muted);">Aggiunte direttamente all'analisi, non a una commessa specifica</span>
         </div>
         <div class="gn-card-body">
-            <form method="POST" action="{{ route('owner.analisi.custom.voceCustom', $analisi->id) }}" style="display:grid;grid-template-columns:2fr 1fr auto;gap:10px;margin-bottom:14px;">
+            <form method="POST" action="{{ route('owner.analisi.custom.voceCustom', $analisi->id) }}" style="display:grid;grid-template-columns:2fr 130px 1fr auto;gap:10px;margin-bottom:14px;align-items:end;">
                 @csrf
-                <input type="text" name="descrizione" placeholder="Es. Sconto cliente, Bonus puntualità, Spese commerciali" required style="padding:8px 12px;border:1px solid var(--gn-border);border-radius:6px;font-size:13px;">
-                <input type="number" step="0.01" name="importo" placeholder="Importo € (negativo per sconti)" required style="padding:8px 12px;border:1px solid var(--gn-border);border-radius:6px;font-size:13px;text-align:right;font-family:monospace;">
-                <button class="gn-btn gn-btn-primary">+ Aggiungi voce</button>
+                <div>
+                    <label style="font-size:11px;color:var(--gn-muted);">Descrizione</label>
+                    <input type="text" name="descrizione" placeholder="Es. Sconto cliente, Bonus puntualità, Spese commerciali" required style="width:100%;padding:8px 12px;border:1px solid var(--gn-border);border-radius:6px;font-size:13px;">
+                </div>
+                <div>
+                    <label style="font-size:11px;color:var(--gn-muted);">Tipo</label>
+                    <select name="tipo" id="selTipoVoce" onchange="aggiornaPlaceholderVoce()" style="width:100%;padding:8px 12px;border:1px solid var(--gn-border);border-radius:6px;font-size:13px;background:#fff;">
+                        <option value="fisso">€ Fisso</option>
+                        <option value="percentuale">% Percentuale</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size:11px;color:var(--gn-muted);" id="lblValoreVoce">Importo € (negativo = sconto)</label>
+                    <input type="number" step="0.01" name="valore" id="inpValoreVoce" placeholder="es. -50 oppure -5 per -5%" required style="width:100%;padding:8px 12px;border:1px solid var(--gn-border);border-radius:6px;font-size:13px;text-align:right;font-family:monospace;">
+                </div>
+                <button class="gn-btn gn-btn-primary">+ Aggiungi</button>
             </form>
+            <div style="font-size:11px;color:var(--gn-muted);margin-bottom:10px;">
+                💡 <strong>% Percentuale</strong>: si applica sul totale commesse incluse (€ {{ number_format($totaleBaseCommesse ?? 0, 2, ',', '.') }}). Usa valore negativo per sconti.
+            </div>
 
             @if(!empty($vociCustom))
             <table class="gn-table">
-                <thead><tr><th>Descrizione</th><th>Autore</th><th>Data</th><th class="num">Importo €</th><th></th></tr></thead>
+                <thead><tr><th>Descrizione</th><th>Tipo</th><th class="num">Valore</th><th class="num">Importo calcolato</th><th>Autore</th><th></th></tr></thead>
                 <tbody>
                 @foreach($vociCustom as $v)
                 <tr>
                     <td><strong>{{ $v['descrizione'] }}</strong></td>
-                    <td>{{ $v['autore'] ?? '-' }}</td>
-                    <td>{{ $v['data'] ?? '-' }}</td>
+                    <td>
+                        @if(($v['tipo'] ?? 'fisso') === 'percentuale')
+                            <span class="gn-badge gn-badge-info">% PERC.</span>
+                        @else
+                            <span class="gn-badge gn-badge-trasporto">€ FISSO</span>
+                        @endif
+                    </td>
+                    <td class="num" style="font-family:monospace;">
+                        @if(($v['tipo'] ?? 'fisso') === 'percentuale')
+                            {{ number_format($v['valore'] ?? 0, 2, ',', '.') }}%
+                        @else
+                            € {{ number_format($v['valore'] ?? $v['importo'] ?? 0, 2, ',', '.') }}
+                        @endif
+                    </td>
                     <td class="num" style="color:{{ $v['importo'] < 0 ? '#dc2626' : '#065f46' }};font-weight:600;">€ {{ number_format($v['importo'], 2, ',', '.') }}</td>
+                    <td style="font-size:12px;color:var(--gn-muted);">{{ $v['autore'] ?? '-' }}<br><small>{{ $v['data'] ?? '' }}</small></td>
                     <td>
                         <form method="POST" action="{{ route('owner.analisi.custom.rimuoviVoceCustom', [$analisi->id, $v['id']]) }}" onsubmit="return confirm('Rimuovere voce?')" style="display:inline;">
                             @csrf @method('DELETE')
@@ -253,6 +282,21 @@
 </div>
 
 <script>
+function aggiornaPlaceholderVoce() {
+    const tipo = document.getElementById('selTipoVoce').value;
+    const inp = document.getElementById('inpValoreVoce');
+    const lbl = document.getElementById('lblValoreVoce');
+    if (tipo === 'percentuale') {
+        inp.placeholder = 'es. -5 per -5%';
+        lbl.textContent = 'Percentuale % (negativo = sconto)';
+        inp.step = '0.01';
+    } else {
+        inp.placeholder = 'es. -50';
+        lbl.textContent = 'Importo € (negativo = sconto)';
+        inp.step = '0.01';
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const inp = document.getElementById('inpCommessa');
     const box = document.getElementById('autocompleteCommesse');

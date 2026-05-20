@@ -48,51 +48,57 @@ $fmtHm = function ($sec) {
             <a href="{{ route('owner.analisi.custom.index') }}?op_token={{ request('op_token') }}" class="gn-btn gn-btn-secondary" style="margin-left:auto;">📊 Analisi Custom</a>
         </div>
 
-        <div id="panFiltri" style="display:{{ !empty(array_filter($f)) ? 'block' : 'none' }};background:#fff;border:1px solid var(--gn-border);border-radius:10px;padding:14px;margin-bottom:14px;">
-            <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:12px;">
+        <div id="panFiltri" style="display:{{ !empty(array_filter($f)) ? 'block' : 'none' }};background:#fff;border:1px solid var(--gn-border);border-radius:10px;padding:16px;margin-bottom:14px;">
+
+            {{-- Layout a 2 colonne: sinistra clienti / destra date+range --}}
+            <div style="display:grid;grid-template-columns:1.2fr 2fr;gap:16px;">
+
+                {{-- COLONNA SINISTRA: clienti multi-select --}}
                 <div>
-                    <label style="font-size:11px;color:var(--gn-muted);">Consegna da</label>
-                    <input type="date" name="data_da" value="{{ $f['data_da'] }}" style="width:100%;padding:7px 10px;border:1px solid var(--gn-border);border-radius:6px;font-size:13px;">
-                </div>
-                <div>
-                    <label style="font-size:11px;color:var(--gn-muted);">Consegna a</label>
-                    <input type="date" name="data_a" value="{{ $f['data_a'] }}" style="width:100%;padding:7px 10px;border:1px solid var(--gn-border);border-radius:6px;font-size:13px;">
-                </div>
-                <div style="grid-column:span 2;">
-                    <label style="font-size:11px;color:var(--gn-muted);">Clienti (multipli, Ctrl/⌘+click)</label>
-                    <select name="clienti[]" multiple size="4" style="width:100%;padding:7px 10px;border:1px solid var(--gn-border);border-radius:6px;font-size:13px;">
+                    <label style="font-size:11px;color:var(--gn-muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Clienti</label>
+                    <div style="font-size:10px;color:#9ca3af;margin-bottom:4px;">Tieni premuto Ctrl (Windows) o ⌘ (Mac) per selezione multipla</div>
+                    <select name="clienti[]" multiple size="7" style="width:100%;padding:6px 8px;border:1px solid var(--gn-border);border-radius:6px;font-size:12px;font-family:monospace;">
                         @foreach($clientiList as $cl)
-                        <option value="{{ $cl }}" {{ in_array($cl, $f['clienti'] ?? []) ? 'selected' : '' }}>{{ \Illuminate\Support\Str::limit($cl, 40) }}</option>
+                        <option value="{{ $cl }}" {{ in_array($cl, $f['clienti'] ?? []) ? 'selected' : '' }}>{{ \Illuminate\Support\Str::limit($cl, 50) }}</option>
                         @endforeach
                     </select>
+                    @if(!empty($f['clienti']))
+                    <div style="font-size:11px;color:var(--gn-primary);margin-top:4px;">✓ {{ count($f['clienti']) }} cliente/i selezionati</div>
+                    @endif
                 </div>
+
+                {{-- COLONNA DESTRA: date e range numerici --}}
                 <div>
-                    <label style="font-size:11px;color:var(--gn-muted);">Ore tot ≥</label>
-                    <input type="number" min="0" step="1" name="ore_min" value="{{ $f['ore_min'] }}" placeholder="es. 5" style="width:100%;padding:7px 10px;border:1px solid var(--gn-border);border-radius:6px;font-size:13px;">
+                    <label style="font-size:11px;color:var(--gn-muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:8px;">Periodo consegna</label>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+                        <input type="date" name="data_da" value="{{ $f['data_da'] }}" placeholder="Da" style="width:100%;padding:7px 10px;border:1px solid var(--gn-border);border-radius:6px;font-size:13px;">
+                        <input type="date" name="data_a" value="{{ $f['data_a'] }}" placeholder="A" style="width:100%;padding:7px 10px;border:1px solid var(--gn-border);border-radius:6px;font-size:13px;">
+                    </div>
+
+                    <label style="font-size:11px;color:var(--gn-muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:8px;">Ore / Scarti</label>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+                        <input type="number" min="0" step="1" name="ore_min" value="{{ $f['ore_min'] }}" placeholder="Ore tot ≥ (es. 5)" style="width:100%;padding:7px 10px;border:1px solid var(--gn-border);border-radius:6px;font-size:13px;">
+                        <input type="number" min="0" step="1" name="scarti_min" value="{{ $f['scarti_min'] }}" placeholder="Scarti ≥ fogli" style="width:100%;padding:7px 10px;border:1px solid var(--gn-border);border-radius:6px;font-size:13px;">
+                    </div>
+
+                    <label style="font-size:11px;color:var(--gn-muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:8px;">Range fogli</label>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+                        <input type="number" min="0" step="1" name="fogli_min" value="{{ $f['fogli_min'] ?? '' }}" placeholder="Min (es. 500)" style="width:100%;padding:7px 10px;border:1px solid var(--gn-border);border-radius:6px;font-size:13px;">
+                        <input type="number" min="0" step="1" name="fogli_max" value="{{ $f['fogli_max'] ?? '' }}" placeholder="Max (es. 10000)" style="width:100%;padding:7px 10px;border:1px solid var(--gn-border);border-radius:6px;font-size:13px;">
+                    </div>
+
+                    <label style="font-size:11px;color:var(--gn-muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:8px;">Range altri costi €</label>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+                        <input type="number" min="0" step="0.01" name="altri_min" value="{{ $f['altri_min'] ?? '' }}" placeholder="Min € (es. 100)" style="width:100%;padding:7px 10px;border:1px solid var(--gn-border);border-radius:6px;font-size:13px;">
+                        <input type="number" min="0" step="0.01" name="altri_max" value="{{ $f['altri_max'] ?? '' }}" placeholder="Max € (es. 1000)" style="width:100%;padding:7px 10px;border:1px solid var(--gn-border);border-radius:6px;font-size:13px;">
+                    </div>
+
+                    <div style="display:flex;gap:8px;justify-content:flex-end;border-top:1px solid #f3f4f6;padding-top:12px;">
+                        <button type="button" class="gn-btn gn-btn-secondary" onclick="document.getElementById('panFiltri').style.display='none';">Annulla</button>
+                        <button class="gn-btn gn-btn-primary">✓ Applica filtri</button>
+                    </div>
                 </div>
-                <div>
-                    <label style="font-size:11px;color:var(--gn-muted);">Scarti ≥ fogli</label>
-                    <input type="number" min="0" step="1" name="scarti_min" value="{{ $f['scarti_min'] }}" placeholder="es. 100" style="width:100%;padding:7px 10px;border:1px solid var(--gn-border);border-radius:6px;font-size:13px;">
-                </div>
-                <div>
-                    <label style="font-size:11px;color:var(--gn-muted);">Fogli min</label>
-                    <input type="number" min="0" step="1" name="fogli_min" value="{{ $f['fogli_min'] ?? '' }}" placeholder="es. 500" style="width:100%;padding:7px 10px;border:1px solid var(--gn-border);border-radius:6px;font-size:13px;">
-                </div>
-                <div>
-                    <label style="font-size:11px;color:var(--gn-muted);">Fogli max</label>
-                    <input type="number" min="0" step="1" name="fogli_max" value="{{ $f['fogli_max'] ?? '' }}" placeholder="es. 10000" style="width:100%;padding:7px 10px;border:1px solid var(--gn-border);border-radius:6px;font-size:13px;">
-                </div>
-                <div>
-                    <label style="font-size:11px;color:var(--gn-muted);">Altri costi € min</label>
-                    <input type="number" min="0" step="0.01" name="altri_min" value="{{ $f['altri_min'] ?? '' }}" placeholder="es. 100" style="width:100%;padding:7px 10px;border:1px solid var(--gn-border);border-radius:6px;font-size:13px;">
-                </div>
-                <div>
-                    <label style="font-size:11px;color:var(--gn-muted);">Altri costi € max</label>
-                    <input type="number" min="0" step="0.01" name="altri_max" value="{{ $f['altri_max'] ?? '' }}" placeholder="es. 1000" style="width:100%;padding:7px 10px;border:1px solid var(--gn-border);border-radius:6px;font-size:13px;">
-                </div>
-                <div style="display:flex;align-items:flex-end;gap:8px;">
-                    <button class="gn-btn gn-btn-primary">Applica</button>
-                </div>
+
             </div>
         </div>
     </form>
