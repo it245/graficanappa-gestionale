@@ -31,11 +31,16 @@ class AnalisiCostiCommessaController extends Controller
 
         // Filtri avanzati
         $f = [
-            'data_da'    => $request->get('data_da'),
-            'data_a'     => $request->get('data_a'),
-            'cliente'    => $request->get('cliente'),
-            'ore_min'    => $request->get('ore_min'),
-            'scarti_min' => $request->get('scarti_min'),
+            'data_da'      => $request->get('data_da'),
+            'data_a'       => $request->get('data_a'),
+            'cliente'      => $request->get('cliente'),       // legacy single
+            'clienti'      => (array) $request->get('clienti', []), // #7 multi-select
+            'ore_min'      => $request->get('ore_min'),
+            'scarti_min'   => $request->get('scarti_min'),
+            'altri_min'    => $request->get('altri_min'),     // #8 range altri costi
+            'altri_max'    => $request->get('altri_max'),
+            'fogli_min'    => $request->get('fogli_min'),     // #8 range fogli
+            'fogli_max'    => $request->get('fogli_max'),
         ];
 
         // Lista clienti per dropdown (DISTINCT da ordini)
@@ -81,14 +86,27 @@ class AnalisiCostiCommessaController extends Controller
         }
         if (!empty($f['data_da'])) $commesseTerminate->where('o.data_prevista_consegna', '>=', $f['data_da']);
         if (!empty($f['data_a']))  $commesseTerminate->where('o.data_prevista_consegna', '<=', $f['data_a']);
-        if (!empty($f['cliente'])) $commesseTerminate->where('o.cliente_nome', $f['cliente']);
+        if (!empty($f['clienti'])) {
+            $commesseTerminate->whereIn('o.cliente_nome', $f['clienti']);
+        } elseif (!empty($f['cliente'])) {
+            $commesseTerminate->where('o.cliente_nome', $f['cliente']);
+        }
         if (!empty($f['ore_min'])) $commesseTerminate->havingRaw('ore_sec >= ?', [(int) $f['ore_min'] * 3600]);
         if (!empty($f['scarti_min'])) $commesseTerminate->havingRaw('scarti_tot >= ?', [(int) $f['scarti_min']]);
+        if (!empty($f['altri_min'])) $commesseTerminate->havingRaw('altri_tot >= ?', [(float) $f['altri_min']]);
+        if (!empty($f['altri_max'])) $commesseTerminate->havingRaw('altri_tot <= ?', [(float) $f['altri_max']]);
+        if (!empty($f['fogli_min'])) $commesseTerminate->havingRaw('fogli_max >= ?', [(int) $f['fogli_min']]);
+        if (!empty($f['fogli_max'])) $commesseTerminate->havingRaw('fogli_max <= ?', [(int) $f['fogli_max']]);
 
+        $appendFilters = [];
+        foreach ($f as $k => $v) {
+            if ($v === null || $v === '' || (is_array($v) && empty($v))) continue;
+            $appendFilters[$k] = $v;
+        }
         $righe = $commesseTerminate
             ->orderByRaw("{$sort} {$dir}")
             ->paginate(50)
-            ->appends(array_merge(['q' => $search, 'sort' => $sort, 'dir' => $dir], array_filter($f)));
+            ->appends(array_merge(['q' => $search, 'sort' => $sort, 'dir' => $dir], $appendFilters));
 
         // Aggregati riepilogo per le commesse della pagina corrente
         $commesseList = collect($righe->items())->pluck('commessa')->all();
@@ -150,7 +168,33 @@ class AnalisiCostiCommessaController extends Controller
                 ->keyBy('commessa');
         }
 
-        return view('owner.costi.analisi_commesse_lista', compact('righe', 'search', 'aggregates', 'fogli', 'altri', 'oreReparti', 'sort', 'dir', 'f', 'clientiList'));
+        // #6 Filtri preferiti
+        $filtriPreferiti = \App\Models\FiltroPreferitoCosti::orderBy('nome')->get();
+
+        return view('owner.costi.analisi_commesse_lista', compact('righe', 'search', 'aggregates', 'fogli', 'altri', 'oreReparti', 'sort', 'dir', 'f', 'clientiList', 'filtriPreferiti'));
+    }
+
+    /**
+     * #6 Salva filtri correnti come preset.
+     */
+    public function salvaFiltro(Request $request)
+    {
+        $data = $request->validate([
+            'nome'    => 'required|string|max:100',
+            'filtri'  => 'nullable|array',
+        ]);
+        \App\Models\FiltroPreferitoCosti::create([
+            'nome'   => $data['nome'],
+            'autore' => session('admin_nome') ?? session('operatore_nome') ?? 'owner',
+            'filtri' => $data['filtri'] ?? [],
+        ]);
+        return redirect()->route('owner.costi.analisi.index', $data['filtri'] ?? []);
+    }
+
+    public function eliminaFiltro(int $id)
+    {
+        \App\Models\FiltroPreferitoCosti::findOrFail($id)->delete();
+        return redirect()->route('owner.costi.analisi.index');
     }
 
     /**

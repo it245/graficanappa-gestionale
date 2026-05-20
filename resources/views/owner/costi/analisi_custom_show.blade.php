@@ -20,7 +20,11 @@
         <div style="display:flex;gap:8px;">
             <a href="{{ route('owner.analisi.custom.pdf', $analisi->id) }}?op_token={{ request('op_token') }}" target="_blank" class="gn-btn gn-btn-primary">📄 PDF</a>
             <a href="{{ route('owner.analisi.custom.excel', $analisi->id) }}?op_token={{ request('op_token') }}" class="gn-btn gn-btn-secondary">📊 CSV</a>
-            <form method="POST" action="{{ route('owner.analisi.custom.destroy', $analisi->id) }}" onsubmit="return confirm('Eliminare analisi?')">
+            <form method="POST" action="{{ route('owner.analisi.custom.duplica', $analisi->id) }}" style="display:inline;">
+                @csrf
+                <button class="gn-btn gn-btn-secondary" title="Duplica analisi con tutte le commesse">📋 Duplica</button>
+            </form>
+            <form method="POST" action="{{ route('owner.analisi.custom.destroy', $analisi->id) }}" onsubmit="return confirm('Eliminare analisi?')" style="display:inline;">
                 @csrf @method('DELETE')
                 <button class="gn-btn gn-btn-secondary">🗑 Elimina</button>
             </form>
@@ -110,6 +114,46 @@
             </div>
         </div>
 
+    </div>
+
+    {{-- #10 Voci custom ad-hoc analisi --}}
+    <div class="gn-card" style="border-color:#a78bfa;">
+        <div class="gn-card-header" style="background:#f5f3ff;">
+            <h3>🏷️ Voci custom (ad-hoc analisi)</h3>
+            <span style="font-size:12px;color:var(--gn-muted);">Aggiunte direttamente all'analisi, non a una commessa specifica</span>
+        </div>
+        <div class="gn-card-body">
+            <form method="POST" action="{{ route('owner.analisi.custom.voceCustom', $analisi->id) }}" style="display:grid;grid-template-columns:2fr 1fr auto;gap:10px;margin-bottom:14px;">
+                @csrf
+                <input type="text" name="descrizione" placeholder="Es. Sconto cliente, Bonus puntualità, Spese commerciali" required style="padding:8px 12px;border:1px solid var(--gn-border);border-radius:6px;font-size:13px;">
+                <input type="number" step="0.01" name="importo" placeholder="Importo € (negativo per sconti)" required style="padding:8px 12px;border:1px solid var(--gn-border);border-radius:6px;font-size:13px;text-align:right;font-family:monospace;">
+                <button class="gn-btn gn-btn-primary">+ Aggiungi voce</button>
+            </form>
+
+            @if(!empty($vociCustom))
+            <table class="gn-table">
+                <thead><tr><th>Descrizione</th><th>Autore</th><th>Data</th><th class="num">Importo €</th><th></th></tr></thead>
+                <tbody>
+                @foreach($vociCustom as $v)
+                <tr>
+                    <td><strong>{{ $v['descrizione'] }}</strong></td>
+                    <td>{{ $v['autore'] ?? '-' }}</td>
+                    <td>{{ $v['data'] ?? '-' }}</td>
+                    <td class="num" style="color:{{ $v['importo'] < 0 ? '#dc2626' : '#065f46' }};font-weight:600;">€ {{ number_format($v['importo'], 2, ',', '.') }}</td>
+                    <td>
+                        <form method="POST" action="{{ route('owner.analisi.custom.rimuoviVoceCustom', [$analisi->id, $v['id']]) }}" onsubmit="return confirm('Rimuovere voce?')" style="display:inline;">
+                            @csrf @method('DELETE')
+                            <button class="gn-btn gn-btn-secondary gn-btn-icon">🗑</button>
+                        </form>
+                    </td>
+                </tr>
+                @endforeach
+                </tbody>
+            </table>
+            @else
+            <div style="color:var(--gn-muted);font-size:13px;text-align:center;padding:8px;">Nessuna voce custom. Usa form sopra per aggiungere voci ad-hoc all'analisi.</div>
+            @endif
+        </div>
     </div>
 
     {{-- Tabella commesse incluse --}}

@@ -104,6 +104,14 @@ Route::delete('/owner/costi/analisi/{commessa}/override', [\App\Http\Controllers
 Route::post('/owner/costi/analisi/{commessa}/voce', [\App\Http\Controllers\AnalisiCostiCommessaController::class, 'updateVoceCosto'])->name('owner.costi.analisi.updateVoce');
 Route::post('/owner/costi/analisi/{commessa}/voce-reset', [\App\Http\Controllers\AnalisiCostiCommessaController::class, 'deleteVoceCosto'])->name('owner.costi.analisi.deleteVoce');
 Route::get('/owner/costi/analisi/{commessa}/pdf', [\App\Http\Controllers\AnalisiCostiCommessaController::class, 'pdfConsuntivo'])->name('owner.costi.analisi.pdf');
+// #6 Filtri preferiti
+Route::post('/owner/costi/filtri-preferiti', [\App\Http\Controllers\AnalisiCostiCommessaController::class, 'salvaFiltro'])->name('owner.costi.filtri.salva');
+Route::delete('/owner/costi/filtri-preferiti/{id}', [\App\Http\Controllers\AnalisiCostiCommessaController::class, 'eliminaFiltro'])->whereNumber('id')->name('owner.costi.filtri.elimina');
+// #12 CRUD categorie altri costi
+Route::get('/owner/costi/categorie', [\App\Http\Controllers\CategorieAltriCostiController::class, 'index'])->name('owner.costi.categorie.index');
+Route::post('/owner/costi/categorie', [\App\Http\Controllers\CategorieAltriCostiController::class, 'store'])->name('owner.costi.categorie.store');
+Route::post('/owner/costi/categorie/{id}', [\App\Http\Controllers\CategorieAltriCostiController::class, 'update'])->whereNumber('id')->name('owner.costi.categorie.update');
+Route::delete('/owner/costi/categorie/{id}', [\App\Http\Controllers\CategorieAltriCostiController::class, 'destroy'])->whereNumber('id')->name('owner.costi.categorie.destroy');
 
 // Workspace analisi custom (gruppi di commesse per analisi ad-hoc)
 Route::get('/owner/analisi-custom',             [\App\Http\Controllers\AnalisiCustomController::class, 'index'])->name('owner.analisi.custom.index');
@@ -117,6 +125,9 @@ Route::delete('/owner/analisi-custom/{id}',     [\App\Http\Controllers\AnalisiCu
 Route::get('/owner/analisi-custom/search/commesse', [\App\Http\Controllers\AnalisiCustomController::class, 'searchCommesse'])->name('owner.analisi.custom.searchCommesse');
 Route::get('/owner/analisi-custom/{id}/pdf',   [\App\Http\Controllers\AnalisiCustomController::class, 'pdf'])->whereNumber('id')->name('owner.analisi.custom.pdf');
 Route::get('/owner/analisi-custom/{id}/excel', [\App\Http\Controllers\AnalisiCustomController::class, 'excel'])->whereNumber('id')->name('owner.analisi.custom.excel');
+Route::post('/owner/analisi-custom/{id}/duplica',  [\App\Http\Controllers\AnalisiCustomController::class, 'duplica'])->whereNumber('id')->name('owner.analisi.custom.duplica');
+Route::post('/owner/analisi-custom/{id}/voce-custom',  [\App\Http\Controllers\AnalisiCustomController::class, 'aggiungiVoceCustom'])->whereNumber('id')->name('owner.analisi.custom.voceCustom');
+Route::delete('/owner/analisi-custom/{id}/voce-custom/{voceId}',  [\App\Http\Controllers\AnalisiCustomController::class, 'rimuoviVoceCustom'])->whereNumber('id')->name('owner.analisi.custom.rimuoviVoceCustom');
 Route::post('/owner/note-spedizione', [DashboardSpedizioneController::class, 'salvaNotaGiornaliera'])->name('owner.salvaNotaSpedizione');
 Route::get('/owner/note-spedizione-check', [DashboardSpedizioneController::class, 'noteUltimoAggiornamento'])->name('owner.noteSpedizioneCheck');
 Route::get('/owner/audit-log', [DashboardOwnerController::class, 'auditLog'])->name('owner.auditLog');

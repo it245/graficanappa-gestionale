@@ -82,7 +82,16 @@ class AnalisiCustomController extends Controller
         }
         arsort($categorieTot);
 
-        return view('owner.costi.analisi_custom_show', compact('analisi', 'datiCommesse', 'totaleGenerale', 'categorieTot'));
+        // #10 Voci custom ad-hoc analisi
+        $vociCustom = $analisi->opzioni_view['voci_custom'] ?? [];
+        $totaleVociCustom = array_sum(array_column($vociCustom, 'importo'));
+        $totaleGenerale += $totaleVociCustom;
+        if ($totaleVociCustom != 0) {
+            $categorieTot['voci_custom'] = ($categorieTot['voci_custom'] ?? 0) + $totaleVociCustom;
+            arsort($categorieTot);
+        }
+
+        return view('owner.costi.analisi_custom_show', compact('analisi', 'datiCommesse', 'totaleGenerale', 'categorieTot', 'vociCustom'));
     }
 
     public function aggiungiCommessa(Request $request, int $id)
@@ -135,6 +144,66 @@ class AnalisiCustomController extends Controller
     {
         AnalisiCustom::findOrFail($id)->delete();
         return redirect()->route('owner.analisi.custom.index');
+    }
+
+    /**
+     * #11 Duplica analisi (copia con tutte le commesse).
+     */
+    public function duplica(int $id)
+    {
+        $orig = AnalisiCustom::with('commesse')->findOrFail($id);
+        $copia = AnalisiCustom::create([
+            'nome'        => $orig->nome . ' (copia)',
+            'descrizione' => $orig->descrizione,
+            'autore'      => session('admin_nome') ?? session('operatore_nome') ?? 'owner',
+            'filtri'      => $orig->filtri,
+            'opzioni_view' => $orig->opzioni_view,
+            'ultimo_accesso' => now(),
+        ]);
+        foreach ($orig->commesse as $c) {
+            AnalisiCustomCommessa::create([
+                'analisi_id'    => $copia->id,
+                'commessa'      => $c->commessa,
+                'etichetta'     => $c->etichetta,
+                'override_voci' => $c->override_voci,
+                'ordine'        => $c->ordine,
+            ]);
+        }
+        return redirect()->route('owner.analisi.custom.show', $copia->id)->with('success', 'Analisi duplicata');
+    }
+
+    /**
+     * #10 Aggiungi voce manuale ad-hoc all'analisi (non a una commessa specifica).
+     */
+    public function aggiungiVoceCustom(Request $request, int $id)
+    {
+        $data = $request->validate([
+            'descrizione' => 'required|string|max:200',
+            'importo'     => 'required|numeric',
+        ]);
+        $analisi = AnalisiCustom::findOrFail($id);
+        $opt = is_array($analisi->opzioni_view) ? $analisi->opzioni_view : [];
+        $opt['voci_custom'] = $opt['voci_custom'] ?? [];
+        $opt['voci_custom'][] = [
+            'id'          => uniqid(),
+            'descrizione' => $data['descrizione'],
+            'importo'     => (float) $data['importo'],
+            'autore'      => session('admin_nome') ?? session('operatore_nome') ?? 'owner',
+            'data'        => now()->format('Y-m-d H:i'),
+        ];
+        $analisi->update(['opzioni_view' => $opt]);
+        return redirect()->route('owner.analisi.custom.show', $id);
+    }
+
+    public function rimuoviVoceCustom(int $id, string $voceId)
+    {
+        $analisi = AnalisiCustom::findOrFail($id);
+        $opt = is_array($analisi->opzioni_view) ? $analisi->opzioni_view : [];
+        if (isset($opt['voci_custom'])) {
+            $opt['voci_custom'] = array_values(array_filter($opt['voci_custom'], fn($v) => ($v['id'] ?? '') !== $voceId));
+        }
+        $analisi->update(['opzioni_view' => $opt]);
+        return redirect()->route('owner.analisi.custom.show', $id);
     }
 
     public function pdf(int $id, CostoConsuntivoService $costoService)

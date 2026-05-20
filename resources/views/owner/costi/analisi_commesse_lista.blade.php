@@ -27,9 +27,23 @@ $fmtHm = function ($sec) {
             </div>
             <button class="gn-btn gn-btn-primary">Filtra</button>
             <button type="button" class="gn-btn gn-btn-secondary" onclick="document.getElementById('panFiltri').style.display = document.getElementById('panFiltri').style.display === 'none' ? 'block' : 'none';">⚙ Filtri avanzati</button>
+
+            {{-- #6 Filtri preferiti --}}
+            @if($filtriPreferiti->count() > 0)
+            <select onchange="if(this.value) window.location=this.value" style="padding:7px 10px;border:1px solid var(--gn-border);border-radius:8px;font-size:13px;background:#fff;">
+                <option value="">⭐ Filtri preferiti…</option>
+                @foreach($filtriPreferiti as $fp)
+                @php $url = route('owner.costi.analisi.index', array_merge(['op_token' => request('op_token')], $fp->filtri ?? [])); @endphp
+                <option value="{{ $url }}">{{ $fp->nome }} ({{ $fp->autore }})</option>
+                @endforeach
+            </select>
+            @endif
+
             @if($filtriAttivi)
             <a href="{{ route('owner.costi.analisi.index') }}" class="gn-btn gn-btn-secondary">Reset</a>
+            <button type="button" class="gn-btn gn-btn-secondary" onclick="salvaFiltroCorrente()">⭐ Salva filtro</button>
             @endif
+            <a href="{{ route('owner.costi.categorie.index') }}?op_token={{ request('op_token') }}" class="gn-btn gn-btn-secondary">🏷 Categorie</a>
             <a href="{{ route('owner.analisi.custom.index') }}?op_token={{ request('op_token') }}" class="gn-btn gn-btn-secondary" style="margin-left:auto;">📊 Analisi Custom</a>
         </div>
 
@@ -43,12 +57,11 @@ $fmtHm = function ($sec) {
                     <label style="font-size:11px;color:var(--gn-muted);">Consegna a</label>
                     <input type="date" name="data_a" value="{{ $f['data_a'] }}" style="width:100%;padding:7px 10px;border:1px solid var(--gn-border);border-radius:6px;font-size:13px;">
                 </div>
-                <div>
-                    <label style="font-size:11px;color:var(--gn-muted);">Cliente</label>
-                    <select name="cliente" style="width:100%;padding:7px 10px;border:1px solid var(--gn-border);border-radius:6px;font-size:13px;">
-                        <option value="">Tutti</option>
+                <div style="grid-column:span 2;">
+                    <label style="font-size:11px;color:var(--gn-muted);">Clienti (multipli, Ctrl/⌘+click)</label>
+                    <select name="clienti[]" multiple size="4" style="width:100%;padding:7px 10px;border:1px solid var(--gn-border);border-radius:6px;font-size:13px;">
                         @foreach($clientiList as $cl)
-                        <option value="{{ $cl }}" {{ $f['cliente'] === $cl ? 'selected' : '' }}>{{ \Illuminate\Support\Str::limit($cl, 40) }}</option>
+                        <option value="{{ $cl }}" {{ in_array($cl, $f['clienti'] ?? []) ? 'selected' : '' }}>{{ \Illuminate\Support\Str::limit($cl, 40) }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -59,6 +72,22 @@ $fmtHm = function ($sec) {
                 <div>
                     <label style="font-size:11px;color:var(--gn-muted);">Scarti ≥ fogli</label>
                     <input type="number" min="0" step="1" name="scarti_min" value="{{ $f['scarti_min'] }}" placeholder="es. 100" style="width:100%;padding:7px 10px;border:1px solid var(--gn-border);border-radius:6px;font-size:13px;">
+                </div>
+                <div>
+                    <label style="font-size:11px;color:var(--gn-muted);">Fogli min</label>
+                    <input type="number" min="0" step="1" name="fogli_min" value="{{ $f['fogli_min'] ?? '' }}" placeholder="es. 500" style="width:100%;padding:7px 10px;border:1px solid var(--gn-border);border-radius:6px;font-size:13px;">
+                </div>
+                <div>
+                    <label style="font-size:11px;color:var(--gn-muted);">Fogli max</label>
+                    <input type="number" min="0" step="1" name="fogli_max" value="{{ $f['fogli_max'] ?? '' }}" placeholder="es. 10000" style="width:100%;padding:7px 10px;border:1px solid var(--gn-border);border-radius:6px;font-size:13px;">
+                </div>
+                <div>
+                    <label style="font-size:11px;color:var(--gn-muted);">Altri costi € min</label>
+                    <input type="number" min="0" step="0.01" name="altri_min" value="{{ $f['altri_min'] ?? '' }}" placeholder="es. 100" style="width:100%;padding:7px 10px;border:1px solid var(--gn-border);border-radius:6px;font-size:13px;">
+                </div>
+                <div>
+                    <label style="font-size:11px;color:var(--gn-muted);">Altri costi € max</label>
+                    <input type="number" min="0" step="0.01" name="altri_max" value="{{ $f['altri_max'] ?? '' }}" placeholder="es. 1000" style="width:100%;padding:7px 10px;border:1px solid var(--gn-border);border-radius:6px;font-size:13px;">
                 </div>
                 <div style="display:flex;align-items:flex-end;gap:8px;">
                     <button class="gn-btn gn-btn-primary">Applica</button>
@@ -131,5 +160,29 @@ $fmtHm = function ($sec) {
         </div>
     </div>
 </div>
+
+{{-- #6 Form nascosto salva filtro --}}
+<form id="frmSalvaFiltro" method="POST" action="{{ route('owner.costi.filtri.salva') }}" style="display:none;">
+    @csrf
+    <input type="hidden" name="nome" id="inpNomeFiltro">
+    @foreach($f as $k => $v)
+        @if(is_array($v))
+            @foreach($v as $vi)
+            <input type="hidden" name="filtri[{{ $k }}][]" value="{{ $vi }}">
+            @endforeach
+        @elseif($v !== null && $v !== '')
+            <input type="hidden" name="filtri[{{ $k }}]" value="{{ $v }}">
+        @endif
+    @endforeach
+</form>
+
+<script>
+function salvaFiltroCorrente() {
+    const nome = prompt('Nome del filtro preferito:');
+    if (!nome) return;
+    document.getElementById('inpNomeFiltro').value = nome;
+    document.getElementById('frmSalvaFiltro').submit();
+}
+</script>
 
 @endsection
