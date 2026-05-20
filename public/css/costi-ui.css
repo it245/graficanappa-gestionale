@@ -30,7 +30,8 @@
 .gn-kpi-sub { font-size: 11px; color: var(--gn-muted); margin-top: 2px; }
 
 /* === CARDS === */
-.gn-card { background: var(--gn-card-bg); border: 1px solid var(--gn-border); border-radius: 12px; margin-bottom: 16px; overflow: hidden; }
+.gn-card { background: var(--gn-card-bg); border: 1px solid var(--gn-border); border-radius: 12px; margin-bottom: 16px; }
+.gn-card.gn-card-clipped { overflow: hidden; } /* uso esplicito quando serve tagliare */
 .gn-card-header { padding: 14px 18px; border-bottom: 1px solid var(--gn-border); display: flex; justify-content: space-between; align-items: center; }
 .gn-card-header h3 { margin: 0; font-size: 14px; font-weight: 600; color: var(--gn-text); }
 .gn-card-header .gn-card-actions { display: flex; gap: 8px; align-items: center; }
