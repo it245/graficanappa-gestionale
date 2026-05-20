@@ -26,6 +26,7 @@ class AnalisiCostiCommessaController extends Controller
 
         $commesseTerminate = DB::table('ordini as o')
             ->join('ordine_fasi as orf', 'orf.ordine_id', '=', 'o.id')
+            ->whereNull('orf.deleted_at')
             ->leftJoin('fasi_catalogo as fc', 'fc.id', '=', 'orf.fase_catalogo_id')
             ->leftJoin('reparti as r', 'r.id', '=', 'fc.reparto_id')
             ->select(
@@ -69,6 +70,7 @@ class AnalisiCostiCommessaController extends Controller
         if (!empty($commesseList)) {
             $aggregates = DB::table('ordini as o')
                 ->join('ordine_fasi as orf', 'orf.ordine_id', '=', 'o.id')
+                ->whereNull('orf.deleted_at')
                 ->whereIn('o.commessa', $commesseList)
                 ->whereNotNull('orf.data_inizio')
                 ->select(
@@ -85,6 +87,7 @@ class AnalisiCostiCommessaController extends Controller
             // Ore per reparto (per tooltip/breakdown in lista)
             $oreReparti = DB::table('ordini as o')
                 ->join('ordine_fasi as orf', 'orf.ordine_id', '=', 'o.id')
+                ->whereNull('orf.deleted_at')
                 ->leftJoin('fasi_catalogo as fc', 'fc.id', '=', 'orf.fase_catalogo_id')
                 ->leftJoin('reparti as r', 'r.id', '=', 'fc.reparto_id')
                 ->whereIn('o.commessa', $commesseList)
@@ -100,6 +103,7 @@ class AnalisiCostiCommessaController extends Controller
 
             $fogli = DB::table('ordini as o')
                 ->join('ordine_fasi as orf', 'orf.ordine_id', '=', 'o.id')
+                ->whereNull('orf.deleted_at')
                 ->leftJoin('fasi_catalogo as fc', 'fc.id', '=', 'orf.fase_catalogo_id')
                 ->leftJoin('reparti as r', 'r.id', '=', 'fc.reparto_id')
                 ->whereIn('o.commessa', $commesseList)
