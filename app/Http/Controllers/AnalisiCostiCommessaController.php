@@ -207,7 +207,7 @@ class AnalisiCostiCommessaController extends Controller
         $mesi = (int) $request->get('mesi', 12);
         $mesi = max(3, min(24, $mesi));
 
-        $cacheKey = 'costi.trend.' . $mesi;
+        $cacheKey = 'costi.trend.v2.' . $mesi;
         $result = Cache::remember($cacheKey, 1800, function () use ($mesi) {
             $start = now()->subMonths($mesi - 1)->startOfMonth();
 
@@ -295,10 +295,128 @@ class AnalisiCostiCommessaController extends Controller
 
         if ($request->boolean('refresh')) {
             Cache::forget($cacheKey);
+            Cache::forget('costi.trend.' . $mesi); // legacy
             return redirect()->route('owner.costi.trend', ['mesi' => $mesi, 'op_token' => $request->get('op_token')]);
         }
 
         return view('owner.costi.trend_mensile', compact('mesiList', 'maxTotale', 'mesi', 'infoCache'));
+    }
+
+    /**
+     * #4 Anomaly detection: commesse fuori soglia.
+     * Categorie: scarti_pct > 10%, ore_fasi > 2x media reparto, costo_per_pezzo > 2x media cliente.
+     */
+    public function anomalie(Request $request)
+    {
+        $sogliaScarti = (float) $request->get('soglia_scarti', 10); // % scarti / fogli_buoni
+        $sogliaOre = (float) $request->get('soglia_ore', 2.0);     // multiplier vs media reparto
+        $sogliaCosto = (float) $request->get('soglia_costo', 2.0); // multiplier vs media cliente
+        $mesi = max(1, min(24, (int) $request->get('mesi', 6)));
+
+        $start = now()->subMonths($mesi)->format('Y-m-d');
+
+        // Aggregati per commessa
+        $base = DB::table('ordini as o')
+            ->join('ordine_fasi as orf', 'orf.ordine_id', '=', 'o.id')
+            ->whereNull('orf.deleted_at')
+            ->leftJoin('fasi_catalogo as fc', 'fc.id', '=', 'orf.fase_catalogo_id')
+            ->leftJoin('reparti as r', 'r.id', '=', 'fc.reparto_id')
+            ->where('o.data_prevista_consegna', '>=', $start)
+            ->select(
+                'o.commessa',
+                DB::raw('MAX(o.cliente_nome) as cliente'),
+                DB::raw("GROUP_CONCAT(DISTINCT o.descrizione SEPARATOR ' · ') as descrizione"),
+                DB::raw('MAX(o.data_prevista_consegna) as consegna'),
+                DB::raw('MAX(o.qta) as qta_richiesta'),
+                DB::raw('SUM(CASE WHEN orf.data_inizio IS NOT NULL THEN COALESCE(orf.tempo_avviamento_sec,0)+COALESCE(orf.tempo_esecuzione_sec,0) ELSE 0 END) as ore_sec'),
+                DB::raw('SUM(COALESCE(orf.scarti,0)) as scarti_tot'),
+                DB::raw('MAX(CASE WHEN LOWER(COALESCE(r.nome,\'\')) IN (\'stampa offset\',\'digitale\') THEN orf.fogli_buoni ELSE 0 END) as fogli_max')
+            )
+            ->groupBy('o.commessa')
+            ->get();
+
+        // Carica totali cache
+        $commesseList = $base->pluck('commessa')->all();
+        $cacheTot = empty($commesseList) ? collect() : DB::table('commessa_totali_cache')
+            ->whereIn('commessa', $commesseList)->get()->keyBy('commessa');
+
+        // Media ore per cliente (per scoprire outlier)
+        $oreMedieCliente = [];
+        $costoMedioCliente = [];
+        foreach ($base as $r) {
+            $cli = $r->cliente ?: '?';
+            $oreMedieCliente[$cli][] = (int) $r->ore_sec;
+            if (isset($cacheTot[$r->commessa]) && $r->qta_richiesta > 0) {
+                $costoPezzo = $cacheTot[$r->commessa]->totale / $r->qta_richiesta;
+                $costoMedioCliente[$cli][] = $costoPezzo;
+            }
+        }
+        $mediaOre = array_map(fn($a) => count($a) > 0 ? array_sum($a) / count($a) : 0, $oreMedieCliente);
+        $mediaCosto = array_map(fn($a) => count($a) > 0 ? array_sum($a) / count($a) : 0, $costoMedioCliente);
+
+        // Identifica anomalie
+        $anomalie = [];
+        foreach ($base as $r) {
+            $tipi = [];
+
+            // Anomalia 1: scarti %
+            if ($r->fogli_max > 0) {
+                $pctScarti = $r->scarti_tot / $r->fogli_max * 100;
+                if ($pctScarti > $sogliaScarti) {
+                    $tipi[] = ['tipo' => 'scarti', 'severita' => $pctScarti > $sogliaScarti * 2 ? 'alta' : 'media',
+                               'valore' => round($pctScarti, 1) . '%', 'descrizione' => "Scarti: {$r->scarti_tot}/{$r->fogli_max} fg = " . round($pctScarti, 1) . "% (soglia {$sogliaScarti}%)"];
+                }
+            }
+
+            // Anomalia 2: ore vs media cliente
+            $cli = $r->cliente ?: '?';
+            $media = $mediaOre[$cli] ?? 0;
+            if ($media > 0 && $r->ore_sec > $media * $sogliaOre) {
+                $rapporto = round($r->ore_sec / $media, 2);
+                $tipi[] = ['tipo' => 'ore', 'severita' => $rapporto > 3 ? 'alta' : 'media',
+                           'valore' => $rapporto . 'x', 'descrizione' => "Ore: " . round($r->ore_sec/3600, 1) . "h vs media cliente " . round($media/3600, 1) . "h ({$rapporto}x)"];
+            }
+
+            // Anomalia 3: costo per pezzo vs media cliente
+            if (isset($cacheTot[$r->commessa]) && $r->qta_richiesta > 0) {
+                $costoPezzo = $cacheTot[$r->commessa]->totale / $r->qta_richiesta;
+                $mediaCli = $mediaCosto[$cli] ?? 0;
+                if ($mediaCli > 0 && $costoPezzo > $mediaCli * $sogliaCosto) {
+                    $rapporto = round($costoPezzo / $mediaCli, 2);
+                    $tipi[] = ['tipo' => 'costo', 'severita' => $rapporto > 3 ? 'alta' : 'media',
+                               'valore' => $rapporto . 'x', 'descrizione' => "€/pezzo: " . number_format($costoPezzo, 3, ',', '.') . " vs media cliente " . number_format($mediaCli, 3, ',', '.') . " ({$rapporto}x)"];
+                }
+            }
+
+            if (!empty($tipi)) {
+                $anomalie[] = [
+                    'commessa'    => $r->commessa,
+                    'cliente'     => $r->cliente,
+                    'descrizione' => $r->descrizione,
+                    'consegna'    => $r->consegna,
+                    'qta'         => $r->qta_richiesta,
+                    'tipi'        => $tipi,
+                    'totale'      => isset($cacheTot[$r->commessa]) ? (float) $cacheTot[$r->commessa]->totale : null,
+                ];
+            }
+        }
+
+        // Ordina per severita: alte prima
+        usort($anomalie, function ($a, $b) {
+            $sA = count(array_filter($a['tipi'], fn($t) => $t['severita'] === 'alta'));
+            $sB = count(array_filter($b['tipi'], fn($t) => $t['severita'] === 'alta'));
+            if ($sA !== $sB) return $sB <=> $sA;
+            return count($b['tipi']) <=> count($a['tipi']);
+        });
+
+        $statsGlobali = [
+            'commesse_totali' => $base->count(),
+            'anomale'         => count($anomalie),
+            'alta_severita'   => count(array_filter($anomalie, fn($a) => count(array_filter($a['tipi'], fn($t) => $t['severita'] === 'alta')) > 0)),
+            'pct_anomale'     => $base->count() > 0 ? round(count($anomalie) / $base->count() * 100, 1) : 0,
+        ];
+
+        return view('owner.costi.anomalie', compact('anomalie', 'sogliaScarti', 'sogliaOre', 'sogliaCosto', 'mesi', 'statsGlobali'));
     }
 
     /**
