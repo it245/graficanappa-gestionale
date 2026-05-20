@@ -321,7 +321,9 @@ class AnalisiCostiCommessaController extends Controller
             'cliente'          => $primoOrdine->cliente_nome ?? '-',
             'descrizione'      => $primoOrdine->descrizione ?? '-',
             'data_consegna'    => $primoOrdine->data_prevista_consegna,
-            'qta_richiesta'    => $ordini->sum('qta_richiesta'),
+            'qta_richiesta'    => $ordini->where('cod_art', '!=', 'SEMILAVSTAMPA_FUSTELLA')
+                                          ->whereNotIn('cod_art', ['SEMILAV', 'SEMILAVSTAMPA'])
+                                          ->sum('qta_richiesta') ?: $ordini->sum('qta_richiesta'),
             'oreReparto'       => $oreReparto,
             'fogliUtilizzati'  => $fogliUtilizzati,
             'faseStampaNome'   => $faseStampa ? ($faseStampa->faseCatalogo->reparto->nome ?? '-') : '-',
