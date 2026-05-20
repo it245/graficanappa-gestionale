@@ -332,8 +332,10 @@ class AnalisiCostiCommessaController extends Controller
                 DB::raw('MAX(o.data_prevista_consegna) as consegna'),
                 DB::raw('MAX(o.qta_richiesta) as qta_richiesta'),
                 DB::raw('SUM(CASE WHEN orf.data_inizio IS NOT NULL THEN COALESCE(orf.tempo_avviamento_sec,0)+COALESCE(orf.tempo_esecuzione_sec,0) ELSE 0 END) as ore_sec'),
-                DB::raw('SUM(COALESCE(orf.scarti,0)) as scarti_tot'),
-                DB::raw('MAX(CASE WHEN LOWER(COALESCE(r.nome,\'\')) IN (\'stampa offset\',\'digitale\') THEN orf.fogli_buoni ELSE 0 END) as fogli_max')
+                // Scarti SOLO fasi stampa (offset+digitale), non somma tutte fasi
+                DB::raw("SUM(CASE WHEN LOWER(COALESCE(r.nome,'')) IN ('stampa offset','digitale') THEN COALESCE(orf.scarti,0) ELSE 0 END) as scarti_tot"),
+                // Fogli stampati: SUM (somma interno+copertina), non MAX
+                DB::raw("SUM(CASE WHEN LOWER(COALESCE(r.nome,'')) IN ('stampa offset','digitale') THEN COALESCE(orf.fogli_buoni,0) ELSE 0 END) as fogli_max")
             )
             ->groupBy('o.commessa')
             ->get();
