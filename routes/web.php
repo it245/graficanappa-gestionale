@@ -112,6 +112,10 @@ Route::get('/owner/costi/categorie', [\App\Http\Controllers\CategorieAltriCostiC
 Route::post('/owner/costi/categorie', [\App\Http\Controllers\CategorieAltriCostiController::class, 'store'])->name('owner.costi.categorie.store');
 Route::post('/owner/costi/categorie/{id}', [\App\Http\Controllers\CategorieAltriCostiController::class, 'update'])->whereNumber('id')->name('owner.costi.categorie.update');
 Route::delete('/owner/costi/categorie/{id}', [\App\Http\Controllers\CategorieAltriCostiController::class, 'destroy'])->whereNumber('id')->name('owner.costi.categorie.destroy');
+// #2 Trend mensile + #1 Confronto multi-analisi
+Route::get('/owner/costi/trend', [\App\Http\Controllers\AnalisiCostiCommessaController::class, 'trendMensile'])->name('owner.costi.trend');
+Route::get('/owner/analisi-custom/confronta/select', [\App\Http\Controllers\AnalisiCustomController::class, 'confrontaSelect'])->name('owner.analisi.custom.confrontaSelect');
+Route::get('/owner/analisi-custom/confronta', [\App\Http\Controllers\AnalisiCustomController::class, 'confronta'])->name('owner.analisi.custom.confronta');
 
 // Workspace analisi custom (gruppi di commesse per analisi ad-hoc)
 Route::get('/owner/analisi-custom',             [\App\Http\Controllers\AnalisiCustomController::class, 'index'])->name('owner.analisi.custom.index');
@@ -121,6 +125,7 @@ Route::get('/owner/analisi-custom/{id}',        [\App\Http\Controllers\AnalisiCu
 Route::post('/owner/analisi-custom/{id}/aggiungi',  [\App\Http\Controllers\AnalisiCustomController::class, 'aggiungiCommessa'])->whereNumber('id')->name('owner.analisi.custom.aggiungi');
 Route::delete('/owner/analisi-custom/{id}/commessa/{pivotId}', [\App\Http\Controllers\AnalisiCustomController::class, 'rimuoviCommessa'])->whereNumber('id')->whereNumber('pivotId')->name('owner.analisi.custom.rimuovi');
 Route::post('/owner/analisi-custom/{id}/commessa/{pivotId}/edit', [\App\Http\Controllers\AnalisiCustomController::class, 'aggiornaRiga'])->whereNumber('id')->whereNumber('pivotId')->name('owner.analisi.custom.aggiornaRiga');
+Route::post('/owner/analisi-custom/{id}/commessa/{pivotId}/voce', [\App\Http\Controllers\AnalisiCustomController::class, 'aggiornaVoce'])->whereNumber('id')->whereNumber('pivotId')->name('owner.analisi.custom.aggiornaVoce');
 Route::delete('/owner/analisi-custom/{id}',     [\App\Http\Controllers\AnalisiCustomController::class, 'destroy'])->whereNumber('id')->name('owner.analisi.custom.destroy');
 Route::get('/owner/analisi-custom/search/commesse', [\App\Http\Controllers\AnalisiCustomController::class, 'searchCommesse'])->name('owner.analisi.custom.searchCommesse');
 Route::get('/owner/analisi-custom/{id}/pdf',   [\App\Http\Controllers\AnalisiCustomController::class, 'pdf'])->whereNumber('id')->name('owner.analisi.custom.pdf');

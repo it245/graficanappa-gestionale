@@ -44,6 +44,7 @@ $fmtHm = function ($sec) {
             <button type="button" class="gn-btn gn-btn-secondary" onclick="salvaFiltroCorrente()">⭐ Salva filtro</button>
             @endif
             <a href="{{ route('owner.costi.categorie.index') }}?op_token={{ request('op_token') }}" class="gn-btn gn-btn-secondary">🏷 Categorie</a>
+            <a href="{{ route('owner.costi.trend') }}?op_token={{ request('op_token') }}" class="gn-btn gn-btn-secondary">📈 Trend mensile</a>
             <a href="{{ route('owner.analisi.custom.index') }}?op_token={{ request('op_token') }}" class="gn-btn gn-btn-secondary" style="margin-left:auto;">📊 Analisi Custom</a>
         </div>
 

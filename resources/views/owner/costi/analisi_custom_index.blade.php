@@ -10,6 +10,7 @@
     <div class="gn-filters">
         <div style="margin-left:auto;display:flex;gap:8px;">
             <a href="{{ route('owner.costi.analisi.index') }}?op_token={{ request('op_token') }}" class="gn-btn gn-btn-secondary">← Lista commesse</a>
+            <a href="{{ route('owner.analisi.custom.confrontaSelect') }}?op_token={{ request('op_token') }}" class="gn-btn gn-btn-secondary">⚖️ Confronta</a>
             <a href="{{ route('owner.analisi.custom.create') }}?op_token={{ request('op_token') }}" class="gn-btn gn-btn-primary">+ Nuova analisi</a>
         </div>
     </div>

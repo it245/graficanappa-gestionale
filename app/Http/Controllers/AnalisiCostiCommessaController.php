@@ -198,6 +198,55 @@ class AnalisiCostiCommessaController extends Controller
     }
 
     /**
+     * #2 Trend mensile costi: ultimi N mesi, totale costi + n commesse + ore.
+     */
+    public function trendMensile(Request $request, CostoConsuntivoService $costoService)
+    {
+        $mesi = (int) $request->get('mesi', 12);
+        $mesi = max(3, min(24, $mesi));
+
+        $start = now()->subMonths($mesi - 1)->startOfMonth();
+        // Commesse terminate con consegna negli ultimi N mesi
+        $commesseRows = DB::table('ordini as o')
+            ->join('ordine_fasi as orf', 'orf.ordine_id', '=', 'o.id')
+            ->whereNull('orf.deleted_at')
+            ->leftJoin('fasi_catalogo as fc', 'fc.id', '=', 'orf.fase_catalogo_id')
+            ->leftJoin('reparti as r', 'r.id', '=', 'fc.reparto_id')
+            ->where('o.data_prevista_consegna', '>=', $start->format('Y-m-d'))
+            ->select(
+                'o.commessa',
+                DB::raw('MAX(DATE_FORMAT(o.data_prevista_consegna, "%Y-%m")) as anno_mese'),
+                DB::raw('SUM(CASE WHEN orf.data_inizio IS NOT NULL THEN COALESCE(orf.tempo_avviamento_sec,0)+COALESCE(orf.tempo_esecuzione_sec,0) ELSE 0 END) as ore_sec')
+            )
+            ->groupBy('o.commessa')
+            ->havingRaw("SUM(CASE WHEN LOWER(COALESCE(r.nome,'')) = 'spedizione' THEN CASE WHEN orf.stato NOT REGEXP '^[0-9]+\$' OR CAST(orf.stato AS UNSIGNED) < 2 THEN 1 ELSE 0 END ELSE CASE WHEN orf.stato NOT REGEXP '^[0-9]+\$' OR CAST(orf.stato AS UNSIGNED) < 3 THEN 1 ELSE 0 END END) = 0")
+            ->get();
+
+        // Costo per ciascuna commessa
+        $trend = []; // anno_mese => ['commesse'=>n, 'totale'=>€, 'ore_sec'=>n]
+        foreach ($commesseRows as $r) {
+            if (!isset($trend[$r->anno_mese])) {
+                $trend[$r->anno_mese] = ['commesse' => 0, 'totale' => 0, 'ore_sec' => 0];
+            }
+            $voci = $costoService->calcola($r->commessa);
+            $tot = array_sum(array_column($voci, 'importo'));
+            $trend[$r->anno_mese]['commesse']++;
+            $trend[$r->anno_mese]['totale'] += $tot;
+            $trend[$r->anno_mese]['ore_sec'] += (int) $r->ore_sec;
+        }
+
+        // Riempi mesi mancanti
+        $mesiList = [];
+        for ($i = 0; $i < $mesi; $i++) {
+            $m = now()->subMonths($mesi - 1 - $i)->format('Y-m');
+            $mesiList[$m] = $trend[$m] ?? ['commesse' => 0, 'totale' => 0, 'ore_sec' => 0];
+        }
+
+        $maxTotale = max(array_column($mesiList, 'totale')) ?: 1;
+        return view('owner.costi.trend_mensile', compact('mesiList', 'maxTotale', 'mesi'));
+    }
+
+    /**
      * Dettaglio costi singola commessa.
      */
     public function show(string $commessa)

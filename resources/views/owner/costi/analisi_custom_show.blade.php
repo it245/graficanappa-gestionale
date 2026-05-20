@@ -171,10 +171,13 @@
             </thead>
             <tbody>
             @forelse($datiCommesse as $c)
-                <tr class="{{ ($c['override_attivo'] ?? false) ? 'gn-override' : '' }}">
+                <tr class="{{ ($c['override_attivo'] ?? false) || ($c['override_voci_attivo'] ?? false) ? 'gn-override' : '' }}">
                     <form method="POST" action="{{ route('owner.analisi.custom.aggiornaRiga', [$analisi->id, $c['pivot_id']]) }}" id="frmRiga{{ $c['pivot_id'] }}">
                         @csrf
-                        <td><a href="{{ route('owner.costi.analisi.show', $c['commessa']) }}?op_token={{ request('op_token') }}" class="gn-commessa-link" target="_blank">{{ $c['commessa'] }}</a></td>
+                        <td>
+                            <button type="button" onclick="document.getElementById('voci{{ $c['pivot_id'] }}').style.display = document.getElementById('voci{{ $c['pivot_id'] }}').style.display === 'none' ? 'table-row' : 'none';" class="gn-btn gn-btn-secondary gn-btn-icon" title="Espandi voci" style="margin-right:6px;">▾</button>
+                            <a href="{{ route('owner.costi.analisi.show', $c['commessa']) }}?op_token={{ request('op_token') }}" class="gn-commessa-link" target="_blank">{{ $c['commessa'] }}</a>
+                        </td>
                         <td>
                             <div>{{ $c['cliente'] }}</div>
                             <small style="color:var(--gn-muted);">{{ \Illuminate\Support\Str::limit($c['descrizione'], 80) }}</small>
@@ -183,9 +186,12 @@
                         <td class="num">
                             <input type="number" step="0.01" min="0" name="totale_override" value="{{ ($c['override_attivo'] ?? false) ? number_format($c['totale'], 2, '.', '') : '' }}"
                                 placeholder="{{ number_format($c['totale_calc'] ?? $c['totale'], 2, '.', '') }}"
+                                @if($c['override_voci_attivo'] ?? false) disabled title="Override per voce attivo — rimuovi prima override voci" @endif
                                 style="width:120px;text-align:right;font-family:monospace;padding:5px 8px;border:1px solid var(--gn-border);border-radius:6px;font-size:12px;font-weight:600;">
                             @if($c['override_attivo'] ?? false)
-                                <div style="font-size:10px;color:#9a3412;">override (calc: {{ number_format($c['totale_calc'], 2, ',', '.') }})</div>
+                                <div style="font-size:10px;color:#9a3412;">override totale (calc: {{ number_format($c['totale_calc'], 2, ',', '.') }})</div>
+                            @elseif($c['override_voci_attivo'] ?? false)
+                                <div style="font-size:10px;color:#9a3412;">override per voce (calc: {{ number_format($c['totale_calc'], 2, ',', '.') }})</div>
                             @endif
                         </td>
                         <td>
@@ -195,8 +201,47 @@
                             <form method="POST" action="{{ route('owner.analisi.custom.rimuovi', [$analisi->id, $c['pivot_id']]) }}" onsubmit="return confirm('Rimuovere?')" style="display:inline;">@csrf @method('DELETE')<button class="gn-btn gn-btn-secondary gn-btn-icon">🗑</button></form>
                         </td>
                 </tr>
+                {{-- #9 Riga expand: voci singole editabili --}}
+                <tr id="voci{{ $c['pivot_id'] }}" style="display:none;">
+                    <td colspan="5" style="background:#f9fafb;padding:14px;">
+                        <div style="font-size:11px;color:var(--gn-muted);margin-bottom:6px;">Override singola voce (mutuamente esclusivo con override totale)</div>
+                        <table style="width:100%;font-size:12px;">
+                            <thead>
+                                <tr style="border-bottom:1px solid #e5e7eb;">
+                                    <th style="text-align:left;padding:4px;">Categoria</th>
+                                    <th style="text-align:left;padding:4px;">Voce</th>
+                                    <th style="text-align:right;padding:4px;">Calcolato €</th>
+                                    <th style="text-align:right;padding:4px;">Override €</th>
+                                    <th style="padding:4px;width:60px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            @foreach($c['voci'] as $v)
+                            <tr style="border-bottom:1px solid #f3f4f6;{{ ($v['override_voce'] ?? false) ? 'background:#fef3c7;' : '' }}">
+                                <td style="padding:4px;"><span class="gn-badge gn-badge-{{ $v['categoria'] }}">{{ $v['categoria'] }}</span></td>
+                                <td style="padding:4px;">{{ $v['descrizione'] }}</td>
+                                <td style="padding:4px;text-align:right;font-family:monospace;color:var(--gn-muted);">€ {{ number_format($v['importo_calc'] ?? $v['importo'], 2, ',', '.') }}</td>
+                                <td style="padding:4px;text-align:right;">
+                                    <form method="POST" action="{{ route('owner.analisi.custom.aggiornaVoce', [$analisi->id, $c['pivot_id']]) }}" style="display:flex;gap:4px;justify-content:flex-end;align-items:center;">
+                                        @csrf
+                                        <input type="hidden" name="voce_key" value="{{ $v['key'] }}">
+                                        <input type="number" step="0.01" name="importo" value="{{ ($v['override_voce'] ?? false) ? number_format($v['importo'], 2, '.', '') : '' }}" placeholder="auto" style="width:90px;text-align:right;padding:3px 6px;font-family:monospace;border:1px solid var(--gn-border);border-radius:4px;font-size:11px;">
+                                        <button class="gn-btn gn-btn-primary gn-btn-icon" title="Salva voce">💾</button>
+                                </td>
+                                <td style="padding:4px;text-align:center;">
+                                        @if($v['override_voce'] ?? false)
+                                        <button name="importo" value="" type="submit" class="gn-btn gn-btn-secondary gn-btn-icon" title="Reset override">↺</button>
+                                        @endif
+                                    </form>
+                                </td>
+                            </tr>
+                            @endforeach
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
             @empty
-                <tr><td colspan="5" style="text-align:center;color:var(--gn-muted);padding:32px;">Nessuna commessa aggiunta. Usa il form sopra.</td></tr>
+                <tr><td colspan="5" style="text-align:center;color:var(--gn-muted);padding:32px;">Nessuna commessa aggiunta. Usa form sopra.</td></tr>
             @endforelse
             </tbody>
             @if(!empty($datiCommesse))

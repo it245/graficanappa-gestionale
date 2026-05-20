@@ -43,6 +43,20 @@ class AnalisiCustomController extends Controller
         $datiCommesse = [];
         foreach ($analisi->commesse->sortBy('ordine') as $row) {
             $voci = $costoService->calcola($row->commessa);
+            $overrideVoci = is_array($row->override_voci) && !empty($row->override_voci['voci']) ? $row->override_voci['voci'] : [];
+
+            // #9 Applica override per voce (key = categoria__md5(descrizione))
+            foreach ($voci as &$v) {
+                $key = $v['categoria'] . '__' . md5($v['descrizione']);
+                $v['key'] = $key;
+                $v['importo_calc'] = $v['importo'];
+                if (array_key_exists($key, $overrideVoci)) {
+                    $v['importo'] = (float) $overrideVoci[$key];
+                    $v['override_voce'] = true;
+                }
+            }
+            unset($v);
+
             $totale = array_sum(array_column($voci, 'importo'));
             $perCategoria = [];
             foreach ($voci as $v) $perCategoria[$v['categoria']] = ($perCategoria[$v['categoria']] ?? 0) + $v['importo'];
@@ -51,12 +65,12 @@ class AnalisiCustomController extends Controller
                 ->select('cliente_nome', DB::raw("GROUP_CONCAT(DISTINCT descrizione SEPARATOR ' · ') as descrizione"))
                 ->groupBy('cliente_nome')->first();
 
-            // Override locale: totale_override sostituisce il totale calcolato (per analisi)
+            // Override totale: totale_override sostituisce calcolo (mutuamente esclusivo con override voci)
             $totaleEffettivo = $totale;
-            $hasOverride = false;
-            if (is_array($row->override_voci) && isset($row->override_voci['totale_override'])) {
+            $hasOverrideTotale = false;
+            if (is_array($row->override_voci) && isset($row->override_voci['totale_override']) && empty($overrideVoci)) {
                 $totaleEffettivo = (float) $row->override_voci['totale_override'];
-                $hasOverride = true;
+                $hasOverrideTotale = true;
             }
             $datiCommesse[] = [
                 'commessa'      => $row->commessa,
@@ -67,7 +81,8 @@ class AnalisiCustomController extends Controller
                 'per_categoria' => $perCategoria,
                 'totale_calc'   => $totale,
                 'totale'        => $totaleEffettivo,
-                'override_attivo' => $hasOverride,
+                'override_attivo' => $hasOverrideTotale,
+                'override_voci_attivo' => !empty($overrideVoci),
                 'pivot_id'      => $row->id,
             ];
         }
@@ -131,6 +146,29 @@ class AnalisiCustomController extends Controller
             'etichetta'     => $data['etichetta'] ?? $row->etichetta,
             'override_voci' => $override,
         ]);
+        return redirect()->route('owner.analisi.custom.show', $id);
+    }
+
+    /**
+     * #9 Override singola voce dentro l'analisi (no tocca commessa).
+     */
+    public function aggiornaVoce(Request $request, int $id, int $pivotId)
+    {
+        $data = $request->validate([
+            'voce_key' => 'required|string|max:100',
+            'importo'  => 'nullable|numeric',
+        ]);
+        $row = AnalisiCustomCommessa::where('id', $pivotId)->where('analisi_id', $id)->firstOrFail();
+        $override = $row->override_voci ?? [];
+        $override['voci'] = $override['voci'] ?? [];
+        if ($data['importo'] === null || $data['importo'] === '') {
+            unset($override['voci'][$data['voce_key']]);
+        } else {
+            $override['voci'][$data['voce_key']] = (float) $data['importo'];
+        }
+        // Quando ci sono override per voce, eliminiamo il totale_override (mutuamente esclusivi)
+        if (!empty($override['voci'])) unset($override['totale_override']);
+        $row->update(['override_voci' => $override]);
         return redirect()->route('owner.analisi.custom.show', $id);
     }
 
@@ -238,6 +276,67 @@ class AnalisiCustomController extends Controller
             foreach ($rows as $r) fputcsv($h, $r, ';');
             fclose($h);
         }, $filename, ['Content-Type' => 'text/csv; charset=utf-8']);
+    }
+
+    /**
+     * #1 Confronto multi-analisi: select N analisi.
+     */
+    public function confrontaSelect()
+    {
+        $analisiList = AnalisiCustom::orderByDesc('ultimo_accesso')->get();
+        return view('owner.costi.analisi_custom_confronta_select', compact('analisiList'));
+    }
+
+    public function confronta(Request $request, CostoConsuntivoService $costoService)
+    {
+        $ids = array_filter((array) $request->get('ids', []));
+        if (count($ids) < 2) {
+            return redirect()->route('owner.analisi.custom.confrontaSelect')->with('error', 'Seleziona almeno 2 analisi');
+        }
+        $analisiAll = AnalisiCustom::with('commesse')->whereIn('id', $ids)->get();
+
+        $colonne = [];
+        foreach ($analisiAll as $a) {
+            $totale = 0;
+            $perCategoria = [];
+            $oreSec = 0;
+            foreach ($a->commesse as $row) {
+                $voci = $costoService->calcola($row->commessa);
+                $totRiga = array_sum(array_column($voci, 'importo'));
+                if (is_array($row->override_voci) && isset($row->override_voci['totale_override'])) {
+                    $totRiga = (float) $row->override_voci['totale_override'];
+                }
+                $totale += $totRiga;
+                foreach ($voci as $v) $perCategoria[$v['categoria']] = ($perCategoria[$v['categoria']] ?? 0) + $v['importo'];
+
+                $oreSec += DB::table('ordini as o')
+                    ->join('ordine_fasi as orf', 'orf.ordine_id', '=', 'o.id')
+                    ->whereNull('orf.deleted_at')
+                    ->where('o.commessa', $row->commessa)
+                    ->whereNotNull('orf.data_inizio')
+                    ->sum(DB::raw('COALESCE(orf.tempo_avviamento_sec,0)+COALESCE(orf.tempo_esecuzione_sec,0)'));
+            }
+            $vociCust = $a->opzioni_view['voci_custom'] ?? [];
+            $totale += array_sum(array_column($vociCust, 'importo'));
+
+            $colonne[] = [
+                'analisi'       => $a,
+                'n_commesse'    => $a->commesse->count(),
+                'totale'        => $totale,
+                'media'         => $a->commesse->count() > 0 ? $totale / $a->commesse->count() : 0,
+                'per_categoria' => $perCategoria,
+                'ore_sec'       => $oreSec,
+            ];
+        }
+
+        // Categorie uniche da tutte
+        $tutteCategorie = [];
+        foreach ($colonne as $c) {
+            foreach ($c['per_categoria'] as $cat => $_) $tutteCategorie[$cat] = true;
+        }
+        $tutteCategorie = array_keys($tutteCategorie);
+
+        return view('owner.costi.analisi_custom_confronta', compact('colonne', 'tutteCategorie'));
     }
 
     public function searchCommesse(Request $request)
