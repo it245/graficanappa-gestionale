@@ -370,24 +370,9 @@ class CostoConsuntivoService
                     foreach ($fase->operatori as $op) {
                         if (!$op->pivot->data_inizio || !$op->pivot->data_fine) continue;
                         $pausa = (int) ($op->pivot->secondi_pausa ?? 0);
-                        $di = \Carbon\Carbon::parse($op->pivot->data_inizio);
-                        $df = \Carbon\Carbon::parse($op->pivot->data_fine);
-                        $diff = $df->getTimestamp() - $di->getTimestamp();
-                        $secPivot = max($diff - $pausa, 0);
-
-                        // CAP intelligente: se durata > 12h (operatore non ha chiuso pausa/fase),
-                        // limita a 8h × giorni LAVORATIVI (lun-ven) attraversati.
-                        if ($secPivot > 12 * 3600) {
-                            $giorniLav = 0;
-                            $cur = $di->copy()->startOfDay();
-                            $end = $df->copy()->startOfDay();
-                            while ($cur->lte($end)) {
-                                if (!$cur->isWeekend()) $giorniLav++;
-                                $cur->addDay();
-                            }
-                            $secPivot = max($giorniLav, 1) * 8 * 3600;
-                        }
-                        $sec += $secPivot;
+                        $diff = \Carbon\Carbon::parse($op->pivot->data_fine)->getTimestamp()
+                              - \Carbon\Carbon::parse($op->pivot->data_inizio)->getTimestamp();
+                        $sec += max($diff - $pausa, 0);
                     }
                 }
                 $perReparto[$repId]['sec'] += $sec;
