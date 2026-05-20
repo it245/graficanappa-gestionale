@@ -145,10 +145,5 @@ table.voci tfoot td { border-top: 2px solid #1a4d8c; padding-top: 8px; font-weig
 </table>
 @endif
 
-<div class="footer-note">
-Documento generato automaticamente dal MES Grafica Nappa. Le voci contrassegnate "(M)" sono state modificate manualmente rispetto al calcolo automatico.
-GDPR: documento ad uso interno aziendale. Foro competente: Aversa.
-</div>
-
 </body>
 </html>
