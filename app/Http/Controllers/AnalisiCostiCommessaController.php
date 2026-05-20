@@ -307,7 +307,8 @@ class AnalisiCostiCommessaController extends Controller
         $vociCosto = app(CostoConsuntivoService::class)->calcola($commessa);
         $vociPerCategoria = [];
         foreach ($vociCosto as $v) $vociPerCategoria[$v['categoria']][] = $v;
-        $totaleConsuntivo = array_sum(array_column($vociCosto, 'importo'));
+        // Includi altri_costi nel totale consuntivo
+        $totaleConsuntivo = array_sum(array_column($vociCosto, 'importo')) + (float) $altriCosti->sum('importo');
 
         return view('owner.costi.analisi_commessa_dettaglio', [
             'fasiEditable'      => $fasiEditable,
