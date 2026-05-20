@@ -123,7 +123,10 @@
     <div class="gn-card gn-card-primary">
         <div class="gn-card-header">
             <h3 style="color:#fff;">Costi consuntivo dettagliato</h3>
-            <span style="color:#fff;font-size:14px;">Totale: <strong>€ {{ number_format($totaleConsuntivo, 2, ',', '.') }}</strong></span>
+            <div class="gn-card-actions">
+                <a href="{{ route('owner.costi.analisi.pdf', $commessa) }}?op_token={{ request('op_token') }}" target="_blank" class="gn-btn gn-btn-secondary gn-btn-sm">📄 PDF</a>
+                <span style="color:#fff;font-size:14px;margin-left:10px;">Totale: <strong>€ {{ number_format($totaleConsuntivo, 2, ',', '.') }}</strong></span>
+            </div>
         </div>
         @if(!empty($vociCosto))
         <table class="gn-table">
