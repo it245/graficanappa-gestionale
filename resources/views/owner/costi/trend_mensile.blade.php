@@ -29,7 +29,12 @@ $mediaMensile = count($mesiList) > 0 ? $totaleAggregato / count($mesiList) : 0;
                 <option value="{{ $m }}" {{ $mesi == $m ? 'selected' : '' }}>{{ $m }}</option>
                 @endforeach
             </select>
+            <a href="{{ route('owner.costi.trend', ['mesi' => $mesi, 'refresh' => 1, 'op_token' => request('op_token')]) }}" class="gn-btn gn-btn-secondary" title="Ricalcola">🔄</a>
         </form>
+    </div>
+
+    <div style="background:#fef3c7;border:1px solid #fcd34d;color:#92400e;padding:10px 14px;border-radius:8px;font-size:12px;margin-bottom:14px;">
+        ⚠️ <strong>Stima rapida</strong> (no chiamate API): ore×€30/h + scarti×€0.10/fg + carta×€0.05/fg + altri costi. Cache 1h. Per dettaglio preciso clicca singola commessa.
     </div>
 
     <div class="gn-kpi-grid">

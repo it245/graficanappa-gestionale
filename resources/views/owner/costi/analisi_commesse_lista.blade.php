@@ -53,18 +53,27 @@ $fmtHm = function ($sec) {
             {{-- Layout a 2 colonne: sinistra clienti / destra date+range --}}
             <div style="display:grid;grid-template-columns:1.2fr 2fr;gap:16px;">
 
-                {{-- COLONNA SINISTRA: clienti multi-select --}}
+                {{-- COLONNA SINISTRA: clienti con checkbox --}}
                 <div>
                     <label style="font-size:11px;color:var(--gn-muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Clienti</label>
-                    <div style="font-size:10px;color:#9ca3af;margin-bottom:4px;">Tieni premuto Ctrl (Windows) o ⌘ (Mac) per selezione multipla</div>
-                    <select name="clienti[]" multiple size="7" style="width:100%;padding:6px 8px;border:1px solid var(--gn-border);border-radius:6px;font-size:12px;font-family:monospace;">
+                    <div style="font-size:10px;color:#9ca3af;margin-bottom:6px;">Spunta i clienti da includere</div>
+                    <input type="text" id="searchCliente" placeholder="🔍 Cerca cliente..." oninput="filtraClienti()" style="width:100%;padding:7px 10px;border:1px solid var(--gn-border);border-radius:6px;font-size:12px;margin-bottom:6px;">
+                    <div style="display:flex;gap:6px;margin-bottom:6px;">
+                        <button type="button" onclick="toggleClienti(true)" class="gn-btn gn-btn-secondary gn-btn-sm">Seleziona visibili</button>
+                        <button type="button" onclick="toggleClienti(false)" class="gn-btn gn-btn-secondary gn-btn-sm">Deseleziona tutti</button>
+                    </div>
+                    <div id="listaClienti" style="max-height:240px;overflow-y:auto;border:1px solid var(--gn-border);border-radius:6px;background:#fff;">
                         @foreach($clientiList as $cl)
-                        <option value="{{ $cl }}" {{ in_array($cl, $f['clienti'] ?? []) ? 'selected' : '' }}>{{ \Illuminate\Support\Str::limit($cl, 50) }}</option>
+                        @php $checked = in_array($cl, $f['clienti'] ?? []); @endphp
+                        <label class="cliente-row" data-nome="{{ strtolower($cl) }}" style="display:flex;align-items:center;gap:8px;padding:6px 10px;border-bottom:1px solid #f3f4f6;cursor:pointer;font-size:12px;{{ $checked ? 'background:#dbeafe;' : '' }}" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='{{ $checked ? '#dbeafe' : '' }}'">
+                            <input type="checkbox" name="clienti[]" value="{{ $cl }}" {{ $checked ? 'checked' : '' }} style="margin:0;cursor:pointer;" onchange="this.closest('label').style.background = this.checked ? '#dbeafe' : '';">
+                            <span style="flex:1;">{{ $cl }}</span>
+                        </label>
                         @endforeach
-                    </select>
-                    @if(!empty($f['clienti']))
-                    <div style="font-size:11px;color:var(--gn-primary);margin-top:4px;">✓ {{ count($f['clienti']) }} cliente/i selezionati</div>
-                    @endif
+                    </div>
+                    <div id="counterClienti" style="font-size:11px;color:var(--gn-primary);margin-top:4px;font-weight:600;">
+                        @if(!empty($f['clienti'])) ✓ {{ count($f['clienti']) }} cliente/i selezionati @else 0 selezionati @endif
+                    </div>
                 </div>
 
                 {{-- COLONNA DESTRA: date e range numerici --}}
@@ -190,6 +199,44 @@ function salvaFiltroCorrente() {
     document.getElementById('inpNomeFiltro').value = nome;
     document.getElementById('frmSalvaFiltro').submit();
 }
+
+function filtraClienti() {
+    const q = document.getElementById('searchCliente').value.toLowerCase();
+    document.querySelectorAll('#listaClienti .cliente-row').forEach(r => {
+        r.style.display = r.dataset.nome.includes(q) ? 'flex' : 'none';
+    });
+}
+
+function toggleClienti(seleziona) {
+    document.querySelectorAll('#listaClienti .cliente-row').forEach(r => {
+        if (r.style.display === 'none') return; // skip filtrati fuori se deseleziona-tutti = false serve comunque deselezionare tutti
+        if (!seleziona && r.style.display === 'none') return;
+        const cb = r.querySelector('input[type=checkbox]');
+        if (seleziona) {
+            cb.checked = true;
+            r.style.background = '#dbeafe';
+        }
+    });
+    if (!seleziona) {
+        document.querySelectorAll('#listaClienti input[type=checkbox]').forEach(cb => {
+            cb.checked = false;
+            cb.closest('label').style.background = '';
+        });
+    }
+    aggiornaCounter();
+}
+
+function aggiornaCounter() {
+    const n = document.querySelectorAll('#listaClienti input[type=checkbox]:checked').length;
+    const c = document.getElementById('counterClienti');
+    c.textContent = n > 0 ? '✓ ' + n + ' cliente/i selezionati' : '0 selezionati';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('#listaClienti input[type=checkbox]').forEach(cb => {
+        cb.addEventListener('change', aggiornaCounter);
+    });
+});
 </script>
 
 @endsection
