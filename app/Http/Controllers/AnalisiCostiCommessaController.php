@@ -230,10 +230,13 @@ class AnalisiCostiCommessaController extends Controller
 
             $commesseList = $commesseRows->pluck('commessa')->all();
 
-            // Leggi totali precalcolati (preferenziale)
-            $cacheTot = empty($commesseList) ? collect() : DB::table('commessa_totali_cache')
-                ->whereIn('commessa', $commesseList)
-                ->get()->keyBy('commessa');
+            // Leggi totali precalcolati (preferenziale, skip se tabella non migrata)
+            $cacheTot = collect();
+            if (!empty($commesseList) && \Schema::hasTable('commessa_totali_cache')) {
+                $cacheTot = DB::table('commessa_totali_cache')
+                    ->whereIn('commessa', $commesseList)
+                    ->get()->keyBy('commessa');
+            }
 
             $altriCosti = empty($commesseList) ? collect() : DB::table('commessa_altri_costi')
                 ->whereIn('commessa', $commesseList)
@@ -327,7 +330,7 @@ class AnalisiCostiCommessaController extends Controller
                 DB::raw('MAX(o.cliente_nome) as cliente'),
                 DB::raw("GROUP_CONCAT(DISTINCT o.descrizione SEPARATOR ' · ') as descrizione"),
                 DB::raw('MAX(o.data_prevista_consegna) as consegna'),
-                DB::raw('MAX(o.qta) as qta_richiesta'),
+                DB::raw('MAX(o.qta_richiesta) as qta_richiesta'),
                 DB::raw('SUM(CASE WHEN orf.data_inizio IS NOT NULL THEN COALESCE(orf.tempo_avviamento_sec,0)+COALESCE(orf.tempo_esecuzione_sec,0) ELSE 0 END) as ore_sec'),
                 DB::raw('SUM(COALESCE(orf.scarti,0)) as scarti_tot'),
                 DB::raw('MAX(CASE WHEN LOWER(COALESCE(r.nome,\'\')) IN (\'stampa offset\',\'digitale\') THEN orf.fogli_buoni ELSE 0 END) as fogli_max')
@@ -335,10 +338,13 @@ class AnalisiCostiCommessaController extends Controller
             ->groupBy('o.commessa')
             ->get();
 
-        // Carica totali cache
+        // Carica totali cache (skip se tabella non ancora migrata)
         $commesseList = $base->pluck('commessa')->all();
-        $cacheTot = empty($commesseList) ? collect() : DB::table('commessa_totali_cache')
-            ->whereIn('commessa', $commesseList)->get()->keyBy('commessa');
+        $cacheTot = collect();
+        if (!empty($commesseList) && \Schema::hasTable('commessa_totali_cache')) {
+            $cacheTot = DB::table('commessa_totali_cache')
+                ->whereIn('commessa', $commesseList)->get()->keyBy('commessa');
+        }
 
         // Media ore per cliente (per scoprire outlier)
         $oreMedieCliente = [];
@@ -667,8 +673,9 @@ class AnalisiCostiCommessaController extends Controller
         // Includi altri_costi nel totale consuntivo
         $totaleConsuntivo = array_sum(array_column($vociCosto, 'importo')) + (float) $altriCosti->sum('importo');
 
-        // Aggiorna cache totali per trend mensile
+        // Aggiorna cache totali per trend mensile (skip se tabella non migrata)
         try {
+            if (!\Schema::hasTable('commessa_totali_cache')) throw new \RuntimeException('cache table not migrated');
             $perCat = [];
             foreach ($vociCosto as $v) $perCat[$v['categoria']] = ($perCat[$v['categoria']] ?? 0) + $v['importo'];
             $dataPrev = $ordini->first()->data_prevista_consegna ?? null;
