@@ -114,6 +114,8 @@ Route::post('/owner/analisi-custom/{id}/aggiungi',  [\App\Http\Controllers\Anali
 Route::delete('/owner/analisi-custom/{id}/commessa/{pivotId}', [\App\Http\Controllers\AnalisiCustomController::class, 'rimuoviCommessa'])->whereNumber('id')->whereNumber('pivotId')->name('owner.analisi.custom.rimuovi');
 Route::delete('/owner/analisi-custom/{id}',     [\App\Http\Controllers\AnalisiCustomController::class, 'destroy'])->whereNumber('id')->name('owner.analisi.custom.destroy');
 Route::get('/owner/analisi-custom/search/commesse', [\App\Http\Controllers\AnalisiCustomController::class, 'searchCommesse'])->name('owner.analisi.custom.searchCommesse');
+Route::get('/owner/analisi-custom/{id}/pdf',   [\App\Http\Controllers\AnalisiCustomController::class, 'pdf'])->whereNumber('id')->name('owner.analisi.custom.pdf');
+Route::get('/owner/analisi-custom/{id}/excel', [\App\Http\Controllers\AnalisiCustomController::class, 'excel'])->whereNumber('id')->name('owner.analisi.custom.excel');
 Route::post('/owner/note-spedizione', [DashboardSpedizioneController::class, 'salvaNotaGiornaliera'])->name('owner.salvaNotaSpedizione');
 Route::get('/owner/note-spedizione-check', [DashboardSpedizioneController::class, 'noteUltimoAggiornamento'])->name('owner.noteSpedizioneCheck');
 Route::get('/owner/audit-log', [DashboardOwnerController::class, 'auditLog'])->name('owner.auditLog');

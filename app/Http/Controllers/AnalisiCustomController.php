@@ -108,6 +108,40 @@ class AnalisiCustomController extends Controller
         return redirect()->route('owner.analisi.custom.index');
     }
 
+    public function pdf(int $id, CostoConsuntivoService $costoService)
+    {
+        $view = $this->show($id, $costoService);
+        $data = $view->getData();
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.analisi_custom', $data);
+        $pdf->setPaper('A4', 'portrait');
+        return $pdf->stream("Analisi_{$data['analisi']->nome}_" . now()->format('Ymd') . ".pdf");
+    }
+
+    public function excel(int $id, CostoConsuntivoService $costoService)
+    {
+        $view = $this->show($id, $costoService);
+        $data = $view->getData();
+        $rows = [['Commessa', 'Cliente', 'Descrizione', 'Etichetta', 'Costo totale €']];
+        foreach ($data['datiCommesse'] as $c) {
+            $rows[] = [
+                $c['commessa'],
+                $c['cliente'],
+                $c['descrizione'],
+                $c['etichetta'] ?? '',
+                round($c['totale'], 2),
+            ];
+        }
+        $rows[] = ['', '', '', 'TOTALE', round($data['totaleGenerale'], 2)];
+
+        $filename = "Analisi_{$data['analisi']->nome}_" . now()->format('Ymd') . ".csv";
+        return response()->streamDownload(function() use ($rows) {
+            $h = fopen('php://output', 'w');
+            fputs($h, "\xEF\xBB\xBF"); // BOM UTF-8 per Excel italiano
+            foreach ($rows as $r) fputcsv($h, $r, ';');
+            fclose($h);
+        }, $filename, ['Content-Type' => 'text/csv; charset=utf-8']);
+    }
+
     public function searchCommesse(Request $request)
     {
         $q = trim($request->get('q', ''));

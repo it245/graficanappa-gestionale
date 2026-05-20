@@ -17,10 +17,14 @@
             <div style="margin-top:6px;">Ultimo accesso</div>
             <div style="font-size:13px;color:var(--gn-text);">{{ $analisi->ultimo_accesso?->format('d/m/Y H:i') ?? '-' }}</div>
         </div>
-        <form method="POST" action="{{ route('owner.analisi.custom.destroy', $analisi->id) }}" onsubmit="return confirm('Eliminare analisi?')">
-            @csrf @method('DELETE')
-            <button class="gn-btn gn-btn-secondary">🗑 Elimina</button>
-        </form>
+        <div style="display:flex;gap:8px;">
+            <a href="{{ route('owner.analisi.custom.pdf', $analisi->id) }}?op_token={{ request('op_token') }}" target="_blank" class="gn-btn gn-btn-primary">📄 PDF</a>
+            <a href="{{ route('owner.analisi.custom.excel', $analisi->id) }}?op_token={{ request('op_token') }}" class="gn-btn gn-btn-secondary">📊 CSV</a>
+            <form method="POST" action="{{ route('owner.analisi.custom.destroy', $analisi->id) }}" onsubmit="return confirm('Eliminare analisi?')">
+                @csrf @method('DELETE')
+                <button class="gn-btn gn-btn-secondary">🗑 Elimina</button>
+            </form>
+        </div>
     </div>
 
     @if(session('success'))
