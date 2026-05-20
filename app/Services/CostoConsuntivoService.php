@@ -141,24 +141,38 @@ class CostoConsuntivoService
 
     private function calcolaCarta($ordini): array
     {
-        // Aggrega qta_carta per tipo (preventivo Onda).
-        // Filtra fuori ordini "figli" senza carta reale: cod_carta SEMILAV* o
-        // carta = descrizione articolo (probabile bug import Onda).
+        // Identifica carta vera (ordine con cod_carta valido, non SEMILAV*).
         $byCarta = [];
         foreach ($ordini as $ord) {
             $carta = trim($ord->carta ?? '');
             $cod = trim($ord->cod_carta ?? '');
-            $qta = (int) ($ord->qta_carta ?? 0);
-            if (!$carta || $qta <= 0) continue;
-            // Skip se cod_carta è semilavorato generico
+            if (!$carta) continue;
+            // Skip semilavorato o carta = descrizione
             if (preg_match('/^SEMILAV/i', $cod)) continue;
-            // Skip se carta = descrizione (campo carta erroneamente popolato col nome articolo)
             if (mb_stripos($carta, 'AST.') === 0 || mb_stripos($carta, 'CUBO') === 0
                 || mb_stripos($carta, 'LIBRO') === 0 || mb_stripos($carta, 'COPERTINA') === 0
                 || mb_stripos($carta, 'BLOCCO') === 0) continue;
-            $byCarta[$carta] ??= ['qta' => 0, 'cod' => $cod, 'um' => $ord->UM_carta ?? 'fg'];
-            $byCarta[$carta]['qta'] += $qta;
+            $byCarta[$carta] ??= ['qta_prev' => 0, 'cod' => $cod, 'um' => $ord->UM_carta ?? 'fg'];
+            $byCarta[$carta]['qta_prev'] += (int) ($ord->qta_carta ?? 0);
         }
+
+        // Fogli effettivamente STAMPATI (Prinect fogli_buoni + fogli_scarto = totale carta usata)
+        $fogliReali = 0;
+        foreach ($ordini as $ord) {
+            foreach ($ord->fasi as $fase) {
+                $repartoLower = strtolower($fase->faseCatalogo->reparto->nome ?? '');
+                if (!str_contains($repartoLower, 'stampa offset') && !str_contains($repartoLower, 'digitale')) continue;
+                $fogli = (int) ($fase->fogli_buoni ?? 0) + (int) ($fase->fogli_scarto ?? 0);
+                if ($fogli === 0) $fogli = (int) ($fase->qta_prod ?? 0);
+                if ($fogli > $fogliReali) $fogliReali = $fogli;
+            }
+        }
+
+        // Usa fogli reali se > 0, altrimenti preventivo
+        foreach ($byCarta as $nome => &$info) {
+            $info['qta'] = $fogliReali > 0 ? $fogliReali : $info['qta_prev'];
+        }
+        unset($info);
 
         $voci = [];
         $i = 0;
