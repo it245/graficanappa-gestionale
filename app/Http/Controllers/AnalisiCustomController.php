@@ -107,4 +107,20 @@ class AnalisiCustomController extends Controller
         AnalisiCustom::findOrFail($id)->delete();
         return redirect()->route('owner.analisi.custom.index');
     }
+
+    public function searchCommesse(Request $request)
+    {
+        $q = trim($request->get('q', ''));
+        if (mb_strlen($q) < 2) return response()->json([]);
+        $risultati = DB::table('ordini')
+            ->where('commessa', 'LIKE', "%{$q}%")
+            ->orWhere('cliente_nome', 'LIKE', "%{$q}%")
+            ->orWhere('descrizione', 'LIKE', "%{$q}%")
+            ->select('commessa', DB::raw('MAX(cliente_nome) as cliente'), DB::raw("GROUP_CONCAT(DISTINCT descrizione SEPARATOR ' · ') as descrizione"))
+            ->groupBy('commessa')
+            ->orderBy('commessa', 'desc')
+            ->limit(10)
+            ->get();
+        return response()->json($risultati);
+    }
 }

@@ -72,9 +72,10 @@
                 <form method="POST" action="{{ route('owner.analisi.custom.aggiungi', $analisi->id) }}">
                     @csrf
                     <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:10px;">
-                        <div>
+                        <div style="position:relative;">
                             <label style="font-size:12px;color:var(--gn-muted);">Commessa</label>
-                            <input type="text" name="commessa" placeholder="Es. 0067200-26" required style="width:100%;padding:8px 12px;border:1px solid var(--gn-border);border-radius:6px;font-size:13px;">
+                            <input type="text" name="commessa" id="inpCommessa" autocomplete="off" placeholder="Es. 0067200-26" required style="width:100%;padding:8px 12px;border:1px solid var(--gn-border);border-radius:6px;font-size:13px;">
+                            <div id="autocompleteCommesse" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--gn-border);border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.1);max-height:280px;overflow-y:auto;z-index:100;margin-top:2px;"></div>
                         </div>
                         <div>
                             <label style="font-size:12px;color:var(--gn-muted);">Etichetta custom (opzionale)</label>
@@ -146,4 +147,41 @@
     </div>
 
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const inp = document.getElementById('inpCommessa');
+    const box = document.getElementById('autocompleteCommesse');
+    if (!inp || !box) return;
+    const url = "{{ route('owner.analisi.custom.searchCommesse') }}";
+    let timer = null;
+
+    inp.addEventListener('input', function() {
+        clearTimeout(timer);
+        const q = inp.value.trim();
+        if (q.length < 2) { box.style.display = 'none'; return; }
+        timer = setTimeout(function() {
+            fetch(url + '?q=' + encodeURIComponent(q))
+                .then(r => r.json())
+                .then(rows => {
+                    if (!rows.length) { box.innerHTML = '<div style="padding:8px 12px;color:#9ca3af;font-size:12px;">Nessun risultato</div>'; box.style.display = 'block'; return; }
+                    box.innerHTML = rows.map(r =>
+                        '<div class="ac-item" data-commessa="' + r.commessa + '" style="padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid #f3f4f6;">' +
+                        '<strong>' + r.commessa + '</strong> · ' + (r.cliente || '-') +
+                        '<br><small style="color:#6b7280;">' + (r.descrizione || '').substring(0, 80) + '</small></div>'
+                    ).join('');
+                    box.style.display = 'block';
+                    box.querySelectorAll('.ac-item').forEach(it => {
+                        it.addEventListener('mouseenter', () => it.style.background = '#f3f4f6');
+                        it.addEventListener('mouseleave', () => it.style.background = '');
+                        it.addEventListener('click', () => { inp.value = it.dataset.commessa; box.style.display = 'none'; });
+                    });
+                });
+        }, 250);
+    });
+    document.addEventListener('click', function(e) {
+        if (!box.contains(e.target) && e.target !== inp) box.style.display = 'none';
+    });
+});
+</script>
 @endsection
