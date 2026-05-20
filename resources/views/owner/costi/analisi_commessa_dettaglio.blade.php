@@ -5,23 +5,29 @@
 <meta name="csrf-token" content="{{ csrf_token() }}">
 
 <div class="gn-page">
-    <a href="{{ route('owner.costi.analisi.index') }}?op_token={{ request('op_token') }}" style="font-size:13px;color:var(--gn-primary);text-decoration:none;">← Torna alla lista</a>
+    <div style="margin-bottom:14px;">
+        <a href="{{ route('owner.costi.analisi.index') }}?op_token={{ request('op_token') }}" class="gn-btn gn-btn-secondary gn-btn-sm">← Torna alla lista</a>
+    </div>
 
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin:8px 0 20px 0;">
+    <div style="display:grid;grid-template-columns:1fr auto auto;gap:24px;align-items:flex-start;margin-bottom:20px;">
         <div>
-            <h1 style="display:inline-block;">Commessa {{ $commessa }}</h1>
-            <span class="gn-stato-completata" style="margin-left:8px;">Completata</span>
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                <h1 style="margin:0;">Commessa {{ $commessa }}</h1>
+                <span class="gn-stato-completata">Completata</span>
+            </div>
             <div style="margin-top:6px;font-size:13px;color:var(--gn-muted);">
                 Cliente: <strong style="color:var(--gn-text);">{{ $cliente }}</strong> · {{ $descrizione }}
             </div>
         </div>
-        <div style="text-align:right;font-size:12px;color:var(--gn-muted);">
+        <div style="text-align:right;font-size:12px;color:var(--gn-muted);white-space:nowrap;">
             <div>Q.tà prodotta</div>
             <div style="font-size:18px;font-weight:700;color:var(--gn-text);">{{ number_format($qta_richiesta, 0, ',', '.') }} pz</div>
             <div style="margin-top:6px;">Consegna</div>
             <div style="font-size:14px;font-weight:600;color:var(--gn-text);">{{ $data_consegna ? \Carbon\Carbon::parse($data_consegna)->format('d/m/Y') : '-' }}</div>
         </div>
-        <a href="{{ route('owner.costi.analisi.pdf', $commessa) }}?op_token={{ request('op_token') }}" target="_blank" class="gn-btn gn-btn-secondary">📄 PDF</a>
+        <div>
+            <a href="{{ route('owner.costi.analisi.pdf', $commessa) }}?op_token={{ request('op_token') }}" target="_blank" class="gn-btn gn-btn-primary" style="white-space:nowrap;">📄 PDF</a>
+        </div>
     </div>
 
     @if(session('success'))
@@ -117,10 +123,7 @@
     <div class="gn-card gn-card-primary">
         <div class="gn-card-header">
             <h3 style="color:#fff;">Costi consuntivo dettagliato</h3>
-            <div class="gn-card-actions">
-                <a href="{{ route('owner.costi.analisi.pdf', $commessa) }}?op_token={{ request('op_token') }}" target="_blank" class="gn-btn gn-btn-secondary gn-btn-sm">📄 PDF</a>
-                <span style="color:#fff;font-size:13px;">Totale: <strong>€ {{ number_format($totaleConsuntivo, 2, ',', '.') }}</strong></span>
-            </div>
+            <span style="color:#fff;font-size:14px;">Totale: <strong>€ {{ number_format($totaleConsuntivo, 2, ',', '.') }}</strong></span>
         </div>
         @if(!empty($vociCosto))
         <table class="gn-table">
