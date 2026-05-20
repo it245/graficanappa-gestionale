@@ -112,6 +112,7 @@ Route::post('/owner/analisi-custom',            [\App\Http\Controllers\AnalisiCu
 Route::get('/owner/analisi-custom/{id}',        [\App\Http\Controllers\AnalisiCustomController::class, 'show'])->whereNumber('id')->name('owner.analisi.custom.show');
 Route::post('/owner/analisi-custom/{id}/aggiungi',  [\App\Http\Controllers\AnalisiCustomController::class, 'aggiungiCommessa'])->whereNumber('id')->name('owner.analisi.custom.aggiungi');
 Route::delete('/owner/analisi-custom/{id}/commessa/{pivotId}', [\App\Http\Controllers\AnalisiCustomController::class, 'rimuoviCommessa'])->whereNumber('id')->whereNumber('pivotId')->name('owner.analisi.custom.rimuovi');
+Route::post('/owner/analisi-custom/{id}/commessa/{pivotId}/edit', [\App\Http\Controllers\AnalisiCustomController::class, 'aggiornaRiga'])->whereNumber('id')->whereNumber('pivotId')->name('owner.analisi.custom.aggiornaRiga');
 Route::delete('/owner/analisi-custom/{id}',     [\App\Http\Controllers\AnalisiCustomController::class, 'destroy'])->whereNumber('id')->name('owner.analisi.custom.destroy');
 Route::get('/owner/analisi-custom/search/commesse', [\App\Http\Controllers\AnalisiCustomController::class, 'searchCommesse'])->name('owner.analisi.custom.searchCommesse');
 Route::get('/owner/analisi-custom/{id}/pdf',   [\App\Http\Controllers\AnalisiCustomController::class, 'pdf'])->whereNumber('id')->name('owner.analisi.custom.pdf');

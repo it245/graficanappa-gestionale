@@ -51,6 +51,13 @@ class AnalisiCustomController extends Controller
                 ->select('cliente_nome', DB::raw("GROUP_CONCAT(DISTINCT descrizione SEPARATOR ' · ') as descrizione"))
                 ->groupBy('cliente_nome')->first();
 
+            // Override locale: totale_override sostituisce il totale calcolato (per analisi)
+            $totaleEffettivo = $totale;
+            $hasOverride = false;
+            if (is_array($row->override_voci) && isset($row->override_voci['totale_override'])) {
+                $totaleEffettivo = (float) $row->override_voci['totale_override'];
+                $hasOverride = true;
+            }
             $datiCommesse[] = [
                 'commessa'      => $row->commessa,
                 'etichetta'     => $row->etichetta,
@@ -58,7 +65,9 @@ class AnalisiCustomController extends Controller
                 'descrizione'   => $info->descrizione ?? '-',
                 'voci'          => $voci,
                 'per_categoria' => $perCategoria,
-                'totale'        => $totale,
+                'totale_calc'   => $totale,
+                'totale'        => $totaleEffettivo,
+                'override_attivo' => $hasOverride,
                 'pivot_id'      => $row->id,
             ];
         }
@@ -93,6 +102,26 @@ class AnalisiCustomController extends Controller
                 'ordine'     => AnalisiCustomCommessa::where('analisi_id', $id)->max('ordine') + 1,
             ]);
         }
+        return redirect()->route('owner.analisi.custom.show', $id);
+    }
+
+    public function aggiornaRiga(Request $request, int $id, int $pivotId)
+    {
+        $data = $request->validate([
+            'etichetta'       => 'nullable|string|max:100',
+            'totale_override' => 'nullable|numeric|min:0',
+        ]);
+        $row = AnalisiCustomCommessa::where('id', $pivotId)->where('analisi_id', $id)->firstOrFail();
+        $override = $row->override_voci ?? [];
+        if (array_key_exists('totale_override', $data) && $data['totale_override'] !== null && $data['totale_override'] !== '') {
+            $override['totale_override'] = (float) $data['totale_override'];
+        } else {
+            unset($override['totale_override']);
+        }
+        $row->update([
+            'etichetta'     => $data['etichetta'] ?? $row->etichetta,
+            'override_voci' => $override,
+        ]);
         return redirect()->route('owner.analisi.custom.show', $id);
     }
 

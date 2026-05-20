@@ -127,18 +127,29 @@
             </thead>
             <tbody>
             @forelse($datiCommesse as $c)
-                <tr>
-                    <td><a href="{{ route('owner.costi.analisi.show', $c['commessa']) }}?op_token={{ request('op_token') }}" class="gn-commessa-link">{{ $c['commessa'] }}</a></td>
-                    <td>
-                        <div>{{ $c['cliente'] }}</div>
-                        <small style="color:var(--gn-muted);">{{ \Illuminate\Support\Str::limit($c['descrizione'], 80) }}</small>
-                    </td>
-                    <td>{{ $c['etichetta'] ?? '-' }}</td>
-                    <td class="num"><strong>€ {{ number_format($c['totale'], 2, ',', '.') }}</strong></td>
-                    <td>
-                        <a href="{{ route('owner.costi.analisi.show', $c['commessa']) }}?op_token={{ request('op_token') }}" target="_blank" class="gn-btn gn-btn-secondary gn-btn-icon" title="Apri dettaglio">↗</a>
-                        <form method="POST" action="{{ route('owner.analisi.custom.rimuovi', [$analisi->id, $c['pivot_id']]) }}" onsubmit="return confirm('Rimuovere?')" style="display:inline;">@csrf @method('DELETE')<button class="gn-btn gn-btn-secondary gn-btn-icon">🗑</button></form>
-                    </td>
+                <tr class="{{ ($c['override_attivo'] ?? false) ? 'gn-override' : '' }}">
+                    <form method="POST" action="{{ route('owner.analisi.custom.aggiornaRiga', [$analisi->id, $c['pivot_id']]) }}" id="frmRiga{{ $c['pivot_id'] }}">
+                        @csrf
+                        <td><a href="{{ route('owner.costi.analisi.show', $c['commessa']) }}?op_token={{ request('op_token') }}" class="gn-commessa-link" target="_blank">{{ $c['commessa'] }}</a></td>
+                        <td>
+                            <div>{{ $c['cliente'] }}</div>
+                            <small style="color:var(--gn-muted);">{{ \Illuminate\Support\Str::limit($c['descrizione'], 80) }}</small>
+                        </td>
+                        <td><input type="text" name="etichetta" value="{{ $c['etichetta'] ?? '' }}" placeholder="etichetta..." style="width:130px;padding:5px 8px;border:1px solid var(--gn-border);border-radius:6px;font-size:12px;"></td>
+                        <td class="num">
+                            <input type="number" step="0.01" min="0" name="totale_override" value="{{ ($c['override_attivo'] ?? false) ? number_format($c['totale'], 2, '.', '') : '' }}"
+                                placeholder="{{ number_format($c['totale_calc'] ?? $c['totale'], 2, '.', '') }}"
+                                style="width:120px;text-align:right;font-family:monospace;padding:5px 8px;border:1px solid var(--gn-border);border-radius:6px;font-size:12px;font-weight:600;">
+                            @if($c['override_attivo'] ?? false)
+                                <div style="font-size:10px;color:#9a3412;">override (calc: {{ number_format($c['totale_calc'], 2, ',', '.') }})</div>
+                            @endif
+                        </td>
+                        <td>
+                            <button class="gn-btn gn-btn-primary gn-btn-icon" title="Salva">💾</button>
+                            <a href="{{ route('owner.costi.analisi.show', $c['commessa']) }}?op_token={{ request('op_token') }}" target="_blank" class="gn-btn gn-btn-secondary gn-btn-icon" title="Apri dettaglio">↗</a>
+                    </form>
+                            <form method="POST" action="{{ route('owner.analisi.custom.rimuovi', [$analisi->id, $c['pivot_id']]) }}" onsubmit="return confirm('Rimuovere?')" style="display:inline;">@csrf @method('DELETE')<button class="gn-btn gn-btn-secondary gn-btn-icon">🗑</button></form>
+                        </td>
                 </tr>
             @empty
                 <tr><td colspan="5" style="text-align:center;color:var(--gn-muted);padding:32px;">Nessuna commessa aggiunta. Usa il form sopra.</td></tr>
