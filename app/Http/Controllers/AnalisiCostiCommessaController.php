@@ -29,6 +29,20 @@ class AnalisiCostiCommessaController extends Controller
                         'ore_sec', 'fogli_max', 'tiri_tot', 'inchiostro_tot', 'scarti_tot', 'altri_tot'];
         if (!in_array($sort, $allowedSort)) $sort = 'data_prevista_consegna';
 
+        // Filtri avanzati
+        $f = [
+            'data_da'    => $request->get('data_da'),
+            'data_a'     => $request->get('data_a'),
+            'cliente'    => $request->get('cliente'),
+            'ore_min'    => $request->get('ore_min'),
+            'scarti_min' => $request->get('scarti_min'),
+        ];
+
+        // Lista clienti per dropdown (DISTINCT da ordini)
+        $clientiList = DB::table('ordini')->whereNotNull('cliente_nome')
+            ->where('cliente_nome', '!=', '')
+            ->select('cliente_nome')->distinct()->orderBy('cliente_nome')->pluck('cliente_nome');
+
         $commesseTerminate = DB::table('ordini as o')
             ->join('ordine_fasi as orf', 'orf.ordine_id', '=', 'o.id')
             ->whereNull('orf.deleted_at')
@@ -65,11 +79,16 @@ class AnalisiCostiCommessaController extends Controller
                   ->orWhere('o.descrizione', 'LIKE', "%{$search}%");
             });
         }
+        if (!empty($f['data_da'])) $commesseTerminate->where('o.data_prevista_consegna', '>=', $f['data_da']);
+        if (!empty($f['data_a']))  $commesseTerminate->where('o.data_prevista_consegna', '<=', $f['data_a']);
+        if (!empty($f['cliente'])) $commesseTerminate->where('o.cliente_nome', $f['cliente']);
+        if (!empty($f['ore_min'])) $commesseTerminate->havingRaw('ore_sec >= ?', [(int) $f['ore_min'] * 3600]);
+        if (!empty($f['scarti_min'])) $commesseTerminate->havingRaw('scarti_tot >= ?', [(int) $f['scarti_min']]);
 
         $righe = $commesseTerminate
             ->orderByRaw("{$sort} {$dir}")
             ->paginate(50)
-            ->appends(['q' => $search, 'sort' => $sort, 'dir' => $dir]);
+            ->appends(array_merge(['q' => $search, 'sort' => $sort, 'dir' => $dir], array_filter($f)));
 
         // Aggregati riepilogo per le commesse della pagina corrente
         $commesseList = collect($righe->items())->pluck('commessa')->all();
@@ -131,7 +150,7 @@ class AnalisiCostiCommessaController extends Controller
                 ->keyBy('commessa');
         }
 
-        return view('owner.costi.analisi_commesse_lista', compact('righe', 'search', 'aggregates', 'fogli', 'altri', 'oreReparti', 'sort', 'dir'));
+        return view('owner.costi.analisi_commesse_lista', compact('righe', 'search', 'aggregates', 'fogli', 'altri', 'oreReparti', 'sort', 'dir', 'f', 'clientiList'));
     }
 
     /**

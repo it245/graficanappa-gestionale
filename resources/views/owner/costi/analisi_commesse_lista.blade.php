@@ -18,15 +18,53 @@ $fmtHm = function ($sec) {
     <h1>Analisi Commesse Terminate</h1>
     <div class="gn-subtitle">Visualizza e analizza i costi delle commesse concluse</div>
 
-    <form method="GET" action="{{ route('owner.costi.analisi.index') }}" class="gn-filters">
-        <div class="gn-search">
-            <input type="text" name="q" value="{{ $search }}" placeholder="Cerca per commessa, cliente, descrizione...">
+    @php $filtriAttivi = !empty(array_filter($f)) || !empty($search); @endphp
+    <form method="GET" action="{{ route('owner.costi.analisi.index') }}">
+        <input type="hidden" name="op_token" value="{{ request('op_token') }}">
+        <div class="gn-filters">
+            <div class="gn-search">
+                <input type="text" name="q" value="{{ $search }}" placeholder="Cerca per commessa, cliente, descrizione...">
+            </div>
+            <button class="gn-btn gn-btn-primary">Filtra</button>
+            <button type="button" class="gn-btn gn-btn-secondary" onclick="document.getElementById('panFiltri').style.display = document.getElementById('panFiltri').style.display === 'none' ? 'block' : 'none';">⚙ Filtri avanzati</button>
+            @if($filtriAttivi)
+            <a href="{{ route('owner.costi.analisi.index') }}" class="gn-btn gn-btn-secondary">Reset</a>
+            @endif
+            <a href="{{ route('owner.analisi.custom.index') }}?op_token={{ request('op_token') }}" class="gn-btn gn-btn-secondary" style="margin-left:auto;">📊 Analisi Custom</a>
         </div>
-        <button class="gn-btn gn-btn-primary">Filtra</button>
-        @if($search)
-        <a href="{{ route('owner.costi.analisi.index') }}" class="gn-btn gn-btn-secondary">Reset</a>
-        @endif
-        <a href="{{ route('owner.analisi.custom.index') }}?op_token={{ request('op_token') }}" class="gn-btn gn-btn-secondary" style="margin-left:auto;">📊 Analisi Custom</a>
+
+        <div id="panFiltri" style="display:{{ !empty(array_filter($f)) ? 'block' : 'none' }};background:#fff;border:1px solid var(--gn-border);border-radius:10px;padding:14px;margin-bottom:14px;">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:12px;">
+                <div>
+                    <label style="font-size:11px;color:var(--gn-muted);">Consegna da</label>
+                    <input type="date" name="data_da" value="{{ $f['data_da'] }}" style="width:100%;padding:7px 10px;border:1px solid var(--gn-border);border-radius:6px;font-size:13px;">
+                </div>
+                <div>
+                    <label style="font-size:11px;color:var(--gn-muted);">Consegna a</label>
+                    <input type="date" name="data_a" value="{{ $f['data_a'] }}" style="width:100%;padding:7px 10px;border:1px solid var(--gn-border);border-radius:6px;font-size:13px;">
+                </div>
+                <div>
+                    <label style="font-size:11px;color:var(--gn-muted);">Cliente</label>
+                    <select name="cliente" style="width:100%;padding:7px 10px;border:1px solid var(--gn-border);border-radius:6px;font-size:13px;">
+                        <option value="">Tutti</option>
+                        @foreach($clientiList as $cl)
+                        <option value="{{ $cl }}" {{ $f['cliente'] === $cl ? 'selected' : '' }}>{{ \Illuminate\Support\Str::limit($cl, 40) }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size:11px;color:var(--gn-muted);">Ore tot ≥</label>
+                    <input type="number" min="0" step="1" name="ore_min" value="{{ $f['ore_min'] }}" placeholder="es. 5" style="width:100%;padding:7px 10px;border:1px solid var(--gn-border);border-radius:6px;font-size:13px;">
+                </div>
+                <div>
+                    <label style="font-size:11px;color:var(--gn-muted);">Scarti ≥ fogli</label>
+                    <input type="number" min="0" step="1" name="scarti_min" value="{{ $f['scarti_min'] }}" placeholder="es. 100" style="width:100%;padding:7px 10px;border:1px solid var(--gn-border);border-radius:6px;font-size:13px;">
+                </div>
+                <div style="display:flex;align-items:flex-end;gap:8px;">
+                    <button class="gn-btn gn-btn-primary">Applica</button>
+                </div>
+            </div>
+        </div>
     </form>
 
     <div class="gn-card">
