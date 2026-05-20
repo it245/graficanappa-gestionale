@@ -14,9 +14,12 @@ body { margin: 0; font-family: 'Inter', -apple-system, sans-serif; background: #
 /* Sidebar dark */
 .gn-shell { display: flex; min-height: 100vh; }
 .gn-sidebar { width: 240px; background: #0f1729; color: #d1d5db; flex-shrink: 0; padding: 18px 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
-.gn-sidebar-brand { display: flex; align-items: center; gap: 10px; padding: 4px 18px 22px 18px; border-bottom: 1px solid #1f2937; }
-.gn-sidebar-brand img { height: 32px; width: auto; }
-.gn-sidebar-brand .gn-brand-text { font-size: 11px; font-weight: 700; color: #94a3b8; letter-spacing: 1.5px; }
+.gn-sidebar-brand { display: flex; align-items: center; gap: 12px; padding: 4px 18px 22px 18px; border-bottom: 1px solid #1f2937; }
+.gn-sidebar-brand .gn-logo-box { width: 40px; height: 40px; background: #1e3a5f; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.gn-sidebar-brand .gn-logo-box img { max-width: 32px; max-height: 32px; filter: brightness(0) invert(1); }
+.gn-sidebar-brand .gn-brand-text { display: flex; flex-direction: column; line-height: 1.1; }
+.gn-sidebar-brand .gn-brand-text .t1 { font-size: 14px; font-weight: 700; color: #fff; }
+.gn-sidebar-brand .gn-brand-text .t2 { font-size: 13px; font-weight: 600; color: #cbd5e1; }
 .gn-sidebar-section { padding: 14px 0 6px 18px; font-size: 10px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; }
 .gn-sidebar a { display: flex; align-items: center; gap: 12px; padding: 9px 18px; color: #cbd5e1; text-decoration: none; font-size: 13px; transition: all .15s; }
 .gn-sidebar a:hover { background: #1f2937; color: #fff; }
@@ -39,8 +42,11 @@ body { margin: 0; font-family: 'Inter', -apple-system, sans-serif; background: #
 <div class="gn-shell">
     <aside class="gn-sidebar">
         <div class="gn-sidebar-brand">
-            <img src="{{ asset('images/logo_graficanappa.png') }}" alt="Grafica Nappa">
-            <span class="gn-brand-text">MES</span>
+            <div class="gn-logo-box"><img src="{{ asset('images/logo_graficanappa.png') }}" alt="GN"></div>
+            <div class="gn-brand-text">
+                <span class="t1">MES</span>
+                <span class="t2">Grafica Nappa</span>
+            </div>
         </div>
 
         <a href="{{ route('owner.dashboard') }}?op_token={{ request('op_token') }}"><span class="gn-icon">⬛</span> Dashboard</a>
