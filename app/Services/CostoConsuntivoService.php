@@ -141,13 +141,22 @@ class CostoConsuntivoService
 
     private function calcolaCarta($ordini): array
     {
-        // Aggrega qta_carta per tipo (preventivo Onda)
+        // Aggrega qta_carta per tipo (preventivo Onda).
+        // Filtra fuori ordini "figli" senza carta reale: cod_carta SEMILAV* o
+        // carta = descrizione articolo (probabile bug import Onda).
         $byCarta = [];
         foreach ($ordini as $ord) {
             $carta = trim($ord->carta ?? '');
+            $cod = trim($ord->cod_carta ?? '');
             $qta = (int) ($ord->qta_carta ?? 0);
             if (!$carta || $qta <= 0) continue;
-            $byCarta[$carta] ??= ['qta' => 0, 'cod' => $ord->cod_carta ?? '', 'um' => $ord->UM_carta ?? 'fg'];
+            // Skip se cod_carta è semilavorato generico
+            if (preg_match('/^SEMILAV/i', $cod)) continue;
+            // Skip se carta = descrizione (campo carta erroneamente popolato col nome articolo)
+            if (mb_stripos($carta, 'AST.') === 0 || mb_stripos($carta, 'CUBO') === 0
+                || mb_stripos($carta, 'LIBRO') === 0 || mb_stripos($carta, 'COPERTINA') === 0
+                || mb_stripos($carta, 'BLOCCO') === 0) continue;
+            $byCarta[$carta] ??= ['qta' => 0, 'cod' => $cod, 'um' => $ord->UM_carta ?? 'fg'];
             $byCarta[$carta]['qta'] += $qta;
         }
 
