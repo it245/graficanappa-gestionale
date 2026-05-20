@@ -43,6 +43,9 @@ class CostoConsuntivoService
         // Scarti (fogli persi × €/foglio carta)
         $voci = array_merge($voci, $this->calcolaScarti($ordini, $eurFoglioCarta));
 
+        // Placeholder fissi (sempre presenti — utente compila manualmente)
+        $voci = array_merge($voci, $this->placeholderFissi($voci));
+
         // Carica override esistenti da DB e applica
         $override = DB::table('commessa_costi_voci')
             ->where('commessa', $commessa)
@@ -391,6 +394,34 @@ class CostoConsuntivoService
             ];
         }
         return $voci;
+    }
+
+    /**
+     * Placeholder sempre presenti — ricorda all'operatore voci tipiche da compilare.
+     */
+    private function placeholderFissi(array $vociEsistenti): array
+    {
+        $chiaviPresenti = array_column($vociEsistenti, 'voce_chiave');
+        $placeholders = [
+            ['manodopera.extra',     'manodopera',  '+ Manodopera extra (h)'],
+            ['trasporto.spedizione', 'trasporto',   '+ Spese trasporto / corriere'],
+            ['cliche.costo',         'cliche',      '+ Cliché (stampa caldo/rilievo)'],
+            ['lavorazione.altra',    'altro',       '+ Altra voce manuale'],
+        ];
+        $out = [];
+        foreach ($placeholders as $p) {
+            if (in_array($p[0], $chiaviPresenti)) continue;
+            $out[] = [
+                'categoria'   => $p[1],
+                'voce_chiave' => $p[0],
+                'descrizione' => $p[2],
+                'qta'         => null,
+                'udm'         => null,
+                'prezzo_unit' => null,
+                'importo'     => 0,
+            ];
+        }
+        return $out;
     }
 
     private function calcolaScarti($ordini, float $eurFoglio = 0): array
