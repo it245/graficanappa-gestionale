@@ -47,9 +47,8 @@ table.voci tfoot td { border-top: 2px solid #1a4d8c; padding-top: 8px; font-weig
             <td class="logo" style="width:40%;"><img src="{{ public_path('images/logo_graficanappa.png') }}" alt="Grafica Nappa"></td>
             <td class="azienda" style="text-align:right;">
                 <strong>GRAFICA NAPPA S.R.L.</strong><br>
-                Via dei Tigli 60 — 80026 Casoria (NA)<br>
-                P.IVA 06959301214 — info@graficanappa.com<br>
-                Tel. 081 758 7037
+                Via Antonio Gramsci 19 — 81031 Aversa (CE)<br>
+                Tel. 081 890 6734
             </td>
         </tr>
     </table>
