@@ -165,9 +165,17 @@ class AnalisiCostiCommessaController extends Controller
                     $sec = (int) $fase->operatori->sum(function ($op) {
                         if (!$op->pivot->data_inizio || !$op->pivot->data_fine) return 0;
                         $pausa = (int) ($op->pivot->secondi_pausa ?? 0);
-                        $diff = Carbon::parse($op->pivot->data_fine)->getTimestamp()
-                              - Carbon::parse($op->pivot->data_inizio)->getTimestamp();
-                        return max($diff - $pausa, 0);
+                        $di = Carbon::parse($op->pivot->data_inizio);
+                        $df = Carbon::parse($op->pivot->data_fine);
+                        $diff = $df->getTimestamp() - $di->getTimestamp();
+                        $secPivot = max($diff - $pausa, 0);
+                        // CAP: se >12h continui → 8h × giorni lavorativi
+                        if ($secPivot > 12 * 3600) {
+                            $giorniLav = 0; $cur = $di->copy()->startOfDay(); $end = $df->copy()->startOfDay();
+                            while ($cur->lte($end)) { if (!$cur->isWeekend()) $giorniLav++; $cur->addDay(); }
+                            $secPivot = max($giorniLav, 1) * 8 * 3600;
+                        }
+                        return $secPivot;
                     });
                 }
                 $oreReparto[$repartoNome] += $sec;
