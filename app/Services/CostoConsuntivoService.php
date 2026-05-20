@@ -32,6 +32,12 @@ class CostoConsuntivoService
             $voci = array_merge($voci, $this->calcolaMacchina($info, $ordini));
         }
 
+        // Manodopera (ore reparto × tariffa CostoReparto)
+        $voci = array_merge($voci, $this->calcolaManodopera($ordini));
+
+        // Scarti (fogli persi × €/foglio carta)
+        $voci = array_merge($voci, $this->calcolaScarti($ordini));
+
         // Carica override esistenti da DB e applica
         $override = DB::table('commessa_costi_voci')
             ->where('commessa', $commessa)
@@ -309,6 +315,88 @@ class CostoConsuntivoService
             if (str_contains($n, $key)) return $slug;
         }
         return null;
+    }
+
+    private function calcolaManodopera($ordini): array
+    {
+        $voci = [];
+        $perReparto = [];
+        foreach ($ordini as $ord) {
+            foreach ($ord->fasi as $fase) {
+                $rep = $fase->faseCatalogo->reparto ?? null;
+                if (!$rep) continue;
+                $repId = $rep->id;
+                $perReparto[$repId] ??= ['nome' => $rep->nome, 'sec' => 0];
+                $sec = (int) (($fase->tempo_avviamento_sec ?? 0) + ($fase->tempo_esecuzione_sec ?? 0));
+                if ($sec === 0) {
+                    foreach ($fase->operatori as $op) {
+                        if (!$op->pivot->data_inizio || !$op->pivot->data_fine) continue;
+                        $pausa = (int) ($op->pivot->secondi_pausa ?? 0);
+                        $diff = \Carbon\Carbon::parse($op->pivot->data_fine)->getTimestamp()
+                              - \Carbon\Carbon::parse($op->pivot->data_inizio)->getTimestamp();
+                        $sec += max($diff - $pausa, 0);
+                    }
+                }
+                $perReparto[$repId]['sec'] += $sec;
+            }
+        }
+        foreach ($perReparto as $repId => $info) {
+            if ($info['sec'] <= 0) continue;
+            $ore = round($info['sec'] / 3600, 2);
+            $tariffa = \App\Models\CostoReparto::tariffaAllaData($repId, now()->toDateString());
+            if ($tariffa <= 0) continue; // skip se reparto non ha tariffa configurata
+            $voci[] = [
+                'categoria'   => 'manodopera',
+                'voce_chiave' => "manodopera.r{$repId}",
+                'descrizione' => "Manodopera {$info['nome']} ({$ore}h × €{$tariffa}/h)",
+                'qta'         => $ore,
+                'udm'         => 'h',
+                'prezzo_unit' => $tariffa,
+                'importo'     => round($ore * $tariffa, 2),
+            ];
+        }
+        return $voci;
+    }
+
+    private function calcolaScarti($ordini): array
+    {
+        $voci = [];
+        $totScarti = 0;
+        foreach ($ordini as $ord) {
+            foreach ($ord->fasi as $fase) {
+                $totScarti += (int) ($fase->fogli_scarto ?? 0);
+                $totScarti += (int) ($fase->scarti ?? 0);
+            }
+        }
+        if ($totScarti <= 0) return $voci;
+
+        // Stima €/foglio dalla carta principale ordine
+        $primoOrdine = $ordini->first();
+        $eurFoglio = 0;
+        $cartaInfo = trim($primoOrdine->carta ?? '');
+        if ($cartaInfo) {
+            $gramm = preg_match('/(\d{2,4})\s*(?:g\/?m²?|gr?)/i', $cartaInfo, $mG) ? (int) $mG[1] : null;
+            $formato = preg_match('/(\d{2,3})\s*[x×]\s*(\d{2,3})/i', $cartaInfo, $mF) ? ($mF[1] . 'x' . $mF[2]) : null;
+            if ($gramm && $formato) {
+                $listino = DB::table('materie_prime_carte')->where('grammatura', 'LIKE', "%{$gramm}%")->first();
+                if ($listino) {
+                    [$l1, $l2] = array_map('intval', explode('x', $formato));
+                    $peso = ($l1 / 100) * ($l2 / 100) * ($gramm / 1000);
+                    $eurFoglio = round($peso * (float) $listino->eur_kg, 4);
+                }
+            }
+        }
+        $importo = round($totScarti * $eurFoglio, 2);
+        $voci[] = [
+            'categoria'   => 'scarti',
+            'voce_chiave' => 'scarti.carta',
+            'descrizione' => "Scarti carta ({$totScarti} fogli × €{$eurFoglio}/fg)",
+            'qta'         => $totScarti,
+            'udm'         => 'fg',
+            'prezzo_unit' => $eurFoglio,
+            'importo'     => $importo,
+        ];
+        return $voci;
     }
 
     private function scegliVariante(string $slug, array $info, $ordini): string
