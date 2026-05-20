@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.costi')
 
 @section('content')
 <link rel="stylesheet" href="{{ asset('css/costi-ui.css') }}?v={{ filemtime(public_path('css/costi-ui.css')) }}">

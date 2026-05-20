@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.costi')
 
 @section('content')
 <div class="container py-3" style="max-width:700px;">

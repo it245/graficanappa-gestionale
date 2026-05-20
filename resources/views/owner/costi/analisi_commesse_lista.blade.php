@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.costi')
 
 @php
 $fmtHm = function ($sec) {
