@@ -1,0 +1,326 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\Ordine;
+use Illuminate\Support\Facades\DB;
+
+class CostoConsuntivoService
+{
+    /**
+     * Calcola tutte le voci di costo per una commessa terminata.
+     * Ritorna array strutturato di voci [categoria => [voci...]].
+     */
+    public function calcola(string $commessa): array
+    {
+        $ordini = Ordine::where('commessa', $commessa)
+            ->with('fasi.faseCatalogo.reparto')
+            ->get();
+        if ($ordini->isEmpty()) return [];
+
+        $voci = [];
+
+        // Aggrega fasi per macchina + flag esterno
+        $perMacchina = $this->aggregaFasi($ordini);
+
+        // Carta
+        $voci = array_merge($voci, $this->calcolaCarta($ordini));
+
+        // Per ogni macchina (interna o esterna)
+        foreach ($perMacchina as $info) {
+            if (!$info['slug']) continue;
+            $voci = array_merge($voci, $this->calcolaMacchina($info, $ordini));
+        }
+
+        // Carica override esistenti da DB e applica
+        $override = DB::table('commessa_costi_voci')
+            ->where('commessa', $commessa)
+            ->where('override_manuale', true)
+            ->get()
+            ->keyBy('voce_chiave');
+
+        foreach ($voci as &$v) {
+            if (isset($override[$v['voce_chiave']])) {
+                $o = $override[$v['voce_chiave']];
+                $v['importo'] = (float) $o->importo;
+                $v['qta'] = $o->qta !== null ? (float) $o->qta : $v['qta'];
+                $v['prezzo_unit'] = $o->prezzo_unit !== null ? (float) $o->prezzo_unit : $v['prezzo_unit'];
+                $v['override_manuale'] = true;
+                $v['autore_override'] = $o->autore_override;
+            } else {
+                $v['override_manuale'] = false;
+            }
+        }
+
+        return $voci;
+    }
+
+    /**
+     * Salva snapshot voci in DB (per fastread + cronologia).
+     */
+    public function persisti(string $commessa): void
+    {
+        $voci = $this->calcola($commessa);
+
+        // Cancella vecchie voci NON override (mantieni override manuali)
+        DB::table('commessa_costi_voci')
+            ->where('commessa', $commessa)
+            ->where('override_manuale', false)
+            ->delete();
+
+        foreach ($voci as $v) {
+            if ($v['override_manuale'] ?? false) continue; // override già in DB
+            DB::table('commessa_costi_voci')->updateOrInsert(
+                ['commessa' => $commessa, 'voce_chiave' => $v['voce_chiave']],
+                [
+                    'categoria'   => $v['categoria'],
+                    'descrizione' => $v['descrizione'],
+                    'qta'         => $v['qta'] ?? null,
+                    'udm'         => $v['udm'] ?? null,
+                    'prezzo_unit' => $v['prezzo_unit'] ?? null,
+                    'importo'     => $v['importo'],
+                    'override_manuale' => false,
+                    'updated_at'  => now(),
+                    'created_at'  => now(),
+                ]
+            );
+        }
+    }
+
+    public function totale(array $voci): float
+    {
+        return (float) array_sum(array_column($voci, 'importo'));
+    }
+
+    public function totalePerCategoria(array $voci): array
+    {
+        $out = [];
+        foreach ($voci as $v) {
+            $cat = $v['categoria'];
+            $out[$cat] = ($out[$cat] ?? 0) + $v['importo'];
+        }
+        return $out;
+    }
+
+    // ============ INTERNAL ============
+
+    private function aggregaFasi($ordini): array
+    {
+        $per = [];
+        foreach ($ordini as $ord) {
+            foreach ($ord->fasi as $fase) {
+                $esterno = (bool) ($fase->esterno ?? false)
+                    || (bool) preg_match('/Inviato\s+a:/i', $fase->note ?? '');
+                $slug = $fase->faseCatalogo->macchina_slug ?? null;
+                $key = ($slug ?? 'unknown') . ':' . ($esterno ? 'ext' : 'int');
+                $per[$key] ??= [
+                    'slug' => $slug, 'esterno' => $esterno,
+                    'qta_prod' => 0, 'fogli_buoni' => 0, 'fogli_scarto' => 0,
+                    'scarti' => 0, 'inchiostro_g' => 0,
+                    'fasi' => [], 'fornitori' => [],
+                ];
+                $per[$key]['qta_prod']     += (int) ($fase->qta_prod ?? 0);
+                $per[$key]['fogli_buoni']  += (int) ($fase->fogli_buoni ?? 0);
+                $per[$key]['fogli_scarto'] += (int) ($fase->fogli_scarto ?? 0);
+                $per[$key]['scarti']       += (int) ($fase->scarti ?? 0);
+                $per[$key]['inchiostro_g'] += (float) ($fase->inchiostro_g ?? 0);
+                $per[$key]['fasi'][] = $fase;
+                if ($esterno && preg_match('/Inviato\s+a:\s*(.+)/i', $fase->note ?? '', $m)) {
+                    $per[$key]['fornitori'][] = trim($m[1]);
+                }
+            }
+        }
+        return $per;
+    }
+
+    private function calcolaCarta($ordini): array
+    {
+        // Aggrega qta_carta per tipo (preventivo Onda)
+        $byCarta = [];
+        foreach ($ordini as $ord) {
+            $carta = trim($ord->carta ?? '');
+            $qta = (int) ($ord->qta_carta ?? 0);
+            if (!$carta || $qta <= 0) continue;
+            $byCarta[$carta] ??= ['qta' => 0, 'cod' => $ord->cod_carta ?? '', 'um' => $ord->UM_carta ?? 'fg'];
+            $byCarta[$carta]['qta'] += $qta;
+        }
+
+        $voci = [];
+        $i = 0;
+        foreach ($byCarta as $nome => $info) {
+            $i++;
+            $info['qta'] = $info['qta']; // qta_carta preventivo (fogli)
+            // Parse: cerca grammatura + formato
+            $gramm = preg_match('/(\d{2,4})\s*(?:g\/?m²?|gr?)/i', $nome, $mG) ? (int) $mG[1] : null;
+            $formato = preg_match('/(\d{2,3})\s*[x×]\s*(\d{2,3})/i', $nome, $mF) ? ($mF[1] . 'x' . $mF[2]) : null;
+
+            // Lookup listino
+            $eurKg = null;
+            $listinoMatch = null;
+            if ($gramm) {
+                $listinoMatch = DB::table('materie_prime_carte')
+                    ->where('grammatura', 'LIKE', "%{$gramm}%")
+                    ->orderByDesc('eur_kg')
+                    ->first();
+                if ($listinoMatch) $eurKg = (float) $listinoMatch->eur_kg;
+            }
+
+            // Calcola peso foglio (cm² × g/m²) → kg
+            $pesoKg = null;
+            if ($gramm && $formato) {
+                [$l1, $l2] = array_map('intval', explode('x', $formato));
+                $pesoKg = ($l1 / 100) * ($l2 / 100) * ($gramm / 1000);
+            }
+
+            $costoFoglio = ($pesoKg && $eurKg) ? round($pesoKg * $eurKg, 4) : 0;
+            $totale = round($costoFoglio * $info['qta'], 2);
+
+            $voci[] = [
+                'categoria'   => 'carta',
+                'voce_chiave' => "carta.{$i}",
+                'descrizione' => "Carta: {$nome}" . ($listinoMatch ? " (listino: {$listinoMatch->nome})" : ' ⚠️ non in listino'),
+                'qta'         => $info['qta'],
+                'udm'         => 'fg',
+                'prezzo_unit' => $costoFoglio,
+                'importo'     => $totale,
+            ];
+        }
+        return $voci;
+    }
+
+    private function calcolaMacchina(array $info, $ordini): array
+    {
+        $slug = $info['slug'];
+        $voci = [];
+
+        if ($info['esterno']) {
+            // Lavorazione esterna — match fornitore in catalogo
+            $fornitori = array_unique($info['fornitori']);
+            $fornitorePrincipale = $fornitori[0] ?? '';
+            $fornitoreSlug = $this->matchFornitoreEsterno($fornitorePrincipale);
+            $fornitoreNome = '';
+            if ($fornitoreSlug) {
+                $row = DB::table('macchine_costi')->where('slug', $fornitoreSlug)->first();
+                $fornitoreNome = $row->nome ?? $fornitoreSlug;
+            }
+            $voci[] = [
+                'categoria'   => 'esterno',
+                'voce_chiave' => "ext.{$slug}." . md5($fornitorePrincipale),
+                'descrizione' => "Esterno {$slug}"
+                    . ($fornitorePrincipale ? " → {$fornitorePrincipale}" : '')
+                    . ($fornitoreSlug ? " (listino: {$fornitoreNome})" : ' ⚠️ fornitore non riconosciuto'),
+                'qta'         => $info['qta_prod'],
+                'udm'         => 'pz',
+                'prezzo_unit' => null,
+                'importo'     => 0,
+            ];
+            return $voci;
+        }
+
+        $macchina = DB::table('macchine_costi')->where('slug', $slug)->first();
+        if (!$macchina) return $voci;
+
+        // Quantità di riferimento: per stampa offset usa fogli_buoni, altrimenti qta_prod
+        $qta = $slug === 'xl106' ? ($info['fogli_buoni'] ?: $info['qta_prod']) : $info['qta_prod'];
+
+        // Tariffa fascia
+        $variante = $this->scegliVariante($slug, $info, $ordini);
+        $tariffa = DB::table('costi_fasce_tiratura')
+            ->where('macchina_id', $macchina->id)
+            ->where('variante', $variante)
+            ->where('da_qta', '<=', $qta)
+            ->where(function ($q) use ($qta) {
+                $q->where('a_qta', '>=', $qta)->orWhereNull('a_qta');
+            })
+            ->orderByDesc('da_qta')
+            ->first();
+
+        if ($tariffa) {
+            // udm: foglio, colpo, click, 1000pz, mq
+            $importo = match ($tariffa->udm) {
+                '1000pz' => ($qta / 1000) * $tariffa->costo,
+                default  => $qta * $tariffa->costo,
+            };
+            $voci[] = [
+                'categoria'   => $macchina->tipo,
+                'voce_chiave' => "{$slug}.lavorazione",
+                'descrizione' => "{$macchina->nome} — {$variante} (fascia {$tariffa->da_qta}-" . ($tariffa->a_qta ?? '∞') . ')',
+                'qta'         => $qta,
+                'udm'         => $tariffa->udm,
+                'prezzo_unit' => (float) $tariffa->costo,
+                'importo'     => round($importo, 2),
+            ];
+        }
+
+        // Inchiostro (solo XL106)
+        if ($slug === 'xl106' && $info['inchiostro_g'] > 0) {
+            $voci[] = [
+                'categoria'   => 'stampa_offset',
+                'voce_chiave' => 'xl106.inchiostro',
+                'descrizione' => 'Inchiostro (€10/kg)',
+                'qta'         => round($info['inchiostro_g'] / 1000, 3),
+                'udm'         => 'kg',
+                'prezzo_unit' => 10,
+                'importo'     => round(($info['inchiostro_g'] / 1000) * 10, 2),
+            ];
+        }
+
+        // Avviamento standard (default 4/0 per offset; semplice per altre macchine)
+        $avv = DB::table('costi_avviamento')
+            ->where('macchina_id', $macchina->id)
+            ->orderBy('id')
+            ->first();
+        if ($avv) {
+            $voci[] = [
+                'categoria'   => $macchina->tipo,
+                'voce_chiave' => "{$slug}.avviamento",
+                'descrizione' => "Avviamento {$macchina->nome} ({$avv->configurazione})",
+                'qta'         => 1,
+                'udm'         => 'cad',
+                'prezzo_unit' => (float) $avv->costo_avviamento,
+                'importo'     => (float) $avv->costo_avviamento,
+            ];
+        }
+
+        return $voci;
+    }
+
+    /**
+     * Match nome fornitore (es "LEGOKART S.A.S.", "KRESIA SRL", "LEGATORIA SALVATORE TONTI")
+     * con slug catalogo fornitori esterni.
+     */
+    private function matchFornitoreEsterno(string $nomeFornitore): ?string
+    {
+        $n = mb_strtolower($nomeFornitore);
+        $map = [
+            'legokart'                      => 'legokart',
+            'kresia'                        => 'kresia',
+            'legraf'                        => 'legraf',
+            'tonti'                         => 'legraf',           // Legatoria Salvatore Tonti = legatoria esterna
+            'salvatore tonti'               => 'legraf',
+            'soluzioni imballaggi shopper'  => 'soluzioni_imballaggi_shopper',
+            'soluzioni imballaggi'          => 'soluzioni_imballaggi_acc',
+            'soluzioni'                     => 'soluzioni_imballaggi_acc',
+            'neoprint'                      => 'neoprint',
+            'sae'                           => 'sae_spotimage',
+            'spotimage'                     => 'sae_spotimage',
+        ];
+        foreach ($map as $key => $slug) {
+            if (str_contains($n, $key)) return $slug;
+        }
+        return null;
+    }
+
+    private function scegliVariante(string $slug, array $info, $ordini): string
+    {
+        // Default per macchina (l'utente può override scegliendo variante diversa)
+        return match ($slug) {
+            'xl106'         => '4/0',
+            'konica14000'   => 'CMYK',
+            'bobst_novacut' => 'standard',
+            'visionfold110' => 'lineare',
+            'brausse105'    => 'caldo',
+            default         => 'standard',
+        };
+    }
+}

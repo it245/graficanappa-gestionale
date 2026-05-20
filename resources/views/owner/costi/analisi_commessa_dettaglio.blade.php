@@ -124,6 +124,76 @@
         </div>
         @endif
 
+        {{-- Costi consuntivo dettagliato (auto + override) --}}
+        <div class="col-12">
+            <div class="card border-primary">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <strong>💰 Costi consuntivo dettagliato</strong>
+                    <span class="badge bg-light text-dark">Totale: € {{ number_format($totaleConsuntivo, 2, ',', '.') }}</span>
+                </div>
+                @if(empty($vociCosto))
+                <div class="p-3 text-muted small">Nessuna voce calcolata. Verifica mapping macchine.</div>
+                @else
+                <div class="table-responsive">
+                <table class="table table-sm mb-0" style="font-size:12px;">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width:130px;">Categoria</th>
+                            <th>Descrizione</th>
+                            <th style="width:90px;text-align:right;">Qta</th>
+                            <th style="width:60px;">UM</th>
+                            <th style="width:90px;text-align:right;">€/unit</th>
+                            <th style="width:110px;text-align:right;">Importo</th>
+                            <th style="width:200px;">Azione</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach($vociCosto as $v)
+                        <tr class="{{ $v['override_manuale'] ? 'table-warning' : '' }}">
+                            <td><span class="badge bg-secondary">{{ $v['categoria'] }}</span></td>
+                            <td class="small">{{ $v['descrizione'] }}
+                                @if($v['override_manuale'])<span class="badge bg-warning text-dark ms-1" title="Override di {{ $v['autore_override'] ?? '' }}">M</span>@endif
+                            </td>
+                            <td class="text-end font-monospace">{{ $v['qta'] !== null ? number_format($v['qta'], 2, ',', '.') : '—' }}</td>
+                            <td class="small">{{ $v['udm'] ?? '' }}</td>
+                            <td class="text-end font-monospace">{{ $v['prezzo_unit'] !== null ? number_format($v['prezzo_unit'], 4, ',', '.') : '—' }}</td>
+                            <td class="text-end font-monospace"><strong>€ {{ number_format($v['importo'], 2, ',', '.') }}</strong></td>
+                            <td>
+                                <form method="POST" action="{{ route('owner.costi.analisi.updateVoce', $commessa) }}" class="d-flex gap-1">
+                                    @csrf
+                                    <input type="hidden" name="voce_chiave" value="{{ $v['voce_chiave'] }}">
+                                    <input type="hidden" name="categoria" value="{{ $v['categoria'] }}">
+                                    <input type="hidden" name="descrizione" value="{{ $v['descrizione'] }}">
+                                    <input type="hidden" name="qta" value="{{ $v['qta'] ?? '' }}">
+                                    <input type="hidden" name="udm" value="{{ $v['udm'] ?? '' }}">
+                                    <input type="hidden" name="prezzo_unit" value="{{ $v['prezzo_unit'] ?? '' }}">
+                                    <input type="number" step="0.01" min="0" name="importo" value="{{ number_format($v['importo'], 2, '.', '') }}" class="form-control form-control-sm text-end" style="width:100px;">
+                                    <button class="btn btn-sm btn-primary py-0" title="Salva override">💾</button>
+                                </form>
+                                @if($v['override_manuale'])
+                                <form method="POST" action="{{ route('owner.costi.analisi.deleteVoce', $commessa) }}" class="d-inline">
+                                    @csrf
+                                    <input type="hidden" name="voce_chiave" value="{{ $v['voce_chiave'] }}">
+                                    <button class="btn btn-sm btn-outline-danger py-0" title="Ripristina auto" onclick="return confirm('Ripristinare valore automatico?')">↺</button>
+                                </form>
+                                @endif
+                            </td>
+                        </tr>
+                    @endforeach
+                    </tbody>
+                    <tfoot>
+                        <tr class="table-primary">
+                            <th colspan="5" class="text-end">TOTALE CONSUNTIVO COMMESSA</th>
+                            <th class="text-end font-monospace">€ {{ number_format($totaleConsuntivo, 2, ',', '.') }}</th>
+                            <th></th>
+                        </tr>
+                    </tfoot>
+                </table>
+                </div>
+                @endif
+            </div>
+        </div>
+
         {{-- Altri Costi --}}
         <div class="col-12">
             <div class="card">

@@ -7,6 +7,7 @@ use App\Models\CommessaAltroCosto;
 use App\Models\CommessaDatiCosti;
 use App\Models\Ordine;
 use App\Models\OrdineFase;
+use App\Services\CostoConsuntivoService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -298,11 +299,20 @@ class AnalisiCostiCommessaController extends Controller
         // Info commessa
         $primoOrdine = $ordini->first();
 
+        // Voci costo consuntivo (calcolato + override)
+        $vociCosto = app(CostoConsuntivoService::class)->calcola($commessa);
+        $vociPerCategoria = [];
+        foreach ($vociCosto as $v) $vociPerCategoria[$v['categoria']][] = $v;
+        $totaleConsuntivo = array_sum(array_column($vociCosto, 'importo'));
+
         return view('owner.costi.analisi_commessa_dettaglio', [
             'fasiEditable'      => $fasiEditable,
             'lavorazioniEsterne'=> $lavorazioniEsterne,
             'override'          => $override,
             'spedizioneStato'   => $spedizioneStato,
+            'vociCosto'         => $vociCosto,
+            'vociPerCategoria'  => $vociPerCategoria,
+            'totaleConsuntivo'  => $totaleConsuntivo,
             'commessa'         => $commessa,
             'cliente'          => $primoOrdine->cliente_nome ?? '-',
             'descrizione'      => $primoOrdine->descrizione ?? '-',
@@ -391,6 +401,47 @@ class AnalisiCostiCommessaController extends Controller
 
         return redirect()->route('owner.costi.analisi.show', $ordine->commessa)
             ->with('success', "Fase {$fase->fase} aggiornata.");
+    }
+
+    /**
+     * Aggiorna manualmente una voce di costo (override).
+     */
+    public function updateVoceCosto(Request $request, string $commessa)
+    {
+        $data = $request->validate([
+            'voce_chiave' => 'required|string|max:100',
+            'categoria'   => 'required|string|max:60',
+            'descrizione' => 'required|string|max:200',
+            'qta'         => 'nullable|numeric',
+            'udm'         => 'nullable|string|max:20',
+            'prezzo_unit' => 'nullable|numeric',
+            'importo'     => 'required|numeric|min:0',
+        ]);
+
+        DB::table('commessa_costi_voci')->updateOrInsert(
+            ['commessa' => $commessa, 'voce_chiave' => $data['voce_chiave']],
+            array_merge($data, [
+                'commessa'         => $commessa,
+                'override_manuale' => true,
+                'autore_override'  => session('admin_nome') ?? session('operatore_nome') ?? 'owner',
+                'updated_at'       => now(),
+                'created_at'       => now(),
+            ])
+        );
+
+        return redirect()->route('owner.costi.analisi.show', $commessa)
+            ->with('success', "Voce '{$data['descrizione']}' aggiornata.");
+    }
+
+    public function deleteVoceCosto(Request $request, string $commessa)
+    {
+        $chiave = $request->input('voce_chiave');
+        DB::table('commessa_costi_voci')
+            ->where('commessa', $commessa)
+            ->where('voce_chiave', $chiave)
+            ->delete();
+        return redirect()->route('owner.costi.analisi.show', $commessa)
+            ->with('success', 'Voce ripristinata a calcolo automatico.');
     }
 
     public function deleteOverride(string $commessa)
