@@ -100,6 +100,7 @@ table.voci tfoot td { border-top: 2px solid #1a4d8c; padding-top: 8px; font-weig
     </thead>
     <tbody>
     @foreach($vociCosto as $v)
+        @if($v['importo'] <= 0) @continue @endif
         <tr class="{{ $v['override_manuale'] ? 'override' : '' }}">
             <td><span class="badge">{{ $v['categoria'] }}</span></td>
             <td>{{ $v['descrizione'] }}{{ $v['override_manuale'] ? ' (M)' : '' }}</td>
