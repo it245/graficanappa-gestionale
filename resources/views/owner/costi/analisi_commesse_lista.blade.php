@@ -12,76 +12,75 @@ $fmtHm = function ($sec) {
 @endphp
 
 @section('content')
-<div class="container-fluid py-3">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="m-0">Analisi Costi — Commesse Terminate</h2>
-        <div class="text-muted small">Tutte le fasi avviate a stato 3 o 4</div>
-    </div>
+<link rel="stylesheet" href="{{ asset('css/costi-ui.css') }}?v={{ filemtime(public_path('css/costi-ui.css')) }}">
 
-    <form method="GET" class="mb-3" action="{{ route('owner.costi.analisi.index') }}">
-        <div class="input-group" style="max-width:500px;">
-            <input type="text" name="q" value="{{ $search }}" class="form-control" placeholder="Cerca commessa, cliente, descrizione…">
-            <button class="btn btn-primary" type="submit">Cerca</button>
-            @if($search)
-            <a href="{{ route('owner.costi.analisi.index') }}" class="btn btn-outline-secondary">Reset</a>
-            @endif
+<div class="gn-page">
+    <h1>Analisi Commesse Terminate</h1>
+    <div class="gn-subtitle">Visualizza e analizza i costi delle commesse concluse</div>
+
+    <form method="GET" action="{{ route('owner.costi.analisi.index') }}" class="gn-filters">
+        <div class="gn-search">
+            <input type="text" name="q" value="{{ $search }}" placeholder="Cerca per commessa, cliente, descrizione...">
         </div>
+        <button class="gn-btn gn-btn-primary">Filtra</button>
+        @if($search)
+        <a href="{{ route('owner.costi.analisi.index') }}" class="gn-btn gn-btn-secondary">Reset</a>
+        @endif
+        <a href="{{ route('owner.analisi.custom.index') }}?op_token={{ request('op_token') }}" class="gn-btn gn-btn-secondary" style="margin-left:auto;">📊 Analisi Custom</a>
     </form>
 
-    <div class="card">
-        <div class="card-body p-0">
-            <div class="table-responsive">
-            <table class="table table-hover table-sm mb-0" style="font-size:13px;">
-                <thead class="table-dark">
-                    <tr>
-                        <th style="width:110px;">Commessa</th>
-                        <th style="width:150px;">Cliente</th>
-                        <th>Descrizione</th>
-                        <th style="width:95px;">Consegna</th>
-                        <th style="width:75px;text-align:right;" title="Totale ore lavorate (hover per breakdown reparto)">Ore</th>
-                        <th style="width:80px;text-align:right;">Fogli</th>
-                        <th style="width:80px;text-align:right;">Tiri</th>
-                        <th style="width:90px;text-align:right;">Inchiostro</th>
-                        <th style="width:70px;text-align:right;">Scarti</th>
-                        <th style="width:85px;text-align:right;">Altri €</th>
-                        <th style="width:80px;text-align:right;"></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($righe as $r)
-                    @php
-                        $agg = $aggregates[$r->commessa] ?? null;
-                        $fg  = $fogli[$r->commessa] ?? null;
-                        $ac  = $altri[$r->commessa] ?? null;
-                        $orepr = $oreReparti[$r->commessa] ?? collect();
-                        $tooltipOre = $orepr->map(fn($x) => $x->reparto.': '.$fmtHm($x->sec))->implode("\n");
-                    @endphp
-                    <tr>
-                        <td><strong>{{ $r->commessa }}</strong></td>
-                        <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ $r->cliente_nome ?? '' }}">{{ $r->cliente_nome ?? '-' }}</td>
-                        <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ $r->descrizione ?? '' }}">{{ $r->descrizione ?? '-' }}</td>
-                        <td>{{ $r->data_prevista_consegna ? \Carbon\Carbon::parse($r->data_prevista_consegna)->format('d/m/Y') : '-' }}</td>
-                        <td class="text-end font-monospace" title="{{ $tooltipOre }}">{{ $agg ? $fmtHm($agg->ore_sec) : '—' }}</td>
-                        <td class="text-end font-monospace">{{ $fg && $fg->fogli ? number_format($fg->fogli, 0, ',', '.') : '—' }}</td>
-                        <td class="text-end font-monospace">{{ $agg && $agg->tiri_tot > 0 ? number_format($agg->tiri_tot, 2, ',', '.') : '—' }}</td>
-                        <td class="text-end font-monospace">{{ $agg && $agg->inchiostro_tot > 0 ? number_format($agg->inchiostro_tot, 2, ',', '.') : '—' }}</td>
-                        <td class="text-end font-monospace text-danger">{{ $agg && $agg->scarti_tot > 0 ? number_format($agg->scarti_tot, 0, ',', '.') : '—' }}</td>
-                        <td class="text-end font-monospace">{{ $ac && $ac->tot > 0 ? '€ '.number_format($ac->tot, 2, ',', '.') : '—' }}</td>
-                        <td class="text-end">
-                            <a href="{{ route('owner.costi.analisi.show', $r->commessa) }}?op_token={{ request('op_token') }}" class="btn btn-sm btn-primary">Apri</a>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr><td colspan="11" class="text-center text-muted py-4">Nessuna commessa terminata trovata.</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
-            </div>
+    <div class="gn-card">
+        <div style="overflow-x:auto;">
+        <table class="gn-table">
+            <thead>
+                <tr>
+                    <th>Commessa</th>
+                    <th>Cliente</th>
+                    <th>Descrizione</th>
+                    <th>Consegna</th>
+                    <th class="num">Ore tot</th>
+                    <th class="num">Fogli</th>
+                    <th class="num">Tiri</th>
+                    <th class="num">Inchiostro (g)</th>
+                    <th class="num">Scarti</th>
+                    <th class="num">Altri €</th>
+                    <th>Azione</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($righe as $r)
+                @php
+                    $agg = $aggregates[$r->commessa] ?? null;
+                    $fg  = $fogli[$r->commessa] ?? null;
+                    $ac  = $altri[$r->commessa] ?? null;
+                    $orepr = $oreReparti[$r->commessa] ?? collect();
+                    $tooltipOre = $orepr->map(fn($x) => $x->reparto.': '.$fmtHm($x->sec))->implode("\n");
+                @endphp
+                <tr>
+                    <td><a href="{{ route('owner.costi.analisi.show', $r->commessa) }}?op_token={{ request('op_token') }}" class="gn-commessa-link">{{ $r->commessa }}</a></td>
+                    <td style="max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ $r->cliente_nome ?? '' }}">{{ $r->cliente_nome ?? '-' }}</td>
+                    <td style="max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ $r->descrizione ?? '' }}">{{ $r->descrizione ?? '-' }}</td>
+                    <td>{{ $r->data_prevista_consegna ? \Carbon\Carbon::parse($r->data_prevista_consegna)->format('d/m/Y') : '-' }}</td>
+                    <td class="num" title="{{ $tooltipOre }}">{{ $agg ? $fmtHm($agg->ore_sec) : '—' }}</td>
+                    <td class="num">{{ $fg && $fg->fogli ? number_format($fg->fogli, 0, ',', '.') : '—' }}</td>
+                    <td class="num">{{ $agg && $agg->tiri_tot > 0 ? number_format($agg->tiri_tot, 0, ',', '.') : '—' }}</td>
+                    <td class="num">{{ $agg && $agg->inchiostro_tot > 0 ? number_format($agg->inchiostro_tot, 0, ',', '.') : '—' }}</td>
+                    <td class="num" style="color:#dc2626;">{{ $agg && $agg->scarti_tot > 0 ? number_format($agg->scarti_tot, 0, ',', '.') : '—' }}</td>
+                    <td class="num">{{ $ac && $ac->tot > 0 ? '€ '.number_format($ac->tot, 2, ',', '.') : '—' }}</td>
+                    <td>
+                        <a href="{{ route('owner.costi.analisi.show', $r->commessa) }}?op_token={{ request('op_token') }}" class="gn-btn gn-btn-primary gn-btn-sm">Apri</a>
+                    </td>
+                </tr>
+                @empty
+                <tr><td colspan="11" style="text-align:center;color:#9ca3af;padding:48px;">Nessuna commessa terminata trovata.</td></tr>
+                @endforelse
+            </tbody>
+        </table>
         </div>
-    </div>
-
-    <div class="mt-3">
-        {{ $righe->links() }}
+        <div class="gn-pagination">
+            <div style="font-size:12px;color:var(--gn-muted);">{{ $righe->firstItem() ?? 0 }}–{{ $righe->lastItem() ?? 0 }} di {{ $righe->total() }} risultati</div>
+            <div class="pager">{{ $righe->links() }}</div>
+        </div>
     </div>
 </div>
 @endsection

@@ -1,132 +1,149 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container-fluid py-3">
-    <div class="d-flex justify-content-between align-items-start mb-3">
+<link rel="stylesheet" href="{{ asset('css/costi-ui.css') }}?v={{ filemtime(public_path('css/costi-ui.css')) }}">
+
+<div class="gn-page">
+    <a href="{{ route('owner.analisi.custom.index') }}?op_token={{ request('op_token') }}" style="font-size:13px;color:var(--gn-primary);text-decoration:none;">← Torna alla lista</a>
+
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin:8px 0 24px 0;">
         <div>
-            <h2 class="m-0">📊 {{ $analisi->nome }}</h2>
-            <div class="text-muted small">{{ $analisi->descrizione ?? 'Nessuna descrizione' }} · Autore: {{ $analisi->autore }}</div>
+            <h1>{{ $analisi->nome }}</h1>
+            <div class="gn-subtitle" style="margin:0;">{{ $analisi->descrizione ?? 'Nessuna descrizione' }}</div>
         </div>
-        <a href="{{ route('owner.analisi.custom.index') }}?op_token={{ request('op_token') }}" class="btn btn-sm btn-outline-secondary">← Lista analisi</a>
+        <div style="text-align:right;font-size:12px;color:var(--gn-muted);">
+            <div>Creato da</div>
+            <div style="font-size:14px;font-weight:600;color:var(--gn-text);">{{ $analisi->autore }}</div>
+            <div style="margin-top:6px;">Ultimo accesso</div>
+            <div style="font-size:13px;color:var(--gn-text);">{{ $analisi->ultimo_accesso?->format('d/m/Y H:i') ?? '-' }}</div>
+        </div>
+        <form method="POST" action="{{ route('owner.analisi.custom.destroy', $analisi->id) }}" onsubmit="return confirm('Eliminare analisi?')">
+            @csrf @method('DELETE')
+            <button class="gn-btn gn-btn-secondary">🗑 Elimina</button>
+        </form>
     </div>
 
-    @if(session('success'))<div class="alert alert-success py-2">{{ session('success') }}</div>@endif
-
-    {{-- KPI aggregati --}}
-    <div class="row g-2 mb-3">
-        <div class="col-md-3">
-            <div class="card border-primary">
-                <div class="card-body py-2">
-                    <div class="small text-muted">Commesse</div>
-                    <div class="h4 m-0">{{ count($datiCommesse) }}</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card border-success">
-                <div class="card-body py-2">
-                    <div class="small text-muted">Totale costi</div>
-                    <div class="h4 m-0">€ {{ number_format($totaleGenerale, 2, ',', '.') }}</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card border-warning">
-                <div class="card-body py-2">
-                    <div class="small text-muted">Costo medio/commessa</div>
-                    <div class="h4 m-0">€ {{ count($datiCommesse) > 0 ? number_format($totaleGenerale / count($datiCommesse), 2, ',', '.') : '0,00' }}</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card border-info">
-                <div class="card-body py-2">
-                    <div class="small text-muted">Voci/categoria</div>
-                    <div class="h6 m-0 small">{{ count($categorieTot) }} categorie</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {{-- Aggiungi commessa --}}
-    <div class="card mb-3">
-        <div class="card-header bg-light"><strong>+ Aggiungi commessa</strong></div>
-        <div class="card-body py-2">
-            <form method="POST" action="{{ route('owner.analisi.custom.aggiungi', $analisi->id) }}" class="row g-2">
-                @csrf
-                <div class="col-md-4"><input type="text" name="commessa" class="form-control form-control-sm" placeholder="es. 0067200-26" required></div>
-                <div class="col-md-4"><input type="text" name="etichetta" class="form-control form-control-sm" placeholder="etichetta opzionale (es. articolo)"></div>
-                <div class="col-md-2"><button class="btn btn-sm btn-success w-100">+ Aggiungi</button></div>
-            </form>
-        </div>
-    </div>
-
-    {{-- Distribuzione voci per categoria --}}
-    @if(!empty($categorieTot))
-    <div class="card mb-3">
-        <div class="card-header bg-light"><strong>📊 Distribuzione costi per categoria</strong></div>
-        <table class="table table-sm mb-0">
-            <thead><tr><th>Categoria</th><th class="text-end" style="width:140px;">Totale €</th><th class="text-end" style="width:80px;">%</th></tr></thead>
-            <tbody>
-                @foreach($categorieTot as $cat => $val)
-                <tr>
-                    <td><span class="badge bg-secondary">{{ $cat }}</span></td>
-                    <td class="text-end font-monospace">€ {{ number_format($val, 2, ',', '.') }}</td>
-                    <td class="text-end font-monospace">{{ $totaleGenerale > 0 ? number_format($val / $totaleGenerale * 100, 1, ',', '.') : 0 }}%</td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
-    </div>
+    @if(session('success'))
+    <div style="background:#d1fae5;border:1px solid #6ee7b7;color:#065f46;padding:10px 14px;border-radius:8px;margin-bottom:14px;">{{ session('success') }}</div>
     @endif
 
-    {{-- Tabella commesse --}}
-    <div class="card">
-        <div class="card-header bg-primary text-white"><strong>Commesse incluse ({{ count($datiCommesse) }})</strong></div>
-        <div class="table-responsive">
-        <table class="table table-sm mb-0">
-            <thead class="table-light">
+    {{-- KPI grandi --}}
+    <div class="gn-kpi-grid">
+        <div class="gn-kpi">
+            <div class="gn-kpi-icon blue">📋</div>
+            <div class="gn-kpi-body">
+                <div class="gn-kpi-value">{{ count($datiCommesse) }}</div>
+                <div class="gn-kpi-label">Commesse</div>
+                <div class="gn-kpi-sub">incluse nell'analisi</div>
+            </div>
+        </div>
+        <div class="gn-kpi">
+            <div class="gn-kpi-icon green">💰</div>
+            <div class="gn-kpi-body">
+                <div class="gn-kpi-value">€ {{ number_format($totaleGenerale, 2, ',', '.') }}</div>
+                <div class="gn-kpi-label">Totale costi</div>
+                <div class="gn-kpi-sub">consuntivo totale</div>
+            </div>
+        </div>
+        <div class="gn-kpi">
+            <div class="gn-kpi-icon amber">📊</div>
+            <div class="gn-kpi-body">
+                <div class="gn-kpi-value">€ {{ count($datiCommesse) > 0 ? number_format($totaleGenerale / count($datiCommesse), 2, ',', '.') : '0,00' }}</div>
+                <div class="gn-kpi-label">Costo medio</div>
+                <div class="gn-kpi-sub">per commessa</div>
+            </div>
+        </div>
+        <div class="gn-kpi">
+            <div class="gn-kpi-icon purple">🏷️</div>
+            <div class="gn-kpi-body">
+                <div class="gn-kpi-value">{{ count($categorieTot) }}</div>
+                <div class="gn-kpi-label">Voci categoria</div>
+                <div class="gn-kpi-sub">categorie analizzate</div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Row: Aggiungi + Distribuzione --}}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+
+        <div class="gn-card">
+            <div class="gn-card-header"><h3>Aggiungi commessa all'analisi</h3></div>
+            <div class="gn-card-body">
+                <form method="POST" action="{{ route('owner.analisi.custom.aggiungi', $analisi->id) }}">
+                    @csrf
+                    <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:10px;">
+                        <div>
+                            <label style="font-size:12px;color:var(--gn-muted);">Commessa</label>
+                            <input type="text" name="commessa" placeholder="Es. 0067200-26" required style="width:100%;padding:8px 12px;border:1px solid var(--gn-border);border-radius:6px;font-size:13px;">
+                        </div>
+                        <div>
+                            <label style="font-size:12px;color:var(--gn-muted);">Etichetta custom (opzionale)</label>
+                            <input type="text" name="etichetta" placeholder="Es. Scatola Luxury" style="width:100%;padding:8px 12px;border:1px solid var(--gn-border);border-radius:6px;font-size:13px;">
+                        </div>
+                        <div style="display:flex;align-items:flex-end;">
+                            <button class="gn-btn gn-btn-primary">+ Aggiungi</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="gn-card">
+            <div class="gn-card-header"><h3>Distribuzione costi per categoria</h3></div>
+            <div class="gn-card-body">
+                @forelse($categorieTot as $cat => $val)
+                @php $pct = $totaleGenerale > 0 ? $val / $totaleGenerale * 100 : 0; @endphp
+                <div class="gn-dist-bar">
+                    <div class="gn-dist-label"><span class="gn-badge gn-badge-{{ $cat }}">{{ $cat }}</span></div>
+                    <div class="gn-dist-value">€ {{ number_format($val, 2, ',', '.') }}</div>
+                    <div class="gn-dist-track"><div class="gn-dist-fill" style="width:{{ $pct }}%;"></div></div>
+                    <div class="gn-dist-pct">{{ number_format($pct, 1, ',', '.') }}%</div>
+                </div>
+                @empty
+                <div style="color:var(--gn-muted);text-align:center;padding:24px;font-size:13px;">Nessuna commessa per calcolare distribuzione.</div>
+                @endforelse
+            </div>
+        </div>
+
+    </div>
+
+    {{-- Tabella commesse incluse --}}
+    <div class="gn-card">
+        <div class="gn-card-header"><h3>Commesse incluse nell'analisi</h3></div>
+        <table class="gn-table">
+            <thead>
                 <tr>
-                    <th style="width:120px;">Commessa</th>
+                    <th>Commessa</th>
                     <th>Cliente / Descrizione</th>
-                    <th style="width:140px;">Etichetta</th>
-                    <th style="width:120px;text-align:right;">Costo totale</th>
-                    <th style="width:80px;">Azioni</th>
+                    <th>Etichetta custom</th>
+                    <th class="num">Costo totale €</th>
+                    <th>Azioni</th>
                 </tr>
             </thead>
             <tbody>
             @forelse($datiCommesse as $c)
                 <tr>
-                    <td><strong>{{ $c['commessa'] }}</strong></td>
-                    <td class="small">
-                        {{ $c['cliente'] }}<br>
-                        <span class="text-muted">{{ \Illuminate\Support\Str::limit($c['descrizione'], 80) }}</span>
-                    </td>
-                    <td class="small">{{ $c['etichetta'] ?? '-' }}</td>
-                    <td class="text-end font-monospace fw-bold">€ {{ number_format($c['totale'], 2, ',', '.') }}</td>
+                    <td><a href="{{ route('owner.costi.analisi.show', $c['commessa']) }}?op_token={{ request('op_token') }}" class="gn-commessa-link">{{ $c['commessa'] }}</a></td>
                     <td>
-                        <a href="{{ route('owner.costi.analisi.show', $c['commessa']) }}?op_token={{ request('op_token') }}" target="_blank" class="btn btn-sm btn-outline-primary py-0" title="Apri dettaglio">↗</a>
-                        <form method="POST" action="{{ route('owner.analisi.custom.rimuovi', [$analisi->id, $c['pivot_id']]) }}" class="d-inline" onsubmit="return confirm('Rimuovere?')">
-                            @csrf @method('DELETE')
-                            <button class="btn btn-sm btn-outline-danger py-0">×</button>
-                        </form>
+                        <div>{{ $c['cliente'] }}</div>
+                        <small style="color:var(--gn-muted);">{{ \Illuminate\Support\Str::limit($c['descrizione'], 80) }}</small>
+                    </td>
+                    <td>{{ $c['etichetta'] ?? '-' }}</td>
+                    <td class="num"><strong>€ {{ number_format($c['totale'], 2, ',', '.') }}</strong></td>
+                    <td>
+                        <a href="{{ route('owner.costi.analisi.show', $c['commessa']) }}?op_token={{ request('op_token') }}" target="_blank" class="gn-btn gn-btn-secondary gn-btn-icon" title="Apri dettaglio">↗</a>
+                        <form method="POST" action="{{ route('owner.analisi.custom.rimuovi', [$analisi->id, $c['pivot_id']]) }}" onsubmit="return confirm('Rimuovere?')" style="display:inline;">@csrf @method('DELETE')<button class="gn-btn gn-btn-secondary gn-btn-icon">🗑</button></form>
                     </td>
                 </tr>
             @empty
-                <tr><td colspan="5" class="text-center text-muted py-4">Nessuna commessa aggiunta. Usa il form sopra.</td></tr>
+                <tr><td colspan="5" style="text-align:center;color:var(--gn-muted);padding:32px;">Nessuna commessa aggiunta. Usa il form sopra.</td></tr>
             @endforelse
             </tbody>
             @if(!empty($datiCommesse))
-            <tfoot>
-                <tr class="table-primary">
-                    <th colspan="3" class="text-end">TOTALE ANALISI</th>
-                    <th class="text-end font-monospace">€ {{ number_format($totaleGenerale, 2, ',', '.') }}</th>
-                    <th></th>
-                </tr>
-            </tfoot>
+            <tfoot><tr><td colspan="3" style="text-align:right;">TOTALE ANALISI</td><td class="num">€ {{ number_format($totaleGenerale, 2, ',', '.') }}</td><td></td></tr></tfoot>
             @endif
         </table>
-        </div>
     </div>
+
 </div>
 @endsection

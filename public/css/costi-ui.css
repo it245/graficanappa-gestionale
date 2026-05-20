@@ -1,0 +1,117 @@
+/* MES Grafica Nappa — Modulo Costi UI (adattato da mockup ChatGPT) */
+
+:root {
+    --gn-primary: #2563eb;
+    --gn-primary-dark: #1a4d8c;
+    --gn-text: #1f2937;
+    --gn-muted: #6b7280;
+    --gn-border: #e5e7eb;
+    --gn-bg: #f9fafb;
+    --gn-card-bg: #fff;
+}
+
+/* === LAYOUT === */
+.gn-page { padding: 24px; background: var(--gn-bg); min-height: calc(100vh - 60px); }
+.gn-page h1 { font-size: 22px; font-weight: 600; color: var(--gn-text); margin: 0 0 4px 0; }
+.gn-page .gn-subtitle { font-size: 13px; color: var(--gn-muted); margin-bottom: 20px; }
+
+/* === KPI CARDS === */
+.gn-kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.gn-kpi { background: var(--gn-card-bg); border: 1px solid var(--gn-border); border-radius: 12px; padding: 18px 20px; display: flex; align-items: center; gap: 14px; }
+.gn-kpi-icon { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; color: #fff; flex-shrink: 0; }
+.gn-kpi-icon.blue { background: #3b82f6; }
+.gn-kpi-icon.green { background: #10b981; }
+.gn-kpi-icon.amber { background: #f59e0b; }
+.gn-kpi-icon.purple { background: #8b5cf6; }
+.gn-kpi-icon.red { background: #ef4444; }
+.gn-kpi-body { flex: 1; }
+.gn-kpi-value { font-size: 26px; font-weight: 700; color: var(--gn-text); line-height: 1.1; }
+.gn-kpi-label { font-size: 12px; color: var(--gn-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+.gn-kpi-sub { font-size: 11px; color: var(--gn-muted); margin-top: 2px; }
+
+/* === CARDS === */
+.gn-card { background: var(--gn-card-bg); border: 1px solid var(--gn-border); border-radius: 12px; margin-bottom: 16px; overflow: hidden; }
+.gn-card-header { padding: 14px 18px; border-bottom: 1px solid var(--gn-border); display: flex; justify-content: space-between; align-items: center; }
+.gn-card-header h3 { margin: 0; font-size: 14px; font-weight: 600; color: var(--gn-text); }
+.gn-card-header .gn-card-actions { display: flex; gap: 8px; align-items: center; }
+.gn-card-body { padding: 16px 18px; }
+.gn-card-body.no-pad { padding: 0; }
+
+.gn-card.gn-card-warning { border-color: #fcd34d; background: #fffbeb; }
+.gn-card.gn-card-warning .gn-card-header { border-color: #fcd34d; background: #fef3c7; color: #92400e; }
+.gn-card.gn-card-primary .gn-card-header { background: var(--gn-primary-dark); color: #fff; border-color: var(--gn-primary-dark); }
+
+/* === TABLES === */
+.gn-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.gn-table thead th { background: #f3f4f6; color: var(--gn-muted); font-weight: 600; text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--gn-border); font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; }
+.gn-table tbody td { padding: 12px; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
+.gn-table tbody tr:hover { background: #f9fafb; }
+.gn-table .num { text-align: right; font-variant-numeric: tabular-nums; font-family: 'SF Mono', Consolas, monospace; }
+.gn-table tfoot td { background: var(--gn-primary-dark); color: #fff; font-weight: 700; padding: 14px 12px; font-size: 14px; }
+
+/* === BADGES === */
+.gn-badge { display: inline-block; padding: 3px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; }
+.gn-badge-carta         { background: #fef3c7; color: #92400e; }
+.gn-badge-stampa_offset { background: #dbeafe; color: #1e40af; }
+.gn-badge-stampa_digitale{ background: #dbeafe; color: #1e40af; }
+.gn-badge-stampa_caldo  { background: #fed7aa; color: #9a3412; }
+.gn-badge-fustella      { background: #ddd6fe; color: #5b21b6; }
+.gn-badge-piega_incolla { background: #d1fae5; color: #065f46; }
+.gn-badge-finestratura  { background: #d1fae5; color: #065f46; }
+.gn-badge-esterno       { background: #fee2e2; color: #991b1b; }
+.gn-badge-manodopera    { background: #ffedd5; color: #9a3412; }
+.gn-badge-scarti        { background: #fecaca; color: #991b1b; }
+.gn-badge-trasporto     { background: #e5e7eb; color: #374151; }
+.gn-badge-cliche        { background: #fce7f3; color: #9d174d; }
+.gn-badge-altro         { background: #e5e7eb; color: #374151; }
+.gn-badge-success       { background: #d1fae5; color: #065f46; }
+.gn-badge-warning       { background: #fef3c7; color: #92400e; }
+.gn-badge-info          { background: #dbeafe; color: #1e40af; }
+
+/* === STATO COMMESSA === */
+.gn-stato-completata { background: #d1fae5; color: #065f46; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; }
+
+/* === INPUT IN TABELLA === */
+.gn-table input[type=number], .gn-table input[type=text] {
+    width: 100%; max-width: 100px; padding: 4px 8px; border: 1px solid var(--gn-border);
+    border-radius: 6px; font-size: 12px; text-align: right; background: #fff;
+    font-variant-numeric: tabular-nums;
+}
+.gn-table input[type=number]:focus, .gn-table input[type=text]:focus { outline: none; border-color: var(--gn-primary); box-shadow: 0 0 0 2px rgba(37,99,235,.15); }
+.gn-table tr.gn-override { background: #fef3c7 !important; }
+
+/* === BUTTONS === */
+.gn-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; border: 1px solid transparent; cursor: pointer; transition: all .15s; text-decoration: none; }
+.gn-btn-primary { background: var(--gn-primary); color: #fff; }
+.gn-btn-primary:hover { background: #1d4ed8; color: #fff; }
+.gn-btn-secondary { background: #fff; color: var(--gn-text); border-color: var(--gn-border); }
+.gn-btn-secondary:hover { background: #f9fafb; }
+.gn-btn-success { background: #10b981; color: #fff; }
+.gn-btn-danger  { background: #ef4444; color: #fff; }
+.gn-btn-sm { padding: 4px 10px; font-size: 12px; }
+.gn-btn-icon { padding: 4px 8px; }
+
+/* === FILTERS BAR === */
+.gn-filters { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+.gn-filters .gn-search { flex: 1; min-width: 280px; position: relative; }
+.gn-filters .gn-search input { width: 100%; padding: 9px 14px 9px 38px; border: 1px solid var(--gn-border); border-radius: 8px; font-size: 13px; }
+.gn-filters .gn-search::before { content: "🔍"; position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--gn-muted); }
+.gn-filters .gn-filter-pill { background: #fff; border: 1px solid var(--gn-border); border-radius: 8px; padding: 9px 14px; font-size: 13px; color: var(--gn-text); cursor: pointer; }
+
+/* === PAGINATION === */
+.gn-pagination { display: flex; justify-content: space-between; align-items: center; padding: 12px 18px; }
+.gn-pagination .pager { display: flex; gap: 4px; }
+.gn-pagination .pager a, .gn-pagination .pager span { padding: 6px 12px; border: 1px solid var(--gn-border); border-radius: 6px; color: var(--gn-text); text-decoration: none; font-size: 13px; min-width: 36px; text-align: center; }
+.gn-pagination .pager .active { background: var(--gn-primary); color: #fff; border-color: var(--gn-primary); }
+
+/* === DISTRIBUTION BARS === */
+.gn-dist-bar { display: flex; align-items: center; gap: 12px; padding: 6px 0; }
+.gn-dist-bar .gn-dist-label { width: 140px; font-size: 12px; }
+.gn-dist-bar .gn-dist-value { width: 110px; text-align: right; font-variant-numeric: tabular-nums; font-size: 12px; font-weight: 600; }
+.gn-dist-bar .gn-dist-track { flex: 1; height: 8px; background: #f3f4f6; border-radius: 4px; overflow: hidden; }
+.gn-dist-bar .gn-dist-fill { height: 100%; background: var(--gn-primary); border-radius: 4px; }
+.gn-dist-bar .gn-dist-pct { width: 60px; text-align: right; font-size: 12px; color: var(--gn-muted); }
+
+/* === LINKS COMMESSA === */
+.gn-table a.gn-commessa-link { color: var(--gn-primary); font-weight: 600; text-decoration: none; }
+.gn-table a.gn-commessa-link:hover { text-decoration: underline; }
