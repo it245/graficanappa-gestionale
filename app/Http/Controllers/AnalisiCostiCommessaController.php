@@ -457,6 +457,19 @@ class AnalisiCostiCommessaController extends Controller
             ->with('success', 'Override rimosso. Valori ora calcolati automaticamente.');
     }
 
+    /**
+     * Genera PDF consuntivo commessa con logo + voci + totale.
+     */
+    public function pdfConsuntivo(string $commessa)
+    {
+        $view = $this->show($commessa);
+        // $view è un \Illuminate\View\View — estrai i dati
+        $data = $view->getData();
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.consuntivo_commessa', $data);
+        $pdf->setPaper('A4', 'portrait');
+        return $pdf->stream("Consuntivo_{$commessa}.pdf");
+    }
+
     public function deleteAltroCosto(int $id)
     {
         $costo = CommessaAltroCosto::findOrFail($id);

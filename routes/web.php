@@ -103,6 +103,7 @@ Route::post('/owner/costi/analisi/{commessa}/override', [\App\Http\Controllers\A
 Route::delete('/owner/costi/analisi/{commessa}/override', [\App\Http\Controllers\AnalisiCostiCommessaController::class, 'deleteOverride'])->name('owner.costi.analisi.deleteOverride');
 Route::post('/owner/costi/analisi/{commessa}/voce', [\App\Http\Controllers\AnalisiCostiCommessaController::class, 'updateVoceCosto'])->name('owner.costi.analisi.updateVoce');
 Route::post('/owner/costi/analisi/{commessa}/voce-reset', [\App\Http\Controllers\AnalisiCostiCommessaController::class, 'deleteVoceCosto'])->name('owner.costi.analisi.deleteVoce');
+Route::get('/owner/costi/analisi/{commessa}/pdf', [\App\Http\Controllers\AnalisiCostiCommessaController::class, 'pdfConsuntivo'])->name('owner.costi.analisi.pdf');
 Route::post('/owner/note-spedizione', [DashboardSpedizioneController::class, 'salvaNotaGiornaliera'])->name('owner.salvaNotaSpedizione');
 Route::get('/owner/note-spedizione-check', [DashboardSpedizioneController::class, 'noteUltimoAggiornamento'])->name('owner.noteSpedizioneCheck');
 Route::get('/owner/audit-log', [DashboardOwnerController::class, 'auditLog'])->name('owner.auditLog');

@@ -174,7 +174,10 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="card border-primary">
                 <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                     <strong>💰 Costi consuntivo dettagliato</strong>
-                    <span class="badge bg-light text-dark">Totale: € {{ number_format($totaleConsuntivo, 2, ',', '.') }}</span>
+                    <div class="d-flex gap-2 align-items-center">
+                        <a href="{{ route('owner.costi.analisi.pdf', $commessa) }}?op_token={{ request('op_token') }}" target="_blank" class="btn btn-sm btn-light" title="Genera PDF consuntivo">📄 PDF</a>
+                        <span class="badge bg-light text-dark">Totale: € {{ number_format($totaleConsuntivo, 2, ',', '.') }}</span>
+                    </div>
                 </div>
                 @if(empty($vociCosto))
                 <div class="p-3 text-muted small">Nessuna voce calcolata. Verifica mapping macchine.</div>
