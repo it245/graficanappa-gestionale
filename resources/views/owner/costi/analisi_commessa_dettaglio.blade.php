@@ -1,6 +1,51 @@
 @extends('layouts.app')
 
 @section('content')
+<meta name="csrf-token" content="{{ csrf_token() }}">
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const urlSalva = "{{ route('owner.costi.analisi.updateVoce', $commessa) }}";
+    const csrf = document.querySelector('meta[name=csrf-token]').content;
+
+    document.querySelectorAll('.voce-riga').forEach(function(tr) {
+        const qta = tr.querySelector('.voce-qta');
+        const prezzo = tr.querySelector('.voce-prezzo');
+        const importo = tr.querySelector('.voce-importo');
+        const btnSalva = tr.querySelector('.btn-salva-voce');
+
+        const recalc = function() {
+            const q = parseFloat((qta.value || '0').replace(',', '.'));
+            const p = parseFloat((prezzo.value || '0').replace(',', '.'));
+            if (!isNaN(q) && !isNaN(p) && q > 0 && p > 0) {
+                importo.value = (q * p).toFixed(2);
+            }
+        };
+        if (qta) qta.addEventListener('input', recalc);
+        if (prezzo) prezzo.addEventListener('input', recalc);
+
+        if (btnSalva) {
+            btnSalva.addEventListener('click', function() {
+                const fd = new FormData();
+                fd.append('_token', csrf);
+                fd.append('voce_chiave', tr.dataset.voceChiave);
+                fd.append('categoria', tr.dataset.categoria);
+                fd.append('descrizione', tr.dataset.descrizione);
+                fd.append('udm', tr.dataset.udm || '');
+                fd.append('qta', qta.value || '');
+                fd.append('prezzo_unit', prezzo.value || '');
+                fd.append('importo', importo.value || '0');
+                btnSalva.disabled = true;
+                btnSalva.textContent = '⏳';
+                fetch(urlSalva, { method: 'POST', body: fd, headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                    .then(function(r) { return r.text(); })
+                    .then(function() { location.reload(); })
+                    .catch(function(e) { alert('Errore: ' + e); btnSalva.disabled = false; btnSalva.textContent = '💾'; });
+            });
+        }
+    });
+});
+</script>
+
 <div class="container-fluid py-3">
     <div class="d-flex justify-content-between align-items-start mb-3">
         <div>
@@ -149,34 +194,30 @@
                     </thead>
                     <tbody>
                     @foreach($vociCosto as $v)
-                        <tr class="{{ $v['override_manuale'] ? 'table-warning' : '' }}">
+                        <tr class="voce-riga {{ $v['override_manuale'] ? 'table-warning' : '' }}"
+                            data-voce-chiave="{{ $v['voce_chiave'] }}"
+                            data-categoria="{{ $v['categoria'] }}"
+                            data-descrizione="{{ $v['descrizione'] }}"
+                            data-udm="{{ $v['udm'] ?? '' }}">
                             <td><span class="badge bg-secondary">{{ $v['categoria'] }}</span></td>
                             <td class="small">{{ $v['descrizione'] }}
                                 @if($v['override_manuale'])<span class="badge bg-warning text-dark ms-1" title="Override di {{ $v['autore_override'] ?? '' }}">M</span>@endif
                             </td>
-                            <td class="text-end font-monospace">{{ $v['qta'] !== null ? number_format($v['qta'], 2, ',', '.') : '—' }}</td>
+                            <td><input type="number" step="0.01" min="0" value="{{ $v['qta'] !== null ? number_format($v['qta'], 2, '.', '') : '' }}" class="form-control form-control-sm text-end voce-qta" style="width:90px;"></td>
                             <td class="small">{{ $v['udm'] ?? '' }}</td>
-                            <td class="text-end font-monospace">{{ $v['prezzo_unit'] !== null ? number_format($v['prezzo_unit'], 4, ',', '.') : '—' }}</td>
-                            <td class="text-end font-monospace"><strong>€ {{ number_format($v['importo'], 2, ',', '.') }}</strong></td>
+                            <td><input type="number" step="0.0001" min="0" value="{{ $v['prezzo_unit'] !== null ? number_format($v['prezzo_unit'], 4, '.', '') : '' }}" class="form-control form-control-sm text-end voce-prezzo" style="width:90px;"></td>
+                            <td><input type="number" step="0.01" min="0" value="{{ number_format($v['importo'], 2, '.', '') }}" class="form-control form-control-sm text-end voce-importo fw-bold" style="width:100px;"></td>
                             <td>
-                                <form method="POST" action="{{ route('owner.costi.analisi.updateVoce', $commessa) }}" class="d-flex gap-1">
-                                    @csrf
-                                    <input type="hidden" name="voce_chiave" value="{{ $v['voce_chiave'] }}">
-                                    <input type="hidden" name="categoria" value="{{ $v['categoria'] }}">
-                                    <input type="hidden" name="descrizione" value="{{ $v['descrizione'] }}">
-                                    <input type="hidden" name="qta" value="{{ $v['qta'] ?? '' }}">
-                                    <input type="hidden" name="udm" value="{{ $v['udm'] ?? '' }}">
-                                    <input type="hidden" name="prezzo_unit" value="{{ $v['prezzo_unit'] ?? '' }}">
-                                    <input type="number" step="0.01" min="0" name="importo" value="{{ number_format($v['importo'], 2, '.', '') }}" class="form-control form-control-sm text-end" style="width:100px;">
-                                    <button class="btn btn-sm btn-primary py-0" title="Salva override">💾</button>
-                                </form>
-                                @if($v['override_manuale'])
-                                <form method="POST" action="{{ route('owner.costi.analisi.deleteVoce', $commessa) }}" class="d-inline">
-                                    @csrf
-                                    <input type="hidden" name="voce_chiave" value="{{ $v['voce_chiave'] }}">
-                                    <button class="btn btn-sm btn-outline-danger py-0" title="Ripristina auto" onclick="return confirm('Ripristinare valore automatico?')">↺</button>
-                                </form>
-                                @endif
+                                <div class="d-flex gap-1">
+                                    <button type="button" class="btn btn-sm btn-primary py-0 btn-salva-voce" title="Salva">💾</button>
+                                    @if($v['override_manuale'])
+                                    <form method="POST" action="{{ route('owner.costi.analisi.deleteVoce', $commessa) }}" class="d-inline">
+                                        @csrf
+                                        <input type="hidden" name="voce_chiave" value="{{ $v['voce_chiave'] }}">
+                                        <button class="btn btn-sm btn-outline-danger py-0" title="Ripristina auto" onclick="return confirm('Ripristinare valore automatico?')">↺</button>
+                                    </form>
+                                    @endif
+                                </div>
                             </td>
                         </tr>
                     @endforeach

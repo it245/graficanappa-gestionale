@@ -23,8 +23,13 @@ class CostoConsuntivoService
         // Aggrega fasi per macchina + flag esterno
         $perMacchina = $this->aggregaFasi($ordini);
 
-        // Carta
-        $voci = array_merge($voci, $this->calcolaCarta($ordini));
+        // Carta (ritorna voci + €/foglio per uso scarti)
+        $vociCarta = $this->calcolaCarta($ordini);
+        $voci = array_merge($voci, $vociCarta);
+        $eurFoglioCarta = 0;
+        foreach ($vociCarta as $vc) {
+            if ($vc['prezzo_unit'] > 0) { $eurFoglioCarta = $vc['prezzo_unit']; break; }
+        }
 
         // Per ogni macchina (interna o esterna)
         foreach ($perMacchina as $info) {
@@ -36,7 +41,7 @@ class CostoConsuntivoService
         $voci = array_merge($voci, $this->calcolaManodopera($ordini));
 
         // Scarti (fogli persi × €/foglio carta)
-        $voci = array_merge($voci, $this->calcolaScarti($ordini));
+        $voci = array_merge($voci, $this->calcolaScarti($ordini, $eurFoglioCarta));
 
         // Carica override esistenti da DB e applica
         $override = DB::table('commessa_costi_voci')
@@ -388,7 +393,7 @@ class CostoConsuntivoService
         return $voci;
     }
 
-    private function calcolaScarti($ordini): array
+    private function calcolaScarti($ordini, float $eurFoglio = 0): array
     {
         $voci = [];
         $totScarti = 0;
@@ -400,27 +405,11 @@ class CostoConsuntivoService
         }
         if ($totScarti <= 0) return $voci;
 
-        // Stima €/foglio dalla carta principale ordine
-        $primoOrdine = $ordini->first();
-        $eurFoglio = 0;
-        $cartaInfo = trim($primoOrdine->carta ?? '');
-        if ($cartaInfo) {
-            $gramm = preg_match('/(\d{2,4})\s*(?:g\/?m²?|gr?)/i', $cartaInfo, $mG) ? (int) $mG[1] : null;
-            $formato = preg_match('/(\d{2,3})\s*[x×]\s*(\d{2,3})/i', $cartaInfo, $mF) ? ($mF[1] . 'x' . $mF[2]) : null;
-            if ($gramm && $formato) {
-                $listino = DB::table('materie_prime_carte')->where('grammatura', 'LIKE', "%{$gramm}%")->first();
-                if ($listino) {
-                    [$l1, $l2] = array_map('intval', explode('x', $formato));
-                    $peso = ($l1 / 100) * ($l2 / 100) * ($gramm / 1000);
-                    $eurFoglio = round($peso * (float) $listino->eur_kg, 4);
-                }
-            }
-        }
         $importo = round($totScarti * $eurFoglio, 2);
         $voci[] = [
             'categoria'   => 'scarti',
             'voce_chiave' => 'scarti.carta',
-            'descrizione' => "Scarti carta ({$totScarti} fogli × €{$eurFoglio}/fg)",
+            'descrizione' => "Scarti carta ({$totScarti} fogli × €" . number_format($eurFoglio, 4, ',', '') . '/fg)',
             'qta'         => $totScarti,
             'udm'         => 'fg',
             'prezzo_unit' => $eurFoglio,
