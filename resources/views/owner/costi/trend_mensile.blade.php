@@ -33,8 +33,23 @@ $mediaMensile = count($mesiList) > 0 ? $totaleAggregato / count($mesiList) : 0;
         </form>
     </div>
 
-    <div style="background:#fef3c7;border:1px solid #fcd34d;color:#92400e;padding:10px 14px;border-radius:8px;font-size:12px;margin-bottom:14px;">
-        ⚠️ <strong>Stima rapida</strong> (no chiamate API): ore×€30/h + scarti×€0.10/fg + carta×€0.05/fg + altri costi. Cache 1h. Per dettaglio preciso clicca singola commessa.
+    @if(session('success'))
+    <div style="background:#d1fae5;border:1px solid #6ee7b7;color:#065f46;padding:10px 14px;border-radius:8px;margin-bottom:14px;">{{ session('success') }}</div>
+    @endif
+
+    <div style="background:#eff6ff;border:1px solid #93c5fd;color:#1e40af;padding:10px 14px;border-radius:8px;font-size:12px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;gap:14px;">
+        <div>
+            📊 <strong>{{ $infoCache['cached'] ?? 0 }}</strong> commesse precise (cache) · <strong>{{ $infoCache['stimati'] ?? 0 }}</strong> stimate (€150/h + €0.30/fg) su <strong>{{ $infoCache['totale_comm'] ?? 0 }}</strong> totali.
+            @if(($infoCache['stimati'] ?? 0) > 0)
+            <br><span style="color:#92400e;">⚠️ Per maggiore precisione precalcola le commesse stimate →</span>
+            @endif
+        </div>
+        @if(($infoCache['stimati'] ?? 0) > 0)
+        <form method="POST" action="{{ route('owner.costi.trend.precalcola') }}?op_token={{ request('op_token') }}">
+            @csrf
+            <button class="gn-btn gn-btn-primary" title="Calcola totale preciso 50 commesse (Prinect API, carta, ecc). Richiede ~1-2 min.">⚡ Precalcola 50</button>
+        </form>
+        @endif
     </div>
 
     <div class="gn-kpi-grid">

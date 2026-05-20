@@ -199,8 +199,8 @@ class AnalisiCostiCommessaController extends Controller
 
     /**
      * #2 Trend mensile costi: ultimi N mesi.
-     * Strategia veloce: SOLO aggregati DB (no API Prinect/Onda), cache 1h.
-     * Per dettaglio preciso: cliccare singola commessa.
+     * Legge da tabella commessa_totali_cache (popolata da show() o cron).
+     * Fallback stima (~€150/h) per commesse non ancora cachate.
      */
     public function trendMensile(Request $request)
     {
@@ -208,10 +208,9 @@ class AnalisiCostiCommessaController extends Controller
         $mesi = max(3, min(24, $mesi));
 
         $cacheKey = 'costi.trend.' . $mesi;
-        $result = Cache::remember($cacheKey, 3600, function () use ($mesi) {
+        $result = Cache::remember($cacheKey, 1800, function () use ($mesi) {
             $start = now()->subMonths($mesi - 1)->startOfMonth();
 
-            // Aggregati per commessa SOLO da DB (no API)
             $commesseRows = DB::table('ordini as o')
                 ->join('ordine_fasi as orf', 'orf.ordine_id', '=', 'o.id')
                 ->whereNull('orf.deleted_at')
@@ -229,56 +228,138 @@ class AnalisiCostiCommessaController extends Controller
                 ->havingRaw("SUM(CASE WHEN LOWER(COALESCE(r.nome,'')) = 'spedizione' THEN CASE WHEN orf.stato NOT REGEXP '^[0-9]+\$' OR CAST(orf.stato AS UNSIGNED) < 2 THEN 1 ELSE 0 END ELSE CASE WHEN orf.stato NOT REGEXP '^[0-9]+\$' OR CAST(orf.stato AS UNSIGNED) < 3 THEN 1 ELSE 0 END END) = 0")
                 ->get();
 
-            // Altri costi aggregati in 1 query
             $commesseList = $commesseRows->pluck('commessa')->all();
+
+            // Leggi totali precalcolati (preferenziale)
+            $cacheTot = empty($commesseList) ? collect() : DB::table('commessa_totali_cache')
+                ->whereIn('commessa', $commesseList)
+                ->get()->keyBy('commessa');
+
             $altriCosti = empty($commesseList) ? collect() : DB::table('commessa_altri_costi')
                 ->whereIn('commessa', $commesseList)
                 ->select('commessa', DB::raw('SUM(importo) as tot'))
                 ->groupBy('commessa')->get()->keyBy('commessa');
 
-            // Stima costo: ore_sec × €30/h + altri_costi + scarti × €0.10/fg + fogli × €0.05/fg
-            // (Stima rapida, NO chiamate API. Per dettaglio cliccare commessa.)
-            $costoOraStimato = 30; // €/h media manodopera+macchina
-            $costoSfridoStimato = 0.10; // €/foglio scarto
-            $costoFoglioStimato = 0.05; // €/foglio carta media
+            // Stima fallback (coefficienti tarati su totali reali storici)
+            $costoOraStimato = 150;    // €/h media (XL106 ~200, digitale ~80, manodopera ~30)
+            $costoSfridoStimato = 0.50; // €/foglio scarto (carta + lavorazione)
+            $costoFoglioStimato = 0.30; // €/foglio carta media patinata
 
             $trend = [];
+            $cachedCount = 0;
+            $stimatoCount = 0;
             foreach ($commesseRows as $r) {
                 if (!isset($trend[$r->anno_mese])) {
-                    $trend[$r->anno_mese] = ['commesse' => 0, 'totale' => 0, 'ore_sec' => 0];
+                    $trend[$r->anno_mese] = ['commesse' => 0, 'totale' => 0, 'ore_sec' => 0, 'cached' => 0, 'stimati' => 0];
                 }
-                $costoOre = ($r->ore_sec / 3600) * $costoOraStimato;
-                $costoScarti = $r->scarti_tot * $costoSfridoStimato;
-                $costoCarta = $r->fogli_max * $costoFoglioStimato;
-                $altri = (float) ($altriCosti[$r->commessa]->tot ?? 0);
 
+                if (isset($cacheTot[$r->commessa])) {
+                    // Cache disponibile = totale preciso
+                    $totale = (float) $cacheTot[$r->commessa]->totale;
+                    $cachedCount++;
+                    $trend[$r->anno_mese]['cached']++;
+                } else {
+                    // Stima fallback
+                    $costoOre = ($r->ore_sec / 3600) * $costoOraStimato;
+                    $costoScarti = $r->scarti_tot * $costoSfridoStimato;
+                    $costoCarta = $r->fogli_max * $costoFoglioStimato;
+                    $altri = (float) ($altriCosti[$r->commessa]->tot ?? 0);
+                    $totale = $costoOre + $costoScarti + $costoCarta + $altri;
+                    $stimatoCount++;
+                    $trend[$r->anno_mese]['stimati']++;
+                }
                 $trend[$r->anno_mese]['commesse']++;
-                $trend[$r->anno_mese]['totale'] += $costoOre + $costoScarti + $costoCarta + $altri;
+                $trend[$r->anno_mese]['totale'] += $totale;
                 $trend[$r->anno_mese]['ore_sec'] += (int) $r->ore_sec;
             }
+
+            $info = ['cached' => $cachedCount, 'stimati' => $stimatoCount, 'totale_comm' => count($commesseList)];
 
             // Riempi mesi mancanti
             $mesiList = [];
             for ($i = 0; $i < $mesi; $i++) {
                 $m = now()->subMonths($mesi - 1 - $i)->format('Y-m');
-                $mesiList[$m] = $trend[$m] ?? ['commesse' => 0, 'totale' => 0, 'ore_sec' => 0];
+                $mesiList[$m] = $trend[$m] ?? ['commesse' => 0, 'totale' => 0, 'ore_sec' => 0, 'cached' => 0, 'stimati' => 0];
             }
 
             return [
                 'mesiList'  => $mesiList,
                 'maxTotale' => max(array_column($mesiList, 'totale')) ?: 1,
+                'info'      => $info,
             ];
         });
 
         $mesiList = $result['mesiList'];
         $maxTotale = $result['maxTotale'];
+        $infoCache = $result['info'] ?? ['cached' => 0, 'stimati' => 0, 'totale_comm' => 0];
 
         if ($request->boolean('refresh')) {
             Cache::forget($cacheKey);
             return redirect()->route('owner.costi.trend', ['mesi' => $mesi, 'op_token' => $request->get('op_token')]);
         }
 
-        return view('owner.costi.trend_mensile', compact('mesiList', 'maxTotale', 'mesi'));
+        return view('owner.costi.trend_mensile', compact('mesiList', 'maxTotale', 'mesi', 'infoCache'));
+    }
+
+    /**
+     * Lancia precalcolo totali costo per commesse terminate (chunk in background).
+     * Salva in commessa_totali_cache così trend mensile è veloce + preciso.
+     */
+    public function precalcolaTotali(Request $request, CostoConsuntivoService $costoService)
+    {
+        $limit = (int) $request->get('limit', 50); // chunk
+        $start = now()->subMonths(24)->startOfMonth();
+
+        $commesseDaCalcolare = DB::table('ordini as o')
+            ->join('ordine_fasi as orf', 'orf.ordine_id', '=', 'o.id')
+            ->whereNull('orf.deleted_at')
+            ->leftJoin('fasi_catalogo as fc', 'fc.id', '=', 'orf.fase_catalogo_id')
+            ->leftJoin('reparti as r', 'r.id', '=', 'fc.reparto_id')
+            ->leftJoin('commessa_totali_cache as ctc', 'ctc.commessa', '=', 'o.commessa')
+            ->where('o.data_prevista_consegna', '>=', $start->format('Y-m-d'))
+            ->whereNull('ctc.commessa') // solo non ancora cachate
+            ->select('o.commessa', DB::raw('MAX(o.data_prevista_consegna) as data_prevista'))
+            ->groupBy('o.commessa')
+            ->havingRaw("SUM(CASE WHEN LOWER(COALESCE(r.nome,'')) = 'spedizione' THEN CASE WHEN orf.stato NOT REGEXP '^[0-9]+\$' OR CAST(orf.stato AS UNSIGNED) < 2 THEN 1 ELSE 0 END ELSE CASE WHEN orf.stato NOT REGEXP '^[0-9]+\$' OR CAST(orf.stato AS UNSIGNED) < 3 THEN 1 ELSE 0 END END) = 0")
+            ->orderByDesc('data_prevista')
+            ->limit($limit)
+            ->get();
+
+        $count = 0;
+        foreach ($commesseDaCalcolare as $r) {
+            try {
+                $voci = $costoService->calcola($r->commessa);
+                $totale = array_sum(array_column($voci, 'importo'));
+                $perCat = [];
+                foreach ($voci as $v) $perCat[$v['categoria']] = ($perCat[$v['categoria']] ?? 0) + $v['importo'];
+
+                DB::table('commessa_totali_cache')->updateOrInsert(
+                    ['commessa' => $r->commessa],
+                    [
+                        'anno_mese'     => substr($r->data_prevista, 0, 7),
+                        'totale'        => $totale,
+                        'n_voci'        => count($voci),
+                        'per_categoria' => json_encode($perCat),
+                        'calcolato_at'  => now(),
+                    ]
+                );
+                $count++;
+            } catch (\Throwable $e) {
+                Log::warning("precalcolaTotali fallito per {$r->commessa}: {$e->getMessage()}");
+            }
+        }
+
+        Cache::flush(); // invalida cache trend
+        $rimanenti = DB::table('ordini as o')
+            ->join('ordine_fasi as orf', 'orf.ordine_id', '=', 'o.id')
+            ->whereNull('orf.deleted_at')
+            ->leftJoin('commessa_totali_cache as ctc', 'ctc.commessa', '=', 'o.commessa')
+            ->where('o.data_prevista_consegna', '>=', $start->format('Y-m-d'))
+            ->whereNull('ctc.commessa')
+            ->distinct('o.commessa')
+            ->count('o.commessa');
+
+        return redirect()->route('owner.costi.trend')->with('success', "Precalcolate {$count} commesse. Rimanenti: {$rimanenti}. Riavvia per continuare.");
     }
 
     /**
@@ -467,6 +548,25 @@ class AnalisiCostiCommessaController extends Controller
         foreach ($vociCosto as $v) $vociPerCategoria[$v['categoria']][] = $v;
         // Includi altri_costi nel totale consuntivo
         $totaleConsuntivo = array_sum(array_column($vociCosto, 'importo')) + (float) $altriCosti->sum('importo');
+
+        // Aggiorna cache totali per trend mensile
+        try {
+            $perCat = [];
+            foreach ($vociCosto as $v) $perCat[$v['categoria']] = ($perCat[$v['categoria']] ?? 0) + $v['importo'];
+            $dataPrev = $ordini->first()->data_prevista_consegna ?? null;
+            DB::table('commessa_totali_cache')->updateOrInsert(
+                ['commessa' => $commessa],
+                [
+                    'anno_mese'     => $dataPrev ? substr((string)$dataPrev, 0, 7) : null,
+                    'totale'        => $totaleConsuntivo,
+                    'n_voci'        => count($vociCosto),
+                    'per_categoria' => json_encode($perCat),
+                    'calcolato_at'  => now(),
+                ]
+            );
+        } catch (\Throwable $e) {
+            Log::warning("Update cache totali fallito per {$commessa}: {$e->getMessage()}");
+        }
 
         return view('owner.costi.analisi_commessa_dettaglio', [
             'fasiEditable'      => $fasiEditable,

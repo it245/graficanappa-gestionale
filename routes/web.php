@@ -114,6 +114,7 @@ Route::post('/owner/costi/categorie/{id}', [\App\Http\Controllers\CategorieAltri
 Route::delete('/owner/costi/categorie/{id}', [\App\Http\Controllers\CategorieAltriCostiController::class, 'destroy'])->whereNumber('id')->name('owner.costi.categorie.destroy');
 // #2 Trend mensile + #1 Confronto multi-analisi
 Route::get('/owner/costi/trend', [\App\Http\Controllers\AnalisiCostiCommessaController::class, 'trendMensile'])->name('owner.costi.trend');
+Route::post('/owner/costi/trend/precalcola', [\App\Http\Controllers\AnalisiCostiCommessaController::class, 'precalcolaTotali'])->name('owner.costi.trend.precalcola');
 Route::get('/owner/analisi-custom/confronta/select', [\App\Http\Controllers\AnalisiCustomController::class, 'confrontaSelect'])->name('owner.analisi.custom.confrontaSelect');
 Route::get('/owner/analisi-custom/confronta', [\App\Http\Controllers\AnalisiCustomController::class, 'confronta'])->name('owner.analisi.custom.confronta');
 
