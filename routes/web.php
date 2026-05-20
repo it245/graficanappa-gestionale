@@ -104,6 +104,15 @@ Route::delete('/owner/costi/analisi/{commessa}/override', [\App\Http\Controllers
 Route::post('/owner/costi/analisi/{commessa}/voce', [\App\Http\Controllers\AnalisiCostiCommessaController::class, 'updateVoceCosto'])->name('owner.costi.analisi.updateVoce');
 Route::post('/owner/costi/analisi/{commessa}/voce-reset', [\App\Http\Controllers\AnalisiCostiCommessaController::class, 'deleteVoceCosto'])->name('owner.costi.analisi.deleteVoce');
 Route::get('/owner/costi/analisi/{commessa}/pdf', [\App\Http\Controllers\AnalisiCostiCommessaController::class, 'pdfConsuntivo'])->name('owner.costi.analisi.pdf');
+
+// Workspace analisi custom (gruppi di commesse per analisi ad-hoc)
+Route::get('/owner/analisi-custom',             [\App\Http\Controllers\AnalisiCustomController::class, 'index'])->name('owner.analisi.custom.index');
+Route::get('/owner/analisi-custom/nuova',       [\App\Http\Controllers\AnalisiCustomController::class, 'create'])->name('owner.analisi.custom.create');
+Route::post('/owner/analisi-custom',            [\App\Http\Controllers\AnalisiCustomController::class, 'store'])->name('owner.analisi.custom.store');
+Route::get('/owner/analisi-custom/{id}',        [\App\Http\Controllers\AnalisiCustomController::class, 'show'])->whereNumber('id')->name('owner.analisi.custom.show');
+Route::post('/owner/analisi-custom/{id}/aggiungi',  [\App\Http\Controllers\AnalisiCustomController::class, 'aggiungiCommessa'])->whereNumber('id')->name('owner.analisi.custom.aggiungi');
+Route::delete('/owner/analisi-custom/{id}/commessa/{pivotId}', [\App\Http\Controllers\AnalisiCustomController::class, 'rimuoviCommessa'])->whereNumber('id')->whereNumber('pivotId')->name('owner.analisi.custom.rimuovi');
+Route::delete('/owner/analisi-custom/{id}',     [\App\Http\Controllers\AnalisiCustomController::class, 'destroy'])->whereNumber('id')->name('owner.analisi.custom.destroy');
 Route::post('/owner/note-spedizione', [DashboardSpedizioneController::class, 'salvaNotaGiornaliera'])->name('owner.salvaNotaSpedizione');
 Route::get('/owner/note-spedizione-check', [DashboardSpedizioneController::class, 'noteUltimoAggiornamento'])->name('owner.noteSpedizioneCheck');
 Route::get('/owner/audit-log', [DashboardOwnerController::class, 'auditLog'])->name('owner.auditLog');
